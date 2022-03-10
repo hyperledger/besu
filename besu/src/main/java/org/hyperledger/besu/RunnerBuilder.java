@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -537,17 +538,24 @@ public class RunnerBuilder {
 
     final MiningParameters miningParameters = besuController.getMiningParameters();
     Optional<StratumServer> stratumServer = Optional.empty();
+    LOG.info("runnerbuilder stratum mining enabled? {}", miningParameters.isStratumMiningEnabled());
     if (miningParameters.isStratumMiningEnabled()) {
+      var powMiningCoordinator = miningCoordinator;
+      if (miningCoordinator instanceof TransitionCoordinator) {
+        LOG.debug("fetching powMiningCoordinator from TransitionCoordinator");
+        powMiningCoordinator = ((TransitionCoordinator) miningCoordinator).getPreMergeObject();
+      }
       stratumServer =
           Optional.of(
               new StratumServer(
                   vertx,
-                  miningCoordinator,
+                  powMiningCoordinator,
                   miningParameters.getStratumPort(),
                   miningParameters.getStratumNetworkInterface(),
                   miningParameters.getStratumExtranonce(),
                   metricsSystem));
       miningCoordinator.addEthHashObserver(stratumServer.get());
+      LOG.debug("added ethash observer: {}", stratumServer.get());
     }
 
     sanitizePeers(network, staticNodes)
