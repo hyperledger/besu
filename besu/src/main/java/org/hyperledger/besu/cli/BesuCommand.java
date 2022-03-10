@@ -3032,7 +3032,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public static List<String> getJDKEnabledCypherSuites() {
     try {
-      SSLContext context = SSLContext.getInstance("TLS");
+      SSLContext context = SSLContext.getInstance("TLS 1.2");
       context.init(null, null, null);
       SSLEngine engine = context.createSSLEngine();
       return Arrays.asList(engine.getEnabledCipherSuites());
@@ -3043,7 +3043,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public static List<String> getJDKEnabledProtocols() {
     try {
-      SSLContext context = SSLContext.getInstance("TLS");
+      SSLContext context = SSLContext.getInstance("TLS 1.2");
       context.init(null, null, null);
       SSLEngine engine = context.createSSLEngine();
       return Arrays.asList(engine.getEnabledProtocols());
