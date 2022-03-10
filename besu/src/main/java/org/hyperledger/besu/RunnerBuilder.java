@@ -538,7 +538,7 @@ public class RunnerBuilder {
 
     final MiningParameters miningParameters = besuController.getMiningParameters();
     Optional<StratumServer> stratumServer = Optional.empty();
-    LOG.info("runnerbuilder stratum mining enabled? {}", miningParameters.isStratumMiningEnabled());
+
     if (miningParameters.isStratumMiningEnabled()) {
       var powMiningCoordinator = miningCoordinator;
       if (miningCoordinator instanceof TransitionCoordinator) {
