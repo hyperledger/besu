@@ -148,8 +148,7 @@ public class EngineExchangeTransitionConfigurationTest {
         new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 0L);
 
     assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x0");
-    assertThat(mockResult.getTerminalTotalDifficultyAsString())
-        .isEqualTo(Difficulty.ZERO.toHexString());
+    assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo("0x0");
     assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
 
     String json = mapper.writeValueAsString(mockResult);
@@ -157,8 +156,25 @@ public class EngineExchangeTransitionConfigurationTest {
     assertThat(res.get("terminalBlockNumber")).isEqualTo("0x0");
     assertThat(res.get("terminalBlockHash"))
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
-    assertThat(res.get("terminalTotalDifficulty"))
+    assertThat(res.get("terminalTotalDifficulty")).isEqualTo("0x0");
+  }
+
+  @Test
+  public void shouldStripLeadingZeros() throws JsonProcessingException {
+    var mapper = new ObjectMapper();
+    var mockResult =
+        new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 100);
+
+    assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x64");
+    assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo("0x0");
+    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
+
+    String json = mapper.writeValueAsString(mockResult);
+    var res = mapper.readValue(json, Map.class);
+    assertThat(res.get("terminalBlockNumber")).isEqualTo("0x64");
+    assertThat(res.get("terminalBlockHash"))
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
+    assertThat(res.get("terminalTotalDifficulty")).isEqualTo("0x0");
   }
 
   private JsonRpcResponse resp(final EngineExchangeTransitionConfigurationParameter param) {
