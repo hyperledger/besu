@@ -18,10 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.auth.AuthOptions;
-import io.vertx.ext.auth.AuthProvider;
 
-public class TomlAuthOptions implements AuthOptions {
+public class TomlAuthOptions {
 
   private Path tomlPath;
 
@@ -31,14 +29,8 @@ public class TomlAuthOptions implements AuthOptions {
     tomlPath = that.tomlPath;
   }
 
-  @Override
-  public AuthProvider createProvider(final Vertx vertx) {
+  public TomlAuth createProvider(final Vertx vertx) {
     return new TomlAuth(vertx, this);
-  }
-
-  @Override
-  public AuthOptions clone() {
-    return new TomlAuthOptions(this);
   }
 
   public TomlAuthOptions setTomlPath(final String tomlPath) {
