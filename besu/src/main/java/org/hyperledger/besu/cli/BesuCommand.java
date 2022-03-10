@@ -504,31 +504,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final BigInteger networkId = null;
 
-  @Option(
-      names = {"--graphql-http-enabled"},
-      description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
-  private final Boolean isGraphQLHttpEnabled = false;
+  @CommandLine.ArgGroup(exclusive = false, heading = "@|bold GraphQL Options|@%n")
+  GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--graphql-http-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String graphQLHttpHost = autoDiscoverDefaultIP().getHostAddress();
+  private class GraphQlOptionGroup {
+    @Option(
+        names = {"--graphql-http-enabled"},
+        description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
+    private final Boolean isGraphQLHttpEnabled = false;
 
-  @Option(
-      names = {"--graphql-http-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--graphql-http-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String graphQLHttpHost = autoDiscoverDefaultIP().getHostAddress();
 
-  @Option(
-      names = {"--graphql-http-cors-origins"},
-      description = "Comma separated origin domain URLs for CORS validation (default: none)")
-  private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
-      new CorsAllowedOriginsProperty();
+    @Option(
+        names = {"--graphql-http-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
+
+    @Option(
+        names = {"--graphql-http-cors-origins"},
+        description = "Comma separated origin domain URLs for CORS validation (default: none)")
+    protected final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
+        new CorsAllowedOriginsProperty();
+  }
 
   @Option(
       names = {"--rpc-http-enabled"},
@@ -1976,15 +1981,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--graphql-http-enabled",
-        !isGraphQLHttpEnabled,
+        !graphQlOptionGroup.isGraphQLHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
-
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
-    graphQLConfiguration.setHost(graphQLHttpHost);
-    graphQLConfiguration.setPort(graphQLHttpPort);
+    graphQLConfiguration.setEnabled(graphQlOptionGroup.isGraphQLHttpEnabled);
+    graphQLConfiguration.setHost(graphQlOptionGroup.graphQLHttpHost);
+    graphQLConfiguration.setPort(graphQlOptionGroup.graphQLHttpPort);
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
-    graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    graphQLConfiguration.setCorsAllowedDomains(graphQlOptionGroup.graphQLHttpCorsAllowedOrigins);
     graphQLConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
 
     return graphQLConfiguration;
@@ -2922,7 +2926,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private List<Integer> getEffectivePorts() {
     final List<Integer> effectivePorts = new ArrayList<>();
     addPortIfEnabled(effectivePorts, p2pPort, p2pEnabled);
-    addPortIfEnabled(effectivePorts, graphQLHttpPort, isGraphQLHttpEnabled);
+    addPortIfEnabled(
+        effectivePorts,
+        graphQlOptionGroup.graphQLHttpPort,
+        graphQlOptionGroup.isGraphQLHttpEnabled);
     addPortIfEnabled(effectivePorts, rpcHttpPort, isRpcHttpEnabled);
     addPortIfEnabled(effectivePorts, rpcWsPort, isRpcWsEnabled);
     addPortIfEnabled(effectivePorts, metricsPort, isMetricsEnabled);
