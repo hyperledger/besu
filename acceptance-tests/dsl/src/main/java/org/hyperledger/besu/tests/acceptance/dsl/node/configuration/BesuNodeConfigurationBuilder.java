@@ -151,6 +151,14 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder engineRpcEnabled() {
+    this.engineRpcConfiguration.setEnabled(true);
+    this.engineRpcConfiguration.setPort(0);
+    this.engineRpcConfiguration.setHostsAllowlist(singletonList("*"));
+
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder metricsEnabled() {
     this.metricsConfiguration =
         MetricsConfiguration.builder()

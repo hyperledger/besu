@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,28 +149,24 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
     } else {
       frame.decrementRemainingGas(gasRequirement);
-      final Bytes output = contract.compute(frame.getInputData(), frame);
-      operationTracer.tracePrecompileCall(frame, gasRequirement, output);
-      if (output != null) {
-        if (contract.getName().equals("Privacy")
-            || contract.getName().equals("FlexiblePrivacy")
-            || contract.getName().equals("PluginPrivacy")) {
-          // do not decrement the gas requirement for a privacy pre-compile contract call -> leads
-          // to discrepancies in receipts root between public and private nodes in a network.
-          frame.incrementRemainingGas(gasRequirement);
-          frame.setState(MessageFrame.State.CODE_EXECUTING);
-          return;
-        }
-        frame.setOutputData(output);
-        LOG.trace(
-            "Precompiled contract {}  successfully executed (gas consumed: {})",
-            contract.getName(),
-            gasRequirement);
-        frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
-      } else {
-        LOG.trace("Precompiled contract  {} failed (gas consumed: {})", contract, gasRequirement);
-        frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      final PrecompiledContract.PrecompileContractResult result =
+          contract.computePrecompile(frame.getInputData(), frame);
+      operationTracer.tracePrecompileCall(frame, gasRequirement, result.getOutput());
+      if (result.isRefundGas()) {
+        frame.incrementRemainingGas(gasRequirement);
       }
+      if (frame.getState() == MessageFrame.State.REVERT) {
+        frame.setRevertReason(result.getOutput());
+      } else {
+        frame.setOutputData(result.getOutput());
+      }
+      frame.setState(result.getState());
+      frame.setExceptionalHaltReason(result.getHaltReason());
+      LOG.trace(
+          "Precompiled contract {} {} (gasComsumed: {})",
+          contract.getName(),
+          result.getState(),
+          result.isRefundGas() ? Gas.ZERO : gasRequirement);
     }
   }
 }
