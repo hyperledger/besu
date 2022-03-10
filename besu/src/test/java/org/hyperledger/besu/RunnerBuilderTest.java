@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -350,9 +351,10 @@ public final class RunnerBuilderTest {
     MergeConfigOptions.setMergeEnabled(true);
     MiningParameters mockMiningParams = besuController.getMiningParameters();
     when(mockMiningParams.isStratumMiningEnabled()).thenReturn(true);
-    TransitionCoordinator mockTransitionCoordinator = mock(TransitionCoordinator.class);
-    when(mockTransitionCoordinator.getPreMergeObject())
-        .thenReturn(mock(PoWMiningCoordinator.class));
+    TransitionCoordinator mockTransitionCoordinator =
+        spy(
+            new TransitionCoordinator(
+                mock(PoWMiningCoordinator.class), mock(MergeMiningCoordinator.class)));
     when(besuController.getMiningCoordinator()).thenReturn(mockTransitionCoordinator);
 
     new RunnerBuilder()
