@@ -250,10 +250,10 @@ import picocli.CommandLine.ParameterException;
     name = "besu",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    header = "Usage:",
+    header = "@|bold,fg(cyan) Usage:|@",
     synopsisHeading = "%n",
-    descriptionHeading = "%nDescription:%n%n",
-    optionListHeading = "%nOptions:%n",
+    descriptionHeading = "%n@|bold,fg(cyan) Description:|@%n%n",
+    optionListHeading = "%n@|bold,fg(cyan) Options:|@%n",
     footerHeading = "%n",
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
