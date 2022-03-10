@@ -97,6 +97,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
+  private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -126,6 +127,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
+      final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
@@ -171,6 +173,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
@@ -217,6 +220,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public boolean isJsonRpcEnabled() {
     return jsonRpcConfiguration().isEnabled();
+  }
+
+  @Override
+  public boolean isEngineRpcEnabled() {
+    return engineRpcConfiguration.isPresent() && engineRpcConfiguration.get().isEnabled();
   }
 
   private boolean isWebSocketsRpcEnabled() {
@@ -282,6 +290,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
+  public Optional<String> engineHttpUrl() {
+    if (isJsonRpcEnabled()) {
+      return Optional.of(
+          "http://" + jsonRpcConfiguration.getHost() + ":" + getEngineJsonRpcPort().get());
+    } else {
+      return Optional.empty();
+    }
+  }
+
   private Optional<String> wsRpcBaseUrl() {
     if (isWebSocketsRpcEnabled()) {
       return Optional.of(
@@ -336,7 +353,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public Optional<Integer> getEngineJsonRpcPort() {
-    if (isJsonRpcEnabled()) {
+    if (isEngineRpcEnabled()) {
       return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-json-rpc")));
     } else {
       return Optional.empty();
@@ -555,6 +572,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   Optional<Integer> jsonRpcListenPort() {
     if (isJsonRpcEnabled()) {
       return Optional.of(jsonRpcConfiguration().getPort());
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  Optional<Integer> jsonEngineListenPort() {
+    if (isEngineRpcEnabled()) {
+      return Optional.of(engineRpcConfiguration.get().getPort());
     } else {
       return Optional.empty();
     }

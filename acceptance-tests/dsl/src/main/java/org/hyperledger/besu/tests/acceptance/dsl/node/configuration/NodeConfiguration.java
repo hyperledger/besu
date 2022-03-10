@@ -42,6 +42,8 @@ public interface NodeConfiguration {
 
   boolean isJsonRpcEnabled();
 
+  boolean isEngineRpcEnabled();
+
   GenesisConfigurationProvider getGenesisConfigProvider();
 
   Optional<String> getGenesisConfig();
