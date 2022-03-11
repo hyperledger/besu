@@ -29,7 +29,11 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(TraceGet.class);
 
   public TraceGet(
       final Supplier<BlockTracer> blockTracerSupplier,
@@ -52,15 +56,21 @@ public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
 
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
     final List<?> traceNumbersAsStrings = requestContext.getRequiredParameter(1, List.class);
-    final List<Integer> traceNumbers =
+    final List<Integer> traceAddress =
         traceNumbersAsStrings.stream()
             .map(t -> Integer.parseInt(((String) t).substring(2), 16))
             .collect(Collectors.toList());
 
+    LOG.trace(
+        "Received RPC rpcName={} txHash={} traceAddress={}",
+        getName(),
+        transactionHash,
+        traceAddress);
+
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         resultByTransactionHash(transactionHash)
-            .filter(trace -> trace.getTraceAddress().equals(traceNumbers))
+            .filter(trace -> trace.getTraceAddress().equals(traceAddress))
             .findFirst()
             .orElse(null));
   }
