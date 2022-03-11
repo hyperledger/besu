@@ -50,9 +50,9 @@ public class OkHttpStreamClient extends AbstractStreamClient<StreamClientConfigu
     if (method == UpnpRequest.Method.POST || method == UpnpRequest.Method.NOTIFY) {
       final MediaType mediaType = MediaType.get(requestMessage.getContentTypeHeader().getString());
       if (requestMessage.getBodyType() == UpnpMessage.BodyType.STRING) {
-        body = RequestBody.create(mediaType, requestMessage.getBodyString());
+        body = RequestBody.create(requestMessage.getBodyString(), mediaType);
       } else {
-        body = RequestBody.create(mediaType, requestMessage.getBodyBytes());
+        body = RequestBody.create(requestMessage.getBodyBytes(), mediaType);
       }
     } else {
       body = null;
