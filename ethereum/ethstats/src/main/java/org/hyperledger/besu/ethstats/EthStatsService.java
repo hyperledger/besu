@@ -440,9 +440,9 @@ public class EthStatsService {
     return block.getBody().getTransactions().stream()
         .min(Comparator.comparing(t -> t.getEffectiveGasPrice(block.getHeader().getBaseFee())))
         .map(t -> t.getEffectiveGasPrice(block.getHeader().getBaseFee()))
-        .filter(wei -> wei.getValue().longValue() > 0)
+        .filter(wei -> wei.getAsBigInteger().longValue() > 0)
         .orElse(miningCoordinator.getMinTransactionGasPrice())
-        .getValue()
+        .getAsBigInteger()
         .longValue();
   }
 }
