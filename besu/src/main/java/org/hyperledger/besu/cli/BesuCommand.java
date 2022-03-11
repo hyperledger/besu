@@ -504,10 +504,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final BigInteger networkId = null;
 
-  @CommandLine.ArgGroup(exclusive = false, heading = "@|bold GraphQL Options|@%n")
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
   GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
 
-  private class GraphQlOptionGroup {
+  static class GraphQlOptionGroup {
     @Option(
         names = {"--graphql-http-enabled"},
         description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
@@ -519,7 +519,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         paramLabel = MANDATORY_HOST_FORMAT_HELP,
         description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private String graphQLHttpHost = autoDiscoverDefaultIP().getHostAddress();
+    private String graphQLHttpHost;
 
     @Option(
         names = {"--graphql-http-port"},
