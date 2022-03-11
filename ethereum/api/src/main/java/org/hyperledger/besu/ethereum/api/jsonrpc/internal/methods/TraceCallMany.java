@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -86,11 +87,13 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     try {
       transactionsAndTraceTypeParameters =
           requestContext.getRequiredParameter(0, TraceCallManyParameter[].class);
-      LOG.trace(
+      final String blockNumberString = String.valueOf(blockNumber);
+      traceLambda(
+          LOG,
           "Received RPC rpcName={} trace_callManyParams={} block={}",
-          getName(),
-          transactionsAndTraceTypeParameters,
-          blockNumber);
+          this::getName,
+          transactionsAndTraceTypeParameters::toString,
+          blockNumberString::toString);
     } catch (final Exception e) {
       LOG.error("Error parsing trace_callMany parameters: {}", e.getLocalizedMessage());
       return new JsonRpcErrorResponse(

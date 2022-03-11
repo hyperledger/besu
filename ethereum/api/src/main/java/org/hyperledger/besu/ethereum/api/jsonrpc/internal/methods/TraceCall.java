@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -59,12 +60,14 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
         JsonCallParameterUtil.validateAndGetCallParams(requestContext);
     final TraceTypeParameter traceTypeParameter =
         requestContext.getRequiredParameter(1, TraceTypeParameter.class);
-    LOG.trace(
+    final String blockNumberString = String.valueOf(blockNumber);
+    traceLambda(
+        LOG,
         "Received RPC rpcName={} callParams={} block={} traceTypes={}",
-        getName(),
-        callParams,
-        blockNumber,
-        traceTypeParameter);
+        this::getName,
+        callParams::toString,
+        blockNumberString::toString,
+        traceTypeParameter::toString);
 
     final Optional<BlockHeader> maybeBlockHeader =
         blockchainQueriesSupplier.get().getBlockHeaderByNumber(blockNumber);
