@@ -592,7 +592,9 @@ public class RunnerBuilder {
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
-              jsonRpcConfiguration.getRpcApis().stream().filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine")).collect(Collectors.toList()),
+              jsonRpcConfiguration.getRpcApis().stream()
+                  .filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine"))
+                  .collect(Collectors.toList()),
               filterManager,
               accountLocalConfigPermissioningController,
               nodeLocalConfigPermissioningController,
