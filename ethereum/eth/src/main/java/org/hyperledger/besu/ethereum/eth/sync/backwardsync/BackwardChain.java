@@ -66,7 +66,9 @@ public class BackwardChain { // TODO: this class now stores everything in memory
     BlockHeader firstHeader =
         getFirstAncestorHeader()
             .orElseThrow(
-                () -> new BackwardSyncException("Cannot save more headers during forward sync"));
+                () ->
+                    new BackwardSyncException(
+                        "Cannot save more headers during forward sync", true));
     if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
       throw new BackwardSyncException(
           "Wrong height of header "
@@ -96,7 +98,8 @@ public class BackwardChain { // TODO: this class now stores everything in memory
   public void merge(final BackwardChain historicalBackwardChain) {
     BlockHeader firstHeader =
         getFirstAncestorHeader()
-            .orElseThrow(() -> new BackwardSyncException("Cannot merge when syncing forward..."));
+            .orElseThrow(
+                () -> new BackwardSyncException("Cannot merge when syncing forward...", true));
     Block historicalPivot = historicalBackwardChain.getPivot();
     Block pivot = getPivot();
     if (firstHeader.getParentHash().equals(historicalPivot.getHash())) {

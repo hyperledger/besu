@@ -15,15 +15,28 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 public class BackwardSyncException extends RuntimeException {
+
+  private final boolean restartable;
+
   public BackwardSyncException(final String message) {
-    super(message);
+    this(message, false);
   }
 
   public BackwardSyncException(final Throwable error) {
+    this(error, false);
+  }
+
+  public BackwardSyncException(final String message, final boolean restartable) {
+    super(message);
+    this.restartable = restartable;
+  }
+
+  public BackwardSyncException(final Throwable error, final boolean restartable) {
     super(error);
+    this.restartable = restartable;
   }
 
   public boolean shouldRestart() {
-    return false;
+    return restartable;
   }
 }

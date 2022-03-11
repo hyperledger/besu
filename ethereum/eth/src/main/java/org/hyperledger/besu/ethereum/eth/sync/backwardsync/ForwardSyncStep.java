@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -156,7 +157,12 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<Block>>> run =
         getBodiesFromPeerTask.run();
-    return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult);
+    return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult)
+        .thenApply(
+            blocks -> {
+              blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
+              return blocks;
+            });
   }
 
   @VisibleForTesting
@@ -193,10 +199,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
     }
     infoLambda(
         LOG,
-        "Saved blocks from {} (height {}) to {} (height {})",
-        () -> blocks.get(0).getHeader().getHash().toHexString(),
+        "Saved blocks {}->{}",
         () -> blocks.get(0).getHeader().getNumber(),
-        () -> blocks.get(blocks.size() - 1).getHeader().getHash().toHexString(),
         () -> blocks.get(blocks.size() - 1).getHeader().getNumber());
     return null;
   }
@@ -205,7 +209,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
   protected CompletableFuture<Void> possiblyMoreForwardSteps(final BlockHeader firstUnsynced) {
     CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
     if (firstUnsynced == null) {
-      LOG.debug("The only work left is to import blocks provided by consensus layer...");
+      LOG.info("Importing blocks provided by consensus layer...");
       backwardChain
           .getSuccessors()
           .forEach(
@@ -214,7 +218,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
                   saveBlock(block);
                 }
               });
-      LOG.debug("The sync is done...");
+      LOG.info("The Backward sync is done...");
       return CompletableFuture.completedFuture(null);
     }
     if (context.getProtocolContext().getBlockchain().contains(firstUnsynced.getParentHash())) {

@@ -62,7 +62,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
             .orElseThrow(
                 () ->
                     new BackwardSyncException(
-                        "No unprocessed hashes during backward sync. that is probably a bug."));
+                        "No unprocessed hashes during backward sync. that is probably a bug.",
+                        true));
     Hash parentHash = firstHeader.getParentHash();
     debugLambda(
         LOG,
@@ -87,7 +88,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
               final List<BlockHeader> result = peerResult.getResult();
               if (result.isEmpty()) {
                 throw new BackwardSyncException(
-                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20));
+                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20),
+                    true);
               }
               BlockHeader blockHeader = result.get(0);
               debugLambda(
@@ -115,7 +117,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
               final List<BlockHeader> result = peerResult.getResult();
               if (result.isEmpty()) {
                 throw new BackwardSyncException(
-                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20));
+                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20),
+                    true);
               }
               infoLambda(
                   LOG,

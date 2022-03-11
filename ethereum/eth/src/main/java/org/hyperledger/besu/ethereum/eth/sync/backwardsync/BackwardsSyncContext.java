@@ -22,14 +22,14 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -49,6 +49,7 @@ public class BackwardsSyncContext {
   private final AtomicReference<BackwardChain> currentChain = new AtomicReference<>();
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
+  private final BackwardSyncLookupService service;
 
   public BackwardsSyncContext(
       final ProtocolContext protocolContext,
@@ -60,6 +61,7 @@ public class BackwardsSyncContext {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.service = new BackwardSyncLookupService(protocolSchedule, ethContext, metricsSystem);
   }
 
   public boolean isSyncing() {
@@ -79,21 +81,18 @@ public class BackwardsSyncContext {
     }
 
     // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
-    return GetHeadersFromPeerByHashTask.forSingleHash(
-            protocolSchedule, ethContext, newBlockhash, 0L, metricsSystem)
-        .run()
-        .thenCompose(
-            headers ->
-                GetBodiesFromPeerTask.forHeaders(
-                        protocolSchedule, ethContext, headers.getResult(), metricsSystem)
-                    .run()
-                    .exceptionally(
-                        ex -> {
-                          LOG.error(
-                              "Failed to fetch block by hash " + newBlockhash.toHexString(), ex);
-                          throw new BackwardSyncException(ex);
-                        })
-                    .thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))));
+    final CompletableFuture<Void> completableFuture =
+        service.lookup(newBlockhash).thenCompose(this::syncBackwardsUntil);
+    this.currentBackwardSyncFuture.set(completableFuture);
+    return completableFuture;
+  }
+
+  private CompletionStage<Void> syncBackwardsUntil(final List<Block> blocks) {
+    CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+    for (Block block : blocks) {
+      future = future.thenCompose(unused -> syncBackwardsUntil(block));
+    }
+    return future;
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
@@ -107,7 +106,7 @@ public class BackwardsSyncContext {
       final BackwardChain newChain = new BackwardChain(newPivot);
       this.currentChain.set(newChain);
       backwardChainMap.put(newPivot.getHeader().getNumber(), newChain);
-      this.currentBackwardSyncFuture.set(prepareBackwardSyncFuture(newChain));
+      currentBackwardSyncFuture.set(prepareBackwardSyncFuture(newChain));
       return currentBackwardSyncFuture.get();
     }
     if (newPivot.getHeader().getParentHash().equals(currentChain.get().getPivot().getHash())) {
@@ -171,7 +170,10 @@ public class BackwardsSyncContext {
         .exceptionally(
             throwable -> {
               if (!(throwable instanceof BackwardSyncException)) {
-                throw new BackwardSyncException(throwable);
+                LOG.warn(
+                    "There was an uncaught exception raised during the backward sync, this represent an unexpected scenario. Copy paste the exception into a bug on github",
+                    throwable);
+                throw new BackwardSyncException(throwable, true);
               }
               if (((BackwardSyncException) throwable).shouldRestart()) {
                 LOG.warn(

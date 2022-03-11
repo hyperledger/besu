@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
 
 public abstract class BackwardSyncTask {
   protected BackwardsSyncContext context;
   protected BackwardChain backwardChain;
+  private static final Logger LOG = getLogger(BackwardSyncTask.class);
 
   protected BackwardSyncTask(
       final BackwardsSyncContext context, final BackwardChain backwardChain) {
@@ -28,19 +33,21 @@ public abstract class BackwardSyncTask {
   }
 
   CompletableFuture<Void> executeAsync(final Void unused) {
-    CompletableFuture<Void> result = new CompletableFuture<>();
     Optional<BackwardChain> currentChain = context.getCurrentChain();
     if (currentChain.isPresent()) {
       if (!backwardChain.equals(currentChain.get())) {
-        result.completeExceptionally(
-            new BackwardSyncException(
-                "The pivot changed, we should stop current flow, some new flow is waiting to take over..."));
-        return result;
-      } else {
-        result.complete(null);
-        return executeStep();
+        LOG.info(
+            "The pivot changed, we should stop current flow, some new flow is waiting to take over...");
+        return CompletableFuture.completedFuture(null);
       }
+      if (backwardChain.getFirstAncestorHeader().isEmpty()) {
+        LOG.debug("The Backwards sync is already finished..."); // todo fishy....
+        return CompletableFuture.completedFuture(null);
+      }
+      return executeStep();
+
     } else {
+      CompletableFuture<Void> result = new CompletableFuture<>();
       result.completeExceptionally(
           new BackwardSyncException(
               "No pivot... that is weird and should not have happened. This method should have been called after the pivot was set..."));
