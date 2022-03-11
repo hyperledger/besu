@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -23,8 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchangeTransitionConfigurationResult;
@@ -62,10 +59,6 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         LOG,
         "received transitionConfiguration: {}",
         () -> Json.encodePrettily(remoteTransitionConfiguration));
-
-    if (remoteTransitionConfiguration.getTerminalBlockNumber() != 0L) {
-      return respondWithError(reqId, INVALID_PARAMS);
-    }
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader = mergeContext.getTerminalPoWBlock();
 
@@ -108,10 +101,5 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       final Object requestId,
       final EngineExchangeTransitionConfigurationResult transitionConfiguration) {
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
-  }
-
-  private JsonRpcResponse respondWithError(
-      final Object requestId, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(requestId, jsonRpcError);
   }
 }
