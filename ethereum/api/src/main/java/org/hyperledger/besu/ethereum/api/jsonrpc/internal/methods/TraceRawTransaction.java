@@ -70,19 +70,23 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
+    final var rawTransaction = requestContext.getRequiredParameter(0, String.class);
+    final TraceTypeParameter traceTypeParameter =
+        requestContext.getRequiredParameter(1, TraceTypeParameter.class);
+    LOG.trace(
+        "Received RPC rpcName={} rawTx={} traceType={}",
+        getName(),
+        rawTransaction,
+        traceTypeParameter);
 
     final Transaction transaction;
     try {
       transaction = DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction);
-      LOG.trace("Received raw transaction {}", transaction);
+      LOG.trace("rawTx decoded to transaction {}", transaction);
     } catch (final RLPException | IllegalArgumentException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-
-    final TraceTypeParameter traceTypeParameter =
-        requestContext.getRequiredParameter(1, TraceTypeParameter.class);
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));

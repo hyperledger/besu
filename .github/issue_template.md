@@ -33,5 +33,12 @@ As an [Actor], I want [feature] so that [why].
 * Docker Version: [`docker version`]
 * Cloud VM, type, size: [Amazon Web Services I3-large]
 
-### Additional Information
+### Smart contract information (If you're reporting an issue arising from deploying or calling a smart contract, please supply related information)
+* Solidity version [`solc --version`]
+* Repo with minimal set of deployable/reproducible contract code - please provide a link
+* Please include specifics on how you are deploying/calling the contract 
+* Have you reproduced the issue on other eth clients
 
+### Additional Information (Add any of the following or anything else that may be relevant)
+* Besu setup info - genesis file, config options
+* System info - memory, CPU

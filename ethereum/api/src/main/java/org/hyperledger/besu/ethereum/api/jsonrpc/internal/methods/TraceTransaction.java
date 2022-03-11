@@ -25,7 +25,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TraceTransaction extends AbstractTraceByHash implements JsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(TraceTransaction.class);
+
   public TraceTransaction(
       final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
@@ -41,6 +46,8 @@ public class TraceTransaction extends AbstractTraceByHash implements JsonRpcMeth
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
+    LOG.trace("Received RPC rpcName={} txHash={}", getName(), transactionHash);
+
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         arrayNodeFromTraceStream(resultByTransactionHash(transactionHash)));
