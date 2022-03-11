@@ -20,8 +20,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.CommitVisitor;
+import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.RangedStorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.SnapPutVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -29,10 +34,15 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -60,7 +70,7 @@ public class WorldStateRangeProofProviderTest {
     final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = generateTrie();
     // collect accounts in range
     final RangedStorageEntriesCollector collector =
-        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
+        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 30, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangedStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -81,6 +91,53 @@ public class WorldStateRangeProofProviderTest {
         worldStateProofProvider.isValidRangeProof(
             Bytes32.ZERO, accounts.lastKey(), accountStateTrie.getRootHash(), proofs, accounts);
     assertThat(isValidRangeProof).isTrue();
+
+
+    final Bytes32 storageRoot = accountStateTrie.getRootHash();
+
+    final Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
+    for (Bytes proof : proofs) {
+      proofsEntries.put(Hash.hash(proof), proof);
+    }
+
+    System.out.println(proofsEntries);
+
+    final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
+            new InnerNodeDiscoveryManager<>(
+                    (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
+                    Function.identity(),
+                    Function.identity(),
+                    Hash.ZERO,
+                    accounts.lastKey(),
+                    true);
+
+    final MerklePatriciaTrie<Bytes, Bytes> trie =
+            new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, storageRoot);
+
+    for (Map.Entry<Bytes32, Bytes> slot : accounts.entrySet()) {
+      trie.put(slot.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, slot.getValue()));
+    }
+
+    // search incomplete nodes in the range
+    final AtomicInteger nbNodesSaved = new AtomicInteger();
+    final NodeUpdater nodeUpdater =
+            (location, hash, value) -> {
+              nbNodesSaved.getAndIncrement();
+            };
+
+    trie.commit(
+            nodeUpdater,
+            (new CommitVisitor<>(nodeUpdater) {
+              @Override
+              public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
+
+                System.out.println("saved "+location+" "+node.getHash()+" "+node.isNeedHeal()+ " "+node.getValue());
+                if (!node.isNeedHeal()) {
+                  super.maybeStoreNode(location, node);
+                }
+              }
+            }));
+
   }
 
   @Test
@@ -96,6 +153,7 @@ public class WorldStateRangeProofProviderTest {
                 root ->
                     RangedStorageEntriesCollector.collectEntries(
                         collector, visitor, root, Hash.ZERO));
+
     // generate the proof
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
@@ -213,7 +271,7 @@ public class WorldStateRangeProofProviderTest {
     final List<Hash> accountHash = new ArrayList<>();
     final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = emptyAccountStateTrie();
     // Add some storage values
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 245; i++) {
       final WorldStateStorage.Updater updater = worldStateStorage.updater();
 
       accountHash.add(Hash.wrap(Bytes32.leftPad(Bytes.of(i + 1))));
@@ -230,7 +288,14 @@ public class WorldStateRangeProofProviderTest {
       final StateTrieAccountValue accountValue =
           new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
       accountStateTrie.put(accountHash.get(i), RLP.encode(accountValue::writeTo));
-      accountStateTrie.commit(updater::putAccountStateTrieNode);
+      accountStateTrie.commit(
+          new NodeUpdater() {
+            @Override
+            public void store(final Bytes location, final Bytes32 hash, final Bytes value) {
+              System.out.println("commit " + location + " " + hash + " " + value);
+              updater.putAccountStateTrieNode(location, hash, value);
+            }
+          });
 
       // Persist updates
       updater.commit();

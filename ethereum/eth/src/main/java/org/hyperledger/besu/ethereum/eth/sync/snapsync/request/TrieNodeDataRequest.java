@@ -41,7 +41,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   private final Bytes location;
   protected Bytes data;
 
-  private boolean requiresPersisting = true;
+  protected boolean requiresPersisting = true;
 
   protected TrieNodeDataRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
     super(TRIE_NODE, rootHash);
@@ -54,17 +54,24 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   public int persist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
-    if (pendingChildren.get() > 0) {
-      return 0; // we do nothing. Our last child will eventually persist us.
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
+
+    if (!isValid() || isExpired(snapSyncState) || pendingChildren.get() > 0) {
+      // we do nothing. Our last child will eventually persist us.
+      return 0;
     }
+
     int saved = 0;
     if (requiresPersisting) {
       checkNotNull(data, "Must set data before node can be persisted.");
-      saved = doPersist(worldStateStorage, updater, downloadState);
+      saved = doPersist(worldStateStorage, updater, downloadState, snapSyncState);
     }
     if (possibleParent.isPresent()) {
-      return possibleParent.get().saveParent(worldStateStorage, updater, downloadState) + saved;
+      return possibleParent
+              .get()
+              .saveParent(worldStateStorage, updater, downloadState, snapSyncState)
+          + saved;
     }
     return saved;
   }
@@ -72,7 +79,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
-    if (!isValid() || isExpired(snapSyncState)) {
+    if (!isValid()) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
     }
@@ -118,7 +125,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
 
   @Override
   public boolean isExpired(final SnapSyncState snapSyncState) {
-    return data.isEmpty() && snapSyncState.isExpired(this);
+    return snapSyncState.isExpired(this);
   }
 
   public void setData(final Bytes data) {

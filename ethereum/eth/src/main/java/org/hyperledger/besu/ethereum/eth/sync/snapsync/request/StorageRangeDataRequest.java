@@ -90,7 +90,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
     if (!isProofValid) {
       return 0;
     }
@@ -117,8 +118,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final MerklePatriciaTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, storageRoot);
 
-    for (Map.Entry<Bytes32, Bytes> account : slots.entrySet()) {
-      trie.put(account.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, account.getValue()));
+    for (Map.Entry<Bytes32, Bytes> slot : slots.entrySet()) {
+      trie.put(slot.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, slot.getValue()));
     }
 
     // search incomplete nodes in the range
@@ -162,6 +163,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   @Override
   public boolean isValid() {
     return !slots.isEmpty() || !proofs.isEmpty();
+  }
+
+  @Override
+  public boolean isExpired(final SnapSyncState snapSyncState) {
+    return snapSyncState.isExpired(this);
   }
 
   @Override

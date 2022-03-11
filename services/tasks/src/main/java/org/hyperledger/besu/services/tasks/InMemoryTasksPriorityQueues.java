@@ -74,7 +74,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     return task;
   }
 
-  protected synchronized Queue<T> findLastNonEmptyQueue() {
+  protected Queue<T> findLastNonEmptyQueue() {
     for (int i = internalQueues.size() - 1; i > 0; i--) {
       final Queue<T> queue = internalQueues.get(i);
       if (!queue.isEmpty()) {

@@ -21,10 +21,12 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
 public class CompleteTaskStep {
+  private final SnapSyncState snapSyncState;
   private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
 
-  public CompleteTaskStep(final MetricsSystem metricsSystem) {
+  public CompleteTaskStep(final SnapSyncState snapSyncState, final MetricsSystem metricsSystem) {
+    this.snapSyncState = snapSyncState;
     completedRequestsCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -38,9 +40,7 @@ public class CompleteTaskStep {
   }
 
   public synchronized void markAsCompleteOrFailed(
-      final SnapSyncState snapSyncState,
-      final SnapWorldDownloadState downloadState,
-      final Task<SnapDataRequest> task) {
+      final SnapWorldDownloadState downloadState, final Task<SnapDataRequest> task) {
     if (task.getData().isValid() || task.getData().isExpired(snapSyncState)) {
       completedRequestsCounter.inc();
       task.markCompleted();

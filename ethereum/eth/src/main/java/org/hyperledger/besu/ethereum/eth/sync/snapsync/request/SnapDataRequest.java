@@ -96,18 +96,20 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   public int persist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
-    return doPersist(worldStateStorage, updater, downloadState);
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
+    return doPersist(worldStateStorage, updater, downloadState, snapSyncState);
   }
 
   protected abstract int doPersist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState);
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState);
 
   public abstract boolean checkProof(
-      WorldDownloadState<SnapDataRequest> downloadState,
-      WorldStateProofProvider worldStateProofProvider);
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final WorldStateProofProvider worldStateProofProvider);
 
   public abstract boolean isValid();
 
@@ -134,9 +136,10 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   protected int saveParent(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
     if (pendingChildren.decrementAndGet() == 0) {
-      return persist(worldStateStorage, updater, downloadState);
+      return persist(worldStateStorage, updater, downloadState, snapSyncState);
     }
     return 0;
   }

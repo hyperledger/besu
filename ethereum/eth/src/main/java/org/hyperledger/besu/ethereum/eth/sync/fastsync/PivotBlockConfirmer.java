@@ -32,6 +32,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -163,7 +164,8 @@ class PivotBlockConfirmer {
     if (query.isPresent()) {
       final CompletableFuture<BlockHeader> headerQuery = query.get().getHeader();
       pivotHeaderFuture =
-          FutureUtils.exceptionallyCompose(headerQuery, (error) -> executePivotQuery(blockNumber));
+          FutureUtils.exceptionallyCompose(
+              headerQuery, 10, TimeUnit.SECONDS, (error) -> executePivotQuery(blockNumber));
     } else {
       // We were unable to find a peer to query, wait and try again
       LOG.debug("No peer currently available to query for block {}.", blockNumber);

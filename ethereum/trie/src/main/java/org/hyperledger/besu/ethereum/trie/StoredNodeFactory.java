@@ -58,7 +58,6 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
     assert (leftIndex <= BranchNode.RADIX);
     assert (rightIndex <= BranchNode.RADIX);
     assert (leftIndex != rightIndex);
-
     final ArrayList<Node<V>> children =
         new ArrayList<>(Collections.nCopies(BranchNode.RADIX, (Node<V>) NULL_NODE));
 

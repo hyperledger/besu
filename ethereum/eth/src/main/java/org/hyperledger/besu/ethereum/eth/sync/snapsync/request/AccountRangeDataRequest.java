@@ -108,11 +108,13 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
 
     if (startStorageRange.isPresent() && endStorageRange.isPresent()) {
-      return 0; // not store the new account if we just want to complete the account thanks to
-      // another rootHash
+      // not store the new account if we just want to complete the account thanks to another
+      // rootHash
+      return 0;
     }
 
     final Bytes32 storageRoot =

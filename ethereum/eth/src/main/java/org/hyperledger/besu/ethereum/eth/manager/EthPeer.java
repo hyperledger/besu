@@ -298,7 +298,7 @@ public class EthPeer {
       throws PeerNotConnected {
     final GetAccountRangeMessage getAccountRangeMessage =
         GetAccountRangeMessage.create(
-            stateRoot, startKeyHash, endKeyHash, BigInteger.valueOf(256 * 1024));
+            stateRoot, startKeyHash, endKeyHash, BigInteger.valueOf(512 * 1024));
     getAccountRangeMessage.setOverrideStateRoot(Optional.of(stateRoot));
     return sendRequest(
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE),

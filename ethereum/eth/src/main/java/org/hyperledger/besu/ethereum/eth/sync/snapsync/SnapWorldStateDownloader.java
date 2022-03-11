@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,27 +127,26 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
+              metricsSystem,
               clock);
 
-      /* RangeManager.generateAllRanges(16)
-      .forEach(
-          (key, value) ->
-              newDownloadState.enqueueRequest(
-                  createAccountRangeDataRequest(stateRoot, key, value)));*/
+      RangeManager.generateAllRanges(16)
+          .forEach(
+              (key, value) ->
+                  newDownloadState.enqueueRequest(
+                      createAccountRangeDataRequest(stateRoot, key, value)));
 
-      newDownloadState.enqueueRequest(
-          createAccountTrieNodeDataRequest(header.getStateRoot(), Bytes.EMPTY));
-
-      maybeCompleteTask = Optional.of(new CompleteTaskStep(metricsSystem));
+      maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
               .taskCountPerRequest(hashCountPerRequest)
               .maxOutstandingRequests(maxOutstandingRequests)
               .pivotBlockManager(
-                  new PivotBlockManager<>(newDownloadState, fastSyncActions, snapSyncState))
+                  new DynamicPivotBlockManager<>(newDownloadState, fastSyncActions, snapSyncState))
               .loadLocalDataStep(
-                  new LoadLocalDataStep(worldStateStorage, newDownloadState, metricsSystem))
+                  new LoadLocalDataStep(
+                      worldStateStorage, newDownloadState, metricsSystem, snapSyncState))
               .requestDataStep(
                   new RequestDataStep(
                       ethContext,
@@ -158,7 +156,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                       metricsSystem))
               .persistDataStep(
                   new PersistDataStep(
-                      snapSyncState, worldStateStorage, newDownloadState, metricsSystem))
+                      snapSyncState, worldStateStorage, newDownloadState))
               .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .fastSyncState(snapSyncState)

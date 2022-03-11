@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerRequestTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -89,9 +88,6 @@ public class GetAccountRangeFromPeerTask
     final AccountRangeMessage accountRangeMessage = AccountRangeMessage.readFrom(message);
     final AccountRangeMessage.AccountRangeData accountRangeData =
         accountRangeMessage.accountData(true);
-    if (accountRangeData.accounts().isEmpty() && accountRangeData.proofs().isEmpty()) {
-      peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
-    }
     return Optional.of(accountRangeData);
   }
 }

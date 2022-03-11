@@ -53,12 +53,15 @@ public class BytecodeRequest extends SnapDataRequest {
   protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
-    updater.putCode(Hash.wrap(accountHash), Hash.hash(code));
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
+    updater.putCode(Hash.wrap(accountHash), code);
     return possibleParent
         .map(
             trieNodeDataRequest ->
-                trieNodeDataRequest.saveParent(worldStateStorage, updater, downloadState) + 1)
+                trieNodeDataRequest.saveParent(
+                        worldStateStorage, updater, downloadState, snapSyncState)
+                    + 1)
         .orElse(1);
   }
 

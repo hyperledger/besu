@@ -69,6 +69,11 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
     return unfinishedOutstandingTasks.size();
   }
 
+
+  public T getUnfinishedOutstandingTasks() {
+    return unfinishedOutstandingTasks.stream().findFirst().get().getData();
+  }
+
   public synchronized int nbTasksRemaining() {
     return internalQueue.size() + unfinishedOutstandingTasks.size();
   }

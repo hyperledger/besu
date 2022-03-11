@@ -387,14 +387,16 @@ public class PipelineBuilder<I, T> {
   }
 
   private static <O> Pipe<O> createPipe(
-      final int newBufferSize,
-      final String stageName,
-      final LabelledMetric<Counter> outputCounter) {
+          final int newBufferSize,
+          final String stageName,
+          final LabelledMetric<Counter> outputCounter) {
     final String labelName = stageName + "_outputPipe";
     return new Pipe<>(
-        newBufferSize,
-        outputCounter.labels(labelName, "added"),
-        outputCounter.labels(labelName, "removed"),
-        outputCounter.labels(labelName, "aborted"));
+            newBufferSize,
+            outputCounter.labels(labelName, "added"),
+            outputCounter.labels(labelName, "removed"),
+            outputCounter.labels(labelName, "aborted"));
   }
+
+
 }

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.datatypes.Hash;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class SnapPutVisitor<V> extends PutVisitor<V> {
@@ -26,7 +28,7 @@ public class SnapPutVisitor<V> extends PutVisitor<V> {
   public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     final Node<V> visit = super.visit(branchNode, path);
     for (Node<V> child : visit.getChildren()) {
-      if (child.isNeedHeal() || child.getValue().isEmpty()) {
+      if (child.isNeedHeal() || (child instanceof StoredNode && child.getValue().isEmpty())) {
         visit.markNeedHeal(); // not save an incomplete node
         return visit;
       }
@@ -37,12 +39,15 @@ public class SnapPutVisitor<V> extends PutVisitor<V> {
   @Override
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     final Node<V> visit = super.visit(extensionNode, path);
+    //System.out.println("visit ex "+visit.getHash());
     for (Node<V> child : visit.getChildren()) {
-      if (child.isNeedHeal() || child.getValue().isEmpty()) {
+      //System.out.println("visit ex "+child.isNeedHeal()+" "+child.getHash());
+      if (child.isNeedHeal() || (child instanceof StoredNode && child.getValue().isEmpty())) {
         visit.markNeedHeal(); // not save an incomplete node
         return visit;
       }
     }
     return visit;
   }
+
 }

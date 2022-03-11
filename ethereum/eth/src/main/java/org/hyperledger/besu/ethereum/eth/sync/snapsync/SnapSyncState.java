@@ -38,6 +38,6 @@ public class SnapSyncState extends FastSyncState {
     return getPivotBlockHeader()
         .map(SealableBlockHeader::getStateRoot)
         .filter(hash -> hash.equals(request.getRootHash()))
-        .isPresent();
+        .isEmpty();
   }
 }

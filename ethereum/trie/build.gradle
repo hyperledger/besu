@@ -31,6 +31,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
   implementation project(':services:kvstore')
+  implementation project(':datatypes')
 
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'

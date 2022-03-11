@@ -38,7 +38,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
   private final Bytes startKeyHash, endKeyHash;
 
-  private boolean allowMissingElementInRange;
+  private final boolean allowMissingElementInRange;
 
   public InnerNodeDiscoveryManager(
       final NodeLoader nodeLoader,
@@ -50,10 +50,6 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
     super(nodeLoader, valueSerializer, valueDeserializer);
     this.startKeyHash = createPath(startKeyHash);
     this.endKeyHash = createPath(endKeyHash);
-    this.allowMissingElementInRange = allowMissingElementInRange;
-  }
-
-  public void setAllowMissingElementInRange(final boolean allowMissingElementInRange) {
     this.allowMissingElementInRange = allowMissingElementInRange;
   }
 
@@ -125,10 +121,6 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
   public List<InnerNode> getInnerNodes() {
     return List.copyOf(innerNodes);
-  }
-
-  public List<Bytes> getIncompleteLocation() {
-    return List.copyOf(incompleteLocation);
   }
 
   private boolean isInRange(final Bytes location) {

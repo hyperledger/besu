@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountHealRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -24,6 +25,9 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.RunnableCounter;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
@@ -42,6 +46,9 @@ import org.slf4j.LoggerFactory;
 public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
+
+  private static final int DISPLAY_PROGRESS_STEP = 100000;
+
   protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
       new InMemoryTaskQueue<>();
   protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
@@ -57,12 +64,18 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private final SnapSyncState snapSyncState;
 
+
+  //metrics round the snapsync
+  private final RunnableCounter generatedNodes;
+  private final RunnableCounter healedNodes;
+
   public SnapWorldDownloadState(
-      final WorldStateStorage worldStateStorage,
-      final SnapSyncState snapSyncState,
-      final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
-      final int maxRequestsWithoutProgress,
-      final long minMillisBeforeStalling,
+          final WorldStateStorage worldStateStorage,
+          final SnapSyncState snapSyncState,
+          final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
+          final int maxRequestsWithoutProgress,
+          final long minMillisBeforeStalling,
+          final MetricsSystem metricsSystem,
       final Clock clock) {
     super(
         worldStateStorage,
@@ -71,6 +84,22 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         minMillisBeforeStalling,
         clock);
     this.snapSyncState = snapSyncState;
+    this.generatedNodes =
+            new RunnableCounter(
+                    metricsSystem.createCounter(
+                            BesuMetricCategory.SYNCHRONIZER,
+                            "snapsync_world_state_generated_nodes_total",
+                            "Total number of data nodes generated as part of snap sync world state download"),
+                    this::displayWorldStateSyncProgress,
+                    DISPLAY_PROGRESS_STEP);
+    this.healedNodes =
+            new RunnableCounter(
+                    metricsSystem.createCounter(
+                            BesuMetricCategory.SYNCHRONIZER,
+                            "snapsync_world_state_healed_nodes_total",
+                            "Total number of data nodes healed as part of snap sync world state heal process"),
+                    this::displayHealProgress,
+                    DISPLAY_PROGRESS_STEP);
   }
 
   @Override
@@ -93,6 +122,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingCodeRequests.allTasksCompleted()
         && pendingStorageRequests.allTasksCompleted()
         && pendingBigStorageRequests.allTasksCompleted()
+        && pendingAccountHealRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
         snapSyncState.setHealStatus(true);
@@ -105,20 +135,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
 
-        LOG.info("Finished downloading world state from peers");
+        LOG.info("Finished downloading world state from peers (generated nodes {} / healed nodes {})", generatedNodes.get(), healedNodes.get());
         internalFuture.complete(null);
         return true;
       }
     }
 
     return false;
-  }
-
-  public synchronized void enqueueFutureHealRequest(final SnapDataRequest request) {
-    if (!internalFuture.isDone()) {
-      pendingAccountHealRequests.add(request);
-      System.out.println("NB heal account request " + pendingAccountHealRequests.size());
-    }
   }
 
   @Override
@@ -164,7 +187,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           return null;
         }
       }
-
       for (TaskCollection<SnapDataRequest> queue : queues) {
         Task<SnapDataRequest> task = queue.remove();
         if (task != null) {
@@ -210,5 +232,21 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     pendingTrieNodeRequests.clearInternalQueues();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);
+  }
+
+  public RunnableCounter getGeneratedNodes() {
+    return generatedNodes;
+  }
+
+  public RunnableCounter getHealedNodes() {
+    return healedNodes;
+  }
+
+  private void displayWorldStateSyncProgress() {
+    LOG.info("Generated {} world state nodes", generatedNodes.get());
+  }
+
+  private void displayHealProgress() {
+    LOG.info("Healed {} world sync nodes", healedNodes.get());
   }
 }

@@ -43,8 +43,6 @@ import org.slf4j.LoggerFactory;
 
 public class SnapDownloaderFactory extends FastDownloaderFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
-
   public static Optional<FastSyncDownloader<?>> createSnapDownloader(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -71,7 +69,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
 
-    final FastSyncState fastSyncState =
+    /*final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
@@ -79,7 +77,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       LOG.info(
           "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
-    }
+    }*/
 
     final SnapSyncState snapSyncState =
         new SnapSyncState(

@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.snap.GetTrieNodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetAccountRangeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetBytecodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetStorageRangeFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -45,7 +44,6 @@ import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.immutables.value.Value;
 
 public class RequestDataStep {
 
@@ -90,8 +88,6 @@ public class RequestDataStep {
             RangeManager.MAX_RANGE,
             blockHeader,
             metricsSystem);
-
-    System.out.println("Storage size " + requestTasks.size());
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
@@ -192,8 +188,9 @@ public class RequestDataStep {
               }
             });
 
-    final GetTrieNodeFromPeerTask getTrieNodeFromPeerTask =
-        GetTrieNodeFromPeerTask.forTrieNodes(ethContext, message, blockHeader, metricsSystem);
+    final EthTask<Map<Bytes, Bytes>> getTrieNodeFromPeerTask =
+        RetryingGetTrieNodeFromPeerTask.forTrieNodes(
+            ethContext, message, blockHeader, metricsSystem);
     downloadState.addOutstandingTask(getTrieNodeFromPeerTask);
     return getTrieNodeFromPeerTask
         .run()
@@ -203,7 +200,7 @@ public class RequestDataStep {
                 downloadState.removeOutstandingTask(getTrieNodeFromPeerTask);
                 for (final Task<SnapDataRequest> task : requestTasks) {
                   final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
-                  final Bytes matchingData = response.getResult().get(request.getPathId());
+                  final Bytes matchingData = response.get(request.getPathId());
                   if (matchingData != null) {
                     request.setData(matchingData);
                   }
@@ -211,12 +208,5 @@ public class RequestDataStep {
               }
               return requestTasks;
             });
-  }
-
-  @Value.Immutable
-  public interface SendRequestResult {
-    SnapDataRequest snapDataRequest();
-
-    AbstractSnapMessageData abstractSnapMessageData();
   }
 }

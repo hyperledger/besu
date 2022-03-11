@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
@@ -40,7 +41,8 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState) {
+      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncState snapSyncState) {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }

@@ -9,26 +9,28 @@ import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PivotBlockManager<REQUEST extends TasksPriorityProvider> {
+public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PivotBlockManager.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockManager.class);
 
-  final WorldDownloadState<REQUEST> worldDownloadState;
+  private final AtomicBoolean isSearchingPivotBlock = new AtomicBoolean(false);
+  private final AtomicBoolean isUpdatingPivotBlock = new AtomicBoolean(false);
 
-  final FastSyncActions syncActions;
+  private final WorldDownloadState<REQUEST> worldDownloadState;
 
-  final FastSyncState syncState;
+  private final FastSyncActions syncActions;
 
-  Optional<BlockHeader> lastBlockFound;
+  private final FastSyncState syncState;
 
-  private boolean lock;
+  private Optional<BlockHeader> lastBlockFound;
 
-  public PivotBlockManager(
+  public DynamicPivotBlockManager(
       final WorldDownloadState<REQUEST> worldDownloadState,
       final FastSyncActions fastSyncActions,
       final SnapSyncState fastSyncState) {
@@ -49,21 +51,21 @@ public class PivotBlockManager<REQUEST extends TasksPriorityProvider> {
                       - lastBlockFound
                           .map(ProcessableBlockHeader::getNumber)
                           .orElse(currentPivotBlockNumber);
-              if (distanceNextPivotBlock > 60) {
-                if (lockResettingPivotBlock()) {
-                  syncActions
-                      .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
-                      .thenCompose(syncActions::selectPivotBlock)
-                      .thenCompose(syncActions::downloadPivotBlockHeader)
-                      .thenAccept(fss -> lastBlockFound = fss.getPivotBlockHeader())
-                      .orTimeout(5, TimeUnit.MINUTES)
-                      .whenComplete((unused, throwable) -> unlockResettingPivotBlock());
-                }
+              if (distanceNextPivotBlock > 60 && isSearchingPivotBlock.compareAndSet(false, true)) {
+                syncActions
+                    .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
+                    .thenCompose(syncActions::selectPivotBlock)
+                    .thenCompose(syncActions::downloadPivotBlockHeader)
+                    .thenAccept(fss -> lastBlockFound = fss.getPivotBlockHeader())
+                    .orTimeout(5, TimeUnit.MINUTES)
+                    .whenComplete((unused, throwable) -> isSearchingPivotBlock.set(false));
               }
+
               final long distance =
                   syncActions.getSyncState().bestChainHeight() - currentPivotBlockNumber;
-              if (distance > 126) {
+              if (distance > 126 && isUpdatingPivotBlock.compareAndSet(false, true)) {
                 switchToNewPivotBlock(onNewPivotBlock);
+                isUpdatingPivotBlock.set(false);
               }
             });
   }
@@ -78,21 +80,6 @@ public class PivotBlockManager<REQUEST extends TasksPriorityProvider> {
           worldDownloadState.requestComplete(true);
           worldDownloadState.notifyTaskAvailable();
         });
-  }
-
-  public boolean lockResettingPivotBlock() {
-    synchronized (this) {
-      if (!lock) {
-        lock = true;
-        return true;
-      }
-      return false;
-    }
-  }
-
-  public void unlockResettingPivotBlock() {
-    synchronized (this) {
-      lock = false;
-    }
+    lastBlockFound = Optional.empty();
   }
 }

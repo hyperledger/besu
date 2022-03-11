@@ -19,6 +19,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -50,6 +51,27 @@ public class FutureUtils {
             result.completeExceptionally(t);
           }
         });
+    return result;
+  }
+
+  public static <T> CompletableFuture<T> exceptionallyCompose(
+      final CompletableFuture<T> future,
+      final long timeout,
+      final TimeUnit timeUnit,
+      final Function<Throwable, CompletionStage<T>> errorHandler) {
+    final CompletableFuture<T> result = new CompletableFuture<>();
+    future
+        .orTimeout(timeout, timeUnit)
+        .whenComplete(
+            (value, error) -> {
+              try {
+                final CompletionStage<T> nextStep =
+                    error != null ? errorHandler.apply(error) : completedFuture(value);
+                propagateResult(nextStep, result);
+              } catch (final Throwable t) {
+                result.completeExceptionally(t);
+              }
+            });
     return result;
   }
 

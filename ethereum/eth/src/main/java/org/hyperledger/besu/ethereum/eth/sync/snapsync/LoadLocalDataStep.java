@@ -32,12 +32,14 @@ public class LoadLocalDataStep {
 
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
+  private final SnapSyncState snapSyncState;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
       final WorldStateStorage worldStateStorage,
       final SnapWorldDownloadState downloadState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SnapSyncState snapSyncState) {
     this.worldStateStorage = worldStateStorage;
     this.downloadState = downloadState;
     existingNodeCounter =
@@ -45,6 +47,7 @@ public class LoadLocalDataStep {
             BesuMetricCategory.SYNCHRONIZER,
             "snap_world_state_existing_nodes_total",
             "Total number of node data requests completed using existing data");
+    this.snapSyncState = snapSyncState;
   }
 
   public Stream<Task<SnapDataRequest>> loadLocalData(
@@ -52,12 +55,13 @@ public class LoadLocalDataStep {
     final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
     // check if node is already stored in the worldstate
     final Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
-    if (existingData.isPresent()) {
+    if (existingData.isPresent() && snapSyncState.hasPivotBlockHeader()) {
       existingNodeCounter.inc();
       request.setData(existingData.get());
       request.setRequiresPersisting(false);
+      request.setRootHash(snapSyncState.getPivotBlockHeader().get().getStateRoot());
       final WorldStateStorage.Updater updater = worldStateStorage.updater();
-      request.persist(worldStateStorage, updater, downloadState);
+      request.persist(worldStateStorage, updater, downloadState, snapSyncState);
       updater.commit();
 
       completedTasks.put(task);

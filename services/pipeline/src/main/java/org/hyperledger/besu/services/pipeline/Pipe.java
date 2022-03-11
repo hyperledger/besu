@@ -46,10 +46,10 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   private final AtomicBoolean aborted = new AtomicBoolean();
 
   public Pipe(
-      final int capacity,
-      final Counter inputCounter,
-      final Counter outputCounter,
-      final Counter abortedItemCounter) {
+          final int capacity,
+          final Counter inputCounter,
+          final Counter outputCounter,
+          final Counter abortedItemCounter) {
     queue = new ArrayBlockingQueue<>(capacity);
     this.inputCounter = inputCounter;
     this.outputCounter = outputCounter;

@@ -56,6 +56,8 @@ public class SynchronizerConfiguration {
   private final int worldStateMaxRequestsWithoutProgress;
   private final int worldStateTaskCacheSize;
 
+  // Snap sync config
+
   // Block propagation config
   private final Range<Long> blockPropagationRange;
 

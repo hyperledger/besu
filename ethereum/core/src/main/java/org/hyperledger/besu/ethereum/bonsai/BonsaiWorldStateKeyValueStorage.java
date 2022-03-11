@@ -82,13 +82,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash, final boolean lazyMode) {
-    Optional<Bytes> response = Optional.empty();
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in accountStorage to accelerate the next time we
       // want to read it so no need to check the trie (lazy mode)
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-
       if (worldStateRootHash.isPresent()) {
         response =
             new StoredMerklePatriciaTrie<>(
@@ -118,7 +117,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap).filter(bytes -> Hash.hash(bytes).equals(nodeHash));
     }
   }
 
@@ -168,7 +167,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   public Optional<Bytes> getStorageValueBySlotHash(
       final Hash accountHash, final Hash slotHash, final boolean lazyMode) {
-    Optional<Bytes> response = Optional.empty();
+    Optional<Bytes> response =
+        storageStorage
+            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
+            .map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in storageStorage to accelerate the next time we
@@ -179,6 +181,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         final StateTrieAccountValue accountValue =
             StateTrieAccountValue.readFrom(
                 org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+
+        System.out.println("read account hash "+accountHash);
         response =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
