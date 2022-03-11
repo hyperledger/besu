@@ -701,7 +701,7 @@ public class RunnerBuilder {
     Optional<WebSocketService> webSocketService = Optional.empty();
     Optional<WebSocketService> engineWebSocketService = Optional.empty();
     if (webSocketConfiguration.isEnabled()) {
-      final Map<String, JsonRpcMethod> webSocketsJsonRpcMethods =
+      final Map<String, JsonRpcMethod> nonEngineMethods =
           jsonRpcMethods(
               protocolSchedule,
               context,
@@ -713,7 +713,9 @@ public class RunnerBuilder {
               miningCoordinator,
               metricsSystem,
               supportedCapabilities,
-              webSocketConfiguration.getRpcApis(),
+              webSocketConfiguration.getRpcApis().stream()
+                  .filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine"))
+                  .collect(Collectors.toList()),
               filterManager,
               accountLocalConfigPermissioningController,
               nodeLocalConfigPermissioningController,
@@ -746,7 +748,7 @@ public class RunnerBuilder {
                   vertx,
                   webSocketConfiguration,
                   subscriptionManager,
-                  webSocketsJsonRpcMethods,
+                  nonEngineMethods,
                   privacyParameters,
                   protocolSchedule,
                   blockchainQueries,
