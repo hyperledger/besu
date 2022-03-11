@@ -28,7 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchange
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.slf4j.Logger;
@@ -37,10 +39,16 @@ import org.slf4j.LoggerFactory;
 public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
+  private final Vertx timerVertx;
+  private static final long QOS_TIMEOUT = 120000L;
+  private static final AtomicLong qosTimerId = new AtomicLong();
+  static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
 
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx, final ProtocolContext protocolContext) {
     super(vertx, protocolContext);
+    this.timerVertx = vertx;
+    resetQosHandler(QOS_TIMEOUT, qosHandler(QOS_TIMEOUT));
   }
 
   @Override
@@ -50,6 +58,9 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    // update our QoS "last call time"
+    qosLastCall.set(System.currentTimeMillis());
+
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(
             0, EngineExchangeTransitionConfigurationParameter.class);
@@ -101,5 +112,32 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       final Object requestId,
       final EngineExchangeTransitionConfigurationResult transitionConfiguration) {
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
+  }
+
+  // Handler is a member func in order to refer to our vertx instance, qosTimeout is a parameter for
+  // testing
+  Handler<Long> qosHandler(final long qosTimeout) {
+    return z -> {
+      if (getLastCallMillis() + qosTimeout < System.currentTimeMillis()) {
+        logQosFailure(qosTimeout);
+      }
+      resetQosHandler(qosTimeout, qosHandler(qosTimeout));
+    };
+  }
+
+  void resetQosHandler(final long qosTimeout, final Handler<Long> qosHandler) {
+    Optional.ofNullable(qosTimerId.get()).ifPresent(timerVertx::cancelTimer);
+    qosTimerId.set(timerVertx.setTimer(qosTimeout, qosHandler));
+  }
+
+  void logQosFailure(final long qosTimeout) {
+    LOG.warn(
+        "engine_exchangeTransitionConfiguration has not been called in {} milliseconds, "
+            + "consensus client may not be connected",
+        qosTimeout);
+  }
+
+  long getLastCallMillis() {
+    return Optional.ofNullable(qosLastCall.get()).orElse(0L);
   }
 }

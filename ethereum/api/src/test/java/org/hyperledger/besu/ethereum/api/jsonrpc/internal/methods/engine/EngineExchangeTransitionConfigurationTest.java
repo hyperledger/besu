@@ -15,6 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -44,22 +50,23 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.exceptions.base.MockitoAssertionError;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(VertxUnitRunner.class)
 public class EngineExchangeTransitionConfigurationTest {
   private EngineExchangeTransitionConfiguration method;
   private static final Vertx vertx = Vertx.vertx();
-
-  @Mock private ProtocolContext protocolContext;
-  @Mock private MergeContext mergeContext;
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
+  private final MergeContext mergeContext = mock(MergeContext.class);
 
   @Before
   public void setUp() {
@@ -164,6 +171,93 @@ public class EngineExchangeTransitionConfigurationTest {
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
     assertThat(res.get("terminalTotalDifficulty"))
         .isEqualTo("0x0000000000000000000000000000000000000000000000000000000000000000");
+  }
+
+  @Test
+  public void shouldWarnWhenExchangeConfigNotCalledWithinTimeout(final TestContext ctx) {
+    final long QOS_TIMEOUT = 75L;
+    final Async async = ctx.async();
+    final var spyMethod = spy(method);
+    spyMethod.resetQosHandler(QOS_TIMEOUT, spyMethod.qosHandler(QOS_TIMEOUT));
+
+    vertx.setTimer(
+        100L,
+        z -> {
+          // should call once to set qos, then a second time once timeout has happened, one
+          // logQosFailure
+          try {
+            verify(spyMethod, times(2)).qosHandler(QOS_TIMEOUT);
+            verify(spyMethod, times(2)).resetQosHandler(anyLong(), any());
+            verify(spyMethod, times(1)).logQosFailure(QOS_TIMEOUT);
+          } catch (Exception ex) {
+            ctx.fail(ex);
+          }
+          async.complete();
+        });
+  }
+
+  @Test
+  public void shouldNotWarnWhenTimerExecutesBeforeTimeout(final TestContext ctx) {
+    final long QOS_TIMEOUT = 200L;
+    final Async async = ctx.async();
+    final var spyMethod = spy(method);
+    spyMethod.resetQosHandler(QOS_TIMEOUT, spyMethod.qosHandler(QOS_TIMEOUT));
+
+    vertx.setTimer(
+        50L,
+        z -> {
+          // should call qosHandler on resetQosHandler once on setup, no logQosFailure within 50
+          // milliseconds
+          try {
+            verify(spyMethod, times(1)).qosHandler(anyLong());
+            verify(spyMethod, times(1)).resetQosHandler(anyLong(), any());
+            verify(spyMethod, times(0)).logQosFailure(QOS_TIMEOUT);
+          } catch (MockitoAssertionError ex) {
+            ctx.fail(ex);
+          }
+          async.complete();
+        });
+  }
+
+  @Test
+  public void shouldNotWarnWhenExchangeConfigurationCalledWithinTimeout(final TestContext ctx) {
+    final long QOS_TIMEOUT = 75L;
+    final Async async = ctx.async();
+    final var spyMethod = spy(method);
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
+    spyMethod.resetQosHandler(QOS_TIMEOUT, spyMethod.qosHandler(QOS_TIMEOUT));
+
+    // call exchangeTransitionConfiguration 35 milliseconds hence to reset our QoS timer
+    vertx.setTimer(
+        35L,
+        z ->
+            spyMethod.syncResponse(
+                new JsonRpcRequestContext(
+                    new JsonRpcRequest(
+                        "2.0",
+                        RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName(),
+                        new Object[] {
+                          new EngineExchangeTransitionConfigurationParameter(
+                              "24",
+                              Hash.fromHexStringLenient("0x01").toHexString(),
+                              new UnsignedLongParameter(0))
+                        }))));
+
+    vertx.setTimer(
+        100L,
+        z -> {
+          // should call resetQos and qosHandler once to setup, then a second time once timeout has
+          // happened, no log
+          try {
+            verify(spyMethod, times(2)).qosHandler(QOS_TIMEOUT);
+            verify(spyMethod, times(2)).resetQosHandler(anyLong(), any());
+            verify(spyMethod, times(0)).logQosFailure(QOS_TIMEOUT);
+          } catch (MockitoAssertionError ex) {
+            ctx.fail(ex);
+          }
+          async.complete();
+        });
   }
 
   private JsonRpcResponse resp(final EngineExchangeTransitionConfigurationParameter param) {
