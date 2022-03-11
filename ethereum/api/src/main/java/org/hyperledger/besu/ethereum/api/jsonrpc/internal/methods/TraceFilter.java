@@ -63,6 +63,7 @@ public class TraceFilter extends TraceBlock {
 
     final long fromBlock = resolveBlockNumber(filterParameter.getFromBlock());
     final long toBlock = resolveBlockNumber(filterParameter.getToBlock());
+    LOG.trace("Received RPC rpcName={} fromBlock={} toBlock={}", getName(), fromBlock, toBlock);
 
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNodeWrapper resultArrayNode =

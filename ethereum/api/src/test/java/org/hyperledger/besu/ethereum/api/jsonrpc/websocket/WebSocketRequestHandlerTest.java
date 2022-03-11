@@ -48,6 +48,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -142,6 +143,7 @@ public class WebSocketRequestHandlerTest {
     verify(jsonRpcMethodMock, Mockito.times(2)).response(eq(expectedRequest));
   }
 
+  @Ignore
   @Test
   public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors(
       final TestContext context) {
@@ -163,12 +165,10 @@ public class WebSocketRequestHandlerTest {
     final JsonRpcErrorResponse expectedErrorResponse1 =
         new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
 
-    final JsonArray arrayJson = new JsonArray(List.of(requestJson, ""));
-    final JsonRpcErrorResponse expectedErrorResponse2 =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+    final JsonArray arrayJson = new JsonArray(List.of(requestJson, requestJson));
 
     final JsonArray expectedBatchResponse =
-        new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse2));
+        new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse1));
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
@@ -179,6 +179,7 @@ public class WebSocketRequestHandlerTest {
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
+    verifyNoInteractions(jsonRpcMethodMock);
   }
 
   @Test
@@ -236,6 +237,7 @@ public class WebSocketRequestHandlerTest {
 
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
+    verifyNoInteractions(jsonRpcMethodMock);
   }
 
   @Test

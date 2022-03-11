@@ -27,14 +27,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchangeTransitionConfigurationResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -76,15 +75,21 @@ public class EngineExchangeTransitionConfigurationTest {
   }
 
   @Test
-  public void shouldReturnInvalidParamsOnTerminalBlockNumberNotZero() {
+  public void shouldNotReturnInvalidParamsOnTerminalBlockNumberNotZero() {
+    var mockBlockHeader =
+        new BlockHeaderTestFixture().difficulty(Difficulty.of(1339L)).number(420).buildHeader();
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(mockBlockHeader));
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
+
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
                 "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(1L)));
 
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    JsonRpcErrorResponse res = ((JsonRpcErrorResponse) response);
-    assertThat(res.getError()).isEqualTo(JsonRpcError.INVALID_PARAMS);
+    var result = fromSuccessResp(response);
+    assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
+    assertThat(result.getTerminalBlockHash()).isEqualTo(mockBlockHeader.getHash());
+    assertThat(result.getTerminalBlockNumber()).isEqualTo(mockBlockHeader.getNumber());
   }
 
   @Test
