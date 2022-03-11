@@ -40,7 +40,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
   private final Vertx timerVertx;
-  private static final AtomicLong qosTimerId = new AtomicLong();
+  private static final AtomicLong qosTimerId = new AtomicLong(Long.MAX_VALUE);
   private static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
   static final long QOS_TIMEOUT_MILLIS = 120000L;
 
@@ -126,7 +126,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   }
 
   void resetQosHandler(final long qosTimeout, final Handler<Long> qosHandler) {
-    Optional.ofNullable(qosTimerId.get()).ifPresent(timerVertx::cancelTimer);
+    timerVertx.cancelTimer(qosTimerId.get());
     qosLastCall.set(System.currentTimeMillis());
     qosTimerId.set(timerVertx.setTimer(qosTimeout, qosHandler));
   }
@@ -136,6 +136,6 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   }
 
   long getLastCallMillis() {
-    return Optional.ofNullable(qosLastCall.get()).orElse(0L);
+    return qosLastCall.get();
   }
 }
