@@ -35,6 +35,7 @@ public class FullSyncDownloader {
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolContext protocolContext;
   private final SyncState syncState;
+  private final SyncTerminationCondition terminationCondition;
 
   public FullSyncDownloader(
       final SynchronizerConfiguration syncConfig,
@@ -47,6 +48,7 @@ public class FullSyncDownloader {
     this.syncConfig = syncConfig;
     this.protocolContext = protocolContext;
     this.syncState = syncState;
+    this.terminationCondition = terminationCondition;
 
     this.chainDownloader =
         FullSyncChainDownloader.create(
@@ -61,7 +63,12 @@ public class FullSyncDownloader {
 
   public CompletableFuture<Void> start() {
     LOG.info("Starting full sync.");
-    return chainDownloader.start();
+    return chainDownloader.start().thenApply(unused -> {
+      if (terminationCondition.shouldStopDownload()){
+        syncState.setReachedTerminalDifficulty(true);
+      }
+      return null;
+    });
   }
 
   public void stop() {

@@ -119,7 +119,7 @@ public class BackwardsSyncContextTest {
             });
 
     context =
-        spy(new BackwardsSyncContext(protocolContext, protocolSchedule, metricsSystem, ethContext));
+        spy(new BackwardsSyncContext(protocolContext, protocolSchedule, metricsSystem, ethContext, syncState));
   }
 
   @Test

@@ -73,7 +73,6 @@ public class BackwardSyncLookupService {
           f.thenApply(CompletableFuture::completedFuture)
               .exceptionally(
                   ex -> {
-                    LOG.error("Failed to fetch blocks, because: {}", ex.getMessage());
                     synchronized (this) {
                       if (!results.isEmpty()) {
                         List<Block> copy = new ArrayList<>(results);
@@ -81,7 +80,7 @@ public class BackwardSyncLookupService {
                         return CompletableFuture.completedFuture(copy);
                       }
                     }
-                    LOG.info("Waiting for few seconds ...");
+                    LOG.error("Failed to fetch blocks because {}. Waiting for few seconds ...", ex.getMessage());
                     wait(5000);
                     return tryToFindBlocks();
                   })

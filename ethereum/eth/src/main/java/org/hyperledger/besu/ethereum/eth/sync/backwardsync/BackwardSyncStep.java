@@ -38,16 +38,30 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @Override
   public CompletableFuture<Void> executeOneStep() {
-    return CompletableFuture.supplyAsync(this::earliestUnprocessedHash)
+    return CompletableFuture.runAsync(this::waitForTTD)
+        .thenApply(this::earliestUnprocessedHash)
         .thenCompose(this::requestHeader)
         .thenApply(this::saveHeader)
         .thenApply(this::possibleMerge)
         .thenCompose(this::possiblyMoreBackwardSteps);
   }
 
+  private void waitForTTD() {
+    while(!context.isOnTTD()){
+      LOG.info("Did not reach TTD yet, falling asleep...");
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new BackwardSyncException("Stopping the Backward sync...");
+      }
+    }
+  }
+
   @Override
   public CompletableFuture<Void> executeBatchStep() {
-    return CompletableFuture.supplyAsync(this::earliestUnprocessedHash)
+    return CompletableFuture.runAsync(this::waitForTTD)
+        .thenApply(this::earliestUnprocessedHash)
         .thenCompose(this::requestHeaders)
         .thenApply(this::saveHeaders)
         .thenApply(this::possibleMerge)
@@ -55,7 +69,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
   }
 
   @VisibleForTesting
-  protected Hash earliestUnprocessedHash() {
+  protected Hash earliestUnprocessedHash(final Void unused) {
     BlockHeader firstHeader =
         backwardChain
             .getFirstAncestorHeader()

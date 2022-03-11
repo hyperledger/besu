@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -44,6 +45,7 @@ public class BackwardsSyncContext {
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
+  private final SyncState syncState;
 
   private final Map<Long, BackwardChain> backwardChainMap = new ConcurrentHashMap<>();
   private final AtomicReference<BackwardChain> currentChain = new AtomicReference<>();
@@ -53,15 +55,16 @@ public class BackwardsSyncContext {
   private static final int MAX_RETRIES = 10;
 
   public BackwardsSyncContext(
-      final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
-      final EthContext ethContext) {
+          final ProtocolContext protocolContext,
+          final ProtocolSchedule protocolSchedule,
+          final MetricsSystem metricsSystem,
+          final EthContext ethContext, final SyncState syncState) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.syncState = syncState;
     this.service = new BackwardSyncLookupService(protocolSchedule, ethContext, metricsSystem);
   }
 
@@ -107,7 +110,7 @@ public class BackwardsSyncContext {
       final BackwardChain newChain = new BackwardChain(newPivot);
       this.currentChain.set(newChain);
       backwardChainMap.put(newPivot.getHeader().getNumber(), newChain);
-      currentBackwardSyncFuture.set(prepareBackwardSyncFuture(newChain));
+      currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry(newChain));
       return currentBackwardSyncFuture.get();
     }
     if (newPivot.getHeader().getParentHash().equals(currentChain.get().getPivot().getHash())) {
@@ -154,17 +157,16 @@ public class BackwardsSyncContext {
                   } else {
                     LOG.debug("The previous backward sync finished without and exception");
                   }
+
                   return newBackwardChain;
                 })
-            .thenCompose(this::prepareBackwardSyncFuture));
+            .thenCompose(this::prepareBackwardSyncFutureWithRetry));
     return currentBackwardSyncFuture.get();
   }
 
-  private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
-    CompletableFuture<Void> f =
-        new BackwardSyncStep(this, backwardChain)
-            .executeAsync(null)
-            .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
+  private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(
+      final BackwardChain backwardChain) {
+    CompletableFuture<Void> f = prepareBackwardSyncFuture(backwardChain);
     for (int i = 0; i < MAX_RETRIES; i++) {
       f =
           f.thenApply(CompletableFuture::completedFuture)
@@ -187,6 +189,12 @@ public class BackwardsSyncContext {
               .thenCompose(Function.identity());
     }
     return f.thenCompose(unused -> cleanup(backwardChain));
+  }
+
+  private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
+    return new BackwardSyncStep(this, backwardChain)
+        .executeAsync(null)
+        .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
   }
 
   private CompletionStage<Void> cleanup(final BackwardChain chain) {
@@ -226,5 +234,9 @@ public class BackwardsSyncContext {
 
   public void putCurrentChainToHeight(final long height, final BackwardChain backwardChain) {
     backwardChainMap.put(height, backwardChain);
+  }
+
+  public boolean isOnTTD() {
+    return syncState.hasReachedTerminalDifficulty().orElse(false);
   }
 }

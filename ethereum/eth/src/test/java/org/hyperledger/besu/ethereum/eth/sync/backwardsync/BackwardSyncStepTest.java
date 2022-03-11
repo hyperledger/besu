@@ -112,7 +112,7 @@ public class BackwardSyncStepTest {
     BackwardSyncStep step =
         new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT));
 
-    final Hash hash = step.earliestUnprocessedHash();
+    final Hash hash = step.earliestUnprocessedHash(null);
 
     assertThat(hash).isEqualTo(getBlockByNumber(REMOTE_HEIGHT - 4).getHeader().getParentHash());
   }
@@ -122,7 +122,7 @@ public class BackwardSyncStepTest {
     final BackwardChain chain = createBackwardChain(REMOTE_HEIGHT);
     chain.dropFirstHeader();
     BackwardSyncStep step = new BackwardSyncStep(context, chain);
-    assertThatThrownBy(step::earliestUnprocessedHash)
+    assertThatThrownBy(()->step.earliestUnprocessedHash(null))
         .isInstanceOf(BackwardSyncException.class)
         .hasMessageContaining("No unprocessed hashes during backward sync");
   }
