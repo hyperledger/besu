@@ -37,6 +37,9 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
+  annotationProcessor "org.immutables:value"
+  implementation "org.immutables:value-annotations"
+
   testImplementation project(':testutil')
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
 
