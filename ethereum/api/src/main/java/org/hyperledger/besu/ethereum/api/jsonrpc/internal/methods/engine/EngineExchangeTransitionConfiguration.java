@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
@@ -26,11 +26,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchangeTransitionConfigurationResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.QosTimer;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.slf4j.Logger;
@@ -39,27 +39,32 @@ import org.slf4j.LoggerFactory;
 public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
-  private final Vertx timerVertx;
-  private static final AtomicLong qosTimerId = new AtomicLong(Long.MAX_VALUE);
-  private static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
-  static final long QOS_TIMEOUT_MILLIS = 120000L;
+
+  static final long QOS_TIMEOUT_MILLIS = 10000L; // TODO set back to 120k
+
+  private static final AtomicReference<QosTimer> qosTimerRef =
+      new AtomicReference<>(
+          new QosTimer(
+              QOS_TIMEOUT_MILLIS,
+              (lastCall) ->
+                  LOG.warn(
+                      "not called in {} seconds, consensus client may not be connected",
+                      QOS_TIMEOUT_MILLIS / 1000L)));
 
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx, final ProtocolContext protocolContext) {
     super(vertx, protocolContext);
-    this.timerVertx = vertx;
-    resetQosHandler(QOS_TIMEOUT_MILLIS, qosHandler(QOS_TIMEOUT_MILLIS));
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName();
+    return ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName();
   }
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     // update our QoS "last call time"
-    resetQosHandler(QOS_TIMEOUT_MILLIS, qosHandler(QOS_TIMEOUT_MILLIS));
+    getQosTimer().resetTimer();
 
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(
@@ -114,28 +119,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
   }
 
-  // Handler is a member func in order to refer to our vertx instance,
-  // qosTimeout is a parameter for testing
-  Handler<Long> qosHandler(final long qosTimeout) {
-    return z -> {
-      if (getLastCallMillis() + qosTimeout < System.currentTimeMillis()) {
-        logQosFailure(qosTimeout);
-      }
-      resetQosHandler(qosTimeout, qosHandler(qosTimeout));
-    };
-  }
-
-  void resetQosHandler(final long qosTimeout, final Handler<Long> qosHandler) {
-    timerVertx.cancelTimer(qosTimerId.get());
-    qosLastCall.set(System.currentTimeMillis());
-    qosTimerId.set(timerVertx.setTimer(qosTimeout, qosHandler));
-  }
-
-  void logQosFailure(final long qosTimeout) {
-    LOG.warn("not called in {} seconds, consensus client may not be connected", qosTimeout / 1000L);
-  }
-
-  long getLastCallMillis() {
-    return qosLastCall.get();
+  // QosTimer accessor for testing considerations
+  QosTimer getQosTimer() {
+    return qosTimerRef.get();
   }
 }
