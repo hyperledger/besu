@@ -40,8 +40,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
   private final Vertx timerVertx;
-  private static final long QOS_TIMEOUT = 120000L;
   private static final AtomicLong qosTimerId = new AtomicLong();
+  static final long QOS_TIMEOUT = 120000L;
   static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
 
   public EngineExchangeTransitionConfiguration(
@@ -59,7 +59,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     // update our QoS "last call time"
-    qosLastCall.set(System.currentTimeMillis());
+    resetQosHandler(QOS_TIMEOUT, qosHandler(QOS_TIMEOUT));
 
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(
@@ -127,14 +127,12 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   void resetQosHandler(final long qosTimeout, final Handler<Long> qosHandler) {
     Optional.ofNullable(qosTimerId.get()).ifPresent(timerVertx::cancelTimer);
+    qosLastCall.set(System.currentTimeMillis());
     qosTimerId.set(timerVertx.setTimer(qosTimeout, qosHandler));
   }
 
   void logQosFailure(final long qosTimeout) {
-    LOG.warn(
-        "engine_exchangeTransitionConfiguration has not been called in {} milliseconds, "
-            + "consensus client may not be connected",
-        qosTimeout);
+    LOG.warn("not called in {} seconds, consensus client may not be connected", qosTimeout / 1000L);
   }
 
   long getLastCallMillis() {

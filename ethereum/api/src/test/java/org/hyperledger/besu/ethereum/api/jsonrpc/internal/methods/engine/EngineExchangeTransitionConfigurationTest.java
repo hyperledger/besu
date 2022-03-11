@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration.QOS_TIMEOUT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -175,10 +176,10 @@ public class EngineExchangeTransitionConfigurationTest {
 
   @Test
   public void shouldWarnWhenExchangeConfigNotCalledWithinTimeout(final TestContext ctx) {
-    final long QOS_TIMEOUT = 75L;
+    final long TEST_QOS_TIMEOUT = 75L;
     final Async async = ctx.async();
     final var spyMethod = spy(method);
-    spyMethod.resetQosHandler(QOS_TIMEOUT, spyMethod.qosHandler(QOS_TIMEOUT));
+    spyMethod.resetQosHandler(TEST_QOS_TIMEOUT, spyMethod.qosHandler(TEST_QOS_TIMEOUT));
 
     vertx.setTimer(
         100L,
@@ -186,9 +187,9 @@ public class EngineExchangeTransitionConfigurationTest {
           // should call once to set qos, then a second time once timeout has happened, one
           // logQosFailure
           try {
-            verify(spyMethod, times(2)).qosHandler(QOS_TIMEOUT);
+            verify(spyMethod, times(2)).qosHandler(TEST_QOS_TIMEOUT);
             verify(spyMethod, times(2)).resetQosHandler(anyLong(), any());
-            verify(spyMethod, times(1)).logQosFailure(QOS_TIMEOUT);
+            verify(spyMethod, times(1)).logQosFailure(TEST_QOS_TIMEOUT);
           } catch (Exception ex) {
             ctx.fail(ex);
           }
@@ -198,10 +199,10 @@ public class EngineExchangeTransitionConfigurationTest {
 
   @Test
   public void shouldNotWarnWhenTimerExecutesBeforeTimeout(final TestContext ctx) {
-    final long QOS_TIMEOUT = 200L;
+    final long TEST_QOS_TIMEOUT = 200L;
     final Async async = ctx.async();
     final var spyMethod = spy(method);
-    spyMethod.resetQosHandler(QOS_TIMEOUT, spyMethod.qosHandler(QOS_TIMEOUT));
+    spyMethod.resetQosHandler(TEST_QOS_TIMEOUT, spyMethod.qosHandler(TEST_QOS_TIMEOUT));
 
     vertx.setTimer(
         50L,
@@ -211,7 +212,7 @@ public class EngineExchangeTransitionConfigurationTest {
           try {
             verify(spyMethod, times(1)).qosHandler(anyLong());
             verify(spyMethod, times(1)).resetQosHandler(anyLong(), any());
-            verify(spyMethod, times(0)).logQosFailure(QOS_TIMEOUT);
+            verify(spyMethod, times(0)).logQosFailure(TEST_QOS_TIMEOUT);
           } catch (MockitoAssertionError ex) {
             ctx.fail(ex);
           }
@@ -221,16 +222,16 @@ public class EngineExchangeTransitionConfigurationTest {
 
   @Test
   public void shouldNotWarnWhenExchangeConfigurationCalledWithinTimeout(final TestContext ctx) {
-    final long QOS_TIMEOUT = 75L;
+    final long TEST_QOS_TIMEOUT = 75L;
     final Async async = ctx.async();
     final var spyMethod = spy(method);
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
-    spyMethod.resetQosHandler(QOS_TIMEOUT, spyMethod.qosHandler(QOS_TIMEOUT));
+    spyMethod.resetQosHandler(TEST_QOS_TIMEOUT, spyMethod.qosHandler(TEST_QOS_TIMEOUT));
 
-    // call exchangeTransitionConfiguration 35 milliseconds hence to reset our QoS timer
+    // call exchangeTransitionConfiguration 50 milliseconds hence to reset our QoS timer
     vertx.setTimer(
-        35L,
+        50L,
         z ->
             spyMethod.syncResponse(
                 new JsonRpcRequestContext(
@@ -247,12 +248,15 @@ public class EngineExchangeTransitionConfigurationTest {
     vertx.setTimer(
         100L,
         z -> {
-          // should call resetQos and qosHandler once to setup, then a second time once timeout has
-          // happened, no log
           try {
-            verify(spyMethod, times(2)).qosHandler(QOS_TIMEOUT);
+            // should call qosHandler once with test QOS value to setup
+            verify(spyMethod, times(1)).qosHandler(TEST_QOS_TIMEOUT);
+            // should call qosHandler with method's static QOS value when resetting qos for request
+            verify(spyMethod, times(1)).qosHandler(QOS_TIMEOUT);
+            // should call resetQos twice, we can't discriminate since the lambda is unique
             verify(spyMethod, times(2)).resetQosHandler(anyLong(), any());
-            verify(spyMethod, times(0)).logQosFailure(QOS_TIMEOUT);
+            // should not log
+            verify(spyMethod, times(0)).logQosFailure(anyLong());
           } catch (MockitoAssertionError ex) {
             ctx.fail(ex);
           }
