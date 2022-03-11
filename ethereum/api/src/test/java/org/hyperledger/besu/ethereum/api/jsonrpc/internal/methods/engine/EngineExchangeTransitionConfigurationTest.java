@@ -184,11 +184,11 @@ public class EngineExchangeTransitionConfigurationTest {
     vertx.setTimer(
         100L,
         z -> {
-          // should call once to set qos, then a second time once timeout has happened, one
-          // logQosFailure
+          // should call 1x to set qos, then a second time once timeout has happened
           try {
             verify(spyMethod, times(2)).qosHandler(TEST_QOS_TIMEOUT);
             verify(spyMethod, times(2)).resetQosHandler(anyLong(), any());
+            // 1x logQosFailure at timeout threshold
             verify(spyMethod, times(1)).logQosFailure(TEST_QOS_TIMEOUT);
           } catch (Exception ex) {
             ctx.fail(ex);
@@ -207,11 +207,12 @@ public class EngineExchangeTransitionConfigurationTest {
     vertx.setTimer(
         50L,
         z -> {
-          // should call qosHandler on resetQosHandler once on setup, no logQosFailure within 50
-          // milliseconds
           try {
+            // should call qosHandler once on setup
             verify(spyMethod, times(1)).qosHandler(anyLong());
+            // should call resetQosHandler once on setup
             verify(spyMethod, times(1)).resetQosHandler(anyLong(), any());
+            // no logQosFailure within 50 millis
             verify(spyMethod, times(0)).logQosFailure(TEST_QOS_TIMEOUT);
           } catch (MockitoAssertionError ex) {
             ctx.fail(ex);

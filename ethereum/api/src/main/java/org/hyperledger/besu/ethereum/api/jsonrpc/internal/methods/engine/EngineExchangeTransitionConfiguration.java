@@ -41,8 +41,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
   private final Vertx timerVertx;
   private static final AtomicLong qosTimerId = new AtomicLong();
+  private static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
   static final long QOS_TIMEOUT = 120000L;
-  static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
 
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx, final ProtocolContext protocolContext) {
@@ -114,8 +114,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
   }
 
-  // Handler is a member func in order to refer to our vertx instance, qosTimeout is a parameter for
-  // testing
+  // Handler is a member func in order to refer to our vertx instance,
+  // qosTimeout is a parameter for testing
   Handler<Long> qosHandler(final long qosTimeout) {
     return z -> {
       if (getLastCallMillis() + qosTimeout < System.currentTimeMillis()) {
