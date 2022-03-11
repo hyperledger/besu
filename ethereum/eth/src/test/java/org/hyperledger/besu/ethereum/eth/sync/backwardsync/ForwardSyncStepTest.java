@@ -177,12 +177,22 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldCreateAnotherStepWhenThereIsWorkToBeDone() {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
+    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 10);
     ForwardSyncStep step = spy(new ForwardSyncStep(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
 
     verify(step).executeAsync(any());
+  }
+
+  @Test
+  public void shouldCreateBackwardStepWhenParentOfWorkIsNotImportedYet() {
+    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
+    ForwardSyncStep step = spy(new ForwardSyncStep(context, backwardChain));
+
+    step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
+
+    verify(step).executeBackwardAsync(any());
   }
 
   @Test

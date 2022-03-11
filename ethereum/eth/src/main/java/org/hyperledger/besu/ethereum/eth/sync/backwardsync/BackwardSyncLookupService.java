@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
@@ -41,7 +39,6 @@ import org.slf4j.Logger;
 
 @ThreadSafe
 public class BackwardSyncLookupService {
-  public static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
   private static final Logger LOG = getLogger(BackwardSyncLookupService.class);
   private static final int MAX_RETRIES = 100;
 
@@ -68,7 +65,7 @@ public class BackwardSyncLookupService {
   public CompletableFuture<List<Block>> lookup(final Hash newBlockhash) {
     synchronized (this) {
       hashes.add(newBlockhash);
-      if (running) { //
+      if (running) {
         LOG.info(
             "some other future is already running and will process our hash {} when time comes...",
             newBlockhash.toHexString());
@@ -76,10 +73,10 @@ public class BackwardSyncLookupService {
       }
       running = true;
     }
-    return findBlocks();
+    return findBlocksWithRetries();
   }
 
-  private CompletableFuture<List<Block>> findBlocks() {
+  private CompletableFuture<List<Block>> findBlocksWithRetries() {
 
     CompletableFuture<List<Block>> f = tryToFindBlocks();
     for (int i = 0; i < MAX_RETRIES; i++) {
@@ -114,7 +111,7 @@ public class BackwardSyncLookupService {
         return CompletableFuture.completedFuture(blocks);
       }
     }
-    return findBlocks();
+    return findBlocksWithRetries();
   }
 
   private List<Block> rememberResults(final List<Block> blocks) {

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -73,14 +74,12 @@ public class BackwardSyncTaskTest {
   }
 
   @Test
-  public void shouldFailWhenPivotIsDifferent() {
+  public void shouldFinishImmediatellyFailWhenPivotIsDifferent()
+      throws ExecutionException, InterruptedException {
     when(context.getCurrentChain()).thenReturn(Optional.of(new BackwardChain(blocks.get(0))));
     BackwardSyncTask step = createBackwardSyncTask();
     CompletableFuture<Void> completableFuture = step.executeAsync(null);
-    assertThatThrownBy(completableFuture::get)
-        .getCause()
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("The pivot changed");
+    assertThat(completableFuture.isDone()).isTrue();
   }
 
   @Test

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -36,12 +37,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -80,11 +83,15 @@ public class BackwardsSyncContextTest {
   private MetricsSystem metricsSystem;
 
   @Mock private BlockValidator blockValidator;
+  @Mock private SyncState syncState;
+
+  @Mock private BackwardSyncLookupService backwardSyncLookupService;
 
   @Before
   public void setup() {
     when(mockProtocolSpec.getBlockValidator()).thenReturn(blockValidator);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
+    when(syncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(true));
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -121,13 +128,20 @@ public class BackwardsSyncContextTest {
     context =
         spy(
             new BackwardsSyncContext(
-                protocolContext, protocolSchedule, metricsSystem, ethContext, syncState));
+                protocolContext,
+                protocolSchedule,
+                metricsSystem,
+                ethContext,
+                syncState,
+                backwardSyncLookupService));
   }
 
   @Test
   public void shouldSyncUntilHash() throws Exception {
-    final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT).getHash());
+    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    when(backwardSyncLookupService.lookup(hash))
+        .thenReturn(CompletableFuture.completedFuture(List.of(getBlockByNumber(REMOTE_HEIGHT))));
+    final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
     respondUntilFutureIsDone(future);
 
@@ -137,13 +151,11 @@ public class BackwardsSyncContextTest {
 
   @Test
   public void shouldNotAppendWhenAlreadySyncingHash() throws Exception {
-    when(context.getCurrentChain())
-        .thenReturn(Optional.of(new BackwardChain(getBlockByNumber(REMOTE_HEIGHT))));
-
-    final CompletableFuture<Void> fut2 =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT).getHash());
+    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    when(backwardSyncLookupService.lookup(hash))
+        .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
+    final CompletableFuture<Void> fut2 = context.syncBackwardsUntil(hash);
     assertThat(fut2).isCompleted();
-    assertThat(fut2.get()).isNull();
   }
 
   @Test

@@ -32,7 +32,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,21 +51,22 @@ public class BackwardsSyncContext {
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
   private final BackwardSyncLookupService service;
-  private static final int MAX_RETRIES = 10;
+  //  private static final int MAX_RETRIES = 10;
 
   public BackwardsSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final BackwardSyncLookupService backwardSyncLookupService) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
-    this.service = new BackwardSyncLookupService(protocolSchedule, ethContext, metricsSystem);
+    this.service = backwardSyncLookupService;
   }
 
   public boolean isSyncing() {
@@ -87,7 +87,14 @@ public class BackwardsSyncContext {
 
     // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
     final CompletableFuture<Void> completableFuture =
-        service.lookup(newBlockhash).thenCompose(this::syncBackwardsUntil);
+        service
+            .lookup(newBlockhash)
+            .thenCompose(
+                blocks -> {
+                  if (blocks.isEmpty()) {
+                    return CompletableFuture.completedFuture(null);
+                  } else return this.syncBackwardsUntil(blocks);
+                });
     this.currentBackwardSyncFuture.set(completableFuture);
     return completableFuture;
   }
@@ -168,28 +175,29 @@ public class BackwardsSyncContext {
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(
       final BackwardChain backwardChain) {
     CompletableFuture<Void> f = prepareBackwardSyncFuture(backwardChain);
-    for (int i = 0; i < MAX_RETRIES; i++) {
-      f =
-          f.thenApply(CompletableFuture::completedFuture)
-              .exceptionally(
-                  throwable -> {
-                    if (!(throwable instanceof BackwardSyncException)) {
-                      LOG.warn(
-                          "There was an uncaught exception raised during the backward sync, this represent an unexpected scenario. Copy paste the exception into a bug on github",
-                          throwable);
-                      throw new BackwardSyncException(throwable, true);
-                    }
-                    if (((BackwardSyncException) throwable).shouldRestart()) {
-                      LOG.warn(
-                          "A backward sync task failed, restarting... Reason: {}",
-                          throwable.getMessage());
-                      return prepareBackwardSyncFuture(backwardChain);
-                    }
-                    throw (BackwardSyncException) throwable;
-                  })
-              .thenCompose(Function.identity());
-    }
-    return f.thenCompose(unused -> cleanup(backwardChain));
+    //    for (int i = 0; i < MAX_RETRIES; i++) {
+    //      f =
+    //          f.thenApply(CompletableFuture::completedFuture)
+    //              .exceptionally(
+    //                  throwable -> {
+    //                    if (!(throwable instanceof BackwardSyncException)) {
+    //                      LOG.warn(
+    //                          "There was an uncaught exception raised during the backward sync,
+    // this represent an unexpected scenario. Copy paste the exception into a bug on github",
+    //                          throwable);
+    //                      throw new BackwardSyncException(throwable, true);
+    //                    }
+    //                    if (((BackwardSyncException) throwable).shouldRestart()) {
+    //                      LOG.warn(
+    //                          "A backward sync task failed, restarting... Reason: {}",
+    //                          throwable.getMessage());
+    //                      return prepareBackwardSyncFuture(backwardChain);
+    //                    }
+    //                    throw (BackwardSyncException) throwable;
+    //                  })
+    //              .thenCompose(Function.identity());
+    //    }
+    return f.thenApply(unused -> cleanup(backwardChain));
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
@@ -198,7 +206,7 @@ public class BackwardsSyncContext {
         .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
   }
 
-  private CompletionStage<Void> cleanup(final BackwardChain chain) {
+  private Void cleanup(final BackwardChain chain) {
     if (currentChain.compareAndSet(chain, null)) {
       this.currentBackwardSyncFuture.set(null);
     }

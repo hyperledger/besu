@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -235,7 +236,11 @@ public class ForwardSyncStep extends BackwardSyncTask {
             + "This should not normally happen and indicates a wrong behaviour somewhere...",
         () -> firstUnsynced.getHash().toHexString(),
         () -> firstUnsynced.getParentHash().toHexString());
-    return completableFuture.thenCompose(
-        new BackwardSyncStep(context, backwardChain)::executeAsync);
+    return completableFuture.thenCompose(this::executeBackwardAsync);
+  }
+
+  @VisibleForTesting
+  protected CompletionStage<Void> executeBackwardAsync(final Void unused) {
+    return new BackwardSyncStep(context, backwardChain).executeAsync(unused);
   }
 }

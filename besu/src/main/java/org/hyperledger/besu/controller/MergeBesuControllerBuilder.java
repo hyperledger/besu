@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncLookupService;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -67,7 +68,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             protocolSchedule,
             metricsSystem,
             ethProtocolManager.ethContext(),
-            syncState));
+            syncState,
+            new BackwardSyncLookupService(
+                protocolSchedule, ethProtocolManager.ethContext(), metricsSystem)));
   }
 
   @Override

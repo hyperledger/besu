@@ -96,6 +96,7 @@ public class BackwardSyncStepTest {
   @Test
   public void shouldFindHeaderWhenRequested() throws Exception {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
+    when(context.isOnTTD()).thenReturn(true);
     BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
 
     final RespondingEthPeer.Responder responder =
