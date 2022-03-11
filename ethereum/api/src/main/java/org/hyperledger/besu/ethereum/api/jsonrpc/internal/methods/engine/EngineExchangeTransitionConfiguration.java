@@ -42,13 +42,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   private final Vertx timerVertx;
   private static final AtomicLong qosTimerId = new AtomicLong();
   private static final AtomicLong qosLastCall = new AtomicLong(System.currentTimeMillis());
-  static final long QOS_TIMEOUT = 120000L;
+  static final long QOS_TIMEOUT_MILLIS = 120000L;
 
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx, final ProtocolContext protocolContext) {
     super(vertx, protocolContext);
     this.timerVertx = vertx;
-    resetQosHandler(QOS_TIMEOUT, qosHandler(QOS_TIMEOUT));
+    resetQosHandler(QOS_TIMEOUT_MILLIS, qosHandler(QOS_TIMEOUT_MILLIS));
   }
 
   @Override
@@ -59,7 +59,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     // update our QoS "last call time"
-    resetQosHandler(QOS_TIMEOUT, qosHandler(QOS_TIMEOUT));
+    resetQosHandler(QOS_TIMEOUT_MILLIS, qosHandler(QOS_TIMEOUT_MILLIS));
 
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration.QOS_TIMEOUT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration.QOS_TIMEOUT_MILLIS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -253,7 +253,7 @@ public class EngineExchangeTransitionConfigurationTest {
             // should call qosHandler once with test QOS value to setup
             verify(spyMethod, times(1)).qosHandler(TEST_QOS_TIMEOUT);
             // should call qosHandler with method's static QOS value when resetting qos for request
-            verify(spyMethod, times(1)).qosHandler(QOS_TIMEOUT);
+            verify(spyMethod, times(1)).qosHandler(QOS_TIMEOUT_MILLIS);
             // should call resetQos twice, we can't discriminate since the lambda is unique
             verify(spyMethod, times(2)).resetQosHandler(anyLong(), any());
             // should not log
