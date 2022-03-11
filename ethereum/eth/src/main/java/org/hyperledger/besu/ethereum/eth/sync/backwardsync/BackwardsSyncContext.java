@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -32,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,7 @@ public class BackwardsSyncContext {
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
   private final BackwardSyncLookupService service;
+  private static final int MAX_RETRIES = 10;
 
   public BackwardsSyncContext(
       final ProtocolContext protocolContext,
@@ -160,30 +161,39 @@ public class BackwardsSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
-    infoLambda(
-        LOG,
-        "Starting Backward Sync with pivot {}",
-        () -> backwardChain.getPivot().getHash().toHexString());
-    return new BackwardSyncStep(this, backwardChain)
-        .executeAsync(null)
-        .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync)
-        .exceptionally(
-            throwable -> {
-              if (!(throwable instanceof BackwardSyncException)) {
-                LOG.warn(
-                    "There was an uncaught exception raised during the backward sync, this represent an unexpected scenario. Copy paste the exception into a bug on github",
-                    throwable);
-                throw new BackwardSyncException(throwable, true);
-              }
-              if (((BackwardSyncException) throwable).shouldRestart()) {
-                LOG.warn(
-                    "A backward sync task failed, restarting... Reason: {}",
-                    throwable.getMessage());
-                return null;
-              }
-              throw (BackwardSyncException) throwable;
-            })
-        .thenCompose(unused -> prepareBackwardSyncFuture(backwardChain));
+    CompletableFuture<Void> f =
+        new BackwardSyncStep(this, backwardChain)
+            .executeAsync(null)
+            .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
+    for (int i = 0; i < MAX_RETRIES; i++) {
+      f =
+          f.thenApply(CompletableFuture::completedFuture)
+              .exceptionally(
+                  throwable -> {
+                    if (!(throwable instanceof BackwardSyncException)) {
+                      LOG.warn(
+                          "There was an uncaught exception raised during the backward sync, this represent an unexpected scenario. Copy paste the exception into a bug on github",
+                          throwable);
+                      throw new BackwardSyncException(throwable, true);
+                    }
+                    if (((BackwardSyncException) throwable).shouldRestart()) {
+                      LOG.warn(
+                          "A backward sync task failed, restarting... Reason: {}",
+                          throwable.getMessage());
+                      return prepareBackwardSyncFuture(backwardChain);
+                    }
+                    throw (BackwardSyncException) throwable;
+                  })
+              .thenCompose(Function.identity());
+    }
+    return f.thenCompose(unused -> cleanup(backwardChain));
+  }
+
+  private CompletionStage<Void> cleanup(final BackwardChain chain) {
+    if (currentChain.compareAndSet(chain, null)) {
+      this.currentBackwardSyncFuture.set(null);
+    }
+    return null;
   }
 
   public Optional<BackwardChain> getCurrentChain() {
