@@ -47,7 +47,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
   }
 
   private void waitForTTD() {
-    while(!context.isOnTTD()){
+    while (!context.isOnTTD()) {
       LOG.info("Did not reach TTD yet, falling asleep...");
       try {
         Thread.sleep(5000);

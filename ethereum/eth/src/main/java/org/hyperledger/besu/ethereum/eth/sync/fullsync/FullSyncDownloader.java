@@ -63,12 +63,15 @@ public class FullSyncDownloader {
 
   public CompletableFuture<Void> start() {
     LOG.info("Starting full sync.");
-    return chainDownloader.start().thenApply(unused -> {
-      if (terminationCondition.shouldStopDownload()){
-        syncState.setReachedTerminalDifficulty(true);
-      }
-      return null;
-    });
+    return chainDownloader
+        .start()
+        .thenApply(
+            unused -> {
+              if (terminationCondition.shouldStopDownload()) {
+                syncState.setReachedTerminalDifficulty(true);
+              }
+              return null;
+            });
   }
 
   public void stop() {

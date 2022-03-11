@@ -122,7 +122,7 @@ public class BackwardSyncStepTest {
     final BackwardChain chain = createBackwardChain(REMOTE_HEIGHT);
     chain.dropFirstHeader();
     BackwardSyncStep step = new BackwardSyncStep(context, chain);
-    assertThatThrownBy(()->step.earliestUnprocessedHash(null))
+    assertThatThrownBy(() -> step.earliestUnprocessedHash(null))
         .isInstanceOf(BackwardSyncException.class)
         .hasMessageContaining("No unprocessed hashes during backward sync");
   }

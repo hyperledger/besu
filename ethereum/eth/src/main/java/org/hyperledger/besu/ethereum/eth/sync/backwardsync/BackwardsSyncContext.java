@@ -55,10 +55,11 @@ public class BackwardsSyncContext {
   private static final int MAX_RETRIES = 10;
 
   public BackwardsSyncContext(
-          final ProtocolContext protocolContext,
-          final ProtocolSchedule protocolSchedule,
-          final MetricsSystem metricsSystem,
-          final EthContext ethContext, final SyncState syncState) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MetricsSystem metricsSystem,
+      final EthContext ethContext,
+      final SyncState syncState) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;

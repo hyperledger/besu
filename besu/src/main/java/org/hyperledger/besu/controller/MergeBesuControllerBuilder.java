@@ -63,7 +63,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         transactionPool.getPendingTransactions(),
         miningParameters,
         new BackwardsSyncContext(
-            protocolContext, protocolSchedule, metricsSystem, ethProtocolManager.ethContext(), syncState));
+            protocolContext,
+            protocolSchedule,
+            metricsSystem,
+            ethProtocolManager.ethContext(),
+            syncState));
   }
 
   @Override
