@@ -50,8 +50,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Suppliers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(TraceReplayBlockTransactions.class);
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<StateDiffGenerator> stateDiffGenerator =
       Suppliers.memoize(StateDiffGenerator::new);
@@ -81,6 +84,12 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
       final JsonRpcRequestContext request, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
         request.getRequiredParameter(1, TraceTypeParameter.class);
+
+    LOG.trace(
+        "Received RPC rpcName={} block={} traceType={}",
+        getName(),
+        blockNumber,
+        traceTypeParameter);
 
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
