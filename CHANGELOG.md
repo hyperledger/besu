@@ -6,6 +6,7 @@
 - Execution layer (The Merge):
   - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
   - Adds JWT authentication to Engine APIs
+  - Supports kiln V2.1 spec
 - Tracing APIs 
   - new API methods: trace_rawTransaction, trace_get, trace_callMany
   - added revertReason to trace APIs including: trace_transaction, trace_get, trace_call, trace_callMany, and trace_rawTransaction
