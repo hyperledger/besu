@@ -41,6 +41,7 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
 
   testImplementation 'junit:junit'
+  testImplementation 'io.vertx:vertx-unit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-core'
 }
