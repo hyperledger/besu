@@ -40,13 +40,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
 
-  static final long QOS_TIMEOUT_MILLIS = 10000L; // TODO set back to 120k
+  static final long QOS_TIMEOUT_MILLIS = 120000L;
 
   private static final AtomicReference<QosTimer> qosTimerRef =
       new AtomicReference<>(
           new QosTimer(
               QOS_TIMEOUT_MILLIS,
-              (lastCall) ->
+              lastCall ->
                   LOG.warn(
                       "not called in {} seconds, consensus client may not be connected",
                       QOS_TIMEOUT_MILLIS / 1000L)));
