@@ -281,6 +281,99 @@ public class EngineExchangeTransitionConfigurationTest {
         });
   }
 
+  @Test
+  public void shouldWarnWhenExchangeConfigNotCalledWithinTimeout(final TestContext ctx) {
+    final long TEST_QOS_TIMEOUT = 75L;
+    final Async async = ctx.async();
+    final AtomicInteger logCounter = new AtomicInteger(0);
+    final var spyMethod = spy(method);
+    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    when(spyMethod.getQosTimer()).thenReturn(spyTimer);
+    spyTimer.resetTimer();
+
+    vertx.setTimer(
+        100L,
+        z -> {
+          try {
+            // just once on construction:
+            verify(spyTimer, times(1)).resetTimer();
+          } catch (Exception ex) {
+            ctx.fail(ex);
+          }
+          // assert one warn:
+          ctx.assertEquals(1, logCounter.get());
+          async.complete();
+        });
+  }
+
+  @Test
+  public void shouldNotWarnWhenTimerExecutesBeforeTimeout(final TestContext ctx) {
+    final long TEST_QOS_TIMEOUT = 500L;
+    final Async async = ctx.async();
+    final AtomicInteger logCounter = new AtomicInteger(0);
+    final var spyMethod = spy(method);
+    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    when(spyMethod.getQosTimer()).thenReturn(spyTimer);
+    spyTimer.resetTimer();
+
+    vertx.setTimer(
+        50L,
+        z -> {
+          try {
+            // just once on construction:
+            verify(spyTimer, times(1)).resetTimer();
+          } catch (Exception ex) {
+            ctx.fail(ex);
+          }
+          // should not warn
+          ctx.assertEquals(0, logCounter.get());
+          async.complete();
+        });
+  }
+
+  @Test
+  public void shouldNotWarnWhenExchangeConfigurationCalledWithinTimeout(final TestContext ctx) {
+    final long TEST_QOS_TIMEOUT = 75L;
+    final Async async = ctx.async();
+    final AtomicInteger logCounter = new AtomicInteger(0);
+    final var spyMethod = spy(method);
+    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
+    when(spyMethod.getQosTimer()).thenReturn(spyTimer);
+    spyTimer.resetTimer();
+
+    // call exchangeTransitionConfiguration 50 milliseconds hence to reset our QoS timer
+    vertx.setTimer(
+        50L,
+        z ->
+            spyMethod.syncResponse(
+                new JsonRpcRequestContext(
+                    new JsonRpcRequest(
+                        "2.0",
+                        RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName(),
+                        new Object[] {
+                          new EngineExchangeTransitionConfigurationParameter(
+                              "24",
+                              Hash.fromHexStringLenient("0x01").toHexString(),
+                              new UnsignedLongParameter(0))
+                        }))));
+
+    vertx.setTimer(
+        100L,
+        z -> {
+          try {
+            // once on construction, once on call:
+            verify(spyTimer, times(2)).resetTimer();
+          } catch (Exception ex) {
+            ctx.fail(ex);
+          }
+          // should not warn
+          ctx.assertEquals(0, logCounter.get());
+          async.complete();
+        });
+  }
+
   private JsonRpcResponse resp(final EngineExchangeTransitionConfigurationParameter param) {
     return method.response(
         new JsonRpcRequestContext(
