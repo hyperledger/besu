@@ -29,13 +29,13 @@ public class QosTimerTest {
 
   @Test
   public void shouldExecuteConsecutivelyAtTimeout(final TestContext ctx) {
-    final long TEST_QOS_TIMEOUT = 50L;
+    final long TEST_QOS_TIMEOUT = 100L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
     new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
-        125L,
+        250L,
         z -> {
           ctx.assertEquals(2, execCount.get());
           async.complete();
