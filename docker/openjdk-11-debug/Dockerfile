@@ -22,7 +22,7 @@ COPY --chown=besu:besu besu /opt/besu/
 # 9545 Metrics
 # 1098 JMX / JMX-RMI
 # 30303 P2P
-EXPOSE 5005 8545 8546 8547 9545 1098 30303
+EXPOSE 5005 8545 8546 8547 8550 8551 9545 1098 30303
 
 # defaults for host interfaces
 ENV BESU_RPC_HTTP_HOST 0.0.0.0
