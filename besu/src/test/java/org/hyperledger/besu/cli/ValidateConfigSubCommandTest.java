@@ -17,6 +17,8 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.BesuInfo;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -57,6 +59,13 @@ public class ValidateConfigSubCommandTest extends CommandTestAbstract {
   public void callingValidateConfigSubCommandHelpMustDisplayUsage() {
     parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--help");
     assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingValidateConfigSubCommandVersionMustDisplayVersion() {
+    parseCommand(VALIDATE_CONFIG_SUBCOMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
