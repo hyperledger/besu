@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
+import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.io.BufferedWriter;
@@ -98,6 +99,20 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   public void callingRPLEncodeSubCommandHelpMustDisplayUsage() {
     parseCommand(RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--help");
     assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_RLP_ENCODE_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingRPLSubCommandVersionMustDisplayVersion() {
+    parseCommand(RLP_SUBCOMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingRPLEncodeSubCommandVersionMustDisplayVersion() {
+    parseCommand(RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
