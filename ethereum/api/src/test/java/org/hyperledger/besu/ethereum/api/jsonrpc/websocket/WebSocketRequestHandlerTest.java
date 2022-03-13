@@ -143,7 +143,6 @@ public class WebSocketRequestHandlerTest {
     verify(jsonRpcMethodMock, Mockito.times(2)).response(eq(expectedRequest));
   }
 
-  @Ignore
   @Test
   public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors(
       final TestContext context) {
