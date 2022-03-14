@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 - Execution layer (The Merge):
-  - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
+  - Execution specific RPC endpoint [#3378](https://github.com/hyperledger/besu/issues/3378)
   - Adds JWT authentication to Engine APIs
   - Supports kiln V2.1 spec
 - Tracing APIs 
