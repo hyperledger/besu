@@ -817,76 +817,84 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Path to a file containing the fingerprints of the authorized privacy enclave.")
   private final Path privacyTlsKnownEnclaveFile = null;
 
-  @Option(
-      names = {"--metrics-enabled"},
-      description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
-  private final Boolean isMetricsEnabled = false;
+  // Metrics Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Metrics Options|@%n")
+  MetricsOptionGroup metricsOptionGroup = new MetricsOptionGroup();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--metrics-protocol"},
-      description =
-          "Metrics protocol, one of PROMETHEUS, OPENTELEMETRY or NONE. (default: ${DEFAULT-VALUE})")
-  private MetricsProtocol metricsProtocol = PROMETHEUS;
+  static class MetricsOptionGroup {
+    @Option(
+        names = {"--metrics-enabled"},
+        description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
+    private final Boolean isMetricsEnabled = false;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--metrics-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String metricsHost = autoDiscoverDefaultIP().getHostAddress();
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--metrics-protocol"},
+        description =
+            "Metrics protocol, one of PROMETHEUS, OPENTELEMETRY or NONE. (default: ${DEFAULT-VALUE})")
+    private MetricsProtocol metricsProtocol = PROMETHEUS;
 
-  @Option(
-      names = {"--metrics-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer metricsPort = DEFAULT_METRICS_PORT;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--metrics-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String metricsHost;
 
-  @Option(
-      names = {"--metrics-category", "--metrics-categories"},
-      paramLabel = "<category name>",
-      split = ",",
-      arity = "1..*",
-      description =
-          "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
-  private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
+    @Option(
+        names = {"--metrics-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer metricsPort = DEFAULT_METRICS_PORT;
 
-  @Option(
-      names = {"--metrics-push-enabled"},
-      description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
-  private final Boolean isMetricsPushEnabled = false;
+    @Option(
+        names = {"--metrics-category", "--metrics-categories"},
+        paramLabel = "<category name>",
+        split = ",",
+        arity = "1..*",
+        description =
+            "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
+    private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--metrics-push-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String metricsPushHost = autoDiscoverDefaultIP().getHostAddress();
+    @Option(
+        names = {"--metrics-push-enabled"},
+        description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
+    private final Boolean isMetricsPushEnabled = false;
 
-  @Option(
-      names = {"--metrics-push-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--metrics-push-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description =
+            "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String metricsPushHost;
 
-  @Option(
-      names = {"--metrics-push-interval"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer metricsPushInterval = 15;
+    @Option(
+        names = {"--metrics-push-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description =
+            "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--metrics-push-prometheus-job"},
-      description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String metricsPrometheusJob = "besu-client";
+    @Option(
+        names = {"--metrics-push-interval"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer metricsPushInterval = 15;
+
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--metrics-push-prometheus-job"},
+        description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String metricsPrometheusJob = "besu-client";
+  }
 
   @Option(
       names = {"--host-allowlist"},
@@ -2322,7 +2330,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public MetricsConfiguration metricsConfiguration() {
-    if (isMetricsEnabled && isMetricsPushEnabled) {
+    if (metricsOptionGroup.isMetricsEnabled && metricsOptionGroup.isMetricsPushEnabled) {
       throw new ParameterException(
           this.commandLine,
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
@@ -2333,14 +2341,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--metrics-enabled",
-        !isMetricsEnabled,
+        !metricsOptionGroup.isMetricsEnabled,
         asList("--metrics-host", "--metrics-port"));
 
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
         "--metrics-push-enabled",
-        !isMetricsPushEnabled,
+        !metricsOptionGroup.isMetricsPushEnabled,
         asList(
             "--metrics-push-host",
             "--metrics-push-port",
@@ -2349,17 +2357,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     return unstableMetricsCLIOptions
         .toDomainObject()
-        .enabled(isMetricsEnabled)
-        .host(metricsHost)
-        .port(metricsPort)
-        .protocol(metricsProtocol)
-        .metricCategories(metricCategories)
-        .pushEnabled(isMetricsPushEnabled)
-        .pushHost(metricsPushHost)
-        .pushPort(metricsPushPort)
-        .pushInterval(metricsPushInterval)
+        .enabled(metricsOptionGroup.isMetricsEnabled)
+        .host(
+            Strings.isNullOrEmpty(metricsOptionGroup.metricsHost)
+                ? autoDiscoverDefaultIP().getHostAddress()
+                : metricsOptionGroup.metricsHost)
+        .port(metricsOptionGroup.metricsPort)
+        .protocol(metricsOptionGroup.metricsProtocol)
+        .metricCategories(metricsOptionGroup.metricCategories)
+        .pushEnabled(metricsOptionGroup.isMetricsPushEnabled)
+        .pushHost(
+            Strings.isNullOrEmpty(metricsOptionGroup.metricsPushHost)
+                ? autoDiscoverDefaultIP().getHostAddress()
+                : metricsOptionGroup.metricsPushHost)
+        .pushPort(metricsOptionGroup.metricsPushPort)
+        .pushInterval(metricsOptionGroup.metricsPushInterval)
         .hostsAllowlist(hostsAllowlist)
-        .prometheusJob(metricsPrometheusJob)
+        .prometheusJob(metricsOptionGroup.metricsPrometheusJob)
         .build();
   }
 
@@ -2988,8 +3002,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         jsonRPCWebsocketOptionGroup.rpcWsPort,
         jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
-    addPortIfEnabled(effectivePorts, metricsPort, isMetricsEnabled);
-    addPortIfEnabled(effectivePorts, metricsPushPort, isMetricsPushEnabled);
+    addPortIfEnabled(
+        effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
+    addPortIfEnabled(
+        effectivePorts,
+        metricsOptionGroup.metricsPushPort,
+        metricsOptionGroup.isMetricsPushEnabled);
     addPortIfEnabled(effectivePorts, stratumPort, iStratumMiningEnabled);
     return effectivePorts;
   }
