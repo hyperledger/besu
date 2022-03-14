@@ -57,6 +57,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
         throw new BackwardSyncException("Stopping the Backward sync...");
       }
     }
+    LOG.info("TTD reached. Continuing with Backward Sync...");
   }
 
   @Override
@@ -83,14 +84,14 @@ public class BackwardSyncStep extends BackwardSyncTask {
     debugLambda(
         LOG,
         "First unprocessed hash for current pivot is {} expected on height {}",
-        () -> parentHash.toString().substring(0, 20),
+        parentHash::toHexString,
         () -> firstHeader.getNumber() - 1);
     return parentHash;
   }
 
   @VisibleForTesting
   protected CompletableFuture<BlockHeader> requestHeader(final Hash hash) {
-    debugLambda(LOG, "Requesting header for hash {}", () -> hash.toString().substring(0, 20));
+    debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
     return GetHeadersFromPeerByHashTask.forSingleHash(
             context.getProtocolSchedule(),
             context.getEthContext(),
@@ -103,14 +104,13 @@ public class BackwardSyncStep extends BackwardSyncTask {
               final List<BlockHeader> result = peerResult.getResult();
               if (result.isEmpty()) {
                 throw new BackwardSyncException(
-                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20),
-                    true);
+                    "Did not receive a header for hash {}" + hash.toHexString(), true);
               }
               BlockHeader blockHeader = result.get(0);
               debugLambda(
                   LOG,
                   "Got header {} with height {}",
-                  () -> blockHeader.getHash().toString().substring(0, 20),
+                  () -> blockHeader.getHash().toHexString(),
                   blockHeader::getNumber);
               return blockHeader;
             });
@@ -118,7 +118,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
-    debugLambda(LOG, "Requesting header for hash {}", () -> hash.toString().substring(0, 20));
+    debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
     return GetHeadersFromPeerByHashTask.endingAtHash(
             context.getProtocolSchedule(),
             context.getEthContext(),
@@ -132,8 +132,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
               final List<BlockHeader> result = peerResult.getResult();
               if (result.isEmpty()) {
                 throw new BackwardSyncException(
-                    "Did not receive a header for hash {}" + hash.toString().substring(0, 20),
-                    true);
+                    "Did not receive a header for hash {}" + hash.toHexString(), true);
               }
               infoLambda(
                   LOG,

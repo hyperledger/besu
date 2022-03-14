@@ -41,7 +41,7 @@ public abstract class BackwardSyncTask {
         return CompletableFuture.completedFuture(null);
       }
       if (backwardChain.getFirstAncestorHeader().isEmpty()) {
-        LOG.debug("The Backwards sync is already finished..."); // todo fishy....
+        LOG.info("The Backwards sync is already finished...");
         return CompletableFuture.completedFuture(null);
       }
       return executeStep();

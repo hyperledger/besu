@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface BackwardSyncStorage {
@@ -34,8 +33,6 @@ public interface BackwardSyncStorage {
   List<BlockHeader> getFirstNAncestorHeaders(int size);
   /** Returns all ancestors */
   List<BlockHeader> getAllAncestors();
-
-  Map<Hash, Block> getAllTrustedBlocks();
 
   /** Adds a known header to the begining of the ancestors chain */
   void prependAncestorsHeader(BlockHeader blockHeader);

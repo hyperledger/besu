@@ -133,7 +133,8 @@ public class BackwardsSyncContextTest {
                 metricsSystem,
                 ethContext,
                 syncState,
-                backwardSyncLookupService));
+                backwardSyncLookupService,
+                storageProvider));
   }
 
   @Test

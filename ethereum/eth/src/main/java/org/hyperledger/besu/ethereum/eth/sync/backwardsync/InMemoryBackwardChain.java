@@ -66,7 +66,6 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
     return ancestors;
   }
 
-  @Override
   public Map<Hash, Block> getAllTrustedBlocks() {
     return trustedBlocks;
   }
@@ -107,6 +106,9 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
 
   @Override
   public void prependChain(final BackwardSyncStorage historicalBackwardChain) {
+    if (!(historicalBackwardChain instanceof InMemoryBackwardChain)) {
+      throw new BackwardSyncException("Cannot merge non memory chain into memory chain");
+    }
     BlockHeader firstHeader =
         getFirstAncestorHeader()
             .orElseThrow(
@@ -127,7 +129,8 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
           () -> pivot.getHash().toString().substring(0, 20),
           () -> pivot.getHeader().getNumber(),
           () -> getFirstAncestorHeader().orElseThrow().getNumber());
-      trustedBlocks.putAll(historicalBackwardChain.getAllTrustedBlocks());
+
+      trustedBlocks.putAll(((InMemoryBackwardChain) historicalBackwardChain).getAllTrustedBlocks());
     } else {
       warnLambda(
           LOG,

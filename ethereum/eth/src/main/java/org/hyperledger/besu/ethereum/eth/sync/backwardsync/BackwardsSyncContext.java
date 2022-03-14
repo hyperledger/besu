@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -51,7 +53,7 @@ public class BackwardsSyncContext {
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
   private final BackwardSyncLookupService service;
-  //  private static final int MAX_RETRIES = 10;
+  private final StorageProvider storageProvider;
 
   public BackwardsSyncContext(
       final ProtocolContext protocolContext,
@@ -59,7 +61,8 @@ public class BackwardsSyncContext {
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
-      final BackwardSyncLookupService backwardSyncLookupService) {
+      final BackwardSyncLookupService backwardSyncLookupService,
+      final StorageProvider storageProvider) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -67,6 +70,7 @@ public class BackwardsSyncContext {
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
     this.service = backwardSyncLookupService;
+    this.storageProvider = storageProvider;
   }
 
   public boolean isSyncing() {
@@ -115,7 +119,11 @@ public class BackwardsSyncContext {
           "Starting new backward sync towards a pivot {} at height {}",
           () -> newPivot.getHash().toString().substring(0, 20),
           () -> newPivot.getHeader().getNumber());
-      final BackwardSyncStorage newChain = new InMemoryBackwardChain(newPivot);
+      final BackwardSyncStorage newChain =
+          new KeyValueBackwardChain(
+              storageProvider,
+              ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+              newPivot);
       this.currentChain.set(newChain);
       backwardChainMap.put(newPivot.getHeader().getNumber(), newChain);
       currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry(newChain));
@@ -136,7 +144,9 @@ public class BackwardsSyncContext {
         () -> newPivot.getHash().toString().substring(0, 20),
         () -> newPivot.getHeader().getNumber());
 
-    BackwardSyncStorage newBackwardChain = new InMemoryBackwardChain(newPivot);
+    BackwardSyncStorage newBackwardChain =
+        new KeyValueBackwardChain(
+            storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule), newPivot);
     backwardChainMap.put(newPivot.getHeader().getNumber(), newBackwardChain);
     this.currentChain.set(
         newBackwardChain); // the current ongoing backward sync will finish its current step and end
