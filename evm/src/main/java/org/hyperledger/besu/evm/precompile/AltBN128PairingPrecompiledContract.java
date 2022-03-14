@@ -20,7 +20,6 @@ import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.crypto.altbn128.Fq12;
 import org.hyperledger.besu.crypto.altbn128.Fq2;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
@@ -31,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
@@ -42,11 +42,11 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   public static final Bytes TRUE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
 
-  private final Gas pairingGasCost;
-  private final Gas baseGasCost;
+  private final long pairingGasCost;
+  private final long baseGasCost;
 
   private AltBN128PairingPrecompiledContract(
-      final GasCalculator gasCalculator, final Gas pairingGasCost, final Gas baseGasCost) {
+      final GasCalculator gasCalculator, final long pairingGasCost, final long baseGasCost) {
     super(
         "AltBN128Pairing",
         gasCalculator,
@@ -57,21 +57,21 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   }
 
   public static AltBN128PairingPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128PairingPrecompiledContract(gasCalculator, Gas.of(80_000), Gas.of(100_000));
+    return new AltBN128PairingPrecompiledContract(gasCalculator, 80_000L, 100_000L);
   }
 
   public static AltBN128PairingPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128PairingPrecompiledContract(gasCalculator, Gas.of(34_000), Gas.of(45_000));
+    return new AltBN128PairingPrecompiledContract(gasCalculator, 34_000L, 45_000L);
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
-    return pairingGasCost.times(parameters).plus(baseGasCost);
+    return (pairingGasCost * parameters) + baseGasCost;
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
     if (input.isEmpty()) {
       return TRUE;
     }

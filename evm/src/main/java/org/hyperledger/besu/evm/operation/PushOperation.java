@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -42,7 +43,7 @@ public class PushOperation extends AbstractFixedCostOperation {
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.length = length;
-    pushResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), length + 1);
+    pushResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty(), length + 1);
   }
 
   @Override

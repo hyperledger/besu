@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -107,69 +106,72 @@ public class MainnetTransactionValidator {
       final Transaction transaction,
       final Optional<Wei> baseFee,
       final TransactionValidationParams transactionValidationParams) {
-    final ValidationResult<TransactionInvalidReason> signatureResult =
-        validateTransactionSignature(transaction);
-    if (!signatureResult.isValid()) {
-      return signatureResult;
-    }
+    try {
+      final ValidationResult<TransactionInvalidReason> signatureResult =
+          validateTransactionSignature(transaction);
+      if (!signatureResult.isValid()) {
+        return signatureResult;
+      }
 
-    if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
-          "gasPrice must be set to zero on a GoQuorum compatible network");
-    }
+      if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
+            "gasPrice must be set to zero on a GoQuorum compatible network");
+      }
 
-    final TransactionType transactionType = transaction.getType();
-    if (!acceptedTransactionTypes.contains(transactionType)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          String.format(
-              "Transaction type %s is invalid, accepted transaction types are %s",
-              transactionType, acceptedTransactionTypes));
-    }
-
-    if (baseFee.isPresent()) {
-      final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
-      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
-          && price.compareTo(baseFee.orElseThrow()) < 0) {
+      final TransactionType transactionType = transaction.getType();
+      if (!acceptedTransactionTypes.contains(transactionType)) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            "gasPrice is less than the current BaseFee");
+            String.format(
+                "Transaction type %s is invalid, accepted transaction types are %s",
+                transactionType, acceptedTransactionTypes));
       }
 
-      // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
-      if (transaction.getType().supports1559FeeMarket()
-          && transaction
-                  .getMaxPriorityFeePerGas()
-                  .get()
-                  .getAsBigInteger()
-                  .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
-              > 0) {
+      if (baseFee.isPresent()) {
+        final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
+        if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+            && price.compareTo(baseFee.orElseThrow()) < 0) {
+          return ValidationResult.invalid(
+              TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+              "gasPrice is less than the current BaseFee");
+        }
+
+        // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
+        if (transaction.getType().supports1559FeeMarket()
+            && transaction
+                    .getMaxPriorityFeePerGas()
+                    .get()
+                    .getAsBigInteger()
+                    .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
+                > 0) {
+          return ValidationResult.invalid(
+              TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
+              "max priority fee per gas cannot be greater than max fee per gas");
+        }
+      }
+
+      // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
+      if (!feeMarket.satisfiesFloorTxCost(transaction)
+          && !transactionValidationParams.isAllowExceedingBalance()) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
-            "max priority fee per gas cannot be greater than max fee per gas");
+            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+            "effective gas price is too low to execute");
       }
-    }
 
-    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
-    if (!feeMarket.satisfiesFloorTxCost(transaction)
-        && !transactionValidationParams.isAllowExceedingBalance()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "effective gas price is too low to execute");
-    }
-
-    final Gas intrinsicGasCost =
-        gasCalculator
-            .transactionIntrinsicGasCost(transaction.getPayload(), transaction.isContractCreation())
-            .plus(
-                transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(Gas.ZERO));
-    if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-          String.format(
-              "intrinsic gas cost %s exceeds gas limit %s",
-              intrinsicGasCost, transaction.getGasLimit()));
+      final long intrinsicGasCost =
+          gasCalculator.transactionIntrinsicGasCost(
+                  transaction.getPayload(), transaction.isContractCreation())
+              + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+      if (intrinsicGasCost > transaction.getGasLimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
+            String.format(
+                "intrinsic gas cost %s exceeds gas limit %s",
+                intrinsicGasCost, transaction.getGasLimit()));
+      }
+    } catch (final RuntimeException re) {
+      return ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR);
     }
 
     return ValidationResult.valid();
@@ -246,7 +248,7 @@ public class MainnetTransactionValidator {
     }
 
     if (!transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)
-        && !chainId.isPresent()
+        && chainId.isEmpty()
         && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,

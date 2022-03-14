@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -87,7 +86,7 @@ public class EvmToolCommand implements Runnable {
       names = {"--gas"},
       description = "Amount of gas for this invocation.",
       paramLabel = "<int>")
-  private final Gas gas = Gas.of(10_000_000_000L);
+  private final Long gas = 10_000_000_000L;
 
   @Option(
       names = {"--price"},
@@ -161,7 +160,6 @@ public class EvmToolCommand implements Runnable {
     // add sub commands here
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
-    commandLine.registerConverter(Gas.class, (arg) -> Gas.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
 
     commandLine.parseWithHandlers(resultHandler, exceptionHandler, args);
@@ -286,28 +284,24 @@ public class EvmToolCommand implements Runnable {
                     sender,
                     Optional.empty());
 
-            final Gas intrinsicGasCost =
+            final long intrinsicGasCost =
                 protocolSpec
                     .getGasCalculator()
                     .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-            final Gas accessListCost =
+            final long accessListCost =
                 tx.getAccessList()
                     .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
-                    .orElse(Gas.ZERO);
-            final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
+                    .orElse(0L);
+            final long evmGas = gas - messageFrame.getRemainingGas();
             out.println();
             out.println(
                 new JsonObject()
-                    .put("gasUser", evmGas.asUInt256().toShortHexString())
+                    .put("gasUser", "0x" + Long.toHexString(evmGas))
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
                     .put(
                         "gasTotal",
-                        evmGas
-                            .plus(intrinsicGasCost)
-                            .plus(accessListCost)
-                            .asUInt256()
-                            .toShortHexString()));
+                        "0x" + Long.toHexString(evmGas + intrinsicGasCost) + accessListCost));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();

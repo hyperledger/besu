@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -57,7 +56,7 @@ public class EnvironmentInformation {
 
   private final Wei value;
 
-  private final Gas gas;
+  private final long gas;
 
   /**
    * Public constructor.
@@ -95,7 +94,7 @@ public class EnvironmentInformation {
         data == null ? null : Bytes.fromHexString(data),
         value == null ? null : Wei.fromHexString(value),
         gasPrice == null ? null : Wei.fromHexString(gasPrice),
-        gas == null ? null : Gas.fromHexString(gas));
+        gas == null ? 0 : Long.decode(gas));
   }
 
   private EnvironmentInformation(
@@ -108,7 +107,7 @@ public class EnvironmentInformation {
       final Bytes data,
       final Wei value,
       final Wei gasPrice,
-      final Gas gas) {
+      final long gas) {
     this.code = code;
     this.depth = depth;
     this.accountAddress = accountAddress;
@@ -216,7 +215,7 @@ public class EnvironmentInformation {
    *
    * @return the amount of gas available.
    */
-  public Gas getGas() {
+  public long getGas() {
     return gas;
   }
 

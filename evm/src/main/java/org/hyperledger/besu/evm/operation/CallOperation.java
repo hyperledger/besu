@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class CallOperation extends AbstractCallOperation {
 
@@ -35,8 +35,12 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected Gas gas(final MessageFrame frame) {
-    return Gas.of(frame.getStackItem(0).trimLeadingZeros());
+  protected long gas(final MessageFrame frame) {
+    try {
+      return frame.getStackItem(0).trimLeadingZeros().toLong();
+    } catch (final ArithmeticException | IllegalArgumentException ae) {
+      return Long.MAX_VALUE;
+    }
   }
 
   @Override
@@ -85,7 +89,7 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
-  public Gas gasAvailableForChildCall(final MessageFrame frame) {
+  public long gasAvailableForChildCall(final MessageFrame frame) {
     return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
   }
 
@@ -95,8 +99,8 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final Gas stipend = gas(frame);
+  public long cost(final MessageFrame frame) {
+    final long stipend = gas(frame);
     final long inputDataOffset = inputDataOffset(frame);
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);
@@ -120,7 +124,7 @@ public class CallOperation extends AbstractCallOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
       return new OperationResult(
-          Optional.of(cost(frame)), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+          OptionalLong.of(cost(frame)), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
     } else {
       return super.execute(frame, evm);
     }

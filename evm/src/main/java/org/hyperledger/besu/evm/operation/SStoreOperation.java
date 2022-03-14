@@ -16,33 +16,33 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
 
-  public static final Gas FRONTIER_MINIMUM = Gas.ZERO;
-  public static final Gas EIP_1706_MINIMUM = Gas.of(2300);
+  public static final long FRONTIER_MINIMUM = 0L;
+  public static final long EIP_1706_MINIMUM = 2300L;
 
   protected static final OperationResult ILLEGAL_STATE_CHANGE =
       new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
 
-  private final Gas minumumGasRemaining;
+  private final long minumumGasRemaining;
 
-  public SStoreOperation(final GasCalculator gasCalculator, final Gas minumumGasRemaining) {
+  public SStoreOperation(final GasCalculator gasCalculator, final long minumumGasRemaining) {
     super(0x55, "SSTORE", 2, 0, 1, gasCalculator);
     this.minumumGasRemaining = minumumGasRemaining;
   }
 
-  public Gas getMinumumGasRemaining() {
+  public long getMinumumGasRemaining() {
     return minumumGasRemaining;
   }
 
@@ -60,21 +60,21 @@ public class SStoreOperation extends AbstractOperation {
 
     final Address address = account.getAddress();
     final boolean slotIsWarm = frame.warmUpStorage(address, key);
-    final Gas cost =
-        gasCalculator()
-            .calculateStorageCost(account, key, value)
-            .plus(slotIsWarm ? Gas.ZERO : gasCalculator().getColdSloadCost());
+    final long cost =
+        gasCalculator().calculateStorageCost(account, key, value)
+            + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
 
-    final Optional<Gas> optionalCost = Optional.of(cost);
-    final Gas remainingGas = frame.getRemainingGas();
+    final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
       return new OperationResult(
-          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-    } else if (remainingGas.compareTo(cost) < 0) {
-      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-    } else if (remainingGas.compareTo(minumumGasRemaining) <= 0) {
+          OptionalLong.of(remainingGas), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (remainingGas < cost) {
       return new OperationResult(
-          Optional.of(minumumGasRemaining), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    } else if (remainingGas <= minumumGasRemaining) {
+      return new OperationResult(
+          OptionalLong.of(minumumGasRemaining),
+          Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     // Increment the refund counter.
@@ -82,6 +82,6 @@ public class SStoreOperation extends AbstractOperation {
 
     account.setStorageValue(key, value);
     frame.storageWasUpdated(key, value);
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

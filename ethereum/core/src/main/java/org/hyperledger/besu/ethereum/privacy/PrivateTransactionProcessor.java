@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -125,7 +124,7 @@ public class PrivateTransactionProcessor {
               .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(mutablePrivateWorldStateUpdater)
-              .initialGas(Gas.MAX_VALUE)
+              .initialGas(Long.MAX_VALUE)
               .originator(senderAddress)
               .gasPrice(transaction.getGasPrice())
               .sender(senderAddress)
@@ -145,7 +144,7 @@ public class PrivateTransactionProcessor {
 
         LOG.debug(
             "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
-            privateContractAddress.toString(),
+            privateContractAddress,
             senderAddress,
             previousNonce,
             privacyGroupId.toString());
@@ -231,13 +230,12 @@ public class PrivateTransactionProcessor {
   }
 
   @SuppressWarnings("unused")
-  private Gas refunded(final Transaction transaction, final Gas gasRemaining, final Gas gasRefund) {
+  private long refunded(
+      final Transaction transaction, final long gasRemaining, final long gasRefund) {
     // Integer truncation takes care of the the floor calculation needed after the divide.
-    final Gas maxRefundAllowance =
-        Gas.of(transaction.getGasLimit())
-            .minus(gasRemaining)
-            .dividedBy(gasCalculator.getMaxRefundQuotient());
-    final Gas refundAllowance = maxRefundAllowance.min(gasRefund);
-    return gasRemaining.plus(refundAllowance);
+    final long maxRefundAllowance =
+        (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
+    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
+    return gasRemaining + refundAllowance;
   }
 }

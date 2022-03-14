@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -23,6 +22,7 @@ import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
+import org.jetbrains.annotations.NotNull;
 
 // The big integer modular exponentiation precompiled contract defined in EIP-198.
 public class BigIntegerModularExponentiationPrecompiledContract
@@ -48,12 +48,12 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     return gasCalculator().modExpGasCost(input);
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);
