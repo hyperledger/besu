@@ -793,30 +793,47 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final File rpcWsAuthenticationPublicKeyFile = null;
   }
 
-  @Option(
-      names = {"--privacy-tls-enabled"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
-  private final Boolean isPrivacyTlsEnabled = false;
+  // Privacy Options Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Privacy Options|@%n")
+  PrivacyOptionGroup privacyOptionGroup = new PrivacyOptionGroup();
 
-  @Option(
-      names = "--privacy-tls-keystore-file",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
-  private final Path privacyKeyStoreFile = null;
+  static class PrivacyOptionGroup {
+    @Option(
+        names = {"--privacy-tls-enabled"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "Enable TLS for connecting to privacy enclave (default: ${DEFAULT-VALUE})")
+    private final Boolean isPrivacyTlsEnabled = false;
 
-  @Option(
-      names = "--privacy-tls-keystore-password-file",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Path to a file containing the password used to decrypt the keystore.")
-  private final Path privacyKeyStorePasswordFile = null;
+    @Option(
+        names = "--privacy-tls-keystore-file",
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.")
+    private final Path privacyKeyStoreFile = null;
 
-  @Option(
-      names = "--privacy-tls-known-enclave-file",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "Path to a file containing the fingerprints of the authorized privacy enclave.")
-  private final Path privacyTlsKnownEnclaveFile = null;
+    @Option(
+        names = "--privacy-tls-keystore-password-file",
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "Path to a file containing the password used to decrypt the keystore.")
+    private final Path privacyKeyStorePasswordFile = null;
+
+    @Option(
+        names = "--privacy-tls-known-enclave-file",
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "Path to a file containing the fingerprints of the authorized privacy enclave.")
+    private final Path privacyTlsKnownEnclaveFile = null;
+
+    @Option(
+            names = {"--privacy-enabled"},
+            description = "Enable private transactions (default: ${DEFAULT-VALUE})")
+    private final Boolean isPrivacyEnabled = false;
+
+    @Option(
+            names = {"--privacy-multi-tenancy-enabled"},
+            description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
+    private final Boolean isPrivacyMultiTenancyEnabled = false;
+  }
 
   // Metrics Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Metrics Options|@%n")
@@ -1005,67 +1022,63 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
   private final Boolean pruningEnabled = false;
 
-  @Option(
-      names = {"--permissions-nodes-config-file-enabled"},
-      description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsNodesEnabled = false;
+  //Permission Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "")
+  PermissionsOptionGroup permissionsOptionGroup = new PermissionsOptionGroup();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      names = {"--permissions-nodes-config-file"},
-      description =
-          "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
-  private String nodePermissionsConfigFile = null;
+  static class PermissionsOptionGroup {
+    @Option(
+            names = {"--permissions-nodes-config-file-enabled"},
+            description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
+    private final Boolean permissionsNodesEnabled = false;
 
-  @Option(
-      names = {"--permissions-accounts-config-file-enabled"},
-      description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsAccountsEnabled = false;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @CommandLine.Option(
+            names = {"--permissions-nodes-config-file"},
+            description =
+                    "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+    private String nodePermissionsConfigFile = null;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      names = {"--permissions-accounts-config-file"},
-      description =
-          "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
-  private String accountPermissionsConfigFile = null;
+    @Option(
+            names = {"--permissions-accounts-config-file-enabled"},
+            description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
+    private final Boolean permissionsAccountsEnabled = false;
 
-  @Option(
-      names = {"--permissions-nodes-contract-address"},
-      description = "Address of the node permissioning smart contract",
-      arity = "1")
-  private final Address permissionsNodesContractAddress = null;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @CommandLine.Option(
+            names = {"--permissions-accounts-config-file"},
+            description =
+                    "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+    private String accountPermissionsConfigFile = null;
 
-  @Option(
-      names = {"--permissions-nodes-contract-version"},
-      description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
-  private final Integer permissionsNodesContractVersion = 1;
+    @Option(
+            names = {"--permissions-nodes-contract-address"},
+            description = "Address of the node permissioning smart contract",
+            arity = "1")
+    private final Address permissionsNodesContractAddress = null;
 
-  @Option(
-      names = {"--permissions-nodes-contract-enabled"},
-      description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsNodesContractEnabled = false;
+    @Option(
+            names = {"--permissions-nodes-contract-version"},
+            description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
+    private final Integer permissionsNodesContractVersion = 1;
 
-  @Option(
-      names = {"--permissions-accounts-contract-address"},
-      description = "Address of the account permissioning smart contract",
-      arity = "1")
-  private final Address permissionsAccountsContractAddress = null;
+    @Option(
+            names = {"--permissions-nodes-contract-enabled"},
+            description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
+    private final Boolean permissionsNodesContractEnabled = false;
 
-  @Option(
-      names = {"--permissions-accounts-contract-enabled"},
-      description =
-          "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
-  private final Boolean permissionsAccountsContractEnabled = false;
+    @Option(
+            names = {"--permissions-accounts-contract-address"},
+            description = "Address of the account permissioning smart contract",
+            arity = "1")
+    private final Address permissionsAccountsContractAddress = null;
 
-  @Option(
-      names = {"--privacy-enabled"},
-      description = "Enable private transactions (default: ${DEFAULT-VALUE})")
-  private final Boolean isPrivacyEnabled = false;
-
-  @Option(
-      names = {"--privacy-multi-tenancy-enabled"},
-      description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
-  private final Boolean isPrivacyMultiTenancyEnabled = false;
+    @Option(
+            names = {"--permissions-accounts-contract-enabled"},
+            description =
+                    "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
+    private final Boolean permissionsAccountsContractEnabled = false;
+  }
 
   @Option(
       names = {"--revert-reason-enabled"},
@@ -1579,7 +1592,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // consequently you can only do some configuration checks
     // after start has been called on plugins
 
-    if (isPrivacyEnabled) {
+    if (privacyOptionGroup.isPrivacyEnabled) {
 
       if (privateMarkerTransactionSigningKeyPath != null
           && privacyPluginService != null
@@ -1854,7 +1867,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         Optional.ofNullable(syncMode)
             .orElse(
                 genesisFile == null
-                        && !isPrivacyEnabled
+                        && !privacyOptionGroup.isPrivacyEnabled
                         && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
                     ? SyncMode.FAST
                     : SyncMode.FULL);
@@ -1920,9 +1933,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private GoQuorumEnclave createGoQuorumEnclave() {
     final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
-    if (privacyKeyStoreFile != null) {
+    if (privacyOptionGroup.privacyKeyStoreFile != null) {
       return enclaveFactory.createGoQuorumEnclave(
-          privacyUrl, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyTlsKnownEnclaveFile);
+          privacyUrl,
+          privacyOptionGroup.privacyKeyStoreFile,
+          privacyOptionGroup.privacyKeyStorePasswordFile,
+          privacyOptionGroup.privacyTlsKnownEnclaveFile);
     } else {
       return enclaveFactory.createGoQuorumEnclave(privacyUrl);
     }
@@ -2190,7 +2206,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--privacy-tls-enabled",
-        !isPrivacyTlsEnabled,
+        !privacyOptionGroup.isPrivacyTlsEnabled,
         asList(
             "--privacy-tls-keystore-file",
             "--privacy-tls-keystore-password-file",
@@ -2401,30 +2417,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final Optional<LocalPermissioningConfiguration> localPermissioningConfigurationOptional;
     if (localPermissionsEnabled()) {
       final Optional<String> nodePermissioningConfigFile =
-          Optional.ofNullable(nodePermissionsConfigFile);
+          Optional.ofNullable(permissionsOptionGroup.nodePermissionsConfigFile);
       final Optional<String> accountPermissioningConfigFile =
-          Optional.ofNullable(accountPermissionsConfigFile);
+          Optional.ofNullable(permissionsOptionGroup.accountPermissionsConfigFile);
 
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-              permissionsNodesEnabled,
+                  permissionsOptionGroup.permissionsNodesEnabled,
               getEnodeDnsConfiguration(),
               nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
-              permissionsAccountsEnabled,
+                  permissionsOptionGroup.permissionsAccountsEnabled,
               accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
 
       localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
     } else {
-      if (nodePermissionsConfigFile != null && !permissionsNodesEnabled) {
+      if (permissionsOptionGroup.nodePermissionsConfigFile != null && !permissionsOptionGroup.permissionsNodesEnabled) {
         logger.warn(
             "Node permissioning config file set {} but no permissions enabled",
-            nodePermissionsConfigFile);
+                permissionsOptionGroup.nodePermissionsConfigFile);
       }
 
-      if (accountPermissionsConfigFile != null && !permissionsAccountsEnabled) {
+      if (permissionsOptionGroup.accountPermissionsConfigFile != null && !permissionsOptionGroup.permissionsAccountsEnabled) {
         logger.warn(
             "Account permissioning config file set {} but no permissions enabled",
-            accountPermissionsConfigFile);
+                permissionsOptionGroup.accountPermissionsConfigFile);
       }
       localPermissioningConfigurationOptional = Optional.empty();
     }
@@ -2432,40 +2448,40 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         SmartContractPermissioningConfiguration.createDefault();
 
-    if (permissionsNodesContractEnabled) {
-      if (permissionsNodesContractAddress == null) {
+    if (permissionsOptionGroup.permissionsNodesContractEnabled) {
+      if (permissionsOptionGroup.permissionsNodesContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
             "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
       } else {
         smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
-            permissionsNodesContractEnabled);
+                permissionsOptionGroup.permissionsNodesContractEnabled);
         smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-            permissionsNodesContractAddress);
+                permissionsOptionGroup. permissionsNodesContractAddress);
         smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
-            permissionsNodesContractVersion);
+                permissionsOptionGroup.permissionsNodesContractVersion);
       }
-    } else if (permissionsNodesContractAddress != null) {
+    } else if (permissionsOptionGroup.permissionsNodesContractAddress != null) {
       logger.warn(
           "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
-          permissionsNodesContractAddress);
+              permissionsOptionGroup.permissionsNodesContractAddress);
     }
 
-    if (permissionsAccountsContractEnabled) {
-      if (permissionsAccountsContractAddress == null) {
+    if (permissionsOptionGroup.permissionsAccountsContractEnabled) {
+      if (permissionsOptionGroup.permissionsAccountsContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
             "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
       } else {
         smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
-            permissionsAccountsContractEnabled);
+                permissionsOptionGroup.permissionsAccountsContractEnabled);
         smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-            permissionsAccountsContractAddress);
+                permissionsOptionGroup.permissionsAccountsContractAddress);
       }
-    } else if (permissionsAccountsContractAddress != null) {
+    } else if (permissionsOptionGroup.permissionsAccountsContractAddress != null) {
       logger.warn(
           "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
-          permissionsAccountsContractAddress);
+              permissionsOptionGroup.permissionsAccountsContractAddress);
     }
 
     final PermissioningConfiguration permissioningConfiguration =
@@ -2493,11 +2509,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean localPermissionsEnabled() {
-    return permissionsAccountsEnabled || permissionsNodesEnabled;
+    return permissionsOptionGroup.permissionsAccountsEnabled || permissionsOptionGroup.permissionsNodesEnabled;
   }
 
   private boolean contractPermissionsEnabled() {
-    return permissionsNodesContractEnabled || permissionsAccountsContractEnabled;
+    return permissionsOptionGroup.permissionsNodesContractEnabled || permissionsOptionGroup.permissionsAccountsContractEnabled;
   }
 
   private PrivacyParameters privacyParameters(final KeyValueStorageProvider storageProvider) {
@@ -2506,20 +2522,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--privacy-enabled",
-        !isPrivacyEnabled,
+        !privacyOptionGroup.isPrivacyEnabled,
         asList("--privacy-multi-tenancy-enabled", "--privacy-tls-enabled"));
 
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
         "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.",
-        List.of(!isPrivacyEnabled, !isGoQuorumCompatibilityMode),
+        List.of(!privacyOptionGroup.isPrivacyEnabled, !isGoQuorumCompatibilityMode),
         List.of("--privacy-url", "--privacy-public-key-file"));
 
     checkPrivacyTlsOptionsDependencies();
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
-    if (isPrivacyEnabled) {
+    if (privacyOptionGroup.isPrivacyEnabled) {
       final String errorSuffix = "cannot be enabled with privacy.";
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
@@ -2532,7 +2548,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             commandLine, String.format("%s %s", "GoQuorum mode", errorSuffix));
       }
 
-      if (isPrivacyMultiTenancyEnabled
+      if (privacyOptionGroup.isPrivacyMultiTenancyEnabled
           && !jsonRpcConfiguration.isAuthenticationEnabled()
           && !webSocketConfiguration.isAuthenticationEnabled()) {
         throw new ParameterException(
@@ -2542,7 +2558,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
-      privacyParametersBuilder.setMultiTenancyEnabled(isPrivacyMultiTenancyEnabled);
+      privacyParametersBuilder.setMultiTenancyEnabled(privacyOptionGroup.isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
           isFlexiblePrivacyGroupsEnabled || isOnchainPrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
@@ -2550,19 +2566,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
 
-      if (hasPrivacyPublicKey && isPrivacyMultiTenancyEnabled) {
+      if (hasPrivacyPublicKey && privacyOptionGroup.isPrivacyMultiTenancyEnabled) {
         throw new ParameterException(
             commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
       }
 
       if (!hasPrivacyPublicKey
-          && !isPrivacyMultiTenancyEnabled
+          && !privacyOptionGroup.isPrivacyMultiTenancyEnabled
           && !unstablePrivacyPluginOptions.isPrivacyPluginEnabled()) {
         throw new ParameterException(
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
 
-      if (hasPrivacyPublicKey && !isPrivacyMultiTenancyEnabled) {
+      if (hasPrivacyPublicKey && !privacyOptionGroup.isPrivacyMultiTenancyEnabled) {
         try {
           privacyParametersBuilder.setPrivacyUserIdUsingFile(privacyPublicKeyFile);
         } catch (final IOException e) {
@@ -2577,10 +2593,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
-      if (isPrivacyTlsEnabled) {
-        privacyParametersBuilder.setPrivacyKeyStoreFile(privacyKeyStoreFile);
-        privacyParametersBuilder.setPrivacyKeyStorePasswordFile(privacyKeyStorePasswordFile);
-        privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(privacyTlsKnownEnclaveFile);
+      if (privacyOptionGroup.isPrivacyTlsEnabled) {
+        privacyParametersBuilder.setPrivacyKeyStoreFile(privacyOptionGroup.privacyKeyStoreFile);
+        privacyParametersBuilder.setPrivacyKeyStorePasswordFile(
+            privacyOptionGroup.privacyKeyStorePasswordFile);
+        privacyParametersBuilder.setPrivacyTlsKnownEnclaveFile(
+            privacyOptionGroup.privacyTlsKnownEnclaveFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
     } else if (isGoQuorumCompatibilityMode) {
@@ -2588,7 +2606,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           Optional.of(configureGoQuorumPrivacy(storageProvider)));
     }
 
-    if (!isPrivacyEnabled && anyPrivacyApiEnabled()) {
+    if (!privacyOptionGroup.isPrivacyEnabled && anyPrivacyApiEnabled()) {
       logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
     }
 
@@ -2600,7 +2618,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     privacyParametersBuilder.setPrivacyService(privacyPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
-    if (isPrivacyEnabled) {
+    if (privacyOptionGroup.isPrivacyEnabled) {
       preSynchronizationTaskRunner.addTask(
           new PrivateDatabaseMigrationPreSyncTask(privacyParameters, migratePrivateDatabase));
     }
