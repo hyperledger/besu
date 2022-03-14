@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -47,17 +48,12 @@ public class BackwardSyncStep extends BackwardSyncTask {
         .thenCompose(this::possiblyMoreBackwardSteps);
   }
 
-  private void waitForTTD() {
-    while (!context.isOnTTD()) {
-      LOG.info("Did not reach TTD yet, falling asleep...");
-      try {
-        Thread.sleep(5000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new BackwardSyncException("Stopping the Backward sync...");
-      }
+  private CompletableFuture<Void> waitForTTD() {
+    if(context.isOnTTD()) {
+      return CompletableFuture.completedFuture(null);
     }
-    LOG.info("TTD reached. Continuing with Backward Sync...");
+    LOG.info("Did not reach TTD yet, falling asleep...");
+    return context.getEthContext().getScheduler().scheduleFutureTask(this::waitForTTD, Duration.ofSeconds(5));
   }
 
   @Override

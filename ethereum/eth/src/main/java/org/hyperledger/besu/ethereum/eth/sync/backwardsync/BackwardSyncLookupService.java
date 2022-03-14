@@ -19,12 +19,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,10 +94,9 @@ public class BackwardSyncLookupService {
                       }
                     }
                     LOG.error(
-                        "Failed to fetch blocks because {}. Waiting for few seconds ...",
-                        ex.getMessage());
-                    wait(5000);
-                    return tryToFindBlocks();
+                        "Failed to fetch blocks because {} Current peers: {}.  Waiting for few seconds ...",
+                        ex.getMessage(), ethContext.getEthPeers().peerCount());
+                    return ethContext.getScheduler().scheduleFutureTask(this::tryToFindBlocks, Duration.ofSeconds(5));
                   })
               .thenCompose(Function.identity());
     }
@@ -136,13 +137,5 @@ public class BackwardSyncLookupService {
                         protocolSchedule, ethContext, headers.getResult(), metricsSystem)
                     .run())
         .thenApply(AbstractPeerTask.PeerTaskResult::getResult);
-  }
-
-  private void wait(final int millis) {
-    try {
-      Thread.sleep(millis);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
   }
 }

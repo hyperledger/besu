@@ -117,7 +117,7 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
     if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
       throw new BackwardSyncException(
           "Wrong height of header "
-              + blockHeader.getHash().toString().substring(0, 20)
+              + blockHeader.getHash().toHexString()
               + " is "
               + blockHeader.getNumber()
               + " when we were expecting "
@@ -126,18 +126,18 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
     if (!firstHeader.getParentHash().equals(blockHeader.getHash())) {
       throw new BackwardSyncException(
           "Hash of header does not match our expectations, was "
-              + blockHeader.getHash().toString().substring(0, 20)
+              + blockHeader.getHash().toHexString()
               + " when we expected "
-              + firstHeader.getParentHash().toString().substring(0, 20));
+              + firstHeader.getParentHash().toHexString());
     }
     headers.put(blockHeader.getHash(), blockHeader);
     ancestors.add(blockHeader.getHash());
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
-        () -> blockHeader.getHash().toString().substring(0, 20),
+        () -> blockHeader.getHash().toHexString(),
         blockHeader::getNumber,
-        () -> firstHeader.getHash().toString().substring(0, 20),
+        () -> firstHeader.getHash().toHexString(),
         firstHeader::getNumber);
   }
 
@@ -163,16 +163,16 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
       debugLambda(
           LOG,
           "Merged backward chain led by block {} into chain led by block {}, new backward chain starts at height {} and ends at height {}",
-          () -> historicalPivot.getHash().toString().substring(0, 20),
-          () -> pivot.getHash().toString().substring(0, 20),
+          () -> historicalPivot.getHash().toHexString(),
+          () -> pivot.getHash().toHexString(),
           () -> pivot.getHeader().getNumber(),
           () -> getFirstAncestorHeader().orElseThrow().getNumber());
     } else {
       warnLambda(
           LOG,
           "Cannot merge previous historical run because headers of {} and {} do not equal. Ignoring previous run. Did someone lie to us?",
-          () -> firstHeader.getHash().toString().substring(0, 20),
-          () -> historicalPivot.getHash().toString().substring(0, 20));
+          () -> firstHeader.getHash().toHexString(),
+          () -> historicalPivot.getHash().toHexString());
     }
   }
 
