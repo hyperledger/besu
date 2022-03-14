@@ -356,10 +356,13 @@ public class EnodeURLImpl implements EnodeURL {
     public Builder ipAddress(final String ip, final EnodeDnsConfiguration enodeDnsConfiguration) {
       if (enodeDnsConfiguration.dnsEnabled()) {
         try {
-          if (enodeDnsConfiguration.updateEnabled()) {
-            this.maybeHostname = Optional.of(ip);
-          }
           this.ip = InetAddress.getByName(ip);
+          if (enodeDnsConfiguration.updateEnabled()) {
+            if (this.ip.isLoopbackAddress()) {
+              this.ip = InetAddress.getLocalHost();
+            }
+            this.maybeHostname = Optional.of(this.ip.getHostName());
+          }
         } catch (final UnknownHostException e) {
           if (!enodeDnsConfiguration.updateEnabled()) {
             throw new IllegalArgumentException("Invalid ip address or hostname.");

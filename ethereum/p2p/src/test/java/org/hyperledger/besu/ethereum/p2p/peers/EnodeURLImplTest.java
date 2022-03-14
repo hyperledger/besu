@@ -492,8 +492,15 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void toURI_WithHostnameShouldWorkWhenDnsEnabledAndUpdateEnabled() {
-    final String enodeURLString = "enode://" + VALID_NODE_ID + "@" + "localhost" + ":" + P2P_PORT;
+  public void toURI_WithHostnameShouldWorkWhenDnsEnabledAndUpdateEnabled()
+      throws UnknownHostException {
+    final String enodeURLString =
+        "enode://"
+            + VALID_NODE_ID
+            + "@"
+            + InetAddress.getLocalHost().getHostName()
+            + ":"
+            + P2P_PORT;
     final URI expectedURI = URI.create(enodeURLString);
     final URI createdURI =
         EnodeURLImpl.fromString(
