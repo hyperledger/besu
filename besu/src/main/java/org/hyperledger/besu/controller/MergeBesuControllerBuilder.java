@@ -70,7 +70,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             ethProtocolManager.ethContext(),
             syncState,
             new BackwardSyncLookupService(
-                protocolSchedule, ethProtocolManager.ethContext(), metricsSystem),
+                protocolSchedule, ethProtocolManager.ethContext(), metricsSystem, protocolContext),
             storageProvider));
   }
 

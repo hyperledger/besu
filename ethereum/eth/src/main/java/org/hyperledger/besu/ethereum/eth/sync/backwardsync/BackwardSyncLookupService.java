@@ -17,23 +17,21 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -43,6 +41,7 @@ import org.slf4j.Logger;
 public class BackwardSyncLookupService {
   private static final Logger LOG = getLogger(BackwardSyncLookupService.class);
   private static final int MAX_RETRIES = 100;
+  public static final int UNUSED = -1;
 
   @GuardedBy("this")
   private final Queue<Hash> hashes = new ArrayDeque<>();
@@ -54,14 +53,17 @@ public class BackwardSyncLookupService {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private List<Block> results = new ArrayList<>();
+  private final ProtocolContext protocolContext;
 
   public BackwardSyncLookupService(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final ProtocolContext protocolContext) {
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.protocolContext = protocolContext;
   }
 
   public CompletableFuture<List<Block>> lookup(final Hash newBlockhash) {
@@ -75,32 +77,14 @@ public class BackwardSyncLookupService {
       }
       running = true;
     }
-    return findBlocksWithRetries();
+    return tryToFindBlocks();
   }
 
-  private CompletableFuture<List<Block>> findBlocksWithRetries() {
-
-    CompletableFuture<List<Block>> f = tryToFindBlocks();
-    for (int i = 0; i < MAX_RETRIES; i++) {
-      f =
-          f.thenApply(CompletableFuture::completedFuture)
-              .exceptionally(
-                  ex -> {
-                    synchronized (this) {
-                      if (!results.isEmpty()) {
-                        List<Block> copy = new ArrayList<>(results);
-                        results = new ArrayList<>();
-                        return CompletableFuture.completedFuture(copy);
-                      }
-                    }
-                    LOG.error(
-                        "Failed to fetch blocks because {} Current peers: {}.  Waiting for few seconds ...",
-                        ex.getMessage(), ethContext.getEthPeers().peerCount());
-                    return ethContext.getScheduler().scheduleFutureTask(this::tryToFindBlocks, Duration.ofSeconds(5));
-                  })
-              .thenCompose(Function.identity());
-    }
-    return f.thenApply(this::rememberResults).thenCompose(this::possibleNextHash);
+  private CompletableFuture<List<Block>> tryToFindBlocks() {
+    return CompletableFuture.supplyAsync(this::getNextHash)
+        .thenCompose(this::tryToFindBlock)
+        .thenApply(this::rememberResult)
+        .thenCompose(this::possibleNextHash);
   }
 
   private CompletableFuture<List<Block>> possibleNextHash(final List<Block> blocks) {
@@ -112,11 +96,11 @@ public class BackwardSyncLookupService {
         return CompletableFuture.completedFuture(blocks);
       }
     }
-    return findBlocksWithRetries();
+    return tryToFindBlocks();
   }
 
-  private List<Block> rememberResults(final List<Block> blocks) {
-    this.results.addAll(blocks);
+  private List<Block> rememberResult(final Block block) {
+    this.results.add(block);
     return results;
   }
 
@@ -124,18 +108,20 @@ public class BackwardSyncLookupService {
     return hashes.peek();
   }
 
-  private CompletableFuture<List<Block>> tryToFindBlocks() {
-    return CompletableFuture.supplyAsync(
-            () ->
-                GetHeadersFromPeerByHashTask.forSingleHash(
-                        protocolSchedule, ethContext, getNextHash(), 0L, metricsSystem)
-                    .run())
-        .thenCompose(f -> f)
-        .thenCompose(
-            headers ->
-                GetBodiesFromPeerTask.forHeaders(
-                        protocolSchedule, ethContext, headers.getResult(), metricsSystem)
-                    .run())
+  private CompletableFuture<Block> tryToFindBlock(Hash targetHash) {
+
+    final RetryingGetBlockFromPeersTask getBlockTask =
+        RetryingGetBlockFromPeersTask.create(
+            protocolContext,
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            ethContext.getEthPeers().getMaxPeers(),
+            Optional.of(targetHash),
+            UNUSED);
+    return ethContext
+        .getScheduler()
+        .scheduleSyncWorkerTask(getBlockTask::run)
         .thenApply(AbstractPeerTask.PeerTaskResult::getResult);
   }
 }

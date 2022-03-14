@@ -49,11 +49,14 @@ public class BackwardSyncStep extends BackwardSyncTask {
   }
 
   private CompletableFuture<Void> waitForTTD() {
-    if(context.isOnTTD()) {
+    if (context.isOnTTD()) {
       return CompletableFuture.completedFuture(null);
     }
     LOG.info("Did not reach TTD yet, falling asleep...");
-    return context.getEthContext().getScheduler().scheduleFutureTask(this::waitForTTD, Duration.ofSeconds(5));
+    return context
+        .getEthContext()
+        .getScheduler()
+        .scheduleFutureTask(this::waitForTTD, Duration.ofSeconds(5));
   }
 
   @Override

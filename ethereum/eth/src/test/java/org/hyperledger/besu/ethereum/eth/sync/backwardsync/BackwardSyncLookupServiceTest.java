@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -68,6 +69,8 @@ public class BackwardSyncLookupServiceTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private MetricsSystem metricsSystem;
 
+  @Mock private ProtocolContext protocolContext;
+
   private BackwardSyncLookupService backwardSyncLookupService;
 
   @Before
@@ -100,7 +103,9 @@ public class BackwardSyncLookupServiceTest {
     EthContext ethContext = ethProtocolManager.ethContext();
 
     backwardSyncLookupService =
-        spy(new BackwardSyncLookupService(protocolSchedule, ethContext, metricsSystem));
+        spy(
+            new BackwardSyncLookupService(
+                protocolSchedule, ethContext, metricsSystem, protocolContext));
   }
 
   @Test
