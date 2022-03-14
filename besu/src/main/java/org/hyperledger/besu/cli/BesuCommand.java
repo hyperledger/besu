@@ -934,34 +934,40 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
   private final Long reorgLoggingThreshold = 6L;
 
-  @Option(
-      names = {"--miner-enabled"},
-      description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
-  private final Boolean isMiningEnabled = false;
+  // Miner options group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Miner Options|@%n")
+  MinerOptionGroup minerOptionGroup = new MinerOptionGroup();
 
-  @Option(
-      names = {"--miner-stratum-enabled"},
-      description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
-  private final Boolean iStratumMiningEnabled = false;
+  static class MinerOptionGroup {
+    @Option(
+        names = {"--miner-enabled"},
+        description = "Set if node will perform mining (default: ${DEFAULT-VALUE})")
+    private final Boolean isMiningEnabled = false;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--miner-stratum-host"},
-      description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
-  private String stratumNetworkInterface = "0.0.0.0";
+    @Option(
+        names = {"--miner-stratum-enabled"},
+        description = "Set if node will perform Stratum mining (default: ${DEFAULT-VALUE})")
+    private final Boolean iStratumMiningEnabled = false;
 
-  @Option(
-      names = {"--miner-stratum-port"},
-      description = "Stratum port binding (default: ${DEFAULT-VALUE})")
-  private final Integer stratumPort = 8008;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--miner-stratum-host"},
+        description = "Host for Stratum network mining service (default: ${DEFAULT-VALUE})")
+    private String stratumNetworkInterface = "0.0.0.0";
 
-  @Option(
-      names = {"--miner-coinbase"},
-      description =
-          "Account to which mining rewards are paid. You must specify a valid coinbase if "
-              + "mining is enabled using --miner-enabled option",
-      arity = "1")
-  private final Address coinbase = null;
+    @Option(
+        names = {"--miner-stratum-port"},
+        description = "Stratum port binding (default: ${DEFAULT-VALUE})")
+    private final Integer stratumPort = 8008;
+
+    @Option(
+        names = {"--miner-coinbase"},
+        description =
+            "Account to which mining rewards are paid. You must specify a valid coinbase if "
+                + "mining is enabled using --miner-enabled option",
+        arity = "1")
+    private final Address coinbase = null;
+  }
 
   @Option(
       names = {"--min-gas-price"},
@@ -1659,13 +1665,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
-    if (isMiningEnabled && coinbase == null) {
+    if (minerOptionGroup.isMiningEnabled && minerOptionGroup.coinbase == null) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
-    if (!isMiningEnabled && iStratumMiningEnabled) {
+    if (!minerOptionGroup.isMiningEnabled && minerOptionGroup.iStratumMiningEnabled) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
@@ -1795,7 +1801,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           logger,
           commandLine,
           "--miner-enabled",
-          !isMiningEnabled,
+          !minerOptionGroup.isMiningEnabled,
           asList(
               "--miner-coinbase",
               "--min-gas-price",
@@ -1807,7 +1813,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--miner-enabled",
-        !isMiningEnabled,
+        !minerOptionGroup.isMiningEnabled,
         asList(
             "--miner-stratum-enabled",
             "--Xminer-remote-sealers-limit",
@@ -1969,14 +1975,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .dataDirectory(dataDir())
         .miningParameters(
             new MiningParameters.Builder()
-                .coinbase(coinbase)
+                .coinbase(minerOptionGroup.coinbase)
                 .targetGasLimit(targetGasLimit)
                 .minTransactionGasPrice(minTransactionGasPrice)
                 .extraData(extraData)
-                .miningEnabled(isMiningEnabled)
-                .stratumMiningEnabled(iStratumMiningEnabled)
-                .stratumNetworkInterface(stratumNetworkInterface)
-                .stratumPort(stratumPort)
+                .miningEnabled(minerOptionGroup.isMiningEnabled)
+                .stratumMiningEnabled(minerOptionGroup.iStratumMiningEnabled)
+                .stratumNetworkInterface(minerOptionGroup.stratumNetworkInterface)
+                .stratumPort(minerOptionGroup.stratumPort)
                 .stratumExtranonce(unstableMiningOptions.getStratumExtranonce())
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .remoteSealersLimit(unstableMiningOptions.getRemoteSealersLimit())
@@ -3008,7 +3014,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         metricsOptionGroup.metricsPushPort,
         metricsOptionGroup.isMetricsPushEnabled);
-    addPortIfEnabled(effectivePorts, stratumPort, iStratumMiningEnabled);
+    addPortIfEnabled(
+        effectivePorts, minerOptionGroup.stratumPort, minerOptionGroup.iStratumMiningEnabled);
     return effectivePorts;
   }
 
