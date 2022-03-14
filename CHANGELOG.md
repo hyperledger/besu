@@ -4,8 +4,9 @@
 
 ### Additions and Improvements
 - Execution layer (The Merge):
-  - Execution specific RPC endpoint [[#3378](https://github.com/hyperledger/besu/issues/3378)
+  - Execution specific RPC endpoint [#3378](https://github.com/hyperledger/besu/issues/3378)
   - Adds JWT authentication to Engine APIs
+  - Supports kiln V2.1 spec
 - Tracing APIs 
   - new API methods: trace_rawTransaction, trace_get, trace_callMany
   - added revertReason to trace APIs including: trace_transaction, trace_get, trace_call, trace_callMany, and trace_rawTransaction
@@ -52,11 +53,11 @@
 - Add option to require replay protection for locally submitted transactions [\#1975](https://github.com/hyperledger/besu/issues/1975)
 - Update to block header validation for IBFT and QBFT to support London fork EIP-1559 [#3251](https://github.com/hyperledger/besu/pull/3251)
 - Move into SLF4J as logging facade [#3285](https://github.com/hyperledger/besu/pull/3285)
-- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.
+- Changing the order in which we traverse the word state tree during fast sync. This should improve fast sync during subsequent pivot changes.[#3202](https://github.com/hyperledger/besu/pull/3202)
 - Updated besu-native to version 0.4.3 [#3331](https://github.com/hyperledger/besu/pull/3331)
 - Refactor synchronizer to asynchronously retrieve blocks from peers, and to change peer when retrying to get a block. [#3326](https://github.com/hyperledger/besu/pull/3326)
 - Disable RocksDB TTL compactions [#3356](https://github.com/hyperledger/besu/pull/3356)
-- add a websocket frame size configuration CLI parameter [3368][https://github.com/hyperledger/besu/pull/3379]
+- add a websocket frame size configuration CLI parameter [3386][https://github.com/hyperledger/besu/pull/3386]
 - Add `--ec-curve` parameter to export/export-address public-key subcommands [#3333](https://github.com/hyperledger/besu/pull/3333)
 
 ### Bug Fixes
