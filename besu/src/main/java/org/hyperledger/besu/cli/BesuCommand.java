@@ -1985,7 +1985,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
     graphQLConfiguration.setEnabled(graphQlOptionGroup.isGraphQLHttpEnabled);
-    graphQLConfiguration.setHost(graphQlOptionGroup.graphQLHttpHost);
+    graphQLConfiguration.setHost(
+        Strings.isNullOrEmpty(graphQlOptionGroup.graphQLHttpHost)
+            ? autoDiscoverDefaultIP().getHostAddress()
+            : graphQlOptionGroup.graphQLHttpHost);
     graphQLConfiguration.setPort(graphQlOptionGroup.graphQLHttpPort);
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
     graphQLConfiguration.setCorsAllowedDomains(graphQlOptionGroup.graphQLHttpCorsAllowedOrigins);
