@@ -27,7 +27,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BackwardChainTest {
+public class InMemoryBackwardChainTest {
 
   public static final int HEIGHT = 20_000;
   public static final int ELEMENTS = 20;
@@ -40,30 +40,31 @@ public class BackwardChainTest {
 
   @Test
   public void shouldReturnFirstHeaderCorrectly() {
-    BackwardChain backwardChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    backwardChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 4).getHeader());
+    BackwardSyncStorage backwardChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 4).getHeader());
     BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 4).getHeader());
   }
 
   @Test
   public void shouldSaveHeadersWhenHeightAndHashMatches() {
-    BackwardChain backwardChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    backwardChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 4).getHeader());
+    BackwardSyncStorage backwardChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 4).getHeader());
     BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 4).getHeader());
   }
 
   @Test
   public void shouldNotSaveHeadersWhenWrongHeight() {
-    BackwardChain backwardChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    backwardChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
-    assertThatThrownBy(() -> backwardChain.saveHeader(blocks.get(blocks.size() - 5).getHeader()))
+    BackwardSyncStorage backwardChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
+    assertThatThrownBy(
+            () -> backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 5).getHeader()))
         .isInstanceOf(BackwardSyncException.class)
         .hasMessageContaining("Wrong height of header");
     BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
@@ -72,11 +73,11 @@ public class BackwardChainTest {
 
   @Test
   public void shouldNotSaveHeadersWhenWrongHash() {
-    BackwardChain backwardChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    backwardChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
+    BackwardSyncStorage backwardChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
     BlockHeader wrongHashHeader = prepareWrongParentHash(blocks.get(blocks.size() - 4).getHeader());
-    assertThatThrownBy(() -> backwardChain.saveHeader(wrongHashHeader))
+    assertThatThrownBy(() -> backwardChain.prependAncestorsHeader(wrongHashHeader))
         .isInstanceOf(BackwardSyncException.class)
         .hasMessageContaining("Hash of header does not match our expectations");
     BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
@@ -86,18 +87,18 @@ public class BackwardChainTest {
   @Test
   public void shouldMergeConnectedChains() {
 
-    BackwardChain firstChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    firstChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    firstChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
+    BackwardSyncStorage firstChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
 
-    BackwardChain secondChain = new BackwardChain(blocks.get(blocks.size() - 4));
-    secondChain.saveHeader(blocks.get(blocks.size() - 5).getHeader());
-    secondChain.saveHeader(blocks.get(blocks.size() - 6).getHeader());
+    InMemoryBackwardChain secondChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 4));
+    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 5).getHeader());
+    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 6).getHeader());
 
     BlockHeader firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
 
-    firstChain.merge(secondChain);
+    firstChain.prependChain(secondChain);
 
     firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 6).getHeader());
@@ -106,18 +107,18 @@ public class BackwardChainTest {
   @Test
   public void shouldNotMergeNotConnectedChains() {
 
-    BackwardChain firstChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    firstChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    firstChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
+    BackwardSyncStorage firstChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
 
-    BackwardChain secondChain = new BackwardChain(blocks.get(blocks.size() - 5));
-    secondChain.saveHeader(blocks.get(blocks.size() - 6).getHeader());
-    secondChain.saveHeader(blocks.get(blocks.size() - 7).getHeader());
+    InMemoryBackwardChain secondChain = new InMemoryBackwardChain(blocks.get(blocks.size() - 5));
+    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 6).getHeader());
+    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 7).getHeader());
 
     BlockHeader firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
 
-    firstChain.merge(secondChain);
+    firstChain.prependChain(secondChain);
 
     firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
@@ -126,21 +127,22 @@ public class BackwardChainTest {
   @Test
   public void shouldDropFromTheEnd() {
 
-    BackwardChain backwardChain = new BackwardChain(blocks.get(blocks.size() - 1));
-    backwardChain.saveHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.saveHeader(blocks.get(blocks.size() - 3).getHeader());
+    BackwardSyncStorage backwardSyncStorage =
+        new InMemoryBackwardChain(blocks.get(blocks.size() - 1));
+    backwardSyncStorage.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
+    backwardSyncStorage.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
 
-    BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
+    BlockHeader firstHeader = backwardSyncStorage.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
 
-    backwardChain.dropFirstHeader();
+    backwardSyncStorage.dropFirstHeader();
 
-    firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
+    firstHeader = backwardSyncStorage.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 2).getHeader());
 
-    backwardChain.dropFirstHeader();
+    backwardSyncStorage.dropFirstHeader();
 
-    firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
+    firstHeader = backwardSyncStorage.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 1).getHeader());
   }
 }

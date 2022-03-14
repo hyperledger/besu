@@ -40,7 +40,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
 
-  public ForwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
+  public ForwardSyncStep(
+      final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
     super(context, backwardChain);
   }
 

@@ -59,12 +59,12 @@ public class BackwardSyncTaskTest {
 
   @NotNull
   private BackwardSyncTask createBackwardSyncTask() {
-    final BackwardChain backwardChain = new BackwardChain(blocks.get(1));
+    final BackwardSyncStorage backwardChain = new InMemoryBackwardChain(blocks.get(1));
     return createBackwardSyncTask(backwardChain);
   }
 
   @NotNull
-  private BackwardSyncTask createBackwardSyncTask(final BackwardChain backwardChain) {
+  private BackwardSyncTask createBackwardSyncTask(final BackwardSyncStorage backwardChain) {
     return new BackwardSyncTask(context, backwardChain) {
       @Override
       CompletableFuture<Void> executeOneStep() {
@@ -76,7 +76,8 @@ public class BackwardSyncTaskTest {
   @Test
   public void shouldFinishImmediatellyFailWhenPivotIsDifferent()
       throws ExecutionException, InterruptedException {
-    when(context.getCurrentChain()).thenReturn(Optional.of(new BackwardChain(blocks.get(0))));
+    when(context.getCurrentChain())
+        .thenReturn(Optional.of(new InMemoryBackwardChain(blocks.get(0))));
     BackwardSyncTask step = createBackwardSyncTask();
     CompletableFuture<Void> completableFuture = step.executeAsync(null);
     assertThat(completableFuture.isDone()).isTrue();
@@ -84,7 +85,7 @@ public class BackwardSyncTaskTest {
 
   @Test
   public void shouldExecuteWhenPivotIsCorrect() {
-    final BackwardChain backwardChain = new BackwardChain(blocks.get(1));
+    final BackwardSyncStorage backwardChain = new InMemoryBackwardChain(blocks.get(1));
     BackwardSyncTask step = createBackwardSyncTask();
     when(context.getCurrentChain()).thenReturn(Optional.of(backwardChain));
     CompletableFuture<Void> completableFuture = step.executeAsync(null);

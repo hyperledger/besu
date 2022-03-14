@@ -24,29 +24,27 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BackwardChain { // TODO: this class now stores everything in memory...
-  private static final Logger LOG = LoggerFactory.getLogger(BackwardChain.class);
+public class InMemoryBackwardChain implements BackwardSyncStorage {
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryBackwardChain.class);
 
   private final List<BlockHeader> ancestors = new ArrayList<>();
   private final List<Block> successors = new ArrayList<>();
-  private final Set<Hash> successorsHashes = new HashSet<>();
   private final Map<Hash, Block> trustedBlocks = new HashMap<>();
 
-  public BackwardChain(final Block pivot) {
+  public InMemoryBackwardChain(final Block pivot) {
     ancestors.add(pivot.getHeader());
     successors.add(pivot);
   }
 
+  @Override
   public Optional<BlockHeader> getFirstAncestorHeader() {
     if (ancestors.isEmpty()) {
       return Optional.empty();
@@ -54,6 +52,7 @@ public class BackwardChain { // TODO: this class now stores everything in memory
     return Optional.of(ancestors.get(ancestors.size() - 1));
   }
 
+  @Override
   public List<BlockHeader> getFirstNAncestorHeaders(final int size) {
     List<BlockHeader> headers = new ArrayList<>(size);
     for (int i = 0; i < ancestors.size() && i < size; ++i) {
@@ -62,7 +61,18 @@ public class BackwardChain { // TODO: this class now stores everything in memory
     return headers;
   }
 
-  public void saveHeader(final BlockHeader blockHeader) {
+  @Override
+  public List<BlockHeader> getAllAncestors() {
+    return ancestors;
+  }
+
+  @Override
+  public Map<Hash, Block> getAllTrustedBlocks() {
+    return trustedBlocks;
+  }
+
+  @Override
+  public void prependAncestorsHeader(final BlockHeader blockHeader) {
     BlockHeader firstHeader =
         getFirstAncestorHeader()
             .orElseThrow(
@@ -95,7 +105,8 @@ public class BackwardChain { // TODO: this class now stores everything in memory
         firstHeader::getNumber);
   }
 
-  public void merge(final BackwardChain historicalBackwardChain) {
+  @Override
+  public void prependChain(final BackwardSyncStorage historicalBackwardChain) {
     BlockHeader firstHeader =
         getFirstAncestorHeader()
             .orElseThrow(
@@ -103,12 +114,12 @@ public class BackwardChain { // TODO: this class now stores everything in memory
     Block historicalPivot = historicalBackwardChain.getPivot();
     Block pivot = getPivot();
     if (firstHeader.getParentHash().equals(historicalPivot.getHash())) {
-      Collections.reverse(historicalBackwardChain.successors);
+      Collections.reverse(historicalBackwardChain.getSuccessors());
       this.ancestors.addAll(
-          historicalBackwardChain.successors.stream()
+          historicalBackwardChain.getSuccessors().stream()
               .map(Block::getHeader)
               .collect(Collectors.toList()));
-      this.ancestors.addAll(historicalBackwardChain.ancestors);
+      this.ancestors.addAll(historicalBackwardChain.getAllAncestors());
       debugLambda(
           LOG,
           "Merged backward chain led by block {} into chain led by block {}, new backward chain starts at height {} and ends at height {}",
@@ -116,7 +127,7 @@ public class BackwardChain { // TODO: this class now stores everything in memory
           () -> pivot.getHash().toString().substring(0, 20),
           () -> pivot.getHeader().getNumber(),
           () -> getFirstAncestorHeader().orElseThrow().getNumber());
-      trustedBlocks.putAll(historicalBackwardChain.trustedBlocks);
+      trustedBlocks.putAll(historicalBackwardChain.getAllTrustedBlocks());
     } else {
       warnLambda(
           LOG,
@@ -126,33 +137,34 @@ public class BackwardChain { // TODO: this class now stores everything in memory
     }
   }
 
+  @Override
   public Block getPivot() {
     return successors.get(successors.size() - 1);
   }
 
+  @Override
   public void dropFirstHeader() {
     ancestors.remove(ancestors.size() - 1);
   }
 
+  @Override
   public void appendExpectedBlock(final Block newPivot) {
     successors.add(newPivot);
-    successorsHashes.add(newPivot.getHash());
     trustedBlocks.put(newPivot.getHash(), newPivot);
   }
 
+  @Override
   public List<Block> getSuccessors() {
     return successors;
   }
 
+  @Override
   public boolean isTrusted(final Hash hash) {
     return trustedBlocks.containsKey(hash);
   }
 
+  @Override
   public Block getTrustedBlock(final Hash hash) {
     return trustedBlocks.get(hash);
-  }
-
-  public boolean knowsSuccessor(final Hash blockHash) {
-    return successorsHashes.contains(blockHash);
   }
 }

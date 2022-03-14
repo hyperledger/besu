@@ -110,7 +110,7 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldExecuteForwardSyncWhenPossible() throws Exception {
-    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
+    final BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
     ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
 
     final RespondingEthPeer.Responder responder =
@@ -134,7 +134,8 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldDropHeadersAsLongAsWeKnowThem() {
-    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 3);
+    final BackwardSyncStorage backwardChain =
+        createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 3);
     ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
 
     assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
@@ -146,10 +147,10 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldDropBlocksThatWeTrust() {
-    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT);
+    final InMemoryBackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT);
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
-    final BackwardChain finalChain = createBackwardChain(LOCAL_HEIGHT + 2, LOCAL_HEIGHT + 5);
-    finalChain.merge(backwardChain);
+    final BackwardSyncStorage finalChain = createBackwardChain(LOCAL_HEIGHT + 2, LOCAL_HEIGHT + 5);
+    finalChain.prependChain(backwardChain);
 
     ForwardSyncStep step = new ForwardSyncStep(context, finalChain);
 
@@ -177,7 +178,7 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldCreateAnotherStepWhenThereIsWorkToBeDone() {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 10);
+    BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 10);
     ForwardSyncStep step = spy(new ForwardSyncStep(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
@@ -187,7 +188,7 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldCreateBackwardStepWhenParentOfWorkIsNotImportedYet() {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
+    BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
     ForwardSyncStep step = spy(new ForwardSyncStep(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
@@ -197,7 +198,7 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldAddSuccessorsWhenNoUnknownBlockSet() throws Exception {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 3, LOCAL_HEIGHT);
+    BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT - 3, LOCAL_HEIGHT);
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 2));
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 3));
@@ -211,17 +212,17 @@ public class ForwardSyncStepTest {
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 3));
   }
 
-  private BackwardChain createBackwardChain(final int from, final int until) {
-    BackwardChain chain = backwardChainFromBlock(until);
+  private InMemoryBackwardChain createBackwardChain(final int from, final int until) {
+    InMemoryBackwardChain chain = backwardChainFromBlock(until);
     for (int i = until; i > from; --i) {
-      chain.saveHeader(getBlockByNumber(i - 1).getHeader());
+      chain.prependAncestorsHeader(getBlockByNumber(i - 1).getHeader());
     }
     return chain;
   }
 
   @NotNull
-  private BackwardChain backwardChainFromBlock(final int number) {
-    return new BackwardChain(remoteBlockchain.getBlockByNumber(number).orElseThrow());
+  private InMemoryBackwardChain backwardChainFromBlock(final int number) {
+    return new InMemoryBackwardChain(remoteBlockchain.getBlockByNumber(number).orElseThrow());
   }
 
   @NotNull

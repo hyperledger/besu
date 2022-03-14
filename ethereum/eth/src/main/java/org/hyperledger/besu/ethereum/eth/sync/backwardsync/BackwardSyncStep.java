@@ -32,7 +32,8 @@ import org.slf4j.LoggerFactory;
 public class BackwardSyncStep extends BackwardSyncTask {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
 
-  public BackwardSyncStep(final BackwardsSyncContext context, final BackwardChain backwardChain) {
+  public BackwardSyncStep(
+      final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
     super(context, backwardChain);
   }
 
@@ -147,7 +148,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected Void saveHeader(final BlockHeader blockHeader) {
-    backwardChain.saveHeader(blockHeader);
+    backwardChain.prependAncestorsHeader(blockHeader);
     context.putCurrentChainToHeight(blockHeader.getNumber(), backwardChain);
     return null;
   }
@@ -162,11 +163,11 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected BlockHeader possibleMerge(final Void unused) {
-    Optional<BackwardChain> maybeHistoricalBackwardChain =
+    Optional<BackwardSyncStorage> maybeHistoricalBackwardChain =
         Optional.ofNullable(
             context.findCorrectChainFromPivot(
                 backwardChain.getFirstAncestorHeader().orElseThrow().getNumber() - 1));
-    maybeHistoricalBackwardChain.ifPresent(backwardChain::merge);
+    maybeHistoricalBackwardChain.ifPresent(backwardChain::prependChain);
     return backwardChain.getFirstAncestorHeader().orElseThrow();
   }
 
