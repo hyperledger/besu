@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -39,7 +37,7 @@ public class EngineExchangeTransitionConfigurationResult {
 
   @JsonGetter(value = "terminalTotalDifficulty")
   public String getTerminalTotalDifficultyAsString() {
-    return terminalTotalDifficulty.toHexString();
+    return Quantity.create(this.terminalTotalDifficulty.getAsBigInteger());
   }
 
   public Difficulty getTerminalTotalDifficulty() {
@@ -57,10 +55,7 @@ public class EngineExchangeTransitionConfigurationResult {
 
   @JsonGetter(value = "terminalBlockNumber")
   public String getTerminalBlockNumberAsString() {
-    return Optional.of(terminalBlockNumber)
-        .filter(val -> val != 0L)
-        .map(Long::toHexString)
-        .orElse("0x0");
+    return Quantity.create(this.terminalBlockNumber);
   }
 
   public Long getTerminalBlockNumber() {
