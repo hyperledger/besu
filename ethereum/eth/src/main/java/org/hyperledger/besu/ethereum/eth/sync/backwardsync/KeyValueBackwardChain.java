@@ -93,8 +93,8 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
   @Override
   public List<BlockHeader> getFirstNAncestorHeaders(final int size) {
     List<Hash> resultList = new ArrayList<>(size);
-    for (int i = 0; i < ancestors.size() && i < size; ++i) {
-      resultList.add(ancestors.get(ancestors.size() - 1 - i));
+    for (int i = size; i > 0; --i) {
+      resultList.add(ancestors.get(ancestors.size() - i));
     }
     return resultList.stream()
         .map(h -> this.headers.get(h).orElseThrow())
@@ -147,32 +147,35 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
         getFirstAncestorHeader()
             .orElseThrow(
                 () -> new BackwardSyncException("Cannot merge when syncing forward...", true));
-    Block historicalPivot = historicalBackwardChain.getPivot();
-    Block pivot = getPivot();
-    if (firstHeader.getParentHash().equals(historicalPivot.getHash())) {
+    BlockHeader historicalHeader =
+        historicalBackwardChain.getHeaderOnHeight(firstHeader.getNumber() - 1);
+    if (firstHeader.getParentHash().equals(historicalHeader.getHash())) {
       Collections.reverse(historicalBackwardChain.getSuccessors());
       this.ancestors.addAll(
           historicalBackwardChain.getSuccessors().stream()
               .map(Block::getHeader)
+              .filter(blockHeader -> blockHeader.getNumber() < firstHeader.getNumber())
               .map(BlockHeader::getHash)
               .collect(Collectors.toList()));
       this.ancestors.addAll(
           historicalBackwardChain.getAllAncestors().stream()
+              .filter(blockHeader -> blockHeader.getNumber() < firstHeader.getNumber())
               .map(BlockHeader::getHash)
               .collect(Collectors.toList()));
+      // todo maybe some successors are after our successors...
       debugLambda(
           LOG,
-          "Merged backward chain led by block {} into chain led by block {}, new backward chain starts at height {} and ends at height {}",
-          () -> historicalPivot.getHash().toHexString(),
-          () -> pivot.getHash().toHexString(),
-          () -> pivot.getHeader().getNumber(),
+          "Merged backward chain. New chain starts at height {} and ends at height {}",
+          () -> getPivot().getHeader().getNumber(),
           () -> getFirstAncestorHeader().orElseThrow().getNumber());
     } else {
       warnLambda(
           LOG,
-          "Cannot merge previous historical run because headers of {} and {} do not equal. Ignoring previous run. Did someone lie to us?",
-          () -> firstHeader.getHash().toHexString(),
-          () -> historicalPivot.getHash().toHexString());
+          "Cannot merge previous historical run because headers on height {} ({}) of {} and {} are not equal. Ignoring previous run. Did someone lie to us?",
+          () -> firstHeader.getNumber() - 1,
+          () -> historicalHeader.getNumber(),
+          () -> firstHeader.getParentHash().toHexString(),
+          () -> historicalHeader.getHash().toHexString());
     }
   }
 
@@ -232,4 +235,26 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
 
   @Override
   public void commit() {}
+
+  @Override
+  public BlockHeader getHeaderOnHeight(final long height) {
+    final long firstAncestor = headers.get(ancestors.get(0)).orElseThrow().getNumber();
+    if (firstAncestor >= height) {
+      LOG.info(
+          "First: {} Height: {}, result: {}",
+          firstAncestor,
+          height,
+          headers.get(ancestors.get((int) (firstAncestor - height))).orElseThrow().getNumber());
+      return headers.get(ancestors.get((int) (firstAncestor - height))).orElseThrow();
+    } else {
+      final long firstSuccessor = headers.get(successors.get(0)).orElseThrow().getNumber();
+      LOG.info(
+          "First: {} Height: {}, result: {}",
+          firstSuccessor,
+          height,
+          headers.get(successors.get((int) (height - firstSuccessor))).orElseThrow().getNumber());
+
+      return headers.get(successors.get((int) (height - firstSuccessor))).orElseThrow();
+    }
+  }
 }

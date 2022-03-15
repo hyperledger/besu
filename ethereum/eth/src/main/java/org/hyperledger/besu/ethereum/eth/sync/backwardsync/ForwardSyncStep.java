@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 public class ForwardSyncStep extends BackwardSyncTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
+  private int batchSize = BackwardsSyncContext.BATCH_SIZE;
 
   public ForwardSyncStep(
       final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
@@ -69,13 +70,13 @@ public class ForwardSyncStep extends BackwardSyncTask {
         debugLambda(
             LOG,
             "Block {} is already imported, we can ignore it for the sync process",
-            () -> header.getHash().toString().substring(0, 20));
+            () -> header.getHash().toHexString());
         backwardChain.dropFirstHeader();
       } else if (backwardChain.isTrusted(header.getHash())) {
         debugLambda(
             LOG,
             "Block {} was added by consensus layer, we can trust it and should therefore import it.",
-            () -> header.getHash().toString().substring(0, 20));
+            () -> header.getHash().toHexString());
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
         return header;
@@ -91,17 +92,18 @@ public class ForwardSyncStep extends BackwardSyncTask {
       if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
         debugLambda(
             LOG,
-            "Block {} is already imported, we can ignore it for the sync process",
-            () -> header.getHash().toString().substring(0, 20));
+            "Block {}({}) is already imported, we can ignore it for the sync process",
+            () -> header.getNumber(),
+            () -> header.getHash().toHexString());
         backwardChain.dropFirstHeader();
       } else if (backwardChain.isTrusted(header.getHash())) {
         debugLambda(
             LOG,
             "Block {} was added by consensus layer, we can trust it and should therefore import it.",
-            () -> header.getHash().toString().substring(0, 20));
+            () -> header.getHash().toHexString());
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
-        return backwardChain.getFirstNAncestorHeaders(BackwardsSyncContext.BATCH_SIZE);
+        return backwardChain.getFirstNAncestorHeaders(batchSize);
       }
     }
     return Collections.emptyList();
@@ -115,7 +117,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
       debugLambda(
           LOG,
           "We don't have body of block {}, going to request it",
-          () -> blockHeader.getHash().toString().substring(0, 20));
+          () -> blockHeader.getHash().toHexString());
       return requestBlock(blockHeader).thenApply(this::saveBlock);
     }
   }
@@ -127,9 +129,11 @@ public class ForwardSyncStep extends BackwardSyncTask {
     } else {
       debugLambda(
           LOG,
-          "We don't have body of {} blocks starting from {}, going to request it",
+          "We don't have body of {} blocks   {}->{} ({}), going to request it",
           blockHeaders::size,
-          () -> blockHeaders.get(0).getHash().toString().substring(0, 20));
+          () -> blockHeaders.get(0).getNumber(),
+          () -> blockHeaders.get(blockHeaders.size() - 1).getNumber(),
+          () -> blockHeaders.get(0).getHash().toHexString());
       return requestBodies(blockHeaders).thenApply(this::saveBlocks);
     }
   }
@@ -169,10 +173,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected Void saveBlock(final Block block) {
-    debugLambda(
-        LOG,
-        "Going to validate block {}",
-        () -> block.getHeader().getHash().toString().substring(0, 20));
+    debugLambda(LOG, "Going to validate block {}", () -> block.getHeader().getHash().toHexString());
     var optResult =
         context
             .getBlockValidator(block.getHeader().getNumber())
@@ -187,7 +188,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
           debugLambda(
               LOG,
               "Block {} was validated, going to import it",
-              () -> block.getHeader().getHash().toString().substring(0, 20));
+              () -> block.getHeader().getHash().toHexString());
           result.worldState.persist(block.getHeader());
           context.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
         });
@@ -196,8 +197,20 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected Void saveBlocks(final List<Block> blocks) {
+
     for (Block block : blocks) {
-      saveBlock(block);
+      final Optional<Block> parent =
+          context
+              .getProtocolContext()
+              .getBlockchain()
+              .getBlockByHash(block.getHeader().getParentHash());
+      if (parent.isEmpty()) {
+        batchSize = batchSize / 2 + 1;
+        return null;
+      } else {
+        batchSize = BackwardsSyncContext.BATCH_SIZE;
+        saveBlock(block);
+      }
     }
     backwardChain.commit();
     infoLambda(
@@ -209,27 +222,27 @@ public class ForwardSyncStep extends BackwardSyncTask {
   }
 
   @VisibleForTesting
-  protected CompletableFuture<Void> possiblyMoreForwardSteps(final BlockHeader firstUnsynced) {
+  protected CompletableFuture<Void> possiblyMoreForwardSteps(final BlockHeader firstNotSynced) {
     CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
-    if (firstUnsynced == null) {
-      LOG.info("Importing blocks provided by consensus layer...");
-      backwardChain
-          .getSuccessors()
-          .forEach(
-              block -> {
-                if (!context.getProtocolContext().getBlockchain().contains(block.getHash())) {
-                  saveBlock(block);
-                }
-              });
+    if (firstNotSynced == null) {
+      final List<Block> successors = backwardChain.getSuccessors();
+      LOG.info("Importing {} blocks provided by consensus layer...", successors.size());
+      successors.forEach(
+          block -> {
+            if (!context.getProtocolContext().getBlockchain().contains(block.getHash())) {
+              saveBlock(block);
+            }
+          });
       LOG.info("The Backward sync is done...");
       backwardChain.clear();
       return CompletableFuture.completedFuture(null);
     }
-    if (context.getProtocolContext().getBlockchain().contains(firstUnsynced.getParentHash())) {
+    if (context.getProtocolContext().getBlockchain().contains(firstNotSynced.getParentHash())) {
       debugLambda(
           LOG,
-          "Block {} is not yet imported, we need to run another step of ForwardSync",
-          () -> firstUnsynced.getHash().toString().substring(0, 20));
+          "Block {}({}) is not yet imported, we need to run another step of ForwardSync",
+          () -> firstNotSynced.getNumber(),
+          () -> firstNotSynced.getHash().toHexString());
       return completableFuture.thenCompose(this::executeAsync);
     }
 
@@ -237,8 +250,8 @@ public class ForwardSyncStep extends BackwardSyncTask {
         LOG,
         "Block {} is not yet imported but its parent {} is not imported either... "
             + "This should not normally happen and indicates a wrong behaviour somewhere...",
-        () -> firstUnsynced.getHash().toHexString(),
-        () -> firstUnsynced.getParentHash().toHexString());
+        () -> firstNotSynced.getHash().toHexString(),
+        () -> firstNotSynced.getParentHash().toHexString());
     return completableFuture.thenCompose(this::executeBackwardAsync);
   }
 

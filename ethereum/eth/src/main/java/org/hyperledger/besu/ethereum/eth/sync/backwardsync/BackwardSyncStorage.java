@@ -70,4 +70,6 @@ public interface BackwardSyncStorage {
   void clear();
 
   void commit();
+
+  BlockHeader getHeaderOnHeight(long height);
 }

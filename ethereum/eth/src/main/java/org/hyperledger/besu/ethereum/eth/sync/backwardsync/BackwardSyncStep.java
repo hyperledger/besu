@@ -141,7 +141,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
                 throw new BackwardSyncException(
                     "Did not receive a header for hash {}" + hash.toHexString(), true);
               }
-              infoLambda(
+              debugLambda(
                   LOG,
                   "Got headers {} -> {} ",
                   blockHeaders.get(0)::getNumber,
@@ -165,8 +165,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
     infoLambda(
         LOG,
         "Saved headers {} -> {}",
-        () -> blockHeaders.get(0).getHash().toHexString(),
-        () -> blockHeaders.get(blockHeaders.size() - 1).getHash().toHexString());
+        () -> blockHeaders.get(0).getNumber(),
+        () -> blockHeaders.get(blockHeaders.size() - 1).getNumber());
     return null;
   }
 

@@ -187,4 +187,15 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
 
   @Override
   public void commit() {}
+
+  @Override
+  public BlockHeader getHeaderOnHeight(final long height) {
+    final long firstAncestor = ancestors.get(0).getNumber();
+    if (firstAncestor >= height) {
+      return ancestors.get((int) (firstAncestor - height));
+    } else {
+      final long firstSuccessor = successors.get(0).getHeader().getNumber();
+      return successors.get((int) (height - firstSuccessor)).getHeader();
+    }
+  }
 }
