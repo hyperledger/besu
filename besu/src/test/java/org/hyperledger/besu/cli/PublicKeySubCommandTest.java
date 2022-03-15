@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 
+import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -162,11 +163,25 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void callingPublicKeySubCommandVersionMustDisplayVersion() {
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   // Export public key sub-sub-command
   @Test
   public void callingPublicKeyExportSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--help");
     assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingPublicKeyExportSubCommandVersionMustDisplayVersion() {
+    parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_SUBCOMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -255,6 +270,14 @@ public class PublicKeySubCommandTest extends CommandTestAbstract {
   public void callingPublicKeyExportAddressSubCommandHelpMustDisplayUsage() {
     parseCommand(PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--help");
     assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_PUBLIC_KEY_EXPORT_ADDRESS_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingPublicKeyExportAddressSubCommandVersionMustDisplayVersion() {
+    parseCommand(
+        PUBLIC_KEY_SUBCOMMAND_NAME, PUBLIC_KEY_EXPORT_ADDRESS_SUBCOMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
