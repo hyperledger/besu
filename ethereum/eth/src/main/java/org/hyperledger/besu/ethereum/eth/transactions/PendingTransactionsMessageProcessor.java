@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -96,10 +97,15 @@ public class PendingTransactionsMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      LOG.trace("Received pooled transaction hashes message from {}", peer);
+      final var transactionHashes = transactionsMessage.pendingTransactions();
+      traceLambda(
+          LOG,
+          "Received pooled transaction hashes message from {}, transactions {}, list {}",
+          peer::toString,
+          transactionHashes::size,
+          transactionHashes::toString);
 
-      transactionTracker.markTransactionsHashesAsSeen(
-          peer, transactionsMessage.pendingTransactions());
+      transactionTracker.markTransactionsHashesAsSeen(peer, transactionHashes);
       if (syncState.isInSync(SYNC_TOLERANCE)) {
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
             scheduledTasks.computeIfAbsent(
@@ -113,7 +119,7 @@ public class PendingTransactionsMessageProcessor {
                   return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
                 });
 
-        for (final Hash hash : transactionsMessage.pendingTransactions()) {
+        for (final Hash hash : transactionHashes) {
           if (transactionPool.getTransactionByHash(hash).isEmpty()
               && transactionPool.addTransactionHash(hash)) {
             bufferedTask.addHash(hash);

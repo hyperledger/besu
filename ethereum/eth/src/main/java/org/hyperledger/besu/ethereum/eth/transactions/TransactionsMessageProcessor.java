@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -28,6 +29,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -73,9 +75,14 @@ class TransactionsMessageProcessor {
   private void processTransactionsMessage(
       final EthPeer peer, final TransactionsMessage transactionsMessage) {
     try {
-      LOG.trace("Received transactions message from {}", peer);
-
       final List<Transaction> readTransactions = transactionsMessage.transactions();
+      traceLambda(
+          LOG,
+          "Received transactions message from {}, transactions {}, list {}",
+          peer::toString,
+          readTransactions::size,
+          () -> readTransactions.stream().map(Transaction::getHash).collect(Collectors.toList()));
+
       final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
       transactionTracker.markTransactionsAsSeen(peer, transactions);
       transactionPool.addRemoteTransactions(transactions);
