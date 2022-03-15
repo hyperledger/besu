@@ -2036,7 +2036,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonRPCWebsocketOptionGroup.engineJwtKeyFile.toFile());
       } else {
         logger.info(
-            "Engine API authentication enabled without key file. Expect ephemeral jwt.hex dile in datadir");
+            "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir");
       }
     }
     return engineConfig;

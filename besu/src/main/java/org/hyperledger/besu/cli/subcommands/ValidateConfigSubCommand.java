@@ -20,6 +20,7 @@ import static org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand.COMM
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
+import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -32,7 +33,8 @@ import picocli.CommandLine.ParentCommand;
 @Command(
     name = COMMAND_NAME,
     description = "This command provides basic Besu config validation (syntax only).",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
 public class ValidateConfigSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "validate-config";

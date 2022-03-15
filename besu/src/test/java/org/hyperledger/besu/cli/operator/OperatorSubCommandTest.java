@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.hyperledger.besu.cli.operator.OperatorSubCommandTest.Cmd.cmd;
 
+import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.crypto.SECP256K1;
@@ -108,6 +109,41 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   public void callingOperatorCommandHelpMustDisplayUsage() {
     parseCommand(OperatorSubCommand.COMMAND_NAME, "--help");
     assertThat(commandOutput.toString(UTF_8)).startsWith(EXPECTED_OPERATOR_USAGE);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingOperatorCommandVersionMustDisplayVersion() {
+    parseCommand(OperatorSubCommand.COMMAND_NAME, "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingBackupStateCommandVersionMustDisplayVersion() {
+    parseCommand("x-backup-state", "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingGenerateBlockchainConfigCommandVersionMustDisplayVersion() {
+    parseCommand("generate-blockchain-config", "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingGenerateLogBloomCacheCommandVersionMustDisplayVersion() {
+    parseCommand("generate-log-bloom-cache", "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingRestoreStateCommandVersionMustDisplayVersion() {
+    parseCommand("x-restore-state", "--version");
+    assertThat(commandOutput.toString(UTF_8)).isEqualToIgnoringWhitespace(BesuInfo.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
