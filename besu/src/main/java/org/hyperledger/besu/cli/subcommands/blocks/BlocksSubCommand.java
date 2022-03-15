@@ -28,6 +28,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ExportSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -73,6 +74,7 @@ import picocli.CommandLine.Spec;
     name = COMMAND_NAME,
     description = "This command provides blocks related actions.",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     subcommands = {ImportSubCommand.class, ExportSubCommand.class})
 public class BlocksSubCommand implements Runnable {
 
@@ -118,7 +120,8 @@ public class BlocksSubCommand implements Runnable {
   @Command(
       name = "import",
       description = "This command imports blocks from a file into the database.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class ImportSubCommand implements Runnable {
     @SuppressWarnings("unused")
     @ParentCommand
@@ -302,7 +305,8 @@ public class BlocksSubCommand implements Runnable {
   @Command(
       name = "export",
       description = "This command exports a specific block, or list of blocks from storage.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class ExportSubCommand implements Runnable {
     @SuppressWarnings("unused")
     @ParentCommand

@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -36,7 +37,8 @@ import picocli.CommandLine.ParentCommand;
 @Command(
     name = "generate-log-bloom-cache",
     description = "Generate cached values of block log bloom filters.",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
 public class GenerateLogBloomCache implements Runnable {
 
   @Option(
