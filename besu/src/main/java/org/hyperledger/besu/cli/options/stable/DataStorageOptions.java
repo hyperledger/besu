@@ -14,7 +14,7 @@
  *
  */
 
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
