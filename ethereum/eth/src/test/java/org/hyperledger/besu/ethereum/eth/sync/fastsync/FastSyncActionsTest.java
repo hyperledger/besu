@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -416,6 +417,7 @@ public class FastSyncActionsTest {
     return new FastSyncActions(
         syncConfig,
         worldStateStorage,
+        mock(GenesisConfigOptions.class),
         protocolSchedule,
         protocolContext,
         ethContext,

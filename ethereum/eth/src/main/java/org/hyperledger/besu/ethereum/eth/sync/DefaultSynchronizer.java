@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -58,6 +59,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
+      final GenesisConfigOptions genesisConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
@@ -117,6 +119,7 @@ public class DefaultSynchronizer implements Synchronizer {
       this.fastSyncDownloader =
           FastDownloaderFactory.create(
               syncConfig,
+              genesisConfig,
               dataDirectory,
               protocolSchedule,
               protocolContext,

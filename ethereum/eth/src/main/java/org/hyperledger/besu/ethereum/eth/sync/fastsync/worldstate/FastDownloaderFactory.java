@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -52,6 +53,7 @@ public class FastDownloaderFactory {
 
   public static Optional<FastSyncDownloader<?>> create(
       final SynchronizerConfiguration syncConfig,
+      final GenesisConfigOptions genesisConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -114,6 +116,7 @@ public class FastDownloaderFactory {
             new FastSyncActions(
                 syncConfig,
                 worldStateStorage,
+                genesisConfig,
                 protocolSchedule,
                 protocolContext,
                 ethContext,

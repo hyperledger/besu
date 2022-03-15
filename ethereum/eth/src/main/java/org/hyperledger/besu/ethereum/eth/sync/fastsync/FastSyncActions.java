@@ -17,8 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
+import java.util.function.Function;
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
@@ -48,6 +51,7 @@ public class FastSyncActions {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
   private final SynchronizerConfiguration syncConfig;
   private final WorldStateStorage worldStateStorage;
+  private final GenesisConfigOptions genesisConfig;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
@@ -59,6 +63,7 @@ public class FastSyncActions {
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
       final WorldStateStorage worldStateStorage,
+      final GenesisConfigOptions genesisConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
@@ -66,6 +71,7 @@ public class FastSyncActions {
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.worldStateStorage = worldStateStorage;
+    this.genesisConfig = genesisConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -125,42 +131,86 @@ public class FastSyncActions {
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
     return fastSyncState.hasPivotBlockHeader()
         ? completedFuture(fastSyncState)
-        : selectPivotBlockFromPeers();
+        : selectNewPivotBlock();
   }
 
-  private CompletableFuture<FastSyncState> selectPivotBlockFromPeers() {
+  private CompletableFuture<FastSyncState> selectNewPivotBlock() {
+    if (genesisConfig.getTerminalTotalDifficulty().isPresent()) {
+      return selectLastFinalizedBlockAsPivotIfPresent(
+          Difficulty.of(genesisConfig.getTerminalTotalDifficulty().get()));
+    }
+    return selectPivotBlockFromPeers(this::fromBestPeer);
+  }
+
+  private CompletableFuture<FastSyncState> selectLastFinalizedBlockAsPivotIfPresent(
+      final Difficulty difficulty) {
+    LOG.debug("TTD is present: {}", difficulty);
+    return protocolContext
+        .getBlockchain()
+        .getFinalized()
+        .flatMap(protocolContext.getBlockchain()::getBlockHeader)
+        .map(
+            blockHeader -> {
+              LOG.info("Returning finalized block as pivot: {}", blockHeader.toLogString());
+              return completedFuture(new FastSyncState(blockHeader));
+            })
+        .orElse(selectPivotBlockFromPeers(ethPeer -> fromBestPeerIfBeforeTTD(ethPeer, difficulty)));
+  }
+
+  private CompletableFuture<FastSyncState> selectPivotBlockFromPeers(
+      final Function<EthPeer, CompletableFuture<FastSyncState>> fastSyncStateSupplier) {
     return ethContext
         .getEthPeers()
         .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
         // Only select a pivot block number when we have a minimum number of height estimates
-        .filter(
-            peer -> {
-              final long peerCount = countPeersThatCanDeterminePivotBlock();
-              final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
-              if (peerCount < minPeerCount) {
-                LOG.info(
-                    "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",
-                    peerCount,
-                    minPeerCount);
-                return false;
-              }
-              return true;
-            })
-        .map(
-            peer -> {
-              final long pivotBlockNumber =
-                  peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
-              if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
-                // Peer's chain isn't long enough, return an empty value so we can try again.
-                LOG.info("Waiting for peers with sufficient chain height");
-                return null;
-              }
-              LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-              pivotBlockSelectionCounter.inc();
-              pivotBlockGauge.set(pivotBlockNumber);
-              return completedFuture(new FastSyncState(pivotBlockNumber));
-            })
+        .filter(unused -> enoughFastSyncPeersArePresent())
+        .map(fastSyncStateSupplier)
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
+  }
+
+  private CompletableFuture<FastSyncState> fromBestPeer(final EthPeer peer) {
+    final long pivotBlockNumber =
+        peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
+    if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
+      // Peer's chain isn't long enough, return an empty value so we can try again.
+      LOG.info("Waiting for peers with sufficient chain height");
+      return null;
+    }
+    LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
+    pivotBlockSelectionCounter.inc();
+    pivotBlockGauge.set(pivotBlockNumber);
+    return completedFuture(new FastSyncState(pivotBlockNumber));
+  }
+
+  private CompletableFuture<FastSyncState> fromBestPeerIfBeforeTTD(
+      final EthPeer peer, final Difficulty difficulty) {
+    // verify if fast sync best peer is before or after the TTD
+    Difficulty bestPeerEstDifficulty = peer.chainState().getEstimatedTotalDifficulty();
+    if (bestPeerEstDifficulty.lessThan(difficulty)) {
+      LOG.info("Chain has not yet reached TTD, so select pivot from peers");
+      // chain has not switched to PoS yet so fallback to the older pivot selection
+      return fromBestPeer(peer);
+    }
+    // some peers are after the TTD, but no finalized block is present yet,
+    // so retry after a while to wait for the first finalized block
+    LOG.info(
+        "Chain has reached TTD, best peer has estimated difficulty {},"
+            + " but no finalized block is present yet, waiting for the first finalized block",
+        bestPeerEstDifficulty);
+    return null;
+  }
+
+  private boolean enoughFastSyncPeersArePresent() {
+    final long peerCount = countPeersThatCanDeterminePivotBlock();
+    final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
+    if (peerCount < minPeerCount) {
+      LOG.info(
+          "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",
+          peerCount,
+          minPeerCount);
+      return false;
+    }
+    return true;
   }
 
   private long countPeersThatCanDeterminePivotBlock() {
@@ -198,7 +248,7 @@ public class FastSyncActions {
     trailingPeerLimiter.enforceTrailingPeerLimit();
 
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-        .thenCompose(ignore -> selectPivotBlockFromPeers());
+        .thenCompose(ignore -> selectNewPivotBlock());
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(

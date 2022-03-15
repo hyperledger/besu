@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -50,6 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class FastDownloaderFactoryTest {
 
   @Mock private SynchronizerConfiguration syncConfig;
+  @Mock private GenesisConfigOptions genesisConfig;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
   @Mock private MetricsSystem metricsSystem;
@@ -67,6 +69,7 @@ public class FastDownloaderFactoryTest {
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
     FastDownloaderFactory.create(
         syncConfig,
+        genesisConfig,
         dataDirectory,
         protocolSchedule,
         protocolContext,
@@ -86,6 +89,7 @@ public class FastDownloaderFactoryTest {
     final Optional result =
         FastDownloaderFactory.create(
             syncConfig,
+            genesisConfig,
             dataDirectory,
             protocolSchedule,
             protocolContext,
@@ -109,6 +113,7 @@ public class FastDownloaderFactoryTest {
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
     FastDownloaderFactory.create(
         syncConfig,
+        genesisConfig,
         dataDirectory,
         protocolSchedule,
         protocolContext,
@@ -138,6 +143,7 @@ public class FastDownloaderFactoryTest {
 
     FastDownloaderFactory.create(
         syncConfig,
+        genesisConfig,
         dataDirectory,
         protocolSchedule,
         protocolContext,
@@ -169,6 +175,7 @@ public class FastDownloaderFactoryTest {
             () ->
                 FastDownloaderFactory.create(
                     syncConfig,
+                    genesisConfig,
                     dataDirectory,
                     protocolSchedule,
                     protocolContext,

@@ -363,6 +363,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Synchronizer synchronizer =
         new DefaultSynchronizer(
             syncConfig,
+            genesisConfig.getConfigOptions(),
             protocolSchedule,
             protocolContext,
             worldStateStorage,
