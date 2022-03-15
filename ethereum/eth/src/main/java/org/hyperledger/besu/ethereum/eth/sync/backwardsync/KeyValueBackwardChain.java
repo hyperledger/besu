@@ -221,4 +221,15 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
     value.writeTo(output);
     return output.encoded().toArrayUnsafe();
   }
+
+  @Override
+  public void clear() {
+    ancestors.clear();
+    successors.clear();
+    blocks.clear();
+    headers.clear();
+  }
+
+  @Override
+  public void commit() {}
 }

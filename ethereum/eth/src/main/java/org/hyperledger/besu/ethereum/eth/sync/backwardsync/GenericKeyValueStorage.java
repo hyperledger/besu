@@ -52,4 +52,8 @@ public class GenericKeyValueStorage<K, V> {
   public void drop(final K key) {
     storage.tryDelete(keyConvertor.toBytes(key));
   }
+
+  public void clear() {
+    storage.clear();
+  }
 }

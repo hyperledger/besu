@@ -66,4 +66,8 @@ public interface BackwardSyncStorage {
 
   /** Returns a trusted block for a hash */
   Block getTrustedBlock(Hash hash);
+
+  void clear();
+
+  void commit();
 }

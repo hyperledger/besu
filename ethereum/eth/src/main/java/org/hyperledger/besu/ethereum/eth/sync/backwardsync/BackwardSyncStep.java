@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -41,7 +42,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @Override
   public CompletableFuture<Void> executeOneStep() {
-    return CompletableFuture.runAsync(this::waitForTTD)
+    return CompletableFuture.supplyAsync(() -> waitForTTD())
+        .thenCompose(Function.identity())
         .thenApply(this::earliestUnprocessedHash)
         .thenCompose(this::requestHeader)
         .thenApply(this::saveHeader)
@@ -62,7 +64,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
 
   @Override
   public CompletableFuture<Void> executeBatchStep() {
-    return CompletableFuture.runAsync(this::waitForTTD)
+    return CompletableFuture.supplyAsync(this::waitForTTD)
+        .thenCompose(Function.identity())
         .thenApply(this::earliestUnprocessedHash)
         .thenCompose(this::requestHeaders)
         .thenApply(this::saveHeaders)

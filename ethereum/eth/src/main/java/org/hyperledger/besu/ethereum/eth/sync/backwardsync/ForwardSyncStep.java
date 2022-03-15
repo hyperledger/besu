@@ -199,6 +199,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
     for (Block block : blocks) {
       saveBlock(block);
     }
+    backwardChain.commit();
     infoLambda(
         LOG,
         "Saved blocks {}->{}",
@@ -221,6 +222,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
                 }
               });
       LOG.info("The Backward sync is done...");
+      backwardChain.clear();
       return CompletableFuture.completedFuture(null);
     }
     if (context.getProtocolContext().getBlockchain().contains(firstUnsynced.getParentHash())) {

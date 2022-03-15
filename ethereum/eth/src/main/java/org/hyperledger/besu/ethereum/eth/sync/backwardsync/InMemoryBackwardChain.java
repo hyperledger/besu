@@ -177,4 +177,14 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
   public Block getTrustedBlock(final Hash hash) {
     return trustedBlocks.get(hash);
   }
+
+  @Override
+  public void clear() {
+    ancestors.clear();
+    successors.clear();
+    trustedBlocks.clear();
+  }
+
+  @Override
+  public void commit() {}
 }
