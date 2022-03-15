@@ -23,6 +23,7 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.AddressSubCommand;
 import org.hyperledger.besu.cli.subcommands.PublicKeySubCommand.ExportSubCommand;
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.crypto.SignatureAlgorithmType;
@@ -51,6 +52,7 @@ import picocli.CommandLine.Spec;
     name = COMMAND_NAME,
     description = "This command provides node public key related actions.",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     subcommands = {ExportSubCommand.class, AddressSubCommand.class})
 public class PublicKeySubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(PublicKeySubCommand.class);
@@ -87,7 +89,8 @@ public class PublicKeySubCommand implements Runnable {
   @Command(
       name = "export",
       description = "This command outputs the node public key. Default output is standard output.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class ExportSubCommand extends KeyPairSubcommand implements Runnable {
 
     @Option(
@@ -117,7 +120,8 @@ public class PublicKeySubCommand implements Runnable {
       description =
           "This command outputs the node's account address. "
               + "Default output is standard output.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class AddressSubCommand extends KeyPairSubcommand implements Runnable {
 
     @Option(

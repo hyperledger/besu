@@ -19,6 +19,7 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Hash;
@@ -58,7 +59,8 @@ import picocli.CommandLine.ParentCommand;
 @Command(
     name = "x-restore-state",
     description = "Restores the chain from a previously generated backup-state.",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
 public class RestoreState implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(RestoreState.class);

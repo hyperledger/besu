@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintStream;
 
@@ -30,6 +31,7 @@ import picocli.CommandLine.Spec;
     name = COMMAND_NAME,
     description = "Operator related actions such as generating configuration and caches.",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     subcommands = {
       GenerateBlockchainConfig.class,
       GenerateLogBloomCache.class,

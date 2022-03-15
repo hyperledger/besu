@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand.EncodeSubCommand;
+import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -45,6 +46,7 @@ import picocli.CommandLine.Spec;
     name = RLPSubCommand.COMMAND_NAME,
     description = "This command provides RLP data related actions.",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     subcommands = {EncodeSubCommand.class})
 public class RLPSubCommand implements Runnable {
 
@@ -79,7 +81,8 @@ public class RLPSubCommand implements Runnable {
   @Command(
       name = "encode",
       description = "This command encodes a JSON typed data into an RLP hex string.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class EncodeSubCommand implements Runnable {
 
     @SuppressWarnings("unused")
