@@ -13,7 +13,7 @@
     "berlinBlock": 0,
     "londonBlock": 0,
     "preMergeForkBlock": 1000,
-    "terminalTotalDifficulty": 1000000000000,
+    "terminalTotalDifficulty": 20000000000000,
     "discovery": {
       "bootnodes": [
         "enode://c354db99124f0faf677ff0e75c3cbbd568b2febc186af664e0c51ac435609badedc67a18a63adb64dacc1780a28dcefebfc29b83fd1a3f4aa3c0eb161364cf94@164.92.130.5:30303"

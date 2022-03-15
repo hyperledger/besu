@@ -138,6 +138,6 @@ public abstract class MainnetDifficultyCalculators {
   }
 
   private static BigInteger difficulty(final Quantity value) {
-    return (BigInteger) value.getValue();
+    return value.getAsBigInteger();
   }
 }

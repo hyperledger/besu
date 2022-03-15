@@ -21,6 +21,7 @@ import static com.google.errorprone.util.ASTHelpers.getType;
 import static com.google.errorprone.util.ASTHelpers.isSubtype;
 
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
@@ -29,6 +30,7 @@ import com.google.errorprone.BugPattern;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.bugpatterns.BugChecker.VariableTreeMatcher;
+import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
 import com.google.errorprone.suppliers.Supplier;
 import com.google.errorprone.suppliers.Suppliers;
@@ -60,8 +62,10 @@ public class PrivateStaticFinalLoggers extends BugChecker implements VariableTre
     if (!isSubtype(getType(tree), ORG_SLF4J_LOGGER.get(state), state)) {
       return NO_MATCH;
     }
+    Optional<SuggestedFix> fixes =
+        addModifiers(tree, state, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
     return buildDescription(tree)
-        .addFix(addModifiers(tree, state, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL))
+        .addFix(fixes.isPresent() ? fixes.get() : SuggestedFix.emptyFix())
         .build();
   }
 }

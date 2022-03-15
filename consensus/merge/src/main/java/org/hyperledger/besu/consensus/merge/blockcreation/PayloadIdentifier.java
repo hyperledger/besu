@@ -72,7 +72,7 @@ public class PayloadIdentifier implements Quantity {
   @Override
   public boolean equals(final Object o) {
     if (o instanceof PayloadIdentifier) {
-      return getValue().equals(((PayloadIdentifier) o).getValue());
+      return getAsBigInteger().equals(((PayloadIdentifier) o).getAsBigInteger());
     }
     return false;
   }

@@ -14,23 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchangeTransitionConfigurationResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.QosTimer;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -41,6 +40,17 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
 
+  static final long QOS_TIMEOUT_MILLIS = 120000L;
+
+  private static final AtomicReference<QosTimer> qosTimerRef =
+      new AtomicReference<>(
+          new QosTimer(
+              QOS_TIMEOUT_MILLIS,
+              lastCall ->
+                  LOG.warn(
+                      "not called in {} seconds, consensus client may not be connected",
+                      QOS_TIMEOUT_MILLIS / 1000L)));
+
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx, final ProtocolContext protocolContext) {
     super(vertx, protocolContext);
@@ -48,11 +58,14 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName();
+    return ENGINE_EXCHANGE_TRANSITION_CONFIGURATION.getMethodName();
   }
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    // update our QoS "last call time"
+    getQosTimer().resetTimer();
+
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(
             0, EngineExchangeTransitionConfigurationParameter.class);
@@ -62,10 +75,6 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         LOG,
         "received transitionConfiguration: {}",
         () -> Json.encodePrettily(remoteTransitionConfiguration));
-
-    if (remoteTransitionConfiguration.getTerminalBlockNumber() != 0L) {
-      return respondWithError(reqId, INVALID_PARAMS);
-    }
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader = mergeContext.getTerminalPoWBlock();
 
@@ -110,8 +119,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
   }
 
-  private JsonRpcResponse respondWithError(
-      final Object requestId, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(requestId, jsonRpcError);
+  // QosTimer accessor for testing considerations
+  QosTimer getQosTimer() {
+    return qosTimerRef.get();
   }
 }

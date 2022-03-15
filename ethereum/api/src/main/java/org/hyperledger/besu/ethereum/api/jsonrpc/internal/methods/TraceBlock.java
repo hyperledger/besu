@@ -35,8 +35,11 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TraceBlock extends AbstractBlockParameterMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final Supplier<BlockTracer> blockTracerSupplier;
@@ -68,6 +71,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       // Nothing to trace for the genesis block
       return emptyResult().getArrayNode();
     }
+    LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
 
     return getBlockchainQueries()
         .getBlockchain()

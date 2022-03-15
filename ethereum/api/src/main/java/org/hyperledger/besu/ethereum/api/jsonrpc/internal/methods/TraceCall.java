@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -54,8 +56,18 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
+    final JsonCallParameter callParams =
+        JsonCallParameterUtil.validateAndGetCallParams(requestContext);
     final TraceTypeParameter traceTypeParameter =
         requestContext.getRequiredParameter(1, TraceTypeParameter.class);
+    final String blockNumberString = String.valueOf(blockNumber);
+    traceLambda(
+        LOG,
+        "Received RPC rpcName={} callParams={} block={} traceTypes={}",
+        this::getName,
+        callParams::toString,
+        blockNumberString::toString,
+        traceTypeParameter::toString);
 
     final Optional<BlockHeader> maybeBlockHeader =
         blockchainQueriesSupplier.get().getBlockHeaderByNumber(blockNumber);
@@ -65,18 +77,16 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
+
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.process(
-            JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-            buildTransactionValidationParams(),
-            tracer,
-            maybeBlockHeader.get());
+            callParams, buildTransactionValidationParams(), tracer, maybeBlockHeader.get());
 
     if (maybeSimulatorResult.isEmpty()) {
       LOG.error(
-          "Empty simulator result, call params: {}, blockHeader: {} ",
-          JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+          "Empty simulator result. call params: {}, blockHeader: {} ",
+          callParams,
           maybeBlockHeader.get());
       return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
     }
