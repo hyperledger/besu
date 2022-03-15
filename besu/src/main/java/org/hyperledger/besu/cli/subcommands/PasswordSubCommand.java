@@ -19,6 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.PasswordSubCommand.COMMAND_NA
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand.HashSubCommand;
+import org.hyperledger.besu.cli.util.VersionProvider;
 
 import java.io.PrintStream;
 
@@ -33,6 +34,7 @@ import picocli.CommandLine.Spec;
     name = COMMAND_NAME,
     description = "This command provides password related actions.",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     subcommands = {HashSubCommand.class})
 public class PasswordSubCommand implements Runnable {
 
@@ -60,7 +62,8 @@ public class PasswordSubCommand implements Runnable {
   @Command(
       name = "hash",
       description = "This command generates the hash of a given password.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class HashSubCommand implements Runnable {
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
