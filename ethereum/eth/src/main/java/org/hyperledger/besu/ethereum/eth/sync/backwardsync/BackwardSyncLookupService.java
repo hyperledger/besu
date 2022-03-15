@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersT
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -77,7 +79,45 @@ public class BackwardSyncLookupService {
       }
       running = true;
     }
-    return tryToFindBlocks();
+    return findBlocksWithRetries()
+        .handle(
+            (blocks, throwable) -> {
+              synchronized (this) {
+                running = false;
+              }
+              if (throwable != null) {
+                throw new BackwardSyncException(throwable);
+              }
+              return blocks;
+            });
+  }
+
+  private CompletableFuture<List<Block>> findBlocksWithRetries() {
+
+    CompletableFuture<List<Block>> f = tryToFindBlocks();
+    for (int i = 0; i < MAX_RETRIES; i++) {
+      f =
+          f.thenApply(CompletableFuture::completedFuture)
+              .exceptionally(
+                  ex -> {
+                    synchronized (this) {
+                      if (!results.isEmpty()) {
+                        List<Block> copy = new ArrayList<>(results);
+                        results = new ArrayList<>();
+                        return CompletableFuture.completedFuture(copy);
+                      }
+                    }
+                    LOG.error(
+                        "Failed to fetch blocks because {} Current peers: {}.  Waiting for few seconds ...",
+                        ex.getMessage(),
+                        ethContext.getEthPeers().peerCount());
+                    return ethContext
+                        .getScheduler()
+                        .scheduleFutureTask(this::tryToFindBlocks, Duration.ofSeconds(5));
+                  })
+              .thenCompose(Function.identity());
+    }
+    return f.thenApply(this::rememberResults).thenCompose(this::possibleNextHash);
   }
 
   private CompletableFuture<List<Block>> tryToFindBlocks() {
@@ -104,11 +144,16 @@ public class BackwardSyncLookupService {
     return results;
   }
 
+  private List<Block> rememberResults(final List<Block> blocks) {
+    this.results.addAll(blocks);
+    return results;
+  }
+
   private synchronized Hash getNextHash() {
     return hashes.peek();
   }
 
-  private CompletableFuture<Block> tryToFindBlock(Hash targetHash) {
+  private CompletableFuture<Block> tryToFindBlock(final Hash targetHash) {
 
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(

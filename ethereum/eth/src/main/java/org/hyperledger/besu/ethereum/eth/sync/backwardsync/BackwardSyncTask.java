@@ -36,7 +36,7 @@ public abstract class BackwardSyncTask {
     Optional<BackwardSyncStorage> currentChain = context.getCurrentChain();
     if (currentChain.isPresent()) {
       if (!backwardChain.equals(currentChain.get())) {
-        LOG.info(
+        LOG.debug(
             "The pivot changed, we should stop current flow, some new flow is waiting to take over...");
         return CompletableFuture.completedFuture(null);
       }

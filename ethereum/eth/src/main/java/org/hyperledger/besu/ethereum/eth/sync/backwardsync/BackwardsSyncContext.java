@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -27,6 +28,8 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +37,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +45,7 @@ import org.slf4j.LoggerFactory;
 public class BackwardsSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardsSyncContext.class);
   public static final int BATCH_SIZE = 200;
+  private static final int MAX_RETRIES = 100;
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -81,26 +86,27 @@ public class BackwardsSyncContext {
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
     final Optional<BackwardSyncStorage> chain = getCurrentChain();
+    CompletableFuture<List<Block>> completableFuture;
     if (chain.isPresent() && chain.get().isTrusted(newBlockhash)) {
-      debugLambda(
+      infoLambda(
           LOG,
           "not fetching and appending hash {} to backwards sync since it is present in successors",
           newBlockhash::toHexString);
-      return CompletableFuture.completedFuture(null);
+      completableFuture = CompletableFuture.completedFuture(Collections.emptyList());
+    } else {
+      completableFuture = service.lookup(newBlockhash);
     }
 
     // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
-    final CompletableFuture<Void> completableFuture =
-        service
-            .lookup(newBlockhash)
-            .thenCompose(
-                blocks -> {
-                  if (blocks.isEmpty()) {
-                    return CompletableFuture.completedFuture(null);
-                  } else return this.syncBackwardsUntil(blocks);
-                });
-    this.currentBackwardSyncFuture.set(completableFuture);
-    return completableFuture;
+    final CompletableFuture<Void> future =
+        completableFuture.thenCompose(
+            blocks -> {
+              if (blocks.isEmpty()) {
+                return CompletableFuture.completedFuture(null);
+              } else return this.syncBackwardsUntil(blocks);
+            });
+    this.currentBackwardSyncFuture.set(future);
+    return future;
   }
 
   private CompletionStage<Void> syncBackwardsUntil(final List<Block> blocks) {
@@ -159,11 +165,11 @@ public class BackwardsSyncContext {
                   if (error != null) {
                     if ((error.getCause() != null)
                         && (error.getCause() instanceof BackwardSyncException)) {
-                      LOG.debug(
+                      LOG.info(
                           "Previous Backward sync ended exceptionally with message {}",
                           error.getMessage());
                     } else {
-                      LOG.debug(
+                      LOG.info(
                           "Previous Backward sync ended exceptionally with message {}",
                           error.getMessage());
                       if (error instanceof RuntimeException) {
@@ -173,7 +179,7 @@ public class BackwardsSyncContext {
                       }
                     }
                   } else {
-                    LOG.debug("The previous backward sync finished without and exception");
+                    LOG.info("The previous backward sync finished without and exception");
                   }
 
                   return newBackwardChain;
@@ -184,30 +190,32 @@ public class BackwardsSyncContext {
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(
       final BackwardSyncStorage backwardChain) {
+
     CompletableFuture<Void> f = prepareBackwardSyncFuture(backwardChain);
-    //    for (int i = 0; i < MAX_RETRIES; i++) {
-    //      f =
-    //          f.thenApply(CompletableFuture::completedFuture)
-    //              .exceptionally(
-    //                  throwable -> {
-    //                    if (!(throwable instanceof BackwardSyncException)) {
-    //                      LOG.warn(
-    //                          "There was an uncaught exception raised during the backward sync,
-    // this represent an unexpected scenario. Copy paste the exception into a bug on github",
-    //                          throwable);
-    //                      throw new BackwardSyncException(throwable, true);
-    //                    }
-    //                    if (((BackwardSyncException) throwable).shouldRestart()) {
-    //                      LOG.warn(
-    //                          "A backward sync task failed, restarting... Reason: {}",
-    //                          throwable.getMessage());
-    //                      return prepareBackwardSyncFuture(backwardChain);
-    //                    }
-    //                    throw (BackwardSyncException) throwable;
-    //                  })
-    //              .thenCompose(Function.identity());
-    //    }
-    return f.thenApply(unused -> cleanup(backwardChain));
+    for (int i = 0; i < MAX_RETRIES; i++) {
+      f =
+          f.thenApply(CompletableFuture::completedFuture)
+              .exceptionally(
+                  ex -> {
+                    LOG.info(
+                        "Backward sync failed, retrying in few seconds...",
+                        ex.getMessage(),
+                        ethContext.getEthPeers().peerCount());
+                    return ethContext
+                        .getScheduler()
+                        .scheduleFutureTask(
+                            () -> prepareBackwardSyncFuture(backwardChain), Duration.ofSeconds(5));
+                  })
+              .thenCompose(Function.identity());
+    }
+    return f.handle(
+        (unused, throwable) -> {
+          this.cleanup(backwardChain);
+          if (throwable != null) {
+            throw new BackwardSyncException(throwable);
+          }
+          return null;
+        });
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture(

@@ -113,7 +113,12 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
         getFirstAncestorHeader()
             .orElseThrow(
                 () -> new BackwardSyncException("Cannot merge when syncing forward...", true));
+
     Block historicalPivot = historicalBackwardChain.getPivot();
+    LOG.info(
+        "Prepending previous chain we end at {}, they start at {}",
+        firstHeader.getNumber(),
+        historicalBackwardChain.getPivot().getHeader().getNumber());
     Block pivot = getPivot();
     if (firstHeader.getParentHash().equals(historicalPivot.getHash())) {
       Collections.reverse(historicalBackwardChain.getSuccessors());
@@ -134,9 +139,11 @@ public class InMemoryBackwardChain implements BackwardSyncStorage {
     } else {
       warnLambda(
           LOG,
-          "Cannot merge previous historical run because headers of {} and {} do not equal. Ignoring previous run. Did someone lie to us?",
-          () -> firstHeader.getHash().toString().substring(0, 20),
-          () -> historicalPivot.getHash().toString().substring(0, 20));
+          "Cannot merge previous historical run because hashes of {}({}) and {}({}) do not equal. Ignoring previous run. Did someone lie to us?",
+          () -> firstHeader.getNumber() - 1,
+          () -> firstHeader.getParentHash().toHexString(),
+          () -> historicalPivot.getHeader().getNumber(),
+          () -> historicalPivot.getHash().toHexString());
     }
   }
 

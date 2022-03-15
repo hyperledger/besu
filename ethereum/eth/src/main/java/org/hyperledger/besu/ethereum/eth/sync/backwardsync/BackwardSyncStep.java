@@ -20,6 +20,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersEndingAtFromPeerByHashTask;
 
 import java.time.Duration;
 import java.util.List;
@@ -118,29 +119,31 @@ public class BackwardSyncStep extends BackwardSyncTask {
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
     debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
-    return GetHeadersFromPeerByHashTask.endingAtHash(
-            context.getProtocolSchedule(),
-            context.getEthContext(),
-            hash,
-            context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
-            BackwardsSyncContext.BATCH_SIZE,
-            context.getMetricsSystem())
-        .run()
+    final RetryingGetHeadersEndingAtFromPeerByHashTask
+        retryingGetHeadersEndingAtFromPeerByHashTask =
+            RetryingGetHeadersEndingAtFromPeerByHashTask.endingAtHash(
+                context.getProtocolSchedule(),
+                context.getEthContext(),
+                hash,
+                context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
+                BackwardsSyncContext.BATCH_SIZE,
+                context.getMetricsSystem());
+    return context
+        .getEthContext()
+        .getScheduler()
+        .scheduleSyncWorkerTask(retryingGetHeadersEndingAtFromPeerByHashTask::run)
         .thenApply(
-            peerResult -> {
-              final List<BlockHeader> result = peerResult.getResult();
-              if (result.isEmpty()) {
+            blockHeaders -> {
+              if (blockHeaders.isEmpty()) {
                 throw new BackwardSyncException(
                     "Did not receive a header for hash {}" + hash.toHexString(), true);
               }
               infoLambda(
                   LOG,
-                  "Got headers {} from height {} to {} height {}",
-                  () -> result.get(0).getHash().toHexString(),
-                  result.get(0)::getNumber,
-                  () -> result.get(result.size() - 1).getHash().toHexString(),
-                  result.get(result.size() - 1)::getNumber);
-              return result;
+                  "Got headers {} -> {} ",
+                  blockHeaders.get(0)::getNumber,
+                  blockHeaders.get(blockHeaders.size() - 1)::getNumber);
+              return blockHeaders;
             });
   }
 
@@ -156,6 +159,11 @@ public class BackwardSyncStep extends BackwardSyncTask {
     for (BlockHeader blockHeader : blockHeaders) {
       saveHeader(blockHeader);
     }
+    infoLambda(
+        LOG,
+        "Saved headers {} -> {}",
+        () -> blockHeaders.get(0).getHash().toHexString(),
+        () -> blockHeaders.get(blockHeaders.size() - 1).getHash().toHexString());
     return null;
   }
 
@@ -181,9 +189,12 @@ public class BackwardSyncStep extends BackwardSyncTask {
     }
     if (context.getProtocolContext().getBlockchain().getChainHead().getHeight()
         > blockHeader.getNumber() - 1) {
-      completableFuture.completeExceptionally(
-          new RuntimeException("Backward sync would reach under know head of blockchain"));
-      return completableFuture;
+      LOG.warn(
+          "Backward sync is following unknown branch {} ({}) and reached bellow previous head {}({})",
+          blockHeader.getNumber(),
+          blockHeader.getHash(),
+          context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
+          context.getProtocolContext().getBlockchain().getChainHead().getHash().toHexString());
     }
     LOG.debug("Backward sync did not reach a know block, need to go deeper");
     completableFuture.complete(null);
