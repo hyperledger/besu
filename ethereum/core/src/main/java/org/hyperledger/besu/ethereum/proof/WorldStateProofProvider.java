@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +134,7 @@ public class WorldStateProofProvider {
     }
 
     // reconstruct a part of the trie with the proof
-    Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
+    final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
     for (Bytes proof : proofs) {
       proofsEntries.put(Hash.hash(proof), proof);
     }
@@ -152,7 +151,9 @@ public class WorldStateProofProvider {
                   false),
               rootHash);
       try {
-        // check is there is not missing element
+        // check if there is not missing element
+        // a missing node will throw an exception while it is loading
+        // @see org.hyperledger.besu.ethereum.trie.StoredNode#load()
         trie.entriesFrom(startKeyHash, Integer.MAX_VALUE);
       } catch (MerkleTrieException e) {
         return false;
@@ -171,6 +172,7 @@ public class WorldStateProofProvider {
             true);
     final MerklePatriciaTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, rootHash);
+    // filling out innerNodes of the InnerNodeDiscoveryManager by walking through the trie
     trie.visitAll(node -> {});
     final List<InnerNode> innerNodes = snapStoredNodeFactory.getInnerNodes();
     for (InnerNode innerNode : innerNodes) {

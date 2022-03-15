@@ -83,7 +83,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
    * Create a trie.
    *
    * @param nodeFactory The {@link StoredNodeFactory} to retrieve node.
-   * @param rootHash The initial root has for the trie, which should be already present in {@code
+   * @param rootHash The initial root hash for the trie, which should be already present in {@code
    *     storage}.
    */
   public StoredMerklePatriciaTrie(final StoredNodeFactory<V> nodeFactory, final Bytes32 rootHash) {

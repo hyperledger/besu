@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.RangedStorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -59,14 +59,14 @@ public class WorldStateRangeProofProviderTest {
   public void rangeProofValidationNominalCase() {
     final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = generateTrie();
     // collect accounts in range
-    final RangedStorageEntriesCollector collector =
-        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
-    final TrieIterator<Bytes> visitor = RangedStorageEntriesCollector.createVisitor(collector);
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
+    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
-                    RangedStorageEntriesCollector.collectEntries(
+                    RangeStorageEntriesCollector.collectEntries(
                         collector, visitor, root, Hash.ZERO));
     // generate the proof
     final List<Bytes> proofs =
@@ -87,14 +87,14 @@ public class WorldStateRangeProofProviderTest {
   public void rangeProofValidationMissingAccount() {
     MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = generateTrie();
     // collect accounts in range
-    final RangedStorageEntriesCollector collector =
-        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
-    final TrieIterator<Bytes> visitor = RangedStorageEntriesCollector.createVisitor(collector);
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
+    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
-                    RangedStorageEntriesCollector.collectEntries(
+                    RangeStorageEntriesCollector.collectEntries(
                         collector, visitor, root, Hash.ZERO));
 
     // generate the proof
@@ -125,15 +125,15 @@ public class WorldStateRangeProofProviderTest {
     MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = generateTrie();
 
     // generate the invalid proof
-    final RangedStorageEntriesCollector collector =
-        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 12, Integer.MAX_VALUE);
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 12, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
-        RangedStorageEntriesCollector.createVisitor(collector);
+        RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
-                    RangedStorageEntriesCollector.collectEntries(
+                    RangeStorageEntriesCollector.collectEntries(
                         collector, invalidVisitor, root, Hash.ZERO));
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
@@ -161,15 +161,15 @@ public class WorldStateRangeProofProviderTest {
     MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = generateTrie();
 
     // generate the invalid proof
-    final RangedStorageEntriesCollector collector =
-        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 15, Integer.MAX_VALUE);
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 15, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
-        RangedStorageEntriesCollector.createVisitor(collector);
+        RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
-                    RangedStorageEntriesCollector.collectEntries(
+                    RangeStorageEntriesCollector.collectEntries(
                         collector, invalidVisitor, root, Hash.ZERO));
 
     // validate the range proof
@@ -188,15 +188,15 @@ public class WorldStateRangeProofProviderTest {
     MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie = generateTrie();
 
     // generate the invalid proof
-    final RangedStorageEntriesCollector collector =
-        RangedStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 9, Integer.MAX_VALUE);
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 9, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
-        RangedStorageEntriesCollector.createVisitor(collector);
+        RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
-                    RangedStorageEntriesCollector.collectEntries(
+                    RangeStorageEntriesCollector.collectEntries(
                         collector, invalidVisitor, root, Hash.ZERO));
 
     // validate the range proof

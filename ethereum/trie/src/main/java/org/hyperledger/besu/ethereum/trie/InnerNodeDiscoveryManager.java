@@ -18,10 +18,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -32,8 +30,7 @@ import org.immutables.value.Value;
 
 public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
-  public List<InnerNode> innerNodes = new ArrayList<>();
-  public Set<Bytes> incompleteLocation = new HashSet<>();
+  private final List<InnerNode> innerNodes = new ArrayList<>();
 
   private final Bytes startKeyHash, endKeyHash;
 
@@ -110,11 +107,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
               if (!allowMissingElementInRange && isInRange(location)) {
                 return Optional.empty();
               }
-              final MissingNode<V> missingNode = new MissingNode<>(hash, location);
-              if (!hash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-                incompleteLocation.add(location.slice(0, Math.max(0, location.size() - 1)));
-              }
-              return Optional.of(missingNode);
+              return Optional.of(new MissingNode<>(hash, location));
             });
   }
 
