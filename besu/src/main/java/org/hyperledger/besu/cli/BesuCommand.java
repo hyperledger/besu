@@ -535,7 +535,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CorsAllowedOriginsProperty();
   }
 
-  // Json RPC http
+  // Json RPC Http Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Http Options|@%n")
   JsonRPCHttpOptionGroup jsonRPCHttpOptionGroup = new JsonRPCHttpOptionGroup();
 
@@ -683,11 +683,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
   }
 
+  // Json RPC Websocket Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Websocket Options|@%n")
   JsonRPCWebsocketOptionGroup jsonRPCWebsocketOptionGroup = new JsonRPCWebsocketOptionGroup();
 
   static class JsonRPCWebsocketOptionGroup {
-
     @Option(
         names = {"--rpc-ws-authentication-jwt-algorithm"},
         description =
@@ -984,6 +984,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 + "mining is enabled using --miner-enabled option",
         arity = "1")
     private final Address coinbase = null;
+
+    @Option(
+        names = {"--miner-extra-data"},
+        description =
+            "A hex string representing the (32) bytes to be included in the extra data "
+                + "field of a mined block (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Bytes extraData = DEFAULT_EXTRA_DATA;
   }
 
   @Option(
@@ -1006,14 +1014,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
-
-  @Option(
-      names = {"--miner-extra-data"},
-      description =
-          "A hex string representing the (32) bytes to be included in the extra data "
-              + "field of a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Bytes extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
       names = {"--pruning-enabled"},
@@ -2001,7 +2001,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .coinbase(minerOptionGroup.coinbase)
                 .targetGasLimit(targetGasLimit)
                 .minTransactionGasPrice(minTransactionGasPrice)
-                .extraData(extraData)
+                .extraData(minerOptionGroup.extraData)
                 .miningEnabled(minerOptionGroup.isMiningEnabled)
                 .stratumMiningEnabled(minerOptionGroup.iStratumMiningEnabled)
                 .stratumNetworkInterface(minerOptionGroup.stratumNetworkInterface)
