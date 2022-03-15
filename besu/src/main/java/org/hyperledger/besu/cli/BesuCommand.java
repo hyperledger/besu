@@ -21,7 +21,6 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -52,11 +51,11 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
-import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
@@ -275,6 +274,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
+  private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
@@ -286,7 +286,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
 
   // stable CLI options
-  private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
@@ -536,7 +535,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CorsAllowedOriginsProperty();
   }
 
-  // Json RPC http
+  // Json RPC Http Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Http Options|@%n")
   JsonRPCHttpOptionGroup jsonRPCHttpOptionGroup = new JsonRPCHttpOptionGroup();
 
@@ -684,11 +683,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
   }
 
-  @CommandLine.ArgGroup(validate = false, heading = "")
+  // Json RPC Websocket Options
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Websocket Options|@%n")
   JsonRPCWebsocketOptionGroup jsonRPCWebsocketOptionGroup = new JsonRPCWebsocketOptionGroup();
 
   static class JsonRPCWebsocketOptionGroup {
-
     @Option(
         names = {"--rpc-ws-authentication-jwt-algorithm"},
         description =
@@ -825,13 +824,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Path privacyTlsKnownEnclaveFile = null;
 
     @Option(
-            names = {"--privacy-enabled"},
-            description = "Enable private transactions (default: ${DEFAULT-VALUE})")
+        names = {"--privacy-enabled"},
+        description = "Enable private transactions (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivacyEnabled = false;
 
     @Option(
-            names = {"--privacy-multi-tenancy-enabled"},
-            description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
+        names = {"--privacy-multi-tenancy-enabled"},
+        description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivacyMultiTenancyEnabled = false;
   }
 
@@ -985,6 +984,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 + "mining is enabled using --miner-enabled option",
         arity = "1")
     private final Address coinbase = null;
+
+    @Option(
+        names = {"--miner-extra-data"},
+        description =
+            "A hex string representing the (32) bytes to be included in the extra data "
+                + "field of a mined block (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Bytes extraData = DEFAULT_EXTRA_DATA;
   }
 
   @Option(
@@ -1009,74 +1016,67 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 
   @Option(
-      names = {"--miner-extra-data"},
-      description =
-          "A hex string representing the (32) bytes to be included in the extra data "
-              + "field of a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Bytes extraData = DEFAULT_EXTRA_DATA;
-
-  @Option(
       names = {"--pruning-enabled"},
       description =
           "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
   private final Boolean pruningEnabled = false;
 
-  //Permission Option Group
-  @CommandLine.ArgGroup(validate = false, heading = "")
+  // Permission Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Permissions Options|@%n")
   PermissionsOptionGroup permissionsOptionGroup = new PermissionsOptionGroup();
 
   static class PermissionsOptionGroup {
     @Option(
-            names = {"--permissions-nodes-config-file-enabled"},
-            description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
+        names = {"--permissions-nodes-config-file-enabled"},
+        description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
     private final Boolean permissionsNodesEnabled = false;
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @CommandLine.Option(
-            names = {"--permissions-nodes-config-file"},
-            description =
-                    "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+        names = {"--permissions-nodes-config-file"},
+        description =
+            "Node permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
     private String nodePermissionsConfigFile = null;
 
     @Option(
-            names = {"--permissions-accounts-config-file-enabled"},
-            description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
+        names = {"--permissions-accounts-config-file-enabled"},
+        description = "Enable account level permissions (default: ${DEFAULT-VALUE})")
     private final Boolean permissionsAccountsEnabled = false;
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @CommandLine.Option(
-            names = {"--permissions-accounts-config-file"},
-            description =
-                    "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
+        names = {"--permissions-accounts-config-file"},
+        description =
+            "Account permissioning config TOML file (default: a file named \"permissions_config.toml\" in the Besu data folder)")
     private String accountPermissionsConfigFile = null;
 
     @Option(
-            names = {"--permissions-nodes-contract-address"},
-            description = "Address of the node permissioning smart contract",
-            arity = "1")
+        names = {"--permissions-nodes-contract-address"},
+        description = "Address of the node permissioning smart contract",
+        arity = "1")
     private final Address permissionsNodesContractAddress = null;
 
     @Option(
-            names = {"--permissions-nodes-contract-version"},
-            description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
+        names = {"--permissions-nodes-contract-version"},
+        description = "Version of the EEA Node Permissioning interface (default: ${DEFAULT-VALUE})")
     private final Integer permissionsNodesContractVersion = 1;
 
     @Option(
-            names = {"--permissions-nodes-contract-enabled"},
-            description = "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
+        names = {"--permissions-nodes-contract-enabled"},
+        description =
+            "Enable node level permissions via smart contract (default: ${DEFAULT-VALUE})")
     private final Boolean permissionsNodesContractEnabled = false;
 
     @Option(
-            names = {"--permissions-accounts-contract-address"},
-            description = "Address of the account permissioning smart contract",
-            arity = "1")
+        names = {"--permissions-accounts-contract-address"},
+        description = "Address of the account permissioning smart contract",
+        arity = "1")
     private final Address permissionsAccountsContractAddress = null;
 
     @Option(
-            names = {"--permissions-accounts-contract-enabled"},
-            description =
-                    "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
+        names = {"--permissions-accounts-contract-enabled"},
+        description =
+            "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
     private final Boolean permissionsAccountsContractEnabled = false;
   }
 
@@ -1133,40 +1133,46 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
 
-  @Option(
-      names = {"--tx-pool-max-size"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+  // Tx Pool Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Options|@%n")
+  TxPoolOptionGroup txPoolOptionGroup = new TxPoolOptionGroup();
 
-  @Option(
-      names = {"--tx-pool-hashes-max-size"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Deprecated, has not effect. Maximum number of pending transaction hashes that will be kept in the transaction pool",
-      arity = "1")
-  @SuppressWarnings("unused")
-  private final Integer pooledTransactionHashesSize = null; // NOSONAR
+  static class TxPoolOptionGroup {
+    @Option(
+        names = {"--tx-pool-max-size"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
-  @Option(
-      names = {"--tx-pool-retention-hours"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer pendingTxRetentionPeriod =
-      TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+    @Option(
+        names = {"--tx-pool-hashes-max-size"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer pooledTransactionHashesSize =
+        TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
 
-  @Option(
-      names = {"--tx-pool-price-bump"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      converter = PercentageConverter.class,
-      description =
-          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+    @Option(
+        names = {"--tx-pool-retention-hours"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer pendingTxRetentionPeriod =
+        TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+
+    @Option(
+        names = {"--tx-pool-price-bump"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        converter = PercentageConverter.class,
+        description =
+            "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+  }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -1451,7 +1457,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addMixin("Ethstats", ethstatsOptions);
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
     commandLine.addMixin("Logging level", loggingLevelOption);
-    commandLine.addMixin("Data Storage Options", dataStorageOptions);
   }
 
   private void handleUnstableOptions() {
@@ -1470,6 +1475,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
+            .put("Data Storage Options", unstableDataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
@@ -1854,10 +1860,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
     }
-
-    if (pooledTransactionHashesSize != null) { // NOSONAR
-      logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
-    }
   }
 
   private void configure() throws Exception {
@@ -1999,7 +2001,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .coinbase(minerOptionGroup.coinbase)
                 .targetGasLimit(targetGasLimit)
                 .minTransactionGasPrice(minTransactionGasPrice)
-                .extraData(extraData)
+                .extraData(minerOptionGroup.extraData)
                 .miningEnabled(minerOptionGroup.isMiningEnabled)
                 .stratumMiningEnabled(minerOptionGroup.iStratumMiningEnabled)
                 .stratumNetworkInterface(minerOptionGroup.stratumNetworkInterface)
@@ -2031,7 +2033,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(dataStorageOptions.toDomainObject())
+        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
         .maxPeers(maxPeers);
   }
 
@@ -2423,24 +2425,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       final LocalPermissioningConfiguration localPermissioningConfiguration =
           PermissioningConfigurationBuilder.permissioningConfiguration(
-                  permissionsOptionGroup.permissionsNodesEnabled,
+              permissionsOptionGroup.permissionsNodesEnabled,
               getEnodeDnsConfiguration(),
               nodePermissioningConfigFile.orElse(getDefaultPermissioningFilePath()),
-                  permissionsOptionGroup.permissionsAccountsEnabled,
+              permissionsOptionGroup.permissionsAccountsEnabled,
               accountPermissioningConfigFile.orElse(getDefaultPermissioningFilePath()));
 
       localPermissioningConfigurationOptional = Optional.of(localPermissioningConfiguration);
     } else {
-      if (permissionsOptionGroup.nodePermissionsConfigFile != null && !permissionsOptionGroup.permissionsNodesEnabled) {
+      if (permissionsOptionGroup.nodePermissionsConfigFile != null
+          && !permissionsOptionGroup.permissionsNodesEnabled) {
         logger.warn(
             "Node permissioning config file set {} but no permissions enabled",
-                permissionsOptionGroup.nodePermissionsConfigFile);
+            permissionsOptionGroup.nodePermissionsConfigFile);
       }
 
-      if (permissionsOptionGroup.accountPermissionsConfigFile != null && !permissionsOptionGroup.permissionsAccountsEnabled) {
+      if (permissionsOptionGroup.accountPermissionsConfigFile != null
+          && !permissionsOptionGroup.permissionsAccountsEnabled) {
         logger.warn(
             "Account permissioning config file set {} but no permissions enabled",
-                permissionsOptionGroup.accountPermissionsConfigFile);
+            permissionsOptionGroup.accountPermissionsConfigFile);
       }
       localPermissioningConfigurationOptional = Optional.empty();
     }
@@ -2455,16 +2459,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "No node permissioning contract address specified. Cannot enable smart contract based node permissioning.");
       } else {
         smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(
-                permissionsOptionGroup.permissionsNodesContractEnabled);
+            permissionsOptionGroup.permissionsNodesContractEnabled);
         smartContractPermissioningConfiguration.setNodeSmartContractAddress(
-                permissionsOptionGroup. permissionsNodesContractAddress);
+            permissionsOptionGroup.permissionsNodesContractAddress);
         smartContractPermissioningConfiguration.setNodeSmartContractInterfaceVersion(
-                permissionsOptionGroup.permissionsNodesContractVersion);
+            permissionsOptionGroup.permissionsNodesContractVersion);
       }
     } else if (permissionsOptionGroup.permissionsNodesContractAddress != null) {
       logger.warn(
           "Node permissioning smart contract address set {} but smart contract node permissioning is disabled.",
-              permissionsOptionGroup.permissionsNodesContractAddress);
+          permissionsOptionGroup.permissionsNodesContractAddress);
     }
 
     if (permissionsOptionGroup.permissionsAccountsContractEnabled) {
@@ -2474,14 +2478,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "No account permissioning contract address specified. Cannot enable smart contract based account permissioning.");
       } else {
         smartContractPermissioningConfiguration.setSmartContractAccountAllowlistEnabled(
-                permissionsOptionGroup.permissionsAccountsContractEnabled);
+            permissionsOptionGroup.permissionsAccountsContractEnabled);
         smartContractPermissioningConfiguration.setAccountSmartContractAddress(
-                permissionsOptionGroup.permissionsAccountsContractAddress);
+            permissionsOptionGroup.permissionsAccountsContractAddress);
       }
     } else if (permissionsOptionGroup.permissionsAccountsContractAddress != null) {
       logger.warn(
           "Account permissioning smart contract address set {} but smart contract account permissioning is disabled.",
-              permissionsOptionGroup.permissionsAccountsContractAddress);
+          permissionsOptionGroup.permissionsAccountsContractAddress);
     }
 
     final PermissioningConfiguration permissioningConfiguration =
@@ -2509,11 +2513,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean localPermissionsEnabled() {
-    return permissionsOptionGroup.permissionsAccountsEnabled || permissionsOptionGroup.permissionsNodesEnabled;
+    return permissionsOptionGroup.permissionsAccountsEnabled
+        || permissionsOptionGroup.permissionsNodesEnabled;
   }
 
   private boolean contractPermissionsEnabled() {
-    return permissionsOptionGroup.permissionsNodesContractEnabled || permissionsOptionGroup.permissionsAccountsContractEnabled;
+    return permissionsOptionGroup.permissionsNodesContractEnabled
+        || permissionsOptionGroup.permissionsAccountsContractEnabled;
   }
 
   private PrivacyParameters privacyParameters(final KeyValueStorageProvider storageProvider) {
@@ -2558,7 +2564,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       privacyParametersBuilder.setEnabled(true);
       privacyParametersBuilder.setEnclaveUrl(privacyUrl);
-      privacyParametersBuilder.setMultiTenancyEnabled(privacyOptionGroup.isPrivacyMultiTenancyEnabled);
+      privacyParametersBuilder.setMultiTenancyEnabled(
+          privacyOptionGroup.isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
           isFlexiblePrivacyGroupsEnabled || isOnchainPrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
@@ -2693,9 +2700,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
     return unstableTransactionPoolOptions
         .toDomainObject()
-        .txPoolMaxSize(txPoolMaxSize)
-        .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
-        .priceBump(Percentage.fromInt(priceBump))
+        .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
+        .pooledTransactionHashesSize(txPoolOptionGroup.pooledTransactionHashesSize)
+        .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
+        .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
         .build();
   }
@@ -3097,7 +3105,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Override
     public int getDatabaseVersion() {
-      return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
+      return unstableDataStorageOptions
+          .toDomainObject()
+          .getDataStorageFormat()
+          .getDatabaseVersion();
     }
   }
 
