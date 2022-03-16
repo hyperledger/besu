@@ -147,9 +147,12 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
         getFirstAncestorHeader()
             .orElseThrow(
                 () -> new BackwardSyncException("Cannot merge when syncing forward...", true));
-    BlockHeader historicalHeader =
+    Optional<BlockHeader> historicalHeader =
         historicalBackwardChain.getHeaderOnHeight(firstHeader.getNumber() - 1);
-    if (firstHeader.getParentHash().equals(historicalHeader.getHash())) {
+    if (historicalHeader.isEmpty()) {
+      return;
+    }
+    if (firstHeader.getParentHash().equals(historicalHeader.orElseThrow().getHash())) {
       Collections.reverse(historicalBackwardChain.getSuccessors());
       this.ancestors.addAll(
           historicalBackwardChain.getSuccessors().stream()
@@ -173,9 +176,9 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
           LOG,
           "Cannot merge previous historical run because headers on height {} ({}) of {} and {} are not equal. Ignoring previous run. Did someone lie to us?",
           () -> firstHeader.getNumber() - 1,
-          () -> historicalHeader.getNumber(),
+          () -> historicalHeader.orElseThrow().getNumber(),
           () -> firstHeader.getParentHash().toHexString(),
-          () -> historicalHeader.getHash().toHexString());
+          () -> historicalHeader.orElseThrow().getHash().toHexString());
     }
   }
 
@@ -237,24 +240,38 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
   public void commit() {}
 
   @Override
-  public BlockHeader getHeaderOnHeight(final long height) {
+  public Optional<BlockHeader> getHeaderOnHeight(final long height) {
+    if (ancestors.isEmpty()) {
+      return Optional.empty();
+    }
     final long firstAncestor = headers.get(ancestors.get(0)).orElseThrow().getNumber();
     if (firstAncestor >= height) {
-      LOG.info(
-          "First: {} Height: {}, result: {}",
-          firstAncestor,
-          height,
-          headers.get(ancestors.get((int) (firstAncestor - height))).orElseThrow().getNumber());
-      return headers.get(ancestors.get((int) (firstAncestor - height))).orElseThrow();
+      if (firstAncestor - height < ancestors.size()) {
+        LOG.info(
+            "First: {} Height: {}, result: {}",
+            firstAncestor,
+            height,
+            headers.get(ancestors.get((int) (firstAncestor - height))).orElseThrow().getNumber());
+        return headers.get(ancestors.get((int) (firstAncestor - height)));
+      } else {
+        return Optional.empty();
+      }
     } else {
+      if (successors.isEmpty()) {
+        return Optional.empty();
+      }
       final long firstSuccessor = headers.get(successors.get(0)).orElseThrow().getNumber();
-      LOG.info(
-          "First: {} Height: {}, result: {}",
-          firstSuccessor,
-          height,
-          headers.get(successors.get((int) (height - firstSuccessor))).orElseThrow().getNumber());
+      if (height - firstSuccessor < successors.size()) {
+        LOG.info(
+            "First: {} Height: {}, result: {}",
+            firstSuccessor,
+            height,
+            headers.get(successors.get((int) (height - firstSuccessor))).orElseThrow().getNumber());
 
-      return headers.get(successors.get((int) (height - firstSuccessor))).orElseThrow();
+        return headers.get(successors.get((int) (height - firstSuccessor)));
+      } else {
+        return Optional.empty();
+      }
     }
   }
 }

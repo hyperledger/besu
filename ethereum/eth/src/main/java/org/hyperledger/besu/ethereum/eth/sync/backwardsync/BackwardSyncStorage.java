@@ -71,5 +71,5 @@ public interface BackwardSyncStorage {
 
   void commit();
 
-  BlockHeader getHeaderOnHeight(long height);
+  Optional<BlockHeader> getHeaderOnHeight(long height);
 }

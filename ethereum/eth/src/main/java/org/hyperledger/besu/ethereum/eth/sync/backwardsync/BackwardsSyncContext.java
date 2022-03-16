@@ -197,10 +197,14 @@ public class BackwardsSyncContext {
           f.thenApply(CompletableFuture::completedFuture)
               .exceptionally(
                   ex -> {
-                    LOG.info(
-                        "Backward sync failed, retrying in few seconds...",
-                        ex.getMessage(),
-                        ethContext.getEthPeers().peerCount());
+                    if (ex instanceof BackwardSyncException && ex.getCause() == null) {
+                      LOG.info(
+                          "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
+                          ex.getMessage(),
+                          ethContext.getEthPeers().peerCount());
+                    } else {
+                      LOG.warn("there was an uncaught exception during backward sync", ex);
+                    }
                     return ethContext
                         .getScheduler()
                         .scheduleFutureTask(
@@ -256,8 +260,8 @@ public class BackwardsSyncContext {
     return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
   }
 
-  public BackwardSyncStorage findCorrectChainFromPivot(final long number) {
-    return backwardChainMap.get(number);
+  public Optional<BackwardSyncStorage> findCorrectChainFromPivot(final long number) {
+    return Optional.ofNullable(backwardChainMap.get(number));
   }
 
   public void putCurrentChainToHeight(final long height, final BackwardSyncStorage backwardChain) {

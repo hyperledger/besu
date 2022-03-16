@@ -173,9 +173,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
   @VisibleForTesting
   protected BlockHeader possibleMerge(final Void unused) {
     Optional<BackwardSyncStorage> maybeHistoricalBackwardChain =
-        Optional.ofNullable(
-            context.findCorrectChainFromPivot(
-                backwardChain.getFirstAncestorHeader().orElseThrow().getNumber() - 1));
+        context.findCorrectChainFromPivot(
+            backwardChain.getFirstAncestorHeader().orElseThrow().getNumber() - 1);
     maybeHistoricalBackwardChain.ifPresent(backwardChain::prependChain);
     return backwardChain.getFirstAncestorHeader().orElseThrow();
   }
@@ -185,7 +184,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
   protected CompletableFuture<Void> possiblyMoreBackwardSteps(final BlockHeader blockHeader) {
     CompletableFuture<Void> completableFuture = new CompletableFuture<>();
     if (context.getProtocolContext().getBlockchain().contains(blockHeader.getHash())) {
-      LOG.debug(
+      LOG.info(
           "The backward sync let us to a block that we already know... We will init forward sync...");
       completableFuture.complete(null); // we finished backward sync
       return completableFuture;
@@ -199,7 +198,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
           context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
           context.getProtocolContext().getBlockchain().getChainHead().getHash().toHexString());
     }
-    LOG.debug("Backward sync did not reach a know block, need to go deeper");
+    LOG.info("Backward sync did not reach a know block, need to go deeper");
     completableFuture.complete(null);
     return completableFuture.thenCompose(this::executeAsync);
   }
