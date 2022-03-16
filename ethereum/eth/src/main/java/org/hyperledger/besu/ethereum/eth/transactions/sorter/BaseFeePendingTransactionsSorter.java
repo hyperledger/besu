@@ -84,7 +84,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxPriorityFeePerGas()
                           // safe to .get() here because only 1559 txs can be in the static range
                           .get()
-                          .getValue()
+                          .getAsBigInteger()
                           .longValue())
               .thenComparing(TransactionInfo::getSequence)
               .reversed());
@@ -97,7 +97,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                       transactionInfo
                           .getTransaction()
                           .getMaxFeePerGas()
-                          .map(maxFeePerGas -> maxFeePerGas.getValue().longValue())
+                          .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getSequence)
               .reversed());

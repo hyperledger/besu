@@ -29,11 +29,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class PrivacyGroupUtil {
 
   /*
-   * Tessera, Orion and Besu all have code to generate the privacyGroupId for LEGACY AKA EEA groups.
-   * Functionality relies on them all generating the same value. Tessera code is here:
+   * Tessera and Besu both have code to generate the privacyGroupId for LEGACY AKA EEA groups.
+   * Functionality relies on them both generating the same value. Tessera code is here:
    * https://github.com/ConsenSys/tessera/blob/c756e1bf2d1c7a7806cf3cb5b31361f51ad705f1/enclave/enclave-api/src/main/java/com/quorum/tessera/enclave/PrivacyGroupUtil.java
-   * Orion code is here:
-   * https://github.com/ConsenSys/orion/blob/05759341ec1a216e6837df91e421207c8294ad2a/src/main/java/net/consensys/orion/enclave/sodium/SodiumEnclave.java
    */
   public static Bytes32 calculateEeaPrivacyGroupId(
       final Bytes privateFrom, final List<Bytes> privateFor) {

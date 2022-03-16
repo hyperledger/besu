@@ -36,9 +36,13 @@ public interface NodeConfiguration {
 
   Optional<Integer> getEngineJsonRpcPort();
 
+  Optional<Integer> getEngineJsonRpcWebSocketPort();
+
   String getHostName();
 
   boolean isJsonRpcEnabled();
+
+  boolean isEngineRpcEnabled();
 
   GenesisConfigurationProvider getGenesisConfigProvider();
 

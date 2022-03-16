@@ -13,7 +13,7 @@
 
 plugins {
   id 'org.web3j' version '4.8.9'
-  id 'org.web3j.solidity' version '0.3.2'
+  id 'org.web3j.solidity' version '0.3.3'
 }
 
 web3j {
@@ -55,14 +55,15 @@ dependencies {
   testImplementation 'io.grpc:grpc-stub'
   testImplementation 'io.netty:netty-all'
   testImplementation 'io.opentelemetry:opentelemetry-api'
-  testImplementation 'io.opentelemetry:opentelemetry-proto'
   testImplementation 'io.opentelemetry:opentelemetry-sdk'
   testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
   testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+  testImplementation 'io.opentelemetry.proto:opentelemetry-proto'
   testImplementation 'io.opentracing.contrib:opentracing-okhttp3'
   testImplementation 'io.opentracing:opentracing-api'
   testImplementation 'io.opentracing:opentracing-util'
   testImplementation 'io.jaegertracing:jaeger-client'
+  testImplementation 'io.jaegertracing:jaeger-proto'
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-compress'

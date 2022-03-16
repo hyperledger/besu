@@ -100,7 +100,7 @@ public class GetWorkProtocolTest {
                 .coinbase(Address.wrap(Bytes.random(20)))
                 .minTransactionGasPrice(Wei.of(1))
                 .extraData(Bytes.fromHexString("0xc0ffee"))
-                .enabled(true)
+                .miningEnabled(true)
                 .build());
     AtomicReference<String> messageRef = new AtomicReference<>();
     StratumConnection connection =

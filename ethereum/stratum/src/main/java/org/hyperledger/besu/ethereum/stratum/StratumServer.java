@@ -157,6 +157,7 @@ public class StratumServer implements PoWObserver {
       logger.debug("Discarding {} as stratum server is not started", poWSolverInputs);
       return;
     }
+    logger.debug("stratum newJob with inputs: {}", poWSolverInputs);
     for (StratumProtocol protocol : protocols) {
       protocol.setCurrentWorkTask(poWSolverInputs);
     }

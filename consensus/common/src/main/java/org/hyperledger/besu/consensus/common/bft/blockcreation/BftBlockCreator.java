@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
+import org.hyperledger.besu.config.BftConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
@@ -37,6 +39,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
   private final BftExtraDataCodec bftExtraDataCodec;
 
   public BftBlockCreator(
+      final ForksSchedule<? extends BftConfigOptions> forksSchedule,
       final Address localAddress,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
@@ -46,20 +49,25 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
-      final Address miningBeneficiary,
       final BftExtraDataCodec bftExtraDataCodec) {
     super(
         localAddress,
+        miningBeneficiaryCalculator(localAddress, forksSchedule),
         targetGasLimitSupplier,
         extraDataCalculator,
         pendingTransactions,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        miningBeneficiary,
         minBlockOccupancyRatio,
         parentHeader);
     this.bftExtraDataCodec = bftExtraDataCodec;
+  }
+
+  private static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
+      final Address localAddress, final ForksSchedule<? extends BftConfigOptions> forksSchedule) {
+    return blockNum ->
+        forksSchedule.getFork(blockNum).getValue().getMiningBeneficiary().orElse(localAddress);
   }
 
   @Override

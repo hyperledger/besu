@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -67,6 +67,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockCreator.class);
 
   protected final Address coinbase;
+  private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   protected final Supplier<Optional<Long>> targetGasLimitSupplier;
 
   private final ExtraDataCalculator extraDataCalculator;
@@ -76,7 +77,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final BlockHeaderFunctions blockHeaderFunctions;
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
-  private final Address miningBeneficiary;
   protected final BlockHeader parentHeader;
   protected final ProtocolSpec protocolSpec;
 
@@ -84,16 +84,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected AbstractBlockCreator(
       final Address coinbase,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
-      final Address miningBeneficiary,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     this.coinbase = coinbase;
+    this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.targetGasLimitSupplier = targetGasLimitSupplier;
     this.extraDataCalculator = extraDataCalculator;
     this.pendingTransactions = pendingTransactions;
@@ -101,7 +102,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.protocolSchedule = protocolSchedule;
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
-    this.miningBeneficiary = miningBeneficiary;
     this.parentHeader = parentHeader;
     this.protocolSpec = protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1);
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
@@ -146,12 +146,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected Block createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
-      final Optional<Bytes32> maybeRandom,
+      final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
     try {
       final ProcessableBlockHeader processableBlockHeader =
-          createPendingBlockHeader(timestamp, maybeRandom);
+          createPendingBlockHeader(timestamp, maybePrevRandao);
+      final Address miningBeneficiary =
+          miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
 
       throwIfStopped();
 
@@ -164,11 +166,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final BlockTransactionSelector.TransactionSelectionResults transactionResults =
-          selectTransactions(processableBlockHeader, disposableWorldState, maybeTransactions);
+          selectTransactions(
+              processableBlockHeader, disposableWorldState, maybeTransactions, miningBeneficiary);
 
       throwIfStopped();
 
-      final ProtocolSpec protocolSpec =
+      final ProtocolSpec newProtocolSpec =
           protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
 
       if (rewardCoinbase
@@ -176,8 +179,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               disposableWorldState,
               processableBlockHeader,
               ommers,
-              protocolSpec.getBlockReward(),
-              protocolSpec.isSkipZeroBlockRewards())) {
+              miningBeneficiary,
+              newProtocolSpec.getBlockReward(),
+              newProtocolSpec.isSkipZeroBlockRewards())) {
         LOG.trace("Failed to apply mining reward, exiting.");
         throw new RuntimeException("Failed to apply mining reward.");
       }
@@ -216,7 +220,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
       final MutableWorldState disposableWorldState,
-      final Optional<List<Transaction>> transactions)
+      final Optional<List<Transaction>> transactions,
+      final Address miningBeneficiary)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
 
@@ -268,7 +273,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   }
 
   private ProcessableBlockHeader createPendingBlockHeader(
-      final long timestamp, final Optional<Bytes32> maybeRandom) {
+      final long timestamp, final Optional<Bytes32> maybePrevRandao) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
     long gasLimit =
         protocolSpec
@@ -295,7 +300,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                         feeMarket.targetGasUsed(parentHeader)))
             .orElse(null);
 
-    final Bytes32 random = maybeRandom.orElse(null);
+    final Bytes32 prevRandao = maybePrevRandao.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
@@ -304,7 +309,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .gasLimit(gasLimit)
         .timestamp(timestamp)
         .baseFee(baseFee)
-        .random(random)
+        .prevRandao(prevRandao)
         .buildProcessableBlockHeader();
   }
 
@@ -329,6 +334,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final MutableWorldState worldState,
       final ProcessableBlockHeader header,
       final List<BlockHeader> ommers,
+      final Address miningBeneficiary,
       final Wei blockReward,
       final boolean skipZeroBlockRewards) {
 
@@ -371,4 +377,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   protected abstract BlockHeader createFinalBlockHeader(
       final SealableBlockHeader sealableBlockHeader);
+
+  @FunctionalInterface
+  protected interface MiningBeneficiaryCalculator {
+    Address getMiningBeneficiary(long blockNumber);
+  }
 }

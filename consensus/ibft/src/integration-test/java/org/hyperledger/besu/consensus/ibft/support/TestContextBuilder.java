@@ -300,7 +300,7 @@ public class TestContextBuilder {
             .coinbase(AddressHelpers.ofValue(1))
             .minTransactionGasPrice(Wei.ZERO)
             .extraData(Bytes.wrap("Ibft Int tests".getBytes(UTF_8)))
-            .enabled(true)
+            .miningEnabled(true)
             .build();
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
@@ -341,13 +341,13 @@ public class TestContextBuilder {
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final BftBlockCreatorFactory blockCreatorFactory =
-        new BftBlockCreatorFactory(
+    final BftBlockCreatorFactory<?> blockCreatorFactory =
+        new BftBlockCreatorFactory<>(
             pendingTransactions, // changed from IbftBesuController
             protocolContext,
             protocolSchedule,
+            forksSchedule,
             miningParams,
-            localAddress,
             localAddress,
             IBFT_EXTRA_DATA_ENCODER);
 

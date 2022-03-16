@@ -62,6 +62,7 @@ public class BesuNodeFactory {
         config.getDataPath(),
         config.getMiningParameters(),
         config.getJsonRpcConfiguration(),
+        config.getEngineRpcConfiguration(),
         config.getWebSocketConfiguration(),
         config.getMetricsConfiguration(),
         config.getPermissioningConfiguration(),
@@ -279,7 +280,7 @@ public class BesuNodeFactory {
         new MiningParameters.Builder()
             .minTransactionGasPrice(Wei.ZERO)
             .coinbase(AddressHelpers.ofValue(1))
-            .enabled(true)
+            .miningEnabled(true)
             .build();
 
     return create(
@@ -500,6 +501,21 @@ public class BesuNodeFactory {
     }
 
     return create(builder.build());
+  }
+
+  public BesuNode createExecutionEngineGenesisNode(final String name, final String genesisPath)
+      throws IOException {
+    final String genesisFile = GenesisConfigurationFactory.readGenesisFile(genesisPath);
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .genesisConfigProvider((a) -> Optional.of(genesisFile))
+            .devMode(false)
+            .bootnodeEligible(false)
+            .miningEnabled()
+            .jsonRpcEnabled()
+            .engineRpcEnabled()
+            .build());
   }
 
   public BesuNode createCliqueNodeWithValidators(final String name, final String... validators)

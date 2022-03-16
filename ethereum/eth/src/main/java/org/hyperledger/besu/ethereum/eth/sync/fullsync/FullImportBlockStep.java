@@ -35,18 +35,25 @@ public class FullImportBlockStep implements Consumer<Block> {
   private final EthContext ethContext;
   private long gasAccumulator = 0;
   private long lastReportMillis = 0;
+  private final SyncTerminationCondition fullSyncTerminationCondition;
 
   public FullImportBlockStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final EthContext ethContext) {
+      final EthContext ethContext,
+      final SyncTerminationCondition syncTerminationCondition) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.fullSyncTerminationCondition = syncTerminationCondition;
   }
 
   @Override
   public void accept(final Block block) {
+    if (fullSyncTerminationCondition.shouldStopDownload()) {
+      LOG.debug("Not importing another block, because terminal condition was reached.");
+      return;
+    }
     final long blockNumber = block.getHeader().getNumber();
     final String blockHash = block.getHash().toHexString();
     final BlockImporter importer =

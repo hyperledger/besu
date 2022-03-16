@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Naive implementation of Synchronizer used by retesteth. Because retesteth is not implemented in
@@ -28,7 +29,9 @@ import java.util.Optional;
  */
 public class DummySynchronizer implements Synchronizer {
   @Override
-  public void start() {}
+  public CompletableFuture<Void> start() {
+    return CompletableFuture.completedFuture(null);
+  }
 
   @Override
   public void stop() {}

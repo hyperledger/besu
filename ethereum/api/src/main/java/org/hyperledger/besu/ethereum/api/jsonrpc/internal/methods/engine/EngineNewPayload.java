@@ -120,7 +120,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getTimestamp(),
             Bytes.fromHexString(blockParam.getExtraData()),
             blockParam.getBaseFeePerGas(),
-            blockParam.getRandom(),
+            blockParam.getPrevRandao(),
             0,
             headerFunctions);
 
@@ -143,16 +143,18 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       }
     }
 
-    // TODO: post-merge cleanup
-    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      return respondWith(requestContext.getRequest().getId(), null, INVALID_TERMINAL_BLOCK);
-    }
-
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
-    if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing(block)) {
+    if (mergeContext.isSyncing()
+        || mergeCoordinator.isBackwardSyncing()
+        || mergeCoordinator.getOrSyncHeaderByHash(newBlockHeader.getParentHash()).isEmpty()) {
       return respondWith(reqId, null, SYNCING);
+    }
+
+    // TODO: post-merge cleanup
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
+      return respondWith(requestContext.getRequest().getId(), null, INVALID_TERMINAL_BLOCK);
     }
 
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 
 import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService.BackupStatus;
@@ -41,7 +42,8 @@ import picocli.CommandLine.ParentCommand;
 @Command(
     name = "x-backup-state",
     description = "Backs up the state and accounts at a specified block.",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
 public class BackupState implements Runnable {
 
   @Option(

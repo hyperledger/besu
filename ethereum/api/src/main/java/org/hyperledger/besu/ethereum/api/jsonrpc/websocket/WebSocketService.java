@@ -18,6 +18,7 @@ import static com.google.common.collect.Streams.stream;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 
 import java.net.InetSocketAddress;
@@ -70,10 +71,10 @@ public class WebSocketService {
         vertx,
         configuration,
         websocketRequestHandler,
-        AuthenticationService.create(vertx, configuration));
+        DefaultAuthenticationService.create(vertx, configuration));
   }
 
-  private WebSocketService(
+  public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
       final WebSocketRequestHandler websocketRequestHandler,
@@ -132,16 +133,26 @@ public class WebSocketService {
                 buffer.toString(),
                 socketAddressAsString(socketAddress));
 
-            AuthenticationUtils.getUser(
-                authenticationService,
-                token,
-                user ->
-                    websocketRequestHandler.handle(
-                        authenticationService,
-                        websocket,
-                        buffer.toString(),
-                        user,
-                        configuration.getRpcApisNoAuth()));
+            if (authenticationService.isPresent()) {
+              authenticationService
+                  .get()
+                  .authenticate(
+                      token,
+                      user ->
+                          websocketRequestHandler.handle(
+                              authenticationService,
+                              websocket,
+                              buffer.toString(),
+                              user,
+                              configuration.getRpcApisNoAuth()));
+            } else {
+              websocketRequestHandler.handle(
+                  Optional.empty(),
+                  websocket,
+                  buffer.toString(),
+                  Optional.empty(),
+                  configuration.getRpcApisNoAuth());
+            }
           });
 
       websocket.textMessageHandler(
@@ -151,16 +162,26 @@ public class WebSocketService {
                 payload,
                 socketAddressAsString(socketAddress));
 
-            AuthenticationUtils.getUser(
-                authenticationService,
-                token,
-                user ->
-                    websocketRequestHandler.handle(
-                        authenticationService,
-                        websocket,
-                        payload,
-                        user,
-                        configuration.getRpcApisNoAuth()));
+            if (authenticationService.isPresent()) {
+              authenticationService
+                  .get()
+                  .authenticate(
+                      token,
+                      user ->
+                          websocketRequestHandler.handle(
+                              authenticationService,
+                              websocket,
+                              payload,
+                              user,
+                              configuration.getRpcApisNoAuth()));
+            } else {
+              websocketRequestHandler.handle(
+                  Optional.empty(),
+                  websocket,
+                  payload,
+                  Optional.empty(),
+                  configuration.getRpcApisNoAuth());
+            }
           });
 
       websocket.closeHandler(
@@ -226,7 +247,7 @@ public class WebSocketService {
       router
           .post("/login")
           .produces(APPLICATION_JSON)
-          .handler(AuthenticationService::handleDisabledLogin);
+          .handler(DefaultAuthenticationService::handleDisabledLogin);
     }
 
     router.route().handler(WebSocketService::handleHttpNotSupported);

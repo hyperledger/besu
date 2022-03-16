@@ -1,0 +1,35 @@
+{
+  "comment" : "call the prior contract then call log contract 00a0..00.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x6b9b967cfbeedeb7f0f4956b8103075ddfcea26c01d6d5dc3f9e2ed2ec9c42c0", [ "0x0" ] ],
+    "id" : 283
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0x9fbda871d559710256a2502a2517b794b482db40",
+        "gas" : "0xfb2ea9",
+        "input" : "0x",
+        "to" : "0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x425ea2cf9bb89c09f131ab531958c4d189b5d047fd924d74f25d49cf47a5a8f1",
+      "blockNumber" : 19,
+      "result" : {
+        "gasUsed" : "0x138e",
+        "output" : "0x"
+      },
+      "subtraces" : 1,
+      "traceAddress" : [ 0 ],
+      "transactionHash" : "0x6b9b967cfbeedeb7f0f4956b8103075ddfcea26c01d6d5dc3f9e2ed2ec9c42c0",
+      "transactionPosition" : 1,
+      "type" : "call"
+    },
+    "id" : 283
+  },
+  "statusCode" : 200
+}

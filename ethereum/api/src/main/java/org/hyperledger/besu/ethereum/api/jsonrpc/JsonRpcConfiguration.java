@@ -70,6 +70,9 @@ public class JsonRpcConfiguration {
     engineMethodGroup.add(RpcApis.ENGINE.name());
     engineMethodGroup.add(RpcApis.ETH.name());
     config.setRpcApis(engineMethodGroup);
+    config.setAuthenticationEnabled(true);
+    config.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+    config.setAuthenticationPublicKeyFile(null); // ephemeral key will be generated on startup.
     return config;
   }
 

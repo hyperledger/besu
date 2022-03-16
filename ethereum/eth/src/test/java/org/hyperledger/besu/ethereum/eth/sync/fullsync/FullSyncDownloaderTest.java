@@ -92,7 +92,13 @@ public class FullSyncDownloaderTest {
 
   private FullSyncDownloader downloader(final SynchronizerConfiguration syncConfig) {
     return new FullSyncDownloader(
-        syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        metricsSystem,
+        SyncTerminationCondition.never());
   }
 
   @Test

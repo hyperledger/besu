@@ -22,11 +22,13 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -248,10 +250,10 @@ import picocli.CommandLine.ParameterException;
     name = "besu",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    header = "Usage:",
+    header = "@|bold,fg(cyan) Usage:|@",
     synopsisHeading = "%n",
-    descriptionHeading = "%nDescription:%n%n",
-    optionListHeading = "%nOptions:%n",
+    descriptionHeading = "%n@|bold,fg(cyan) Description:|@%n%n",
+    optionListHeading = "%n@|bold,fg(cyan) Options:|@%n",
     footerHeading = "%n",
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
@@ -502,254 +504,293 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final BigInteger networkId = null;
 
-  @Option(
-      names = {"--graphql-http-enabled"},
-      description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
-  private final Boolean isGraphQLHttpEnabled = false;
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold GraphQL Options|@%n")
+  GraphQlOptionGroup graphQlOptionGroup = new GraphQlOptionGroup();
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--graphql-http-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String graphQLHttpHost = autoDiscoverDefaultIP().getHostAddress();
+  static class GraphQlOptionGroup {
+    @Option(
+        names = {"--graphql-http-enabled"},
+        description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
+    private final Boolean isGraphQLHttpEnabled = false;
 
-  @Option(
-      names = {"--graphql-http-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--graphql-http-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String graphQLHttpHost;
 
-  @Option(
-      names = {"--graphql-http-cors-origins"},
-      description = "Comma separated origin domain URLs for CORS validation (default: none)")
-  private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
-      new CorsAllowedOriginsProperty();
+    @Option(
+        names = {"--graphql-http-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
 
-  @Option(
-      names = {"--rpc-http-enabled"},
-      description = "Set to start the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcHttpEnabled = false;
+    @Option(
+        names = {"--graphql-http-cors-origins"},
+        description = "Comma separated origin domain URLs for CORS validation (default: none)")
+    protected final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
+        new CorsAllowedOriginsProperty();
+  }
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--rpc-http-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String rpcHttpHost = autoDiscoverDefaultIP().getHostAddress();
+  // Json RPC http
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Http Options|@%n")
+  JsonRPCHttpOptionGroup jsonRPCHttpOptionGroup = new JsonRPCHttpOptionGroup();
 
-  @Option(
-      names = {"--rpc-http-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
+  static class JsonRPCHttpOptionGroup {
+    @Option(
+        names = {"--rpc-http-enabled"},
+        description = "Set to start the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcHttpEnabled = false;
 
-  @Option(
-      names = {"--engine-rpc-http-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--rpc-http-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String rpcHttpHost;
 
-  @Option(
-      names = {"--rpc-http-max-active-connections"},
-      description =
-          "Maximum number of HTTP connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
-      arity = "1")
-  private final Integer rpcHttpMaxConnections = DEFAULT_HTTP_MAX_CONNECTIONS;
+    @Option(
+        names = {"--rpc-http-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
 
-  // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
-  @Option(
-      names = {"--rpc-http-cors-origins"},
-      description = "Comma separated origin domain URLs for CORS validation (default: none)")
-  private final CorsAllowedOriginsProperty rpcHttpCorsAllowedOrigins =
-      new CorsAllowedOriginsProperty();
+    @Option(
+        names = {"--engine-rpc-http-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
-  @Option(
-      names = {"--rpc-http-api", "--rpc-http-apis"},
-      paramLabel = "<api name>",
-      split = " {0,1}, {0,1}",
-      arity = "1..*",
-      description =
-          "Comma separated list of APIs to enable on JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final List<String> rpcHttpApis = DEFAULT_RPC_APIS;
+    @Option(
+        names = {"--rpc-http-max-active-connections"},
+        description =
+            "Maximum number of HTTP connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
+        arity = "1")
+    private final Integer rpcHttpMaxConnections = DEFAULT_HTTP_MAX_CONNECTIONS;
 
-  @Option(
-      names = {"--rpc-http-api-method-no-auth", "--rpc-http-api-methods-no-auth"},
-      paramLabel = "<api name>",
-      split = " {0,1}, {0,1}",
-      arity = "1..*",
-      description =
-          "Comma separated list of API methods to exclude from RPC authentication services, RPC HTTP authentication must be enabled")
-  private final List<String> rpcHttpApiMethodsNoAuth = new ArrayList<String>();
+    // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
+    @Option(
+        names = {"--rpc-http-cors-origins"},
+        description = "Comma separated origin domain URLs for CORS validation (default: none)")
+    private final CorsAllowedOriginsProperty rpcHttpCorsAllowedOrigins =
+        new CorsAllowedOriginsProperty();
 
-  @Option(
-      names = {"--rpc-http-authentication-enabled"},
-      description =
-          "Require authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcHttpAuthenticationEnabled = false;
+    @Option(
+        names = {"--rpc-http-api", "--rpc-http-apis"},
+        paramLabel = "<api name>",
+        split = " {0,1}, {0,1}",
+        arity = "1..*",
+        description =
+            "Comma separated list of APIs to enable on JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+    private final List<String> rpcHttpApis = DEFAULT_RPC_APIS;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      names = {"--rpc-http-authentication-credentials-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Storage file for JSON-RPC HTTP authentication credentials (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String rpcHttpAuthenticationCredentialsFile = null;
+    @Option(
+        names = {"--rpc-http-api-method-no-auth", "--rpc-http-api-methods-no-auth"},
+        paramLabel = "<api name>",
+        split = " {0,1}, {0,1}",
+        arity = "1..*",
+        description =
+            "Comma separated list of API methods to exclude from RPC authentication services, RPC HTTP authentication must be enabled")
+    private final List<String> rpcHttpApiMethodsNoAuth = new ArrayList<String>();
 
-  @CommandLine.Option(
-      names = {"--rpc-http-authentication-jwt-public-key-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "JWT public key file for JSON-RPC HTTP authentication",
-      arity = "1")
-  private final File rpcHttpAuthenticationPublicKeyFile = null;
+    @Option(
+        names = {"--rpc-http-authentication-enabled"},
+        description =
+            "Require authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcHttpAuthenticationEnabled = false;
 
-  @Option(
-      names = {"--rpc-http-authentication-jwt-algorithm"},
-      description =
-          "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
-              + " (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final JwtAlgorithm rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @CommandLine.Option(
+        names = {"--rpc-http-authentication-credentials-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "Storage file for JSON-RPC HTTP authentication credentials (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String rpcHttpAuthenticationCredentialsFile = null;
 
-  @Option(
-      names = {"--rpc-ws-authentication-jwt-algorithm"},
-      description =
-          "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
-              + " (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final JwtAlgorithm rpcWebsocketsAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
+    @CommandLine.Option(
+        names = {"--rpc-http-authentication-jwt-public-key-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "JWT public key file for JSON-RPC HTTP authentication",
+        arity = "1")
+    private final File rpcHttpAuthenticationPublicKeyFile = null;
 
-  @Option(
-      names = {"--rpc-http-tls-enabled"},
-      description = "Enable TLS for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcHttpTlsEnabled = false;
+    @Option(
+        names = {"--rpc-http-authentication-jwt-algorithm"},
+        description =
+            "Encryption algorithm used for HTTP JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+                + " (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final JwtAlgorithm rpcHttpAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
-  @Option(
-      names = {"--rpc-http-tls-keystore-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required if TLS is enabled.")
-  private final Path rpcHttpTlsKeyStoreFile = null;
+    @Option(
+        names = {"--rpc-http-tls-enabled"},
+        description = "Enable TLS for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcHttpTlsEnabled = false;
 
-  @Option(
-      names = {"--rpc-http-tls-keystore-password-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "File containing password to unlock keystore for the JSON-RPC HTTP service. Required if TLS is enabled.")
-  private final Path rpcHttpTlsKeyStorePasswordFile = null;
+    @Option(
+        names = {"--rpc-http-tls-keystore-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "Keystore (PKCS#12) containing key/certificate for the JSON-RPC HTTP service. Required if TLS is enabled.")
+    private final Path rpcHttpTlsKeyStoreFile = null;
 
-  @Option(
-      names = {"--rpc-http-tls-client-auth-enabled"},
-      description =
-          "Enable TLS client authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcHttpTlsClientAuthEnabled = false;
+    @Option(
+        names = {"--rpc-http-tls-keystore-password-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "File containing password to unlock keystore for the JSON-RPC HTTP service. Required if TLS is enabled.")
+    private final Path rpcHttpTlsKeyStorePasswordFile = null;
 
-  @Option(
-      names = {"--rpc-http-tls-known-clients-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Path to file containing clients certificate common name and fingerprint for client authentication")
-  private final Path rpcHttpTlsKnownClientsFile = null;
+    @Option(
+        names = {"--rpc-http-tls-client-auth-enabled"},
+        description =
+            "Enable TLS client authentication for the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcHttpTlsClientAuthEnabled = false;
 
-  @Option(
-      names = {"--rpc-http-tls-ca-clients-enabled"},
-      description =
-          "Enable to accept clients certificate signed by a valid CA for client authentication (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcHttpTlsCAClientsEnabled = false;
+    @Option(
+        names = {"--rpc-http-tls-known-clients-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "Path to file containing clients certificate common name and fingerprint for client authentication")
+    private final Path rpcHttpTlsKnownClientsFile = null;
 
-  @Option(
-      names = {"--rpc-http-tls-protocol", "--rpc-http-tls-protocols"},
-      description = "Comma separated list of TLS protocols to support (default: ${DEFAULT-VALUE})",
-      split = ",",
-      arity = "1..*")
-  private final List<String> rpcHttpTlsProtocols = new ArrayList<>(DEFAULT_TLS_PROTOCOLS);
+    @Option(
+        names = {"--rpc-http-tls-ca-clients-enabled"},
+        description =
+            "Enable to accept clients certificate signed by a valid CA for client authentication (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcHttpTlsCAClientsEnabled = false;
 
-  @Option(
-      names = {"--rpc-http-tls-cipher-suite", "--rpc-http-tls-cipher-suites"},
-      description = "Comma separated list of TLS cipher suites to support",
-      split = ",",
-      arity = "1..*")
-  private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
+    @Option(
+        names = {"--rpc-http-tls-protocol", "--rpc-http-tls-protocols"},
+        description =
+            "Comma separated list of TLS protocols to support (default: ${DEFAULT-VALUE})",
+        split = ",",
+        arity = "1..*")
+    private final List<String> rpcHttpTlsProtocols = new ArrayList<>(DEFAULT_TLS_PROTOCOLS);
 
-  @Option(
-      names = {"--rpc-ws-enabled"},
-      description = "Set to start the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcWsEnabled = false;
+    @Option(
+        names = {"--rpc-http-tls-cipher-suite", "--rpc-http-tls-cipher-suites"},
+        description = "Comma separated list of TLS cipher suites to support",
+        split = ",",
+        arity = "1..*")
+    private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
+  }
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--rpc-ws-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String rpcWsHost = autoDiscoverDefaultIP().getHostAddress();
+  @CommandLine.ArgGroup(validate = false, heading = "")
+  JsonRPCWebsocketOptionGroup jsonRPCWebsocketOptionGroup = new JsonRPCWebsocketOptionGroup();
 
-  @Option(
-      names = {"--rpc-ws-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
+  static class JsonRPCWebsocketOptionGroup {
 
-  @Option(
-      names = {"--rpc-ws-max-frame-size"},
-      description =
-          "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
-      arity = "1")
-  private final Integer rpcWsMaxFrameSize = DEFAULT_WS_MAX_FRAME_SIZE;
+    @Option(
+        names = {"--rpc-ws-authentication-jwt-algorithm"},
+        description =
+            "Encryption algorithm used for Websockets JWT public key. Possible values are ${COMPLETION-CANDIDATES}"
+                + " (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final JwtAlgorithm rpcWebsocketsAuthenticationAlgorithm = DEFAULT_JWT_ALGORITHM;
 
-  @Option(
-      names = {"--rpc-ws-max-active-connections"},
-      description =
-          "Maximum number of WebSocket connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
-      arity = "1")
-  private final Integer rpcWsMaxConnections = DEFAULT_WS_MAX_CONNECTIONS;
+    @Option(
+        names = {"--rpc-ws-enabled"},
+        description = "Set to start the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcWsEnabled = false;
 
-  @Option(
-      names = {"--rpc-ws-api", "--rpc-ws-apis"},
-      paramLabel = "<api name>",
-      split = " {0,1}, {0,1}",
-      arity = "1..*",
-      description =
-          "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
-  private final List<String> rpcWsApis = DEFAULT_RPC_APIS;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--rpc-ws-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description =
+            "Host for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String rpcWsHost;
 
-  @Option(
-      names = {"--rpc-ws-api-methods-no-auth", "--rpc-ws-api-method-no-auth"},
-      paramLabel = "<api name>",
-      split = " {0,1}, {0,1}",
-      arity = "1..*",
-      description =
-          "Comma separated list of RPC methods to exclude from RPC authentication services, RPC WebSocket authentication must be enabled")
-  private final List<String> rpcWsApiMethodsNoAuth = new ArrayList<String>();
+    @Option(
+        names = {"--rpc-ws-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description =
+            "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
 
-  @Option(
-      names = {"--rpc-ws-authentication-enabled"},
-      description =
-          "Require authentication for the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
-  private final Boolean isRpcWsAuthenticationEnabled = false;
+    @Option(
+        names = {"--engine-rpc-ws-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description =
+            "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      names = {"--rpc-ws-authentication-credentials-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description =
-          "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String rpcWsAuthenticationCredentialsFile = null;
+    @Option(
+        names = {"--engine-jwt-secret"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "Path to file containing shared secret key for JWT signature verification")
+    private final Path engineJwtKeyFile = null;
 
-  @CommandLine.Option(
-      names = {"--rpc-ws-authentication-jwt-public-key-file"},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "JWT public key file for JSON-RPC WebSocket authentication",
-      arity = "1")
-  private final File rpcWsAuthenticationPublicKeyFile = null;
+    @Option(
+        names = {"--engine-jwt-enabled"},
+        description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineAuthEnabled = false;
+
+    @Option(
+        names = {"--rpc-ws-max-frame-size"},
+        description =
+            "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
+        arity = "1")
+    private final Integer rpcWsMaxFrameSize = DEFAULT_WS_MAX_FRAME_SIZE;
+
+    @Option(
+        names = {"--rpc-ws-max-active-connections"},
+        description =
+            "Maximum number of WebSocket connections allowed for JSON-RPC (default: ${DEFAULT-VALUE}). Once this limit is reached, incoming connections will be rejected.",
+        arity = "1")
+    private final Integer rpcWsMaxConnections = DEFAULT_WS_MAX_CONNECTIONS;
+
+    @Option(
+        names = {"--rpc-ws-api", "--rpc-ws-apis"},
+        paramLabel = "<api name>",
+        split = " {0,1}, {0,1}",
+        arity = "1..*",
+        description =
+            "Comma separated list of APIs to enable on JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
+    private final List<String> rpcWsApis = DEFAULT_RPC_APIS;
+
+    @Option(
+        names = {"--rpc-ws-api-methods-no-auth", "--rpc-ws-api-method-no-auth"},
+        paramLabel = "<api name>",
+        split = " {0,1}, {0,1}",
+        arity = "1..*",
+        description =
+            "Comma separated list of RPC methods to exclude from RPC authentication services, RPC WebSocket authentication must be enabled")
+    private final List<String> rpcWsApiMethodsNoAuth = new ArrayList<String>();
+
+    @Option(
+        names = {"--rpc-ws-authentication-enabled"},
+        description =
+            "Require authentication for the JSON-RPC WebSocket service (default: ${DEFAULT-VALUE})")
+    private final Boolean isRpcWsAuthenticationEnabled = false;
+
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @CommandLine.Option(
+        names = {"--rpc-ws-authentication-credentials-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description =
+            "Storage file for JSON-RPC WebSocket authentication credentials (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String rpcWsAuthenticationCredentialsFile = null;
+
+    @CommandLine.Option(
+        names = {"--rpc-ws-authentication-jwt-public-key-file"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "JWT public key file for JSON-RPC WebSocket authentication",
+        arity = "1")
+    private final File rpcWsAuthenticationPublicKeyFile = null;
+  }
 
   @Option(
       names = {"--privacy-tls-enabled"},
@@ -859,7 +900,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--engine-host-allowlist"},
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
       description =
-          "Comma separated list of hostnames to allow for ENGINE API access, or * to accept any host (default: ${DEFAULT-VALUE})",
+          "Comma separated list of hostnames to allow for ENGINE API access (applies to both HTTP and websockets), or * to accept any host (default: ${DEFAULT-VALUE})",
       defaultValue = "localhost,127.0.0.1")
   private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
       new JsonRPCAllowlistHostsProperty();
@@ -1192,6 +1233,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private WebSocketConfiguration engineWebSocketConfiguration;
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -1495,6 +1537,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcConfiguration,
         engineJsonRpcConfiguration,
         webSocketConfiguration,
+        engineWebSocketConfiguration,
         apiConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
@@ -1678,16 +1721,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
 
-    if (!rpcHttpApis.stream().allMatch(configuredApis)) {
+    if (!jsonRPCHttpOptionGroup.rpcHttpApis.stream().allMatch(configuredApis)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
     }
 
-    if (!rpcWsApis.stream().allMatch(configuredApis)) {
+    if (!jsonRPCWebsocketOptionGroup.rpcWsApis.stream().allMatch(configuredApis)) {
       throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
     }
 
     final boolean validHttpApiMethods =
-        rpcHttpApiMethodsNoAuth.stream().allMatch(RpcMethod::rpcMethodExists);
+        jsonRPCHttpOptionGroup.rpcHttpApiMethodsNoAuth.stream()
+            .allMatch(RpcMethod::rpcMethodExists);
 
     if (!validHttpApiMethods) {
       throw new ParameterException(
@@ -1696,7 +1740,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     final boolean validWsApiMethods =
-        rpcWsApiMethodsNoAuth.stream().allMatch(RpcMethod::rpcMethodExists);
+        jsonRPCWebsocketOptionGroup.rpcWsApiMethodsNoAuth.stream()
+            .allMatch(RpcMethod::rpcMethodExists);
 
     if (!validWsApiMethods) {
       throw new ParameterException(
@@ -1718,6 +1763,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void issueOptionWarnings() {
+
     // Check that P2P options are able to work
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1734,6 +1780,20 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-interface",
             "--p2p-port",
             "--remote-connections-max-percentage"));
+
+    // Check that block producer options work
+    if (!isMergeEnabled()) {
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--miner-enabled",
+          !isMiningEnabled,
+          asList(
+              "--miner-coinbase",
+              "--min-gas-price",
+              "--min-block-occupancy-ratio",
+              "--miner-extra-data"));
+    }
     // Check that mining options are able to work
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -1741,10 +1801,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--miner-enabled",
         !isMiningEnabled,
         asList(
-            "--miner-coinbase",
-            "--min-gas-price",
-            "--min-block-occupancy-ratio",
-            "--miner-extra-data",
             "--miner-stratum-enabled",
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
@@ -1778,7 +1834,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     syncMode =
         Optional.ofNullable(syncMode)
             .orElse(
-                genesisFile == null && !isPrivacyEnabled && network != NetworkName.DEV
+                genesisFile == null
+                        && !isPrivacyEnabled
+                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
                     ? SyncMode.FAST
                     : SyncMode.FULL);
 
@@ -1786,11 +1844,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
-    jsonRpcConfiguration = jsonRpcConfiguration();
-    engineJsonRpcConfiguration = engineJsonRpcConfiguration();
+    jsonRpcConfiguration =
+        jsonRpcConfiguration(
+            jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
+    engineJsonRpcConfiguration =
+        createEngineJsonRpcConfiguration(
+            jsonRPCHttpOptionGroup.engineRpcHttpPort, engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
-    webSocketConfiguration = webSocketConfiguration();
+    webSocketConfiguration =
+        webSocketConfiguration(
+            jsonRPCWebsocketOptionGroup.rpcWsPort,
+            jsonRPCWebsocketOptionGroup.rpcWsApis,
+            hostsAllowlist);
+    engineWebSocketConfiguration =
+        engineWebSocketConfiguration(
+            jsonRPCWebsocketOptionGroup.engineRpcWsPort, engineHostsAllowlist);
     apiConfiguration = apiConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1896,7 +1965,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .targetGasLimit(targetGasLimit)
                 .minTransactionGasPrice(minTransactionGasPrice)
                 .extraData(extraData)
-                .enabled(isMiningEnabled)
+                .miningEnabled(isMiningEnabled)
                 .stratumMiningEnabled(iStratumMiningEnabled)
                 .stratumNetworkInterface(stratumNetworkInterface)
                 .stratumPort(stratumPort)
@@ -1937,74 +2006,105 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--graphql-http-enabled",
-        !isGraphQLHttpEnabled,
+        !graphQlOptionGroup.isGraphQLHttpEnabled,
         asList("--graphql-http-cors-origins", "--graphql-http-host", "--graphql-http-port"));
-
     final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
-    graphQLConfiguration.setHost(graphQLHttpHost);
-    graphQLConfiguration.setPort(graphQLHttpPort);
+    graphQLConfiguration.setEnabled(graphQlOptionGroup.isGraphQLHttpEnabled);
+    graphQLConfiguration.setHost(
+        Strings.isNullOrEmpty(graphQlOptionGroup.graphQLHttpHost)
+            ? autoDiscoverDefaultIP().getHostAddress()
+            : graphQlOptionGroup.graphQLHttpHost);
+    graphQLConfiguration.setPort(graphQlOptionGroup.graphQLHttpPort);
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
-    graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    graphQLConfiguration.setCorsAllowedDomains(graphQlOptionGroup.graphQLHttpCorsAllowedOrigins);
     graphQLConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
 
     return graphQLConfiguration;
   }
 
-  private JsonRpcConfiguration engineJsonRpcConfiguration() {
-    final JsonRpcConfiguration engineConfig = JsonRpcConfiguration.createDefault();
-    engineConfig.setEnabled(isRpcHttpEnabled);
-    engineConfig.setHost(rpcHttpHost);
-    engineConfig.setPort(engineRpcHttpPort);
-    engineConfig.setMaxActiveConnections(rpcHttpMaxConnections);
-    engineConfig.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
-    engineConfig.setHostsAllowlist(engineHostsAllowlist);
-    engineConfig.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
-    engineConfig.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
-    engineConfig.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    engineConfig.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
-    engineConfig.setTlsConfiguration(rpcHttpTlsConfiguration());
-    engineConfig.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
+  private JsonRpcConfiguration createEngineJsonRpcConfiguration(
+      final Integer listenPort, final List<String> allowCallsFrom) {
+    JsonRpcConfiguration engineConfig =
+        jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+    engineConfig.setEnabled(isMergeEnabled());
+    if (jsonRPCWebsocketOptionGroup.isEngineAuthEnabled) {
+      engineConfig.setAuthenticationEnabled(true);
+      engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+      if (jsonRPCWebsocketOptionGroup.engineJwtKeyFile != null
+          && java.nio.file.Files.exists(jsonRPCWebsocketOptionGroup.engineJwtKeyFile)) { // NOSONAR
+        engineConfig.setAuthenticationPublicKeyFile(
+            jsonRPCWebsocketOptionGroup.engineJwtKeyFile.toFile());
+      } else {
+        logger.info(
+            "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir");
+      }
+    }
     return engineConfig;
   }
 
-  private JsonRpcConfiguration jsonRpcConfiguration() {
+  private WebSocketConfiguration engineWebSocketConfiguration(
+      final Integer listenPort, final List<String> allowCallsFrom) {
+
+    final WebSocketConfiguration webSocketConfiguration =
+        webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+    webSocketConfiguration.setEnabled(isMergeEnabled());
+    if (jsonRPCWebsocketOptionGroup.isEngineAuthEnabled) {
+      webSocketConfiguration.setAuthenticationEnabled(true);
+      webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+      if (jsonRPCWebsocketOptionGroup.engineJwtKeyFile != null
+          && java.nio.file.Files.exists(jsonRPCWebsocketOptionGroup.engineJwtKeyFile)) { // NOSONAR
+        webSocketConfiguration.setAuthenticationPublicKeyFile(
+            jsonRPCWebsocketOptionGroup.engineJwtKeyFile.toFile());
+      }
+    }
+    return webSocketConfiguration;
+  }
+
+  private JsonRpcConfiguration jsonRpcConfiguration(
+      final Integer listenPort, final List<String> apiGroups, final List<String> allowCallsFrom) {
     checkRpcTlsClientAuthOptionsDependencies();
     checkRpcTlsOptionsDependencies();
     checkRpcHttpOptionsDependencies();
 
-    if (isRpcHttpAuthenticationEnabled) {
+    if (jsonRPCHttpOptionGroup.isRpcHttpAuthenticationEnabled) {
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
           "--rpc-http-authentication-public-key-file",
-          rpcHttpAuthenticationPublicKeyFile == null,
+          jsonRPCHttpOptionGroup.rpcHttpAuthenticationPublicKeyFile == null,
           asList("--rpc-http-authentication-jwt-algorithm"));
     }
 
-    if (isRpcHttpAuthenticationEnabled
+    if (jsonRPCHttpOptionGroup.isRpcHttpAuthenticationEnabled
         && rpcHttpAuthenticationCredentialsFile() == null
-        && rpcHttpAuthenticationPublicKeyFile == null) {
+        && jsonRPCHttpOptionGroup.rpcHttpAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC HTTP endpoint without a supplied credentials file or authentication public key file");
     }
 
     final JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
-    jsonRpcConfiguration.setEnabled(isRpcHttpEnabled);
-    jsonRpcConfiguration.setHost(rpcHttpHost);
-    jsonRpcConfiguration.setPort(rpcHttpPort);
-    jsonRpcConfiguration.setMaxActiveConnections(rpcHttpMaxConnections);
-    jsonRpcConfiguration.setCorsAllowedDomains(rpcHttpCorsAllowedOrigins);
-    jsonRpcConfiguration.setRpcApis(rpcHttpApis.stream().distinct().collect(Collectors.toList()));
+    jsonRpcConfiguration.setEnabled(jsonRPCHttpOptionGroup.isRpcHttpEnabled);
+    jsonRpcConfiguration.setHost(
+        Strings.isNullOrEmpty(jsonRPCHttpOptionGroup.rpcHttpHost)
+            ? autoDiscoverDefaultIP().getHostAddress()
+            : jsonRPCHttpOptionGroup.rpcHttpHost);
+    jsonRpcConfiguration.setPort(listenPort);
+    jsonRpcConfiguration.setMaxActiveConnections(jsonRPCHttpOptionGroup.rpcHttpMaxConnections);
+    jsonRpcConfiguration.setCorsAllowedDomains(jsonRPCHttpOptionGroup.rpcHttpCorsAllowedOrigins);
+    jsonRpcConfiguration.setRpcApis(apiGroups.stream().distinct().collect(Collectors.toList()));
     jsonRpcConfiguration.setNoAuthRpcApis(
-        rpcHttpApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
-    jsonRpcConfiguration.setHostsAllowlist(hostsAllowlist);
-    jsonRpcConfiguration.setAuthenticationEnabled(isRpcHttpAuthenticationEnabled);
+        jsonRPCHttpOptionGroup.rpcHttpApiMethodsNoAuth.stream()
+            .distinct()
+            .collect(Collectors.toList()));
+    jsonRpcConfiguration.setHostsAllowlist(allowCallsFrom);
+    jsonRpcConfiguration.setAuthenticationEnabled(
+        jsonRPCHttpOptionGroup.isRpcHttpAuthenticationEnabled);
     jsonRpcConfiguration.setAuthenticationCredentialsFile(rpcHttpAuthenticationCredentialsFile());
-    jsonRpcConfiguration.setAuthenticationPublicKeyFile(rpcHttpAuthenticationPublicKeyFile);
-    jsonRpcConfiguration.setAuthenticationAlgorithm(rpcHttpAuthenticationAlgorithm);
+    jsonRpcConfiguration.setAuthenticationPublicKeyFile(
+        jsonRPCHttpOptionGroup.rpcHttpAuthenticationPublicKeyFile);
+    jsonRpcConfiguration.setAuthenticationAlgorithm(
+        jsonRPCHttpOptionGroup.rpcHttpAuthenticationAlgorithm);
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     return jsonRpcConfiguration;
@@ -2015,7 +2115,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--rpc-http-enabled",
-        !isRpcHttpEnabled,
+        !jsonRPCHttpOptionGroup.isRpcHttpEnabled,
         asList(
             "--rpc-http-api",
             "--rpc-http-apis",
@@ -2045,7 +2145,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--rpc-http-tls-enabled",
-        !isRpcHttpTlsEnabled,
+        !jsonRPCHttpOptionGroup.isRpcHttpTlsEnabled,
         asList(
             "--rpc-http-tls-keystore-file",
             "--rpc-http-tls-keystore-password-file",
@@ -2062,7 +2162,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--rpc-http-tls-client-auth-enabled",
-        !isRpcHttpTlsClientAuthEnabled,
+        !jsonRPCHttpOptionGroup.isRpcHttpTlsClientAuthEnabled,
         asList("--rpc-http-tls-known-clients-file", "--rpc-http-tls-ca-clients-enabled"));
   }
 
@@ -2083,27 +2183,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
 
-    if (rpcHttpTlsKeyStoreFile == null) {
+    if (jsonRPCHttpOptionGroup.rpcHttpTlsKeyStoreFile == null) {
       throw new ParameterException(
           commandLine, "Keystore file is required when TLS is enabled for JSON-RPC HTTP endpoint");
     }
 
-    if (rpcHttpTlsKeyStorePasswordFile == null) {
+    if (jsonRPCHttpOptionGroup.rpcHttpTlsKeyStorePasswordFile == null) {
       throw new ParameterException(
           commandLine,
           "File containing password to unlock keystore is required when TLS is enabled for JSON-RPC HTTP endpoint");
     }
 
-    if (isRpcHttpTlsClientAuthEnabled
-        && !isRpcHttpTlsCAClientsEnabled
-        && rpcHttpTlsKnownClientsFile == null) {
+    if (jsonRPCHttpOptionGroup.isRpcHttpTlsClientAuthEnabled
+        && !jsonRPCHttpOptionGroup.isRpcHttpTlsCAClientsEnabled
+        && jsonRPCHttpOptionGroup.rpcHttpTlsKnownClientsFile == null) {
       throw new ParameterException(
           commandLine,
           "Known-clients file must be specified or CA clients must be enabled when TLS client authentication is enabled for JSON-RPC HTTP endpoint");
     }
 
-    rpcHttpTlsProtocols.retainAll(getJDKEnabledProtocols());
-    if (rpcHttpTlsProtocols.isEmpty()) {
+    jsonRPCHttpOptionGroup.rpcHttpTlsProtocols.retainAll(getJDKEnabledProtocols());
+    if (jsonRPCHttpOptionGroup.rpcHttpTlsProtocols.isEmpty()) {
       throw new ParameterException(
           commandLine,
           "No valid TLS protocols specified (the following protocols are enabled: "
@@ -2111,31 +2211,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + ")");
     }
 
-    for (String cipherSuite : rpcHttpTlsCipherSuites) {
+    for (String cipherSuite : jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites) {
       if (!getJDKEnabledCypherSuites().contains(cipherSuite)) {
         throw new ParameterException(
             commandLine, "Invalid TLS cipher suite specified " + cipherSuite);
       }
     }
 
-    rpcHttpTlsCipherSuites.retainAll(getJDKEnabledCypherSuites());
+    jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites.retainAll(getJDKEnabledCypherSuites());
 
     return Optional.of(
         TlsConfiguration.Builder.aTlsConfiguration()
-            .withKeyStorePath(rpcHttpTlsKeyStoreFile)
+            .withKeyStorePath(jsonRPCHttpOptionGroup.rpcHttpTlsKeyStoreFile)
             .withKeyStorePasswordSupplier(
-                new FileBasedPasswordProvider(rpcHttpTlsKeyStorePasswordFile))
+                new FileBasedPasswordProvider(
+                    jsonRPCHttpOptionGroup.rpcHttpTlsKeyStorePasswordFile))
             .withClientAuthConfiguration(rpcHttpTlsClientAuthConfiguration())
-            .withSecureTransportProtocols(rpcHttpTlsProtocols)
-            .withCipherSuites(rpcHttpTlsCipherSuites)
+            .withSecureTransportProtocols(jsonRPCHttpOptionGroup.rpcHttpTlsProtocols)
+            .withCipherSuites(jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites)
             .build());
   }
 
   private TlsClientAuthConfiguration rpcHttpTlsClientAuthConfiguration() {
-    if (isRpcHttpTlsClientAuthEnabled) {
+    if (jsonRPCHttpOptionGroup.isRpcHttpTlsClientAuthEnabled) {
       return TlsClientAuthConfiguration.Builder.aTlsClientAuthConfiguration()
-          .withKnownClientsFile(rpcHttpTlsKnownClientsFile)
-          .withCaClientsEnabled(isRpcHttpTlsCAClientsEnabled)
+          .withKnownClientsFile(jsonRPCHttpOptionGroup.rpcHttpTlsKnownClientsFile)
+          .withCaClientsEnabled(jsonRPCHttpOptionGroup.isRpcHttpTlsCAClientsEnabled)
           .build();
     }
 
@@ -2143,16 +2244,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean isRpcTlsConfigurationRequired() {
-    return isRpcHttpEnabled && isRpcHttpTlsEnabled;
+    return jsonRPCHttpOptionGroup.isRpcHttpEnabled && jsonRPCHttpOptionGroup.isRpcHttpTlsEnabled;
   }
 
-  private WebSocketConfiguration webSocketConfiguration() {
+  private WebSocketConfiguration webSocketConfiguration(
+      final Integer listenPort, final List<String> apiGroups, final List<String> allowCallsFrom) {
 
     CommandLineUtils.checkOptionDependencies(
         logger,
         commandLine,
         "--rpc-ws-enabled",
-        !isRpcWsEnabled,
+        !jsonRPCWebsocketOptionGroup.isRpcWsEnabled,
         asList(
             "--rpc-ws-api",
             "--rpc-ws-apis",
@@ -2167,37 +2269,45 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--rpc-ws-authentication-public-key-file",
             "--rpc-ws-authentication-jwt-algorithm"));
 
-    if (isRpcWsAuthenticationEnabled) {
+    if (jsonRPCWebsocketOptionGroup.isRpcWsAuthenticationEnabled) {
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
           "--rpc-ws-authentication-public-key-file",
-          rpcWsAuthenticationPublicKeyFile == null,
+          jsonRPCWebsocketOptionGroup.rpcWsAuthenticationPublicKeyFile == null,
           asList("--rpc-ws-authentication-jwt-algorithm"));
     }
 
-    if (isRpcWsAuthenticationEnabled
+    if (jsonRPCWebsocketOptionGroup.isRpcWsAuthenticationEnabled
         && rpcWsAuthenticationCredentialsFile() == null
-        && rpcWsAuthenticationPublicKeyFile == null) {
+        && jsonRPCWebsocketOptionGroup.rpcWsAuthenticationPublicKeyFile == null) {
       throw new ParameterException(
           commandLine,
           "Unable to authenticate JSON-RPC WebSocket endpoint without a supplied credentials file or authentication public key file");
     }
 
     final WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
-    webSocketConfiguration.setEnabled(isRpcWsEnabled);
-    webSocketConfiguration.setHost(rpcWsHost);
-    webSocketConfiguration.setPort(rpcWsPort);
-    webSocketConfiguration.setMaxFrameSize(rpcWsMaxFrameSize);
-    webSocketConfiguration.setMaxActiveConnections(rpcWsMaxConnections);
-    webSocketConfiguration.setRpcApis(rpcWsApis);
+    webSocketConfiguration.setEnabled(jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
+    webSocketConfiguration.setHost(
+        Strings.isNullOrEmpty(jsonRPCWebsocketOptionGroup.rpcWsHost)
+            ? autoDiscoverDefaultIP().getHostAddress()
+            : jsonRPCWebsocketOptionGroup.rpcWsHost);
+    webSocketConfiguration.setPort(listenPort);
+    webSocketConfiguration.setMaxFrameSize(jsonRPCWebsocketOptionGroup.rpcWsMaxFrameSize);
+    webSocketConfiguration.setMaxActiveConnections(jsonRPCWebsocketOptionGroup.rpcWsMaxConnections);
+    webSocketConfiguration.setRpcApis(apiGroups);
     webSocketConfiguration.setRpcApisNoAuth(
-        rpcWsApiMethodsNoAuth.stream().distinct().collect(Collectors.toList()));
-    webSocketConfiguration.setAuthenticationEnabled(isRpcWsAuthenticationEnabled);
+        jsonRPCWebsocketOptionGroup.rpcWsApiMethodsNoAuth.stream()
+            .distinct()
+            .collect(Collectors.toList()));
+    webSocketConfiguration.setAuthenticationEnabled(
+        jsonRPCWebsocketOptionGroup.isRpcWsAuthenticationEnabled);
     webSocketConfiguration.setAuthenticationCredentialsFile(rpcWsAuthenticationCredentialsFile());
-    webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    webSocketConfiguration.setAuthenticationPublicKeyFile(rpcWsAuthenticationPublicKeyFile);
-    webSocketConfiguration.setAuthenticationAlgorithm(rpcWebsocketsAuthenticationAlgorithm);
+    webSocketConfiguration.setHostsAllowlist(allowCallsFrom);
+    webSocketConfiguration.setAuthenticationPublicKeyFile(
+        jsonRPCWebsocketOptionGroup.rpcWsAuthenticationPublicKeyFile);
+    webSocketConfiguration.setAuthenticationAlgorithm(
+        jsonRPCWebsocketOptionGroup.rpcWebsocketsAuthenticationAlgorithm);
     webSocketConfiguration.setTimeoutSec(unstableRPCOptions.getWsTimeoutSec());
     return webSocketConfiguration;
   }
@@ -2255,7 +2365,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private Optional<PermissioningConfiguration> permissioningConfiguration() throws Exception {
     if (!(localPermissionsEnabled() || contractPermissionsEnabled())) {
-      if (rpcHttpApis.contains(RpcApis.PERM.name()) || rpcWsApis.contains(RpcApis.PERM.name())) {
+      if (jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.PERM.name())
+          || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.PERM.name())) {
         logger.warn(
             "Permissions are disabled. Cannot enable PERM APIs when not using Permissions.");
       }
@@ -2457,8 +2568,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (!isGoQuorumCompatibilityMode
-        && (rpcHttpApis.contains(RpcApis.GOQUORUM.name())
-            || rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
+        && (jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.GOQUORUM.name())
+            || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
       logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
     }
     privacyParametersBuilder.setPrivacyService(privacyPluginService);
@@ -2481,10 +2592,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private boolean anyPrivacyApiEnabled() {
-    return rpcHttpApis.contains(RpcApis.EEA.name())
-        || rpcWsApis.contains(RpcApis.EEA.name())
-        || rpcHttpApis.contains(RpcApis.PRIV.name())
-        || rpcWsApis.contains(RpcApis.PRIV.name());
+    return jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.EEA.name())
+        || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.EEA.name())
+        || jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.PRIV.name())
+        || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.PRIV.name());
   }
 
   private PrivacyKeyValueStorageProvider privacyKeyStorageProvider(final String name) {
@@ -2566,6 +2677,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final WebSocketConfiguration engineWebSocketConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
@@ -2601,6 +2713,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
+            .engineWebSocketConfiguration(engineWebSocketConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
@@ -2777,7 +2890,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private String rpcHttpAuthenticationCredentialsFile() {
-    final String filename = rpcHttpAuthenticationCredentialsFile;
+    final String filename = jsonRPCHttpOptionGroup.rpcHttpAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "HTTP");
@@ -2786,7 +2899,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private String rpcWsAuthenticationCredentialsFile() {
-    final String filename = rpcWsAuthenticationCredentialsFile;
+    final String filename = jsonRPCWebsocketOptionGroup.rpcWsAuthenticationCredentialsFile;
 
     if (filename != null) {
       RpcAuthFileValidator.validate(commandLine, filename, "WS");
@@ -2863,9 +2976,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private List<Integer> getEffectivePorts() {
     final List<Integer> effectivePorts = new ArrayList<>();
     addPortIfEnabled(effectivePorts, p2pPort, p2pEnabled);
-    addPortIfEnabled(effectivePorts, graphQLHttpPort, isGraphQLHttpEnabled);
-    addPortIfEnabled(effectivePorts, rpcHttpPort, isRpcHttpEnabled);
-    addPortIfEnabled(effectivePorts, rpcWsPort, isRpcWsEnabled);
+    addPortIfEnabled(
+        effectivePorts,
+        graphQlOptionGroup.graphQLHttpPort,
+        graphQlOptionGroup.isGraphQLHttpEnabled);
+    addPortIfEnabled(
+        effectivePorts,
+        jsonRPCHttpOptionGroup.rpcHttpPort,
+        jsonRPCHttpOptionGroup.isRpcHttpEnabled);
+    addPortIfEnabled(
+        effectivePorts,
+        jsonRPCWebsocketOptionGroup.rpcWsPort,
+        jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
     addPortIfEnabled(effectivePorts, metricsPort, isMetricsEnabled);
     addPortIfEnabled(effectivePorts, metricsPushPort, isMetricsPushEnabled);
     addPortIfEnabled(effectivePorts, stratumPort, iStratumMiningEnabled);
