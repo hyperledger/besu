@@ -25,46 +25,46 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BackwardSyncStorage {
-  /**
+  /*
    * The Ancestors list should keep a pointer to the first one in it and return it when necessary
    */
   Optional<BlockHeader> getFirstAncestorHeader();
-  /** Returns at most first N nodes from the Ancestors list */
+  /* Returns at most first N nodes from the Ancestors list */
   List<BlockHeader> getFirstNAncestorHeaders(int size);
-  /** Returns all ancestors */
+  /* Returns all ancestors */
   List<BlockHeader> getAllAncestors();
 
-  /** Adds a known header to the begining of the ancestors chain */
+  /* Adds a known header to the begining of the ancestors chain */
   void prependAncestorsHeader(BlockHeader blockHeader);
 
-  /**
+  /*
    * prepends another chain before the current chain. The historical chain has to end just at the
    * point where the current chain begins
    */
   void prependChain(BackwardSyncStorage historicalBackwardChain);
 
-  /** This is the last known block of the chain */
+  /* This is the last known block of the chain */
   Block getPivot();
 
-  /** removes the first ancesstor header from the chain */
+  /* removes the first ancesstor header from the chain */
   void dropFirstHeader();
 
-  /** appends a block to the end of the chain, this block becomes a new pivot block */
+  /* appends a block to the end of the chain, this block becomes a new pivot block */
   void appendExpectedBlock(Block newPivot);
 
-  /**
+  /*
    * successors we store fully, this method retrieves all of them so that they can be imported into
    * the blockchain at once
    */
   List<Block> getSuccessors();
 
-  /**
+  /*
    * As consensus layer gives as blocks we might be able to trust them even when not imported in the
    * blockchain
    */
   boolean isTrusted(Hash hash);
 
-  /** Returns a trusted block for a hash */
+  /* Returns a trusted block for a hash */
   Block getTrustedBlock(Hash hash);
 
   void clear();
