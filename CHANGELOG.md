@@ -2,6 +2,9 @@
 
 ## 22.1.2
 
+### Breaking Changes
+- Remove the experimental flag for bonsai tries CLI options '--data-storage-format' and '--bonsai-maximum-back-layers-to-load' [#3578](https://github.com/hyperledger/besu/pull/3578)
+
 ### Additions and Improvements
 - Execution layer (The Merge):
   - Execution specific RPC endpoint [#3378](https://github.com/hyperledger/besu/issues/3378)

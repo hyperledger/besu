@@ -14,7 +14,7 @@
  *
  */
 
-package org.hyperledger.besu.cli.options.unstable;
+package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
@@ -29,10 +29,10 @@ import picocli.CommandLine.Option;
 
 public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> {
 
-  private static final String DATA_STORAGE_FORMAT = "--Xdata-storage-format";
+  private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
   private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
-      "--Xbonsai-maximum-back-layers-to-load";
+      "--bonsai-maximum-back-layers-to-load";
 
   // Use Bonsai DB
   @Option(
