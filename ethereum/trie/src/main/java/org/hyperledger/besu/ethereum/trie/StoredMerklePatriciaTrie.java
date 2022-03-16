@@ -79,6 +79,21 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
             : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
   }
 
+  /**
+   * Create a trie.
+   *
+   * @param nodeFactory The {@link StoredNodeFactory} to retrieve node.
+   * @param rootHash The initial root hash for the trie, which should be already present in {@code
+   *     storage}.
+   */
+  public StoredMerklePatriciaTrie(final StoredNodeFactory<V> nodeFactory, final Bytes32 rootHash) {
+    this.nodeFactory = nodeFactory;
+    this.root =
+        rootHash.equals(EMPTY_TRIE_NODE_HASH)
+            ? NullNode.instance()
+            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
+  }
+
   @Override
   public Optional<V> get(final K key) {
     checkNotNull(key);
@@ -109,6 +124,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public void removePath(final K path, final RemoveVisitor<V> removeVisitor) {
+    checkNotNull(path);
+    this.root = root.accept(removeVisitor, path);
+  }
+
+  @Override
   public void commit(final NodeUpdater nodeUpdater) {
     final CommitVisitor<V> commitVisitor = new CommitVisitor<>(nodeUpdater);
     root.accept(Bytes.EMPTY, commitVisitor);
@@ -135,6 +156,11 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public Map<Bytes32, V> entriesFrom(final Bytes32 startKeyHash, final int limit) {
     return StorageEntriesCollector.collectEntries(root, startKeyHash, limit);
+  }
+
+  @Override
+  public Map<Bytes32, V> entriesFrom(final Function<Node<V>, Map<Bytes32, V>> handler) {
+    return handler.apply(root);
   }
 
   @Override
