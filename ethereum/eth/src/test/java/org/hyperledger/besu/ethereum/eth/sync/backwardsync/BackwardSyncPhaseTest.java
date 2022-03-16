@@ -201,7 +201,7 @@ public class BackwardSyncPhaseTest {
   public void shouldNotMergeWhenNotPossible() {
     BackwardSyncStorage backwardChain = createBackwardChain(REMOTE_HEIGHT - 5, REMOTE_HEIGHT);
     backwardChain = spy(backwardChain);
-    when(context.findCorrectChainFromPivot(any(Long.class))).thenReturn(null);
+    when(context.findCorrectChainFromPivot(any(Long.class))).thenReturn(Optional.empty());
     BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
 
     step.possibleMerge(null);
