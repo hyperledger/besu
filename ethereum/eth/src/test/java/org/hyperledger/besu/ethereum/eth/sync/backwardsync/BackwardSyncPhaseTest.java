@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BackwardSyncStepTest {
+public class BackwardSyncPhaseTest {
 
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
@@ -97,7 +98,7 @@ public class BackwardSyncStepTest {
   public void shouldFindHeaderWhenRequested() throws Exception {
     final BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
     when(context.isOnTTD()).thenReturn(true);
-    BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
@@ -110,8 +111,8 @@ public class BackwardSyncStepTest {
   @Test
   public void shouldFindHashToSync() {
 
-    BackwardSyncStep step =
-        new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT));
+    BackwardSyncPhase step =
+        new BackwardSyncPhase(context, createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT));
 
     final Hash hash = step.earliestUnprocessedHash(null);
 
@@ -122,7 +123,7 @@ public class BackwardSyncStepTest {
   public void shouldFailWhenNothingToSync() {
     final BackwardSyncStorage chain = createBackwardChain(REMOTE_HEIGHT);
     chain.dropFirstHeader();
-    BackwardSyncStep step = new BackwardSyncStep(context, chain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, chain);
     assertThatThrownBy(() -> step.earliestUnprocessedHash(null))
         .isInstanceOf(BackwardSyncException.class)
         .hasMessageContaining("No unprocessed hashes during backward sync");
@@ -130,7 +131,7 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldRequestHeaderWhenAsked() throws Exception {
-    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    BackwardSyncPhase step = new BackwardSyncPhase(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
     final RespondingEthPeer.Responder responder =
@@ -146,7 +147,7 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() throws Exception {
-    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    BackwardSyncPhase step = new BackwardSyncPhase(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
     final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
@@ -168,7 +169,7 @@ public class BackwardSyncStepTest {
 
     when(header.getNumber()).thenReturn(12345L);
 
-    BackwardSyncStep step = new BackwardSyncStep(context, chain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, chain);
 
     step.saveHeader(header);
 
@@ -180,11 +181,12 @@ public class BackwardSyncStepTest {
   public void shouldMergeWhenPossible() {
     BackwardSyncStorage backwardChain = createBackwardChain(REMOTE_HEIGHT - 3, REMOTE_HEIGHT);
     backwardChain = spy(backwardChain);
-    BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
 
     final InMemoryBackwardChain historicalChain =
         createBackwardChain(REMOTE_HEIGHT - 10, REMOTE_HEIGHT - 4);
-    when(context.findCorrectChainFromPivot(REMOTE_HEIGHT - 4)).thenReturn(historicalChain);
+    when(context.findCorrectChainFromPivot(REMOTE_HEIGHT - 4))
+        .thenReturn(Optional.of(historicalChain));
 
     assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
         .isEqualTo(getBlockByNumber(REMOTE_HEIGHT - 3).getHeader());
@@ -200,7 +202,7 @@ public class BackwardSyncStepTest {
     BackwardSyncStorage backwardChain = createBackwardChain(REMOTE_HEIGHT - 5, REMOTE_HEIGHT);
     backwardChain = spy(backwardChain);
     when(context.findCorrectChainFromPivot(any(Long.class))).thenReturn(null);
-    BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
 
     step.possibleMerge(null);
 
@@ -210,7 +212,7 @@ public class BackwardSyncStepTest {
   @Test
   public void shouldFinishWhenNoMoreSteps() {
     BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
-    BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
 
     final CompletableFuture<Void> completableFuture =
         step.possiblyMoreBackwardSteps(getBlockByNumber(LOCAL_HEIGHT).getHeader());
@@ -222,7 +224,7 @@ public class BackwardSyncStepTest {
   @Test
   public void shouldFinishExceptionallyWhenHeaderIsBellowBlockchainHeightButUnknown() {
     BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
-    BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
 
     final CompletableFuture<Void> completableFuture =
         step.possiblyMoreBackwardSteps(
@@ -234,7 +236,7 @@ public class BackwardSyncStepTest {
   @Test
   public void shouldCreateAnotherStepWhenThereIsWorkToBeDone() {
     BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
-    BackwardSyncStep step = spy(new BackwardSyncStep(context, backwardChain));
+    BackwardSyncPhase step = spy(new BackwardSyncPhase(context, backwardChain));
 
     step.possiblyMoreBackwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
 

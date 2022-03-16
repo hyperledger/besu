@@ -36,12 +36,12 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ForwardSyncStep extends BackwardSyncTask {
+public class ForwardSyncPhase extends BackwardSyncTask {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncPhase.class);
   private int batchSize = BackwardsSyncContext.BATCH_SIZE;
 
-  public ForwardSyncStep(
+  public ForwardSyncPhase(
       final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
     super(context, backwardChain);
   }
@@ -79,6 +79,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
             () -> header.getHash().toHexString());
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
+        debugLambda(LOG, "First unprocessed header is {}", header::getNumber);
         return header;
       }
     }
@@ -226,7 +227,9 @@ public class ForwardSyncStep extends BackwardSyncTask {
     CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
     if (firstNotSynced == null) {
       final List<Block> successors = backwardChain.getSuccessors();
-      LOG.info("Importing {} blocks provided by consensus layer...", successors.size());
+      LOG.info(
+          "Forward Sync Phase is finished. Importing {} block(s) provided by consensus layer...",
+          successors.size());
       successors.forEach(
           block -> {
             if (!context.getProtocolContext().getBlockchain().contains(block.getHash())) {
@@ -241,7 +244,7 @@ public class ForwardSyncStep extends BackwardSyncTask {
       debugLambda(
           LOG,
           "Block {}({}) is not yet imported, we need to run another step of ForwardSync",
-          () -> firstNotSynced.getNumber(),
+          firstNotSynced::getNumber,
           () -> firstNotSynced.getHash().toHexString());
       return completableFuture.thenCompose(this::executeAsync);
     }
@@ -257,6 +260,6 @@ public class ForwardSyncStep extends BackwardSyncTask {
 
   @VisibleForTesting
   protected CompletionStage<Void> executeBackwardAsync(final Void unused) {
-    return new BackwardSyncStep(context, backwardChain).executeAsync(unused);
+    return new BackwardSyncPhase(context, backwardChain).executeAsync(unused);
   }
 }

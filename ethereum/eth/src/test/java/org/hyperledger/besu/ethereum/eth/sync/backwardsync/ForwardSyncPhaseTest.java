@@ -53,7 +53,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ForwardSyncStepTest {
+public class ForwardSyncPhaseTest {
 
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
@@ -111,7 +111,7 @@ public class ForwardSyncStepTest {
   @Test
   public void shouldExecuteForwardSyncWhenPossible() throws Exception {
     final BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
-    ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
+    ForwardSyncPhase step = new ForwardSyncPhase(context, backwardChain);
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
@@ -136,7 +136,7 @@ public class ForwardSyncStepTest {
   public void shouldDropHeadersAsLongAsWeKnowThem() {
     final BackwardSyncStorage backwardChain =
         createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 3);
-    ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
+    ForwardSyncPhase step = new ForwardSyncPhase(context, backwardChain);
 
     assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
         .isEqualTo(getBlockByNumber(LOCAL_HEIGHT - 5).getHeader());
@@ -152,7 +152,7 @@ public class ForwardSyncStepTest {
     final BackwardSyncStorage finalChain = createBackwardChain(LOCAL_HEIGHT + 2, LOCAL_HEIGHT + 5);
     finalChain.prependChain(backwardChain);
 
-    ForwardSyncStep step = new ForwardSyncStep(context, finalChain);
+    ForwardSyncPhase step = new ForwardSyncPhase(context, finalChain);
 
     assertThat(finalChain.getFirstAncestorHeader().orElseThrow())
         .isEqualTo(getBlockByNumber(LOCAL_HEIGHT - 5).getHeader());
@@ -163,8 +163,8 @@ public class ForwardSyncStepTest {
 
   @Test
   public void shouldFindBlockWhenRequested() throws Exception {
-    ForwardSyncStep step =
-        new ForwardSyncStep(context, createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 3));
+    ForwardSyncPhase step =
+        new ForwardSyncPhase(context, createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 3));
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
@@ -179,7 +179,7 @@ public class ForwardSyncStepTest {
   @Test
   public void shouldCreateAnotherStepWhenThereIsWorkToBeDone() {
     BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 10);
-    ForwardSyncStep step = spy(new ForwardSyncStep(context, backwardChain));
+    ForwardSyncPhase step = spy(new ForwardSyncPhase(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
 
@@ -189,7 +189,7 @@ public class ForwardSyncStepTest {
   @Test
   public void shouldCreateBackwardStepWhenParentOfWorkIsNotImportedYet() {
     BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
-    ForwardSyncStep step = spy(new ForwardSyncStep(context, backwardChain));
+    ForwardSyncPhase step = spy(new ForwardSyncPhase(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
 
@@ -203,7 +203,7 @@ public class ForwardSyncStepTest {
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 2));
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 3));
 
-    ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
+    ForwardSyncPhase step = new ForwardSyncPhase(context, backwardChain);
     final BlockHeader header = step.processKnownAncestors(null);
     assertThat(header).isNull();
 

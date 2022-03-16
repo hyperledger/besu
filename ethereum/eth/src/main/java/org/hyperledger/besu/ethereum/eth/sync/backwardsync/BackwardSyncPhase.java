@@ -32,10 +32,10 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BackwardSyncStep extends BackwardSyncTask {
-  private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
+public class BackwardSyncPhase extends BackwardSyncTask {
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncPhase.class);
 
-  public BackwardSyncStep(
+  public BackwardSyncPhase(
       final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
     super(context, backwardChain);
   }
@@ -184,9 +184,8 @@ public class BackwardSyncStep extends BackwardSyncTask {
   protected CompletableFuture<Void> possiblyMoreBackwardSteps(final BlockHeader blockHeader) {
     CompletableFuture<Void> completableFuture = new CompletableFuture<>();
     if (context.getProtocolContext().getBlockchain().contains(blockHeader.getHash())) {
-      LOG.info(
-          "The backward sync let us to a block that we already know... We will init forward sync...");
-      completableFuture.complete(null); // we finished backward sync
+      LOG.info("Backward Phase finished.");
+      completableFuture.complete(null);
       return completableFuture;
     }
     if (context.getProtocolContext().getBlockchain().getChainHead().getHeight()
@@ -198,7 +197,7 @@ public class BackwardSyncStep extends BackwardSyncTask {
           context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
           context.getProtocolContext().getBlockchain().getChainHead().getHash().toHexString());
     }
-    LOG.info("Backward sync did not reach a know block, need to go deeper");
+    LOG.debug("Backward sync did not reach a know block, need to go deeper");
     completableFuture.complete(null);
     return completableFuture.thenCompose(this::executeAsync);
   }

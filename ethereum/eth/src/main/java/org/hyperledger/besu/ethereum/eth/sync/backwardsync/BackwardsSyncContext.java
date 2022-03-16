@@ -224,9 +224,9 @@ public class BackwardsSyncContext {
 
   private CompletableFuture<Void> prepareBackwardSyncFuture(
       final BackwardSyncStorage backwardChain) {
-    return new BackwardSyncStep(this, backwardChain)
+    return new BackwardSyncPhase(this, backwardChain)
         .executeAsync(null)
-        .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
+        .thenCompose(new ForwardSyncPhase(this, backwardChain)::executeAsync);
   }
 
   private Void cleanup(final BackwardSyncStorage chain) {

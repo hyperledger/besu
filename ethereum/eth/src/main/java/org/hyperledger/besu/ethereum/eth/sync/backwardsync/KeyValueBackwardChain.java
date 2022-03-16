@@ -93,7 +93,7 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
   @Override
   public List<BlockHeader> getFirstNAncestorHeaders(final int size) {
     List<Hash> resultList = new ArrayList<>(size);
-    for (int i = size; i > 0; --i) {
+    for (int i = Math.min(size, ancestors.size()); i > 0; --i) {
       resultList.add(ancestors.get(ancestors.size() - i));
     }
     return resultList.stream()
@@ -247,12 +247,16 @@ public class KeyValueBackwardChain implements BackwardSyncStorage, ValueConverto
     final long firstAncestor = headers.get(ancestors.get(0)).orElseThrow().getNumber();
     if (firstAncestor >= height) {
       if (firstAncestor - height < ancestors.size()) {
-        LOG.info(
-            "First: {} Height: {}, result: {}",
-            firstAncestor,
-            height,
-            headers.get(ancestors.get((int) (firstAncestor - height))).orElseThrow().getNumber());
-        return headers.get(ancestors.get((int) (firstAncestor - height)));
+        final Optional<BlockHeader> blockHeader =
+            headers.get(ancestors.get((int) (firstAncestor - height)));
+        blockHeader.ifPresent(
+            blockHeader1 ->
+                LOG.info(
+                    "First: {} Height: {}, result: {}",
+                    firstAncestor,
+                    height,
+                    blockHeader.orElseThrow().getNumber()));
+        return blockHeader;
       } else {
         return Optional.empty();
       }
