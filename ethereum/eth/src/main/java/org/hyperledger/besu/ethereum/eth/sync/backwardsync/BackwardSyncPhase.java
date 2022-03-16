@@ -143,7 +143,7 @@ public class BackwardSyncPhase extends BackwardSyncTask {
               }
               debugLambda(
                   LOG,
-                  "Got headers {} -> {} ",
+                  "Got headers {} -> {}",
                   blockHeaders.get(0)::getNumber,
                   blockHeaders.get(blockHeaders.size() - 1)::getNumber);
               return blockHeaders;

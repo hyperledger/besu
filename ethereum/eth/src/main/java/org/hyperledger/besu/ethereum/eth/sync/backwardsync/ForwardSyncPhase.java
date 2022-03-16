@@ -75,7 +75,8 @@ public class ForwardSyncPhase extends BackwardSyncTask {
       } else if (backwardChain.isTrusted(header.getHash())) {
         debugLambda(
             LOG,
-            "Block {} was added by consensus layer, we can trust it and should therefore import it.",
+            "Importing trusted block {}({})",
+            header::getNumber,
             () -> header.getHash().toHexString());
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
@@ -117,7 +118,8 @@ public class ForwardSyncPhase extends BackwardSyncTask {
     } else {
       debugLambda(
           LOG,
-          "We don't have body of block {}, going to request it",
+          "Requesting body for {} ({})",
+          blockHeader::getNumber,
           () -> blockHeader.getHash().toHexString());
       return requestBlock(blockHeader).thenApply(this::saveBlock);
     }
@@ -130,7 +132,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
     } else {
       debugLambda(
           LOG,
-          "We don't have body of {} blocks   {}->{} ({}), going to request it",
+          "Requesting {} blocks {}->{} ({})",
           blockHeaders::size,
           () -> blockHeaders.get(0).getNumber(),
           () -> blockHeaders.get(blockHeaders.size() - 1).getNumber(),

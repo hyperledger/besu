@@ -229,11 +229,10 @@ public class BackwardsSyncContext {
         .thenCompose(new ForwardSyncPhase(this, backwardChain)::executeAsync);
   }
 
-  private Void cleanup(final BackwardSyncStorage chain) {
+  private void cleanup(final BackwardSyncStorage chain) {
     if (currentChain.compareAndSet(chain, null)) {
       this.currentBackwardSyncFuture.set(null);
     }
-    return null;
   }
 
   public Optional<BackwardSyncStorage> getCurrentChain() {
