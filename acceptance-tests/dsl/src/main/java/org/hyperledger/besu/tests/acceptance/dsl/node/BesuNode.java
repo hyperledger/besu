@@ -82,6 +82,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private static final String LOCALHOST = "127.0.0.1";
   private static final Logger LOG = LoggerFactory.getLogger(BesuNode.class);
+  public static final String HTTP = "http://";
+  public static final String WS_RPC = "ws-rpc";
 
   private final Path homeDirectory;
   private KeyPair keyPair;
@@ -165,7 +167,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
           }
         });
     keyPair.ifPresentOrElse(
-        (existingKeyPair) -> {
+        existingKeyPair -> {
           this.keyPair = existingKeyPair;
           KeyPairUtil.storeKeyFile(existingKeyPair, homeDirectory);
         },
@@ -206,7 +208,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
-    LOG.info("Created BesuNode {}", this.toString());
+    LOG.info("Created BesuNode {}", this);
   }
 
   private static Path createTmpDataDirectory() {
@@ -281,19 +283,18 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<String> jsonRpcBaseUrl() {
     if (isJsonRpcEnabled()) {
       return Optional.of(
-          "http://"
-              + jsonRpcConfiguration.getHost()
-              + ":"
-              + portsProperties.getProperty("json-rpc"));
+          HTTP + jsonRpcConfiguration.getHost() + ":" + portsProperties.getProperty("json-rpc"));
     } else {
       return Optional.empty();
     }
   }
 
   public Optional<String> engineHttpUrl() {
-    if (isJsonRpcEnabled()) {
+    if (isEngineRpcEnabled()
+        && engineRpcConfiguration.isPresent()
+        && getEngineJsonRpcPort().isPresent()) {
       return Optional.of(
-          "http://" + jsonRpcConfiguration.getHost() + ":" + getEngineJsonRpcPort().get());
+          HTTP + engineRpcConfiguration.get().getHost() + ":" + getEngineJsonRpcPort().get());
     } else {
       return Optional.empty();
     }
@@ -302,7 +303,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<String> wsRpcBaseUrl() {
     if (isWebSocketsRpcEnabled()) {
       return Optional.of(
-          "ws://" + webSocketConfiguration.getHost() + ":" + portsProperties.getProperty("ws-rpc"));
+          "ws://" + webSocketConfiguration.getHost() + ":" + portsProperties.getProperty(WS_RPC));
     } else {
       return Optional.empty();
     }
@@ -311,10 +312,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<String> wsRpcBaseHttpUrl() {
     if (isWebSocketsRpcEnabled()) {
       return Optional.of(
-          "http://"
-              + webSocketConfiguration.getHost()
-              + ":"
-              + portsProperties.getProperty("ws-rpc"));
+          HTTP + webSocketConfiguration.getHost() + ":" + portsProperties.getProperty(WS_RPC));
     } else {
       return Optional.empty();
     }
@@ -323,7 +321,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public Optional<String> metricsHttpUrl() {
     if (isMetricsEnabled()) {
       return Optional.of(
-          "http://"
+          HTTP
               + metricsConfiguration.getHost()
               + ":"
               + portsProperties.getProperty("metrics")
@@ -336,7 +334,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public Optional<Integer> getJsonRpcWebSocketPort() {
     if (isWebSocketsRpcEnabled()) {
-      return Optional.of(Integer.valueOf(portsProperties.getProperty("ws-rpc")));
+      return Optional.of(Integer.valueOf(portsProperties.getProperty(WS_RPC)));
     } else {
       return Optional.empty();
     }
@@ -396,7 +394,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
         websocketService = Optional.of((WebSocketService) web3jService);
       } else {
-        final String url = jsonRpcBaseUrl().orElse("http://" + LOCALHOST + ":" + 8545);
+        final String url = jsonRpcBaseUrl().orElse(HTTP + LOCALHOST + ":" + 8545);
         web3jService = new HttpService(url);
         if (token != null) {
           ((HttpService) web3jService).addHeader("Authorization", "Bearer " + token);
@@ -439,8 +437,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         baseUrl = jsonRpcBaseUrl();
         port = "8545";
       }
-      loginRequestFactory =
-          new LoginRequestFactory(baseUrl.orElse("http://" + LOCALHOST + ":" + port));
+      loginRequestFactory = new LoginRequestFactory(baseUrl.orElse(HTTP + LOCALHOST + ":" + port));
     }
     return loginRequestFactory;
   }
