@@ -25,7 +25,7 @@ public class NullNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode instance = new NullNode();
 
-  private NullNode() {}
+  protected NullNode() {}
 
   @SuppressWarnings("unchecked")
   public static <V> NullNode<V> instance() {

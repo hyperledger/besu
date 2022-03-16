@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -66,6 +67,14 @@ public interface MerklePatriciaTrie<K, V> {
   void remove(K key);
 
   /**
+   * Deletes the node mapped to the specified path, if such a node exists (Optional operation).
+   *
+   * @param path of the node to be deleted.
+   * @param removeVisitor custom visitor for the deletion
+   */
+  void removePath(K path, RemoveVisitor<V> removeVisitor);
+
+  /**
    * Returns the KECCAK256 hash of the root node of the trie.
    *
    * @return The KECCAK256 hash of the root node of the trie.
@@ -88,6 +97,14 @@ public interface MerklePatriciaTrie<K, V> {
    * @return the requested storage entries as a map of key hash to value.
    */
   Map<Bytes32, V> entriesFrom(Bytes32 startKeyHash, int limit);
+
+  /**
+   * Retrieve entries using a custom collector
+   *
+   * @param handler a custom trie collector.
+   * @return the requested storage entries as a map of key hash to value.
+   */
+  Map<Bytes32, V> entriesFrom(final Function<Node<V>, Map<Bytes32, V>> handler);
 
   void visitAll(Consumer<Node<V>> nodeConsumer);
 
