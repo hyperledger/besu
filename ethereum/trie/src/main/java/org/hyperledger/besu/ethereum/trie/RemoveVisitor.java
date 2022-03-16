@@ -16,8 +16,18 @@ package org.hyperledger.besu.ethereum.trie;
 
 import org.apache.tuweni.bytes.Bytes;
 
-class RemoveVisitor<V> implements PathNodeVisitor<V> {
+public class RemoveVisitor<V> implements PathNodeVisitor<V> {
   private final Node<V> NULL_NODE_RESULT = NullNode.instance();
+
+  private final boolean allowFlatten;
+
+  public RemoveVisitor() {
+    allowFlatten = true;
+  }
+
+  public RemoveVisitor(final boolean allowFlatten) {
+    this.allowFlatten = allowFlatten;
+  }
 
   @Override
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
@@ -46,7 +56,7 @@ class RemoveVisitor<V> implements PathNodeVisitor<V> {
     }
 
     final Node<V> updatedChild = branchNode.child(childIndex).accept(this, path.slice(1));
-    return branchNode.replaceChild(childIndex, updatedChild);
+    return branchNode.replaceChild(childIndex, updatedChild, allowFlatten);
   }
 
   @Override
