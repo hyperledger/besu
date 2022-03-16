@@ -51,11 +51,11 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
@@ -274,7 +274,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
-  private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
@@ -286,6 +285,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
 
   // stable CLI options
+  private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
@@ -1441,7 +1441,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
-            .put("Data Storage Options", unstableDataStorageOptions)
+            .put("Data Storage Options", dataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
@@ -1996,7 +1996,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
+        .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(maxPeers);
   }
 
@@ -3050,10 +3050,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Override
     public int getDatabaseVersion() {
-      return unstableDataStorageOptions
-          .toDomainObject()
-          .getDataStorageFormat()
-          .getDatabaseVersion();
+      return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
     }
   }
 

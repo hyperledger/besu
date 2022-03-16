@@ -1687,7 +1687,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidBonsaiTrieLimitBackLayersOption() {
-    parseCommand("--Xdata-storage-format", "BONSAI", "--Xbonsai-maximum-back-layers-to-load", "11");
+    parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "11");
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
@@ -1702,14 +1702,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void parsesInvalidBonsaiTrieLimitBackLayersOption() {
 
-    parseCommand(
-        "--Xdata-storage-format", "BONSAI", "--Xbonsai-maximum-back-layers-to-load", "ten");
+    parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
 
     Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--Xbonsai-maximum-back-layers-to-load': 'ten' is not a long");
+            "Invalid value for option '--bonsai-maximum-back-layers-to-load': 'ten' is not a long");
   }
 
   @Test
