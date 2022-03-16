@@ -832,6 +832,39 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--privacy-multi-tenancy-enabled"},
         description = "Enable multi-tenant private transactions (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivacyMultiTenancyEnabled = false;
+
+    @Option(
+        names = {"--privacy-url"},
+        description = "The URL on which the enclave is running")
+    private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
+
+    @Option(
+        names = {"--privacy-public-key-file"},
+        description = "The enclave's public key file")
+    private final File privacyPublicKeyFile = null;
+
+    @Option(
+        names = {"--privacy-marker-transaction-signing-key-file"},
+        description =
+            "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
+    private final Path privateMarkerTransactionSigningKeyPath = null;
+
+    @Option(
+        names = {"--privacy-enable-database-migration"},
+        description = "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
+    private final Boolean migratePrivateDatabase = false;
+
+    @Option(
+        names = {"--privacy-flexible-groups-enabled"},
+        description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
+    private final Boolean isFlexiblePrivacyGroupsEnabled = false;
+
+    @Option(
+        hidden = true,
+        names = {"--privacy-onchain-groups-enabled"},
+        description =
+            "!!DEPRECATED!! Use `--privacy-flexible-groups-enabled` instead. Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
+    private final Boolean isOnchainPrivacyGroupsEnabled = false;
   }
 
   // Metrics Option Group
@@ -1093,39 +1126,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "*",
       split = ",")
   private final Map<Long, Hash> requiredBlocks = new HashMap<>();
-
-  @Option(
-      names = {"--privacy-url"},
-      description = "The URL on which the enclave is running")
-  private final URI privacyUrl = PrivacyParameters.DEFAULT_ENCLAVE_URL;
-
-  @Option(
-      names = {"--privacy-public-key-file"},
-      description = "The enclave's public key file")
-  private final File privacyPublicKeyFile = null;
-
-  @Option(
-      names = {"--privacy-marker-transaction-signing-key-file"},
-      description =
-          "The name of a file containing the private key used to sign privacy marker transactions. If unset, each will be signed with a random key.")
-  private final Path privateMarkerTransactionSigningKeyPath = null;
-
-  @Option(
-      names = {"--privacy-enable-database-migration"},
-      description = "Enable private database metadata migration (default: ${DEFAULT-VALUE})")
-  private final Boolean migratePrivateDatabase = false;
-
-  @Option(
-      names = {"--privacy-flexible-groups-enabled"},
-      description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
-  private final Boolean isFlexiblePrivacyGroupsEnabled = false;
-
-  @Option(
-      hidden = true,
-      names = {"--privacy-onchain-groups-enabled"},
-      description =
-          "!!DEPRECATED!! Use `--privacy-flexible-groups-enabled` instead. Enable flexible (onchain) privacy groups (default: ${DEFAULT-VALUE})")
-  private final Boolean isOnchainPrivacyGroupsEnabled = false;
 
   @Option(
       names = {"--target-gas-limit"},
@@ -1600,7 +1600,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (privacyOptionGroup.isPrivacyEnabled) {
 
-      if (privateMarkerTransactionSigningKeyPath != null
+      if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath != null
           && privacyPluginService != null
           && privacyPluginService.getPrivateMarkerTransactionFactory() != null) {
         throw new ParameterException(
@@ -1611,7 +1611,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privateMarkerTransactionSigningKeyPath == null
+        if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
             && (privacyPluginService == null
                 || privacyPluginService.getPrivateMarkerTransactionFactory() == null)) {
           throw new ParameterException(
@@ -1629,7 +1629,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
-          && (isFlexiblePrivacyGroupsEnabled || isOnchainPrivacyGroupsEnabled)) {
+          && (privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
+              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
         throw new ParameterException(
             commandLine, "Privacy Plugin can not be used with flexible privacy groups");
       }
@@ -1854,7 +1855,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
 
-    if (isOnchainPrivacyGroupsEnabled) {
+    if (privacyOptionGroup.isOnchainPrivacyGroupsEnabled) {
       logger.warn(
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
@@ -1937,19 +1938,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
     if (privacyOptionGroup.privacyKeyStoreFile != null) {
       return enclaveFactory.createGoQuorumEnclave(
-          privacyUrl,
+          privacyOptionGroup.privacyUrl,
           privacyOptionGroup.privacyKeyStoreFile,
           privacyOptionGroup.privacyKeyStorePasswordFile,
           privacyOptionGroup.privacyTlsKnownEnclaveFile);
     } else {
-      return enclaveFactory.createGoQuorumEnclave(privacyUrl);
+      return enclaveFactory.createGoQuorumEnclave(privacyOptionGroup.privacyUrl);
     }
   }
 
   private String readEnclaveKey() {
     final String key;
     try {
-      key = Files.asCharSource(privacyPublicKeyFile, UTF_8).read();
+      key = Files.asCharSource(privacyOptionGroup.privacyPublicKeyFile, UTF_8).read();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine,
@@ -2563,15 +2564,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       privacyParametersBuilder.setEnabled(true);
-      privacyParametersBuilder.setEnclaveUrl(privacyUrl);
+      privacyParametersBuilder.setEnclaveUrl(privacyOptionGroup.privacyUrl);
       privacyParametersBuilder.setMultiTenancyEnabled(
           privacyOptionGroup.isPrivacyMultiTenancyEnabled);
       privacyParametersBuilder.setFlexiblePrivacyGroupsEnabled(
-          isFlexiblePrivacyGroupsEnabled || isOnchainPrivacyGroupsEnabled);
+          privacyOptionGroup.isFlexiblePrivacyGroupsEnabled
+              || privacyOptionGroup.isOnchainPrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
 
-      final boolean hasPrivacyPublicKey = privacyPublicKeyFile != null;
+      final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
 
       if (hasPrivacyPublicKey && privacyOptionGroup.isPrivacyMultiTenancyEnabled) {
         throw new ParameterException(
@@ -2587,7 +2589,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (hasPrivacyPublicKey && !privacyOptionGroup.isPrivacyMultiTenancyEnabled) {
         try {
-          privacyParametersBuilder.setPrivacyUserIdUsingFile(privacyPublicKeyFile);
+          privacyParametersBuilder.setPrivacyUserIdUsingFile(
+              privacyOptionGroup.privacyPublicKeyFile);
         } catch (final IOException e) {
           throw new ParameterException(
               commandLine, "Problem with privacy-public-key-file: " + e.getMessage(), e);
@@ -2597,7 +2600,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         }
       }
 
-      privacyParametersBuilder.setPrivateKeyPath(privateMarkerTransactionSigningKeyPath);
+      privacyParametersBuilder.setPrivateKeyPath(
+          privacyOptionGroup.privateMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
       if (privacyOptionGroup.isPrivacyTlsEnabled) {
@@ -2627,7 +2631,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (privacyOptionGroup.isPrivacyEnabled) {
       preSynchronizationTaskRunner.addTask(
-          new PrivateDatabaseMigrationPreSyncTask(privacyParameters, migratePrivateDatabase));
+          new PrivateDatabaseMigrationPreSyncTask(
+              privacyParameters, privacyOptionGroup.migratePrivateDatabase));
     }
 
     return privacyParameters;
