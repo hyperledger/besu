@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback {
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
@@ -70,8 +71,11 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
     }
   }
 
-  public boolean isPeerSupported(final EthPeer peer, final Capability capability) {
-    return peer.getAgreedCapabilities().contains(capability);
+  public boolean isPeerSupported(final EthPeer peer, final Capability... capabilities) {
+    return Stream.of(capabilities)
+        .filter(peer.getAgreedCapabilities()::contains)
+        .findAny()
+        .isPresent();
   }
 
   private Set<Hash> getOrCreateSeenTransactionsForPeer(final EthPeer peer) {
