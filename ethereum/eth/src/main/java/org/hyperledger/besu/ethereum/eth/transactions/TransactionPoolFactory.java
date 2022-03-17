@@ -99,6 +99,7 @@ public class TransactionPoolFactory {
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);
+
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
@@ -111,10 +112,12 @@ public class TransactionPoolFactory {
                     "Total number of transactions messages skipped by the processor.")),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+
     final PendingTransactionsMessageHandler pooledTransactionsMessageHandler =
         new PendingTransactionsMessageHandler(
             ethContext.getScheduler(),
             new PendingTransactionsMessageProcessor(
+                transactionTracker,
                 pendingTransactionTracker,
                 transactionPool,
                 transactionPoolConfiguration,

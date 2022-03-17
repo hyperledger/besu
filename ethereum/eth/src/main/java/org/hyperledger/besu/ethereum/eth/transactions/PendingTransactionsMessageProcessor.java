@@ -31,6 +31,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -47,7 +48,8 @@ public class PendingTransactionsMessageProcessor {
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;
 
-  private final PeerPendingTransactionTracker transactionTracker;
+  private final PeerTransactionTracker transactionTracker;
+  private final PeerPendingTransactionTracker pendingTransactionTracker;
   private final Counter totalSkippedTransactionsMessageCounter;
   private final TransactionPool transactionPool;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
@@ -56,7 +58,8 @@ public class PendingTransactionsMessageProcessor {
   private final SyncState syncState;
 
   public PendingTransactionsMessageProcessor(
-      final PeerPendingTransactionTracker transactionTracker,
+      final PeerTransactionTracker transactionTracker,
+      final PeerPendingTransactionTracker pendingTransactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final Counter metricsCounter,
@@ -64,6 +67,7 @@ public class PendingTransactionsMessageProcessor {
       final MetricsSystem metricsSystem,
       final SyncState syncState) {
     this.transactionTracker = transactionTracker;
+    this.pendingTransactionTracker = pendingTransactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
@@ -85,7 +89,7 @@ public class PendingTransactionsMessageProcessor {
       final NewPooledTransactionHashesMessage transactionsMessage,
       final Instant startedAt,
       final Duration keepAlive) {
-    // Check if message not expired.
+    // Check if message is not expired.
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
@@ -97,15 +101,17 @@ public class PendingTransactionsMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      final var transactionHashes = transactionsMessage.pendingTransactions();
+      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactions();
+
+      pendingTransactionTracker.markTransactionsHashesAsSeen(peer, incomingTransactionHashes);
+
       traceLambda(
           LOG,
-          "Received pooled transaction hashes message from {}, transactions {}, list {}",
+          "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}",
           peer::toString,
-          transactionHashes::size,
-          transactionHashes::toString);
+          incomingTransactionHashes::size,
+          incomingTransactionHashes::toString);
 
-      transactionTracker.markTransactionsHashesAsSeen(peer, transactionHashes);
       if (syncState.isInSync(SYNC_TOLERANCE)) {
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
             scheduledTasks.computeIfAbsent(
@@ -116,15 +122,12 @@ public class PendingTransactionsMessageProcessor {
                       .scheduleFutureTask(
                           new FetcherCreatorTask(peer),
                           transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
-                  return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
+
+                  return new BufferedGetPooledTransactionsFromPeerFetcher(
+                      ethContext, transactionPool, transactionTracker, metricsSystem, peer);
                 });
 
-        for (final Hash hash : transactionHashes) {
-          if (transactionPool.getTransactionByHash(hash).isEmpty()
-              && transactionPool.addTransactionHash(hash)) {
-            bufferedTask.addHash(hash);
-          }
-        }
+        incomingTransactionHashes.forEach(bufferedTask::addHash);
       }
     } catch (final RLPException ex) {
       if (peer != null) {
@@ -133,18 +136,6 @@ public class PendingTransactionsMessageProcessor {
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }
-  }
-
-  public TransactionPool getTransactionPool() {
-    return transactionPool;
-  }
-
-  public EthContext getEthContext() {
-    return ethContext;
-  }
-
-  public MetricsSystem getMetricsSystem() {
-    return metricsSystem;
   }
 
   public class FetcherCreatorTask implements Runnable {

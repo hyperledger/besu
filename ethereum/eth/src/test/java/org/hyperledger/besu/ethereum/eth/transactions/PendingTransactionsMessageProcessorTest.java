@@ -55,7 +55,8 @@ public class PendingTransactionsMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
   @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
-  @Mock private PeerPendingTransactionTracker transactionTracker;
+  @Mock private PeerTransactionTracker transactionTracker;
+  @Mock private PeerPendingTransactionTracker pendingTransactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
   @Mock private MetricsSystem metricsSystem;
@@ -72,13 +73,17 @@ public class PendingTransactionsMessageProcessorTest {
 
   @Before
   public void setup() {
+    //    final Cache<Hash, Long> recentlySeenTransactionHashes =
+    //        CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
     messageHandler =
         new PendingTransactionsMessageProcessor(
             transactionTracker,
+            pendingTransactionTracker,
             transactionPool,
             transactionPoolConfiguration,
+            //            recentlySeenTransactionHashes,
             totalSkippedTransactionsMessageCounter,
             ethContext,
             metricsSystem,
@@ -94,9 +99,9 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionTracker)
+    verify(pendingTransactionTracker)
         .markTransactionsHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
-    verifyNoMoreInteractions(transactionTracker);
+    verifyNoMoreInteractions(pendingTransactionTracker);
   }
 
   @Test
@@ -159,7 +164,7 @@ public class PendingTransactionsMessageProcessorTest {
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now().minus(ofMinutes(1)),
         ofMillis(1));
-    verifyNoInteractions(transactionTracker);
+    verifyNoInteractions(pendingTransactionTracker);
     verify(totalSkippedTransactionsMessageCounter).inc(1);
     verifyNoMoreInteractions(totalSkippedTransactionsMessageCounter);
   }

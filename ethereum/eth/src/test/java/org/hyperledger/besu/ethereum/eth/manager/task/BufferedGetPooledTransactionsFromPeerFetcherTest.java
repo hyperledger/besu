@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
@@ -55,18 +54,14 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   @Mock TransactionPool transactionPool;
   @Mock EthContext ethContext;
   @Mock EthScheduler ethScheduler;
+  @Mock MetricsSystem metricsSystem;
 
   @InjectMocks BufferedGetPooledTransactionsFromPeerFetcher fetcher;
-
-  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
 
   @Before
   public void setup() {
-    when(processor.getTransactionPool()).thenReturn(transactionPool);
-    when(processor.getMetricsSystem()).thenReturn(metricsSystem);
-    when(processor.getEthContext()).thenReturn(ethContext);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 

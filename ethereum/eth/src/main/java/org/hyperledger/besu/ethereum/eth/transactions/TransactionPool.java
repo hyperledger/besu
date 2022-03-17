@@ -120,7 +120,7 @@ public class TransactionPool implements BlockAddedObserver {
         .getLocalTransactions()
         .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
 
-    if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH66, EthProtocol.ETH65)) {
+    if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
       pendingTransactions
           .getNewPooledHashes()
           .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash));
