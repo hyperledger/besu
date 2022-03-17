@@ -37,7 +37,7 @@
   - Backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
   - Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
   - Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
-  - Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
+  - Add PostMergeContext, and stop syncing after the switch to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
   - Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
   - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
   - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
