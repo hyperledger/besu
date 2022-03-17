@@ -338,7 +338,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         if (terminalBlockHeader.isPresent()) {
           return isDescendantOf(terminalBlockHeader.get(), blockHeader);
         } else {
-          if (ancestorIsValidTerminalProofOfWork(blockHeader)) {
+          if (isTerminalProofOfWorkBlock(blockHeader, protocolContext)
+              || ancestorIsValidTerminalProofOfWork(blockHeader)) {
             return true;
           } else {
             LOG.warn("Couldn't find terminal block, no blocks will be valid");
