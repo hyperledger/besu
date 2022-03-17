@@ -58,6 +58,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   final MiningParameters miningParameters;
   final MergeBlockCreatorFactory mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
+  final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
   private final MergeContext mergeContext;
   private final ProtocolContext protocolContext;
   private final BackwardSyncContext backwardSyncContext;
@@ -353,17 +354,27 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   // TODO: post-merge cleanup
-  static final long MAX_TTD_SEARCH_DEPTH = 1024L; // 32 epochs
+  static final long MAX_TTD_SEARCH_DEPTH = 131072L; // 32 * 128 epochs
 
   // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
     // this should only happen very close to the transition from PoW to PoS, prior to a finalized
     // block
+
+    // check a 'cached' block which was determined to descend from terminal to short circuit
+    // in the case of a long period of non-finality
+    if (Optional.ofNullable(latestDescendsFromTerminal.get())
+        .map(latestDescendant -> isDescendantOf(latestDescendant, blockheader))
+        .orElse(Boolean.FALSE)) {
+      latestDescendsFromTerminal.set(blockheader);
+      return true;
+    }
+
     var blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> parent = blockchain.getBlockHeader(blockheader.getParentHash());
     do {
 
-      LOG.warn(
+      LOG.debug(
           "checking ancestor {} is valid terminal PoW for {}",
           parent.map(BlockHeader::toLogString).orElse("empty"),
           blockheader.toLogString());
@@ -387,6 +398,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         parent.map(BlockHeader::toLogString).orElse("empty"),
         blockheader.toLogString(),
         resp);
+    if (resp) {
+      latestDescendsFromTerminal.set(blockheader);
+    }
     return resp;
   }
 
