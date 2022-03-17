@@ -64,6 +64,13 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
     }
   }
 
+  public boolean hasSeenTransaction(final Hash txHash) {
+    return seenTransactions.values().stream()
+        .filter(seen -> seen.contains(txHash))
+        .findAny()
+        .isPresent();
+  }
+
   private Set<Hash> getOrCreateSeenTransactionsForPeer(final EthPeer peer) {
     return seenTransactions.computeIfAbsent(peer, key -> createTransactionsSet());
   }

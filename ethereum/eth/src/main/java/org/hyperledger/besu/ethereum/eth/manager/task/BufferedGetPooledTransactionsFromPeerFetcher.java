@@ -17,8 +17,11 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor;
+import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,31 +35,39 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
 
   private static final int MAX_HASHES = 256;
 
+  private final TransactionPool transactionPool;
+  private final PeerTransactionTracker transactionTracker;
+  private final EthContext ethContext;
+  private final MetricsSystem metricsSystem;
   private final EthPeer peer;
-  private final NewPooledTransactionHashesMessageProcessor processor;
   private final Queue<Hash> txAnnounces;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
-      final EthPeer peer, final NewPooledTransactionHashesMessageProcessor processor) {
+      final EthContext ethContext,
+      final EthPeer peer,
+      final TransactionPool transactionPool,
+      final PeerTransactionTracker transactionTracker,
+      final MetricsSystem metricsSystem) {
+    this.ethContext = ethContext;
     this.peer = peer;
-    this.processor = processor;
+    this.transactionPool = transactionPool;
+    this.transactionTracker = transactionTracker;
+    this.metricsSystem = metricsSystem;
     this.txAnnounces = Queues.synchronizedQueue(EvictingQueue.create(MAX_PENDING_TRANSACTIONS));
   }
 
   public void requestTransactions() {
-    for (List<Hash> txAnnounces = getTxAnnounces();
-        !txAnnounces.isEmpty();
-        txAnnounces = getTxAnnounces()) {
+    for (List<Hash> txHashesAnnounced = getTxHashesAnnounced();
+        !txHashesAnnounced.isEmpty();
+        txHashesAnnounced = getTxHashesAnnounced()) {
+
       final GetPooledTransactionsFromPeerTask task =
-          GetPooledTransactionsFromPeerTask.forHashes(
-              processor.getEthContext(), txAnnounces, processor.getMetricsSystem());
+          GetPooledTransactionsFromPeerTask.forHashes(ethContext, txHashesAnnounced, metricsSystem);
       task.assignPeer(peer);
-      processor
-          .getEthContext()
+      ethContext
           .getScheduler()
           .scheduleSyncWorkerTask(task)
-          .thenAccept(
-              result -> processor.getTransactionPool().addRemoteTransactions(result.getResult()));
+          .thenAccept(result -> transactionPool.addRemoteTransactions(result.getResult()));
     }
   }
 
@@ -64,14 +75,19 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     txAnnounces.add(hash);
   }
 
-  private List<Hash> getTxAnnounces() {
-    List<Hash> retrieved = new ArrayList<>();
+  private List<Hash> getTxHashesAnnounced() {
+    List<Hash> retrieved = new ArrayList<>(MAX_HASHES);
     while (retrieved.size() < MAX_HASHES && !txAnnounces.isEmpty()) {
-      final Hash txAnnounce = txAnnounces.poll();
-      if (processor.getTransactionPool().getTransactionByHash(txAnnounce).isEmpty()) {
-        retrieved.add(txAnnounce);
+      final Hash txHashAnnounced = txAnnounces.poll();
+      if (notSeen(txHashAnnounced)) {
+        retrieved.add(txHashAnnounced);
       }
     }
     return retrieved;
+  }
+
+  private boolean notSeen(final Hash txHash) {
+    return transactionPool.getTransactionByHash(txHash).isEmpty()
+        && !transactionTracker.hasSeenTransaction(txHash);
   }
 }

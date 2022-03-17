@@ -96,6 +96,7 @@ public class TransactionPoolFactory {
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);
+
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),

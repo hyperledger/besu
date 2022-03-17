@@ -118,14 +118,12 @@ public class NewPooledTransactionHashesMessageProcessor {
                       .scheduleFutureTask(
                           new FetcherCreatorTask(peer),
                           transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
-                  return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
+
+                  return new BufferedGetPooledTransactionsFromPeerFetcher(
+                      ethContext, peer, transactionPool, transactionTracker, metricsSystem);
                 });
 
-        for (final Hash hash : incomingTransactionHashes) {
-          if (transactionPool.getTransactionByHash(hash).isEmpty()) {
-            bufferedTask.addHash(hash);
-          }
-        }
+        incomingTransactionHashes.forEach(bufferedTask::addHash);
       }
     } catch (final RLPException ex) {
       if (peer != null) {
@@ -134,18 +132,6 @@ public class NewPooledTransactionHashesMessageProcessor {
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }
-  }
-
-  public TransactionPool getTransactionPool() {
-    return transactionPool;
-  }
-
-  public EthContext getEthContext() {
-    return ethContext;
-  }
-
-  public MetricsSystem getMetricsSystem() {
-    return metricsSystem;
   }
 
   public class FetcherCreatorTask implements Runnable {
