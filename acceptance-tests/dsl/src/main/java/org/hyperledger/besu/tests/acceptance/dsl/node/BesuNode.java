@@ -84,6 +84,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private static final Logger LOG = LoggerFactory.getLogger(BesuNode.class);
   public static final String HTTP = "http://";
   public static final String WS_RPC = "ws-rpc";
+  public static final String JSON_RPC = "json-rpc";
 
   private final Path homeDirectory;
   private KeyPair keyPair;
@@ -283,18 +284,20 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<String> jsonRpcBaseUrl() {
     if (isJsonRpcEnabled()) {
       return Optional.of(
-          HTTP + jsonRpcConfiguration.getHost() + ":" + portsProperties.getProperty("json-rpc"));
+          HTTP + jsonRpcConfiguration.getHost() + ":" + portsProperties.getProperty(JSON_RPC));
     } else {
       return Optional.empty();
     }
   }
 
   public Optional<String> engineHttpUrl() {
-    if (isEngineRpcEnabled()
-        && engineRpcConfiguration.isPresent()
-        && getEngineJsonRpcPort().isPresent()) {
+    if (isEngineRpcEnabled()) {
+      final Optional<Integer> maybeEngineRpcPort = getEngineJsonRpcPort();
+      if (maybeEngineRpcPort.isEmpty()) {
+        return Optional.empty();
+      }
       return Optional.of(
-          HTTP + engineRpcConfiguration.get().getHost() + ":" + getEngineJsonRpcPort().get());
+          HTTP + engineRpcConfiguration.get().getHost() + ":" + maybeEngineRpcPort.get());
     } else {
       return Optional.empty();
     }
@@ -343,7 +346,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public Optional<Integer> getJsonRpcPort() {
     if (isJsonRpcEnabled()) {
-      return Optional.of(Integer.valueOf(portsProperties.getProperty("json-rpc")));
+      return Optional.of(Integer.valueOf(portsProperties.getProperty(JSON_RPC)));
     } else {
       return Optional.empty();
     }
