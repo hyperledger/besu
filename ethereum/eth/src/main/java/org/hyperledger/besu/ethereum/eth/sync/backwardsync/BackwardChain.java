@@ -223,7 +223,7 @@ public class BackwardChain {
             headers.get(ancestors.get((int) (firstAncestor - height)));
         blockHeader.ifPresent(
             blockHeader1 ->
-                LOG.info(
+                LOG.debug(
                     "First: {} Height: {}, result: {}",
                     firstAncestor,
                     height,
@@ -238,7 +238,7 @@ public class BackwardChain {
       }
       final long firstSuccessor = headers.get(successors.get(0)).orElseThrow().getNumber();
       if (height - firstSuccessor < successors.size()) {
-        LOG.info(
+        LOG.debug(
             "First: {} Height: {}, result: {}",
             firstSuccessor,
             height,
