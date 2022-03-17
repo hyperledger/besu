@@ -41,8 +41,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncPhase.class);
   private int batchSize = BackwardsSyncContext.BATCH_SIZE;
 
-  public ForwardSyncPhase(
-      final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
+  public ForwardSyncPhase(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
   }
 

@@ -17,26 +17,25 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Optional;
 
-public class GenericKeyValueStorage<K, V> {
+public class GenericKeyValueStorageFacade<K, V> implements Closeable {
   protected final KeyValueStorage storage;
   private final KeyConvertor<K> keyConvertor;
   private final ValueConvertor<V> valueConvertor;
 
-  public GenericKeyValueStorage(
-      final StorageProvider provider,
-      final SegmentIdentifier segment,
+  public GenericKeyValueStorageFacade(
       final KeyConvertor<K> keyConvertor,
-      final ValueConvertor<V> valueConvertor) {
+      final ValueConvertor<V> valueConvertor,
+      final KeyValueStorage storageBySegmentIdentifier) {
     this.keyConvertor = keyConvertor;
     this.valueConvertor = valueConvertor;
-    this.storage = provider.getStorageBySegmentIdentifier(segment);
+    this.storage = storageBySegmentIdentifier;
   }
 
   public Optional<V> get(final K key) {
@@ -55,5 +54,10 @@ public class GenericKeyValueStorage<K, V> {
 
   public void clear() {
     storage.clear();
+  }
+
+  @Override
+  public void close() throws IOException {
+    storage.close();
   }
 }

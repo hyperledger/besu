@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -37,9 +38,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -68,9 +71,22 @@ public class ForwardSyncPhaseTest {
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
   private MutableBlockchain localBlockchain;
+  GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
+  GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
 
   @Before
   public void setup() {
+    headersStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
+    blocksStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new BlocksConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
+
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -110,7 +126,7 @@ public class ForwardSyncPhaseTest {
 
   @Test
   public void shouldExecuteForwardSyncWhenPossible() throws Exception {
-    final BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 3);
     ForwardSyncPhase step = new ForwardSyncPhase(context, backwardChain);
 
     final RespondingEthPeer.Responder responder =
@@ -134,8 +150,7 @@ public class ForwardSyncPhaseTest {
 
   @Test
   public void shouldDropHeadersAsLongAsWeKnowThem() {
-    final BackwardSyncStorage backwardChain =
-        createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 3);
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 3);
     ForwardSyncPhase step = new ForwardSyncPhase(context, backwardChain);
 
     assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
@@ -147,9 +162,9 @@ public class ForwardSyncPhaseTest {
 
   @Test
   public void shouldDropBlocksThatWeTrust() {
-    final InMemoryBackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT);
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT);
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
-    final BackwardSyncStorage finalChain = createBackwardChain(LOCAL_HEIGHT + 2, LOCAL_HEIGHT + 5);
+    final BackwardChain finalChain = createBackwardChain(LOCAL_HEIGHT + 2, LOCAL_HEIGHT + 5);
     finalChain.prependChain(backwardChain);
 
     ForwardSyncPhase step = new ForwardSyncPhase(context, finalChain);
@@ -178,7 +193,7 @@ public class ForwardSyncPhaseTest {
 
   @Test
   public void shouldCreateAnotherStepWhenThereIsWorkToBeDone() {
-    BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 10);
+    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 1, LOCAL_HEIGHT + 10);
     ForwardSyncPhase step = spy(new ForwardSyncPhase(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
@@ -188,7 +203,7 @@ public class ForwardSyncPhaseTest {
 
   @Test
   public void shouldCreateBackwardStepWhenParentOfWorkIsNotImportedYet() {
-    BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
+    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
     ForwardSyncPhase step = spy(new ForwardSyncPhase(context, backwardChain));
 
     step.possiblyMoreForwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
@@ -198,7 +213,7 @@ public class ForwardSyncPhaseTest {
 
   @Test
   public void shouldAddSuccessorsWhenNoUnknownBlockSet() throws Exception {
-    BackwardSyncStorage backwardChain = createBackwardChain(LOCAL_HEIGHT - 3, LOCAL_HEIGHT);
+    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 3, LOCAL_HEIGHT);
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 2));
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 3));
@@ -212,8 +227,8 @@ public class ForwardSyncPhaseTest {
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 3));
   }
 
-  private InMemoryBackwardChain createBackwardChain(final int from, final int until) {
-    InMemoryBackwardChain chain = backwardChainFromBlock(until);
+  private BackwardChain createBackwardChain(final int from, final int until) {
+    BackwardChain chain = backwardChainFromBlock(until);
     for (int i = until; i > from; --i) {
       chain.prependAncestorsHeader(getBlockByNumber(i - 1).getHeader());
     }
@@ -221,8 +236,9 @@ public class ForwardSyncPhaseTest {
   }
 
   @NotNull
-  private InMemoryBackwardChain backwardChainFromBlock(final int number) {
-    return new InMemoryBackwardChain(remoteBlockchain.getBlockByNumber(number).orElseThrow());
+  private BackwardChain backwardChainFromBlock(final int number) {
+    return new BackwardChain(
+        headersStorage, blocksStorage, remoteBlockchain.getBlockByNumber(number).orElseThrow());
   }
 
   @NotNull

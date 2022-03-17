@@ -53,8 +53,8 @@ public class BackwardsSyncContext {
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
 
-  private final Map<Long, BackwardSyncStorage> backwardChainMap = new ConcurrentHashMap<>();
-  private final AtomicReference<BackwardSyncStorage> currentChain = new AtomicReference<>();
+  private final Map<Long, BackwardChain> backwardChainMap = new ConcurrentHashMap<>();
+  private final AtomicReference<BackwardChain> currentChain = new AtomicReference<>();
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
   private final BackwardSyncLookupService service;
@@ -85,7 +85,7 @@ public class BackwardsSyncContext {
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
-    final Optional<BackwardSyncStorage> chain = getCurrentChain();
+    final Optional<BackwardChain> chain = getCurrentChain();
     CompletableFuture<List<Block>> completableFuture;
     if (chain.isPresent() && chain.get().isTrusted(newBlockhash)) {
       infoLambda(
@@ -118,15 +118,15 @@ public class BackwardsSyncContext {
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    final BackwardSyncStorage backwardChain = currentChain.get();
+    final BackwardChain backwardChain = currentChain.get();
     if (backwardChain == null) {
       debugLambda(
           LOG,
           "Starting new backward sync towards a pivot {} at height {}",
           () -> newPivot.getHash().toString().substring(0, 20),
           () -> newPivot.getHeader().getNumber());
-      final BackwardSyncStorage newChain =
-          new KeyValueBackwardChain(
+      final BackwardChain newChain =
+          new BackwardChain(
               storageProvider,
               ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
               newPivot);
@@ -150,8 +150,8 @@ public class BackwardsSyncContext {
         () -> newPivot.getHash().toString().substring(0, 20),
         () -> newPivot.getHeader().getNumber());
 
-    BackwardSyncStorage newBackwardChain =
-        new KeyValueBackwardChain(
+    BackwardChain newBackwardChain =
+        new BackwardChain(
             storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule), newPivot);
     backwardChainMap.put(newPivot.getHeader().getNumber(), newBackwardChain);
     this.currentChain.set(
@@ -189,7 +189,7 @@ public class BackwardsSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(
-      final BackwardSyncStorage backwardChain) {
+      final BackwardChain backwardChain) {
 
     CompletableFuture<Void> f = prepareBackwardSyncFuture(backwardChain);
     for (int i = 0; i < MAX_RETRIES; i++) {
@@ -222,20 +222,19 @@ public class BackwardsSyncContext {
         });
   }
 
-  private CompletableFuture<Void> prepareBackwardSyncFuture(
-      final BackwardSyncStorage backwardChain) {
+  private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
     return new BackwardSyncPhase(this, backwardChain)
         .executeAsync(null)
         .thenCompose(new ForwardSyncPhase(this, backwardChain)::executeAsync);
   }
 
-  private void cleanup(final BackwardSyncStorage chain) {
+  private void cleanup(final BackwardChain chain) {
     if (currentChain.compareAndSet(chain, null)) {
       this.currentBackwardSyncFuture.set(null);
     }
   }
 
-  public Optional<BackwardSyncStorage> getCurrentChain() {
+  public Optional<BackwardChain> getCurrentChain() {
     return Optional.ofNullable(currentChain.get());
   }
 
@@ -259,11 +258,11 @@ public class BackwardsSyncContext {
     return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
   }
 
-  public Optional<BackwardSyncStorage> findCorrectChainFromPivot(final long number) {
+  public Optional<BackwardChain> findCorrectChainFromPivot(final long number) {
     return Optional.ofNullable(backwardChainMap.get(number));
   }
 
-  public void putCurrentChainToHeight(final long height, final BackwardSyncStorage backwardChain) {
+  public void putCurrentChainToHeight(final long height, final BackwardChain backwardChain) {
     backwardChainMap.put(height, backwardChain);
   }
 

@@ -35,8 +35,7 @@ import org.slf4j.LoggerFactory;
 public class BackwardSyncPhase extends BackwardSyncTask {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncPhase.class);
 
-  public BackwardSyncPhase(
-      final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
+  public BackwardSyncPhase(final BackwardsSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
   }
 
@@ -172,7 +171,7 @@ public class BackwardSyncPhase extends BackwardSyncTask {
 
   @VisibleForTesting
   protected BlockHeader possibleMerge(final Void unused) {
-    Optional<BackwardSyncStorage> maybeHistoricalBackwardChain =
+    Optional<BackwardChain> maybeHistoricalBackwardChain =
         context.findCorrectChainFromPivot(
             backwardChain.getFirstAncestorHeader().orElseThrow().getNumber() - 1);
     maybeHistoricalBackwardChain.ifPresent(backwardChain::prependChain);

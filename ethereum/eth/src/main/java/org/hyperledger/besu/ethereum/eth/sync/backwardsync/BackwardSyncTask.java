@@ -23,17 +23,17 @@ import org.slf4j.Logger;
 
 public abstract class BackwardSyncTask {
   protected BackwardsSyncContext context;
-  protected BackwardSyncStorage backwardChain;
+  protected BackwardChain backwardChain;
   private static final Logger LOG = getLogger(BackwardSyncTask.class);
 
   protected BackwardSyncTask(
-      final BackwardsSyncContext context, final BackwardSyncStorage backwardChain) {
+      final BackwardsSyncContext context, final BackwardChain backwardChain) {
     this.context = context;
     this.backwardChain = backwardChain;
   }
 
   CompletableFuture<Void> executeAsync(final Void unused) {
-    Optional<BackwardSyncStorage> currentChain = context.getCurrentChain();
+    Optional<BackwardChain> currentChain = context.getCurrentChain();
     if (currentChain.isPresent()) {
       if (!backwardChain.equals(currentChain.get())) {
         LOG.debug(
