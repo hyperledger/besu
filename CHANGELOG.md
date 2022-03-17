@@ -1,9 +1,13 @@
 # Changelog
 
-## 22.1.2
+## 22.1.3
 
 ### Breaking Changes
 - Remove the experimental flag for bonsai tries CLI options '--data-storage-format' and '--bonsai-maximum-back-layers-to-load' [#3578](https://github.com/hyperledger/besu/pull/3578)
+
+### Additions and Improvements
+
+## 22.1.2
 
 ### Additions and Improvements
 - Execution layer (The Merge):
@@ -19,6 +23,10 @@
 ### Bug Fixes
 - Reject locally-sourced transactions below the minimum gas price when not mining. [#3397](https://github.com/hyperledger/besu/pull/3397)
 - Fixed bug with contract address supplied to `debug_accountAt` [#3518](https://github.com/hyperledger/besu/pull/3518)
+
+## Download Links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.2/besu-22.1.2.zip /  SHA256 1b26e3f8982c3a9dbabc72171f83f1cfe89eef84ead45b184ee9101f411c1251
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.1.2/besu-22.1.2.tar.gz / SHA256 1eca9abddf351eaaf4e6eaa1b9536b8b4fd7d30a81d39f9d44ffeb198627ee7a
 
 ## 22.1.1
 
