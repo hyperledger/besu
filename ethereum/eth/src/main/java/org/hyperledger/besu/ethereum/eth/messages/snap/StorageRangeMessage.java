@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -45,13 +46,13 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
   }
 
   public static StorageRangeMessage create(
-      final ArrayDeque<TreeMap<Bytes32, Bytes>> slots, final List<Bytes> proof) {
+      final ArrayDeque<Map<Bytes32, Bytes>> slots, final List<Bytes> proof) {
     return create(Optional.empty(), slots, proof);
   }
 
   public static StorageRangeMessage create(
       final Optional<BigInteger> requestId,
-      final ArrayDeque<TreeMap<Bytes32, Bytes>> slots,
+      final ArrayDeque<Map<Bytes32, Bytes>> slots,
       final List<Bytes> proof) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
@@ -88,7 +89,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
   }
 
   public SlotRangeData slotsData(final boolean withRequestId) {
-    final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
+    final ArrayDeque<Map<Bytes32, Bytes>> slots = new ArrayDeque<>();
     final ArrayDeque<Bytes> proofs = new ArrayDeque<>();
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
@@ -120,7 +121,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
   @Value.Immutable
   public interface SlotRangeData {
 
-    ArrayDeque<TreeMap<Bytes32, Bytes>> slots();
+    ArrayDeque<Map<Bytes32, Bytes>> slots();
 
     ArrayDeque<Bytes> proofs();
   }

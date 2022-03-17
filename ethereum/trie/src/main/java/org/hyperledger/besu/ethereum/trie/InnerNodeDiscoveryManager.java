@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.bytes.MutableBytes32;
 import org.immutables.value.Value;
 
 public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
@@ -130,6 +131,22 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       path.set(j + 1, (byte) (b & 0x0f));
     }
     return path;
+  }
+
+  public static Bytes32 decodePath(final Bytes bytes) {
+    final MutableBytes32 decoded = MutableBytes32.create();
+    final MutableBytes path = MutableBytes.create(Bytes32.SIZE * 2);
+    path.set(0, bytes);
+    int decodedPos = 0;
+    for (int pathPos = 0; pathPos < path.size() - 1; pathPos += 2, decodedPos += 1) {
+      final byte high = path.get(pathPos);
+      final byte low = path.get(pathPos + 1);
+      if ((high & 0xf0) != 0 || (low & 0xf0) != 0) {
+        throw new IllegalArgumentException("Invalid path: contains elements larger than a nibble");
+      }
+      decoded.set(decodedPos, (byte) (high << 4 | low));
+    }
+    return decoded;
   }
 
   @Value.Immutable

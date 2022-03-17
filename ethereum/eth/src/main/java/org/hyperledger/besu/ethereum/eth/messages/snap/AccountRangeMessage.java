@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -47,14 +48,14 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   }
 
   public static AccountRangeMessage create(
-      final Map<Bytes32, Bytes> accounts, final ArrayDeque<Bytes> proof) {
+      final Map<Bytes32, Bytes> accounts, final List<Bytes> proof) {
     return create(Optional.empty(), accounts, proof);
   }
 
   public static AccountRangeMessage create(
       final Optional<BigInteger> requestId,
       final Map<Bytes32, Bytes> accounts,
-      final ArrayDeque<Bytes> proof) {
+      final List<Bytes> proof) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
