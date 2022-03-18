@@ -535,8 +535,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CorsAllowedOriginsProperty();
   }
 
-  // Json RPC Http Options
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Http Options|@%n")
+  // JSON-RPC HTTP Options
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC HTTP Options|@%n")
   JsonRPCHttpOptionGroup jsonRPCHttpOptionGroup = new JsonRPCHttpOptionGroup();
 
   static class JsonRPCHttpOptionGroup {
@@ -683,8 +683,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final List<String> rpcHttpTlsCipherSuites = new ArrayList<>();
   }
 
-  // Json RPC Websocket Options
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Json RPC Websocket Options|@%n")
+  // JSON-RPC Websocket Options
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC Websocket Options|@%n")
   JsonRPCWebsocketOptionGroup jsonRPCWebsocketOptionGroup = new JsonRPCWebsocketOptionGroup();
 
   static class JsonRPCWebsocketOptionGroup {
@@ -1598,7 +1598,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // consequently you can only do some configuration checks
     // after start has been called on plugins
 
-    if (privacyOptionGroup.isPrivacyEnabled) {
+    if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
 
       if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath != null
           && privacyPluginService != null
@@ -1686,13 +1686,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @SuppressWarnings("ConstantConditions")
   private void validateMiningParams() {
-    if (minerOptionGroup.isMiningEnabled && minerOptionGroup.coinbase == null) {
+    if (Boolean.TRUE.equals(minerOptionGroup.isMiningEnabled)
+        && minerOptionGroup.coinbase == null) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
-    if (!minerOptionGroup.isMiningEnabled && minerOptionGroup.iStratumMiningEnabled) {
+    if (Boolean.FALSE.equals(minerOptionGroup.isMiningEnabled)
+        && minerOptionGroup.iStratumMiningEnabled) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
@@ -1855,7 +1857,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
 
-    if (privacyOptionGroup.isOnchainPrivacyGroupsEnabled) {
+    if (Boolean.TRUE.equals(privacyOptionGroup.isOnchainPrivacyGroupsEnabled)) {
       logger.warn(
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
@@ -2453,7 +2455,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final SmartContractPermissioningConfiguration smartContractPermissioningConfiguration =
         SmartContractPermissioningConfiguration.createDefault();
 
-    if (permissionsOptionGroup.permissionsNodesContractEnabled) {
+    if (Boolean.TRUE.equals(permissionsOptionGroup.permissionsNodesContractEnabled)) {
       if (permissionsOptionGroup.permissionsNodesContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
@@ -2472,7 +2474,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           permissionsOptionGroup.permissionsNodesContractAddress);
     }
 
-    if (permissionsOptionGroup.permissionsAccountsContractEnabled) {
+    if (Boolean.TRUE.equals(permissionsOptionGroup.permissionsAccountsContractEnabled)) {
       if (permissionsOptionGroup.permissionsAccountsContractAddress == null) {
         throw new ParameterException(
             this.commandLine,
@@ -2542,7 +2544,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     checkPrivacyTlsOptionsDependencies();
 
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
-    if (privacyOptionGroup.isPrivacyEnabled) {
+    if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
       final String errorSuffix = "cannot be enabled with privacy.";
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
@@ -2555,9 +2557,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             commandLine, String.format("%s %s", "GoQuorum mode", errorSuffix));
       }
 
-      if (privacyOptionGroup.isPrivacyMultiTenancyEnabled
-          && !jsonRpcConfiguration.isAuthenticationEnabled()
-          && !webSocketConfiguration.isAuthenticationEnabled()) {
+      if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
+          && Boolean.FALSE.equals(jsonRpcConfiguration.isAuthenticationEnabled())
+          && Boolean.FALSE.equals(webSocketConfiguration.isAuthenticationEnabled())) {
         throw new ParameterException(
             commandLine,
             "Privacy multi-tenancy requires either http authentication to be enabled or WebSocket authentication to be enabled");
@@ -2587,7 +2589,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             commandLine, "Please specify Enclave public key file path to enable privacy");
       }
 
-      if (hasPrivacyPublicKey && !privacyOptionGroup.isPrivacyMultiTenancyEnabled) {
+      if (hasPrivacyPublicKey
+          && Boolean.FALSE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)) {
         try {
           privacyParametersBuilder.setPrivacyUserIdUsingFile(
               privacyOptionGroup.privacyPublicKeyFile);
@@ -2604,7 +2607,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           privacyOptionGroup.privateMarkerTransactionSigningKeyPath);
       privacyParametersBuilder.setStorageProvider(
           privacyKeyStorageProvider(keyValueStorageName + "-privacy"));
-      if (privacyOptionGroup.isPrivacyTlsEnabled) {
+      if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyTlsEnabled)) {
         privacyParametersBuilder.setPrivacyKeyStoreFile(privacyOptionGroup.privacyKeyStoreFile);
         privacyParametersBuilder.setPrivacyKeyStorePasswordFile(
             privacyOptionGroup.privacyKeyStorePasswordFile);
@@ -2617,7 +2620,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           Optional.of(configureGoQuorumPrivacy(storageProvider)));
     }
 
-    if (!privacyOptionGroup.isPrivacyEnabled && anyPrivacyApiEnabled()) {
+    if (Boolean.FALSE.equals(privacyOptionGroup.isPrivacyEnabled) && anyPrivacyApiEnabled()) {
       logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
     }
 
@@ -2629,7 +2632,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     privacyParametersBuilder.setPrivacyService(privacyPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
-    if (privacyOptionGroup.isPrivacyEnabled) {
+    if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
       preSynchronizationTaskRunner.addTask(
           new PrivateDatabaseMigrationPreSyncTask(
               privacyParameters, privacyOptionGroup.migratePrivateDatabase));
