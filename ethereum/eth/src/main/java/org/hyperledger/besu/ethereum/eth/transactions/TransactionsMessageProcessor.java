@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
+import static org.hyperledger.besu.ethereum.eth.transactions.Utils.toHashList;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
@@ -28,10 +28,8 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
@@ -95,9 +93,5 @@ class TransactionsMessageProcessor {
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }
-  }
-
-  private List<Hash> toHashList(final Collection<Transaction> txs) {
-    return txs.stream().map(Transaction::getHash).collect(Collectors.toList());
   }
 }

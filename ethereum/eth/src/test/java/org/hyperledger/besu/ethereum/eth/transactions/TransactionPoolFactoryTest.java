@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -48,6 +51,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 @SuppressWarnings("unchecked")
 public class TransactionPoolFactoryTest {
@@ -65,14 +69,17 @@ public class TransactionPoolFactoryTest {
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    final ArgumentCaptor<Runnable> sendTaskCapture = ArgumentCaptor.forClass(Runnable.class);
+    doNothing().when(ethScheduler).scheduleSyncWorkerTask(sendTaskCapture.capture());
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
     final SyncState state = mock(SyncState.class);
     final GasPricePendingTransactionsSorter pendingTransactions =
         mock(GasPricePendingTransactionsSorter.class);
     final PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     final TransactionsMessageSender transactionsMessageSender =
         mock(TransactionsMessageSender.class);
-    final PeerPendingTransactionTracker peerPendingTransactionTracker =
-        mock(PeerPendingTransactionTracker.class);
+    doNothing().when(transactionsMessageSender).sendTransactionsToPeer(any(EthPeer.class));
     final PendingTransactionsMessageSender pendingTransactionsMessageSender =
         mock(PendingTransactionsMessageSender.class);
     final TransactionPool pool =
@@ -95,7 +102,6 @@ public class TransactionPoolFactoryTest {
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
-            peerPendingTransactionTracker,
             pendingTransactionsMessageSender);
 
     final EthProtocolManager ethProtocolManager =
@@ -117,8 +123,9 @@ public class TransactionPoolFactoryTest {
         RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
     assertThat(ethPeer.getEthPeer()).isNotNull();
     assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+    sendTaskCapture.getValue().run();
     ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeer.getEthPeer());
     verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
-    verify(peerPendingTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
   }
 }

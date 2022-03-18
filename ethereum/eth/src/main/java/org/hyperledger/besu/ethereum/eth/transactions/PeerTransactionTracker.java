@@ -15,12 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.emptySet;
+import static org.hyperledger.besu.ethereum.eth.transactions.Utils.toHashList;
 
-import java.util.Arrays;
-import java.util.List;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 
 import java.util.Collection;
@@ -29,19 +27,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
-  private static final List<Capability> REQUIRED_PROTOCOLS =
-      Arrays.asList(EthProtocol.ETH66, EthProtocol.ETH65);
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
 
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Transaction> transactions) {
+    markTransactionHashesAsSeen(peer, toHashList(transactions));
+  }
+
+  public synchronized void markTransactionHashesAsSeen(
+      final EthPeer peer, final Collection<Hash> txHashes) {
     final Set<Hash> seenTransactionsForPeer = getOrCreateSeenTransactionsForPeer(peer);
-    transactions.stream().map(Transaction::getHash).forEach(seenTransactionsForPeer::add);
+    seenTransactionsForPeer.addAll(txHashes);
   }
 
   public synchronized void addToPeerSendQueue(final EthPeer peer, final Transaction transaction) {
@@ -91,9 +91,5 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   public void onDisconnect(final EthPeer peer) {
     seenTransactions.remove(peer);
     transactionsToSend.remove(peer);
-  }
-
-  public boolean peerHasPooledTransactionHashSupport(EthPeer peer) {
-    return REQUIRED_PROTOCOLS.stream().anyMatch(peer.getAgreedCapabilities()::contains);
   }
 }

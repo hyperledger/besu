@@ -51,8 +51,8 @@ public class TransactionPoolFactory {
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
 
-    final PeerPendingTransactionTracker pendingTransactionTracker =
-        new PeerPendingTransactionTracker(pendingTransactions);
+    //  final PeerPendingTransactionTracker pendingTransactionTracker =
+    //        new PeerPendingTransactionTracker(pendingTransactions);
     final PendingTransactionsMessageSender pendingTransactionsMessageSender =
         new PendingTransactionsMessageSender(transactionTracker);
 
@@ -67,7 +67,7 @@ public class TransactionPoolFactory {
         pendingTransactions,
         transactionTracker,
         transactionsMessageSender,
-        pendingTransactionTracker,
+        //      pendingTransactionTracker,
         pendingTransactionsMessageSender);
   }
 
@@ -82,25 +82,21 @@ public class TransactionPoolFactory {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final PeerPendingTransactionTracker pendingTransactionTracker,
       final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionBroadcast(
+            new TransactionBroadcaster(
+                pendingTransactions,
                 transactionTracker,
                 transactionsMessageSender,
                 pendingTransactionsMessageSender,
                 ethContext),
- //           new PendingTransactionSender(
-   //             pendingTransactionTracker, pendingTransactionsMessageSender, ethContext),
             syncState,
             ethContext,
             transactionTracker,
-//            pendingTransactionTracker,
-            pendingTransactionsMessageSender,
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);
@@ -120,7 +116,7 @@ public class TransactionPoolFactory {
         new PendingTransactionsMessageHandler(
             ethContext.getScheduler(),
             new PendingTransactionsMessageProcessor(
-                pendingTransactionTracker,
+                transactionTracker,
                 transactionPool,
                 transactionPoolConfiguration,
                 metricsSystem.createCounter(
@@ -134,7 +130,6 @@ public class TransactionPoolFactory {
     ethContext
         .getEthMessages()
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
-    ethContext.getEthPeers().subscribeDisconnect(pendingTransactionTracker);
 
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);

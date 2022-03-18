@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.Utils.toHashList;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-import com.google.common.collect.Iterables;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -27,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMess
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
@@ -38,17 +34,9 @@ class PendingTransactionsMessageSender {
 
   private final PeerTransactionTracker transactionTracker;
 
-  public PendingTransactionsMessageSender(
-      final PeerTransactionTracker transactionTracker) {
+  public PendingTransactionsMessageSender(final PeerTransactionTracker transactionTracker) {
     this.transactionTracker = transactionTracker;
   }
-
-//  public void sendTransactionHashesToPeers() {
-//    StreamSupport.stream(
-//          transactionTracker.getEthPeersWithUnsentTransactions().spliterator(), true)
-//        .parallel()
-//        .forEach(this::sentTransactionHashesToPeer);
-//  }
 
   public void sendTransactionHashesToPeer(final EthPeer peer) {
     for (final List<Transaction> txBatch :
@@ -56,7 +44,7 @@ class PendingTransactionsMessageSender {
             transactionTracker.claimTransactionsToSendToPeer(peer),
             TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES)) {
       try {
-        List<Hash> txHashes = toHashes(txBatch);
+        List<Hash> txHashes = toHashList(txBatch);
         traceLambda(
             LOG,
             "Sending transaction hashes to peer {}, transaction hashes count {}, list {}",
@@ -69,9 +57,5 @@ class PendingTransactionsMessageSender {
         break;
       }
     }
-  }
-
-  private List<Hash> toHashes(Collection<Transaction> transactions) {
-    return transactions.stream().map(Transaction::getHash).collect(Collectors.toList());
   }
 }

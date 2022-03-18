@@ -71,39 +71,28 @@ public class TransactionPool implements BlockAddedObserver {
   private final AbstractPendingTransactionsSorter pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
-  private final TransactionBatchAddedListener transactionBatchAddedListener;
- // private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
+  private final TransactionBroadcaster transactionBroadcaster;
   private final SyncState syncState;
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
-  private final PeerTransactionTracker peerTransactionTracker;
- // private final PeerPendingTransactionTracker peerPendingTransactionTracker;
-  private final PendingTransactionsMessageSender pendingTransactionsMessageSender;
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final TransactionBatchAddedListener transactionBatchAddedListener,
-     // final TransactionBatchAddedListener pendingTransactionBatchAddedListener,
+      final TransactionBroadcaster transactionBroadcaster,
       final SyncState syncState,
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
-//      final PeerPendingTransactionTracker peerPendingTransactionTracker,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender,
       final MiningParameters miningParameters,
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration configuration) {
     this.pendingTransactions = pendingTransactions;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
-    this.transactionBatchAddedListener = transactionBatchAddedListener;
-  //  this.pendingTransactionBatchAddedListener = pendingTransactionBatchAddedListener;
+    this.transactionBroadcaster = transactionBroadcaster;
     this.syncState = syncState;
-    this.peerTransactionTracker = peerTransactionTracker;
-  //  this.peerPendingTransactionTracker = peerPendingTransactionTracker;
-    this.pendingTransactionsMessageSender = pendingTransactionsMessageSender;
     this.miningParameters = miningParameters;
     this.configuration = configuration;
 
@@ -118,13 +107,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   void handleConnect(final EthPeer peer) {
-    pendingTransactions
-        .getLocalTransactions()
-        .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
-
-    if (peerTransactionTracker.peerHasPooledTransactionHashSupport(peer)) {
-      pendingTransactionsMessageSender.sendTransactionHashesToPeer(peer);
-    }
+    transactionBroadcaster.handlePeerConnection(peer);
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -143,8 +126,7 @@ public class TransactionPool implements BlockAddedObserver {
         return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
       }
       final Collection<Transaction> txs = singletonList(transaction);
-      transactionBatchAddedListener.onTransactionsAdded(txs);
-//      pendingTransactionBatchAddedListener.onTransactionsAdded(txs);
+      transactionBroadcaster.onTransactionsAdded(txs);
     }
 
     return validationResult;
@@ -191,7 +173,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
     }
     if (!addedTransactions.isEmpty()) {
-      transactionBatchAddedListener.onTransactionsAdded(addedTransactions);
+      transactionBroadcaster.onTransactionsAdded(addedTransactions);
     }
   }
 

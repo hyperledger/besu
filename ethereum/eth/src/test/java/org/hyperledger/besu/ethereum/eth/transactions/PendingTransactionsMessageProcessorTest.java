@@ -55,7 +55,7 @@ public class PendingTransactionsMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
   @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
-  @Mock private PeerPendingTransactionTracker transactionTracker;
+  @Mock private PeerTransactionTracker transactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
   @Mock private MetricsSystem metricsSystem;
@@ -95,7 +95,7 @@ public class PendingTransactionsMessageProcessorTest {
         ofMinutes(1));
 
     verify(transactionTracker)
-        .markTransactionsHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
+        .markTransactionHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
     verifyNoMoreInteractions(transactionTracker);
   }
 
@@ -109,9 +109,6 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-//    verify(transactionPool).addTransactionHash(hash1);
-//    verify(transactionPool).addTransactionHash(hash2);
-//    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -133,7 +130,7 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-//    verify(transactionPool).addTransactionHash(hash3);
+    //    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -182,7 +179,6 @@ public class PendingTransactionsMessageProcessorTest {
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    //when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
@@ -194,9 +190,6 @@ public class PendingTransactionsMessageProcessorTest {
   @Test
   public void shouldNotScheduleGetPooledTransactionsTaskTwice() {
     when(syncState.isInSync(anyLong())).thenReturn(true);
-
-    //when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
-    //when(transactionPool.addTransactionHash(hash2)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.Utils.toHashList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -56,9 +57,9 @@ public class PendingTransactionsMessageSenderTest {
   private final EthPeer peer2 = mock(EthPeer.class);
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
-  private final Hash transaction1 = generator.transaction().getHash();
-  private final Hash transaction2 = generator.transaction().getHash();
-  private final Hash transaction3 = generator.transaction().getHash();
+  private final Transaction transaction1 = generator.transaction();
+  private final Transaction transaction2 = generator.transaction();
+  private final Transaction transaction3 = generator.transaction();
 
   @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
 
@@ -76,7 +77,7 @@ public class PendingTransactionsMessageSenderTest {
 
   @Before
   public void setUp() {
-    transactionTracker = new PeerTransactionTracker(pendingTransactions);
+    transactionTracker = new PeerTransactionTracker();
     messageSender = new PendingTransactionsMessageSender(transactionTracker);
     Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
@@ -89,7 +90,7 @@ public class PendingTransactionsMessageSenderTest {
     transactionTracker.addToPeerSendQueue(peer1, transaction2);
     transactionTracker.addToPeerSendQueue(peer2, transaction3);
 
-    messageSender.sendTransactionHashesToPeers();
+    List.of(peer1, peer2).forEach(messageSender::sendTransactionHashesToPeer);
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
@@ -98,12 +99,12 @@ public class PendingTransactionsMessageSenderTest {
 
   @Test
   public void shouldSendTransactionsInBatchesWithLimit() throws Exception {
-    final Set<Hash> transactions =
-        generator.transactions(6000).stream().map(Transaction::getHash).collect(Collectors.toSet());
+    final Set<Transaction> transactions =
+        generator.transactions(6000).stream().collect(Collectors.toSet());
 
     transactions.forEach(transaction -> transactionTracker.addToPeerSendQueue(peer1, transaction));
 
-    messageSender.sendTransactionHashesToPeers();
+    messageSender.sendTransactionHashesToPeer(peer1);
     final ArgumentCaptor<MessageData> messageDataArgumentCaptor =
         ArgumentCaptor.forClass(MessageData.class);
     verify(peer1, times(2)).send(messageDataArgumentCaptor.capture());
@@ -124,14 +125,15 @@ public class PendingTransactionsMessageSenderTest {
         .hasSizeBetween(
             expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
 
-    assertThat(Sets.union(firstBatch, secondBatch)).isEqualTo(transactions);
+    assertThat(Sets.union(firstBatch, secondBatch)).isEqualTo(newHashSet(toHashList(transactions)));
   }
 
-  private MessageData transactionsMessageContaining(final Hash... transactions) {
+  private MessageData transactionsMessageContaining(final Transaction... transactions) {
     return argThat(
         message -> {
           final Set<Hash> actualSentTransactions = getTransactionsFromMessage(message);
-          final Set<Hash> expectedTransactions = newHashSet(transactions);
+          final Set<Hash> expectedTransactions =
+              newHashSet(toHashList(Arrays.asList(transactions)));
           return message.getCode() == EthPV65.NEW_POOLED_TRANSACTION_HASHES
               && actualSentTransactions.equals(expectedTransactions);
         });
