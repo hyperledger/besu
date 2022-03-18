@@ -14,40 +14,46 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import com.google.common.collect.Iterables;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
-import java.util.List;
-import java.util.stream.StreamSupport;
-
-import com.google.common.collect.Iterables;
-
 class PendingTransactionsMessageSender {
 
-  private final PeerPendingTransactionTracker transactionTracker;
+  private final PeerTransactionTracker transactionTracker;
 
-  public PendingTransactionsMessageSender(final PeerPendingTransactionTracker transactionTracker) {
+  public PendingTransactionsMessageSender(
+      final PeerTransactionTracker transactionTracker) {
     this.transactionTracker = transactionTracker;
   }
 
-  public void sendTransactionsToPeers() {
-    StreamSupport.stream(transactionTracker.getEthPeersWithUnsentTransactions().spliterator(), true)
-        .parallel()
-        .forEach(this::sendTransactionsToPeer);
-  }
+//  public void sendTransactionHashesToPeers() {
+//    StreamSupport.stream(
+//          transactionTracker.getEthPeersWithUnsentTransactions().spliterator(), true)
+//        .parallel()
+//        .forEach(this::sentTransactionHashesToPeer);
+//  }
 
-  private void sendTransactionsToPeer(final EthPeer peer) {
-    for (final List<Hash> hashes :
+  public void sendTransactionHashesToPeer(final EthPeer peer) {
+    for (final List<Transaction> txBatch :
         Iterables.partition(
             transactionTracker.claimTransactionsToSendToPeer(peer),
             TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES)) {
       try {
-        peer.send(NewPooledTransactionHashesMessage.create(hashes));
+        peer.send(NewPooledTransactionHashesMessage.create(toHashes(txBatch)));
       } catch (final PeerNotConnected __) {
         break;
       }
     }
+  }
+
+  private List<Hash> toHashes(Collection<Transaction> transactions) {
+    return transactions.stream().map(Transaction::getHash).collect(Collectors.toList());
   }
 }

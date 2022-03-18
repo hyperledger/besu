@@ -72,9 +72,9 @@ public class PeerPendingTransactionTrackerTest {
     tracker.addToPeerSendQueue(ethPeer1, hash2);
     tracker.addToPeerSendQueue(ethPeer2, hash3);
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer1, ethPeer2);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer1)).containsOnly(hash1, hash2);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer2)).containsOnly(hash3);
+    assertThat(tracker.getEthPeersWithUnsentTransactionHashes()).containsOnly(ethPeer1, ethPeer2);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer1)).containsOnly(hash1, hash2);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer2)).containsOnly(hash3);
   }
 
   @Test
@@ -85,9 +85,9 @@ public class PeerPendingTransactionTrackerTest {
     tracker.addToPeerSendQueue(ethPeer1, hash2);
     tracker.addToPeerSendQueue(ethPeer2, hash3);
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer1, ethPeer2);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer1)).containsOnly(hash1);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer2)).containsOnly(hash3);
+    assertThat(tracker.getEthPeersWithUnsentTransactionHashes()).containsOnly(ethPeer1, ethPeer2);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer1)).containsOnly(hash1);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer2)).containsOnly(hash3);
   }
 
   @Test
@@ -98,9 +98,9 @@ public class PeerPendingTransactionTrackerTest {
     tracker.addToPeerSendQueue(ethPeer1, hash2);
     tracker.addToPeerSendQueue(ethPeer2, hash3);
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer2);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer1)).isEmpty();
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer2)).containsOnly(hash3);
+    assertThat(tracker.getEthPeersWithUnsentTransactionHashes()).containsOnly(ethPeer2);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer1)).isEmpty();
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer2)).containsOnly(hash3);
   }
 
   @Test
@@ -112,13 +112,13 @@ public class PeerPendingTransactionTrackerTest {
 
     tracker.onDisconnect(ethPeer1);
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer2);
+    assertThat(tracker.getEthPeersWithUnsentTransactionHashes()).containsOnly(ethPeer2);
 
     // Should have cleared data that ethPeer1 has already seen transaction1
     tracker.addToPeerSendQueue(ethPeer1, hash1);
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer1, ethPeer2);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer1)).containsOnly(hash1);
-    assertThat(tracker.claimTransactionsToSendToPeer(ethPeer2)).containsOnly(hash3);
+    assertThat(tracker.getEthPeersWithUnsentTransactionHashes()).containsOnly(ethPeer1, ethPeer2);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer1)).containsOnly(hash1);
+    assertThat(tracker.claimTransactionHashesToSendToPeer(ethPeer2)).containsOnly(hash3);
   }
 }

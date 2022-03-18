@@ -54,7 +54,7 @@ public class TransactionPoolFactory {
     final PeerPendingTransactionTracker pendingTransactionTracker =
         new PeerPendingTransactionTracker(pendingTransactions);
     final PendingTransactionsMessageSender pendingTransactionsMessageSender =
-        new PendingTransactionsMessageSender(pendingTransactionTracker);
+        new PendingTransactionsMessageSender(transactionTracker);
 
     return createTransactionPool(
         protocolSchedule,
@@ -89,13 +89,18 @@ public class TransactionPoolFactory {
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
-            new PendingTransactionSender(
-                pendingTransactionTracker, pendingTransactionsMessageSender, ethContext),
+            new TransactionBroadcast(
+                transactionTracker,
+                transactionsMessageSender,
+                pendingTransactionsMessageSender,
+                ethContext),
+ //           new PendingTransactionSender(
+   //             pendingTransactionTracker, pendingTransactionsMessageSender, ethContext),
             syncState,
             ethContext,
             transactionTracker,
-            pendingTransactionTracker,
+//            pendingTransactionTracker,
+            pendingTransactionsMessageSender,
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);

@@ -58,8 +58,8 @@ public class PendingTransactionsSenderTest {
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     when(ethPeers.streamAvailablePeers()).thenReturn(Arrays.asList(peer1, peer2).stream());
-    when(peerPendingTransactionTracker.isPeerSupported(peer1, EthProtocol.ETH65)).thenReturn(true);
-    when(peerPendingTransactionTracker.isPeerSupported(peer2, EthProtocol.ETH65)).thenReturn(false);
+    when(peerPendingTransactionTracker.isPeerSupported(peer1)).thenReturn(true);
+    when(peerPendingTransactionTracker.isPeerSupported(peer2)).thenReturn(false);
     sender.onTransactionsAdded(Collections.singleton(tx));
     verify(peerPendingTransactionTracker, times(1)).addToPeerSendQueue(peer1, hash);
     verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer2, hash);

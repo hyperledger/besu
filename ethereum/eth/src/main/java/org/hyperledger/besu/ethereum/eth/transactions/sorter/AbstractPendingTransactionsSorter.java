@@ -71,7 +71,6 @@ public abstract class AbstractPendingTransactionsSorter {
   protected final int maxTransactionRetentionHours;
   protected final Clock clock;
 
-  protected final EvictingQueue<Hash> newPooledHashes;
   protected final Object lock = new Object();
   protected final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
 
@@ -104,7 +103,6 @@ public abstract class AbstractPendingTransactionsSorter {
     this.maxTransactionRetentionHours = maxTransactionRetentionHours;
     this.maxPendingTransactions = maxPendingTransactions;
     this.clock = clock;
-    this.newPooledHashes = EvictingQueue.create(maxPooledTransactionHashes);
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
     this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
     final LabelledMetric<Counter> transactionAddedCounter =
@@ -161,17 +159,6 @@ public abstract class AbstractPendingTransactionsSorter {
       remoteTransactionAddedCounter.inc();
     }
     return added;
-  }
-
-  public boolean addTransactionHash(final Hash transactionHash) {
-    final boolean hashAdded;
-    synchronized (newPooledHashes) {
-      hashAdded = newPooledHashes.add(transactionHash);
-    }
-    if (hashAdded) {
-      localTransactionHashesAddedCounter.inc();
-    }
-    return hashAdded;
   }
 
   @VisibleForTesting
@@ -336,18 +323,6 @@ public abstract class AbstractPendingTransactionsSorter {
     return transactionsForSenderInfo == null
         ? OptionalLong.empty()
         : transactionsForSenderInfo.maybeNextNonce();
-  }
-
-  public void tryEvictTransactionHash(final Hash hash) {
-    synchronized (newPooledHashes) {
-      newPooledHashes.remove(hash);
-    }
-  }
-
-  public List<Hash> getNewPooledHashes() {
-    synchronized (newPooledHashes) {
-      return List.copyOf(newPooledHashes);
-    }
   }
 
   public abstract void manageBlockAdded(final Block block);

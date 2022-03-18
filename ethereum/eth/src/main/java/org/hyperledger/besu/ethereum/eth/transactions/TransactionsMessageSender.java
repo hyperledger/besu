@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import java.util.Collection;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.LimitedTransactionsMessages;
@@ -40,7 +41,7 @@ class TransactionsMessageSender {
         .forEach(this::sendTransactionsToPeer);
   }
 
-  private void sendTransactionsToPeer(final EthPeer peer) {
+  void sendTransactionsToPeer(final EthPeer peer) {
     final Set<Transaction> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =

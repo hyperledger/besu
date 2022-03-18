@@ -211,7 +211,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       }
       LOG.trace("Adding {} to pending transactions", transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
-      tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
         final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();

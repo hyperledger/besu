@@ -15,22 +15,21 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 
 class PendingTransactionSender implements TransactionBatchAddedListener {
 
-  private final PeerPendingTransactionTracker transactionTracker;
-  private final PendingTransactionsMessageSender transactionsMessageSender;
+  private final PeerPendingTransactionTracker transactionHashTracker;
+  private final PendingTransactionsMessageSender transactionHashesMessageSender;
   private final EthContext ethContext;
 
   public PendingTransactionSender(
-      final PeerPendingTransactionTracker transactionTracker,
-      final PendingTransactionsMessageSender transactionsMessageSender,
+      final PeerPendingTransactionTracker transactionHashTracker,
+      final PendingTransactionsMessageSender transactionHashesMessageSender,
       final EthContext ethContext) {
-    this.transactionTracker = transactionTracker;
-    this.transactionsMessageSender = transactionsMessageSender;
+    this.transactionHashTracker = transactionHashTracker;
+    this.transactionHashesMessageSender = transactionHashesMessageSender;
     this.ethContext = ethContext;
   }
 
@@ -39,14 +38,14 @@ class PendingTransactionSender implements TransactionBatchAddedListener {
     ethContext
         .getEthPeers()
         .streamAvailablePeers()
-        .filter(peer -> transactionTracker.isPeerSupported(peer, EthProtocol.ETH65))
+        .filter(peer -> transactionHashTracker.isPeerSupported(peer))
         .forEach(
             peer ->
                 transactions.forEach(
                     transaction ->
-                        transactionTracker.addToPeerSendQueue(peer, transaction.getHash())));
-    ethContext
-        .getScheduler()
-        .scheduleSyncWorkerTask(transactionsMessageSender::sendTransactionsToPeers);
+                        transactionHashTracker.addToPeerSendQueue(peer, transaction.getHash())));
+//    ethContext
+//        .getScheduler()
+//        .scheduleSyncWorkerTask(transactionHashesMessageSender::sendTransactionHashesToPeers);
   }
 }

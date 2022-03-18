@@ -16,7 +16,10 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.emptySet;
 
+import java.util.Arrays;
+import java.util.List;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -31,8 +34,10 @@ import java.util.stream.Collectors;
 
 public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback {
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
+  private static final List<Capability> REQUIRED_PROTOCOLS =
+      Arrays.asList(EthProtocol.ETH66, EthProtocol.ETH65);
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
-  private final Map<EthPeer, Set<Hash>> transactionsToSend = new ConcurrentHashMap<>();
+  private final Map<EthPeer, Set<Hash>> transactionHashsToSend = new ConcurrentHashMap<>();
   private final AbstractPendingTransactionsSorter pendingTransactions;
 
   public PeerPendingTransactionTracker(
@@ -41,37 +46,37 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
   }
 
   public synchronized void markTransactionsHashesAsSeen(
-      final EthPeer peer, final Collection<Hash> transactions) {
+      final EthPeer peer, final Collection<Hash> txHashes) {
     final Set<Hash> seenTransactionsForPeer = getOrCreateSeenTransactionsForPeer(peer);
-    transactions.stream().forEach(seenTransactionsForPeer::add);
+    seenTransactionsForPeer.addAll(txHashes);
   }
 
   public synchronized void addToPeerSendQueue(final EthPeer peer, final Hash hash) {
     if (!hasPeerSeenTransaction(peer, hash)) {
-      transactionsToSend.computeIfAbsent(peer, key -> createTransactionsSet()).add(hash);
+      transactionHashsToSend.computeIfAbsent(peer, key -> createTransactionsSet()).add(hash);
     }
   }
 
-  public Iterable<EthPeer> getEthPeersWithUnsentTransactions() {
-    return transactionsToSend.keySet();
+  public Iterable<EthPeer> getEthPeersWithUnsentTransactionHashes() {
+    return transactionHashsToSend.keySet();
   }
 
-  public synchronized Set<Hash> claimTransactionsToSendToPeer(final EthPeer peer) {
-    final Set<Hash> transactionsToSend = this.transactionsToSend.remove(peer);
-    if (transactionsToSend != null) {
+  public synchronized Set<Hash> claimTransactionHashesToSendToPeer(final EthPeer peer) {
+    final Set<Hash> transactionHashesToSend = this.transactionHashsToSend.remove(peer);
+    if (transactionHashesToSend != null) {
       markTransactionsHashesAsSeen(
           peer,
-          transactionsToSend.stream()
+          transactionHashesToSend.stream()
               .filter(h -> pendingTransactions.getTransactionByHash(h).isPresent())
               .collect(Collectors.toSet()));
-      return transactionsToSend;
+      return transactionHashesToSend;
     } else {
       return emptySet();
     }
   }
 
-  public boolean isPeerSupported(final EthPeer peer, final Capability capability) {
-    return peer.getAgreedCapabilities().contains(capability);
+  public boolean isPeerSupported(final EthPeer peer) {
+    return REQUIRED_PROTOCOLS.stream().anyMatch(peer.getAgreedCapabilities()::contains);
   }
 
   private Set<Hash> getOrCreateSeenTransactionsForPeer(final EthPeer peer) {
@@ -96,6 +101,6 @@ public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback
   @Override
   public void onDisconnect(final EthPeer peer) {
     seenTransactions.remove(peer);
-    transactionsToSend.remove(peer);
+    transactionHashsToSend.remove(peer);
   }
 }

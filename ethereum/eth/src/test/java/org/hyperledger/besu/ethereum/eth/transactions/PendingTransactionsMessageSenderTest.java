@@ -62,7 +62,7 @@ public class PendingTransactionsMessageSenderTest {
 
   @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
 
-  private PeerPendingTransactionTracker transactionTracker;
+  private PeerTransactionTracker transactionTracker;
   private PendingTransactionsMessageSender messageSender;
 
   @Parameterized.Parameters
@@ -76,7 +76,7 @@ public class PendingTransactionsMessageSenderTest {
 
   @Before
   public void setUp() {
-    transactionTracker = new PeerPendingTransactionTracker(pendingTransactions);
+    transactionTracker = new PeerTransactionTracker(pendingTransactions);
     messageSender = new PendingTransactionsMessageSender(transactionTracker);
     Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
@@ -89,7 +89,7 @@ public class PendingTransactionsMessageSenderTest {
     transactionTracker.addToPeerSendQueue(peer1, transaction2);
     transactionTracker.addToPeerSendQueue(peer2, transaction3);
 
-    messageSender.sendTransactionsToPeers();
+    messageSender.sendTransactionHashesToPeers();
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
@@ -103,7 +103,7 @@ public class PendingTransactionsMessageSenderTest {
 
     transactions.forEach(transaction -> transactionTracker.addToPeerSendQueue(peer1, transaction));
 
-    messageSender.sendTransactionsToPeers();
+    messageSender.sendTransactionHashesToPeers();
     final ArgumentCaptor<MessageData> messageDataArgumentCaptor =
         ArgumentCaptor.forClass(MessageData.class);
     verify(peer1, times(2)).send(messageDataArgumentCaptor.capture());

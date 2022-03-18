@@ -114,8 +114,7 @@ public class PendingTransactionsMessageProcessor {
                 });
 
         for (final Hash hash : transactionsMessage.pendingTransactions()) {
-          if (transactionPool.getTransactionByHash(hash).isEmpty()
-              && transactionPool.addTransactionHash(hash)) {
+          if (transactionPool.getTransactionByHash(hash).isEmpty()) {
             bufferedTask.addHash(hash);
           }
         }

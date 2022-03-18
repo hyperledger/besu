@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -73,12 +72,13 @@ public class TransactionPool implements BlockAddedObserver {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBatchAddedListener transactionBatchAddedListener;
-  private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
+ // private final TransactionBatchAddedListener pendingTransactionBatchAddedListener;
   private final SyncState syncState;
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final PeerTransactionTracker peerTransactionTracker;
-  private final PeerPendingTransactionTracker peerPendingTransactionTracker;
+ // private final PeerPendingTransactionTracker peerPendingTransactionTracker;
+  private final PendingTransactionsMessageSender pendingTransactionsMessageSender;
   private final TransactionPoolConfiguration configuration;
 
   public TransactionPool(
@@ -86,11 +86,12 @@ public class TransactionPool implements BlockAddedObserver {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBatchAddedListener transactionBatchAddedListener,
-      final TransactionBatchAddedListener pendingTransactionBatchAddedListener,
+     // final TransactionBatchAddedListener pendingTransactionBatchAddedListener,
       final SyncState syncState,
       final EthContext ethContext,
       final PeerTransactionTracker peerTransactionTracker,
-      final PeerPendingTransactionTracker peerPendingTransactionTracker,
+//      final PeerPendingTransactionTracker peerPendingTransactionTracker,
+      final PendingTransactionsMessageSender pendingTransactionsMessageSender,
       final MiningParameters miningParameters,
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration configuration) {
@@ -98,10 +99,11 @@ public class TransactionPool implements BlockAddedObserver {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBatchAddedListener = transactionBatchAddedListener;
-    this.pendingTransactionBatchAddedListener = pendingTransactionBatchAddedListener;
+  //  this.pendingTransactionBatchAddedListener = pendingTransactionBatchAddedListener;
     this.syncState = syncState;
     this.peerTransactionTracker = peerTransactionTracker;
-    this.peerPendingTransactionTracker = peerPendingTransactionTracker;
+  //  this.peerPendingTransactionTracker = peerPendingTransactionTracker;
+    this.pendingTransactionsMessageSender = pendingTransactionsMessageSender;
     this.miningParameters = miningParameters;
     this.configuration = configuration;
 
@@ -120,15 +122,9 @@ public class TransactionPool implements BlockAddedObserver {
         .getLocalTransactions()
         .forEach(transaction -> peerTransactionTracker.addToPeerSendQueue(peer, transaction));
 
-    if (peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)) {
-      pendingTransactions
-          .getNewPooledHashes()
-          .forEach(hash -> peerPendingTransactionTracker.addToPeerSendQueue(peer, hash));
+    if (peerTransactionTracker.peerHasPooledTransactionHashSupport(peer)) {
+      pendingTransactionsMessageSender.sendTransactionHashesToPeer(peer);
     }
-  }
-
-  public boolean addTransactionHash(final Hash transactionHash) {
-    return pendingTransactions.addTransactionHash(transactionHash);
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
@@ -148,7 +144,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBatchAddedListener.onTransactionsAdded(txs);
-      pendingTransactionBatchAddedListener.onTransactionsAdded(txs);
+//      pendingTransactionBatchAddedListener.onTransactionsAdded(txs);
     }
 
     return validationResult;
@@ -169,7 +165,6 @@ public class TransactionPool implements BlockAddedObserver {
     }
     final Set<Transaction> addedTransactions = new HashSet<>();
     for (final Transaction transaction : transactions) {
-      pendingTransactions.tryEvictTransactionHash(transaction.getHash());
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
@@ -328,16 +323,16 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
   }
 
-  public interface TransactionBatchAddedListener {
-
-    void onTransactionsAdded(Iterable<Transaction> transactions);
-  }
-
   private Wei minTransactionGasPrice(final Transaction transaction) {
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
     return protocolSchedule
         .getByBlockNumber(chainHeadBlockHeader.getNumber())
         .getFeeMarket()
         .minTransactionPriceInNextBlock(transaction, chainHeadBlockHeader::getBaseFee);
+  }
+
+  public interface TransactionBatchAddedListener {
+
+    void onTransactionsAdded(Iterable<Transaction> transactions);
   }
 }

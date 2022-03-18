@@ -544,7 +544,7 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
-    verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
+//    verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
     verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }
@@ -637,17 +637,25 @@ public class TransactionPoolTest {
   @Test
   public void shouldNotNotifyPeerForPendingTransactionsIfItDoesntSupportEth65() {
     EthPeer peer = mock(EthPeer.class);
-    EthPeer validPeer = mock(EthPeer.class);
-    when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
-    when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
-        .thenReturn(true);
+    when(peerPendingTransactionTracker.isPeerSupported(peer)).thenReturn(false);
 
-    transactionPool.addTransactionHash(transaction1.getHash());
+    givenTransactionIsValid(transaction1);
+    transactionPool.addLocalTransaction(transaction1);
     transactionPool.handleConnect(peer);
     verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
-    transactionPool.handleConnect(validPeer);
+  }
+
+  @Test
+  public void shouldNotifyPeerForPendingTransactionsIfItSupportEth65() {
+    EthPeer peer = mock(EthPeer.class);
+    when(peerPendingTransactionTracker.isPeerSupported(peer))
+        .thenReturn(true);
+
+    givenTransactionIsValid(transaction1);
+    transactionPool.addLocalTransaction(transaction1);
+    transactionPool.handleConnect(peer);
     verify(peerPendingTransactionTracker, times(1))
-        .addToPeerSendQueue(validPeer, transaction1.getHash());
+        .addToPeerSendQueue(peer, transaction1.getHash());
   }
 
   @Test

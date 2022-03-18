@@ -109,9 +109,9 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionPool).addTransactionHash(hash1);
-    verify(transactionPool).addTransactionHash(hash2);
-    verify(transactionPool).addTransactionHash(hash3);
+//    verify(transactionPool).addTransactionHash(hash1);
+//    verify(transactionPool).addTransactionHash(hash2);
+//    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -133,7 +133,7 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionPool).addTransactionHash(hash3);
+//    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -182,7 +182,7 @@ public class PendingTransactionsMessageProcessorTest {
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
+    //when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
@@ -195,8 +195,8 @@ public class PendingTransactionsMessageProcessorTest {
   public void shouldNotScheduleGetPooledTransactionsTaskTwice() {
     when(syncState.isInSync(anyLong())).thenReturn(true);
 
-    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
-    when(transactionPool.addTransactionHash(hash2)).thenReturn(true);
+    //when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
+    //when(transactionPool.addTransactionHash(hash2)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
