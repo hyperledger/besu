@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
-  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
+  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
   private static final List<Capability> REQUIRED_PROTOCOLS =
       Arrays.asList(EthProtocol.ETH66, EthProtocol.ETH65);
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();

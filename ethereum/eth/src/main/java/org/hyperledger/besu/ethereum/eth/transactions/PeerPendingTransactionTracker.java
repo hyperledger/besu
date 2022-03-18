@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class PeerPendingTransactionTracker implements EthPeer.DisconnectCallback {
-  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
+  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
   private static final List<Capability> REQUIRED_PROTOCOLS =
       Arrays.asList(EthProtocol.ETH66, EthProtocol.ETH65);
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
