@@ -15,49 +15,67 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BackwardsSyncContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BackwardsSyncContext.class);
+public class BackwardSyncContext {
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncContext.class);
+  public static final int BATCH_SIZE = 200;
+  private static final int MAX_RETRIES = 100;
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
+  private final SyncState syncState;
 
   private final Map<Long, BackwardChain> backwardChainMap = new ConcurrentHashMap<>();
   private final AtomicReference<BackwardChain> currentChain = new AtomicReference<>();
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
+  private final BackwardSyncLookupService service;
+  private final StorageProvider storageProvider;
 
-  public BackwardsSyncContext(
+  public BackwardSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
-      final EthContext ethContext) {
+      final EthContext ethContext,
+      final SyncState syncState,
+      final BackwardSyncLookupService backwardSyncLookupService,
+      final StorageProvider storageProvider) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
+    this.syncState = syncState;
+    this.service = backwardSyncLookupService;
+    this.storageProvider = storageProvider;
   }
 
   public boolean isSyncing() {
@@ -67,36 +85,36 @@ public class BackwardsSyncContext {
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
-    if (getCurrentChain()
-        .flatMap(
-            chain ->
-                chain.getSuccessors().stream()
-                    .map(Block::getHash)
-                    .filter(hash -> hash.equals(newBlockhash))
-                    .findAny())
-        .isPresent()) {
-      debugLambda(
+    final Optional<BackwardChain> chain = getCurrentChain();
+    CompletableFuture<List<Block>> completableFuture;
+    if (chain.isPresent() && chain.get().isTrusted(newBlockhash)) {
+      infoLambda(
           LOG,
           "not fetching and appending hash {} to backwards sync since it is present in successors",
-          () -> newBlockhash.toHexString());
-      return CompletableFuture.completedFuture(null);
+          newBlockhash::toHexString);
+      completableFuture = CompletableFuture.completedFuture(Collections.emptyList());
+    } else {
+      completableFuture = service.lookup(newBlockhash);
     }
 
     // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
-    return GetHeadersFromPeerByHashTask.forSingleHash(
-            protocolSchedule, ethContext, newBlockhash, 0L, metricsSystem)
-        .run()
-        .thenCompose(
-            headers ->
-                GetBodiesFromPeerTask.forHeaders(
-                        protocolSchedule, ethContext, headers.getResult(), metricsSystem)
-                    .run()
-                    .thenCompose(blocks -> syncBackwardsUntil(blocks.getResult().get(0))))
-        .exceptionally(
-            ex -> {
-              LOG.error("Failed to fetch block by hash " + newBlockhash.toHexString(), ex);
-              throw new BackwardSyncException(ex);
+    final CompletableFuture<Void> future =
+        completableFuture.thenCompose(
+            blocks -> {
+              if (blocks.isEmpty()) {
+                return CompletableFuture.completedFuture(null);
+              } else return this.syncBackwardsUntil(blocks);
             });
+    this.currentBackwardSyncFuture.set(future);
+    return future;
+  }
+
+  private CompletionStage<Void> syncBackwardsUntil(final List<Block> blocks) {
+    CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+    for (Block block : blocks) {
+      future = future.thenCompose(unused -> syncBackwardsUntil(block));
+    }
+    return future;
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
@@ -107,10 +125,14 @@ public class BackwardsSyncContext {
           "Starting new backward sync towards a pivot {} at height {}",
           () -> newPivot.getHash().toString().substring(0, 20),
           () -> newPivot.getHeader().getNumber());
-      final BackwardChain newChain = new BackwardChain(newPivot);
+      final BackwardChain newChain =
+          new BackwardChain(
+              storageProvider,
+              ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+              newPivot);
       this.currentChain.set(newChain);
       backwardChainMap.put(newPivot.getHeader().getNumber(), newChain);
-      this.currentBackwardSyncFuture.set(prepareBackwardSyncFuture(newChain));
+      currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry(newChain));
       return currentBackwardSyncFuture.get();
     }
     if (newPivot.getHeader().getParentHash().equals(currentChain.get().getPivot().getHash())) {
@@ -128,7 +150,9 @@ public class BackwardsSyncContext {
         () -> newPivot.getHash().toString().substring(0, 20),
         () -> newPivot.getHeader().getNumber());
 
-    BackwardChain newBackwardChain = new BackwardChain(newPivot);
+    BackwardChain newBackwardChain =
+        new BackwardChain(
+            storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule), newPivot);
     backwardChainMap.put(newPivot.getHeader().getNumber(), newBackwardChain);
     this.currentChain.set(
         newBackwardChain); // the current ongoing backward sync will finish its current step and end
@@ -141,11 +165,11 @@ public class BackwardsSyncContext {
                   if (error != null) {
                     if ((error.getCause() != null)
                         && (error.getCause() instanceof BackwardSyncException)) {
-                      LOG.debug(
+                      LOG.info(
                           "Previous Backward sync ended exceptionally with message {}",
                           error.getMessage());
                     } else {
-                      LOG.debug(
+                      LOG.info(
                           "Previous Backward sync ended exceptionally with message {}",
                           error.getMessage());
                       if (error instanceof RuntimeException) {
@@ -155,18 +179,59 @@ public class BackwardsSyncContext {
                       }
                     }
                   } else {
-                    LOG.debug("The previous backward sync finished without and exception");
+                    LOG.info("The previous backward sync finished without and exception");
                   }
+
                   return newBackwardChain;
                 })
-            .thenCompose(this::prepareBackwardSyncFuture));
+            .thenCompose(this::prepareBackwardSyncFutureWithRetry));
     return currentBackwardSyncFuture.get();
   }
 
+  private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(
+      final BackwardChain backwardChain) {
+
+    CompletableFuture<Void> f = prepareBackwardSyncFuture(backwardChain);
+    for (int i = 0; i < MAX_RETRIES; i++) {
+      f =
+          f.thenApply(CompletableFuture::completedFuture)
+              .exceptionally(
+                  ex -> {
+                    if (ex instanceof BackwardSyncException && ex.getCause() == null) {
+                      LOG.info(
+                          "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
+                          ex.getMessage(),
+                          ethContext.getEthPeers().peerCount());
+                    } else {
+                      LOG.warn("there was an uncaught exception during backward sync", ex);
+                    }
+                    return ethContext
+                        .getScheduler()
+                        .scheduleFutureTask(
+                            () -> prepareBackwardSyncFuture(backwardChain), Duration.ofSeconds(5));
+                  })
+              .thenCompose(Function.identity());
+    }
+    return f.handle(
+        (unused, throwable) -> {
+          this.cleanup(backwardChain);
+          if (throwable != null) {
+            throw new BackwardSyncException(throwable);
+          }
+          return null;
+        });
+  }
+
   private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
-    return new BackwardSyncStep(this, backwardChain)
+    return new BackwardSyncPhase(this, backwardChain)
         .executeAsync(null)
-        .thenCompose(new ForwardSyncStep(this, backwardChain)::executeAsync);
+        .thenCompose(new ForwardSyncPhase(this, backwardChain)::executeAsync);
+  }
+
+  private void cleanup(final BackwardChain chain) {
+    if (currentChain.compareAndSet(chain, null)) {
+      this.currentBackwardSyncFuture.set(null);
+    }
   }
 
   public Optional<BackwardChain> getCurrentChain() {
@@ -193,11 +258,15 @@ public class BackwardsSyncContext {
     return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
   }
 
-  public BackwardChain findCorrectChainFromPivot(final long number) {
-    return backwardChainMap.get(number);
+  public Optional<BackwardChain> findCorrectChainFromPivot(final long number) {
+    return Optional.ofNullable(backwardChainMap.get(number));
   }
 
   public void putCurrentChainToHeight(final long height, final BackwardChain backwardChain) {
     backwardChainMap.put(height, backwardChain);
+  }
+
+  public boolean isOnTTD() {
+    return syncState.hasReachedTerminalDifficulty().orElse(false);
   }
 }
