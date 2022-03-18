@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +69,6 @@ public class BackwardSyncPhaseTest {
 
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
-
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
 
@@ -117,14 +115,10 @@ public class BackwardSyncPhaseTest {
   public void shouldWaitWhenTTDNotReached()
       throws ExecutionException, InterruptedException, TimeoutException {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
-    when(context.isOnTTD()).thenReturn(false);
+    when(context.isOnTTD()).thenReturn(false).thenReturn(false).thenReturn(true);
     BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
-    final CompletableFuture<Void> completableFuture = step.waitForTTD();
-    assertThat(completableFuture.isDone()).isFalse();
-    when(context.isOnTTD()).thenReturn(true);
-
-    completableFuture.get(6, TimeUnit.SECONDS);
-    assertThat(completableFuture.isDone()).isFalse();
+    step.waitForTTD();
+    verify(context, Mockito.times(2)).getEthContext();
   }
 
   @Test
