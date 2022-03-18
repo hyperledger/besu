@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -60,7 +60,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
   private final MergeContext mergeContext;
   private final ProtocolContext protocolContext;
-  private final BackwardsSyncContext backwardsSyncContext;
+  private final BackwardSyncContext backwardSyncContext;
   private final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
@@ -68,12 +68,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final BackwardsSyncContext backwardsSyncContext) {
+      final BackwardSyncContext backwardSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
-    this.backwardsSyncContext = backwardsSyncContext;
+    this.backwardSyncContext = backwardSyncContext;
     this.targetGasLimit =
         miningParameters
             .getTargetGasLimit()
@@ -212,10 +212,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final var optHeader = chain.getBlockHeader(blockhash);
 
     if (optHeader.isPresent()) {
-      infoLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
+      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
       infoLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
-      backwardsSyncContext.syncBackwardsUntil(blockhash);
+      backwardSyncContext.syncBackwardsUntil(blockhash);
     }
     return optHeader;
   }
@@ -229,7 +229,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         .ifPresentOrElse(
             blockHeader ->
                 debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
-            () -> backwardsSyncContext.syncBackwardsUntil(block));
+            () -> backwardSyncContext.syncBackwardsUntil(block));
 
     final var validationResult =
         protocolSchedule
@@ -412,7 +412,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean isBackwardSyncing() {
-    return backwardsSyncContext.isSyncing();
+    return backwardSyncContext.isSyncing();
   }
 
   @Override

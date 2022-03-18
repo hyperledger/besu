@@ -42,8 +42,8 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BackwardsSyncContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BackwardsSyncContext.class);
+public class BackwardSyncContext {
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncContext.class);
   public static final int BATCH_SIZE = 200;
   private static final int MAX_RETRIES = 100;
 
@@ -60,7 +60,7 @@ public class BackwardsSyncContext {
   private final BackwardSyncLookupService service;
   private final StorageProvider storageProvider;
 
-  public BackwardsSyncContext(
+  public BackwardSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,

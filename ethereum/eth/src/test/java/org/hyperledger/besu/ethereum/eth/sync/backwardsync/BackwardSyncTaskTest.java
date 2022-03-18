@@ -41,7 +41,7 @@ public class BackwardSyncTaskTest {
 
   public static final int HEIGHT = 20_000;
 
-  @Mock private BackwardsSyncContext context;
+  @Mock private BackwardSyncContext context;
   private List<Block> blocks;
 
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;

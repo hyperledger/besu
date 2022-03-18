@@ -60,13 +60,13 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BackwardsSyncContextTest {
+public class BackwardSyncContextTest {
 
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
-  private BackwardsSyncContext context;
+  private BackwardSyncContext context;
 
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
@@ -128,7 +128,7 @@ public class BackwardsSyncContextTest {
 
     context =
         spy(
-            new BackwardsSyncContext(
+            new BackwardSyncContext(
                 protocolContext,
                 protocolSchedule,
                 metricsSystem,

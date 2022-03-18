@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -87,7 +87,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             mockProtocolSchedule,
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardsSyncContext.class));
+            mock(BackwardSyncContext.class));
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->

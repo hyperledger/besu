@@ -22,12 +22,11 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 
 public abstract class BackwardSyncTask {
-  protected BackwardsSyncContext context;
+  protected BackwardSyncContext context;
   protected BackwardChain backwardChain;
   private static final Logger LOG = getLogger(BackwardSyncTask.class);
 
-  protected BackwardSyncTask(
-      final BackwardsSyncContext context, final BackwardChain backwardChain) {
+  protected BackwardSyncTask(final BackwardSyncContext context, final BackwardChain backwardChain) {
     this.context = context;
     this.backwardChain = backwardChain;
   }

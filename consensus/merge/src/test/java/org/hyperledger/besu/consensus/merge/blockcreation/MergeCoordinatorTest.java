@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -65,7 +65,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Mock AbstractPendingTransactionsSorter mockSorter;
   @Mock MergeContext mergeContext;
-  @Mock BackwardsSyncContext backwardsSyncContext;
+  @Mock BackwardSyncContext backwardSyncContext;
 
   private MergeCoordinator coordinator;
   private ProtocolContext protocolContext;
@@ -104,7 +104,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockProtocolSchedule,
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            backwardsSyncContext);
+            backwardSyncContext);
   }
 
   @Test
@@ -341,7 +341,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     var res = coordinator.getOrSyncHeaderByHash(mockHeader.getHash());
 
     assertThat(res).isNotPresent();
-    verify(backwardsSyncContext, times(1)).syncBackwardsUntil(mockHeader.getHash());
+    verify(backwardSyncContext, times(1)).syncBackwardsUntil(mockHeader.getHash());
   }
 
   @Test
@@ -394,7 +394,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockProtocolSchedule,
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardsSyncContext.class));
+            mock(BackwardSyncContext.class));
 
     var blockZero = mockHeaderBuilder.number(0L).buildHeader();
     var blockOne = mockHeaderBuilder.number(1L).parentHash(blockZero.getHash()).buildHeader();
@@ -510,7 +510,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 mockProtocolSchedule,
                 mockSorter,
                 new MiningParameters.Builder().coinbase(coinbase).build(),
-                mock(BackwardsSyncContext.class)));
+                mock(BackwardSyncContext.class)));
 
     return mockCoordinator;
   }

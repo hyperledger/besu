@@ -39,9 +39,9 @@ import org.slf4j.LoggerFactory;
 public class ForwardSyncPhase extends BackwardSyncTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncPhase.class);
-  private int batchSize = BackwardsSyncContext.BATCH_SIZE;
+  private int batchSize = BackwardSyncContext.BATCH_SIZE;
 
-  public ForwardSyncPhase(final BackwardsSyncContext context, final BackwardChain backwardChain) {
+  public ForwardSyncPhase(final BackwardSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
   }
 
@@ -210,7 +210,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
         batchSize = batchSize / 2 + 1;
         return null;
       } else {
-        batchSize = BackwardsSyncContext.BATCH_SIZE;
+        batchSize = BackwardSyncContext.BATCH_SIZE;
         saveBlock(block);
       }
     }
@@ -244,9 +244,8 @@ public class ForwardSyncPhase extends BackwardSyncTask {
     if (context.getProtocolContext().getBlockchain().contains(firstNotSynced.getParentHash())) {
       debugLambda(
           LOG,
-          "Block {}({}) is not yet imported, we need to run another step of ForwardSync",
-          firstNotSynced::getNumber,
-          () -> firstNotSynced.getHash().toHexString());
+          "Block {} is not yet imported, we need to run another step of ForwardSync",
+          firstNotSynced::toLogString);
       return completableFuture.thenCompose(this::executeAsync);
     }
 
@@ -254,7 +253,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
         LOG,
         "Block {} is not yet imported but its parent {} is not imported either... "
             + "This should not normally happen and indicates a wrong behaviour somewhere...",
-        () -> firstNotSynced.getHash().toHexString(),
+        firstNotSynced::toLogString,
         () -> firstNotSynced.getParentHash().toHexString());
     return completableFuture.thenCompose(this::executeBackwardAsync);
   }
