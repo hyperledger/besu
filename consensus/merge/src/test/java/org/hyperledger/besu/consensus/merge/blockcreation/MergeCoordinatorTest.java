@@ -435,7 +435,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(mockBlockchain.getTotalDifficultyByHash(blockZero.getHash()))
         .thenReturn(Optional.of(Difficulty.of(1336L)));
 
-    when(mockBlockchain.getBlockHeader(blockZero.getHash())).thenReturn(Optional.of(blockZero));
     when(mockBlockchain.getBlockHeader(blockOne.getHash())).thenReturn(Optional.of(blockOne));
     when(mockBlockchain.getBlockHeader(blockTwo.getHash())).thenReturn(Optional.of(blockTwo));
     when(mockBlockchain.getBlockHeader(blockThree.getHash())).thenReturn(Optional.of(blockThree));

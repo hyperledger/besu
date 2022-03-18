@@ -65,8 +65,11 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
-    if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing()) {
-      // if we are syncing, return SYNCING
+    if (mergeContext.isSyncing()
+        || mergeCoordinator.getOrSyncHeaderByHash(forkChoice.getHeadBlockHash()).isEmpty()
+        || mergeCoordinator.getOrSyncHeaderByHash(forkChoice.getFinalizedBlockHash()).isEmpty()) {
+      // if we are syncing or missing head or finalized, return SYNCING
+
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
           new EngineUpdateForkchoiceResult(SYNCING, null, null));

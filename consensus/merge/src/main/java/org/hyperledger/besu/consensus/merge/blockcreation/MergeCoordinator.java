@@ -431,6 +431,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
+  public CompletableFuture<Void> appendNewPayloadToSync(final Block newPayload) {
+    return backwardSyncContext.syncBackwardsUntil(newPayload);
+  }
+
+  @Override
   public boolean isMiningBeforeMerge() {
     return miningParameters.isMiningEnabled();
   }
