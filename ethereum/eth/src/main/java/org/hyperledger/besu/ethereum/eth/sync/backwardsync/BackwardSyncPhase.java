@@ -39,18 +39,8 @@ public class BackwardSyncPhase extends BackwardSyncTask {
     super(context, backwardChain);
   }
 
-  @Override
-  public CompletableFuture<Void> executeOneStep() {
-    return CompletableFuture.supplyAsync(() -> waitForTTD())
-        .thenCompose(Function.identity())
-        .thenApply(this::earliestUnprocessedHash)
-        .thenCompose(this::requestHeader)
-        .thenApply(this::saveHeader)
-        .thenApply(this::possibleMerge)
-        .thenCompose(this::possiblyMoreBackwardSteps);
-  }
-
-  private CompletableFuture<Void> waitForTTD() {
+  @VisibleForTesting
+  protected CompletableFuture<Void> waitForTTD() {
     if (context.isOnTTD()) {
       return CompletableFuture.completedFuture(null);
     }
@@ -62,7 +52,7 @@ public class BackwardSyncPhase extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeBatchStep() {
+  public CompletableFuture<Void> executeStep() {
     return CompletableFuture.supplyAsync(this::waitForTTD)
         .thenCompose(Function.identity())
         .thenApply(this::earliestUnprocessedHash)

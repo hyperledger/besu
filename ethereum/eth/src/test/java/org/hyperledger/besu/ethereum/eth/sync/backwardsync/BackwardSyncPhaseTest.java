@@ -42,6 +42,9 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -108,6 +111,20 @@ public class BackwardSyncPhaseTest {
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
+  }
+
+  @Test
+  public void shouldWaitWhenTTDNotReached()
+      throws ExecutionException, InterruptedException, TimeoutException {
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
+    when(context.isOnTTD()).thenReturn(false);
+    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
+    final CompletableFuture<Void> completableFuture = step.waitForTTD();
+    assertThat(completableFuture.isDone()).isFalse();
+    when(context.isOnTTD()).thenReturn(true);
+
+    completableFuture.get(6, TimeUnit.SECONDS);
+    assertThat(completableFuture.isDone()).isFalse();
   }
 
   @Test

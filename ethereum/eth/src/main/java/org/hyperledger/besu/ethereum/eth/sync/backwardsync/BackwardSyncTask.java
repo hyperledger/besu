@@ -55,13 +55,5 @@ public abstract class BackwardSyncTask {
     }
   }
 
-  CompletableFuture<Void> executeStep() {
-    return executeBatchStep();
-  }
-
-  abstract CompletableFuture<Void> executeOneStep();
-
-  CompletableFuture<Void> executeBatchStep() {
-    return executeOneStep();
-  }
+  abstract CompletableFuture<Void> executeStep();
 }

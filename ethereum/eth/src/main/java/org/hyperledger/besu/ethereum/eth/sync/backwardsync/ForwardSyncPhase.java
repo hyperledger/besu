@@ -46,15 +46,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
   }
 
   @Override
-  public CompletableFuture<Void> executeOneStep() {
-    return CompletableFuture.supplyAsync(() -> processKnownAncestors(null))
-        .thenCompose(this::possibleRequestBlock)
-        .thenApply(this::processKnownAncestors)
-        .thenCompose(this::possiblyMoreForwardSteps);
-  }
-
-  @Override
-  public CompletableFuture<Void> executeBatchStep() {
+  public CompletableFuture<Void> executeStep() {
     return CompletableFuture.supplyAsync(() -> returnFirstNUnknownHeaders(null))
         .thenCompose(this::possibleRequestBodies)
         .thenApply(this::processKnownAncestors)
