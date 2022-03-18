@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 public class BackwardSyncPhase extends BackwardSyncTask {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncPhase.class);
 
-  public BackwardSyncPhase(final BackwardsSyncContext context, final BackwardChain backwardChain) {
+  public BackwardSyncPhase(final BackwardSyncContext context, final BackwardChain backwardChain) {
     super(context, backwardChain);
   }
 
@@ -118,7 +118,7 @@ public class BackwardSyncPhase extends BackwardSyncTask {
                 context.getEthContext(),
                 hash,
                 context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
-                BackwardsSyncContext.BATCH_SIZE,
+                BackwardSyncContext.BATCH_SIZE,
                 context.getMetricsSystem());
     return context
         .getEthContext()

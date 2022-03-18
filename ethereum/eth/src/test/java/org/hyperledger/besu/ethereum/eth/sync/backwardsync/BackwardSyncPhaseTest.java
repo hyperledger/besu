@@ -63,7 +63,7 @@ public class BackwardSyncPhaseTest {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private BackwardsSyncContext context;
+  private BackwardSyncContext context;
 
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
