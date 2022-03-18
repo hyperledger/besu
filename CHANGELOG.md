@@ -6,6 +6,7 @@
 - Remove the experimental flag for bonsai tries CLI options '--data-storage-format' and '--bonsai-maximum-back-layers-to-load' [#3578](https://github.com/hyperledger/besu/pull/3578)
 
 ### Additions and Improvements
+- Tune transaction synchronization parameter to adapt to mainnet traffic [#3610](https://github.com/hyperledger/besu/pull/3610)
 
 ## 22.1.2
 
@@ -14,7 +15,7 @@
   - Execution specific RPC endpoint [#3378](https://github.com/hyperledger/besu/issues/3378)
   - Adds JWT authentication to Engine APIs
   - Supports kiln V2.1 spec
-- Tracing APIs 
+- Tracing APIs
   - new API methods: trace_rawTransaction, trace_get, trace_callMany
   - added revertReason to trace APIs including: trace_transaction, trace_get, trace_call, trace_callMany, and trace_rawTransaction
 - Allow mining beneficiary to transition at specific blocks for ibft2 and qbft consensus mechanisms.  [#3115](https://github.com/hyperledger/besu/issues/3115)
