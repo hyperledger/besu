@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
@@ -23,8 +25,11 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class PendingTransactionsMessageSender {
+  private static final Logger LOG = LoggerFactory.getLogger(PendingTransactionsMessageSender.class);
 
   private final PeerPendingTransactionTracker transactionTracker;
 
@@ -44,6 +49,13 @@ class PendingTransactionsMessageSender {
             transactionTracker.claimTransactionsToSendToPeer(peer),
             TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES)) {
       try {
+        traceLambda(
+            LOG,
+            "Sending transaction hashes to peer {}, transaction hashes count {}, list {}",
+            peer::toString,
+            hashes::size,
+            hashes::toString);
+
         peer.send(NewPooledTransactionHashesMessage.create(hashes));
       } catch (final PeerNotConnected __) {
         break;

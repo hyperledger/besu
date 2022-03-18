@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -96,7 +98,14 @@ public class PendingTransactionsMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      LOG.trace("Received pooled transaction hashes message from {}", peer);
+      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactions();
+
+      traceLambda(
+          LOG,
+          "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}",
+          peer::toString,
+          incomingTransactionHashes::size,
+          incomingTransactionHashes::toString);
 
       transactionTracker.markTransactionsHashesAsSeen(
           peer, transactionsMessage.pendingTransactions());
