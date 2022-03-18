@@ -51,8 +51,6 @@ public class TransactionPoolFactory {
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
 
-    //  final PeerPendingTransactionTracker pendingTransactionTracker =
-    //        new PeerPendingTransactionTracker(pendingTransactions);
     final PendingTransactionsMessageSender pendingTransactionsMessageSender =
         new PendingTransactionsMessageSender(transactionTracker);
 
@@ -67,7 +65,6 @@ public class TransactionPoolFactory {
         pendingTransactions,
         transactionTracker,
         transactionsMessageSender,
-        //      pendingTransactionTracker,
         pendingTransactionsMessageSender);
   }
 
