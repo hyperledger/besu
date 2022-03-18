@@ -354,7 +354,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   // TODO: post-merge cleanup
-  static final long MAX_TTD_SEARCH_DEPTH = 131072L; // 32 * 128 epochs
+  static final long MAX_TTD_SEARCH_DEPTH = 131072L; // 32 * 4096 epochs
 
   // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
