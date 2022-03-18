@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
-  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
+  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
 
