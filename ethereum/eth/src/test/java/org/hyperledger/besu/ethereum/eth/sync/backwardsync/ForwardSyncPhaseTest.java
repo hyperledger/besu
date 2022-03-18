@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -174,6 +175,33 @@ public class ForwardSyncPhaseTest {
     step.processKnownAncestors(null);
     assertThat(finalChain.getFirstAncestorHeader().orElseThrow())
         .isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 2).getHeader());
+  }
+
+  @Test
+  public void shouldMergeEvenLongerChains() {
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 7);
+    backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
+    final BackwardChain finalChain = createBackwardChain(LOCAL_HEIGHT + 2, LOCAL_HEIGHT + 5);
+    finalChain.prependChain(backwardChain);
+
+    ForwardSyncPhase step = new ForwardSyncPhase(context, finalChain);
+
+    assertThat(finalChain.getFirstAncestorHeader().orElseThrow())
+        .isEqualTo(getBlockByNumber(LOCAL_HEIGHT - 5).getHeader());
+    step.processKnownAncestors(null);
+    assertThat(finalChain.getFirstAncestorHeader().orElseThrow())
+        .isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 2).getHeader());
+  }
+
+  @Test
+  public void shouldNotRequestWhenNull() {
+    ForwardSyncPhase phase = new ForwardSyncPhase(null, null);
+    final CompletableFuture<Void> completableFuture = phase.possibleRequestBlock(null);
+    assertThat(completableFuture.isDone()).isTrue();
+
+    final CompletableFuture<Void> completableFuture1 =
+        phase.possibleRequestBodies(Collections.emptyList());
+    assertThat(completableFuture1.isDone()).isTrue();
   }
 
   @Test
