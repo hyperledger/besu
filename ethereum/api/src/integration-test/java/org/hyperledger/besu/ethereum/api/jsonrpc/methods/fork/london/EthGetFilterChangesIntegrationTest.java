@@ -84,7 +84,6 @@ public class EthGetFilterChangesIntegrationTest {
   private BaseFeePendingTransactionsSorter transactions;
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_HASHES = 5;
   private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final Transaction transaction = createTransaction(1);
   private FilterManager filterManager;
@@ -99,7 +98,6 @@ public class EthGetFilterChangesIntegrationTest {
         new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
-            MAX_HASHES,
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,

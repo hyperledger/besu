@@ -47,7 +47,6 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   public GasPricePendingTransactionsSorter(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
-      final int maxPooledTransactionHashes,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
@@ -55,7 +54,6 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
     super(
         maxTransactionRetentionHours,
         maxPendingTransactions,
-        maxPooledTransactionHashes,
         clock,
         metricsSystem,
         chainHeadHeaderSupplier,

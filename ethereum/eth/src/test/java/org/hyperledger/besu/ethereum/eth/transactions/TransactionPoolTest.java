@@ -94,7 +94,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class TransactionPoolTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
@@ -136,7 +135,6 @@ public class TransactionPoolTest {
         new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,

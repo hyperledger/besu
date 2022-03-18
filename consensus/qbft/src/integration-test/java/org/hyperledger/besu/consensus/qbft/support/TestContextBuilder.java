@@ -439,7 +439,6 @@ public class TestContextBuilder {
         new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
-            1,
             clock,
             metricsSystem,
             blockChain::getChainHeadHeader,

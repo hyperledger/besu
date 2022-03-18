@@ -1117,10 +1117,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--tx-pool-hashes-max-size"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+          "Deprecated, has not effect. Maximum number of pending transaction hashes that will be kept in the transaction pool",
       arity = "1")
-  private final Integer pooledTransactionHashesSize =
-      TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
+  @SuppressWarnings("unused")
+  private final Integer pooledTransactionHashesSize = null;
 
   @Option(
       names = {"--tx-pool-retention-hours"},
@@ -1824,7 +1824,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
-          "--privacy-flexible-groups-enabled");
+          "--privacy-flexible-groups-enabled",
+          "--tx-pool-hashes-max-size");
     }
   }
 
@@ -2651,7 +2652,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
-        .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(priceBump))
         .txFeeCap(txFeeCap)

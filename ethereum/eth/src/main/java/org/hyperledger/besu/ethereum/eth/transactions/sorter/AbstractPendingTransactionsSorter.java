@@ -94,7 +94,6 @@ public abstract class AbstractPendingTransactionsSorter {
   public AbstractPendingTransactionsSorter(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
-      final int maxPooledTransactionHashes,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,

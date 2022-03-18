@@ -149,7 +149,6 @@ public class TransactionPoolFactory {
       return new BaseFeePendingTransactionsSorter(
           transactionPoolConfiguration.getPendingTxRetentionPeriod(),
           transactionPoolConfiguration.getTxPoolMaxSize(),
-          transactionPoolConfiguration.getPooledTransactionHashesSize(),
           clock,
           metricsSystem,
           protocolContext.getBlockchain()::getChainHeadHeader,
@@ -158,7 +157,6 @@ public class TransactionPoolFactory {
       return new GasPricePendingTransactionsSorter(
           transactionPoolConfiguration.getPendingTxRetentionPeriod(),
           transactionPoolConfiguration.getTxPoolMaxSize(),
-          transactionPoolConfiguration.getPooledTransactionHashesSize(),
           clock,
           metricsSystem,
           protocolContext.getBlockchain()::getChainHeadHeader,

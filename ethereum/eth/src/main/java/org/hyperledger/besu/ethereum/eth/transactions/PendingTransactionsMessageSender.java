@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 class PendingTransactionsMessageSender {
   private static final Logger LOG = LoggerFactory.getLogger(PendingTransactionsMessageSender.class);
 
+  private final int MAX_TRANSACTIONS_HASHES = 4096;
   private final PeerTransactionTracker transactionTracker;
 
   public PendingTransactionsMessageSender(final PeerTransactionTracker transactionTracker) {
@@ -41,8 +42,7 @@ class PendingTransactionsMessageSender {
   public void sendTransactionHashesToPeer(final EthPeer peer) {
     for (final List<Transaction> txBatch :
         Iterables.partition(
-            transactionTracker.claimTransactionsToSendToPeer(peer),
-            TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES)) {
+            transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
       try {
         List<Hash> txHashes = toHashList(txBatch);
         traceLambda(

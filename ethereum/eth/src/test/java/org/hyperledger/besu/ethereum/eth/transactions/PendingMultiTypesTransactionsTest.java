@@ -42,7 +42,6 @@ import org.junit.Test;
 public class PendingMultiTypesTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance)::get;
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -59,7 +58,6 @@ public class PendingMultiTypesTransactionsTest {
       new BaseFeePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
-          MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
           () -> mockBlockHeader(Wei.of(7L)),
