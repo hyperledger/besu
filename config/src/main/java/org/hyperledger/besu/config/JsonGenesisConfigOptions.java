@@ -273,10 +273,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getParisForkBlockNumber() {
-    var parisForkBlock = getOptionalLong("parisblock");
-    if (parisForkBlock.isPresent()) {
-      return parisForkBlock;
+  public OptionalLong getParisBlockNumber() {
+    var parisBlock = getOptionalLong("parisblock");
+    if (parisBlock.isPresent()) {
+      return parisBlock;
     } else {
       return getOptionalLong("premergeforkblock");
     }
@@ -437,7 +437,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
-    getParisForkBlockNumber().ifPresent(l -> builder.put("parisForkBlock", l));
+    getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
 
@@ -555,7 +555,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
-            getParisForkBlockNumber(),
+            getParisBlockNumber(),
             getTerminalBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),

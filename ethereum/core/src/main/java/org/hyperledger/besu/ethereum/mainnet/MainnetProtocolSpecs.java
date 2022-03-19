@@ -589,7 +589,7 @@ public abstract class MainnetProtocolSpecs {
         .name("ArrowGlacier");
   }
 
-  static ProtocolSpecBuilder parisForkDefinition(
+  static ProtocolSpecBuilder parisDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -608,8 +608,7 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.parisFork(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+                MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .name("ParisFork");
   }
 

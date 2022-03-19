@@ -84,7 +84,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getArrowGlacierBlockNumber();
 
-  OptionalLong getParisForkBlockNumber();
+  OptionalLong getParisBlockNumber();
 
   Optional<Wei> getBaseFeePerGas();
 

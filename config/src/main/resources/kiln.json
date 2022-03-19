@@ -12,7 +12,7 @@
     "istanbulBlock": 0,
     "berlinBlock": 0,
     "londonBlock": 0,
-    "parisForkBlock": 1000,
+    "parisBlock": 1000,
     "terminalTotalDifficulty": 20000000000000,
     "discovery": {
       "bootnodes": [
