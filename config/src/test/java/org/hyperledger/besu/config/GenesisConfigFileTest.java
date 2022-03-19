@@ -199,6 +199,26 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void shouldFindParisForkAndAlias() {
+    GenesisConfigFile parisGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"parisBlock\":10},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(parisGenesis.getForks().size()).isEqualTo(1);
+    assertThat(parisGenesis.getForks().get(0)).isEqualTo(10L);
+
+    GenesisConfigFile premergeForkGenesis =
+        GenesisConfigFile.fromConfig(
+            "{\"config\":{\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(premergeForkGenesis.getForks().size()).isEqualTo(1);
+    assertThat(premergeForkGenesis.getForks().get(0)).isEqualTo(11L);
+
+    GenesisConfigFile parisOverAlias =
+        GenesisConfigFile.fromConfig(
+            "{\"config\":{\"parisBlock\":10,\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(parisOverAlias.getForks().size()).isEqualTo(1);
+    assertThat(parisOverAlias.getForks().get(0)).isEqualTo(10L);
+  }
+
+  @Test
   public void shouldDefaultTimestampToZero() {
     assertThat(EMPTY_CONFIG.getTimestamp()).isZero();
   }

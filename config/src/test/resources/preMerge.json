@@ -3,7 +3,7 @@
     "chainId": 1337,
     "londonBlock": 0,
     "phillyBlock": 5,
-    "preMergeForkBlock": 10,
+    "parisForkBlock": 10,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100

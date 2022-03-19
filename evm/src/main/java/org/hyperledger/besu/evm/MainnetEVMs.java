@@ -369,26 +369,25 @@ public abstract class MainnetEVMs {
     registry.put(new BaseFeeOperation(gasCalculator));
   }
 
-  public static EVM preMergeFork(
-      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return preMergeFork(new LondonGasCalculator(), chainId, evmConfiguration);
+  public static EVM parisFork(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return parisFork(new LondonGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM preMergeFork(
+  public static EVM parisFork(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return new EVM(preMergeForkOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(parisForkOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
-  public static OperationRegistry preMergeForkOperations(
+  public static OperationRegistry parisForkOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerPreMergeForkOperations(operationRegistry, gasCalculator, chainId);
+    registerParisForkOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
-  public static void registerPreMergeForkOperations(
+  public static void registerParisForkOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
