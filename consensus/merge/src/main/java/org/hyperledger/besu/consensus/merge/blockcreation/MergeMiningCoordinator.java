@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -43,6 +44,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader);
 
   boolean isBackwardSyncing();
+
+  CompletableFuture<Void> appendNewPayloadToSync(Block newPayload);
 
   Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockhash);
 
