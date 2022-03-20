@@ -278,7 +278,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     var parisBlock = getOptionalLong("parisblock");
     var preMergeAlias = getOptionalLong("premergeforkblock");
     if (parisBlock.isPresent() && preMergeAlias.isPresent()) {
-      throw new RuntimeException("Found both paris and preMergeFork blocks.  Should have one or the other");
+      throw new RuntimeException(
+          "Found both paris and preMergeFork blocks.  Should have one or the other");
     }
     return Streams.concat(parisBlock.stream(), preMergeAlias.stream()).findFirst();
   }
