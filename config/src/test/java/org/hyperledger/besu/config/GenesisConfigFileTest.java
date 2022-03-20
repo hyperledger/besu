@@ -203,19 +203,29 @@ public class GenesisConfigFileTest {
     GenesisConfigFile parisGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"parisBlock\":10},\"baseFeePerGas\":\"0xa\"}");
     assertThat(parisGenesis.getForks().size()).isEqualTo(1);
-    assertThat(parisGenesis.getForks().get(0)).isEqualTo(10L);
+    assertThat(parisGenesis.getConfigOptions().getParisBlockNumber()).isPresent();
+    assertThat(parisGenesis.getConfigOptions().getParisBlockNumber().getAsLong()).isEqualTo(10L);
 
     GenesisConfigFile premergeForkGenesis =
         GenesisConfigFile.fromConfig(
             "{\"config\":{\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}");
     assertThat(premergeForkGenesis.getForks().size()).isEqualTo(1);
-    assertThat(premergeForkGenesis.getForks().get(0)).isEqualTo(11L);
+    assertThat(premergeForkGenesis.getConfigOptions().getParisBlockNumber()).isPresent();
+    assertThat(premergeForkGenesis.getConfigOptions().getParisBlockNumber().getAsLong()).isEqualTo(11L);
 
-    GenesisConfigFile parisOverAlias =
+    // assert fail if both paris and alias are present
+    assertThatThrownBy(() -> GenesisConfigFile.fromConfig(
+        "{\"config\":{\"parisBlock\":10,\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}")
+        .getConfigOptions().getParisBlockNumber())
+        .isInstanceOf(RuntimeException.class);
+
+    // assert empty in neither are present:
+    GenesisConfigFile londonGenesis =
         GenesisConfigFile.fromConfig(
-            "{\"config\":{\"parisBlock\":10,\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(parisOverAlias.getForks().size()).isEqualTo(1);
-    assertThat(parisOverAlias.getForks().get(0)).isEqualTo(10L);
+            "{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(londonGenesis.getForks().size()).isEqualTo(1);
+    assertThat(londonGenesis.getConfigOptions().getParisBlockNumber()).isEmpty();
+
   }
 
   @Test

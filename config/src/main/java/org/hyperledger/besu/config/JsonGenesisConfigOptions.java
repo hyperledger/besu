@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
@@ -275,11 +276,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getParisBlockNumber() {
     var parisBlock = getOptionalLong("parisblock");
-    if (parisBlock.isPresent()) {
-      return parisBlock;
-    } else {
-      return getOptionalLong("premergeforkblock");
+    var preMergeAlias = getOptionalLong("premergeforkblock");
+    if (parisBlock.isPresent() && preMergeAlias.isPresent()) {
+      throw new RuntimeException("Found both paris and preMergeFork blocks.  Should have one or the other");
     }
+    return Streams.concat(parisBlock.stream(), preMergeAlias.stream()).findFirst();
   }
 
   @Override
