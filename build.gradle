@@ -116,7 +116,6 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
-    maven { url "https://repository.apache.org/content/repositories/orgapachetuweni-1023" }
     mavenCentral()
     maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
