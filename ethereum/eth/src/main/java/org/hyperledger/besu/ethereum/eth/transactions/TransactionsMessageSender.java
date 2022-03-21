@@ -14,12 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.LimitedTransactionsMessages;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
@@ -45,7 +51,16 @@ class TransactionsMessageSender {
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
           LimitedTransactionsMessages.createLimited(allTxToSend);
-      LOG.trace("Sending transactions to peer {} TRANSACTIONS count {}", peer, allTxToSend.size());
+      final Set<Transaction> includedTransactions =
+          limitedTransactionsMessages.getIncludedTransactions();
+      traceLambda(
+          LOG,
+          "Sending transactions to peer {} all transactions count {}, "
+              + "single message transactions {}, single message list {}",
+          peer::toString,
+          allTxToSend::size,
+          includedTransactions::size,
+          () -> toHashList(includedTransactions));
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
         peer.send(limitedTransactionsMessages.getTransactionsMessage());
@@ -53,5 +68,9 @@ class TransactionsMessageSender {
         return;
       }
     }
+  }
+
+  private List<Hash> toHashList(final Collection<Transaction> txs) {
+    return txs.stream().map(Transaction::getHash).collect(Collectors.toList());
   }
 }
