@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -161,6 +162,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public boolean isBackwardSyncing() {
     return mergeCoordinator.isBackwardSyncing();
+  }
+
+  @Override
+  public CompletableFuture<Void> appendNewPayloadToSync(final Block newPayload) {
+    return mergeCoordinator.appendNewPayloadToSync(newPayload);
   }
 
   @Override

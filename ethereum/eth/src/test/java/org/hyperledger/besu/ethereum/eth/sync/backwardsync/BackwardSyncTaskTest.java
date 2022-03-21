@@ -18,11 +18,16 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -36,13 +41,25 @@ public class BackwardSyncTaskTest {
 
   public static final int HEIGHT = 20_000;
 
-  @Mock private BackwardsSyncContext context;
-
+  @Mock private BackwardSyncContext context;
   private List<Block> blocks;
+
+  GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
+  GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
 
   @Before
   public void initContextAndChain() {
     blocks = ChainForTestCreator.prepareChain(2, HEIGHT);
+    headersStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
+    blocksStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new BlocksConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
   }
 
   @Test
@@ -58,7 +75,8 @@ public class BackwardSyncTaskTest {
 
   @NotNull
   private BackwardSyncTask createBackwardSyncTask() {
-    final BackwardChain backwardChain = new BackwardChain(blocks.get(1));
+    final BackwardChain backwardChain =
+        new BackwardChain(headersStorage, blocksStorage, blocks.get(1));
     return createBackwardSyncTask(backwardChain);
   }
 
@@ -73,19 +91,20 @@ public class BackwardSyncTaskTest {
   }
 
   @Test
-  public void shouldFailWhenPivotIsDifferent() {
-    when(context.getCurrentChain()).thenReturn(Optional.of(new BackwardChain(blocks.get(0))));
+  public void shouldFinishImmediatellyFailWhenPivotIsDifferent()
+      throws ExecutionException, InterruptedException {
+    final BackwardChain backwardChain =
+        new BackwardChain(headersStorage, blocksStorage, blocks.get(0));
+    when(context.getCurrentChain()).thenReturn(Optional.of(backwardChain));
     BackwardSyncTask step = createBackwardSyncTask();
     CompletableFuture<Void> completableFuture = step.executeAsync(null);
-    assertThatThrownBy(completableFuture::get)
-        .getCause()
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("The pivot changed");
+    assertThat(completableFuture.isDone()).isTrue();
   }
 
   @Test
   public void shouldExecuteWhenPivotIsCorrect() {
-    final BackwardChain backwardChain = new BackwardChain(blocks.get(1));
+    final BackwardChain backwardChain =
+        new BackwardChain(headersStorage, blocksStorage, blocks.get(1));
     BackwardSyncTask step = createBackwardSyncTask();
     when(context.getCurrentChain()).thenReturn(Optional.of(backwardChain));
     CompletableFuture<Void> completableFuture = step.executeAsync(null);

@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -31,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardsSyncContext;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -57,9 +58,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   final MiningParameters miningParameters;
   final MergeBlockCreatorFactory mergeBlockCreator;
   final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
+  final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
   private final MergeContext mergeContext;
   private final ProtocolContext protocolContext;
-  private final BackwardsSyncContext backwardsSyncContext;
+  private final BackwardSyncContext backwardSyncContext;
   private final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
@@ -67,12 +69,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final ProtocolSchedule protocolSchedule,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
-      final BackwardsSyncContext backwardsSyncContext) {
+      final BackwardSyncContext backwardSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
-    this.backwardsSyncContext = backwardsSyncContext;
+    this.backwardSyncContext = backwardSyncContext;
     this.targetGasLimit =
         miningParameters
             .getTargetGasLimit()
@@ -213,8 +215,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     if (optHeader.isPresent()) {
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
-      backwardsSyncContext.syncBackwardsUntil(blockhash);
+      infoLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
+      backwardSyncContext.syncBackwardsUntil(blockhash);
     }
     return optHeader;
   }
@@ -228,7 +230,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         .ifPresentOrElse(
             blockHeader ->
                 debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
-            () -> backwardsSyncContext.syncBackwardsUntil(block));
+            () -> backwardSyncContext.syncBackwardsUntil(block));
 
     final var validationResult =
         protocolSchedule
@@ -337,7 +339,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         if (terminalBlockHeader.isPresent()) {
           return isDescendantOf(terminalBlockHeader.get(), blockHeader);
         } else {
-          if (ancestorIsValidTerminalProofOfWork(blockHeader)) {
+          if (isTerminalProofOfWorkBlock(blockHeader, protocolContext)
+              || ancestorIsValidTerminalProofOfWork(blockHeader)) {
             return true;
           } else {
             LOG.warn("Couldn't find terminal block, no blocks will be valid");
@@ -351,17 +354,27 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   // TODO: post-merge cleanup
-  static final long MAX_TTD_SEARCH_DEPTH = 1024L; // 32 epochs
+  static final long MAX_TTD_SEARCH_DEPTH = 131072L; // 32 * 4096 epochs
 
   // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
     // this should only happen very close to the transition from PoW to PoS, prior to a finalized
     // block
+
+    // check a 'cached' block which was determined to descend from terminal to short circuit
+    // in the case of a long period of non-finality
+    if (Optional.ofNullable(latestDescendsFromTerminal.get())
+        .map(latestDescendant -> isDescendantOf(latestDescendant, blockheader))
+        .orElse(Boolean.FALSE)) {
+      latestDescendsFromTerminal.set(blockheader);
+      return true;
+    }
+
     var blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> parent = blockchain.getBlockHeader(blockheader.getParentHash());
     do {
 
-      LOG.warn(
+      LOG.debug(
           "checking ancestor {} is valid terminal PoW for {}",
           parent.map(BlockHeader::toLogString).orElse("empty"),
           blockheader.toLogString());
@@ -385,6 +398,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         parent.map(BlockHeader::toLogString).orElse("empty"),
         blockheader.toLogString(),
         resp);
+    if (resp) {
+      latestDescendsFromTerminal.set(blockheader);
+    }
     return resp;
   }
 
@@ -411,7 +427,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean isBackwardSyncing() {
-    return backwardsSyncContext.isSyncing();
+    return backwardSyncContext.isSyncing();
+  }
+
+  @Override
+  public CompletableFuture<Void> appendNewPayloadToSync(final Block newPayload) {
+    return backwardSyncContext.syncBackwardsUntil(newPayload);
   }
 
   @Override

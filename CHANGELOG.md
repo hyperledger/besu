@@ -6,6 +6,7 @@
 - Remove the experimental flag for bonsai tries CLI options '--data-storage-format' and '--bonsai-maximum-back-layers-to-load' [#3578](https://github.com/hyperledger/besu/pull/3578)
 
 ### Additions and Improvements
+- Tune transaction synchronization parameter to adapt to mainnet traffic [#3610](https://github.com/hyperledger/besu/pull/3610)
 
 ## 22.1.2
 
@@ -14,7 +15,7 @@
   - Execution specific RPC endpoint [#3378](https://github.com/hyperledger/besu/issues/3378)
   - Adds JWT authentication to Engine APIs
   - Supports kiln V2.1 spec
-- Tracing APIs 
+- Tracing APIs
   - new API methods: trace_rawTransaction, trace_get, trace_callMany
   - added revertReason to trace APIs including: trace_transaction, trace_get, trace_call, trace_callMany, and trace_rawTransaction
 - Allow mining beneficiary to transition at specific blocks for ibft2 and qbft consensus mechanisms.  [#3115](https://github.com/hyperledger/besu/issues/3115)
@@ -37,7 +38,7 @@
   - Backward sync [#3410](https://github.com/hyperledger/besu/pull/3410)
   - Extend validateAndProcessBlock to return an error message in case of failure, so it can be returned to the caller of ExecutePayload API [#3411](https://github.com/hyperledger/besu/pull/3411)
   - Persist latest finalized block [#2913](https://github.com/hyperledger/besu/issues/2913)
-  - Add PostMergeContext, and stop syncing after the swith to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
+  - Add PostMergeContext, and stop syncing after the switch to PoS [#3453](https://github.com/hyperledger/besu/pull/3453)
   - Add header validation rules needed to validate The Merge blocks [#3454](https://github.com/hyperledger/besu/pull/3454)
   - Add core components: controller builder, protocol scheduler, coordinator, block creator and processor. [#3461](https://github.com/hyperledger/besu/pull/3461)
   - Execution specific RPC endpoint [#2914](https://github.com/hyperledger/besu/issues/2914), [#3350](https://github.com/hyperledger/besu/pull/3350)
