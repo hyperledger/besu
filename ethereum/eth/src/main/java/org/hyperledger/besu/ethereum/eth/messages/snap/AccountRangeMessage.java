@@ -35,6 +35,10 @@ import org.immutables.value.Value;
 
 public final class AccountRangeMessage extends AbstractSnapMessageData {
 
+  public AccountRangeMessage(final Bytes data) {
+    super(data);
+  }
+
   public static AccountRangeMessage readFrom(final MessageData message) {
     if (message instanceof AccountRangeMessage) {
       return (AccountRangeMessage) message;
@@ -70,10 +74,6 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     tmp.writeList(proof, (bytes, rlpOutput) -> rlpOutput.writeBytes(bytes));
     tmp.endList();
     return new AccountRangeMessage(tmp.encoded());
-  }
-
-  public AccountRangeMessage(final Bytes data) {
-    super(data);
   }
 
   @Override

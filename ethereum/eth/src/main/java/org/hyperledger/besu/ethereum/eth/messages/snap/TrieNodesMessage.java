@@ -29,6 +29,10 @@ import org.apache.tuweni.bytes.Bytes;
 
 public final class TrieNodesMessage extends AbstractSnapMessageData {
 
+  public TrieNodesMessage(final Bytes data) {
+    super(data);
+  }
+
   public static TrieNodesMessage readFrom(final MessageData message) {
     if (message instanceof TrieNodesMessage) {
       return (TrieNodesMessage) message;
@@ -53,10 +57,6 @@ public final class TrieNodesMessage extends AbstractSnapMessageData {
     tmp.writeList(nodes, (node, rlpOutput) -> rlpOutput.writeBytes(node));
     tmp.endList();
     return new TrieNodesMessage(tmp.encoded());
-  }
-
-  public TrieNodesMessage(final Bytes data) {
-    super(data);
   }
 
   @Override

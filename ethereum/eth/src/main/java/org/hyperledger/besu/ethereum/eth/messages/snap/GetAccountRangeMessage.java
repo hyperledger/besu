@@ -29,6 +29,10 @@ import org.immutables.value.Value;
 
 public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
+  public GetAccountRangeMessage(final Bytes data) {
+    super(data);
+  }
+
   public static GetAccountRangeMessage readFrom(final MessageData message) {
     if (message instanceof GetAccountRangeMessage) {
       return (GetAccountRangeMessage) message;
@@ -51,10 +55,6 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
     return new GetAccountRangeMessage(tmp.encoded());
-  }
-
-  public GetAccountRangeMessage(final Bytes data) {
-    super(data);
   }
 
   @Override

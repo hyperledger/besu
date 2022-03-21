@@ -33,6 +33,10 @@ import org.immutables.value.Value;
 
 public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
+  public GetStorageRangeMessage(final Bytes data) {
+    super(data);
+  }
+
   public static GetStorageRangeMessage readFrom(final MessageData message) {
     if (message instanceof GetStorageRangeMessage) {
       return (GetStorageRangeMessage) message;
@@ -69,10 +73,6 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
     return new GetStorageRangeMessage(tmp.encoded());
-  }
-
-  public GetStorageRangeMessage(final Bytes data) {
-    super(data);
   }
 
   @Override

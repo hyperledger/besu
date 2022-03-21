@@ -31,6 +31,10 @@ import org.immutables.value.Value;
 
 public final class GetTrieNodesMessage extends AbstractSnapMessageData {
 
+  public GetTrieNodesMessage(final Bytes data) {
+    super(data);
+  }
+
   public static GetTrieNodesMessage readFrom(final MessageData message) {
     if (message instanceof GetTrieNodesMessage) {
       return (GetTrieNodesMessage) message;
@@ -63,10 +67,6 @@ public final class GetTrieNodesMessage extends AbstractSnapMessageData {
     tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
     return new GetTrieNodesMessage(tmp.encoded());
-  }
-
-  public GetTrieNodesMessage(final Bytes data) {
-    super(data);
   }
 
   @Override

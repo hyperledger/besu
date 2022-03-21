@@ -33,6 +33,10 @@ import org.immutables.value.Value;
 
 public final class StorageRangeMessage extends AbstractSnapMessageData {
 
+  public StorageRangeMessage(final Bytes data) {
+    super(data);
+  }
+
   public static StorageRangeMessage readFrom(final MessageData message) {
     if (message instanceof StorageRangeMessage) {
       return (StorageRangeMessage) message;
@@ -71,10 +75,6 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
     tmp.writeList(proof, (bytes, rlpOutput) -> rlpOutput.writeBytes(bytes));
     tmp.endList();
     return new StorageRangeMessage(tmp.encoded());
-  }
-
-  public StorageRangeMessage(final Bytes data) {
-    super(data);
   }
 
   @Override
