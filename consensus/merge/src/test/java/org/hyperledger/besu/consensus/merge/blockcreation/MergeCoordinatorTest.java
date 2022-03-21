@@ -355,6 +355,26 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void assertCachedUnfinalizedAncestorDescendsFromTTD() {
+    final long howDeep = 10;
+    var mockBlockHeader = new BlockHeaderTestFixture().number(howDeep).buildHeader();
+    var mockCoordinator = terminalAncestorMock(howDeep, true);
+    assertThat(
+            mockCoordinator.ancestorIsValidTerminalProofOfWork(
+                new BlockHeaderTestFixture().number(howDeep).buildHeader()))
+        .isTrue();
+
+    // assert that parent block was cached as descending from TTD
+    assertThat(
+            mockCoordinator.ancestorIsValidTerminalProofOfWork(
+                new BlockHeaderTestFixture()
+                    .number(howDeep + 1)
+                    .parentHash(mockBlockHeader.getHash())
+                    .buildHeader()))
+        .isTrue();
+  }
+
+  @Test
   public void ancestorExceedsDepthValidTerminalProofOfWork() {
     final long howDeep = MergeCoordinator.MAX_TTD_SEARCH_DEPTH + 2;
     assertThat(
@@ -372,6 +392,65 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 .ancestorIsValidTerminalProofOfWork(
                     new BlockHeaderTestFixture().number(howDeep).buildHeader()))
         .isFalse();
+  }
+
+  @Test
+  public void assertNonGenesisTerminalBlockSatisfiesDescendsFromTerminal() {
+
+    var mockConsensusContext = mock(MergeContext.class);
+    when(mockConsensusContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
+    var mockBlockchain = mock(MutableBlockchain.class);
+    var mockProtocolContext = mock(ProtocolContext.class);
+    when(mockProtocolContext.getBlockchain()).thenReturn(mockBlockchain);
+    when(mockProtocolContext.getConsensusContext(MergeContext.class))
+        .thenReturn(mockConsensusContext);
+
+    var mockHeaderBuilder = new BlockHeaderTestFixture();
+
+    MergeCoordinator mockCoordinator =
+        new MergeCoordinator(
+            mockProtocolContext,
+            mockProtocolSchedule,
+            mockSorter,
+            new MiningParameters.Builder().coinbase(coinbase).build(),
+            mock(BackwardSyncContext.class));
+
+    var blockZero = mockHeaderBuilder.number(0L).difficulty(Difficulty.of(1336L)).buildHeader();
+    var blockOne =
+        mockHeaderBuilder
+            .number(1L)
+            .difficulty(Difficulty.ONE)
+            .parentHash(blockZero.getHash())
+            .buildHeader();
+    var blockTwo =
+        mockHeaderBuilder
+            .number(2L)
+            .difficulty(Difficulty.ZERO)
+            .parentHash(blockOne.getHash())
+            .buildHeader();
+    var blockThree = mockHeaderBuilder.number(3L).parentHash(blockTwo.getHash()).buildHeader();
+
+    when(mockBlockchain.getTotalDifficultyByHash(any()))
+        .thenReturn(Optional.of(Difficulty.of(1337L)));
+    when(mockBlockchain.getTotalDifficultyByHash(blockZero.getHash()))
+        .thenReturn(Optional.of(Difficulty.of(1336L)));
+
+    when(mockBlockchain.getBlockHeader(blockOne.getHash())).thenReturn(Optional.of(blockOne));
+    when(mockBlockchain.getBlockHeader(blockTwo.getHash())).thenReturn(Optional.of(blockTwo));
+    when(mockBlockchain.getBlockHeader(blockThree.getHash())).thenReturn(Optional.of(blockThree));
+
+    // assert pre-merge genesis block does not descend from terminal
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isFalse();
+    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isNull();
+    // assert TTD merge block (1) descends from terminal returns true
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isTrue();
+    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isNull();
+    // assert post-merge block (2) descends from terminal returns true
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockTwo)).isTrue();
+    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isEqualTo(blockTwo);
+    // assert post-merge block (3) descends from terminal returns true
+    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockThree)).isTrue();
+    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isEqualTo(blockThree);
   }
 
   @Test

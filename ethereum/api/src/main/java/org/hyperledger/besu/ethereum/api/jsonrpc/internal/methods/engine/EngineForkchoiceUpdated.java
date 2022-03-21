@@ -65,8 +65,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
-    if (mergeContext.isSyncing() || mergeCoordinator.isBackwardSyncing()) {
-      // if we are syncing, return SYNCING
+    if (mergeContext.isSyncing()) {
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
           new EngineUpdateForkchoiceResult(SYNCING, null, null));
@@ -77,13 +76,20 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getHeadBlockHash(),
         forkChoice.getFinalizedBlockHash());
 
-    Optional<BlockHeader> currentHead =
+    Optional<BlockHeader> newHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
-    if (currentHead.isPresent()) {
+    Optional<Hash> finalizedHash =
+        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
+            .filter(finalized -> !Hash.ZERO.equals(finalized));
+
+    Optional<BlockHeader> finalizedHead =
+        finalizedHash.flatMap(protocolContext.getBlockchain()::getBlockHeader);
+
+    if (newHead.isPresent() && (finalizedHash.isEmpty() || finalizedHead.isPresent())) {
 
       // TODO: post-merge cleanup, this should be unnecessary after merge
-      if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(currentHead.get())) {
+      if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),
             new EngineUpdateForkchoiceResult(INVALID_TERMINAL_BLOCK, null, null));
@@ -101,7 +107,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             optionalPayloadAttributes.map(
                 payloadAttributes ->
                     mergeCoordinator.preparePayload(
-                        currentHead.get(),
+                        newHead.get(),
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
                         payloadAttributes.getSuggestedFeeRecipient()));
@@ -125,9 +131,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       }
     }
 
-    // TODO: start sync for this head https://github.com/hyperledger/besu/issues/3268
-    //       for now use backward sync:
-    Optional.ofNullable(forkChoice.getFinalizedBlockHash())
+    Optional.ofNullable(forkChoice.getHeadBlockHash())
         .filter(hash -> !hash.equals(Hash.ZERO))
         .ifPresent(mergeCoordinator::getOrSyncHeaderByHash);
 
