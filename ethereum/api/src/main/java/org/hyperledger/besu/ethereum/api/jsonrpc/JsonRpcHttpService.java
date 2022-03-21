@@ -770,7 +770,7 @@ public class JsonRpcHttpService {
           return method.response(
               new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
         } catch (final InvalidJsonRpcParameters e) {
-          LOG.debug("Invalid Params", e);
+          LOG.debug("Invalid Params for method: {}", method.getName(), e);
           span.setStatus(StatusCode.ERROR, "Invalid Params");
           return errorResponse(id, JsonRpcError.INVALID_PARAMS);
         } catch (final MultiTenancyValidationException e) {

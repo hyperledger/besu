@@ -92,8 +92,7 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
-  public void shouldReturnSyncingIfBackwardSync() {
-    when(mergeCoordinator.isBackwardSyncing()).thenReturn(true);
+  public void shouldReturnSyncingIfMissingNewHead() {
     assertSuccessWithPayloadForForkchoiceResult(
         Optional.empty(), mock(ForkchoiceResult.class), SYNCING);
   }

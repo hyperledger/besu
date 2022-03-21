@@ -141,13 +141,7 @@ public class DefaultSynchronizer implements Synchronizer {
       } else {
         future = startFullSync();
       }
-      future =
-          future.thenApply(
-              unused -> {
-                blockPropagationManager.stop();
-                running.set(false);
-                return null;
-              });
+      future = future.thenApply(this::finalizeSync);
       return future;
     } else {
       throw new IllegalStateException("Attempt to start an already started synchronizer.");
@@ -191,18 +185,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
   private CompletableFuture<Void> startFullSync() {
     maybePruner.ifPresent(Pruner::start);
-    return fullSyncDownloader
-        .start()
-        .thenCompose(
-            unused -> {
-              maybePruner.ifPresent(Pruner::stop);
-              return null;
-            })
-        .thenApply(
-            o -> {
-              maybePruner.ifPresent(Pruner::stop);
-              return null;
-            });
+    return fullSyncDownloader.start();
   }
 
   @Override
@@ -237,5 +220,14 @@ public class DefaultSynchronizer implements Synchronizer {
   @Override
   public boolean unsubscribeInSync(final long listenerId) {
     return syncState.unsubscribeSyncStatus(listenerId);
+  }
+
+  private Void finalizeSync(final Void unused) {
+    LOG.info("Stopping block propagation.");
+    blockPropagationManager.stop();
+    LOG.info("Stopping the pruner.");
+    maybePruner.ifPresent(Pruner::stop);
+    running.set(false);
+    return null;
   }
 }

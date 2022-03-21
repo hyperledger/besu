@@ -37,7 +37,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   // Use Bonsai DB
   @Option(
       names = {DATA_STORAGE_FORMAT},
-      hidden = true,
       description =
           "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
@@ -45,7 +44,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   @Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD},
-      hidden = true,
       paramLabel = "<LONG>",
       description =
           "Limit of back layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
