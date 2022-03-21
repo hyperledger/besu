@@ -51,8 +51,8 @@ public class TransactionPoolFactory {
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
 
-    final PendingTransactionsMessageSender pendingTransactionsMessageSender =
-        new PendingTransactionsMessageSender(transactionTracker);
+    final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
+        new NewPooledTransactionHashesMessageSender(transactionTracker);
 
     return createTransactionPool(
         protocolSchedule,
@@ -65,7 +65,7 @@ public class TransactionPoolFactory {
         pendingTransactions,
         transactionTracker,
         transactionsMessageSender,
-        pendingTransactionsMessageSender);
+        newPooledTransactionHashesMessageSender);
   }
 
   static TransactionPool createTransactionPool(
@@ -79,7 +79,7 @@ public class TransactionPoolFactory {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
+      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
@@ -90,7 +90,7 @@ public class TransactionPoolFactory {
                 pendingTransactions,
                 transactionTracker,
                 transactionsMessageSender,
-                pendingTransactionsMessageSender),
+                newPooledTransactionHashesMessageSender),
             syncState,
             ethContext,
             transactionTracker,
@@ -109,10 +109,10 @@ public class TransactionPoolFactory {
                     "Total number of transactions messages skipped by the processor.")),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
-    final PendingTransactionsMessageHandler pooledTransactionsMessageHandler =
-        new PendingTransactionsMessageHandler(
+    final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
+        new NewPooledTransactionHashesMessageHandler(
             ethContext.getScheduler(),
-            new PendingTransactionsMessageProcessor(
+            new NewPooledTransactionHashesMessageProcessor(
                 transactionTracker,
                 transactionPool,
                 transactionPoolConfiguration,

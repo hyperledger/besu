@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
+import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -51,7 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
   @Mock EthPeer ethPeer;
-  @Mock PendingTransactionsMessageProcessor processor;
+  @Mock NewPooledTransactionHashesMessageProcessor processor;
   @Mock TransactionPool transactionPool;
   @Mock EthContext ethContext;
   @Mock EthScheduler ethScheduler;

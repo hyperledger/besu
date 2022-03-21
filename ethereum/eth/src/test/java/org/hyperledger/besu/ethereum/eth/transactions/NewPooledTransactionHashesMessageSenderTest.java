@@ -51,7 +51,7 @@ import org.junit.runners.Parameterized;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(Parameterized.class)
-public class PendingTransactionsMessageSenderTest {
+public class NewPooledTransactionHashesMessageSenderTest {
 
   private final EthPeer peer1 = mock(EthPeer.class);
   private final EthPeer peer2 = mock(EthPeer.class);
@@ -64,7 +64,7 @@ public class PendingTransactionsMessageSenderTest {
   @Parameterized.Parameter public AbstractPendingTransactionsSorter pendingTransactions;
 
   private PeerTransactionTracker transactionTracker;
-  private PendingTransactionsMessageSender messageSender;
+  private NewPooledTransactionHashesMessageSender messageSender;
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
@@ -78,7 +78,7 @@ public class PendingTransactionsMessageSenderTest {
   @Before
   public void setUp() {
     transactionTracker = new PeerTransactionTracker();
-    messageSender = new PendingTransactionsMessageSender(transactionTracker);
+    messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     Transaction tx = mock(Transaction.class);
     when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
   }

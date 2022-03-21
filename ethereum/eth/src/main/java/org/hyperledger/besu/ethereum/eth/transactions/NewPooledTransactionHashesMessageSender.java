@@ -29,13 +29,14 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class PendingTransactionsMessageSender {
-  private static final Logger LOG = LoggerFactory.getLogger(PendingTransactionsMessageSender.class);
+class NewPooledTransactionHashesMessageSender {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(NewPooledTransactionHashesMessageSender.class);
 
   private final int MAX_TRANSACTIONS_HASHES = 4096;
   private final PeerTransactionTracker transactionTracker;
 
-  public PendingTransactionsMessageSender(final PeerTransactionTracker transactionTracker) {
+  public NewPooledTransactionHashesMessageSender(final PeerTransactionTracker transactionTracker) {
     this.transactionTracker = transactionTracker;
   }
 

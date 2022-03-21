@@ -37,13 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PendingTransactionsMessageProcessor {
+public class NewPooledTransactionHashesMessageProcessor {
 
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private static final long SYNC_TOLERANCE = 100L;
 
   private static final Logger LOG =
-      LoggerFactory.getLogger(PendingTransactionsMessageProcessor.class);
+      LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
 
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;
@@ -56,7 +56,7 @@ public class PendingTransactionsMessageProcessor {
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
 
-  public PendingTransactionsMessageProcessor(
+  public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,

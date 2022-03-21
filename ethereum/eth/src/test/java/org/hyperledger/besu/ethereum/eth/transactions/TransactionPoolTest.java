@@ -101,7 +101,7 @@ public class TransactionPoolTest {
   @Mock private PendingTransactionListener listener;
   @Mock private MiningParameters miningParameters;
   @Mock private TransactionsMessageSender transactionsMessageSender;
-  @Mock private PendingTransactionsMessageSender pendingTransactionsMessageSender;
+  @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
   @SuppressWarnings("unchecked")
   @Mock
@@ -163,7 +163,7 @@ public class TransactionPoolTest {
                 transactions,
                 peerTransactionTracker,
                 transactionsMessageSender,
-                pendingTransactionsMessageSender));
+                newPooledTransactionHashesMessageSender));
 
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
@@ -655,7 +655,7 @@ public class TransactionPoolTest {
     transactionPool.addLocalTransaction(transaction1);
     transactionPool.handleConnect(peer);
     syncTaskCapture.getValue().run();
-    verify(pendingTransactionsMessageSender).sendTransactionHashesToPeer(peer);
+    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(peer);
   }
 
   @Test

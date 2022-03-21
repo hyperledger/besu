@@ -34,7 +34,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private final AbstractPendingTransactionsSorter pendingTransactions;
   private final PeerTransactionTracker transactionTracker;
   private final TransactionsMessageSender transactionsMessageSender;
-  private final PendingTransactionsMessageSender pendingTransactionsMessageSender;
+  private final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
   private final EthContext ethContext;
   private final int numPeersToSendFullTransactions;
 
@@ -43,11 +43,11 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
+      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
     this.pendingTransactions = pendingTransactions;
     this.transactionTracker = transactionTracker;
     this.transactionsMessageSender = transactionsMessageSender;
-    this.pendingTransactionsMessageSender = pendingTransactionsMessageSender;
+    this.newPooledTransactionHashesMessageSender = newPooledTransactionHashesMessageSender;
     this.ethContext = ethContext;
     this.numPeersToSendFullTransactions =
         (int) Math.ceil(Math.sqrt(ethContext.getEthPeers().getMaxPeers()));
@@ -127,7 +127,9 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
               ethContext
                   .getScheduler()
                   .scheduleSyncWorkerTask(
-                      () -> pendingTransactionsMessageSender.sendTransactionHashesToPeer(peer));
+                      () ->
+                          newPooledTransactionHashesMessageSender.sendTransactionHashesToPeer(
+                              peer));
             });
   }
 

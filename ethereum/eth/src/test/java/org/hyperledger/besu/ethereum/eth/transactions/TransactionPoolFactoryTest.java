@@ -80,8 +80,8 @@ public class TransactionPoolFactoryTest {
     final TransactionsMessageSender transactionsMessageSender =
         mock(TransactionsMessageSender.class);
     doNothing().when(transactionsMessageSender).sendTransactionsToPeer(any(EthPeer.class));
-    final PendingTransactionsMessageSender pendingTransactionsMessageSender =
-        mock(PendingTransactionsMessageSender.class);
+    final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
+        mock(NewPooledTransactionHashesMessageSender.class);
     final TransactionPool pool =
         TransactionPoolFactory.createTransactionPool(
             schedule,
@@ -101,7 +101,7 @@ public class TransactionPoolFactoryTest {
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
-            pendingTransactionsMessageSender);
+            newPooledTransactionHashesMessageSender);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
