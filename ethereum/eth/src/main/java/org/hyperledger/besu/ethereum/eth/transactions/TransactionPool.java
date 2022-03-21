@@ -145,7 +145,7 @@ public class TransactionPool implements BlockAddedObserver {
     if (!syncState.isInSync(SYNC_TOLERANCE)) {
       return;
     }
-    final Set<Transaction> addedTransactions = new HashSet<>();
+    final Set<Transaction> addedTransactions = new HashSet<>(transactions.size());
     for (final Transaction transaction : transactions) {
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
         // We already have this transaction, don't even validate it.

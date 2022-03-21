@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -1824,8 +1825,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
-          "--privacy-flexible-groups-enabled",
-          "--tx-pool-hashes-max-size");
+          "--privacy-flexible-groups-enabled");
+    }
+
+    if (pooledTransactionHashesSize != null) { // NOSONAR
+      logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
   }
 

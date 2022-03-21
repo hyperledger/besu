@@ -125,7 +125,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
         .hasSizeBetween(
             expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
 
-    assertThat(Sets.union(firstBatch, secondBatch)).isEqualTo(newHashSet(toHashList(transactions)));
+    assertThat(Sets.union(firstBatch, secondBatch))
+        .containsExactlyInAnyOrderElementsOf(toHashList(transactions));
   }
 
   private MessageData transactionsMessageContaining(final Transaction... transactions) {

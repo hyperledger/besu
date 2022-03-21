@@ -51,7 +51,6 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 @SuppressWarnings("unchecked")
 public class TransactionPoolFactoryTest {
@@ -70,8 +69,6 @@ public class TransactionPoolFactoryTest {
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     final EthScheduler ethScheduler = mock(EthScheduler.class);
-    final ArgumentCaptor<Runnable> sendTaskCapture = ArgumentCaptor.forClass(Runnable.class);
-    doNothing().when(ethScheduler).scheduleSyncWorkerTask(sendTaskCapture.capture());
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     final SyncState state = mock(SyncState.class);
     final GasPricePendingTransactionsSorter pendingTransactions =
@@ -122,9 +119,7 @@ public class TransactionPoolFactoryTest {
         RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
     assertThat(ethPeer.getEthPeer()).isNotNull();
     assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
-    sendTaskCapture.getValue().run();
     ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
-    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeer.getEthPeer());
     verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
   }
 }
