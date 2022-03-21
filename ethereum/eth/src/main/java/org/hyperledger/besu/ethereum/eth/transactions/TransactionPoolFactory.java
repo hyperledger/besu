@@ -86,11 +86,11 @@ public class TransactionPoolFactory {
             protocolSchedule,
             protocolContext,
             new TransactionBroadcaster(
+                ethContext,
                 pendingTransactions,
                 transactionTracker,
                 transactionsMessageSender,
-                pendingTransactionsMessageSender,
-                ethContext),
+                pendingTransactionsMessageSender),
             syncState,
             ethContext,
             transactionTracker,

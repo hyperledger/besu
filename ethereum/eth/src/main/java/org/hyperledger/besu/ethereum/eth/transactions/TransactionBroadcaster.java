@@ -39,11 +39,11 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private final int numPeersToSendFullTransactions;
 
   public TransactionBroadcaster(
+      final EthContext ethContext,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender,
-      final EthContext ethContext) {
+      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
     this.pendingTransactions = pendingTransactions;
     this.transactionTracker = transactionTracker;
     this.transactionsMessageSender = transactionsMessageSender;

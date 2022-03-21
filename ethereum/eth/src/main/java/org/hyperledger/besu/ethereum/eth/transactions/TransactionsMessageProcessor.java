@@ -75,18 +75,17 @@ class TransactionsMessageProcessor {
   private void processTransactionsMessage(
       final EthPeer peer, final TransactionsMessage transactionsMessage) {
     try {
-      final List<Transaction> readTransactions = transactionsMessage.transactions();
+      final List<Transaction> incomingTransactions = transactionsMessage.transactions();
+      transactionTracker.markTransactionsAsSeen(peer, incomingTransactions);
 
       traceLambda(
           LOG,
           "Received transactions message from {}, incoming transactions {}, incoming list {}",
           peer::toString,
-          readTransactions::size,
-          () -> toHashList(readTransactions));
+          incomingTransactions::size,
+          () -> toHashList(incomingTransactions));
 
-      final Set<Transaction> transactions = Sets.newHashSet(readTransactions);
-      transactionTracker.markTransactionsAsSeen(peer, transactions);
-      transactionPool.addRemoteTransactions(transactions);
+      transactionPool.addRemoteTransactions(incomingTransactions);
     } catch (final RLPException ex) {
       if (peer != null) {
         LOG.debug("Malformed transaction message received, disconnecting: {}", peer, ex);

@@ -159,11 +159,11 @@ public class TransactionPoolTest {
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(
+                ethContext,
                 transactions,
                 peerTransactionTracker,
                 transactionsMessageSender,
-                pendingTransactionsMessageSender,
-                ethContext));
+                pendingTransactionsMessageSender));
 
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);

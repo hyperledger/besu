@@ -99,8 +99,7 @@ public class PendingTransactionsMessageProcessor {
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
       final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactions();
-      transactionTracker.markTransactionHashesAsSeen(
-          peer, transactionsMessage.pendingTransactions());
+      transactionTracker.markTransactionHashesAsSeen(peer, incomingTransactionHashes);
 
       traceLambda(
           LOG,
@@ -122,7 +121,7 @@ public class PendingTransactionsMessageProcessor {
                   return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
                 });
 
-        for (final Hash hash : transactionsMessage.pendingTransactions()) {
+        for (final Hash hash : incomingTransactionHashes) {
           if (transactionPool.getTransactionByHash(hash).isEmpty()) {
             bufferedTask.addHash(hash);
           }
