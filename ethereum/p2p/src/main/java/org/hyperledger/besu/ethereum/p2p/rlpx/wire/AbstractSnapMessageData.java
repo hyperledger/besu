@@ -28,7 +28,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractSnapMessageData extends AbstractMessageData {
 
-  @VisibleForTesting public static final BigInteger SIZE_REQUEST = BigInteger.valueOf(512 * 1024);
+  @VisibleForTesting
+  public static final BigInteger SIZE_REQUEST = BigInteger.valueOf(524288); // 512 * 1024
 
   private Optional<Hash> rootHash;
 

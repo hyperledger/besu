@@ -144,7 +144,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       if ((high & 0xf0) != 0 || (low & 0xf0) != 0) {
         throw new IllegalArgumentException("Invalid path: contains elements larger than a nibble");
       }
-      decoded.set(decodedPos, (byte) (high << 4 | low));
+      decoded.set(decodedPos, (byte) (high << 4 | low & 0xff));
     }
     return decoded;
   }
