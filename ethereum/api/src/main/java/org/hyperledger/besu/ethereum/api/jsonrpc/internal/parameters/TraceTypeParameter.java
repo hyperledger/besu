@@ -76,4 +76,9 @@ public class TraceTypeParameter {
       throw new InvalidJsonRpcParameters("Invalid trace types supplied: " + unsupportedTypes);
     }
   }
+
+  @Override
+  public String toString() {
+    return "TraceTypeParameter" + getTraceTypes().stream().collect(Collectors.toList());
+  }
 }

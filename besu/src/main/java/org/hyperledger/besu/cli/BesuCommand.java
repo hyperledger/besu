@@ -1423,6 +1423,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addMixin("Ethstats", ethstatsOptions);
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
     commandLine.addMixin("Logging level", loggingLevelOption);
+    commandLine.addMixin("Data Storage Options", dataStorageOptions);
   }
 
   private void handleUnstableOptions() {
@@ -1441,7 +1442,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
-            .put("Data Storage Options", dataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)

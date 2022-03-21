@@ -187,6 +187,10 @@ auto-log-bloom-caching-enabled=true
 ethstats="nodename:secret@host:1234"
 ethstats-contact="contact@mail.n"
 
+# Data storage
+data-storage-format="BONSAI"
+bonsai-maximum-back-layers-to-load=512
+
 # feature flags
 Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
