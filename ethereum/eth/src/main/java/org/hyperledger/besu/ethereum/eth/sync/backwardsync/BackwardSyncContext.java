@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -88,7 +87,7 @@ public class BackwardSyncContext {
     final Optional<BackwardChain> chain = getCurrentChain();
     CompletableFuture<List<Block>> completableFuture;
     if (chain.isPresent() && chain.get().isTrusted(newBlockhash)) {
-      infoLambda(
+      debugLambda(
           LOG,
           "not fetching and appending hash {} to backwards sync since it is present in successors",
           newBlockhash::toHexString);

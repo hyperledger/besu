@@ -147,8 +147,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
     if (mergeContext.isSyncing()
-        || mergeCoordinator.isBackwardSyncing()
         || mergeCoordinator.getOrSyncHeaderByHash(newBlockHeader.getParentHash()).isEmpty()) {
+      mergeCoordinator.appendNewPayloadToSync(block);
       return respondWith(reqId, null, SYNCING);
     }
 
