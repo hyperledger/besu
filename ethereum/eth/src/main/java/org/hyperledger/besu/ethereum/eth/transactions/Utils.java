@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Utils {
+  private Utils() {}
+
   static List<Hash> toHashList(final Collection<Transaction> transactions) {
     return transactions.stream().map(Transaction::getHash).collect(Collectors.toUnmodifiableList());
   }

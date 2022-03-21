@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
 class NewPooledTransactionHashesMessageSender {
   private static final Logger LOG =
       LoggerFactory.getLogger(NewPooledTransactionHashesMessageSender.class);
+  private static final int MAX_TRANSACTIONS_HASHES = 4096;
 
-  private final int MAX_TRANSACTIONS_HASHES = 4096;
   private final PeerTransactionTracker transactionTracker;
 
   public NewPooledTransactionHashesMessageSender(final PeerTransactionTracker transactionTracker) {
@@ -54,7 +54,7 @@ class NewPooledTransactionHashesMessageSender {
             txHashes::toString);
 
         peer.send(NewPooledTransactionHashesMessage.create(txHashes));
-      } catch (final PeerNotConnected __) {
+      } catch (final PeerNotConnected unused) {
         break;
       }
     }

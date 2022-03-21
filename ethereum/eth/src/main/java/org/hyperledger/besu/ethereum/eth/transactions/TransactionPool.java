@@ -84,7 +84,6 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionBroadcaster transactionBroadcaster,
       final SyncState syncState,
       final EthContext ethContext,
-      final PeerTransactionTracker peerTransactionTracker,
       final MiningParameters miningParameters,
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration configuration) {

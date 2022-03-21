@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -104,7 +103,6 @@ public class EthGetFilterChangesIntegrationTest {
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
-    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
     EthContext ethContext = mock(EthContext.class);
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -117,7 +115,6 @@ public class EthGetFilterChangesIntegrationTest {
             batchAddedListener,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);

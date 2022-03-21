@@ -188,7 +188,6 @@ public class TransactionPoolTest {
         transactionBroadcaster,
         syncState,
         ethContext,
-        peerTransactionTracker,
         miningParameters,
         metricsSystem,
         config);
@@ -546,7 +545,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
@@ -689,11 +687,8 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            //            pendingBatchAddedListener,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            //            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
@@ -749,7 +744,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
@@ -799,7 +793,6 @@ public class TransactionPoolTest {
   public void shouldIgnoreFeeCapIfSetZero() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final Wei twoEthers = Wei.fromEth(2);
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -809,7 +802,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
@@ -835,7 +827,6 @@ public class TransactionPoolTest {
   public void shouldIgnoreEIP1559TransactionWhenNotAllowed() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final TransactionPool transactionPool =
         new TransactionPool(
             transactions,
@@ -844,7 +835,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
@@ -870,7 +860,6 @@ public class TransactionPoolTest {
   public void shouldIgnoreEIP1559TransactionBeforeTheFork() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final TransactionPool transactionPool =
         new TransactionPool(
             transactions,
@@ -879,7 +868,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
@@ -907,7 +895,6 @@ public class TransactionPoolTest {
   public void shouldRejectLocalTransactionIfFeeCapExceeded() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final Wei twoEthers = Wei.fromEth(2);
     TransactionPool transactionPool =
         new TransactionPool(
@@ -917,7 +904,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
@@ -945,7 +931,6 @@ public class TransactionPoolTest {
 
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final Wei twoEthers = Wei.fromEth(2);
 
     final TransactionPool transactionPool =
@@ -956,7 +941,6 @@ public class TransactionPoolTest {
             transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());

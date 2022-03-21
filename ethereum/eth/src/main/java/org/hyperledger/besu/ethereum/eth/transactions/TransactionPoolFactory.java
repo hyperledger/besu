@@ -93,7 +93,6 @@ public class TransactionPoolFactory {
                 newPooledTransactionHashesMessageSender),
             syncState,
             ethContext,
-            transactionTracker,
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);

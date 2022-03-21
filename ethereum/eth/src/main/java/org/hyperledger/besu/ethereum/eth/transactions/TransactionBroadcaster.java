@@ -96,7 +96,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       Collections.shuffle(peersWithTransactionHashesSupport);
       IntStream.range(0, delta)
           .forEach(
-              _unused ->
+              unused ->
                   peersWithOnlyTransactionSupport.add(
                       peersWithTransactionHashesSupport.remove(
                           peersWithTransactionHashesSupport.size() - 1)));

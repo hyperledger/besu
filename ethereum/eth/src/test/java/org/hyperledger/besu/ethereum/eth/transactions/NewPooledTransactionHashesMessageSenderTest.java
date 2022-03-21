@@ -111,8 +111,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
     final List<MessageData> sentMessages = messageDataArgumentCaptor.getAllValues();
 
-    assertThat(sentMessages).hasSize(2);
     assertThat(sentMessages)
+        .hasSize(2)
         .allMatch(message -> message.getCode() == EthPV65.NEW_POOLED_TRANSACTION_HASHES);
     final Set<Hash> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
     final Set<Hash> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
