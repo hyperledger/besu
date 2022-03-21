@@ -170,7 +170,7 @@ downloadLicenses {
     // ANTLR license markings are not all machine readable.
     // Explicitly state BSD License for license scanning.
     'org.antlr:antlr-runtime:3.5.2': bsd,
-    'org.antlr:ST4:4.3': bsd,
+    'org.antlr:ST4:4.3.1': bsd,
   ]
 }
 
