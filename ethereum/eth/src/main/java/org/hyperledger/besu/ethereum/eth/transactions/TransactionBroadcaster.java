@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo.toTransactionList;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -29,7 +30,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TransactionBroadcaster implements TransactionBatchAddedListener {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionBroadcaster.class);
 
   private final AbstractPendingTransactionsSorter pendingTransactions;
   private final PeerTransactionTracker transactionTracker;
@@ -98,6 +103,15 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       movePeersBetweenLists(
           peersWithTransactionHashesSupport, peersWithOnlyTransactionSupport, delta);
     }
+
+    traceLambda(
+        LOG,
+        "Sending full transactions to {} peers and transaction hashes to {} peers."
+            + " Peers w/o eth/66 {}, peers with eth/66 {}",
+        peersWithOnlyTransactionSupport::size,
+        peersWithTransactionHashesSupport::size,
+        peersWithOnlyTransactionSupport::toString,
+        peersWithTransactionHashesSupport::toString);
 
     sendFullTransactions(transactions, peersWithOnlyTransactionSupport);
 
