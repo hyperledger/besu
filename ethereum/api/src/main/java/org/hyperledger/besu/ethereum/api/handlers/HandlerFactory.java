@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,5 +43,10 @@ public class HandlerFactory {
                 methods.keySet().stream()
                     .collect(Collectors.toMap(String::new, ignored -> globalOptions)),
                 decodeJSON));
+  }
+
+  public static Handler<RoutingContext> authentication(
+      final AuthenticationService authenticationService, final Collection<String> noAuthRpcApis) {
+    return AuthenticationHandler.handler(authenticationService, noAuthRpcApis);
   }
 }

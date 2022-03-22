@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
@@ -103,6 +102,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -344,14 +344,19 @@ public class JsonRpcHttpService {
         .route(HealthService.READINESS_PATH)
         .method(HttpMethod.GET)
         .handler(readinessService::handleRequest);
-    router
-        .route("/")
-        .method(HttpMethod.POST)
-        .produces(APPLICATION_JSON)
-        .handler(
-            HandlerFactory.timeout(
-                new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true))
-        .handler(this::handleJsonRPCRequest);
+    Route mainRoute =
+        router
+            .route("/")
+            .method(HttpMethod.POST)
+            .produces(APPLICATION_JSON)
+            .handler(
+                HandlerFactory.timeout(
+                    new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true));
+    if (authenticationService.isPresent()) {
+      mainRoute.handler(
+          HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
+    }
+    mainRoute.handler(this::handleJsonRPCRequest);
 
     if (authenticationService.isPresent()) {
       router
@@ -493,11 +498,6 @@ public class JsonRpcHttpService {
     };
   }
 
-  private String getAuthToken(final RoutingContext routingContext) {
-    return AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
-        routingContext.request().getHeader("Authorization"));
-  }
-
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
     String hostname =
         event.request().getHeader(HttpHeaders.HOST) != null
@@ -563,47 +563,26 @@ public class JsonRpcHttpService {
   }
 
   private void handleJsonRPCRequest(final RoutingContext routingContext) {
-    // first check token if authentication is required
-    final String token = getAuthToken(routingContext);
-    // we check the no auth api methods actually match what's in the request later on
-    if (authenticationService.isPresent() && token == null && config.getNoAuthRpcApis().isEmpty()) {
-      // no auth token when auth required
-      handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
-    } else {
+    Optional<User> user =
+        ContextKey.AUTHENTICATED_USER.extractFrom(routingContext, Optional::empty);
+    try {
       // Parse json
-      try {
-        final String json = routingContext.getBodyAsString().trim();
-        if (!json.isEmpty() && json.charAt(0) == '{') {
-          final JsonObject requestBodyJsonObject =
-              ContextKey.REQUEST_BODY_AS_JSON_OBJECT.extractFrom(
-                  routingContext, () -> new JsonObject(json));
-          if (authenticationService.isPresent()) {
-            authenticationService
-                .get()
-                .authenticate(
-                    token,
-                    user -> handleJsonSingleRequest(routingContext, requestBodyJsonObject, user));
-          } else {
-            handleJsonSingleRequest(routingContext, requestBodyJsonObject, Optional.empty());
-          }
-
-        } else {
-          final JsonArray array = new JsonArray(json);
-          if (array.size() < 1) {
-            handleJsonRpcError(routingContext, null, INVALID_REQUEST);
-            return;
-          }
-          if (authenticationService.isPresent()) {
-            authenticationService
-                .get()
-                .authenticate(token, user -> handleJsonBatchRequest(routingContext, array, user));
-          } else {
-            handleJsonBatchRequest(routingContext, array, Optional.empty());
-          }
+      final String json = routingContext.getBodyAsString().trim();
+      if (!json.isEmpty() && json.charAt(0) == '{') {
+        final JsonObject requestBodyJsonObject =
+            ContextKey.REQUEST_BODY_AS_JSON_OBJECT.extractFrom(
+                routingContext, () -> new JsonObject(json));
+        handleJsonSingleRequest(routingContext, requestBodyJsonObject, user);
+      } else {
+        final JsonArray array = new JsonArray(json);
+        if (array.size() < 1) {
+          handleJsonRpcError(routingContext, null, INVALID_REQUEST);
+          return;
         }
-      } catch (final DecodeException | NullPointerException ex) {
-        handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
+        handleJsonBatchRequest(routingContext, array, user);
       }
+    } catch (final DecodeException | NullPointerException ex) {
+      handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
     }
   }
 
@@ -814,16 +793,6 @@ public class JsonRpcHttpService {
     if (!response.closed()) {
       response
           .setStatusCode(statusCodeFromError(error).code())
-          .end(Json.encode(new JsonRpcErrorResponse(id, error)));
-    }
-  }
-
-  private void handleJsonRpcUnauthorizedError(
-      final RoutingContext routingContext, final Object id, final JsonRpcError error) {
-    final HttpServerResponse response = routingContext.response();
-    if (!response.closed()) {
-      response
-          .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
           .end(Json.encode(new JsonRpcErrorResponse(id, error)));
     }
   }
