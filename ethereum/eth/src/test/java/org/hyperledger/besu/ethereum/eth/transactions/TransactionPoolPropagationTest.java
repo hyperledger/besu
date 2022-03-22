@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -27,10 +29,9 @@ import java.util.concurrent.TimeUnit;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ComparisonFailure;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TransactionPoolPropagationTest {
 
@@ -38,12 +39,12 @@ public class TransactionPoolPropagationTest {
 
   private Vertx vertx;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     vertx = Vertx.vertx();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     vertx.close();
   }
@@ -67,7 +68,7 @@ public class TransactionPoolPropagationTest {
    * 2nd order test to verify the framework correctly fails if a disconnect occurs It could have a
    * more detailed exception check - more than just the class.
    */
-  @Test(expected = ComparisonFailure.class)
+  @Test
   public void disconnectShouldThrow() throws Exception {
 
     try (final TestNodeList txNodes = new TestNodeList()) {
@@ -80,7 +81,7 @@ public class TransactionPoolPropagationTest {
 
       node1.network.getPeers().iterator().next().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
 
-      wrapup(txNodes);
+      assertThatThrownBy(() -> wrapup(txNodes)).isInstanceOf(AssertionError.class);
     }
   }
 

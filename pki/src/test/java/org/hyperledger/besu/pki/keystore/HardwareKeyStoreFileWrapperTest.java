@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.runners.Parameterized;
 
 public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest {
@@ -60,7 +61,13 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
           .map(provider -> new HardwareKeyStoreWrapper(validKeystorePassword, provider, crlPath))
           .orElseGet(() -> new HardwareKeyStoreWrapper(validKeystorePassword, path, crlPath));
     } catch (final Exception e) {
-      throw new PkiException("Failed to initialize NSS keystore", e);
+      if (OS.MAC.isCurrentOs()) {
+        // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
+        // machines.
+        Assume.assumeNoException("Failed to initialize hardware keystore", e);
+      }
+      // Not a mac, probably a production build. Full failure.
+      throw new PkiException("Failed to initialize hardware keystore", e);
     }
   }
 
