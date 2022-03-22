@@ -344,19 +344,16 @@ public class JsonRpcHttpService {
         .route(HealthService.READINESS_PATH)
         .method(HttpMethod.GET)
         .handler(readinessService::handleRequest);
-    Route mainRoute =
-        router
-            .route("/")
-            .method(HttpMethod.POST)
-            .produces(APPLICATION_JSON)
-            .handler(
-                HandlerFactory.timeout(
-                    new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true));
+    Route mainRoute = router.route("/").method(HttpMethod.POST).produces(APPLICATION_JSON);
     if (authenticationService.isPresent()) {
       mainRoute.handler(
           HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
     }
-    mainRoute.handler(this::handleJsonRPCRequest);
+    mainRoute
+        .handler(
+            HandlerFactory.timeout(
+                new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true))
+        .handler(this::handleJsonRPCRequest);
 
     if (authenticationService.isPresent()) {
       router
