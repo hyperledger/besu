@@ -148,8 +148,10 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
   private void movePeersBetweenLists(
       final List<EthPeer> sourceList, final List<EthPeer> destinationList, final int num) {
-    for (int i = 0; i < num; i++) {
-      destinationList.add(sourceList.remove(sourceList.size() - 1));
+
+    final int stopIndex = sourceList.size() - num;
+    for (int i = sourceList.size() - 1; i >= stopIndex; i--) {
+      destinationList.add(sourceList.remove(i));
     }
   }
 }
