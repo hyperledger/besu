@@ -7,6 +7,7 @@
 
 ### Additions and Improvements
 - Tune transaction synchronization parameter to adapt to mainnet traffic [#3610](https://github.com/hyperledger/besu/pull/3610)
+- Unit tests are now executed with JUnit5 [#3620](https://github.com/hyperledger/besu/pull/3620)
 
 ## 22.1.2
 
