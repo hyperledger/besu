@@ -126,11 +126,9 @@ public final class RangeManagerTest {
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
 
-    Optional<Bytes32> newBeginElementInRange =
+    final Optional<Bytes32> newBeginElementInRange =
         RangeManager.findNewBeginElementInRange(
             accountStateTrie.getRootHash(), proofs, accounts, RangeManager.MAX_RANGE);
-
-    System.out.println(newBeginElementInRange);
 
     Assertions.assertThat(newBeginElementInRange)
         .contains(Bytes32.leftPad(Bytes.wrap(Bytes.ofUnsignedShort(0x0b))));
@@ -167,11 +165,9 @@ public final class RangeManagerTest {
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
 
-    Optional<Bytes32> newBeginElementInRange =
+    final Optional<Bytes32> newBeginElementInRange =
         RangeManager.findNewBeginElementInRange(
             accountStateTrie.getRootHash(), proofs, accounts, RangeManager.MAX_RANGE);
-
-    System.out.println(newBeginElementInRange);
 
     Assertions.assertThat(newBeginElementInRange).isEmpty();
   }
