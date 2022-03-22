@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo.toTransactionList;
+
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -23,12 +25,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
@@ -92,14 +91,12 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
           Math.min(
               numPeersToSendFullTransactions - peersWithOnlyTransactionSupport.size(),
               peersWithTransactionHashesSupport.size());
-      // add peer from the other list to reach the required size
+
       Collections.shuffle(peersWithTransactionHashesSupport);
-      IntStream.range(0, delta)
-          .forEach(
-              unused ->
-                  peersWithOnlyTransactionSupport.add(
-                      peersWithTransactionHashesSupport.remove(
-                          peersWithTransactionHashesSupport.size() - 1)));
+
+      // move peers from the other list to reach the required size for full transaction peers
+      movePeersBetweenLists(
+          peersWithTransactionHashesSupport, peersWithOnlyTransactionSupport, delta);
     }
 
     sendFullTransactions(transactions, peersWithOnlyTransactionSupport);
@@ -135,10 +132,10 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
             });
   }
 
-  private Collection<Transaction> toTransactionList(
-      final Collection<TransactionInfo> transactionsInfo) {
-    return transactionsInfo.stream()
-        .map(TransactionInfo::getTransaction)
-        .collect(Collectors.toUnmodifiableList());
+  private void movePeersBetweenLists(
+      final List<EthPeer> sourceList, final List<EthPeer> destinationList, final int num) {
+    for (int i = 0; i < num; i++) {
+      destinationList.add(sourceList.remove(sourceList.size() - 1));
+    }
   }
 }

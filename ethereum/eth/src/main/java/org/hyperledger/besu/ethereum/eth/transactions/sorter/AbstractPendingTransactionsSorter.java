@@ -40,6 +40,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -384,6 +385,13 @@ public abstract class AbstractPendingTransactionsSorter {
 
     public Instant getAddedToPoolAt() {
       return addedToPoolAt;
+    }
+
+    public static List<Transaction> toTransactionList(
+        final Collection<TransactionInfo> transactionsInfo) {
+      return transactionsInfo.stream()
+          .map(TransactionInfo::getTransaction)
+          .collect(Collectors.toUnmodifiableList());
     }
   }
 
