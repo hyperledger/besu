@@ -20,7 +20,6 @@ import picocli.CommandLine;
 public class RocksDBCLIOptions {
 
   public static final int DEFAULT_MAX_OPEN_FILES = 1024;
-  //public static final long DEFAULT_CACHE_CAPACITY = 8388608;
   public static final long DEFAULT_CACHE_CAPACITY = 67_108_864; // 64 MB
   public static final int DEFAULT_MAX_BACKGROUND_COMPACTIONS = 4;
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
