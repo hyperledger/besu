@@ -123,7 +123,9 @@ class StoredNode<V> implements Node<V> {
                           "Unable to load trie node value for hash "
                               + hash
                               + " location "
-                              + location));
+                              + location,
+                          hash,
+                          location));
     }
 
     return loaded;
