@@ -150,7 +150,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           return respondWithInvalid(
               reqId, parentHeader.get().getHash(), "Timestamp must be greater than parent");
         }
-      } 
+      }
     }
 
     final var block =
