@@ -53,7 +53,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TLSContextFactoryTest {
+class TLSContextFactoryTest {
 
   private static final String JKS = "JKS";
   private static final String validKeystorePassword = "test123";
@@ -85,7 +85,7 @@ public class TLSContextFactoryTest {
   private Server server;
   private Client client;
 
-  public static Collection<Object[]> hardwareKeysData() {
+  static Collection<Object[]> hardwareKeysData() {
     return Arrays.asList(
         new Object[][] {
           {
@@ -114,7 +114,7 @@ public class TLSContextFactoryTest {
         });
   }
 
-  public static Collection<Object[]> softwareKeysData() {
+  static Collection<Object[]> softwareKeysData() {
     return Arrays.asList(
         new Object[][] {
           {
@@ -189,10 +189,10 @@ public class TLSContextFactoryTest {
   }
 
   @BeforeEach
-  public void init() {}
+  void init() {}
 
   @AfterEach
-  public void tearDown() {
+  void tearDown() {
     if (client != null) {
       client.stop();
     }
@@ -239,7 +239,7 @@ public class TLSContextFactoryTest {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("softwareKeysData")
-  public void testConnectionSoftwareKeys(
+  void testConnectionSoftwareKeys(
       final String ignoredTestDescription,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
@@ -250,7 +250,7 @@ public class TLSContextFactoryTest {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("hardwareKeysData")
-  public void testConnectionHardwareKeys(
+  void testConnectionHardwareKeys(
       final String ignoredTestDescription,
       final boolean testSuccess,
       final KeyStoreWrapper serverKeyStoreWrapper,
@@ -306,7 +306,7 @@ public class TLSContextFactoryTest {
     private final String id;
     private final CountDownLatch latch;
 
-    public MessageHandler(final String id, final CountDownLatch latch) {
+    MessageHandler(final String id, final CountDownLatch latch) {
       this.id = id;
       this.latch = latch;
     }
@@ -336,7 +336,7 @@ public class TLSContextFactoryTest {
     private ChannelFuture channelFuture;
     private final EventLoopGroup group = new NioEventLoopGroup();
 
-    public ChannelFuture getChannelFuture() {
+    ChannelFuture getChannelFuture() {
       return channelFuture;
     }
 
@@ -373,7 +373,7 @@ public class TLSContextFactoryTest {
       this.channelFuture = b.connect("127.0.0.1", this.port).sync();
     }
 
-    public void stop() {
+    void stop() {
       group.shutdownGracefully();
     }
   }
@@ -421,7 +421,7 @@ public class TLSContextFactoryTest {
       this.port = ((InetSocketAddress) channel.localAddress()).getPort();
     }
 
-    public void stop() {
+    void stop() {
       childGroup.shutdownGracefully();
       parentGroup.shutdownGracefully();
     }

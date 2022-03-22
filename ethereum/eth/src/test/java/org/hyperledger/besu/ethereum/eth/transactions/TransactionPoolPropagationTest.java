@@ -33,19 +33,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class TransactionPoolPropagationTest {
+class TransactionPoolPropagationTest {
 
   final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
 
   private Vertx vertx;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     vertx = Vertx.vertx();
   }
 
   @AfterEach
-  public void tearDown() {
+  void tearDown() {
     vertx.close();
   }
 
@@ -69,7 +69,7 @@ public class TransactionPoolPropagationTest {
    * more detailed exception check - more than just the class.
    */
   @Test
-  public void disconnectShouldThrow() throws Exception {
+  void disconnectShouldThrow() throws Exception {
 
     try (final TestNodeList txNodes = new TestNodeList()) {
       // Create & Start Nodes
@@ -90,7 +90,7 @@ public class TransactionPoolPropagationTest {
    * node. Verify that all nodes get the correct number of pending transactions.
    */
   @Test
-  public void shouldPropagateLocalAndRemoteTransactions() throws Exception {
+  void shouldPropagateLocalAndRemoteTransactions() throws Exception {
     try (final TestNodeList nodes = new TestNodeList()) {
       // Create & Start Nodes
       final TestNode node1 = nodes.create(vertx, null, null, noDiscovery);
