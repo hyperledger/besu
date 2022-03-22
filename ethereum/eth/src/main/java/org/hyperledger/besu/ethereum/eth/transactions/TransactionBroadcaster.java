@@ -54,7 +54,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
         (int) Math.ceil(Math.sqrt(ethContext.getEthPeers().getMaxPeers()));
   }
 
-  public void handlePeerConnection(final EthPeer peer) {
+  public void relayTransactionPoolTo(final EthPeer peer) {
     Set<TransactionInfo> pendingTransactionInfo = pendingTransactions.getTransactionInfo();
     if (!pendingTransactionInfo.isEmpty()) {
       if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {

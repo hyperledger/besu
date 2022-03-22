@@ -106,7 +106,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   void handleConnect(final EthPeer peer) {
-    transactionBroadcaster.handlePeerConnection(peer);
+    transactionBroadcaster.relayTransactionPoolTo(peer);
   }
 
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(

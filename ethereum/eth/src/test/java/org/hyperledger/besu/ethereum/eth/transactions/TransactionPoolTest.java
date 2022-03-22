@@ -554,7 +554,6 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
-    //    verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
     verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }

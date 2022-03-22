@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.Utils.toHashList;
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;

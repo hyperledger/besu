@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.Utils.toHashList;
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;

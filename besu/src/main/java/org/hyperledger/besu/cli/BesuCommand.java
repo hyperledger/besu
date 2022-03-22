@@ -1121,7 +1121,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Deprecated, has not effect. Maximum number of pending transaction hashes that will be kept in the transaction pool",
       arity = "1")
   @SuppressWarnings("unused")
-  private final Integer pooledTransactionHashesSize = null;
+  private final Integer pooledTransactionHashesSize = null; // NOSONAR
 
   @Option(
       names = {"--tx-pool-retention-hours"},
