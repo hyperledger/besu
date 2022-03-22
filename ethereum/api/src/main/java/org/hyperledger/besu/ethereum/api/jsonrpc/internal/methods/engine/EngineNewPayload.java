@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -140,6 +141,17 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           .isPresent()) {
         LOG.debug("block already present");
         return respondWith(reqId, blockParam.getBlockHash(), VALID);
+      }
+
+      Optional<BlockHeader> parentHeader =
+          protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+      if (parentHeader.isPresent()) {
+        if (!(blockParam.getTimestamp() > parentHeader.get().getTimestamp())) {
+          return respondWithInvalid(
+              reqId, parentHeader.get().getHash(), "Timestamp must be greater than parent");
+        }
+      } else {
+
       }
     }
 

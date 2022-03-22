@@ -220,6 +220,25 @@ public class EngineNewPayloadTest {
   }
 
   @Test
+  public void shouldReturnInvalidOnOldTimestamp() {
+    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(parent.getHash())
+            .timestamp(parent.getTimestamp())
+            .buildHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEqualTo(parent.getHash().toString());
+    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("Timestamp must be greater than parent");
+  }
+
+  @Test
   public void shouldRespondWithSyncingDuringForwardSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
