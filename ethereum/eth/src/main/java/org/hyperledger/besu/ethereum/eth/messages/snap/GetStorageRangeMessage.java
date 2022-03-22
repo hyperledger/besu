@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -32,7 +33,9 @@ import org.immutables.value.Value;
 
 public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
-  private final Optional<ArrayDeque<Bytes32>> storageRoots;
+  public GetStorageRangeMessage(final Bytes data) {
+    super(data);
+  }
 
   public static GetStorageRangeMessage readFrom(final MessageData message) {
     if (message instanceof GetStorageRangeMessage) {
@@ -48,29 +51,18 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
   public static GetStorageRangeMessage create(
       final Hash worldStateRootHash,
-      final ArrayDeque<Bytes32> accountHashes,
-      final Optional<ArrayDeque<Bytes32>> storageRoots,
+      final List<Bytes32> accountHashes,
       final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash,
-      final BigInteger responseBytes) {
-    return create(
-        Optional.empty(),
-        worldStateRootHash,
-        accountHashes,
-        storageRoots,
-        startKeyHash,
-        endKeyHash,
-        responseBytes);
+      final Bytes32 endKeyHash) {
+    return create(Optional.empty(), worldStateRootHash, accountHashes, startKeyHash, endKeyHash);
   }
 
   public static GetStorageRangeMessage create(
       final Optional<BigInteger> requestId,
       final Hash worldStateRootHash,
-      final ArrayDeque<Bytes32> accountHashes,
-      final Optional<ArrayDeque<Bytes32>> storageRoots,
+      final List<Bytes32> accountHashes,
       final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash,
-      final BigInteger responseBytes) {
+      final Bytes32 endKeyHash) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
@@ -78,23 +70,9 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     tmp.writeList(accountHashes, (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
-    tmp.writeBigIntegerScalar(responseBytes);
+    tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
-    return new GetStorageRangeMessage(tmp.encoded(), storageRoots);
-  }
-
-  public GetStorageRangeMessage(final Bytes data) {
-    this(data, Optional.empty());
-  }
-
-  public GetStorageRangeMessage(
-      final Bytes data, final Optional<ArrayDeque<Bytes32>> storageRoots) {
-    super(data);
-    this.storageRoots = storageRoots;
-  }
-
-  public Optional<ArrayDeque<Bytes32>> getStorageRoots() {
-    return storageRoots;
+    return new GetStorageRangeMessage(tmp.encoded());
   }
 
   @Override
@@ -104,10 +82,8 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
             Optional.of(requestId),
             range.worldStateRootHash(),
             range.hashes(),
-            storageRoots,
             range.startKeyHash(),
-            range.endKeyHash(),
-            range.responseBytes())
+            range.endKeyHash())
         .getData();
   }
 
@@ -124,7 +100,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     final Hash worldStateRootHash = Hash.wrap(Bytes32.wrap(input.readBytes32()));
     final ImmutableStorageRange.Builder range =
         ImmutableStorageRange.builder()
-            .worldStateRootHash(getOverrideStateRoot().orElse(worldStateRootHash));
+            .worldStateRootHash(getRootHash().orElse(worldStateRootHash));
     input.enterList();
     while (!input.isEndOfCurrentList()) {
       hashes.add(input.readBytes32());
@@ -147,11 +123,6 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     range.responseBytes(input.readBigIntegerScalar());
     input.leaveList();
     return range.build();
-  }
-
-  @Override
-  public String toString() {
-    return "GetStorageRangeMessage{" + "storageRoots=" + storageRoots + ", data=" + data + '}';
   }
 
   @Value.Immutable

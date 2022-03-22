@@ -21,16 +21,19 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
 public final class GetByteCodesMessage extends AbstractSnapMessageData {
 
-  final Optional<ArrayDeque<Bytes32>> accountHashes;
+  public GetByteCodesMessage(final Bytes data) {
+    super(data);
+  }
 
   public static GetByteCodesMessage readFrom(final MessageData message) {
     if (message instanceof GetByteCodesMessage) {
@@ -41,40 +44,27 @@ public final class GetByteCodesMessage extends AbstractSnapMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetByteCodesMessage.", code));
     }
-    return new GetByteCodesMessage(Optional.empty(), message.getData());
+    return new GetByteCodesMessage(message.getData());
+  }
+
+  public static GetByteCodesMessage create(final List<Bytes32> codeHashes) {
+    return create(Optional.empty(), codeHashes);
   }
 
   public static GetByteCodesMessage create(
-      final Optional<ArrayDeque<Bytes32>> accountHashes,
-      final ArrayDeque<Bytes32> codeHashes,
-      final BigInteger responseBytes) {
-    return create(Optional.empty(), accountHashes, codeHashes, responseBytes);
-  }
-
-  public static GetByteCodesMessage create(
-      final Optional<BigInteger> requestId,
-      final Optional<ArrayDeque<Bytes32>> accountHashes,
-      final ArrayDeque<Bytes32> codeHashes,
-      final BigInteger responseBytes) {
+      final Optional<BigInteger> requestId, final List<Bytes32> codeHashes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
     tmp.writeList(codeHashes, (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
-    tmp.writeBigIntegerScalar(responseBytes);
+    tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
-    return new GetByteCodesMessage(accountHashes, tmp.encoded());
-  }
-
-  public GetByteCodesMessage(final Optional<ArrayDeque<Bytes32>> accountHashes, final Bytes data) {
-    super(data);
-    this.accountHashes = accountHashes;
+    return new GetByteCodesMessage(tmp.encoded());
   }
 
   @Override
   protected Bytes wrap(final BigInteger requestId) {
-    final CodeHashes request = codeHashes(false);
-    return create(Optional.of(requestId), accountHashes, request.hashes(), request.responseBytes())
-        .getData();
+    return create(Optional.of(requestId), codeHashes(false).hashes()).getData();
   }
 
   @Override
@@ -83,7 +73,7 @@ public final class GetByteCodesMessage extends AbstractSnapMessageData {
   }
 
   public CodeHashes codeHashes(final boolean withRequestId) {
-    final ArrayDeque<Bytes32> hashes = new ArrayDeque<>();
+    final List<Bytes32> hashes = new ArrayList<>();
     final BigInteger responseBytes;
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
@@ -98,14 +88,10 @@ public final class GetByteCodesMessage extends AbstractSnapMessageData {
     return ImmutableCodeHashes.builder().hashes(hashes).responseBytes(responseBytes).build();
   }
 
-  public Optional<ArrayDeque<Bytes32>> getAccountHashes() {
-    return accountHashes;
-  }
-
   @Value.Immutable
   public interface CodeHashes {
 
-    ArrayDeque<Bytes32> hashes();
+    List<Bytes32> hashes();
 
     BigInteger responseBytes();
   }

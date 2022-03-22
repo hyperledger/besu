@@ -29,6 +29,10 @@ import org.immutables.value.Value;
 
 public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
+  public GetAccountRangeMessage(final Bytes data) {
+    super(data);
+  }
+
   public static GetAccountRangeMessage readFrom(final MessageData message) {
     if (message instanceof GetAccountRangeMessage) {
       return (GetAccountRangeMessage) message;
@@ -42,22 +46,15 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
   }
 
   public static GetAccountRangeMessage create(
-      final Hash worldStateRootHash,
-      final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash,
-      final BigInteger responseBytes) {
+      final Hash worldStateRootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     tmp.writeBytes(worldStateRootHash);
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
-    tmp.writeBigIntegerScalar(responseBytes);
+    tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
     return new GetAccountRangeMessage(tmp.encoded());
-  }
-
-  public GetAccountRangeMessage(final Bytes data) {
-    super(data);
   }
 
   @Override
@@ -86,7 +83,7 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     final Hash worldStateRootHash = Hash.wrap(Bytes32.wrap(input.readBytes32()));
     final ImmutableRange range =
         ImmutableRange.builder()
-            .worldStateRootHash(getOverrideStateRoot().orElse(worldStateRootHash))
+            .worldStateRootHash(getRootHash().orElse(worldStateRootHash))
             .startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
             .endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())))
             .responseBytes(input.readBigIntegerScalar())
