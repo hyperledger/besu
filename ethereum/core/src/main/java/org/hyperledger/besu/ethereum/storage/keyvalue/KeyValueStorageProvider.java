@@ -102,7 +102,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public GoQuorumPrivateStorage createGoQuorumPrivateStorage() {
     return new GoQuorumPrivateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BACKWARD_SYNC_HEADERS));
+        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.GOQUORUM_PRIVATE_STORAGE));
   }
 
   @Override
