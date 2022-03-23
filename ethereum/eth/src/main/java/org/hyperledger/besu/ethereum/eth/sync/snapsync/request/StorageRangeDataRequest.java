@@ -99,9 +99,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     final AtomicReference<Updater> updaterTmp = new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          if (location.isEmpty()) {
-            System.out.println("completed account " + Hash.wrap(accountHash));
-          }
+          // create small batch in order to commit small amount of nodes at the same time
           updaterTmp.get().putAccountStorageTrieNode(Hash.wrap(accountHash), location, hash, value);
           if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
             updaterTmp.get().commit();
@@ -122,7 +120,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final SnapSyncState snapSyncState) {
     if (!worldStateProofProvider.isValidRangeProof(
         startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
-      System.out.println("change root for account " + Hash.wrap(accountHash));
       downloadState.enqueueRequest(
           createAccountDataRequest(
               getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
@@ -188,8 +185,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                       .toUnsignedBigInteger()
                       .subtract(startKeyHash.toUnsignedBigInteger()))
               .intValue();
-      if (nbRangesNeeded >= 16) {
-        return 16;
+      if (nbRangesNeeded >= MAX_CHILD) {
+        return MAX_CHILD;
       }
       return nbRangesNeeded;
     }

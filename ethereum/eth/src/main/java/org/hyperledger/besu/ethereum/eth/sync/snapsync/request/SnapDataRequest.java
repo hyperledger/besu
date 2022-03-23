@@ -36,6 +36,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public abstract class SnapDataRequest implements TasksPriorityProvider {
 
+  public static final int MAX_CHILD = 16;
+
   protected Optional<TrieNodeDataRequest> possibleParent = Optional.empty();
   protected int depth;
   protected long priority;

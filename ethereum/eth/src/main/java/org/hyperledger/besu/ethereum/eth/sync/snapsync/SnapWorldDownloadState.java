@@ -240,9 +240,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public void clearTrieNodes() {
     worldStateStorage.clearFlatDatabase();
     pendingTrieNodeRequests.clearInternalQueues();
-    pendingAccountRequests.clearInternalQueue();
-    pendingStorageRequests.clearInternalQueue();
-    pendingBigStorageRequests.clearInternalQueue();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);
   }

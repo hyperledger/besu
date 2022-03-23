@@ -67,7 +67,7 @@ public class StackTrie {
   }
 
   public void commit(final NodeUpdater nodeUpdater) {
-    if (nbSegments.decrementAndGet() > 0 && (!proofs.isEmpty() || !keys.isEmpty())) {
+    if (nbSegments.decrementAndGet() <= 0 && (!proofs.isEmpty() || !keys.isEmpty())) {
       final Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
       for (Bytes proof : proofs) {
         proofsEntries.put(Hash.hash(proof), proof);
