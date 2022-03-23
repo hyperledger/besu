@@ -20,29 +20,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 public class HandlerFactory {
-  private static final Map<HandlerName, Handler<RoutingContext>> HANDLERS =
-      new ConcurrentHashMap<>();
 
   public static Handler<RoutingContext> timeout(
-      final TimeoutOptions globalOptions,
-      final Map<String, JsonRpcMethod> methods,
-      final boolean decodeJSON) {
+      final TimeoutOptions globalOptions, final Map<String, JsonRpcMethod> methods) {
     assert methods != null && globalOptions != null;
-    return HANDLERS.computeIfAbsent(
-        HandlerName.TIMEOUT,
-        handlerName ->
-            TimeoutHandler.handler(
-                Optional.of(globalOptions),
-                methods.keySet().stream()
-                    .collect(Collectors.toMap(String::new, ignored -> globalOptions)),
-                decodeJSON));
+    return TimeoutHandler.handler(
+        Optional.of(globalOptions),
+        methods.keySet().stream().collect(Collectors.toMap(String::new, ignored -> globalOptions)));
   }
 
   public static Handler<RoutingContext> authentication(

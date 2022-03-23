@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 
 import java.util.Arrays;
@@ -101,13 +100,12 @@ public class TimeoutHandlerTest {
     final Map<String, TimeoutOptions> options =
         ImmutableMap.of(
             method.getMethodName(), new TimeoutOptions(timeoutSec, DEFAULT_OPTS.getErrorCode()));
-    final Handler<RoutingContext> handler = TimeoutHandler.handler(globalOptions, options, true);
+    final Handler<RoutingContext> handler = TimeoutHandler.handler(globalOptions, options);
     final RoutingContext ctx = Mockito.spy(RoutingContext.class);
     final Vertx vertx = Mockito.spy(Vertx.class);
     when(ctx.getBodyAsString()).thenReturn(body);
     when(ctx.vertx()).thenReturn(vertx);
     handler.handle(ctx);
-    verify(ctx).put(eq(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()), any());
     verify(vertx, times(timerMustBeSet ? 1 : 0))
         .setTimer(eq(TimeUnit.SECONDS.toMillis(timeoutSec)), any());
     verify(ctx, times(timerMustBeSet ? 1 : 0)).addBodyEndHandler(any());

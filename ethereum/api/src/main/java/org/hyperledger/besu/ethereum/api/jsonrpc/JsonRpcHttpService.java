@@ -350,9 +350,7 @@ public class JsonRpcHttpService {
           HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
     }
     mainRoute
-        .handler(
-            HandlerFactory.timeout(
-                new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true))
+        .handler(HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods))
         .handler(this::handleJsonRPCRequest);
 
     if (authenticationService.isPresent()) {
