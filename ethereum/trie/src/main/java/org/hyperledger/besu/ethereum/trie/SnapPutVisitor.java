@@ -37,9 +37,7 @@ public class SnapPutVisitor<V> extends PutVisitor<V> {
   @Override
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     final Node<V> visit = super.visit(extensionNode, path);
-    // System.out.println("visit ex "+visit.getHash());
     for (Node<V> child : visit.getChildren()) {
-      // System.out.println("visit ex "+child.isNeedHeal()+" "+child.getHash());
       if (child.isNeedHeal() || (child instanceof StoredNode && child.getValue().isEmpty())) {
         visit.markNeedHeal(); // not save an incomplete node
         return visit;
