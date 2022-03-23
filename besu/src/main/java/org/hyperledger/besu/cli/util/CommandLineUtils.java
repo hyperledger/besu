@@ -29,6 +29,8 @@ public class CommandLineUtils {
   public static final String MULTI_DEPENDENCY_WARNING_MSG =
       "{} ignored because none of {} was defined.";
   public static final String DEPRECATION_WARNING_MSG = "{} has been deprecated, use {} instead.";
+  public static final String DEPRECATED_AND_USELESS_WARNING_MSG =
+      "{} has been deprecated and is now useless, remove it.";
 
   /**
    * Check if options are passed that require an option to be true to have any effect and log a

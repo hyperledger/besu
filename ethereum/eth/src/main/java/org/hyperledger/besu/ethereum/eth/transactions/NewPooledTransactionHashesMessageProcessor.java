@@ -37,18 +37,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PendingTransactionsMessageProcessor {
+public class NewPooledTransactionHashesMessageProcessor {
 
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private static final long SYNC_TOLERANCE = 100L;
 
   private static final Logger LOG =
-      LoggerFactory.getLogger(PendingTransactionsMessageProcessor.class);
+      LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
 
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;
 
-  private final PeerPendingTransactionTracker transactionTracker;
+  private final PeerTransactionTracker transactionTracker;
   private final Counter totalSkippedTransactionsMessageCounter;
   private final TransactionPool transactionPool;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
@@ -56,8 +56,8 @@ public class PendingTransactionsMessageProcessor {
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
 
-  public PendingTransactionsMessageProcessor(
-      final PeerPendingTransactionTracker transactionTracker,
+  public NewPooledTransactionHashesMessageProcessor(
+      final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final Counter metricsCounter,
@@ -86,7 +86,7 @@ public class PendingTransactionsMessageProcessor {
       final NewPooledTransactionHashesMessage transactionsMessage,
       final Instant startedAt,
       final Duration keepAlive) {
-    // Check if message not expired.
+    // Check if message is not expired.
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
@@ -99,6 +99,7 @@ public class PendingTransactionsMessageProcessor {
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
       final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactions();
+      transactionTracker.markTransactionHashesAsSeen(peer, incomingTransactionHashes);
 
       traceLambda(
           LOG,
@@ -107,8 +108,6 @@ public class PendingTransactionsMessageProcessor {
           incomingTransactionHashes::size,
           incomingTransactionHashes::toString);
 
-      transactionTracker.markTransactionsHashesAsSeen(
-          peer, transactionsMessage.pendingTransactions());
       if (syncState.isInSync(SYNC_TOLERANCE)) {
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
             scheduledTasks.computeIfAbsent(
@@ -122,9 +121,8 @@ public class PendingTransactionsMessageProcessor {
                   return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
                 });
 
-        for (final Hash hash : transactionsMessage.pendingTransactions()) {
-          if (transactionPool.getTransactionByHash(hash).isEmpty()
-              && transactionPool.addTransactionHash(hash)) {
+        for (final Hash hash : incomingTransactionHashes) {
+          if (transactionPool.getTransactionByHash(hash).isEmpty()) {
             bufferedTask.addHash(hash);
           }
         }

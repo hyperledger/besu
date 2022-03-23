@@ -38,9 +38,11 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -678,6 +680,17 @@ public class Transaction
       return false;
     }
     return GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v.get());
+  }
+
+  /**
+   * Return the list of transaction hashes extracted from the collection of Transaction passed as
+   * argument
+   *
+   * @param transactions a collection of transactions
+   * @return the list of transaction hashes
+   */
+  public static List<Hash> toHashList(final Collection<Transaction> transactions) {
+    return transactions.stream().map(Transaction::getHash).collect(Collectors.toUnmodifiableList());
   }
 
   private static Bytes32 computeSenderRecoveryHash(
