@@ -58,25 +58,9 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       final WorldStateStorage.Updater updater,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
-
     if (!isValid() || isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
       return 0;
-    }
-
-    if (getLocation().size() < 5 && this instanceof AccountTrieNodeDataRequest) {
-
-      System.out.println(
-          (!requiresPersisting ? "(Already)" : "")
-              + "Synced "
-              + getLocation()
-              + " "
-              + pendingChildren);
-      System.out.println(
-          "Synced % --> "
-              + 100
-                  * (getLocation().toLong()
-                      / Double.valueOf(Bytes.fromHexString("0xffffffffff").toLong())));
     }
     int saved = 0;
     if (requiresPersisting) {
