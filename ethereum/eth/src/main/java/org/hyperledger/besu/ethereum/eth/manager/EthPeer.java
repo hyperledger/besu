@@ -515,6 +515,11 @@ public class EthPeer {
     return connection.getPeerInfo().getNodeId();
   }
 
+  public boolean hasSupportForMessage(final int messageCode) {
+    return getAgreedCapabilities().stream()
+        .anyMatch(cap -> EthProtocol.get().isValidMessageCode(cap.getVersion(), messageCode));
+  }
+
   @Override
   public String toString() {
     return String.format("Peer %s...", nodeId().toString().substring(0, 20));

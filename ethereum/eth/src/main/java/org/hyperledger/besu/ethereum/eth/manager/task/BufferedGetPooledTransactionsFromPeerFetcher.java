@@ -18,7 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
+import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +33,11 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private static final int MAX_HASHES = 256;
 
   private final EthPeer peer;
-  private final PendingTransactionsMessageProcessor processor;
+  private final NewPooledTransactionHashesMessageProcessor processor;
   private final Queue<Hash> txAnnounces;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
-      final EthPeer peer, final PendingTransactionsMessageProcessor processor) {
+      final EthPeer peer, final NewPooledTransactionHashesMessageProcessor processor) {
     this.peer = peer;
     this.processor = processor;
     this.txAnnounces = Queues.synchronizedQueue(EvictingQueue.create(MAX_PENDING_TRANSACTIONS));

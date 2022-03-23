@@ -24,15 +24,15 @@ import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMess
 import java.time.Duration;
 import java.time.Instant;
 
-class PendingTransactionsMessageHandler implements EthMessages.MessageCallback {
+class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCallback {
 
-  private final PendingTransactionsMessageProcessor transactionsMessageProcessor;
+  private final NewPooledTransactionHashesMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
   private final Duration txMsgKeepAlive;
 
-  public PendingTransactionsMessageHandler(
+  public NewPooledTransactionHashesMessageHandler(
       final EthScheduler scheduler,
-      final PendingTransactionsMessageProcessor transactionsMessageProcessor,
+      final NewPooledTransactionHashesMessageProcessor transactionsMessageProcessor,
       final int txMsgKeepAliveSeconds) {
     this.scheduler = scheduler;
     this.transactionsMessageProcessor = transactionsMessageProcessor;

@@ -53,7 +53,6 @@ import org.junit.Test;
 public class GasPricePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -70,7 +69,6 @@ public class GasPricePendingTransactionsTest {
       new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
-          MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
           GasPricePendingTransactionsTest::mockBlockHeader,
@@ -617,7 +615,6 @@ public class GasPricePendingTransactionsTest {
         new GasPricePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
             () -> null,
@@ -641,7 +638,6 @@ public class GasPricePendingTransactionsTest {
         new GasPricePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
             () -> null,
@@ -661,7 +657,6 @@ public class GasPricePendingTransactionsTest {
         new GasPricePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
             () -> null,

@@ -49,10 +49,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.PeerPendingTransactionTracker;
-import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -75,8 +73,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetFilterChangesIntegrationTest {
 
-  @Mock private TransactionBatchAddedListener batchAddedListener;
-  @Mock private TransactionBatchAddedListener pendingBatchAddedListener;
+  @Mock private TransactionBroadcaster batchAddedListener;
   private MutableBlockchain blockchain;
   private final String ETH_METHOD = "eth_getFilterChanges";
   private final String JSON_RPC_VERSION = "2.0";
@@ -86,7 +83,6 @@ public class EthGetFilterChangesIntegrationTest {
   private GasPricePendingTransactionsSorter transactions;
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_HASHES = 5;
   private static final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private final Transaction transaction = createTransaction(1);
   private FilterManager filterManager;
@@ -101,16 +97,12 @@ public class EthGetFilterChangesIntegrationTest {
         new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
-            MAX_HASHES,
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
-    PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
-    PeerPendingTransactionTracker peerPendingTransactionTracker =
-        mock(PeerPendingTransactionTracker.class);
     EthContext ethContext = mock(EthContext.class);
     EthPeers ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -121,11 +113,8 @@ public class EthGetFilterChangesIntegrationTest {
             executionContext.getProtocolSchedule(),
             protocolContext,
             batchAddedListener,
-            pendingBatchAddedListener,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);

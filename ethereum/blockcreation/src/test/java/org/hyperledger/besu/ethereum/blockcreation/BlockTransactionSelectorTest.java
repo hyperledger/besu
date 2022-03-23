@@ -84,7 +84,6 @@ public class BlockTransactionSelectorTest {
       new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
-          5,
           TestClock.fixed(),
           metricsSystem,
           BlockTransactionSelectorTest::mockBlockHeader,
@@ -336,7 +335,6 @@ public class BlockTransactionSelectorTest {
     final BaseFeePendingTransactionsSorter pendingTransactions1559 =
         new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            5,
             5,
             TestClock.fixed(),
             metricsSystem,

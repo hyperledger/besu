@@ -14,50 +14,47 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class PendingTransactionsMessageSender {
-  private static final Logger LOG = LoggerFactory.getLogger(PendingTransactionsMessageSender.class);
+class NewPooledTransactionHashesMessageSender {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(NewPooledTransactionHashesMessageSender.class);
+  private static final int MAX_TRANSACTIONS_HASHES = 4096;
 
-  private final PeerPendingTransactionTracker transactionTracker;
+  private final PeerTransactionTracker transactionTracker;
 
-  public PendingTransactionsMessageSender(final PeerPendingTransactionTracker transactionTracker) {
+  public NewPooledTransactionHashesMessageSender(final PeerTransactionTracker transactionTracker) {
     this.transactionTracker = transactionTracker;
   }
 
-  public void sendTransactionsToPeers() {
-    StreamSupport.stream(transactionTracker.getEthPeersWithUnsentTransactions().spliterator(), true)
-        .parallel()
-        .forEach(this::sendTransactionsToPeer);
-  }
-
-  private void sendTransactionsToPeer(final EthPeer peer) {
-    for (final List<Hash> hashes :
+  public void sendTransactionHashesToPeer(final EthPeer peer) {
+    for (final List<Transaction> txBatch :
         Iterables.partition(
-            transactionTracker.claimTransactionsToSendToPeer(peer),
-            TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES)) {
+            transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
       try {
+        List<Hash> txHashes = toHashList(txBatch);
         traceLambda(
             LOG,
             "Sending transaction hashes to peer {}, transaction hashes count {}, list {}",
             peer::toString,
-            hashes::size,
-            hashes::toString);
+            txHashes::size,
+            txHashes::toString);
 
-        peer.send(NewPooledTransactionHashesMessage.create(hashes));
-      } catch (final PeerNotConnected __) {
+        peer.send(NewPooledTransactionHashesMessage.create(txHashes));
+      } catch (final PeerNotConnected unused) {
         break;
       }
     }

@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -1117,10 +1118,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--tx-pool-hashes-max-size"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+          "Deprecated, has not effect. Maximum number of pending transaction hashes that will be kept in the transaction pool",
       arity = "1")
-  private final Integer pooledTransactionHashesSize =
-      TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
+  @SuppressWarnings("unused")
+  private final Integer pooledTransactionHashesSize = null; // NOSONAR
 
   @Option(
       names = {"--tx-pool-retention-hours"},
@@ -1825,6 +1826,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
+    }
+
+    if (pooledTransactionHashesSize != null) { // NOSONAR
+      logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
   }
 
@@ -2651,7 +2656,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
-        .pooledTransactionHashesSize(pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(priceBump))
         .txFeeCap(txFeeCap)
