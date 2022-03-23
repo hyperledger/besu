@@ -72,7 +72,11 @@ public interface Node<V> {
   /** Unloads the node if it is, for example, a StoredNode. */
   default void unload() {}
 
-  /** Return if a node needs heal. If one of its children missing in the storage */
+  /**
+   * Return if a node needs heal. If one of its children missing in the storage
+   *
+   * @return true if the node need heal
+   */
   boolean isNeedHeal();
 
   /**
