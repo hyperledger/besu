@@ -165,4 +165,14 @@ class LeafNode<V> implements Node<V> {
   public void markDirty() {
     dirty = true;
   }
+
+  @Override
+  public boolean isNeedHeal() {
+    return false;
+  }
+
+  @Override
+  public void markNeedHeal() {
+    // nothing to do a leaf don't have child
+  }
 }

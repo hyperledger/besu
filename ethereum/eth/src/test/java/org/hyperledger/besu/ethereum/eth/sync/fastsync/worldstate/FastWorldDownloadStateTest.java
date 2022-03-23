@@ -67,7 +67,11 @@ public class FastWorldDownloadStateTest {
   private final TestClock clock = new TestClock();
   private final FastWorldDownloadState downloadState =
       new FastWorldDownloadState(
-          pendingRequests, MAX_REQUESTS_WITHOUT_PROGRESS, MIN_MILLIS_BEFORE_STALLING, clock);
+          worldStateStorage,
+          pendingRequests,
+          MAX_REQUESTS_WITHOUT_PROGRESS,
+          MIN_MILLIS_BEFORE_STALLING,
+          clock);
 
   private final CompletableFuture<Void> future = downloadState.getDownloadFuture();
 
@@ -96,7 +100,7 @@ public class FastWorldDownloadStateTest {
 
   @Test
   public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain() {
-    downloadState.checkCompletion(worldStateStorage, header);
+    downloadState.checkCompletion(header);
 
     assertThat(future).isCompleted();
     assertThat(downloadState.isDownloading()).isFalse();
@@ -110,7 +114,7 @@ public class FastWorldDownloadStateTest {
                 assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
                     .contains(ROOT_NODE_DATA));
 
-    downloadState.checkCompletion(worldStateStorage, header);
+    downloadState.checkCompletion(header);
 
     assertThat(future).isCompleted();
     assertThat(postFutureChecks).isCompleted();
@@ -121,7 +125,7 @@ public class FastWorldDownloadStateTest {
     pendingRequests.add(
         NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
-    downloadState.checkCompletion(worldStateStorage, header);
+    downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
     assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
@@ -208,7 +212,7 @@ public class FastWorldDownloadStateTest {
 
   @Test
   public void shouldNotAddRequestsAfterDownloadIsCompleted() {
-    downloadState.checkCompletion(worldStateStorage, header);
+    downloadState.checkCompletion(header);
 
     downloadState.enqueueRequests(
         Stream.of(
