@@ -86,7 +86,6 @@ public abstract class AbstractPendingTransactionsSorter {
   protected final LabelledMetric<Counter> transactionRemovedCounter;
   protected final Counter localTransactionAddedCounter;
   protected final Counter remoteTransactionAddedCounter;
-  protected final Counter localTransactionHashesAddedCounter;
 
   protected final long maxPendingTransactions;
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
@@ -112,7 +111,6 @@ public abstract class AbstractPendingTransactionsSorter {
             "source");
     localTransactionAddedCounter = transactionAddedCounter.labels("local");
     remoteTransactionAddedCounter = transactionAddedCounter.labels("remote");
-    localTransactionHashesAddedCounter = transactionAddedCounter.labels("pool");
 
     transactionRemovedCounter =
         metricsSystem.createLabelledCounter(
