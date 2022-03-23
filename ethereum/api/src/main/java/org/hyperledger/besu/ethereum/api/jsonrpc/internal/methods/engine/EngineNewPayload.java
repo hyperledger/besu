@@ -145,11 +145,10 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
       Optional<BlockHeader> parentHeader =
           protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-      if (parentHeader.isPresent()) {
-        if (!(blockParam.getTimestamp() > parentHeader.get().getTimestamp())) {
-          return respondWithInvalid(
-              reqId, parentHeader.get().getHash(), "Timestamp must be greater than parent");
-        }
+      if (parentHeader.isPresent()
+          && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
+        return respondWithInvalid(
+            reqId, parentHeader.get().getHash(), "Timestamp must be greater than parent");
       }
     }
 
