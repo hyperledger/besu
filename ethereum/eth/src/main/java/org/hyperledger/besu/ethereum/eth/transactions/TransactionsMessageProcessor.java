@@ -18,14 +18,16 @@ import static java.time.Instant.now;
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -37,27 +39,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class TransactionsMessageProcessor {
-
-  private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageProcessor.class);
+  private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
+  private static final String TRANSACTIONS = "transactions";
+
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
   private final Counter totalSkippedTransactionsMessageCounter;
+  private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
 
   public TransactionsMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
-      final Counter metricsCounter) {
+      final MetricsSystem metricsSystem) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.totalSkippedTransactionsMessageCounter =
         new RunnableCounter(
-            metricsCounter,
+            metricsSystem.createCounter(
+                BesuMetricCategory.TRANSACTION_POOL,
+                "transactions_messages_skipped_total",
+                "Total number of transactions messages skipped by the processor."),
             () ->
                 LOG.warn(
                     "{} expired transaction messages have been skipped.",
                     SKIPPED_MESSAGES_LOGGING_THRESHOLD),
             SKIPPED_MESSAGES_LOGGING_THRESHOLD);
+
+    alreadySeenTransactionsCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "remote_already_seen_total",
+            "Total number of received transactions already seen",
+            "source");
   }
 
   void processTransactionsMessage(
@@ -81,6 +95,9 @@ class TransactionsMessageProcessor {
 
       transactionTracker.markTransactionsAsSeen(peer, incomingTransactions);
 
+      alreadySeenTransactionsCounter
+          .labels(TRANSACTIONS)
+          .inc((long)incomingTransactions.size() - freshTransactions.size());
       traceLambda(
           LOG,
           "Received transactions message from {}, incoming transactions {}, incoming list {}"
@@ -103,16 +120,7 @@ class TransactionsMessageProcessor {
 
   private Collection<Transaction> skipSeenTransactions(final List<Transaction> inTransactions) {
     return inTransactions.stream()
-        .filter(
-            tx -> {
-              final Hash txHash = tx.getHash();
-              return transactionPool.getTransactionByHash(txHash).isEmpty()
-                  && !transactionTracker.hasSeenTransaction(txHash);
-            })
+        .filter(tx -> !transactionTracker.hasSeenTransaction(tx.getHash()))
         .collect(Collectors.toUnmodifiableList());
-  }
-
-  private List<Hash> toHashList(final Collection<Transaction> txs) {
-    return txs.stream().map(Transaction::getHash).collect(Collectors.toList());
   }
 }

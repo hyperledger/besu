@@ -15,25 +15,35 @@
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Queues;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("UnstableApiUsage")
 public class BufferedGetPooledTransactionsFromPeerFetcher {
-
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BufferedGetPooledTransactionsFromPeerFetcher.class);
   private static final int MAX_HASHES = 256;
+  private static final String HASHES = "hashes";
 
   private final TransactionPool transactionPool;
   private final PeerTransactionTracker transactionTracker;
@@ -41,6 +51,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final MetricsSystem metricsSystem;
   private final EthPeer peer;
   private final Queue<Hash> txAnnounces;
+  private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
@@ -54,40 +65,66 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     this.transactionTracker = transactionTracker;
     this.metricsSystem = metricsSystem;
     this.txAnnounces = Queues.synchronizedQueue(EvictingQueue.create(MAX_PENDING_TRANSACTIONS));
+
+    this.alreadySeenTransactionsCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "remote_already_seen_total",
+            "Total number of received transactions already seen",
+            "source");
   }
 
   public void requestTransactions() {
-    for (List<Hash> txHashesAnnounced = getTxHashesAnnounced();
-        !txHashesAnnounced.isEmpty();
-        txHashesAnnounced = getTxHashesAnnounced()) {
-
+    List<Hash> txHashesAnnounced;
+    while (!(txHashesAnnounced = getTxHashesAnnounced()).isEmpty()) {
       final GetPooledTransactionsFromPeerTask task =
           GetPooledTransactionsFromPeerTask.forHashes(ethContext, txHashesAnnounced, metricsSystem);
       task.assignPeer(peer);
       ethContext
           .getScheduler()
           .scheduleSyncWorkerTask(task)
-          .thenAccept(result -> transactionPool.addRemoteTransactions(result.getResult()));
+          .thenAccept(
+              result -> {
+                List<Transaction> retrievedTransactions = result.getResult();
+                transactionTracker.markTransactionsAsSeen(peer, retrievedTransactions);
+
+                traceLambda(
+                    LOG,
+                    "Got {} transactions of {} hashes requested from peer {}",
+                    retrievedTransactions::size,
+                    task.getTransactionHashes()::size,
+                    peer::toString);
+
+                transactionPool.addRemoteTransactions(retrievedTransactions);
+              });
     }
   }
 
-  public void addHash(final Hash hash) {
-    txAnnounces.add(hash);
+  public void addHashes(final Collection<Hash> hashes) {
+    txAnnounces.addAll(hashes);
   }
 
   private List<Hash> getTxHashesAnnounced() {
-    List<Hash> retrieved = new ArrayList<>(MAX_HASHES);
-    while (retrieved.size() < MAX_HASHES && !txAnnounces.isEmpty()) {
+    final List<Hash> toRetrieve = new ArrayList<>(MAX_HASHES);
+    int discarded = 0;
+    while (toRetrieve.size() < MAX_HASHES && !txAnnounces.isEmpty()) {
       final Hash txHashAnnounced = txAnnounces.poll();
-      if (notSeen(txHashAnnounced)) {
-        retrieved.add(txHashAnnounced);
+      if (!transactionTracker.hasSeenTransaction(txHashAnnounced)) {
+        toRetrieve.add(txHashAnnounced);
+      } else {
+        discarded++;
       }
     }
-    return retrieved;
-  }
 
-  private boolean notSeen(final Hash txHash) {
-    return transactionPool.getTransactionByHash(txHash).isEmpty()
-        && !transactionTracker.hasSeenTransaction(txHash);
+    final int alreadySeenCount = discarded;
+    alreadySeenTransactionsCounter.labels(HASHES).inc(alreadySeenCount);
+    traceLambda(
+        LOG,
+        "Transaction hashes to request from peer {}, fresh count {}, already seen count {}",
+        peer::toString,
+        toRetrieve::size,
+        () -> alreadySeenCount);
+
+    return toRetrieve;
   }
 }
