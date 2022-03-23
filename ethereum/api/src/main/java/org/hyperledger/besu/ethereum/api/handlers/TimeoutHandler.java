@@ -37,31 +37,27 @@ public class TimeoutHandler {
       final Optional<TimeoutOptions> globalOptions,
       final Map<String, TimeoutOptions> timeoutOptionsByMethod) {
     try {
-      final String bodyAsString = ctx.getBodyAsString();
-      if (bodyAsString != null) {
-        final String json = ctx.getBodyAsString().trim();
-        Optional<TimeoutOptions> methodTimeoutOptions = Optional.empty();
-        if (!json.isEmpty() && json.charAt(0) == '{') {
-          final JsonObject requestBodyJsonObject = new JsonObject(json);
-          ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), requestBodyJsonObject);
-          final String method = requestBodyJsonObject.getString("method");
-          methodTimeoutOptions = Optional.ofNullable(timeoutOptionsByMethod.get(method));
-        }
-        methodTimeoutOptions
-            .or(() -> globalOptions)
-            .ifPresent(
-                timeoutOptions -> {
-                  long tid =
-                      ctx.vertx()
-                          .setTimer(
-                              timeoutOptions.getTimeoutMillis(),
-                              t -> {
-                                ctx.fail(timeoutOptions.getErrorCode());
-                                ctx.response().close();
-                              });
-                  ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
-                });
+      Optional<TimeoutOptions> methodTimeoutOptions = Optional.empty();
+      if (ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name())) {
+        final JsonObject requestBodyJsonObject =
+            ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+        final String method = requestBodyJsonObject.getString("method");
+        methodTimeoutOptions = Optional.ofNullable(timeoutOptionsByMethod.get(method));
       }
+      methodTimeoutOptions
+          .or(() -> globalOptions)
+          .ifPresent(
+              timeoutOptions -> {
+                long tid =
+                    ctx.vertx()
+                        .setTimer(
+                            timeoutOptions.getTimeoutMillis(),
+                            t -> {
+                              ctx.fail(timeoutOptions.getErrorCode());
+                              ctx.response().close();
+                            });
+                ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
+              });
     } finally {
       ctx.next();
     }

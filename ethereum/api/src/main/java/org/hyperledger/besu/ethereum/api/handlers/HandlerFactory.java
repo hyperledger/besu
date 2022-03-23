@@ -39,4 +39,8 @@ public class HandlerFactory {
       final AuthenticationService authenticationService, final Collection<String> noAuthRpcApis) {
     return AuthenticationHandler.handler(authenticationService, noAuthRpcApis);
   }
+
+  public static Handler<RoutingContext> jsonRpcParser() {
+    return JsonRpcParserHandler.handler();
+  }
 }
