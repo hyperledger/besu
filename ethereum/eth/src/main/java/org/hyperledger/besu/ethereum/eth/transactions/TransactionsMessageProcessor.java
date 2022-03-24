@@ -97,7 +97,7 @@ class TransactionsMessageProcessor {
 
       alreadySeenTransactionsCounter
           .labels(TRANSACTIONS)
-          .inc((long)incomingTransactions.size() - freshTransactions.size());
+          .inc((long) incomingTransactions.size() - freshTransactions.size());
       traceLambda(
           LOG,
           "Received transactions message from {}, incoming transactions {}, incoming list {}"
