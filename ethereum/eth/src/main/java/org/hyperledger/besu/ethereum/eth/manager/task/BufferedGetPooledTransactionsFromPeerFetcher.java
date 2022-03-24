@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,7 +50,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final MetricsSystem metricsSystem;
   private final EthPeer peer;
   private final Queue<Hash> txAnnounces;
-  private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
+  private final Counter alreadySeenTransactionsCounter;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
@@ -67,11 +66,13 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     this.txAnnounces = Queues.synchronizedQueue(EvictingQueue.create(MAX_PENDING_TRANSACTIONS));
 
     this.alreadySeenTransactionsCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "remote_already_seen_total",
-            "Total number of received transactions already seen",
-            "source");
+        metricsSystem
+            .createLabelledCounter(
+                BesuMetricCategory.TRANSACTION_POOL,
+                "remote_already_seen_total",
+                "Total number of received transactions already seen",
+                "source")
+            .labels(HASHES);
   }
 
   public void requestTransactions() {
@@ -117,7 +118,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     }
 
     final int alreadySeenCount = discarded;
-    alreadySeenTransactionsCounter.labels(HASHES).inc(alreadySeenCount);
+    alreadySeenTransactionsCounter.inc(alreadySeenCount);
     traceLambda(
         LOG,
         "Transaction hashes to request from peer {}, fresh count {}, already seen count {}",

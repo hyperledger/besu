@@ -27,7 +27,6 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -46,7 +45,7 @@ class TransactionsMessageProcessor {
   private final PeerTransactionTracker transactionTracker;
   private final TransactionPool transactionPool;
   private final Counter totalSkippedTransactionsMessageCounter;
-  private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
+  private final Counter alreadySeenTransactionsCounter;
 
   public TransactionsMessageProcessor(
       final PeerTransactionTracker transactionTracker,
@@ -67,11 +66,13 @@ class TransactionsMessageProcessor {
             SKIPPED_MESSAGES_LOGGING_THRESHOLD);
 
     alreadySeenTransactionsCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            "remote_already_seen_total",
-            "Total number of received transactions already seen",
-            "source");
+        metricsSystem
+            .createLabelledCounter(
+                BesuMetricCategory.TRANSACTION_POOL,
+                "remote_already_seen_total",
+                "Total number of received transactions already seen",
+                "source")
+            .labels(TRANSACTIONS);
   }
 
   void processTransactionsMessage(
@@ -95,9 +96,8 @@ class TransactionsMessageProcessor {
 
       transactionTracker.markTransactionsAsSeen(peer, incomingTransactions);
 
-      alreadySeenTransactionsCounter
-          .labels(TRANSACTIONS)
-          .inc((long) incomingTransactions.size() - freshTransactions.size());
+      alreadySeenTransactionsCounter.inc(
+          (long) incomingTransactions.size() - freshTransactions.size());
       traceLambda(
           LOG,
           "Received transactions message from {}, incoming transactions {}, incoming list {}"
