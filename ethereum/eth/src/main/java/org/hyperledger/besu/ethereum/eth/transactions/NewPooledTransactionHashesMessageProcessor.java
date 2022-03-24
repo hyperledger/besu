@@ -51,7 +51,7 @@ public class NewPooledTransactionHashesMessageProcessor {
       scheduledTasks;
 
   private final PeerTransactionTracker transactionTracker;
-  private final Counter totalSkippedTransactionsMessageCounter;
+  private final Counter totalSkippedNewPooledTransactionHashesMessageCounter;
   private final TransactionPool transactionPool;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
@@ -71,15 +71,15 @@ public class NewPooledTransactionHashesMessageProcessor {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
-    this.totalSkippedTransactionsMessageCounter =
+    this.totalSkippedNewPooledTransactionHashesMessageCounter =
         new RunnableCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.TRANSACTION_POOL,
-                "pending_transactions_messages_skipped_total",
-                "Total number of pending transactions messages skipped by the processor."),
+                "new_pooled_transaction_hashes_messages_skipped_total",
+                "Total number of new pooled transaction hashes messages skipped by the processor."),
             () ->
                 LOG.warn(
-                    "{} expired transaction messages have been skipped.",
+                    "{} expired new pooled transaction hashes messages have been skipped.",
                     SKIPPED_MESSAGES_LOGGING_THRESHOLD),
             SKIPPED_MESSAGES_LOGGING_THRESHOLD);
     this.scheduledTasks = new ConcurrentHashMap<>();
@@ -94,7 +94,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
-      totalSkippedTransactionsMessageCounter.inc();
+      totalSkippedNewPooledTransactionHashesMessageCounter.inc();
     }
   }
 
