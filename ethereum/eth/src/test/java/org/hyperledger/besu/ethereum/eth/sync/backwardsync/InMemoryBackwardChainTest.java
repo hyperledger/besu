@@ -22,10 +22,15 @@ import static org.hyperledger.besu.ethereum.eth.sync.backwardsync.ChainForTestCr
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +46,7 @@ public class InMemoryBackwardChainTest {
 
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
+  GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
 
   @Before
   public void prepareData() {
@@ -54,14 +60,16 @@ public class InMemoryBackwardChainTest {
             Hash::toArrayUnsafe,
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
+    chainStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
 
     blocks = prepareChain(ELEMENTS, HEIGHT);
   }
 
   @Test
   public void shouldReturnFirstHeaderCorrectly() {
-    BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 4).getHeader());
@@ -69,10 +77,17 @@ public class InMemoryBackwardChainTest {
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 4).getHeader());
   }
 
+  @Nonnull
+  private BackwardChain createChainFromBlock(final Block pivot) {
+    final BackwardChain backwardChain =
+        new BackwardChain(headersStorage, blocksStorage, chainStorage);
+    backwardChain.appendTrustedBlock(pivot);
+    return backwardChain;
+  }
+
   @Test
   public void shouldSaveHeadersWhenHeightAndHashMatches() {
-    BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 4).getHeader());
@@ -82,8 +97,7 @@ public class InMemoryBackwardChainTest {
 
   @Test
   public void shouldNotSaveHeadersWhenWrongHeight() {
-    BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
     assertThatThrownBy(
@@ -96,8 +110,7 @@ public class InMemoryBackwardChainTest {
 
   @Test
   public void shouldNotSaveHeadersWhenWrongHash() {
-    BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
     BlockHeader wrongHashHeader = prepareWrongParentHash(blocks.get(blocks.size() - 4).getHeader());
@@ -109,54 +122,9 @@ public class InMemoryBackwardChainTest {
   }
 
   @Test
-  public void shouldMergeConnectedChains() {
-
-    BackwardChain firstChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
-    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
-    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
-
-    BackwardChain secondChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 4));
-    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 5).getHeader());
-    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 6).getHeader());
-
-    BlockHeader firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
-    assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
-
-    firstChain.prependChain(secondChain);
-
-    firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
-    assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 6).getHeader());
-  }
-
-  @Test
-  public void shouldNotMergeNotConnectedChains() {
-
-    BackwardChain firstChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
-    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
-    firstChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
-
-    BackwardChain secondChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 5));
-    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 6).getHeader());
-    secondChain.prependAncestorsHeader(blocks.get(blocks.size() - 7).getHeader());
-
-    BlockHeader firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
-    assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
-
-    firstChain.prependChain(secondChain);
-
-    firstHeader = firstChain.getFirstAncestorHeader().orElseThrow();
-    assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
-  }
-
-  @Test
   public void shouldDropFromTheEnd() {
 
-    BackwardChain backwardChain =
-        new BackwardChain(headersStorage, blocksStorage, blocks.get(blocks.size() - 1));
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
     backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
 
@@ -172,5 +140,60 @@ public class InMemoryBackwardChainTest {
 
     firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 1).getHeader());
+  }
+
+  @Test
+  public void shouldCreateChainFromScheduleAndFunctions() {
+    final StorageProvider provider = new InMemoryKeyValueStorageProvider();
+    BlockHeaderFunctions functions = new MainnetBlockHeaderFunctions();
+
+    final BackwardChain chain = BackwardChain.from(provider, functions);
+    assertThat(chain).isNotNull();
+
+    chain.clear();
+  }
+
+  @Test
+  public void shouldAddHeaderToQueue() {
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(3));
+    Optional<Hash> firstHash = backwardChain.getFirstHash();
+    assertThat(firstHash).isNotPresent();
+    backwardChain.addNewHash(blocks.get(7).getHash());
+    backwardChain.addNewHash(blocks.get(9).getHash());
+    backwardChain.addNewHash(blocks.get(9).getHash());
+    backwardChain.addNewHash(blocks.get(11).getHash());
+
+    firstHash = backwardChain.getFirstHash();
+    assertThat(firstHash).isPresent();
+    assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(7).getHash());
+    firstHash = backwardChain.getFirstHash();
+    assertThat(firstHash).isPresent();
+    assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(9).getHash());
+    firstHash = backwardChain.getFirstHash();
+    assertThat(firstHash).isPresent();
+    assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(11).getHash());
+  }
+
+  @Test
+  public void shouldChangeFirstAncestorIfPivotIsToFar() {
+    BackwardChain backwardChain = createChainFromBlock(blocks.get(3));
+    backwardChain.appendTrustedBlock(blocks.get(4));
+
+    Optional<BlockHeader> firstAncestorHeader = backwardChain.getFirstAncestorHeader();
+    assertThat(firstAncestorHeader).isPresent();
+    assertThat(firstAncestorHeader.orElseThrow()).isEqualTo(blocks.get(3).getHeader());
+    Optional<Block> pivot = backwardChain.getPivot();
+    assertThat(pivot).isPresent();
+    assertThat(pivot.orElseThrow()).isEqualTo(blocks.get(4));
+
+    backwardChain.appendTrustedBlock(blocks.get(7));
+
+    firstAncestorHeader = backwardChain.getFirstAncestorHeader();
+
+    assertThat(firstAncestorHeader).isPresent();
+    assertThat(firstAncestorHeader.orElseThrow()).isEqualTo(blocks.get(7).getHeader());
+    pivot = backwardChain.getPivot();
+    assertThat(pivot).isPresent();
+    assertThat(pivot.orElseThrow()).isEqualTo(blocks.get(7));
   }
 }

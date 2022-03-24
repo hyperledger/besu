@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -76,6 +77,7 @@ public class TransitionControllerBuilderTest {
             new TransitionProtocolSchedule(
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
+    postMergeBuilder.storageProvider(new InMemoryKeyValueStorageProvider());
     when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     when(transitionProtocolSchedule.getPostMergeSchedule()).thenReturn(postMergeProtocolSchedule);
     when(transitionProtocolSchedule.getPreMergeSchedule()).thenReturn(preMergeProtocolSchedule);

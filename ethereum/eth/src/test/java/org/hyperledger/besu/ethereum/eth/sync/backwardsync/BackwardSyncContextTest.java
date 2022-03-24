@@ -21,7 +21,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -32,23 +34,26 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
@@ -56,6 +61,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -86,7 +92,7 @@ public class BackwardSyncContextTest {
   @Mock private BlockValidator blockValidator;
   @Mock private SyncState syncState;
 
-  @Mock private BackwardSyncLookupService backwardSyncLookupService;
+  private BackwardChain backwardChain;
 
   @Before
   public void setup() {
@@ -126,6 +132,7 @@ public class BackwardSyncContextTest {
                       new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
             });
 
+    backwardChain = newBackwardChain();
     context =
         spy(
             new BackwardSyncContext(
@@ -134,30 +141,36 @@ public class BackwardSyncContextTest {
                 metricsSystem,
                 ethContext,
                 syncState,
-                backwardSyncLookupService,
-                new InMemoryKeyValueStorageProvider()));
+                backwardChain));
+    when(context.getBatchSize()).thenReturn(2);
+  }
+
+  private BackwardChain newBackwardChain() {
+    final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
+    final GenericKeyValueStorageFacade<Hash, Block> blocksStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new BlocksConvertor(new MainnetBlockHeaderFunctions()),
+            new InMemoryKeyValueStorage());
+    final GenericKeyValueStorageFacade<Hash, Hash> chainStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+    return new BackwardChain(headersStorage, blocksStorage, chainStorage);
   }
 
   @Test
   public void shouldSyncUntilHash() throws Exception {
     final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
-    when(backwardSyncLookupService.lookup(hash))
-        .thenReturn(CompletableFuture.completedFuture(List.of(getBlockByNumber(REMOTE_HEIGHT))));
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
     respondUntilFutureIsDone(future);
 
     future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
-  }
-
-  @Test
-  public void shouldNotAppendWhenAlreadySyncingHash() {
-    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
-    when(backwardSyncLookupService.lookup(hash))
-        .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
-    final CompletableFuture<Void> fut2 = context.syncBackwardsUntil(hash);
-    assertThat(fut2).isCompleted();
   }
 
   @Test
@@ -189,23 +202,6 @@ public class BackwardSyncContextTest {
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 
-  @Test
-  public void shouldReplaceFlowWhenBlockWasSkipped() throws Exception {
-
-    final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 10));
-
-    final CompletableFuture<Void> secondFuture =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT));
-
-    assertThat(future).isNotSameAs(secondFuture);
-
-    respondUntilFutureIsDone(secondFuture);
-
-    secondFuture.get();
-    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
-  }
-
   private void respondUntilFutureIsDone(final CompletableFuture<Void> future) {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
@@ -216,5 +212,44 @@ public class BackwardSyncContextTest {
   @Nonnull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
+  }
+
+  @Test
+  public void shouldWaitWhenTTDNotReached()
+      throws ExecutionException, InterruptedException, TimeoutException {
+    doReturn(false, false, true).when(context).isOnTTD();
+    context.waitForTTD();
+    verify(context, Mockito.times(2)).getEthContext();
+  }
+
+  @Test
+  public void shouldStartForwardStepWhenOnLocalHeight() {
+    createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
+    doReturn(CompletableFuture.completedFuture(null)).when(context).executeForwardAsync(any());
+
+    context.executeNextStep(null);
+    verify(context).executeForwardAsync(any());
+  }
+
+  @Test
+  public void shouldFinishWhenWorkIsDonw() {
+
+    final CompletableFuture<Void> completableFuture = context.executeNextStep(null);
+    assertThat(completableFuture.isDone()).isTrue();
+  }
+
+  @Test
+  public void shouldCreateAnotherBackwardStepWhenNotOnLocalHeight() {
+    createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
+    doReturn(CompletableFuture.completedFuture(null)).when(context).executeBackwardAsync(any());
+
+    context.executeNextStep(null);
+    verify(context).executeBackwardAsync(any());
+  }
+
+  private void createBackwardChain(final int from, final int until) {
+    for (int i = until; i > from; --i) {
+      backwardChain.prependAncestorsHeader(getBlockByNumber(i - 1).getHeader());
+    }
   }
 }

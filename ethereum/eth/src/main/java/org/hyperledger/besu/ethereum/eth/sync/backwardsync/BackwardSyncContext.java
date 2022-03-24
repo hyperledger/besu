@@ -15,29 +15,25 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,12 +48,10 @@ public class BackwardSyncContext {
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
 
-  private final Map<Long, BackwardChain> backwardChainMap = new ConcurrentHashMap<>();
-  private final AtomicReference<BackwardChain> currentChain = new AtomicReference<>();
   private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
       new AtomicReference<>();
-  private final BackwardSyncLookupService service;
-  private final StorageProvider storageProvider;
+  private final BackwardChain backwardChain;
+  private int batchSize = BATCH_SIZE;
 
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
@@ -65,16 +59,14 @@ public class BackwardSyncContext {
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
-      final BackwardSyncLookupService backwardSyncLookupService,
-      final StorageProvider storageProvider) {
+      final BackwardChain backwardChain) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
-    this.service = backwardSyncLookupService;
-    this.storageProvider = storageProvider;
+    this.backwardChain = backwardChain;
   }
 
   public boolean isSyncing() {
@@ -83,114 +75,49 @@ public class BackwardSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockhash) {
-    final Optional<BackwardChain> chain = getCurrentChain();
-    CompletableFuture<List<Block>> completableFuture;
-    if (chain.isPresent() && chain.get().isTrusted(newBlockhash)) {
+  public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
+    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
+    if (backwardChain.isTrusted(newBlockHash)) {
       debugLambda(
           LOG,
-          "not fetching and appending hash {} to backwards sync since it is present in successors",
-          newBlockhash::toHexString);
-      completableFuture = CompletableFuture.completedFuture(Collections.emptyList());
-    } else {
-      completableFuture = service.lookup(newBlockhash);
+          "not fetching or appending hash {} to backwards sync since it is present in successors",
+          newBlockHash::toHexString);
+      return future;
     }
-
-    // kick off async process to fetch this block by hash then delegate to syncBackwardsUntil
-    final CompletableFuture<Void> future =
-        completableFuture.thenCompose(
-            blocks -> {
-              if (blocks.isEmpty()) {
-                return CompletableFuture.completedFuture(null);
-              } else return this.syncBackwardsUntil(blocks);
-            });
-    this.currentBackwardSyncFuture.set(future);
-    return future;
-  }
-
-  private CompletionStage<Void> syncBackwardsUntil(final List<Block> blocks) {
-    CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
-    for (Block block : blocks) {
-      future = future.thenCompose(unused -> syncBackwardsUntil(block));
+    backwardChain.addNewHash(newBlockHash);
+    if (future != null) {
+      return future;
     }
-    return future;
+    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newBlockHash::toHexString);
+    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
+    return this.currentBackwardSyncFuture.get();
   }
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    final BackwardChain backwardChain = currentChain.get();
-    if (backwardChain == null) {
+    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
+    if (backwardChain.isTrusted(newPivot.getHash())) {
       debugLambda(
           LOG,
-          "Starting new backward sync towards a pivot {} at height {}",
-          () -> newPivot.getHash().toString().substring(0, 20),
-          () -> newPivot.getHeader().getNumber());
-      final BackwardChain newChain =
-          new BackwardChain(
-              storageProvider,
-              ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
-              newPivot);
-      this.currentChain.set(newChain);
-      backwardChainMap.put(newPivot.getHeader().getNumber(), newChain);
-      currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry(newChain));
-      return currentBackwardSyncFuture.get();
+          "not fetching or appending hash {} to backwards sync since it is present in successors",
+          () -> newPivot.getHash().toHexString());
+      return future;
     }
-    if (newPivot.getHeader().getParentHash().equals(currentChain.get().getPivot().getHash())) {
-      LOG.debug(
-          "Backward sync is ongoing. Appending expected next block to the end of backward sync chain");
-      backwardChain.appendExpectedBlock(newPivot);
-      backwardChainMap.put(newPivot.getHeader().getNumber(), backwardChain);
-      return currentBackwardSyncFuture.get();
+    backwardChain.appendTrustedBlock(newPivot);
+    if (future != null) {
+      return future;
     }
-    debugLambda(
+    infoLambda(
         LOG,
-        "Stopping existing backward sync from pivot {} at height {} and restarting with pivot {} at height {}",
-        () -> backwardChain.getPivot().getHash().toString().substring(0, 20),
-        () -> backwardChain.getPivot().getHeader().getNumber(),
-        () -> newPivot.getHash().toString().substring(0, 20),
-        () -> newPivot.getHeader().getNumber());
-
-    BackwardChain newBackwardChain =
-        new BackwardChain(
-            storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule), newPivot);
-    backwardChainMap.put(newPivot.getHeader().getNumber(), newBackwardChain);
-    this.currentChain.set(
-        newBackwardChain); // the current ongoing backward sync will finish its current step and end
-
-    currentBackwardSyncFuture.set(
-        currentBackwardSyncFuture
-            .get()
-            .handle(
-                (unused, error) -> {
-                  if (error != null) {
-                    if ((error.getCause() != null)
-                        && (error.getCause() instanceof BackwardSyncException)) {
-                      LOG.info(
-                          "Previous Backward sync ended exceptionally with message {}",
-                          error.getMessage());
-                    } else {
-                      LOG.info(
-                          "Previous Backward sync ended exceptionally with message {}",
-                          error.getMessage());
-                      if (error instanceof RuntimeException) {
-                        throw (RuntimeException) error;
-                      } else {
-                        throw new BackwardSyncException(error);
-                      }
-                    }
-                  } else {
-                    LOG.info("The previous backward sync finished without and exception");
-                  }
-
-                  return newBackwardChain;
-                })
-            .thenCompose(this::prepareBackwardSyncFutureWithRetry));
-    return currentBackwardSyncFuture.get();
+        "Starting new backward sync towards a pivot {}({})",
+        () -> newPivot.getHeader().getNumber(),
+        () -> newPivot.getHash().toHexString());
+    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
+    return this.currentBackwardSyncFuture.get();
   }
 
-  private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(
-      final BackwardChain backwardChain) {
+  private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
 
-    CompletableFuture<Void> f = prepareBackwardSyncFuture(backwardChain);
+    CompletableFuture<Void> f = prepareBackwardSyncFuture();
     for (int i = 0; i < MAX_RETRIES; i++) {
       f =
           f.thenApply(CompletableFuture::completedFuture)
@@ -207,13 +134,13 @@ public class BackwardSyncContext {
                     return ethContext
                         .getScheduler()
                         .scheduleFutureTask(
-                            () -> prepareBackwardSyncFuture(backwardChain), Duration.ofSeconds(5));
+                            () -> prepareBackwardSyncFuture(), Duration.ofSeconds(5));
                   })
               .thenCompose(Function.identity());
     }
     return f.handle(
         (unused, throwable) -> {
-          this.cleanup(backwardChain);
+          this.currentBackwardSyncFuture.set(null);
           if (throwable != null) {
             throw new BackwardSyncException(throwable);
           }
@@ -221,20 +148,8 @@ public class BackwardSyncContext {
         });
   }
 
-  private CompletableFuture<Void> prepareBackwardSyncFuture(final BackwardChain backwardChain) {
-    return new BackwardSyncPhase(this, backwardChain)
-        .executeAsync(null)
-        .thenCompose(new ForwardSyncPhase(this, backwardChain)::executeAsync);
-  }
-
-  private void cleanup(final BackwardChain chain) {
-    if (currentChain.compareAndSet(chain, null)) {
-      this.currentBackwardSyncFuture.set(null);
-    }
-  }
-
-  public Optional<BackwardChain> getCurrentChain() {
-    return Optional.ofNullable(currentChain.get());
+  private CompletableFuture<Void> prepareBackwardSyncFuture() {
+    return executeNextStep(null);
   }
 
   public ProtocolSchedule getProtocolSchedule() {
@@ -261,15 +176,78 @@ public class BackwardSyncContext {
     return getBlockValidator(block.getHeader().getNumber());
   }
 
-  public Optional<BackwardChain> findCorrectChainFromPivot(final long number) {
-    return Optional.ofNullable(backwardChainMap.get(number));
-  }
-
-  public void putCurrentChainToHeight(final long height, final BackwardChain backwardChain) {
-    backwardChainMap.put(height, backwardChain);
-  }
-
   public boolean isOnTTD() {
     return syncState.hasReachedTerminalDifficulty().orElse(false);
+  }
+
+  public CompletableFuture<Void> stop() {
+    return currentBackwardSyncFuture.get();
+  }
+
+  public CompletableFuture<Void> executeNextStep(final Void unused) {
+    final Optional<Hash> firstHash = backwardChain.getFirstHash();
+    if (firstHash.isPresent()) {
+      return executeSyncStep(firstHash.get());
+    }
+    if (!isOnTTD()) {
+      return waitForTTD().thenCompose(this::executeNextStep);
+    }
+    final Optional<BlockHeader> firstAncestorHeader = backwardChain.getFirstAncestorHeader();
+    if (firstAncestorHeader.isEmpty()) {
+      LOG.info("The Backward sync is done...");
+      return CompletableFuture.completedFuture(null);
+    }
+    if (getProtocolContext().getBlockchain().getChainHead().getHeight()
+        > firstAncestorHeader.get().getNumber() - 1) {
+      LOG.info(
+          "Backward reached bellow previous head {}({}) : {} ({})",
+          getProtocolContext().getBlockchain().getChainHead().getHeight(),
+          getProtocolContext().getBlockchain().getChainHead().getHash().toHexString(),
+          firstAncestorHeader.get().getNumber(),
+          firstAncestorHeader.get().getHash());
+    }
+    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.get().getParentHash())) {
+      return executeForwardAsync(firstAncestorHeader.get());
+    }
+    return executeBackwardAsync(firstAncestorHeader.get());
+  }
+
+  private CompletableFuture<Void> executeSyncStep(final Hash hash) {
+    return new SyncStepStep(this, backwardChain).executeAsync(hash);
+  }
+
+  @VisibleForTesting
+  protected CompletableFuture<Void> executeBackwardAsync(final BlockHeader firstHeader) {
+    return new BackwardSyncStep(this, backwardChain).executeAsync(firstHeader);
+  }
+
+  @VisibleForTesting
+  protected CompletableFuture<Void> executeForwardAsync(final BlockHeader firstHeader) {
+    return new ForwardSyncStep(this, backwardChain).executeAsync();
+  }
+
+  @VisibleForTesting
+  protected CompletableFuture<Void> waitForTTD() {
+    if (isOnTTD()) {
+      return CompletableFuture.completedFuture(null);
+    }
+    LOG.debug("Did not reach TTD yet, falling asleep...");
+    return getEthContext()
+        .getScheduler()
+        .scheduleFutureTask(this::waitForTTD, Duration.ofSeconds(5));
+  }
+
+  // In rare case when we request too many headers/blocks we get response that does not contain all
+  // data and we might want to retry with smaller batch size
+  public int getBatchSize() {
+    return batchSize;
+  }
+
+  public void halfBatchSize() {
+    this.batchSize = batchSize / 2 + 1;
+  }
+
+  public void resetBatchSize() {
+    this.batchSize = BATCH_SIZE;
   }
 }
