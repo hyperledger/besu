@@ -42,20 +42,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.rocksdb.BlockBasedTableConfig;
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.ColumnFamilyOptions;
-import org.rocksdb.DBOptions;
-import org.rocksdb.Env;
-import org.rocksdb.LRUCache;
-import org.rocksdb.OptimisticTransactionDB;
-import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksIterator;
-import org.rocksdb.Statistics;
-import org.rocksdb.Status;
-import org.rocksdb.TransactionDBOptions;
-import org.rocksdb.WriteOptions;
+import org.rocksdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +129,7 @@ public class RocksDBColumnarKeyValueStorage
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
+    return new BlockBasedTableConfig().setBlockCache(cache).setFilterPolicy(new BloomFilter(10, false));
   }
 
   @Override
