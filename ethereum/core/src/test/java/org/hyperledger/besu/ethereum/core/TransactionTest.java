@@ -106,7 +106,7 @@ public class TransactionTest {
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
 
     try {
-      final Bytes rlp = spec.getRlp();
+      final Bytes rlp = spec.getTxBytes();
 
       // Test transaction deserialization (will throw an exception if it fails).
       final Transaction transaction = Transaction.readFrom(RLP.input(rlp));

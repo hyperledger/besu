@@ -198,7 +198,7 @@ public class JsonTestParameters<S, T> {
     final List<File> files = new ArrayList<>();
     for (final String path : paths) {
       final URL url = classLoader.getResource(path);
-      checkState(url != null, "Cannot find test directory " + path);
+      checkState(url != null, "Cannot find test directory %s", path);
       final Path dir;
       try {
         dir = Paths.get(url.toURI());
@@ -227,7 +227,12 @@ public class JsonTestParameters<S, T> {
       return objectMapper.readValue(file, javaType);
     } catch (final IOException e) {
       throw new RuntimeException(
-          "Error parsing test case file " + file + " to class " + jsonFileMappedType, e);
+          "Error parsing test case file "
+              + file
+              + " to class "
+              + jsonFileMappedType
+              + ": "
+              + e.getMessage());
     }
   }
 
