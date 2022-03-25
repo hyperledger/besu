@@ -20,6 +20,7 @@ import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipel
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.TaskQueueIterator;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,12 +233,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcess(
-                  "checkNewPivotBlock",
-                  tasks -> {
-                    pivotBlockManager.check(__ -> {});
-                    return tasks;
-                  })
+                  .thenProcess(
+                          "checkNewPivotBlock",
+                          tasks -> {
+                              pivotBlockManager.check(
+                                      blockHeader -> {
+                                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
+                                      });
+                              return tasks;
+                          })
               .thenProcessAsync(
                   "batchDownloadData",
                   requestTask -> requestDataStep.requestAccountData(requestTask),
@@ -254,12 +259,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "world_state_download")
               .inBatches(taskCountPerRequest)
-              .thenProcess(
-                  "checkNewPivotBlock",
-                  tasks -> {
-                    pivotBlockManager.check(__ -> {});
-                    return tasks;
-                  })
+                  .thenProcess(
+                          "checkNewPivotBlock",
+                          tasks -> {
+                              pivotBlockManager.check(
+                                      blockHeader -> {
+                                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
+                                      });
+                              return tasks;
+                          })
               .thenProcessAsyncOrdered(
                   "batchDownloadData",
                   requestTask -> requestDataStep.requestStorage(requestTask),
@@ -279,12 +287,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcess(
-                  "checkNewPivotBlock",
-                  tasks -> {
-                    pivotBlockManager.check(__ -> {});
-                    return tasks;
-                  })
+                  .thenProcess(
+                          "checkNewPivotBlock",
+                          tasks -> {
+                              pivotBlockManager.check(
+                                      blockHeader -> {
+                                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
+                                      });
+                              return tasks;
+                          })
               .thenProcessAsyncOrdered(
                   "batchDownloadData",
                   requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
@@ -351,14 +362,18 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "world_state_download")
               .thenFlatMapInParallel(
                   "requestLoadLocalData",
-                  task -> loadLocalDataStep.loadLocalData(task, requestsToComplete),
+                  task -> loadLocalDataStep.loadLocalDataTrieNode(task, requestsToComplete),
                   3,
                   bufferCapacity)
-              .inBatches(taskCountPerRequest)
+                  .inBatches(
+                          taskCountPerRequest)
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> downloadState.clearTrieNodes());
+                      pivotBlockManager.check(
+                              blockHeader -> {
+                                  if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
+                              });
                     return tasks;
                   })
               .thenProcessAsync(

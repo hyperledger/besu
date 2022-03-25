@@ -16,25 +16,33 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
+public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  AccountTrieNodeDataRequest(final Hash hash, final Hash originalRootHash, final Bytes location) {
+  private final HashSet<Bytes> incompleteAccounts;
+
+  AccountTrieNodeDataRequest(final Hash hash, final Hash originalRootHash, final Bytes location, final HashSet<Bytes> accountHeals) {
     super(hash, originalRootHash, location);
+    this.incompleteAccounts = accountHeals;
   }
 
   @Override
@@ -60,7 +68,46 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
-    return createAccountTrieNodeDataRequest(childHash, getRootHash(), location);
+    return createAccountTrieNodeDataRequest(childHash, getRootHash(), location, getSubLocation(location));
+  }
+
+  public HashSet<Bytes> getSubLocation(final Bytes location){
+    final HashSet<Bytes> ee = new HashSet<>();
+    for (Bytes l: incompleteAccounts) {
+      if(l.commonPrefixLength(location)==location.size()){
+        ee.add(l);
+      }
+    }
+    return ee;
+  }
+
+  @Override
+  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage){
+    final List<SnapDataRequest> requests = new ArrayList<>();
+    final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
+            new StoredMerklePatriciaTrie<>(
+                    worldStateStorage::getAccountStateTrieNode,
+                    Hash.hash(data),
+                    getLocation(),
+                    Function.identity(),
+                    Function.identity());
+    for (Bytes account: incompleteAccounts) {
+      final Bytes32 accountHash = Bytes32.wrap(CompactEncoding.pathToBytes(account));
+      accountTrie
+              .getPath(Bytes.wrap(account.toArrayUnsafe(), getLocation().size(), account.size()-getLocation().size())).map(
+                      RLP::input
+              ).map(StateTrieAccountValue::readFrom).ifPresent(stateTrieAccountValue -> {
+                // If we detect an account storage we fill it with snapsync before completing with a heal
+                System.out.println("account to fix "+Hash.wrap(accountHash));
+                requests.add(createStorageTrieNodeDataRequest(
+                        stateTrieAccountValue.getStorageRoot(),
+                        Hash.wrap(accountHash),
+                        getRootHash(),
+                        Bytes.EMPTY
+                ));
+              });
+    }
+    return requests.stream();
   }
 
   @Override
@@ -88,11 +135,11 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      // If storage is non-empty queue download
-      final SnapDataRequest storageNode =
+      // If we detect an account storage we fill it with snapsync before completing with a heal
+      final SnapDataRequest storageTrieRequest =
           createStorageTrieNodeDataRequest(
               accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
-      builder.add(storageNode);
+      builder.add(storageTrieRequest);
     }
     return builder.build();
   }

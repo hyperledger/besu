@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.datatypes.Hash;
 
 /**
  * A {@link MerklePatriciaTrie} that persists trie nodes to a {@link MerkleStorage} key/value store.
@@ -79,6 +80,19 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
             : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
   }
 
+  public StoredMerklePatriciaTrie(
+          final NodeLoader nodeLoader,
+          final Hash rootHash,
+          final Bytes rootLocation,
+          final Function<V, Bytes> valueSerializer,
+          final Function<Bytes, V> valueDeserializer) {
+    this.nodeFactory = new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer);
+    this.root =
+            rootHash.equals(EMPTY_TRIE_NODE_HASH)
+                    ? NullNode.instance()
+                    : new StoredNode<>(nodeFactory, rootLocation, rootHash);
+  }
+
   /**
    * Create a trie.
    *
@@ -98,6 +112,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   public Optional<V> get(final K key) {
     checkNotNull(key);
     return root.accept(getVisitor, bytesToPath(key)).getValue();
+  }
+
+  @Override
+  public Optional<V> getPath(final K path) {
+    checkNotNull(path);
+    return root.accept(getVisitor, path).getValue();
   }
 
   @Override

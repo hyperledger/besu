@@ -22,7 +22,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class StoredNode<V> implements Node<V> {
+public class StoredNode<V> implements Node<V> {
   private final StoredNodeFactory<V> nodeFactory;
   private final Bytes location;
   private final Bytes32 hash;

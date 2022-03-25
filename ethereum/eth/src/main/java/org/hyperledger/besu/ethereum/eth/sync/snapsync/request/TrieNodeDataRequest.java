@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_N
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -41,6 +42,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   private final Bytes location;
   protected Bytes data;
 
+  protected boolean isInCache = false;
   protected boolean requiresPersisting = true;
 
   protected TrieNodeDataRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
@@ -57,11 +59,10 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
 
-    if (!isValid() || isExpired(snapSyncState) || pendingChildren.get() > 0) {
+    if (isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
       return 0;
     }
-
     int saved = 0;
     if (requiresPersisting) {
       checkNotNull(data, "Must set data before node can be persisted.");
@@ -78,7 +79,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
 
   @Override
   public Stream<SnapDataRequest> getChildRequests(
-      final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
+          final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
     if (!isValid()) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
@@ -109,8 +110,8 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
 
   @Override
   public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider) {
+          final WorldDownloadState<SnapDataRequest> downloadState,
+          final WorldStateProofProvider worldStateProofProvider, final SnapSyncState snapSyncState) {
     return true;
   }
 
@@ -128,8 +129,16 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
     return snapSyncState.isExpired(this);
   }
 
-  public void setData(final Bytes data) {
-    this.data = data;
+  public boolean isInCache() {
+    return isInCache;
+  }
+
+  public boolean isRequiresPersisting() {
+    return requiresPersisting;
+  }
+
+  public void setInCache(final boolean inCache) {
+    isInCache = inCache;
   }
 
   public Bytes32 getNodeHash() {
@@ -154,6 +163,10 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
     return Bytes.concatenate(new ArrayList<>(getTrieNodePath()));
   }
 
+
+  public void setData(final Bytes data) {
+    this.data = data;
+  }
   public void setRequiresPersisting(final boolean requiresPersisting) {
     this.requiresPersisting = requiresPersisting;
   }
@@ -168,6 +181,10 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
 
   protected abstract SnapDataRequest createChildNodeDataRequest(
       final Hash childHash, final Bytes location);
+
+  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage){
+    return Stream.empty();
+  }
 
   protected abstract Stream<SnapDataRequest> getRequestsFromTrieNodeValue(
       final WorldStateStorage worldStateStorage,

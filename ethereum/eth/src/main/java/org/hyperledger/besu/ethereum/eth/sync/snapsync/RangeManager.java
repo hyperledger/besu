@@ -42,8 +42,6 @@ public class RangeManager {
   public static final Hash MAX_RANGE =
       Hash.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-  public static Map<Bytes32, Bytes32> ALL_RANGES = generateAllRanges(32);
-
   public static Map<Bytes32, Bytes32> generateAllRanges(final int sizeRange) {
     if (sizeRange == 1) {
       return Map.ofEntries(Map.entry(MIN_RANGE, MAX_RANGE));
@@ -77,7 +75,7 @@ public class RangeManager {
       final BigInteger min, final BigInteger max, final int nbRange) {
     final BigInteger rangeSize = max.subtract(min).divide(BigInteger.valueOf(nbRange));
     final TreeMap<Bytes32, Bytes32> ranges = new TreeMap<>();
-    if (min.equals(max)) {
+    if (min.equals(max) || nbRange==1) {
       ranges.put(format(min), format(max));
       return ranges;
     }

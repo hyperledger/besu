@@ -73,7 +73,7 @@ public class GetTrieNodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes, 
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.info(
+          LOG.trace(
               "Requesting trie nodes from {} {}", peer, (paths.size() > 1 ? paths.size() : paths));
           return peer.getSnapTrieNode(blockHeader.getStateRoot(), paths);
         },

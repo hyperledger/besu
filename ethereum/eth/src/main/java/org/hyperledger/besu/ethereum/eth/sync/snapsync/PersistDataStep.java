@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -46,18 +47,23 @@ public class PersistDataStep {
       if (task.getData().isValid()) {
         // enqueue child requests
         final Stream<SnapDataRequest> childRequests =
-            task.getData().getChildRequests(worldStateStorage, snapSyncState);
-        if (!task.getData().isExpired(snapSyncState)) {
+            task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+        if(!(task.getData() instanceof TrieNodeDataRequest)){
           enqueueChildren(childRequests);
-        } else if (childRequests.findAny().isPresent()) {
-          // not saved because it's expired and missing child requests
-          return tasks;
+        }else {
+          if (!task.getData().isExpired(snapSyncState)) {
+            enqueueChildren(childRequests);
+          } else if (childRequests.findAny().isPresent()) {
+            // not saved because it's expired and missing child requests
+            return tasks;
+          }
         }
+
         // persist nodes
         final int persistedNodes =
             task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
         if (persistedNodes > 0) {
-          if (snapSyncState.isHealInProgress()) {
+          if (task.getData() instanceof TrieNodeDataRequest) {
             downloadState.getHealedNodes().inc(persistedNodes);
           } else {
             downloadState.getGeneratedNodes().inc(persistedNodes);
@@ -67,8 +73,8 @@ public class PersistDataStep {
     }
     try {
       updater.commit();
-    } catch (Exception e) {
-      System.out.println("Busy " + tasks.get(0).getData().getClass());
+    }catch (Exception e){
+      System.out.println(tasks.get(0).getData().getClass());
       throw e;
     }
     return tasks;

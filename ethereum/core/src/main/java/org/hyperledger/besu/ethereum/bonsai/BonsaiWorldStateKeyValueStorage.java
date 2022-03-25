@@ -82,7 +82,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash, final boolean lazyMode) {
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response = Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in accountStorage to accelerate the next time we
@@ -129,7 +129,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     } else {
       return trieBranchStorage
           .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap);
+          .map(Bytes::wrap).filter(bytes -> Hash.hash(bytes).equals(nodeHash));
     }
   }
 
@@ -168,9 +168,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public Optional<Bytes> getStorageValueBySlotHash(
       final Hash accountHash, final Hash slotHash, final boolean lazyMode) {
     Optional<Bytes> response =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-            .map(Bytes::wrap);
+        Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       // When accessing a trie leaf we store it in storageStorage to accelerate the next time we
@@ -204,6 +202,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
     return Optional.empty();
+  }
+
+  @Override
+  public Optional<Bytes> getTmpNodeData(final Bytes32 hash) {
+    return trieLogStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -342,6 +345,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       }
       trieBranchStorageTransaction.put(
           Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
+      return this;
+    }
+
+    @Override
+    public WorldStateStorage.Updater putTmpNode(final Bytes32 nodeHash, final Bytes value) {
+      trieLogStorageTransaction.put(nodeHash.toArrayUnsafe(), value.toArrayUnsafe());
       return this;
     }
 

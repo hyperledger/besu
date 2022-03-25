@@ -17,13 +17,12 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountHealRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -59,8 +59,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountHealRequests =
-      new InMemoryTaskQueue<>();
+  public final HashSet<Bytes> inconsistentAccounts =
+      new HashSet<>();
 
   private final SnapSyncState snapSyncState;
 
@@ -122,19 +122,17 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingCodeRequests.allTasksCompleted()
         && pendingStorageRequests.allTasksCompleted()
         && pendingBigStorageRequests.allTasksCompleted()
-        && pendingAccountHealRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
         snapSyncState.setHealStatus(true);
         enqueueRequest(
             createAccountTrieNodeDataRequest(
-                snapSyncState.getPivotBlockHeader().orElseThrow().getStateRoot(), Bytes.EMPTY));
+                snapSyncState.getPivotBlockHeader().orElseThrow().getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
       } else {
 
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
-
         LOG.info("Finished downloading world state from peers (generated nodes {} / healed nodes {})", generatedNodes.get(), healedNodes.get());
         internalFuture.complete(null);
         return true;
@@ -157,13 +155,20 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         }
       } else if (request instanceof AccountRangeDataRequest) {
         pendingAccountRequests.add(request);
-      } else if (request instanceof AccountHealRequest) {
-        pendingAccountHealRequests.add(request);
       } else {
         pendingTrieNodeRequests.add(request);
       }
       notifyAll();
     }
+  }
+
+  public void addInconsistentAccount(final Bytes account){
+    System.out.println(" addInconsistentAccount "+ CompactEncoding.pathToBytes(account));
+    inconsistentAccounts.add(account);
+  }
+
+  public void removeInconsistentAccount(final Bytes account){
+    inconsistentAccounts.remove(account);
   }
 
   @Override
@@ -224,12 +229,15 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
-        List.of(pendingAccountHealRequests, pendingTrieNodeRequests));
+        List.of(pendingTrieNodeRequests));
   }
 
   public void clearTrieNodes() {
     worldStateStorage.clearReadAccessDatabase();
     pendingTrieNodeRequests.clearInternalQueues();
+    pendingAccountRequests.clearInternalQueue();
+    pendingStorageRequests.clearInternalQueue();
+    pendingBigStorageRequests.clearInternalQueue();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);
   }

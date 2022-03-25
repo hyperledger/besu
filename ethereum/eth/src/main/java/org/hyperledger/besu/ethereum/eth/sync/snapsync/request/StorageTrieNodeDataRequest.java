@@ -38,7 +38,6 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Hash nodeHash, final Hash accountHash, final Hash rootHash, final Bytes location) {
     super(nodeHash, rootHash, location);
     this.accountHash = accountHash;
-    System.out.println("StorageTrieNodeDataRequest "+getAccountHash()+" "+getLocation());
   }
 
   @Override
@@ -47,7 +46,9 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Updater updater,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
-    System.out.println("doPersist "+getAccountHash()+" "+getLocation());
+    /*if (isRoot()) {
+      ((SnapWorldDownloadState)downloadState).removeInconsistentAccount(CompactEncoding.bytesToPath(accountHash));
+    }*/
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;
   }

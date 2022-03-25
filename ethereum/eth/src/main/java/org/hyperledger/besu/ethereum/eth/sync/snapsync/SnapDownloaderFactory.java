@@ -69,21 +69,21 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
 
-    /*final FastSyncState fastSyncState =
+    final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
-      LOG.info(
-          "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
+      //LOG.info(
+        //  "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
-    }*/
+    }
 
     final SnapSyncState snapSyncState =
         new SnapSyncState(
             fastSyncStateStorage.loadState(
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
-    worldStateStorage.clear();
+    //worldStateStorage.clear();
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection(metricsSystem);

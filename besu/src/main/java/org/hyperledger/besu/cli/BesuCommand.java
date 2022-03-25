@@ -1780,19 +1780,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         !SyncMode.FAST.equals(syncMode) && !SyncMode.X_SNAP.equals(syncMode),
         singletonList("--fast-sync-min-peers"));
 
-    // Xsnap only available with Bonsai
-    if (SyncMode.X_SNAP.equals(syncMode)) {
-      logger.warn("Snapsync is an experimental feature ! Use it at your own risk");
-      if (unstableDataStorageOptions
-          .toDomainObject()
-          .getDataStorageFormat()
-          .equals(DataStorageFormat.FOREST)) {
-        throw new ParameterException(
-            this.commandLine,
-            "Snapsync is only available with Bonsai '--Xdata-storage-format=BONSAI'");
-      }
-    }
-
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
       logger.warn(

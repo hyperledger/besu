@@ -43,13 +43,13 @@ public class FastSyncDownloader<REQUEST> {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloader.class);
   protected final FastSyncActions fastSyncActions;
 
-  private final WorldStateDownloader worldStateDownloader;
+  protected final WorldStateDownloader worldStateDownloader;
   protected final FastSyncStateStorage fastSyncStateStorage;
   private final TaskCollection<REQUEST> taskCollection;
   private final Path fastSyncDataDirectory;
   protected FastSyncState initialFastSyncState;
-  private volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
-  private final AtomicBoolean running = new AtomicBoolean(false);
+  protected volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
+  protected final AtomicBoolean running = new AtomicBoolean(false);
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,

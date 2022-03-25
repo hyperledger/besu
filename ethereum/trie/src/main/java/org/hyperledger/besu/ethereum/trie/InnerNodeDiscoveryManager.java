@@ -34,7 +34,6 @@ import org.immutables.value.Value;
 public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
   public List<InnerNode> innerNodes = new ArrayList<>();
-  public Set<Bytes> incompleteLocation = new HashSet<>();
 
   private final Bytes startKeyHash, endKeyHash;
 
@@ -111,11 +110,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
               if (!allowMissingElementInRange && isInRange(location)) {
                 return Optional.empty();
               }
-              final MissingNode<V> missingNode = new MissingNode<>(hash, location);
-              if (!hash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-                incompleteLocation.add(location.slice(0, Math.max(0, location.size() - 1)));
-              }
-              return Optional.of(missingNode);
+              return Optional.of(new MissingNode<>(hash, location));
             });
   }
 

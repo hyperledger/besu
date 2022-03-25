@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUN
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -106,10 +107,10 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
+          final WorldStateStorage worldStateStorage,
       final Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final SnapSyncState snapSyncState) {
+          final WorldDownloadState<SnapDataRequest> downloadState,
+          final SnapSyncState snapSyncState) {
 
     if (startStorageRange.isPresent() && endStorageRange.isPresent()) {
       // not store the new account if we just want to complete the account thanks to another
@@ -159,13 +160,15 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             }
           }
         }));
+
     return nbNodesSaved.get();
   }
 
   @Override
   public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider) {
+          final WorldDownloadState<SnapDataRequest> downloadState,
+          final WorldStateProofProvider worldStateProofProvider,
+          final SnapSyncState snapSyncState) {
 
     // validate the range proof
     if (!worldStateProofProvider.isValidRangeProof(
@@ -183,7 +186,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   @Override
   public Stream<SnapDataRequest> getChildRequests(
-      final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
+          final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
+
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     // new request is added if the response does not match all the requested range

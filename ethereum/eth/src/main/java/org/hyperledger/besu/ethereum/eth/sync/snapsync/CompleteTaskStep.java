@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -41,7 +42,7 @@ public class CompleteTaskStep {
 
   public synchronized void markAsCompleteOrFailed(
       final SnapWorldDownloadState downloadState, final Task<SnapDataRequest> task) {
-    if (task.getData().isValid() || task.getData().isExpired(snapSyncState)) {
+    if (task.getData().isValid() || (task.getData() instanceof TrieNodeDataRequest && task.getData().isExpired(snapSyncState))) {
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());

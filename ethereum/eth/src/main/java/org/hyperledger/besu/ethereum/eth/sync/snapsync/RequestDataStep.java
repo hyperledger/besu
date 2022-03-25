@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -80,12 +81,16 @@ public class RequestDataStep {
         requestTasks.size() == 1
             ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getStartKeyHash()
             : RangeManager.MIN_RANGE;
+      final Bytes32 maxRange =
+              requestTasks.size() == 1
+                      ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getEndKeyHash()
+                      : RangeManager.MAX_RANGE;
     final EthTask<StorageRangeMessage.SlotRangeData> getStorageRangeTask =
         RetryingGetStorageRangeFromPeerTask.forStorageRange(
             ethContext,
             accountHashes,
             minRange,
-            RangeManager.MAX_RANGE,
+                maxRange,
             blockHeader,
             metricsSystem);
     downloadState.addOutstandingTask(getStorageRangeTask);
@@ -102,7 +107,7 @@ public class RequestDataStep {
                   request.setSlots(response.slots().get(i));
                   request.setProofs(
                       i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
-                  request.checkProof(downloadState, worldStateProofProvider);
+                  request.checkProof(downloadState, worldStateProofProvider, fastSyncState );
                 }
               }
               return requestTasks;
@@ -165,7 +170,7 @@ public class RequestDataStep {
                 accountDataRequest.setRootHash(blockHeader.getStateRoot());
                 accountDataRequest.setAccounts(response.accounts());
                 accountDataRequest.setProofs(response.proofs());
-                accountDataRequest.checkProof(downloadState, worldStateProofProvider);
+                accountDataRequest.checkProof(downloadState, worldStateProofProvider, fastSyncState );
               }
               return requestTask;
             });

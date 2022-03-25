@@ -100,6 +100,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public Optional<Bytes> getTmpNodeData(final Bytes32 hash) {
+    return Optional.empty();
+  }
+
+  @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
   }
@@ -212,6 +217,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
       }
       addedNodes.add(nodeHash);
       transaction.put(nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
+      return this;
+    }
+
+    @Override
+    public WorldStateStorage.Updater putTmpNode(final Bytes32 nodeHash, final Bytes value) {
       return this;
     }
 

@@ -19,6 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -67,8 +68,8 @@ public class BytecodeRequest extends SnapDataRequest {
 
   @Override
   public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider) {
+          final WorldDownloadState<SnapDataRequest> downloadState,
+          final WorldStateProofProvider worldStateProofProvider,final SnapSyncState snapSyncState) {
     return true;
   }
 
@@ -79,7 +80,7 @@ public class BytecodeRequest extends SnapDataRequest {
 
   @Override
   public Stream<SnapDataRequest> getChildRequests(
-      final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
+          final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
     return Stream.empty();
   }
 

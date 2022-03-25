@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -29,6 +32,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -136,11 +140,20 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                   newDownloadState.enqueueRequest(
                       createAccountRangeDataRequest(stateRoot, key, value)));
 
+      /*newDownloadState.enqueueRequest(
+              createAccountTrieNodeDataRequest(stateRoot, Bytes.EMPTY, new HashSet<>())
+      );
+
+      /*newDownloadState.enqueueRequest(createAccountRangeDataRequest(
+              stateRoot, Bytes32.fromHexString("0x3be7fc3cde26aa3af5ab0a5d66abb99afd27679e67cfccb9e2d37211eddd2bd7"),
+              Bytes32.fromHexString("0x3be7fc3cde26aa3af5ab0a5d66abb99afd27679e67cfccb9e2d37211eddd2bd7")
+      ));*/
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
+      System.out.println(hashCountPerRequest);
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
-              .taskCountPerRequest(hashCountPerRequest)
+              .taskCountPerRequest(1024)
               .maxOutstandingRequests(maxOutstandingRequests)
               .pivotBlockManager(
                   new DynamicPivotBlockManager<>(newDownloadState, fastSyncActions, snapSyncState))

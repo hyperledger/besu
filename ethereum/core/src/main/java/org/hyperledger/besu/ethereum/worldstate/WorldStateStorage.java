@@ -39,6 +39,8 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 
+  Optional<Bytes> getTmpNodeData(Bytes32 hash);
+
   boolean isWorldStateAvailable(Bytes32 rootHash, Hash blockHash);
 
   default boolean contains(final Bytes32 hash) {
@@ -76,6 +78,8 @@ public interface WorldStateStorage {
 
     Updater putAccountStorageTrieNode(
         Hash accountHash, Bytes location, Bytes32 nodeHash, Bytes node);
+
+    Updater putTmpNode(Bytes32 nodeHash, Bytes value);
 
     void commit();
 

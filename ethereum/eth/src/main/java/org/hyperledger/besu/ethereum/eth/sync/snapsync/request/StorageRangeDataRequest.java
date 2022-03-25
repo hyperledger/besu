@@ -22,27 +22,23 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAG
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.trie.CommitVisitor;
-import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.SnapPutVisitor;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import kotlin.collections.ArrayDeque;
@@ -61,6 +57,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
 
+
+  private StackTrie stackTrie;
   private TreeMap<Bytes32, Bytes> slots;
   private ArrayDeque<Bytes> proofs;
   private boolean isProofValid;
@@ -78,6 +76,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     this.endKeyHash = endKeyHash;
     this.proofs = new ArrayDeque<>();
     this.slots = new TreeMap<>();
+    addStackTrie(Optional.empty());
     LOG.trace(
         "create get storage range data request for account {} with root hash={} from {} to {}",
         accountHash,
@@ -92,67 +91,41 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final Updater updater,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
-    if (!isProofValid) {
-      return 0;
-    }
 
-    final Bytes32 storageRoot =
-        proofs.isEmpty() ? MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH : getStorageRoot();
-
-    final Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
-    for (Bytes proof : proofs) {
-      proofsEntries.put(Hash.hash(proof), proof);
-    }
-
-    final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
-        new InnerNodeDiscoveryManager<>(
-            (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
-            Function.identity(),
-            Function.identity(),
-            startKeyHash,
-            slots.lastKey(),
-            true);
-
-    final Hash wrappedAccountHash = Hash.wrap(accountHash);
-
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, storageRoot);
-
-    for (Map.Entry<Bytes32, Bytes> slot : slots.entrySet()) {
-      trie.put(slot.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, slot.getValue()));
+    if (isProofValid) {
+      stackTrie.addKeys(slots);
+      stackTrie.addProofs(proofs);
     }
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
+    final AtomicReference<Updater> updaterTmp = new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
-        (location, hash, value) -> {
-          updater.putAccountStorageTrieNode(wrappedAccountHash, location, hash, value);
-          nbNodesSaved.getAndIncrement();
-        };
+            (location, hash, value) -> {
+              updaterTmp.get().putAccountStorageTrieNode(Hash.wrap(accountHash), location, hash, value);
+              if(nbNodesSaved.getAndIncrement()%1000==0){
+                updaterTmp.get().commit();
+                updaterTmp.set(worldStateStorage.updater());
+              }
+            };
+    stackTrie.commit(accountHash, nodeUpdater, node -> {});
 
-    trie.commit(
-        nodeUpdater,
-        (new CommitVisitor<>(nodeUpdater) {
-          @Override
-          public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
-            if (!node.isNeedHeal()) {
-              super.maybeStoreNode(location, node);
-            }
-          }
-        }));
+    updaterTmp.get().commit();
 
     return nbNodesSaved.get();
   }
 
   @Override
   public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider) {
+          final WorldDownloadState<SnapDataRequest> downloadState,
+          final WorldStateProofProvider worldStateProofProvider,
+          final SnapSyncState snapSyncState) {
     if (!worldStateProofProvider.isValidRangeProof(
         startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+      System.out.println("change root for account "+Hash.wrap(accountHash));
       downloadState.enqueueRequest(
-          createAccountDataRequest(
-              getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
+              createAccountDataRequest(
+                      getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
       isProofValid = false;
     } else {
       isProofValid = true;
@@ -172,7 +145,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   @Override
   public Stream<SnapDataRequest> getChildRequests(
-      final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
+          final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     if (!isProofValid) {
@@ -182,20 +155,18 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     findNewBeginElementInRange(storageRoot, proofs, slots, endKeyHash)
         .ifPresent(
             missingRightElement -> {
-              if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
+              final int nbRanges = findNbRanges();
+              RangeManager.generateRanges(missingRightElement, endKeyHash, nbRanges)
+                      .forEach(
+                              (key, value) -> {
+                                final StorageRangeDataRequest storageRangeDataRequest = createStorageRangeDataRequest(accountHash, storageRoot, key, value);
+                                storageRangeDataRequest.addStackTrie(Optional.of(stackTrie));
+                                childRequests.add(storageRangeDataRequest);
+                              });
+              if (!snapSyncState.isHealInProgress() && startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
                 // need to heal this account storage
-                childRequests.add(
-                    createAccountHealDataRequest(
-                        Hash.wrap(storageRoot),
-                        Hash.wrap(accountHash),
-                        getRootHash(),
-                        Bytes.EMPTY));
+                downloadState.addInconsistentAccount(CompactEncoding.bytesToPath(accountHash));
               }
-              RangeManager.generateRanges(missingRightElement, endKeyHash, findNbRanges())
-                  .forEach(
-                      (key, value) ->
-                          childRequests.add(
-                              createStorageRangeDataRequest(accountHash, storageRoot, key, value)));
             });
 
     return childRequests.stream();
@@ -237,16 +208,15 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   public void setProofs(final ArrayDeque<Bytes> proofs) {
-    if (proofs == null) {
-      new Exception().printStackTrace(System.out);
-    }
     this.proofs = proofs;
   }
 
   public void setSlots(final TreeMap<Bytes32, Bytes> slots) {
-    if (slots == null) {
-      new Exception().printStackTrace(System.out);
-    }
     this.slots = slots;
+  }
+
+  public void addStackTrie(final Optional<StackTrie> maybeStackTrie) {
+    stackTrie = maybeStackTrie.filter(StackTrie::addSegment)
+            .orElse(new StackTrie(getRootHash(), 1, 6, startKeyHash));
   }
 }

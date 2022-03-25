@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
+import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -63,6 +66,7 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
             .thenCompose(fss -> downloadChainAndWorldState(fastSyncActions, fss)),
         this::handleFailure);
   }
+
 
   @Override
   protected FastSyncState storeState(final FastSyncState fastSyncState) {

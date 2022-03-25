@@ -42,6 +42,8 @@ public interface MerklePatriciaTrie<K, V> {
    */
   Optional<V> get(K key);
 
+  Optional<V> getPath(final K path);
+
   /**
    * Returns value and ordered proof-related nodes mapped to the hash if it exists; otherwise empty.
    *

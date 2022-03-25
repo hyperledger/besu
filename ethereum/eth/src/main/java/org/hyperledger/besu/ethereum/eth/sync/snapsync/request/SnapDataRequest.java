@@ -19,12 +19,14 @@ import static org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDat
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -69,19 +71,14 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
         getRootHash(), accountHash, storageRoot, startKeyHash, endKeyHash);
   }
 
-  public static AccountHealRequest createAccountHealDataRequest(
-      final Hash nodeHash, final Hash accountHash, final Hash rootHash, final Bytes location) {
-    return new AccountHealRequest(nodeHash, accountHash, rootHash, location);
+  public static AccountTrieNodeDataRequest createAccountTrieNodeDataRequest(
+          final Hash hash, final Bytes location, final HashSet<Bytes> accountHeals) {
+    return new AccountTrieNodeDataRequest(hash, hash, location, accountHeals);
   }
 
   public static AccountTrieNodeDataRequest createAccountTrieNodeDataRequest(
-      final Hash hash, final Bytes location) {
-    return new AccountTrieNodeDataRequest(hash, hash, location);
-  }
-
-  public static AccountTrieNodeDataRequest createAccountTrieNodeDataRequest(
-      final Hash hash, final Hash rootHash, final Bytes location) {
-    return new AccountTrieNodeDataRequest(hash, rootHash, location);
+      final Hash hash, final Hash rootHash, final Bytes location,  final HashSet<Bytes> accountHeals) {
+    return new AccountTrieNodeDataRequest(hash, rootHash, location, accountHeals);
   }
 
   public static StorageTrieNodeDataRequest createStorageTrieNodeDataRequest(
@@ -108,8 +105,8 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final SnapSyncState snapSyncState);
 
   public abstract boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider);
+          final WorldDownloadState<SnapDataRequest> downloadState,
+          final WorldStateProofProvider worldStateProofProvider, SnapSyncState snapSyncState);
 
   public abstract boolean isValid();
 
@@ -118,7 +115,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   public abstract Stream<SnapDataRequest> getChildRequests(
-      final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState);
+          final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage, final SnapSyncState snapSyncState);
 
   protected void registerParent(final TrieNodeDataRequest parent) {
     if (this.possibleParent.isPresent()) {
@@ -139,7 +136,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
     if (pendingChildren.decrementAndGet() == 0) {
-      return persist(worldStateStorage, updater, downloadState, snapSyncState);
+        return persist(worldStateStorage, updater, downloadState, snapSyncState);
     }
     return 0;
   }
