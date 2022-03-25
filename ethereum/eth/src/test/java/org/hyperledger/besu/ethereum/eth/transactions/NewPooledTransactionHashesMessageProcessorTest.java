@@ -73,6 +73,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     metricsSystem = new StubMetricsSystem();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
+
     messageHandler =
         new NewPooledTransactionHashesMessageProcessor(
             transactionTracker,
