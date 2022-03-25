@@ -43,12 +43,16 @@ public class GetPooledTransactionsFromPeerTask extends AbstractPeerRequestTask<L
   private GetPooledTransactionsFromPeerTask(
       final EthContext ethContext, final List<Hash> hashes, final MetricsSystem metricsSystem) {
     super(ethContext, EthPV65.GET_POOLED_TRANSACTIONS, metricsSystem);
-    this.hashes = new ArrayList<>(hashes);
+    this.hashes = List.copyOf(hashes);
   }
 
   public static GetPooledTransactionsFromPeerTask forHashes(
       final EthContext ethContext, final List<Hash> hashes, final MetricsSystem metricsSystem) {
     return new GetPooledTransactionsFromPeerTask(ethContext, hashes, metricsSystem);
+  }
+
+  public List<Hash> getTransactionHashes() {
+    return hashes;
   }
 
   @Override
