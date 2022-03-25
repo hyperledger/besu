@@ -41,11 +41,6 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default int getPooledTransactionHashesSize() {
-    return MAX_PENDING_TRANSACTIONS_HASHES;
-  }
-
-  @Value.Default
   default int getPendingTxRetentionPeriod() {
     return DEFAULT_TX_RETENTION_HOURS;
   }

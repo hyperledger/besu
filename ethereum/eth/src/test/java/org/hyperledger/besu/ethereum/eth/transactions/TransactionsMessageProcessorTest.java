@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
-import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -57,7 +56,7 @@ public class TransactionsMessageProcessorTest {
         ofMinutes(1));
 
     verify(transactionTracker)
-        .markTransactionsAsSeen(peer1, ImmutableSet.of(transaction1, transaction2, transaction3));
+        .markTransactionsAsSeen(peer1, asList(transaction1, transaction2, transaction3));
   }
 
   @Test
@@ -67,8 +66,7 @@ public class TransactionsMessageProcessorTest {
         TransactionsMessage.create(asList(transaction1, transaction2, transaction3)),
         now(),
         ofMinutes(1));
-    verify(transactionPool)
-        .addRemoteTransactions(ImmutableSet.of(transaction1, transaction2, transaction3));
+    verify(transactionPool).addRemoteTransactions(asList(transaction1, transaction2, transaction3));
   }
 
   @Test

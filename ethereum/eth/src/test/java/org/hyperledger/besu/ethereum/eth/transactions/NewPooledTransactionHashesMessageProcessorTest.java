@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -51,11 +51,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PendingTransactionsMessageProcessorTest {
+public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
   @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
-  @Mock private PeerPendingTransactionTracker transactionTracker;
+  @Mock private PeerTransactionTracker transactionTracker;
   @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
   @Mock private MetricsSystem metricsSystem;
@@ -63,7 +63,7 @@ public class PendingTransactionsMessageProcessorTest {
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
 
-  private PendingTransactionsMessageProcessor messageHandler;
+  private NewPooledTransactionHashesMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
@@ -75,7 +75,7 @@ public class PendingTransactionsMessageProcessorTest {
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
     messageHandler =
-        new PendingTransactionsMessageProcessor(
+        new NewPooledTransactionHashesMessageProcessor(
             transactionTracker,
             transactionPool,
             transactionPoolConfiguration,
@@ -95,7 +95,7 @@ public class PendingTransactionsMessageProcessorTest {
         ofMinutes(1));
 
     verify(transactionTracker)
-        .markTransactionsHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
+        .markTransactionHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
     verifyNoMoreInteractions(transactionTracker);
   }
 
@@ -109,9 +109,6 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionPool).addTransactionHash(hash1);
-    verify(transactionPool).addTransactionHash(hash2);
-    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -133,7 +130,7 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionPool).addTransactionHash(hash3);
+    //    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -182,7 +179,6 @@ public class PendingTransactionsMessageProcessorTest {
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
@@ -194,9 +190,6 @@ public class PendingTransactionsMessageProcessorTest {
   @Test
   public void shouldNotScheduleGetPooledTransactionsTaskTwice() {
     when(syncState.isInSync(anyLong())).thenReturn(true);
-
-    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
-    when(transactionPool.addTransactionHash(hash2)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
