@@ -135,6 +135,7 @@ public class RocksDBColumnarKeyValueStorage
                 segmentsById.get(Bytes.wrap(columnHandle.getName())), DEFAULT_COLUMN);
         builder.put(segmentName, columnHandle);
       }
+
       columnHandlesByName = builder.build();
     } catch (final RocksDBException e) {
       throw new StorageException(e);
