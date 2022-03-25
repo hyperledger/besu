@@ -91,7 +91,10 @@ public class RocksDBColumnarKeyValueStorage
               .map(
                   segment ->
                       new ColumnFamilyDescriptor(
-                          segment.getId(), new ColumnFamilyOptions().setTtl(0).setTableFormatConfig(createBlockBasedTableConfig(configuration))))
+                          segment.getId(),
+                          new ColumnFamilyOptions()
+                              .setTtl(0)
+                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
