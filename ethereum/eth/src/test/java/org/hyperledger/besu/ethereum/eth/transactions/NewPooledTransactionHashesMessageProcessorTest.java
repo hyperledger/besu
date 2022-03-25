@@ -115,7 +115,6 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    //    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -142,7 +141,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
-    assertThat(metricsSystem.getCounterValue("pending_transactions_messages_skipped_total"))
+    assertThat(
+            metricsSystem.getCounterValue("new_pooled_transaction_hashes_messages_skipped_total"))
         .isEqualTo(1);
   }
 
@@ -154,7 +154,8 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
-    assertThat(metricsSystem.getCounterValue("pending_transactions_messages_skipped_total"))
+    assertThat(
+            metricsSystem.getCounterValue("new_pooled_transaction_hashes_messages_skipped_total"))
         .isEqualTo(1);
   }
 
