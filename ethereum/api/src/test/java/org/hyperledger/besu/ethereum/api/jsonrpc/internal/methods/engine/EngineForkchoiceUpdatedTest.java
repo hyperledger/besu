@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -126,6 +127,37 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
+  public void shouldReturnInvalidOnOldTimestamp() {
+    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(parent.getHash())
+            .timestamp(parent.getTimestamp())
+            .buildHeader();
+    when(blockchain.getBlockHeader(mockHeader.getHash())).thenReturn(Optional.of(mockHeader));
+    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
+    //    when(blockchain.getChainHeadHeader()).thenReturn(parent);
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(mergeCoordinator.updateForkChoice(mockHeader.getHash(), parent.getHash()))
+        .thenReturn(
+            ForkchoiceResult.withFailure("new head timestamp not greater than parent", parent));
+
+    EngineForkchoiceUpdatedParameter param =
+        new EngineForkchoiceUpdatedParameter(
+            mockHeader.getBlockHash(), parent.getBlockHash(), parent.getBlockHash());
+
+    EngineUpdateForkchoiceResult resp = fromSuccessResp(resp(param, Optional.empty()));
+
+    assertThat(resp.getPayloadStatus().getStatus()).isEqualTo(INVALID);
+    assertThat(resp.getPayloadStatus().getLatestValidHash()).isPresent();
+    assertThat(resp.getPayloadStatus().getLatestValidHash().get()).isEqualTo(parent.getBlockHash());
+    assertThat(resp.getPayloadStatus().getError())
+        .isEqualTo("new head timestamp not greater than parent");
+  }
+
+  @Test
   public void shouldReturnValidWithNewHeadAndFinalizedNoPayload() {
     var builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
     BlockHeader mockParent = builder.number(9L).buildHeader();
@@ -178,17 +210,12 @@ public class EngineForkchoiceUpdatedTest {
         resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), payloadParam);
     var res = fromSuccessResp(resp);
 
-    assertThat(res.getPayloadStatus().getStatus()).isEqualTo(expectedStatus.name());
+    assertThat(res.getPayloadStatus().getStatusAsString()).isEqualTo(expectedStatus.name());
 
     if (expectedStatus.equals(VALID)) {
       // check conditions when response is valid
       assertThat(res.getPayloadStatus().getLatestValidHash())
-          .isEqualTo(
-              forkchoiceResult
-                  .getNewHead()
-                  .map(BlockHeader::getBlockHash)
-                  .map(Hash::toHexString)
-                  .orElse(""));
+          .isEqualTo(forkchoiceResult.getNewHead().map(BlockHeader::getBlockHash));
       assertThat(res.getPayloadStatus().getError()).isNullOrEmpty();
       if (payloadParam.isPresent()) {
         assertThat(res.getPayloadId()).isNotNull();
@@ -197,7 +224,7 @@ public class EngineForkchoiceUpdatedTest {
       }
     } else {
       // assert null latest valid and payload identifier:
-      assertThat(res.getPayloadStatus().getLatestValidHash()).isNull();
+      assertThat(res.getPayloadStatus().getLatestValidHash()).isEmpty();
       assertThat(res.getPayloadId()).isNull();
     }
     return res;

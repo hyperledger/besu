@@ -193,7 +193,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         () -> latestValidHash == null ? null : latestValidHash.toHexString(),
         status::name);
     return new JsonRpcSuccessResponse(
-        requestId, new EnginePayloadStatusResult(status, latestValidHash, null));
+        requestId, new EnginePayloadStatusResult(status, latestValidHash, Optional.empty()));
   }
 
   JsonRpcResponse respondWithInvalid(
@@ -206,6 +206,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         INVALID::name,
         () -> validationError);
     return new JsonRpcSuccessResponse(
-        requestId, new EnginePayloadStatusResult(INVALID, latestValidHash, validationError));
+        requestId,
+        new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
   }
 }
