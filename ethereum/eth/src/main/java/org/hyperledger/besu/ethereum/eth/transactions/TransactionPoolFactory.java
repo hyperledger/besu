@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -96,16 +95,11 @@ public class TransactionPoolFactory {
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);
+
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(
-                transactionTracker,
-                transactionPool,
-                metricsSystem.createCounter(
-                    BesuMetricCategory.TRANSACTION_POOL,
-                    "transactions_messages_skipped_total",
-                    "Total number of transactions messages skipped by the processor.")),
+            new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
@@ -115,10 +109,6 @@ public class TransactionPoolFactory {
                 transactionTracker,
                 transactionPool,
                 transactionPoolConfiguration,
-                metricsSystem.createCounter(
-                    BesuMetricCategory.TRANSACTION_POOL,
-                    "pending_transactions_messages_skipped_total",
-                    "Total number of pending transactions messages skipped by the processor."),
                 ethContext,
                 metricsSystem,
                 syncState),

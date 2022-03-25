@@ -11,6 +11,7 @@
 ### Additions and Improvements
 - Tune transaction synchronization parameter to adapt to mainnet traffic [#3610](https://github.com/hyperledger/besu/pull/3610)
 - Improve eth/66 support [#3616](https://github.com/hyperledger/besu/pull/3616)
+- Avoid reprocessing remote transactions already seen [#3626](https://github.com/hyperledger/besu/pull/3626)
 
 ## 22.1.2
 
