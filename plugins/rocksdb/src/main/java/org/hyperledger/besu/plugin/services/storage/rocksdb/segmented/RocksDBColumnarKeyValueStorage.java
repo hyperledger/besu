@@ -129,7 +129,9 @@ public class RocksDBColumnarKeyValueStorage
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache).setFilterPolicy(new BloomFilter(10, false));
+    return new BlockBasedTableConfig()
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false));
   }
 
   @Override
