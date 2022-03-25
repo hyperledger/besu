@@ -182,12 +182,12 @@ class ExtensionNode<V> implements Node<V> {
   }
 
   @Override
-  public boolean isNeedHeal() {
+  public boolean isHealNeeded() {
     return needHeal;
   }
 
   @Override
-  public void markNeedHeal() {
+  public void markHealNeeded() {
     this.needHeal = true;
   }
 }

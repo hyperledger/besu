@@ -28,7 +28,6 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
   @Override
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     final Bytes extensionPath = extensionNode.getPath();
-
     final int commonPathLength = extensionPath.commonPrefixLength(path);
     assert commonPathLength < path.size()
         : "Visiting path doesn't end with a non-matching terminator";

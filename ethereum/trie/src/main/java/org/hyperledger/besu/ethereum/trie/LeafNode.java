@@ -167,12 +167,12 @@ class LeafNode<V> implements Node<V> {
   }
 
   @Override
-  public boolean isNeedHeal() {
+  public boolean isHealNeeded() {
     return false;
   }
 
   @Override
-  public void markNeedHeal() {
+  public void markHealNeeded() {
     // nothing to do a leaf don't have child
   }
 }

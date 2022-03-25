@@ -77,10 +77,10 @@ public interface Node<V> {
    *
    * @return true if the node need heal
    */
-  boolean isNeedHeal();
+  boolean isHealNeeded();
 
   /**
    * Marking a node as need heal means that one of its children is not yet present in the storage
    */
-  void markNeedHeal();
+  void markHealNeeded();
 }

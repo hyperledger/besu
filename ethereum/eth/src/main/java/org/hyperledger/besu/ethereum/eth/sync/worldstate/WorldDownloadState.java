@@ -121,7 +121,7 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
     }
   }
 
-  protected void cleanupQueues() {
+  protected synchronized void cleanupQueues() {
     for (final EthTask<?> outstandingRequest : outstandingRequests) {
       outstandingRequest.cancel();
     }

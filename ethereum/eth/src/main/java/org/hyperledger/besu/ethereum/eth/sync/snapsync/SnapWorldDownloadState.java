@@ -143,7 +143,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   @Override
-  protected void cleanupQueues() {
+  protected synchronized void cleanupQueues() {
     super.cleanupQueues();
     pendingAccountRequests.clear();
     pendingStorageRequests.clear();

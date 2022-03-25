@@ -42,7 +42,7 @@ public class MissingNode<V> extends NullNode<V> {
   }
 
   @Override
-  public boolean isNeedHeal() {
+  public boolean isHealNeeded() {
     return true;
   }
 

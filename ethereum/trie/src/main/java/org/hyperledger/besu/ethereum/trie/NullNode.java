@@ -98,12 +98,12 @@ public class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public boolean isNeedHeal() {
+  public boolean isHealNeeded() {
     return false;
   }
 
   @Override
-  public void markNeedHeal() {
+  public void markHealNeeded() {
     // do nothing
   }
 }

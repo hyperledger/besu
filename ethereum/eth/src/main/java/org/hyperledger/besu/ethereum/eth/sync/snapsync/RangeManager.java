@@ -36,8 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class RangeManager {
 
-  public static final Hash MIN_RANGE =
-      Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
+  public static final Hash MIN_RANGE = Hash.wrap(Bytes32.ZERO);
   public static final Hash MAX_RANGE =
       Hash.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 

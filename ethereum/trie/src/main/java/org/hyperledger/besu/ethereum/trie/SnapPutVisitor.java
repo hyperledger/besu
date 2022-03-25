@@ -26,8 +26,8 @@ public class SnapPutVisitor<V> extends PutVisitor<V> {
   public Node<V> visit(final BranchNode<V> branchNode, final Bytes path) {
     final Node<V> visit = super.visit(branchNode, path);
     for (Node<V> child : visit.getChildren()) {
-      if (child.isNeedHeal() || (child instanceof StoredNode && child.getValue().isEmpty())) {
-        visit.markNeedHeal(); // not save an incomplete node
+      if (child.isHealNeeded() || (child instanceof StoredNode && child.getValue().isEmpty())) {
+        visit.markHealNeeded(); // not save an incomplete node
         return visit;
       }
     }
@@ -38,8 +38,8 @@ public class SnapPutVisitor<V> extends PutVisitor<V> {
   public Node<V> visit(final ExtensionNode<V> extensionNode, final Bytes path) {
     final Node<V> visit = super.visit(extensionNode, path);
     for (Node<V> child : visit.getChildren()) {
-      if (child.isNeedHeal() || (child instanceof StoredNode && child.getValue().isEmpty())) {
-        visit.markNeedHeal(); // not save an incomplete node
+      if (child.isHealNeeded() || (child instanceof StoredNode && child.getValue().isEmpty())) {
+        visit.markHealNeeded(); // not save an incomplete node
         return visit;
       }
     }

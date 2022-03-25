@@ -48,12 +48,12 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public boolean isNeedHeal() {
+  public boolean isHealNeeded() {
     return false;
   }
 
   @Override
-  public void markNeedHeal() {
+  public void markHealNeeded() {
     throw new IllegalStateException(
         "A stored node cannot be healed since it's loaded from storage");
   }

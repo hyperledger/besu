@@ -107,8 +107,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
           .map(StateTrieAccountValue::readFrom)
           .ifPresent(
               stateTrieAccountValue -> {
-                // If we detect an account storage we fill it with snapsync before completing with a
-                // heal
+                // an account need a heal step
                 requests.add(
                     createStorageTrieNodeDataRequest(
                         stateTrieAccountValue.getStorageRoot(),

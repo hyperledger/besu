@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +120,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     final Bytes32 storageRoot =
         proofs.isEmpty() ? MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH : getRootHash();
 
-    final Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
+    final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
     for (Bytes proof : proofs) {
       proofsEntries.put(Hash.hash(proof), proof);
     }
@@ -155,7 +154,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         (new CommitVisitor<>(nodeUpdater) {
           @Override
           public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
-            if (!node.isNeedHeal()) {
+            if (!node.isHealNeeded()) {
               super.maybeStoreNode(location, node);
             }
           }

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.SnapPutVisitor;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +67,7 @@ public class StackTrie {
 
   public void commit(final NodeUpdater nodeUpdater) {
     if (nbSegments.decrementAndGet() <= 0 && (!proofs.isEmpty() || !keys.isEmpty())) {
-      final Map<Bytes32, Bytes> proofsEntries = Collections.synchronizedMap(new HashMap<>());
+      final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
       for (Bytes proof : proofs) {
         proofsEntries.put(Hash.hash(proof), proof);
       }
@@ -93,7 +92,7 @@ public class StackTrie {
           (new CommitVisitor<>(nodeUpdater) {
             @Override
             public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
-              if (!node.isNeedHeal()) {
+              if (!node.isHealNeeded()) {
                 super.maybeStoreNode(location, node);
               }
             }
