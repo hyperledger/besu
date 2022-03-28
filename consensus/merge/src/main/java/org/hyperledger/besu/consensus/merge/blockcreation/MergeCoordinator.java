@@ -281,6 +281,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     // ensure we have headBlock:
     BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
+
     if (newHead == null) {
       return ForkchoiceResult.withFailure(
           String.format("not able to find new head block %s", headBlockHash), latestValid);
@@ -308,7 +309,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
       return ForkchoiceResult.withFailure(
           "new head timestamp not greater than parent",
-          latestValid.isPresent() ? latestValid.get() : null);
+          latestValid.isPresent() ? getLatestValidAncestor(newHead).get() : null);
     }
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
