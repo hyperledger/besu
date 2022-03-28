@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.handlers;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 import java.util.Collection;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
@@ -42,5 +44,10 @@ public class HandlerFactory {
 
   public static Handler<RoutingContext> jsonRpcParser() {
     return JsonRpcParserHandler.handler();
+  }
+
+  public static Handler<RoutingContext> jsonRpcExecutor(
+      final JsonRpcExecutor jsonRpcExecutor, final Tracer tracer) {
+    return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer);
   }
 }
