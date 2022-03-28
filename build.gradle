@@ -695,7 +695,6 @@ task testDocker {
 }
 
 task acceptanceTestsQuorum {
-  dependsOn distDocker
   /**
    * Tags Description
    *
