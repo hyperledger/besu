@@ -107,7 +107,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
 
     final Hash pmtHash = messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 
-    final String key = input.slice(0, 32).toBase64String();
+    final String key = input.toBase64String();
 
     final ReceiveResponse receiveResponse;
     try {
