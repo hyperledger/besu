@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<S>
