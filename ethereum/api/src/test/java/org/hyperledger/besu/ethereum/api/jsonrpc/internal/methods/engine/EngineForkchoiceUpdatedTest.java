@@ -142,7 +142,8 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeContext.isSyncing()).thenReturn(false);
     when(mergeCoordinator.updateForkChoice(mockHeader.getHash(), parent.getHash()))
         .thenReturn(
-            ForkchoiceResult.withFailure("new head timestamp not greater than parent", parent));
+            ForkchoiceResult.withFailure(
+                "new head timestamp not greater than parent", parent.getHash()));
 
     EngineForkchoiceUpdatedParameter param =
         new EngineForkchoiceUpdatedParameter(

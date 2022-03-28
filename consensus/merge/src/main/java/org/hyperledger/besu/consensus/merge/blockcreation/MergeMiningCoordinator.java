@@ -55,23 +55,25 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
     private final Optional<String> errorMessage;
     private final Optional<BlockHeader> newFinalized;
     private final Optional<BlockHeader> newHead;
-    private final Optional<BlockHeader> latestValid;
+    private final Optional<Hash> latestValid;
 
     private ForkchoiceResult(
         final Optional<String> errorMessage,
         final Optional<BlockHeader> newFinalized,
         final Optional<BlockHeader> newHead,
-        final Optional<BlockHeader> latestValid) {
+        final Optional<Hash> latestValid) {
       this.errorMessage = errorMessage;
       this.newFinalized = newFinalized;
       this.newHead = newHead;
       this.latestValid = latestValid;
     }
 
-    public static ForkchoiceResult withFailure(
-        final String errorMessage, final BlockHeader latestValid) {
+    public static ForkchoiceResult withFailure(final String errorMessage, final Hash latestValid) {
       return new ForkchoiceResult(
-          Optional.of(errorMessage), Optional.empty(), Optional.empty(), Optional.of(latestValid));
+          Optional.of(errorMessage),
+          Optional.empty(),
+          Optional.empty(),
+          Optional.ofNullable(latestValid));
     }
 
     public static ForkchoiceResult withResult(
@@ -91,7 +93,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       return newHead;
     }
 
-    public Optional<BlockHeader> getLatestValid() {
+    public Optional<Hash> getLatestValid() {
       return latestValid;
     }
 

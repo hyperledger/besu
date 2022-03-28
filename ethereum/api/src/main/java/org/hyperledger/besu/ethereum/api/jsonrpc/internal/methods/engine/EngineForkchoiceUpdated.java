@@ -139,9 +139,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             requestContext.getRequest().getId(),
             new EngineUpdateForkchoiceResult(
                 INVALID,
-                result.getLatestValid().isPresent()
-                    ? result.getLatestValid().get().getHash()
-                    : null,
+                result.getLatestValid().isPresent() ? result.getLatestValid().get() : null,
                 null,
                 result.getErrorMessage()));
       }
