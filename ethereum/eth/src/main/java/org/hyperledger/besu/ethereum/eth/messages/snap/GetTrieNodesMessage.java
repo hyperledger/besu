@@ -29,39 +29,33 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
-public final class GetTrieNodes extends AbstractSnapMessageData {
+public final class GetTrieNodesMessage extends AbstractSnapMessageData {
 
-  public static GetTrieNodes readFrom(final MessageData message) {
-    if (message instanceof GetTrieNodes) {
-      return (GetTrieNodes) message;
+  public GetTrieNodesMessage(final Bytes data) {
+    super(data);
+  }
+
+  public static GetTrieNodesMessage readFrom(final MessageData message) {
+    if (message instanceof GetTrieNodesMessage) {
+      return (GetTrieNodesMessage) message;
     }
     final int code = message.getCode();
     if (code != SnapV1.GET_TRIE_NODES) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetTrieNodes.", code));
     }
-    return new GetTrieNodes(message.getData());
+    return new GetTrieNodesMessage(message.getData());
   }
 
-  /*public static GetTrieNodes createWithRequest(
-      final Hash worldStateRootHash,
-      final TrieNodeDataRequest request,
-      final BigInteger responseBytes) {
-    return create(Optional.empty(), worldStateRootHash, request.getPaths(), responseBytes);
-  }*/
-
-  public static GetTrieNodes create(
-      final Hash worldStateRootHash,
-      final List<List<Bytes>> requests,
-      final BigInteger responseBytes) {
-    return create(Optional.empty(), worldStateRootHash, requests, responseBytes);
+  public static GetTrieNodesMessage create(
+      final Hash worldStateRootHash, final List<List<Bytes>> requests) {
+    return create(Optional.empty(), worldStateRootHash, requests);
   }
 
-  public static GetTrieNodes create(
+  public static GetTrieNodesMessage create(
       final Optional<BigInteger> requestId,
       final Hash worldStateRootHash,
-      final List<List<Bytes>> paths,
-      final BigInteger responseBytes) {
+      final List<List<Bytes>> paths) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
@@ -70,24 +64,15 @@ public final class GetTrieNodes extends AbstractSnapMessageData {
         paths,
         (path, rlpOutput) ->
             rlpOutput.writeList(path, (b, subRlpOutput) -> subRlpOutput.writeBytes(b)));
-    tmp.writeBigIntegerScalar(responseBytes);
+    tmp.writeBigIntegerScalar(SIZE_REQUEST);
     tmp.endList();
-    return new GetTrieNodes(tmp.encoded());
-  }
-
-  public GetTrieNodes(final Bytes data) {
-    super(data);
+    return new GetTrieNodesMessage(tmp.encoded());
   }
 
   @Override
   protected Bytes wrap(final BigInteger requestId) {
     final TrieNodesPaths paths = paths(false);
-    return create(
-            Optional.of(requestId),
-            paths.worldStateRootHash(),
-            paths.paths(),
-            paths.responseBytes())
-        .getData();
+    return create(Optional.of(requestId), paths.worldStateRootHash(), paths.paths()).getData();
   }
 
   @Override

@@ -28,9 +28,10 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -51,13 +52,14 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -92,15 +94,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class TransactionPoolTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
   @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private PendingTransactionListener listener;
-  @Mock private TransactionPool.TransactionBatchAddedListener batchAddedListener;
-  @Mock private TransactionPool.TransactionBatchAddedListener pendingBatchAddedListener;
   @Mock private MiningParameters miningParameters;
+  @Mock private TransactionsMessageSender transactionsMessageSender;
+  @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
 
   @SuppressWarnings("unchecked")
   @Mock
@@ -112,6 +113,7 @@ public class TransactionPoolTest {
 
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private MutableBlockchain blockchain;
+  private TransactionBroadcaster transactionBroadcaster;
 
   private GasPricePendingTransactionsSorter transactions;
   private final Transaction transaction1 = createTransaction(1);
@@ -124,7 +126,7 @@ public class TransactionPoolTest {
   private EthContext ethContext;
   private EthPeers ethPeers;
   private PeerTransactionTracker peerTransactionTracker;
-  private PeerPendingTransactionTracker peerPendingTransactionTracker;
+  private ArgumentCaptor<Runnable> syncTaskCapture;
 
   @Before
   public void setUp() {
@@ -133,7 +135,6 @@ public class TransactionPoolTest {
         new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,
@@ -145,10 +146,25 @@ public class TransactionPoolTest {
     syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
     ethContext = mock(EthContext.class);
+
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    syncTaskCapture = ArgumentCaptor.forClass(Runnable.class);
+    doNothing().when(ethScheduler).scheduleSyncWorkerTask(syncTaskCapture.capture());
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+
     ethPeers = mock(EthPeers.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    peerTransactionTracker = mock(PeerTransactionTracker.class);
-    peerPendingTransactionTracker = mock(PeerPendingTransactionTracker.class);
+
+    peerTransactionTracker = new PeerTransactionTracker();
+    transactionBroadcaster =
+        spy(
+            new TransactionBroadcaster(
+                ethContext,
+                transactions,
+                peerTransactionTracker,
+                transactionsMessageSender,
+                newPooledTransactionHashesMessageSender));
+
     transactionPool = createTransactionPool();
     blockchain.observeBlockAdded(transactionPool);
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.of(2));
@@ -169,12 +185,9 @@ public class TransactionPoolTest {
         transactions,
         protocolSchedule,
         protocolContext,
-        batchAddedListener,
-        pendingBatchAddedListener,
+        transactionBroadcaster,
         syncState,
         ethContext,
-        peerTransactionTracker,
-        peerPendingTransactionTracker,
         miningParameters,
         metricsSystem,
         config);
@@ -440,7 +453,7 @@ public class TransactionPoolTest {
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction2);
-    verify(batchAddedListener).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction2));
   }
 
   @Test
@@ -455,7 +468,7 @@ public class TransactionPoolTest {
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction2);
-    verify(batchAddedListener).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction2));
     verify(transactionValidator).validate(eq(transaction1), any(Optional.class), any());
     verify(transactionValidator)
         .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
@@ -529,12 +542,9 @@ public class TransactionPoolTest {
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
@@ -544,7 +554,6 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
-    verify(pendingTransactions).tryEvictTransactionHash(transaction1.getHash());
     verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(pendingTransactions);
   }
@@ -570,8 +579,8 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction2));
 
     assertTransactionPending(transaction1);
-    verify(batchAddedListener).onTransactionsAdded(singleton(transaction1));
-    verify(batchAddedListener, never()).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction1));
+    verify(transactionBroadcaster, never()).onTransactionsAdded(singleton(transaction2));
   }
 
   @Test
@@ -595,8 +604,8 @@ public class TransactionPoolTest {
     transactionPool.addLocalTransaction(transaction2);
 
     assertTransactionPending(transaction1);
-    verify(batchAddedListener).onTransactionsAdded(singletonList(transaction1));
-    verify(batchAddedListener, never()).onTransactionsAdded(singletonList(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction1));
+    verify(transactionBroadcaster, never()).onTransactionsAdded(singletonList(transaction2));
   }
 
   @Test
@@ -611,7 +620,7 @@ public class TransactionPoolTest {
         .isEqualTo(ValidationResult.invalid(EXCEEDS_BLOCK_GAS_LIMIT));
 
     assertTransactionNotPending(transaction1);
-    verifyNoInteractions(batchAddedListener);
+    verifyNoInteractions(transactionBroadcaster);
   }
 
   @Test
@@ -625,29 +634,37 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singleton(transaction1));
 
     assertTransactionNotPending(transaction1);
-    verifyNoInteractions(batchAddedListener);
+    verifyNoInteractions(transactionBroadcaster);
   }
 
   @Test
   public void shouldNotNotifyBatchListenerIfNoTransactionsAreAdded() {
     transactionPool.addRemoteTransactions(emptyList());
-    verifyNoInteractions(batchAddedListener);
+    verifyNoInteractions(transactionBroadcaster);
   }
 
   @Test
-  public void shouldNotNotifyPeerForPendingTransactionsIfItDoesntSupportEth65() {
+  public void shouldSendPooledTransactionHashesIfPeerSupportsEth65() {
     EthPeer peer = mock(EthPeer.class);
-    EthPeer validPeer = mock(EthPeer.class);
-    when(peerPendingTransactionTracker.isPeerSupported(peer, EthProtocol.ETH65)).thenReturn(false);
-    when(peerPendingTransactionTracker.isPeerSupported(validPeer, EthProtocol.ETH65))
-        .thenReturn(true);
+    when(peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)).thenReturn(true);
 
-    transactionPool.addTransactionHash(transaction1.getHash());
+    givenTransactionIsValid(transaction1);
+    transactionPool.addLocalTransaction(transaction1);
     transactionPool.handleConnect(peer);
-    verify(peerPendingTransactionTracker, never()).addToPeerSendQueue(peer, transaction1.getHash());
-    transactionPool.handleConnect(validPeer);
-    verify(peerPendingTransactionTracker, times(1))
-        .addToPeerSendQueue(validPeer, transaction1.getHash());
+    syncTaskCapture.getValue().run();
+    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(peer);
+  }
+
+  @Test
+  public void shouldSendFullTransactionsIfPeerDoesNotSupportEth65() {
+    EthPeer peer = mock(EthPeer.class);
+    when(peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)).thenReturn(false);
+
+    givenTransactionIsValid(transaction1);
+    transactionPool.addLocalTransaction(transaction1);
+    transactionPool.handleConnect(peer);
+    syncTaskCapture.getValue().run();
+    verify(transactionsMessageSender).sendTransactionsToPeer(peer);
   }
 
   @Test
@@ -668,12 +685,9 @@ public class TransactionPoolTest {
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
@@ -688,7 +702,7 @@ public class TransactionPoolTest {
     assertTransactionNotPending(transaction1);
     assertTransactionNotPending(transaction2);
     assertTransactionNotPending(transaction3);
-    verifyNoInteractions(batchAddedListener);
+    verifyNoInteractions(transactionBroadcaster);
   }
 
   @Test
@@ -718,21 +732,17 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldSendOnlyLocalTransactionToNewlyConnectedPeer() {
+  public void shouldSendFullTransactionPoolToNewlyConnectedPeer() {
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     EthContext ethContext = ethProtocolManager.ethContext();
-    PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     TransactionPool transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             TransactionPoolConfiguration.DEFAULT);
@@ -756,7 +766,7 @@ public class TransactionPoolTest {
     Set<Transaction> transactionsToSendToPeer =
         peerTransactionTracker.claimTransactionsToSendToPeer(peer.getEthPeer());
 
-    assertThat(transactionsToSendToPeer).containsExactly(transactionLocal);
+    assertThat(transactionsToSendToPeer).contains(transactionLocal, transactionRemote);
   }
 
   @Test
@@ -782,19 +792,15 @@ public class TransactionPoolTest {
   public void shouldIgnoreFeeCapIfSetZero() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final Wei twoEthers = Wei.fromEth(2);
     final TransactionPool transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ZERO).build());
@@ -820,18 +826,14 @@ public class TransactionPoolTest {
   public void shouldIgnoreEIP1559TransactionWhenNotAllowed() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final TransactionPool transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
@@ -857,18 +859,14 @@ public class TransactionPoolTest {
   public void shouldIgnoreEIP1559TransactionBeforeTheFork() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final TransactionPool transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(Wei.ONE).build());
@@ -896,19 +894,15 @@ public class TransactionPoolTest {
   public void shouldRejectLocalTransactionIfFeeCapExceeded() {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final Wei twoEthers = Wei.fromEth(2);
     TransactionPool transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
@@ -936,7 +930,6 @@ public class TransactionPoolTest {
 
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final PeerTransactionTracker peerTransactionTracker = new PeerTransactionTracker();
     final Wei twoEthers = Wei.fromEth(2);
 
     final TransactionPool transactionPool =
@@ -944,12 +937,9 @@ public class TransactionPoolTest {
             transactions,
             protocolSchedule,
             protocolContext,
-            batchAddedListener,
-            pendingBatchAddedListener,
+            transactionBroadcaster,
             syncState,
             ethContext,
-            peerTransactionTracker,
-            peerPendingTransactionTracker,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
             ImmutableTransactionPoolConfiguration.builder().txFeeCap(twoEthers).build());
@@ -1103,7 +1093,7 @@ public class TransactionPoolTest {
   private void assertRemoteTransactionValid(final Transaction tx) {
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    verify(batchAddedListener).onTransactionsAdded(singleton(tx));
+    verify(transactionBroadcaster).onTransactionsAdded(singleton(tx));
     assertTransactionPending(tx);
   }
 }

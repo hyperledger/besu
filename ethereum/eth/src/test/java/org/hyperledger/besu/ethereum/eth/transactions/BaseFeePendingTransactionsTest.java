@@ -53,7 +53,6 @@ import org.junit.Test;
 public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTION_HASHES = 5;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -70,7 +69,6 @@ public class BaseFeePendingTransactionsTest {
       new BaseFeePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
-          MAX_TRANSACTION_HASHES,
           TestClock.fixed(),
           metricsSystem,
           BaseFeePendingTransactionsTest::mockBlockHeader,
@@ -594,7 +592,6 @@ public class BaseFeePendingTransactionsTest {
         new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
             BaseFeePendingTransactionsTest::mockBlockHeader,
@@ -618,7 +615,6 @@ public class BaseFeePendingTransactionsTest {
         new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
             BaseFeePendingTransactionsTest::mockBlockHeader,
@@ -638,7 +634,6 @@ public class BaseFeePendingTransactionsTest {
         new BaseFeePendingTransactionsSorter(
             maxTransactionRetentionHours,
             MAX_TRANSACTIONS,
-            MAX_TRANSACTION_HASHES,
             clock,
             metricsSystem,
             BaseFeePendingTransactionsTest::mockBlockHeader,
