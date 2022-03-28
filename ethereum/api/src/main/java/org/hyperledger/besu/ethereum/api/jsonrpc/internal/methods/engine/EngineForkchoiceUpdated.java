@@ -135,11 +135,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                 payloadId.orElse(null),
                 Optional.empty()));
       } else if (result.isFailed()) {
+        final Optional<Hash> latestValid = result.getLatestValid();
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),
             new EngineUpdateForkchoiceResult(
                 INVALID,
-                result.getLatestValid().isPresent() ? result.getLatestValid().get() : null,
+                latestValid.isPresent() ? latestValid.get() : null,
                 null,
                 result.getErrorMessage()));
       }

@@ -305,10 +305,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
     if (parentOfNewHead.isPresent()
         && parentOfNewHead.get().getTimestamp() >= newHead.getTimestamp()) {
-      Optional<Hash> latestValid = getLatestValidAncestor(newHead);
+      final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
       return ForkchoiceResult.withFailure(
           "new head timestamp not greater than parent",
-          latestValid.isPresent() ? getLatestValidAncestor(newHead).get() : null);
+          latestValid.isPresent() ? latestValid.get() : null);
     }
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
