@@ -18,6 +18,7 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -25,12 +26,11 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.metrics.StubMetricsSystem;
 
-import com.google.common.collect.ImmutableSet;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -39,14 +39,23 @@ public class TransactionsMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
   @Mock private PeerTransactionTracker transactionTracker;
-  @Mock private Counter totalSkippedTransactionsMessageCounter;
   @Mock private EthPeer peer1;
-  @InjectMocks private TransactionsMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Transaction transaction1 = generator.transaction();
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
+
+  private TransactionsMessageProcessor messageHandler;
+  private StubMetricsSystem metricsSystem;
+
+  @Before
+  public void setup() {
+    metricsSystem = new StubMetricsSystem();
+
+    messageHandler =
+        new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem);
+  }
 
   @Test
   public void shouldMarkAllReceivedTransactionsAsSeen() {
@@ -57,7 +66,7 @@ public class TransactionsMessageProcessorTest {
         ofMinutes(1));
 
     verify(transactionTracker)
-        .markTransactionsAsSeen(peer1, ImmutableSet.of(transaction1, transaction2, transaction3));
+        .markTransactionsAsSeen(peer1, asList(transaction1, transaction2, transaction3));
   }
 
   @Test
@@ -67,8 +76,7 @@ public class TransactionsMessageProcessorTest {
         TransactionsMessage.create(asList(transaction1, transaction2, transaction3)),
         now(),
         ofMinutes(1));
-    verify(transactionPool)
-        .addRemoteTransactions(ImmutableSet.of(transaction1, transaction2, transaction3));
+    verify(transactionPool).addRemoteTransactions(asList(transaction1, transaction2, transaction3));
   }
 
   @Test
@@ -79,7 +87,7 @@ public class TransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
-    verify(totalSkippedTransactionsMessageCounter).inc(1);
+    assertThat(metricsSystem.getCounterValue("transactions_messages_skipped_total")).isEqualTo(1);
   }
 
   @Test
@@ -90,6 +98,6 @@ public class TransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
-    verify(totalSkippedTransactionsMessageCounter).inc(1);
+    assertThat(metricsSystem.getCounterValue("transactions_messages_skipped_total")).isEqualTo(1);
   }
 }

@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodes;
+import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -74,6 +74,6 @@ class SnapServer {
 
   private MessageData constructGetTrieNodesResponse(
       final WorldStateArchive worldStateArchive, final MessageData message) {
-    return TrieNodes.create(new ArrayDeque<>());
+    return TrieNodesMessage.create(new ArrayDeque<>());
   }
 }

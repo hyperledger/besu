@@ -18,6 +18,7 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -35,12 +36,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor.FetcherCreatorTask;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.metrics.StubMetricsSystem;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -51,52 +50,39 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PendingTransactionsMessageProcessorTest {
+public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
   @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
-  @Mock private PeerPendingTransactionTracker transactionTracker;
-  @Mock private Counter totalSkippedTransactionsMessageCounter;
+  @Mock private PeerTransactionTracker transactionTracker;
   @Mock private EthPeer peer1;
-  @Mock private MetricsSystem metricsSystem;
   @Mock private SyncState syncState;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
-
-  private PendingTransactionsMessageProcessor messageHandler;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
   private final Hash hash2 = generator.transaction().getHash();
   private final Hash hash3 = generator.transaction().getHash();
 
+  private NewPooledTransactionHashesMessageProcessor messageHandler;
+  private StubMetricsSystem metricsSystem;
+
   @Before
   public void setup() {
+    metricsSystem = new StubMetricsSystem();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
+
     messageHandler =
-        new PendingTransactionsMessageProcessor(
+        new NewPooledTransactionHashesMessageProcessor(
             transactionTracker,
             transactionPool,
             transactionPoolConfiguration,
-            totalSkippedTransactionsMessageCounter,
             ethContext,
             metricsSystem,
             syncState);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-  }
-
-  @Test
-  public void shouldMarkAllReceivedTransactionsAsSeen() {
-    messageHandler.processNewPooledTransactionHashesMessage(
-        peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
-        now(),
-        ofMinutes(1));
-
-    verify(transactionTracker)
-        .markTransactionsHashesAsSeen(peer1, Arrays.asList(hash1, hash2, hash3));
-    verifyNoMoreInteractions(transactionTracker);
   }
 
   @Test
@@ -109,9 +95,6 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionPool).addTransactionHash(hash1);
-    verify(transactionPool).addTransactionHash(hash2);
-    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -133,7 +116,6 @@ public class PendingTransactionsMessageProcessorTest {
         now(),
         ofMinutes(1));
 
-    verify(transactionPool).addTransactionHash(hash3);
     verify(transactionPool).getTransactionByHash(hash1);
     verify(transactionPool).getTransactionByHash(hash2);
     verify(transactionPool).getTransactionByHash(hash3);
@@ -160,8 +142,9 @@ public class PendingTransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
-    verify(totalSkippedTransactionsMessageCounter).inc(1);
-    verifyNoMoreInteractions(totalSkippedTransactionsMessageCounter);
+    assertThat(
+            metricsSystem.getCounterValue("new_pooled_transaction_hashes_messages_skipped_total"))
+        .isEqualTo(1);
   }
 
   @Test
@@ -172,8 +155,9 @@ public class PendingTransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
-    verify(totalSkippedTransactionsMessageCounter).inc(1);
-    verifyNoMoreInteractions(totalSkippedTransactionsMessageCounter);
+    assertThat(
+            metricsSystem.getCounterValue("new_pooled_transaction_hashes_messages_skipped_total"))
+        .isEqualTo(1);
   }
 
   @Test
@@ -182,7 +166,6 @@ public class PendingTransactionsMessageProcessorTest {
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1, NewPooledTransactionHashesMessage.create(asList(hash1, hash2)), now(), ofMinutes(1));
@@ -194,9 +177,6 @@ public class PendingTransactionsMessageProcessorTest {
   @Test
   public void shouldNotScheduleGetPooledTransactionsTaskTwice() {
     when(syncState.isInSync(anyLong())).thenReturn(true);
-
-    when(transactionPool.addTransactionHash(hash1)).thenReturn(true);
-    when(transactionPool.addTransactionHash(hash2)).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,

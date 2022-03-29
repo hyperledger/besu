@@ -54,7 +54,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   public BaseFeePendingTransactionsSorter(
       final int maxTransactionRetentionHours,
       final int maxPendingTransactions,
-      final int maxPooledTransactionHashes,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
@@ -62,7 +61,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
     super(
         maxTransactionRetentionHours,
         maxPendingTransactions,
-        maxPooledTransactionHashes,
         clock,
         metricsSystem,
         chainHeadHeaderSupplier,
@@ -211,7 +209,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       }
       LOG.trace("Adding {} to pending transactions", transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
-      tryEvictTransactionHash(transactionInfo.getHash());
 
       if (pendingTransactions.size() > maxPendingTransactions) {
         final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
