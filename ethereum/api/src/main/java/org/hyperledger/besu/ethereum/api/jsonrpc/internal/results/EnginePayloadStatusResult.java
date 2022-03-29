@@ -29,20 +29,30 @@ public class EnginePayloadStatusResult {
   Optional<String> validationError;
 
   public EnginePayloadStatusResult(
-      final EngineStatus status, final Hash latestValidHash, final String validationError) {
+      final EngineStatus status,
+      final Hash latestValidHash,
+      final Optional<String> validationError) {
     this.status = status;
     this.latestValidHash = Optional.ofNullable(latestValidHash);
-    this.validationError = Optional.ofNullable(validationError);
+    this.validationError = validationError;
   }
 
   @JsonGetter(value = "status")
-  public String getStatus() {
+  public String getStatusAsString() {
     return status.name();
   }
 
+  public EngineStatus getStatus() {
+    return status;
+  }
+
   @JsonGetter(value = "latestValidHash")
-  public String getLatestValidHash() {
+  public String getLatestValidHashAsString() {
     return latestValidHash.map(Hash::toHexString).orElse(null);
+  }
+
+  public Optional<Hash> getLatestValidHash() {
+    return latestValidHash;
   }
 
   @JsonGetter(value = "validationError")

@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
@@ -141,6 +142,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         LOG.debug("block already present");
         return respondWith(reqId, blockParam.getBlockHash(), VALID);
       }
+
+      Optional<BlockHeader> parentHeader =
+          protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+      if (parentHeader.isPresent()
+          && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
+        return respondWithInvalid(
+            reqId, parentHeader.get().getHash(), "Timestamp must be greater than parent");
+      }
     }
 
     final var block =
@@ -184,7 +193,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         () -> latestValidHash == null ? null : latestValidHash.toHexString(),
         status::name);
     return new JsonRpcSuccessResponse(
-        requestId, new EnginePayloadStatusResult(status, latestValidHash, null));
+        requestId, new EnginePayloadStatusResult(status, latestValidHash, Optional.empty()));
   }
 
   JsonRpcResponse respondWithInvalid(
@@ -197,6 +206,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         INVALID::name,
         () -> validationError);
     return new JsonRpcSuccessResponse(
-        requestId, new EnginePayloadStatusResult(INVALID, latestValidHash, validationError));
+        requestId,
+        new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
   }
 }

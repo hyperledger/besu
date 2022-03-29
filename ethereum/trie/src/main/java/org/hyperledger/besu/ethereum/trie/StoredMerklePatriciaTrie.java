@@ -64,6 +64,29 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
    * @param nodeLoader The {@link NodeLoader} to retrieve node data from.
    * @param rootHash The initial root has for the trie, which should be already present in {@code
    *     storage}.
+   * @param rootLocation The initial root location for the trie
+   * @param valueSerializer A function for serializing values to bytes.
+   * @param valueDeserializer A function for deserializing values from bytes.
+   */
+  public StoredMerklePatriciaTrie(
+      final NodeLoader nodeLoader,
+      final Bytes32 rootHash,
+      final Bytes rootLocation,
+      final Function<V, Bytes> valueSerializer,
+      final Function<Bytes, V> valueDeserializer) {
+    this.nodeFactory = new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer);
+    this.root =
+        rootHash.equals(EMPTY_TRIE_NODE_HASH)
+            ? NullNode.instance()
+            : new StoredNode<>(nodeFactory, rootLocation, rootHash);
+  }
+
+  /**
+   * Create a trie.
+   *
+   * @param nodeLoader The {@link NodeLoader} to retrieve node data from.
+   * @param rootHash The initial root has for the trie, which should be already present in {@code
+   *     storage}.
    * @param valueSerializer A function for serializing values to bytes.
    * @param valueDeserializer A function for deserializing values from bytes.
    */
@@ -72,11 +95,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
       final Bytes32 rootHash,
       final Function<V, Bytes> valueSerializer,
       final Function<Bytes, V> valueDeserializer) {
-    this.nodeFactory = new StoredNodeFactory<>(nodeLoader, valueSerializer, valueDeserializer);
-    this.root =
-        rootHash.equals(EMPTY_TRIE_NODE_HASH)
-            ? NullNode.instance()
-            : new StoredNode<>(nodeFactory, Bytes.EMPTY, rootHash);
+    this(nodeLoader, rootHash, Bytes.EMPTY, valueSerializer, valueDeserializer);
   }
 
   /**
@@ -101,6 +120,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public Optional<V> getPath(final K path) {
+    checkNotNull(path);
+    return root.accept(getVisitor, path).getValue();
+  }
+
+  @Override
   public Proof<V> getValueWithProof(final K key) {
     checkNotNull(key);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
@@ -118,6 +143,12 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public void put(final K key, final PutVisitor<V> putVisitor) {
+    checkNotNull(key);
+    this.root = root.accept(putVisitor, bytesToPath(key));
+  }
+
+  @Override
   public void remove(final K key) {
     checkNotNull(key);
     this.root = root.accept(removeVisitor, bytesToPath(key));
@@ -131,7 +162,11 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
 
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
-    final CommitVisitor<V> commitVisitor = new CommitVisitor<>(nodeUpdater);
+    commit(nodeUpdater, new CommitVisitor<>(nodeUpdater));
+  }
+
+  @Override
+  public void commit(final NodeUpdater nodeUpdater, final CommitVisitor<V> commitVisitor) {
     root.accept(Bytes.EMPTY, commitVisitor);
     // Make sure root node was stored
     if (root.isDirty() && root.getRlpRef().size() < 32) {

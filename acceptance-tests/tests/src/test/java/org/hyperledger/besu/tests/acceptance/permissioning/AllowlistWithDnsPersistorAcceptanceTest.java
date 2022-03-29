@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,12 +31,9 @@ import org.junit.Test;
 
 public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
 
-  private static final String ENODE_ONE =
-      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567";
-  private static final String ENODE_TWO =
-      "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
-  private static final String ENODE_THREE =
-      "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.11:4567";
+  private String ENODE_ONE;
+  private String ENODE_TWO;
+  private String ENODE_THREE;
 
   private Node node;
   private Account senderA;
@@ -43,6 +41,15 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
 
   @Before
   public void setUp() throws Exception {
+    ENODE_ONE =
+        "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@"
+            + InetAddress.getLocalHost().getHostName()
+            + ":4567";
+    ENODE_TWO =
+        "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
+    ENODE_THREE =
+        "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.11:4567";
+
     senderA = accounts.getPrimaryBenefactor();
     tempFile = Files.createTempFile("test", "test");
 

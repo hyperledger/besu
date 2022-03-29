@@ -55,23 +55,30 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
     private final Optional<String> errorMessage;
     private final Optional<BlockHeader> newFinalized;
     private final Optional<BlockHeader> newHead;
+    private final Optional<Hash> latestValid;
 
     private ForkchoiceResult(
         final Optional<String> errorMessage,
         final Optional<BlockHeader> newFinalized,
-        final Optional<BlockHeader> newHead) {
+        final Optional<BlockHeader> newHead,
+        final Optional<Hash> latestValid) {
       this.errorMessage = errorMessage;
       this.newFinalized = newFinalized;
       this.newHead = newHead;
+      this.latestValid = latestValid;
     }
 
-    public static ForkchoiceResult withFailure(final String errorMessage) {
-      return new ForkchoiceResult(Optional.of(errorMessage), Optional.empty(), Optional.empty());
+    public static ForkchoiceResult withFailure(final String errorMessage, final Hash latestValid) {
+      return new ForkchoiceResult(
+          Optional.of(errorMessage),
+          Optional.empty(),
+          Optional.empty(),
+          Optional.ofNullable(latestValid));
     }
 
     public static ForkchoiceResult withResult(
         final Optional<BlockHeader> newFinalized, final Optional<BlockHeader> newHead) {
-      return new ForkchoiceResult(Optional.empty(), newFinalized, newHead);
+      return new ForkchoiceResult(Optional.empty(), newFinalized, newHead, Optional.empty());
     }
 
     public Optional<String> getErrorMessage() {
@@ -84,6 +91,10 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
     public Optional<BlockHeader> getNewHead() {
       return newHead;
+    }
+
+    public Optional<Hash> getLatestValid() {
+      return latestValid;
     }
 
     public boolean isFailed() {

@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -123,6 +124,36 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
 
     assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
+  }
+
+  @Test
+  public void childTimestampExceedsParentsFails() {
+
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader parentHeader = nextBlockHeader(terminalHeader);
+
+    Block parent = new Block(parentHeader, BlockBody.empty());
+    coordinator.executeBlock(parent);
+
+    BlockHeader childHeader = nextBlockHeader(parentHeader, parentHeader.getTimestamp());
+    Block child = new Block(childHeader, BlockBody.empty());
+    coordinator.executeBlock(child);
+
+    ForkchoiceResult result =
+        coordinator.updateForkChoice(childHeader.getHash(), terminalHeader.getHash());
+
+    assertThat(result.isSuccessful()).isFalse();
+    assertThat(result.getErrorMessage()).isPresent();
+    assertThat(result.getErrorMessage().get())
+        .isEqualTo("new head timestamp not greater than parent");
+
+    verify(blockchain, never()).setFinalized(childHeader.getHash());
+    verify(mergeContext, never()).setFinalized(childHeader);
+
+    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
+        .isTrue();
   }
 
   @Test
@@ -512,13 +543,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .buildHeader();
   }
 
-  private BlockHeader nextBlockHeader(final BlockHeader parentHeader) {
+  private BlockHeader nextBlockHeader(
+      final BlockHeader parentHeader, final long... optionalTimestamp) {
     return headerGenerator
         .difficulty(Difficulty.ZERO)
         .parentHash(parentHeader.getHash())
         .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
         .number(parentHeader.getNumber() + 1)
         .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
+        .timestamp(
+            optionalTimestamp.length > 0 ? optionalTimestamp[0] : parentHeader.getTimestamp() + 12)
         .baseFeePerGas(
             feeMarket.computeBaseFee(
                 genesisState.getBlock().getHeader().getNumber() + 1,

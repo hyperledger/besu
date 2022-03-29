@@ -24,11 +24,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.IntSupplier;
@@ -250,6 +253,48 @@ public class SyncStatusNodePermissioningProviderTest {
             synchronizer, Lists.newArrayList(bootnode), metricsSystem);
 
     boolean isPermitted = provider.isConnectionPermitted(enode1, enodeWithDiscoveryPort);
+
+    assertThat(isPermitted).isTrue();
+  }
+
+  @Test
+  public void syncStatusPermissioningCheckShouldAllowDNS() throws UnknownHostException {
+    inSyncListener.onInSyncStatusChange(false);
+    assertThat(provider.hasReachedSync()).isFalse();
+
+    EnodeURL bootnode =
+        EnodeURLImpl.builder()
+            .nodeId(
+                "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0")
+            .listeningPort(9999)
+            .disableDiscovery()
+            .ipAddress(
+                InetAddress.getLocalHost().getHostName(),
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(true)
+                    .build())
+            .build();
+
+    EnodeURL enodeWithIP =
+        EnodeURLImpl.builder()
+            .nodeId(
+                "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0")
+            .listeningPort(9999)
+            .disableDiscovery()
+            .ipAddress(
+                "127.0.0.1",
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(true)
+                    .build())
+            .build();
+
+    final SyncStatusNodePermissioningProvider provider =
+        new SyncStatusNodePermissioningProvider(
+            synchronizer, Lists.newArrayList(bootnode), metricsSystem);
+
+    boolean isPermitted = provider.isConnectionPermitted(enode1, enodeWithIP);
 
     assertThat(isPermitted).isTrue();
   }
