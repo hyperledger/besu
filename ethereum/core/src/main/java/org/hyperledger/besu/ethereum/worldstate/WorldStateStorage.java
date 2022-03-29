@@ -44,6 +44,8 @@ public interface WorldStateStorage {
 
   void clear();
 
+  void clearFlatDatabase();
+
   Updater updater();
 
   long prune(Predicate<byte[]> inUseCheck);

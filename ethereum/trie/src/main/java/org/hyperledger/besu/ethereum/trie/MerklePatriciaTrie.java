@@ -43,6 +43,14 @@ public interface MerklePatriciaTrie<K, V> {
   Optional<V> get(K key);
 
   /**
+   * Returns an {@code Optional} of value mapped to the given path if it exists; otherwise empty.
+   *
+   * @param path The path for the value.
+   * @return an {@code Optional} of value mapped to the given path if it exists; otherwise empty
+   */
+  Optional<V> getPath(final K path);
+
+  /**
    * Returns value and ordered proof-related nodes mapped to the hash if it exists; otherwise empty.
    *
    * @param key The key for the value.
@@ -58,6 +66,15 @@ public interface MerklePatriciaTrie<K, V> {
    * @param value The value to associate the key with.
    */
   void put(K key, V value);
+
+  /**
+   * Updates the value mapped to the specified key, creating the mapping if one does not already
+   * exist.
+   *
+   * @param key The key that corresponds to the value to be updated.
+   * @param putVisitor custom visitor for the update
+   */
+  void put(K key, PutVisitor<V> putVisitor);
 
   /**
    * Deletes the value mapped to the specified key, if such a value exists (Optional operation).
@@ -87,6 +104,14 @@ public interface MerklePatriciaTrie<K, V> {
    * @param nodeUpdater used to store the node values
    */
   void commit(NodeUpdater nodeUpdater);
+
+  /**
+   * Commits any pending changes to the underlying storage.
+   *
+   * @param nodeUpdater used to store the node values
+   * @param commitVisitor custom visitor for the commit
+   */
+  void commit(NodeUpdater nodeUpdater, CommitVisitor<V> commitVisitor);
 
   /**
    * Retrieve up to {@code limit} storage entries beginning from the first entry with hash equal to

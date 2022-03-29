@@ -52,13 +52,17 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
   private final long minMillisBeforeStalling;
   private volatile long timestampOfLastProgress;
   protected Bytes rootNodeData;
+
+  protected final WorldStateStorage worldStateStorage;
   protected WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
+      final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<REQUEST> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {
+    this.worldStateStorage = worldStateStorage;
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.timestampOfLastProgress = clock.millis();
     this.downloadWasResumed = !pendingRequests.isEmpty();
@@ -104,10 +108,8 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
         LOG.info("World state download failed. ", error);
       }
     }
-    for (final EthTask<?> outstandingRequest : outstandingRequests) {
-      outstandingRequest.cancel();
-    }
-    pendingRequests.clear();
+
+    cleanupQueues();
 
     if (error != null) {
       if (worldStateDownloadProcess != null) {
@@ -117,6 +119,13 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
     } else {
       downloadFuture.complete(result);
     }
+  }
+
+  protected synchronized void cleanupQueues() {
+    for (final EthTask<?> outstandingRequest : outstandingRequests) {
+      outstandingRequest.cancel();
+    }
+    pendingRequests.clear();
   }
 
   public boolean downloadWasResumed() {
@@ -237,6 +246,5 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
     this.worldStateDownloadProcess = worldStateDownloadProcess;
   }
 
-  public abstract boolean checkCompletion(
-      final WorldStateStorage worldStateStorage, final BlockHeader header);
+  public abstract boolean checkCompletion(final BlockHeader header);
 }
