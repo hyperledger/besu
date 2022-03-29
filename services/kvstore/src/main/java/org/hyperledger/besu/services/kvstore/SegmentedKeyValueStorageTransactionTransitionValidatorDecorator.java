@@ -25,7 +25,7 @@ public class SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<S>
     implements Transaction<S> {
 
   private final Transaction<S> transaction;
-  private volatile AtomicBoolean active = new AtomicBoolean(Boolean.TRUE);
+  private AtomicBoolean active = new AtomicBoolean(Boolean.TRUE);
 
   public SegmentedKeyValueStorageTransactionTransitionValidatorDecorator(
       final Transaction<S> toDecorate) {
@@ -33,26 +33,26 @@ public class SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<S>
   }
 
   @Override
-  public final void put(final S segment, final byte[] key, final byte[] value) {
+  public final synchronized void put(final S segment, final byte[] key, final byte[] value) {
     checkState(active.get(), "Cannot invoke put() on a completed transaction.");
     transaction.put(segment, key, value);
   }
 
   @Override
-  public final void remove(final S segment, final byte[] key) {
+  public final synchronized void remove(final S segment, final byte[] key) {
     checkState(active.get(), "Cannot invoke remove() on a completed transaction.");
     transaction.remove(segment, key);
   }
 
   @Override
-  public final void commit() throws StorageException {
+  public final synchronized void commit() throws StorageException {
     checkState(active.get(), "Cannot commit a completed transaction.");
     active.set(Boolean.FALSE);
     transaction.commit();
   }
 
   @Override
-  public final void rollback() {
+  public final synchronized void rollback() {
     checkState(active.get(), "Cannot rollback a completed transaction.");
     active.set(Boolean.FALSE);
     transaction.rollback();
