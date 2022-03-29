@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -51,11 +52,11 @@ import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
 import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.unstable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
@@ -274,7 +275,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
   final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
-  private final DataStorageOptions unstableDataStorageOptions = DataStorageOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
@@ -286,6 +286,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
 
   // stable CLI options
+  private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
@@ -535,6 +536,47 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new CorsAllowedOriginsProperty();
   }
 
+  // Engine JSON-PRC Options
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Engine JSON-RPC Options|@%n")
+  EngineRPCOptionGroup engineRPCOptionGroup = new EngineRPCOptionGroup();
+
+  static class EngineRPCOptionGroup {
+    @Option(
+        names = {"--engine-rpc-http-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
+
+    @Option(
+        names = {"--engine-rpc-ws-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description =
+            "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
+
+    @Option(
+        names = {"--engine-jwt-secret"},
+        paramLabel = MANDATORY_FILE_FORMAT_HELP,
+        description = "Path to file containing shared secret key for JWT signature verification")
+    private final Path engineJwtKeyFile = null;
+
+    @Option(
+        names = {"--engine-jwt-enabled"},
+        description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineAuthEnabled = false;
+
+    @Option(
+        names = {"--engine-host-allowlist"},
+        paramLabel = "<hostname>[,<hostname>...]... or * or all",
+        description =
+            "Comma separated list of hostnames to allow for ENGINE API access (applies to both HTTP and websockets), or * to accept any host (default: ${DEFAULT-VALUE})",
+        defaultValue = "localhost,127.0.0.1")
+    private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
+        new JsonRPCAllowlistHostsProperty();
+  }
+
   // JSON-RPC HTTP Options
   @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC HTTP Options|@%n")
   JsonRPCHttpOptionGroup jsonRPCHttpOptionGroup = new JsonRPCHttpOptionGroup();
@@ -559,13 +601,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
         arity = "1")
     private final Integer rpcHttpPort = DEFAULT_JSON_RPC_PORT;
-
-    @Option(
-        names = {"--engine-rpc-http-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
     @Option(
         names = {"--rpc-http-max-active-connections"},
@@ -717,25 +752,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Port for JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
         arity = "1")
     private final Integer rpcWsPort = DEFAULT_WEBSOCKET_PORT;
-
-    @Option(
-        names = {"--engine-rpc-ws-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description =
-            "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
-
-    @Option(
-        names = {"--engine-jwt-secret"},
-        paramLabel = MANDATORY_FILE_FORMAT_HELP,
-        description = "Path to file containing shared secret key for JWT signature verification")
-    private final Path engineJwtKeyFile = null;
-
-    @Option(
-        names = {"--engine-jwt-enabled"},
-        description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineAuthEnabled = false;
 
     @Option(
         names = {"--rpc-ws-max-frame-size"},
@@ -955,15 +971,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final JsonRPCAllowlistHostsProperty hostsAllowlist = new JsonRPCAllowlistHostsProperty();
 
   @Option(
-      names = {"--engine-host-allowlist"},
-      paramLabel = "<hostname>[,<hostname>...]... or * or all",
-      description =
-          "Comma separated list of hostnames to allow for ENGINE API access (applies to both HTTP and websockets), or * to accept any host (default: ${DEFAULT-VALUE})",
-      defaultValue = "localhost,127.0.0.1")
-  private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
-      new JsonRPCAllowlistHostsProperty();
-
-  @Option(
       names = {"--host-whitelist"},
       hidden = true,
       paramLabel = "<hostname>[,<hostname>...]... or * or all",
@@ -1152,8 +1159,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private final Integer pooledTransactionHashesSize =
-        TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS_HASHES;
+    @SuppressWarnings("unused")
+    private final Integer pooledTransactionHashesSize = null; // NOSONAR
 
     @Option(
         names = {"--tx-pool-retention-hours"},
@@ -1457,6 +1464,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addMixin("Ethstats", ethstatsOptions);
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
     commandLine.addMixin("Logging level", loggingLevelOption);
+    commandLine.addMixin("Data Storage Options", dataStorageOptions);
   }
 
   private void handleUnstableOptions() {
@@ -1475,7 +1483,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
-            .put("Data Storage Options", unstableDataStorageOptions)
             .put("Launcher", unstableLauncherOptions)
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
@@ -1863,6 +1870,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
     }
+
+    if (txPoolOptionGroup.pooledTransactionHashesSize != null) { // NOSONAR
+      logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
+    }
   }
 
   private void configure() throws Exception {
@@ -1886,7 +1897,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
     engineJsonRpcConfiguration =
         createEngineJsonRpcConfiguration(
-            jsonRPCHttpOptionGroup.engineRpcHttpPort, engineHostsAllowlist);
+            engineRPCOptionGroup.engineRpcHttpPort, engineRPCOptionGroup.engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration =
@@ -1896,7 +1907,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             hostsAllowlist);
     engineWebSocketConfiguration =
         engineWebSocketConfiguration(
-            jsonRPCWebsocketOptionGroup.engineRpcWsPort, engineHostsAllowlist);
+            engineRPCOptionGroup.engineRpcWsPort, engineRPCOptionGroup.engineHostsAllowlist);
     apiConfiguration = apiConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -2036,7 +2047,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .dataStorageConfiguration(unstableDataStorageOptions.toDomainObject())
+        .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(maxPeers);
   }
 
@@ -2067,13 +2078,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     engineConfig.setEnabled(isMergeEnabled());
-    if (jsonRPCWebsocketOptionGroup.isEngineAuthEnabled) {
+    if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (jsonRPCWebsocketOptionGroup.engineJwtKeyFile != null
-          && java.nio.file.Files.exists(jsonRPCWebsocketOptionGroup.engineJwtKeyFile)) { // NOSONAR
-        engineConfig.setAuthenticationPublicKeyFile(
-            jsonRPCWebsocketOptionGroup.engineJwtKeyFile.toFile());
+      if (engineRPCOptionGroup.engineJwtKeyFile != null
+          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
+        engineConfig.setAuthenticationPublicKeyFile(engineRPCOptionGroup.engineJwtKeyFile.toFile());
       } else {
         logger.info(
             "Engine API authentication enabled without key file. Expect ephemeral jwt.hex file in datadir");
@@ -2088,13 +2098,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final WebSocketConfiguration webSocketConfiguration =
         webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     webSocketConfiguration.setEnabled(isMergeEnabled());
-    if (jsonRPCWebsocketOptionGroup.isEngineAuthEnabled) {
+    if (engineRPCOptionGroup.isEngineAuthEnabled) {
       webSocketConfiguration.setAuthenticationEnabled(true);
       webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (jsonRPCWebsocketOptionGroup.engineJwtKeyFile != null
-          && java.nio.file.Files.exists(jsonRPCWebsocketOptionGroup.engineJwtKeyFile)) { // NOSONAR
+      if (engineRPCOptionGroup.engineJwtKeyFile != null
+          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
         webSocketConfiguration.setAuthenticationPublicKeyFile(
-            jsonRPCWebsocketOptionGroup.engineJwtKeyFile.toFile());
+            engineRPCOptionGroup.engineJwtKeyFile.toFile());
       }
     }
     return webSocketConfiguration;
@@ -2709,7 +2719,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
-        .pooledTransactionHashesSize(txPoolOptionGroup.pooledTransactionHashesSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
@@ -3113,10 +3122,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Override
     public int getDatabaseVersion() {
-      return unstableDataStorageOptions
-          .toDomainObject()
-          .getDataStorageFormat()
-          .getDatabaseVersion();
+      return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
     }
   }
 
