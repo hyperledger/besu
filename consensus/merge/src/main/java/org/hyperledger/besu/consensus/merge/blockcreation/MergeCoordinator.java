@@ -265,7 +265,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       // we should only fail to find when it's the special value 0x000..000
       return ForkchoiceResult.withFailure(
           String.format(
-              "should've been able to find block hash %s but couldn't", finalizedBlockHash));
+              "should've been able to find block hash %s but couldn't", finalizedBlockHash),
+          null);
     }
 
     if (currentFinalized.isPresent()
@@ -274,15 +275,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       return ForkchoiceResult.withFailure(
           String.format(
               "new finalized block %s is not a descendant of current finalized block %s",
-              finalizedBlockHash, currentFinalized.get().getBlockHash()));
+              finalizedBlockHash, currentFinalized.get().getBlockHash()),
+          null);
     }
 
     // ensure we have headBlock:
     BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
-
     if (newHead == null) {
       return ForkchoiceResult.withFailure(
-          String.format("not able to find new head block %s", headBlockHash));
+          String.format("not able to find new head block %s", headBlockHash), null);
     }
 
     // ensure new head is descendant of finalized
@@ -298,9 +299,17 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                         newHead.getBlockHash(), finalized.getBlockHash()));
 
     if (descendantError.isPresent()) {
-      return ForkchoiceResult.withFailure(descendantError.get());
+      return ForkchoiceResult.withFailure(descendantError.get(), null);
     }
 
+    Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
+    if (parentOfNewHead.isPresent()
+        && parentOfNewHead.get().getTimestamp() >= newHead.getTimestamp()) {
+      final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
+      return ForkchoiceResult.withFailure(
+          "new head timestamp not greater than parent",
+          latestValid.isPresent() ? latestValid.get() : null);
+    }
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
 
