@@ -59,7 +59,7 @@ public class StaticNodesParserTest {
           EnodeURLImpl.builder()
               .nodeId(
                   "819e5cbd81f123516b10f04bf620daa2b385efef06d77253148b814bf1bb6197ff58ebd1fd7bf5dc765b49a4440c733bf941e479c800173f2bfeb887e4fbcbc2")
-              .ipAddress("127.0.0.1")
+              .ipAddress("10.0.0.1")
               .discoveryAndListeningPorts(30305)
               .build(),
           EnodeURLImpl.builder()

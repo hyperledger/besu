@@ -354,16 +354,15 @@ public class EnodeURLImpl implements EnodeURL {
     }
 
     public Builder ipAddress(final String ip, final EnodeDnsConfiguration enodeDnsConfiguration) {
-      if (InetAddresses.isUriInetAddress(ip)) {
-        this.ip = InetAddresses.forUriString(ip);
-      } else if (InetAddresses.isInetAddress(ip)) {
-        this.ip = InetAddresses.forString(ip);
-      } else if (enodeDnsConfiguration.dnsEnabled()) {
+      if (enodeDnsConfiguration.dnsEnabled()) {
         try {
-          if (enodeDnsConfiguration.updateEnabled()) {
-            this.maybeHostname = Optional.of(ip);
-          }
           this.ip = InetAddress.getByName(ip);
+          if (enodeDnsConfiguration.updateEnabled()) {
+            if (this.ip.isLoopbackAddress()) {
+              this.ip = InetAddress.getLocalHost();
+            }
+            this.maybeHostname = Optional.of(this.ip.getHostName());
+          }
         } catch (final UnknownHostException e) {
           if (!enodeDnsConfiguration.updateEnabled()) {
             throw new IllegalArgumentException("Invalid ip address or hostname.");
@@ -371,6 +370,10 @@ public class EnodeURLImpl implements EnodeURL {
             this.ip = InetAddresses.forString("127.0.0.1");
           }
         }
+      } else if (InetAddresses.isUriInetAddress(ip)) {
+        this.ip = InetAddresses.forUriString(ip);
+      } else if (InetAddresses.isInetAddress(ip)) {
+        this.ip = InetAddresses.forString(ip);
       } else {
         throw new IllegalArgumentException("Invalid ip address.");
       }
