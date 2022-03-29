@@ -924,7 +924,8 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void toURIWithoutDiscoveryPortShouldProduceValidValue() throws UnknownHostException {
+  public void toURIWithoutDiscoveryPortShouldProduceEntryWithHostnameWhenUsingLoopbackAddress()
+      throws UnknownHostException {
     String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, "127.0.0.1", 9999);
 
     final EnodeURL enodeA =
@@ -936,6 +937,34 @@ public class EnodeURLImplTest {
         URI.create(
             String.format(
                 "enode://%s@%s:%d", VALID_NODE_ID, InetAddress.getLocalHost().getHostName(), 9999));
+    assertThat(enodeA.toURIWithoutDiscoveryPort()).isEqualTo(expected);
+  }
+
+  @Test
+  public void toURIWithoutDiscoveryPortShouldUseLoopbackWhenDomainNotFound() {
+    String enodeString =
+        String.format("enode://%s@%s:%d", VALID_NODE_ID, "besu-is-awesome.example.com", 9999);
+
+    final EnodeURL enodeA =
+        EnodeURLImpl.fromString(
+            enodeString,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+
+    URI expected = URI.create(String.format("enode://%s@%s:%d", VALID_NODE_ID, "127.0.0.1", 9999));
+    assertThat(enodeA.toURIWithoutDiscoveryPort()).isEqualTo(expected);
+  }
+
+  @Test
+  public void toURIWithoutDiscoveryPortShouldKeepDomainWhenFound() {
+    String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, "hyperledger.org", 9999);
+
+    final EnodeURL enodeA =
+        EnodeURLImpl.fromString(
+            enodeString,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+
+    URI expected =
+        URI.create(String.format("enode://%s@%s:%d", VALID_NODE_ID, "hyperledger.org", 9999));
     assertThat(enodeA.toURIWithoutDiscoveryPort()).isEqualTo(expected);
   }
 }
