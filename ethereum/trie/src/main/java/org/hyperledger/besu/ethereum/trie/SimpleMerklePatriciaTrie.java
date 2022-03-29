@@ -60,6 +60,12 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   }
 
   @Override
+  public Optional<V> getPath(final K path) {
+    checkNotNull(path);
+    return root.accept(getVisitor, path).getValue();
+  }
+
+  @Override
   public Proof<V> getValueWithProof(final K key) {
     checkNotNull(key);
     final ProofVisitor<V> proofVisitor = new ProofVisitor<>(root);
@@ -74,6 +80,12 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
     checkNotNull(key);
     checkNotNull(value);
     this.root = root.accept(new PutVisitor<>(nodeFactory, value), bytesToPath(key));
+  }
+
+  @Override
+  public void put(final K key, final PutVisitor<V> putVisitor) {
+    checkNotNull(key);
+    this.root = root.accept(putVisitor, bytesToPath(key));
   }
 
   @Override
@@ -100,6 +112,11 @@ public class SimpleMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
 
   @Override
   public void commit(final NodeUpdater nodeUpdater) {
+    // Nothing to do here
+  }
+
+  @Override
+  public void commit(final NodeUpdater nodeUpdater, final CommitVisitor<V> commitVisitor) {
     // Nothing to do here
   }
 

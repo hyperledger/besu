@@ -20,6 +20,9 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,11 +66,12 @@ public class NodeSmartContractPermissioningV2DNSAcceptanceTest
   }
 
   @Test
-  public void permissionedNodeShouldAddDnsRuleAndAllowNode() {
+  public void permissionedNodeShouldAddDnsRuleAndAllowNode() throws UnknownHostException {
     final EnodeURL forbiddenEnodeURL = getForbiddenEnodeURL();
     Assertions.assertThat(forbiddenEnodeURL.toURI().getHost()).isEqualTo("127.0.0.1");
     final EnodeURL forbiddenDnsEnodeURL = buildDnsEnodeUrl(forbiddenEnodeURL);
-    Assertions.assertThat(forbiddenDnsEnodeURL.toURI().getHost()).isEqualTo("localhost");
+    Assertions.assertThat(forbiddenDnsEnodeURL.toURI().getHost())
+        .isEqualTo(InetAddress.getLocalHost().getHostName());
 
     permissionedNode.verify(connectionIsForbidden(forbiddenNode));
     permissionedNode.verify(connectionIsForbidden(forbiddenDnsEnodeURL));
@@ -77,11 +81,12 @@ public class NodeSmartContractPermissioningV2DNSAcceptanceTest
   }
 
   @Test
-  public void permissionedNodeShouldAddDNSRuleAndConnectToNewPeer() {
+  public void permissionedNodeShouldAddDNSRuleAndConnectToNewPeer() throws UnknownHostException {
     final EnodeURL forbiddenEnodeURL = getForbiddenEnodeURL();
     Assertions.assertThat(forbiddenEnodeURL.toURI().getHost()).isEqualTo("127.0.0.1");
     final EnodeURL forbiddenDnsEnodeURL = buildDnsEnodeUrl(forbiddenEnodeURL);
-    Assertions.assertThat(forbiddenDnsEnodeURL.toURI().getHost()).isEqualTo("localhost");
+    Assertions.assertThat(forbiddenDnsEnodeURL.toURI().getHost())
+        .isEqualTo(InetAddress.getLocalHost().getHostName());
 
     permissionedNode.verify(net.awaitPeerCount(2));
     permissionedNode.verify(connectionIsForbidden(forbiddenNode));
