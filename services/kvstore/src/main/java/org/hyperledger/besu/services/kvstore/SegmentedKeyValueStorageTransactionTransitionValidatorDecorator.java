@@ -25,7 +25,7 @@ public class SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<S>
     implements Transaction<S> {
 
   private final Transaction<S> transaction;
-  private AtomicBoolean active = new AtomicBoolean(Boolean.TRUE);
+  private final AtomicBoolean active = new AtomicBoolean(Boolean.TRUE);
 
   public SegmentedKeyValueStorageTransactionTransitionValidatorDecorator(
       final Transaction<S> toDecorate) {
