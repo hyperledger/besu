@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
@@ -89,8 +90,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
 
-    stackTrie.addKeys(slots);
-    stackTrie.addProofs(proofs);
+    if (isProofValid) {
+      stackTrie.addKeys(slots);
+      stackTrie.addProofs(proofs);
+    }
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
@@ -218,6 +221,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   public void setSlots(final TreeMap<Bytes32, Bytes> slots) {
     this.slots = slots;
+  }
+
+  @VisibleForTesting
+  public void setProofValid(final boolean proofValid) {
+    isProofValid = proofValid;
   }
 
   public void addStackTrie(final Optional<StackTrie> maybeStackTrie) {
