@@ -144,7 +144,7 @@ public class BackwardSyncContextTest {
                 ethContext,
                 syncState,
                 backwardChain));
-    doReturn(true).when(context).isOnTTD();
+    doReturn(true).when(context).isReady();
     doReturn(2).when(context).getBatchSize();
   }
 
@@ -222,7 +222,7 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldWaitWhenTTDNotReached()
       throws ExecutionException, InterruptedException, TimeoutException {
-    doReturn(false).when(context).isOnTTD();
+    doReturn(false).when(context).isReady();
     when(syncState.subscribeTTDReached(any())).thenReturn(88L);
 
     final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
@@ -241,7 +241,7 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldNotWaitWhenTTDReached()
       throws ExecutionException, InterruptedException, TimeoutException {
-    doReturn(true).when(context).isOnTTD();
+    doReturn(true).when(context).isReady();
     when(syncState.subscribeTTDReached(any())).thenReturn(88L);
     final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
     voidCompletableFuture.get(1, TimeUnit.SECONDS);
@@ -261,7 +261,7 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void shouldFinishWhenWorkIsDonw() {
+  public void shouldFinishWhenWorkIsDone() {
 
     final CompletableFuture<Void> completableFuture = context.executeNextStep(null);
     assertThat(completableFuture.isDone()).isTrue();

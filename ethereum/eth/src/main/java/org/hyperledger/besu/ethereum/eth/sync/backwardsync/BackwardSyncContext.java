@@ -178,8 +178,9 @@ public class BackwardSyncContext {
     return getBlockValidator(block.getHeader().getNumber());
   }
 
-  public boolean isOnTTD() {
-    return syncState.hasReachedTerminalDifficulty().orElse(false);
+  public boolean isReady() {
+    return syncState.isInitialSyncPhaseDone()
+        && syncState.hasReachedTerminalDifficulty().orElse(false);
   }
 
   public CompletableFuture<Void> stop() {
@@ -191,7 +192,7 @@ public class BackwardSyncContext {
     if (firstHash.isPresent()) {
       return executeSyncStep(firstHash.get());
     }
-    if (!isOnTTD()) {
+    if (!isReady()) {
       return waitForTTD().thenCompose(this::executeNextStep);
     }
     final Optional<BlockHeader> firstAncestorHeader = backwardChain.getFirstAncestorHeader();
@@ -241,7 +242,7 @@ public class BackwardSyncContext {
     return CompletableFuture.runAsync(
         () -> {
           try {
-            if (!isOnTTD()) {
+            if (!isReady()) {
               LOG.info("Waiting for TTD...");
               final boolean await = latch.await(2, TimeUnit.MINUTES);
               if (await) {

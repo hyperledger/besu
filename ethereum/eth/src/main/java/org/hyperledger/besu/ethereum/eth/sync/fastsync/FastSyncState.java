@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
@@ -22,33 +23,48 @@ import java.util.OptionalLong;
 
 public class FastSyncState {
 
-  public static FastSyncState EMPTY_SYNC_STATE =
-      new FastSyncState(OptionalLong.empty(), Optional.empty());
+  public static final FastSyncState EMPTY_SYNC_STATE = new FastSyncState();
 
   private OptionalLong pivotBlockNumber;
+  private Optional<Hash> pivotBlockHash;
   private Optional<BlockHeader> pivotBlockHeader;
 
   public FastSyncState() {
     pivotBlockNumber = OptionalLong.empty();
+    pivotBlockHash = Optional.empty();
     pivotBlockHeader = Optional.empty();
   }
 
   public FastSyncState(final long pivotBlockNumber) {
-    this(OptionalLong.of(pivotBlockNumber), Optional.empty());
+    this(OptionalLong.of(pivotBlockNumber), Optional.empty(), Optional.empty());
+  }
+
+  public FastSyncState(final Hash pivotBlockHash) {
+    this(OptionalLong.empty(), Optional.of(pivotBlockHash), Optional.empty());
   }
 
   public FastSyncState(final BlockHeader pivotBlockHeader) {
-    this(OptionalLong.of(pivotBlockHeader.getNumber()), Optional.of(pivotBlockHeader));
+    this(
+        OptionalLong.of(pivotBlockHeader.getNumber()),
+        Optional.of(pivotBlockHeader.getHash()),
+        Optional.of(pivotBlockHeader));
   }
 
   protected FastSyncState(
-      final OptionalLong pivotBlockNumber, final Optional<BlockHeader> pivotBlockHeader) {
+      final OptionalLong pivotBlockNumber,
+      final Optional<Hash> pivotBlockHash,
+      final Optional<BlockHeader> pivotBlockHeader) {
     this.pivotBlockNumber = pivotBlockNumber;
+    this.pivotBlockHash = pivotBlockHash;
     this.pivotBlockHeader = pivotBlockHeader;
   }
 
   public OptionalLong getPivotBlockNumber() {
     return pivotBlockNumber;
+  }
+
+  public Optional<Hash> getPivotBlockHash() {
+    return pivotBlockHash;
   }
 
   public Optional<BlockHeader> getPivotBlockHeader() {
@@ -61,6 +77,7 @@ public class FastSyncState {
 
   public void setCurrentHeader(final BlockHeader header) {
     pivotBlockNumber = OptionalLong.of(header.getNumber());
+    pivotBlockHash = Optional.of(header.getHash());
     pivotBlockHeader = Optional.of(header);
   }
 
@@ -70,12 +87,13 @@ public class FastSyncState {
     if (o == null || getClass() != o.getClass()) return false;
     FastSyncState that = (FastSyncState) o;
     return Objects.equals(pivotBlockNumber, that.pivotBlockNumber)
+        && Objects.equals(pivotBlockHash, that.pivotBlockHash)
         && Objects.equals(pivotBlockHeader, that.pivotBlockHeader);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pivotBlockNumber, pivotBlockHeader);
+    return Objects.hash(pivotBlockNumber, pivotBlockHash, pivotBlockHeader);
   }
 
   @Override
@@ -83,6 +101,8 @@ public class FastSyncState {
     return "FastSyncState{"
         + "pivotBlockNumber="
         + pivotBlockNumber
+        + "pivotBlockHash="
+        + pivotBlockHash
         + ", pivotBlockHeader="
         + pivotBlockHeader
         + '}';

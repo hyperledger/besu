@@ -19,7 +19,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -94,7 +93,6 @@ public class FastSyncActionsTest {
             blockchainSetupUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
     fastSyncActions = createFastSyncActions(syncConfig);
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
   }
 
   @Test
@@ -415,13 +413,13 @@ public class FastSyncActionsTest {
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
     return new FastSyncActions(
+        new PivotSelectorFromPeers(syncConfig),
         syncConfig,
         worldStateStorage,
-        mock(GenesisConfigOptions.class),
         protocolSchedule,
         protocolContext,
         ethContext,
-        new SyncState(blockchain, ethContext.getEthPeers()),
+        new SyncState(blockchain, ethContext.getEthPeers(), true),
         new NoOpMetricsSystem());
   }
 }

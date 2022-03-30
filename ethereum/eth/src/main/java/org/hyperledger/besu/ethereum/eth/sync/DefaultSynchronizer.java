@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -56,10 +55,10 @@ public class DefaultSynchronizer implements Synchronizer {
   private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final FullSyncDownloader fullSyncDownloader;
   private final ProtocolContext protocolContext;
+  private final PivotBlockSelector pivotBlockSelector;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
-      final GenesisConfigOptions genesisConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
@@ -70,9 +69,11 @@ public class DefaultSynchronizer implements Synchronizer {
       final Path dataDirectory,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final SyncTerminationCondition terminationCondition) {
+      final SyncTerminationCondition terminationCondition,
+      final PivotBlockSelector pivotBlockSelector) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
+    this.pivotBlockSelector = pivotBlockSelector;
 
     this.protocolContext = protocolContext;
     ChainHeadTracker.trackChainHeadForPeers(
@@ -118,8 +119,8 @@ public class DefaultSynchronizer implements Synchronizer {
     } else {
       this.fastSyncDownloader =
           FastDownloaderFactory.create(
+              pivotBlockSelector,
               syncConfig,
-              genesisConfig,
               dataDirectory,
               protocolSchedule,
               protocolContext,
@@ -199,6 +200,8 @@ public class DefaultSynchronizer implements Synchronizer {
     LOG.info(
         "Fast sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());
+    pivotBlockSelector.close();
+    syncState.markInitialSyncPhaseAsDone();
     return startFullSync();
   }
 

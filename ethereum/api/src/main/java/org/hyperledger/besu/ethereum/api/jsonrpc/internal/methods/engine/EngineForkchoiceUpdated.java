@@ -67,6 +67,10 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     if (mergeContext.isSyncing()) {
+      mergeContext.fireNewForkchoiceMessageEvent(
+          forkChoice.getHeadBlockHash(),
+          forkChoice.getFinalizedBlockHash(),
+          forkChoice.getSafeBlockHash());
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
           new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));

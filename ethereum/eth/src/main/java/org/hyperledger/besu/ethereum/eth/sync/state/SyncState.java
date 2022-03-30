@@ -49,10 +49,18 @@ public class SyncState {
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
   private Optional<Long> newPeerListenerId;
   private Optional<Boolean> reachedTerminalDifficulty = Optional.empty();
+  private volatile boolean isInitialSyncPhaseDone;
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
+    this(blockchain, ethPeers, false);
+  }
+
+  public SyncState(
+      final Blockchain blockchain, final EthPeers ethPeers, final boolean hasInitialSyncPhase) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
+    isInitialSyncPhaseDone = !hasInitialSyncPhase;
+
     blockchain.observeBlockAdded(
         event -> {
           if (event.isNewCanonicalHead()) {
@@ -165,7 +173,8 @@ public class SyncState {
       final Optional<ChainHeadEstimate> syncTargetChain,
       final Optional<ChainHeadEstimate> bestPeerChain,
       final long syncTolerance) {
-    return reachedTerminalDifficulty.orElse(true)
+    return isInitialSyncPhaseDone
+        && reachedTerminalDifficulty.orElse(true)
         // Sync target may be temporarily empty while we switch sync targets during a sync, so
         // check both the sync target and our best peer to determine if we're in sync or not
         && isInSync(localChain, syncTargetChain, syncTolerance)
@@ -276,5 +285,13 @@ public class SyncState {
         .values()
         .forEach(
             (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
+  }
+
+  public void markInitialSyncPhaseAsDone() {
+    isInitialSyncPhaseDone = true;
+  }
+
+  public boolean isInitialSyncPhaseDone() {
+    return isInitialSyncPhaseDone;
   }
 }

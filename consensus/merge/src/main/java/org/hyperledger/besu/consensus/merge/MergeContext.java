@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,6 +38,11 @@ public interface MergeContext extends ConsensusContext {
 
   void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback);
 
+  long addNewForkchoiceMessageListener(
+      final NewForkchoiceMessageListener newForkchoiceMessageListener);
+
+  void removeNewForkchoiceMessageListener(final long subscriberId);
+
   Difficulty getTerminalTotalDifficulty();
 
   void setFinalized(final BlockHeader blockHeader);
@@ -53,7 +59,15 @@ public interface MergeContext extends ConsensusContext {
 
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
 
+  void fireNewForkchoiceMessageEvent(
+      final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash);
+
   interface NewMergeStateCallback {
     void onNewIsPostMergeState(final boolean newIsPostMergeState);
+  }
+
+  interface NewForkchoiceMessageListener {
+    void onNewForkchoiceMessage(
+        final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash);
   }
 }

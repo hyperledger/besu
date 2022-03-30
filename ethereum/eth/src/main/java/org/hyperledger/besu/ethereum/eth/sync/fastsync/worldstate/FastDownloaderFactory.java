@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
@@ -52,8 +52,8 @@ public class FastDownloaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> create(
+      final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
-      final GenesisConfigOptions genesisConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -114,9 +114,9 @@ public class FastDownloaderFactory {
     final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
         new FastSyncDownloader<>(
             new FastSyncActions(
+                pivotBlockSelector,
                 syncConfig,
                 worldStateStorage,
-                genesisConfig,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
