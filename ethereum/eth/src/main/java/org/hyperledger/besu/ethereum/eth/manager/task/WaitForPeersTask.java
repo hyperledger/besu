@@ -60,11 +60,14 @@ public class WaitForPeersTask extends AbstractEthTask<Void> {
             (peer) -> {
               final int peerCount = ethPeers.peerCount();
               if (peerCount >= targetPeerCount) {
-                LOG.info("Complete: {} peers successfully connected.", targetPeerCount);
+                LOG.info("Complete: {} peers connected.", targetPeerCount);
                 // We hit our target
                 result.complete(null);
               } else {
-                LOG.info("Waiting for {} more peers to connect.", targetPeerCount - peerCount);
+                LOG.info(
+                    "Waiting for {} total peers to connect. {} peers currently connected.",
+                    targetPeerCount,
+                    peerCount);
               }
             });
   }
