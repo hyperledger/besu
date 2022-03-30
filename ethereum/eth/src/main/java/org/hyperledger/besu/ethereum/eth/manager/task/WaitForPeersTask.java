@@ -64,7 +64,7 @@ public class WaitForPeersTask extends AbstractEthTask<Void> {
                 // We hit our target
                 result.complete(null);
               } else {
-                LOG.info("Waiting for {} more peers to connect. ", targetPeerCount - peerCount);
+                LOG.info("Waiting for {} more peers to connect.", targetPeerCount - peerCount);
               }
             });
   }
