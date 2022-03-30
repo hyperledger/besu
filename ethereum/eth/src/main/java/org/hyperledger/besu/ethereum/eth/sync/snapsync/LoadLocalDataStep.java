@@ -56,7 +56,6 @@ public class LoadLocalDataStep {
     // check if node is already stored in the worldstate
     if (snapSyncState.hasPivotBlockHeader()) {
       Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
-      System.out.println("ici " + existingData);
       if (existingData.isPresent()) {
         existingNodeCounter.inc();
         request.setData(existingData.get());

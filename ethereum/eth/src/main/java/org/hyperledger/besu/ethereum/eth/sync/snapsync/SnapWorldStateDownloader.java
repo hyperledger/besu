@@ -138,7 +138,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
-      System.out.println(hashCountPerRequest);
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
               .taskCountPerRequest(hashCountPerRequest)
