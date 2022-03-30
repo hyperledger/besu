@@ -89,10 +89,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
 
-    if (isProofValid) {
-      stackTrie.addKeys(slots);
-      stackTrie.addProofs(proofs);
-    }
+    stackTrie.addKeys(slots);
+    stackTrie.addProofs(proofs);
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
@@ -159,7 +157,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                   .forEach(
                       (key, value) -> {
                         final StorageRangeDataRequest storageRangeDataRequest =
-                            createStorageRangeDataRequest(accountHash, storageRoot, key, value);
+                            createStorageRangeDataRequest(
+                                getRootHash(), accountHash, storageRoot, key, value);
                         storageRangeDataRequest.addStackTrie(Optional.of(stackTrie));
                         childRequests.add(storageRangeDataRequest);
                       });
@@ -199,6 +198,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   public Bytes32 getStorageRoot() {
     return storageRoot;
+  }
+
+  public TreeMap<Bytes32, Bytes> getSlots() {
+    return slots;
   }
 
   public Bytes32 getStartKeyHash() {

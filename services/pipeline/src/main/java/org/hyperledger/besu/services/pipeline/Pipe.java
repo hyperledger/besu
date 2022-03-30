@@ -117,9 +117,10 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   }
 
   @Override
-  public void drainTo(final Collection<T> output, final int maxElements) {
+  public int drainTo(final Collection<T> output, final int maxElements) {
     final int count = queue.drainTo(output, maxElements);
     outputCounter.inc(count);
+    return count;
   }
 
   @Override
