@@ -221,11 +221,11 @@ public class P2PPlainNetworkTest {
   }
 
   @Test
-  public void rejectIncomingConnectionFromBlacklistedPeer() throws Exception {
-    final PeerPermissionsDenylist localBlacklist = PeerPermissionsDenylist.create();
+  public void rejectIncomingConnectionFromDenylistedPeer() throws Exception {
+    final PeerPermissionsDenylist localDenylist = PeerPermissionsDenylist.create();
 
     try (final P2PNetwork localNetwork =
-            builder("partner1client1").peerPermissions(localBlacklist).build();
+            builder("partner1client1").peerPermissions(localDenylist).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
 
       localNetwork.start();
@@ -242,8 +242,8 @@ public class P2PPlainNetworkTest {
       final Peer localPeer = createPeer(localId, localPort);
       final Peer remotePeer = createPeer(remoteId, remotePort);
 
-      // Blacklist the remote peer
-      localBlacklist.add(remotePeer);
+      // Denylist the remote peer
+      localDenylist.add(remotePeer);
 
       // Setup disconnect listener
       final CompletableFuture<PeerConnection> peerFuture = new CompletableFuture<>();
