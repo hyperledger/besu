@@ -36,6 +36,7 @@ import io.vertx.ext.auth.impl.Codec;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,7 @@ public class EngineAuthService implements AuthenticationService {
         try {
           final String keyHex = Files.readAllLines(keyFile.get().toPath()).get(0);
           if (keyHex.length() >= 64) {
-            signingKey = Codec.base16Decode(keyHex);
+            signingKey = Bytes.fromHexString(keyHex).toArray();
           } else {
             UnsecurableEngineApiException e =
                 new UnsecurableEngineApiException("signing key too short, 256 bits required");
