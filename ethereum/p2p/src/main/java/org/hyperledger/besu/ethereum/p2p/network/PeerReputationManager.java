@@ -34,10 +34,10 @@ public class PeerReputationManager implements DisconnectCallback {
   private static final Set<DisconnectReason> remotelyTriggeredDisconnectReasons =
       ImmutableSet.of(DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
 
-  private final PeerPermissionsDenylist blacklist;
+  private final PeerPermissionsDenylist denylist;
 
-  public PeerReputationManager(final PeerPermissionsDenylist blacklist) {
-    this.blacklist = blacklist;
+  public PeerReputationManager(final PeerPermissionsDenylist denylist) {
+    this.denylist = denylist;
   }
 
   @Override
@@ -46,8 +46,8 @@ public class PeerReputationManager implements DisconnectCallback {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (shouldBlock(reason, initiatedByPeer)) {
-      LOG.trace("blacklisted peer {} for reason {}", connection, reason.name());
-      blacklist.add(connection.getPeer());
+      LOG.trace("denylist: added peer {} for reason {}", connection, reason.name());
+      denylist.add(connection.getPeer());
     }
   }
 

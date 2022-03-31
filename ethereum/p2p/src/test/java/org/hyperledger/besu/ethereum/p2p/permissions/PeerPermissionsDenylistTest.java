@@ -35,11 +35,11 @@ public class PeerPermissionsDenylistTest {
 
   @Test
   public void add_peer() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
-    blacklist.subscribeUpdate(
+    denylist.subscribeUpdate(
         (restricted, affectedPeers) -> {
           callbackCount.incrementAndGet();
           assertThat(restricted).isTrue();
@@ -48,18 +48,18 @@ public class PeerPermissionsDenylistTest {
 
     assertThat(callbackCount).hasValue(0);
 
-    blacklist.add(peer);
+    denylist.add(peer);
     assertThat(callbackCount).hasValue(1);
   }
 
   @Test
   public void remove_peer() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
-    blacklist.add(peer);
+    denylist.add(peer);
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
-    blacklist.subscribeUpdate(
+    denylist.subscribeUpdate(
         (restricted, affectedPeers) -> {
           callbackCount.incrementAndGet();
           assertThat(restricted).isFalse();
@@ -68,17 +68,17 @@ public class PeerPermissionsDenylistTest {
 
     assertThat(callbackCount).hasValue(0);
 
-    blacklist.remove(peer);
+    denylist.remove(peer);
     assertThat(callbackCount).hasValue(1);
   }
 
   @Test
   public void add_id() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
-    blacklist.subscribeUpdate(
+    denylist.subscribeUpdate(
         (restricted, affectedPeers) -> {
           callbackCount.incrementAndGet();
           assertThat(restricted).isTrue();
@@ -87,18 +87,18 @@ public class PeerPermissionsDenylistTest {
 
     assertThat(callbackCount).hasValue(0);
 
-    blacklist.add(peer.getId());
+    denylist.add(peer.getId());
     assertThat(callbackCount).hasValue(1);
   }
 
   @Test
   public void remove_id() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     Peer peer = createPeer();
-    blacklist.add(peer);
+    denylist.add(peer);
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
-    blacklist.subscribeUpdate(
+    denylist.subscribeUpdate(
         (restricted, affectedPeers) -> {
           callbackCount.incrementAndGet();
           assertThat(restricted).isFalse();
@@ -107,39 +107,39 @@ public class PeerPermissionsDenylistTest {
 
     assertThat(callbackCount).hasValue(0);
 
-    blacklist.remove(peer.getId());
+    denylist.remove(peer.getId());
     assertThat(callbackCount).hasValue(1);
   }
 
   @Test
   public void trackedPeerIsNotPermitted() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
 
     Peer peer = createPeer();
-    checkPermissions(blacklist, peer, true);
+    checkPermissions(denylist, peer, true);
 
-    blacklist.add(peer);
-    checkPermissions(blacklist, peer, false);
+    denylist.add(peer);
+    checkPermissions(denylist, peer, false);
 
-    blacklist.remove(peer);
-    checkPermissions(blacklist, peer, true);
+    denylist.remove(peer);
+    checkPermissions(denylist, peer, true);
   }
 
   @Test
   public void selfPeerIsNotPermitted() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
 
-    checkPermissions(blacklist, localNode, false);
+    checkPermissions(denylist, localNode, false);
   }
 
   @Test
   public void subscribeUpdate() {
-    PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final AtomicInteger callbackCount = new AtomicInteger(0);
     final AtomicInteger restrictedCallbackCount = new AtomicInteger(0);
     Peer peer = createPeer();
 
-    blacklist.subscribeUpdate(
+    denylist.subscribeUpdate(
         (permissionsRestricted, affectedPeers) -> {
           callbackCount.incrementAndGet();
           if (permissionsRestricted) {
@@ -147,85 +147,83 @@ public class PeerPermissionsDenylistTest {
           }
         });
 
-    checkPermissions(blacklist, peer, true);
+    checkPermissions(denylist, peer, true);
     assertThat(callbackCount).hasValue(0);
     assertThat(restrictedCallbackCount).hasValue(0);
 
-    blacklist.add(peer);
+    denylist.add(peer);
     assertThat(callbackCount).hasValue(1);
     assertThat(restrictedCallbackCount).hasValue(1);
 
-    blacklist.add(peer);
+    denylist.add(peer);
     assertThat(callbackCount).hasValue(1);
     assertThat(restrictedCallbackCount).hasValue(1);
 
-    blacklist.remove(peer);
+    denylist.remove(peer);
     assertThat(callbackCount).hasValue(2);
     assertThat(restrictedCallbackCount).hasValue(1);
 
-    blacklist.remove(peer);
+    denylist.remove(peer);
     assertThat(callbackCount).hasValue(2);
     assertThat(restrictedCallbackCount).hasValue(1);
 
-    blacklist.add(peer);
+    denylist.add(peer);
     assertThat(callbackCount).hasValue(3);
     assertThat(restrictedCallbackCount).hasValue(2);
   }
 
   @Test
   public void createWithLimitedCapacity() {
-    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create(2);
+    final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create(2);
     Peer peerA = createPeer();
     Peer peerB = createPeer();
     Peer peerC = createPeer();
 
     // All peers are initially permitted
-    checkPermissions(blacklist, peerA, true);
-    checkPermissions(blacklist, peerB, true);
-    checkPermissions(blacklist, peerC, true);
+    checkPermissions(denylist, peerA, true);
+    checkPermissions(denylist, peerB, true);
+    checkPermissions(denylist, peerC, true);
 
     // Add peerA
-    blacklist.add(peerA);
-    checkPermissions(blacklist, peerA, false);
-    checkPermissions(blacklist, peerB, true);
-    checkPermissions(blacklist, peerC, true);
+    denylist.add(peerA);
+    checkPermissions(denylist, peerA, false);
+    checkPermissions(denylist, peerB, true);
+    checkPermissions(denylist, peerC, true);
 
     // Add peerB
-    blacklist.add(peerB);
-    checkPermissions(blacklist, peerA, false);
-    checkPermissions(blacklist, peerB, false);
-    checkPermissions(blacklist, peerC, true);
+    denylist.add(peerB);
+    checkPermissions(denylist, peerA, false);
+    checkPermissions(denylist, peerB, false);
+    checkPermissions(denylist, peerC, true);
 
     // Add peerC
     // Limit is exceeded and peerA should drop off of the list and be allowed
-    blacklist.add(peerC);
-    checkPermissions(blacklist, peerA, true);
-    checkPermissions(blacklist, peerB, false);
-    checkPermissions(blacklist, peerC, false);
+    denylist.add(peerC);
+    checkPermissions(denylist, peerA, true);
+    checkPermissions(denylist, peerB, false);
+    checkPermissions(denylist, peerC, false);
   }
 
   private void checkPermissions(
-      final PeerPermissionsDenylist blacklist,
-      final Peer remotePeer,
-      final boolean expectedResult) {
+      final PeerPermissionsDenylist denylist, final Peer remotePeer, final boolean expectedResult) {
     for (Action action : Action.values()) {
-      assertThat(blacklist.isPermitted(localNode, remotePeer, action)).isEqualTo(expectedResult);
+      assertThat(denylist.isPermitted(localNode, remotePeer, action)).isEqualTo(expectedResult);
     }
   }
 
   @Test
   public void createWithUnlimitedCapacity() {
-    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final int peerCount = 200;
     final List<Peer> peers =
         Stream.generate(this::createPeer).limit(peerCount).collect(Collectors.toList());
 
-    peers.forEach(p -> checkPermissions(blacklist, p, true));
-    peers.forEach(blacklist::add);
-    peers.forEach(p -> checkPermissions(blacklist, p, false));
+    peers.forEach(p -> checkPermissions(denylist, p, true));
+    peers.forEach(denylist::add);
+    peers.forEach(p -> checkPermissions(denylist, p, false));
 
-    peers.forEach(blacklist::remove);
-    peers.forEach(p -> checkPermissions(blacklist, p, true));
+    peers.forEach(denylist::remove);
+    peers.forEach(p -> checkPermissions(denylist, p, true));
   }
 
   private Peer createPeer() {
