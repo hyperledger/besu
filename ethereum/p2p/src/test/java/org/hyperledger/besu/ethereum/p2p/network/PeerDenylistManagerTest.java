@@ -30,14 +30,14 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class PeerReputationManagerTest {
+public class PeerDenylistManagerTest {
   private final Peer localNode = generatePeer();
-  private final PeerReputationManager peerReputationManager;
+  private final PeerDenylistManager peerDenylistManager;
   private final PeerPermissionsDenylist denylist;
 
-  public PeerReputationManagerTest() {
+  public PeerDenylistManagerTest() {
     denylist = PeerPermissionsDenylist.create();
-    peerReputationManager = new PeerReputationManager(denylist);
+    peerDenylistManager = new PeerDenylistManager(denylist);
   }
 
   @Test
@@ -46,7 +46,7 @@ public class PeerReputationManagerTest {
 
     checkPermissions(denylist, peer.getPeer(), true);
 
-    peerReputationManager.onDisconnect(peer, DisconnectReason.TOO_MANY_PEERS, false);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.TOO_MANY_PEERS, false);
 
     checkPermissions(denylist, peer.getPeer(), true);
   }
@@ -56,7 +56,7 @@ public class PeerReputationManagerTest {
     final PeerConnection peer = generatePeerConnection();
 
     checkPermissions(denylist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, false);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, false);
     checkPermissions(denylist, peer.getPeer(), false);
   }
 
@@ -65,7 +65,7 @@ public class PeerReputationManagerTest {
     final PeerConnection peer = generatePeerConnection();
 
     checkPermissions(denylist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, true);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, true);
     checkPermissions(denylist, peer.getPeer(), true);
   }
 
@@ -74,7 +74,7 @@ public class PeerReputationManagerTest {
     final PeerConnection peer = generatePeerConnection();
 
     checkPermissions(denylist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(
+    peerDenylistManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, false);
     checkPermissions(denylist, peer.getPeer(), false);
   }
@@ -84,7 +84,7 @@ public class PeerReputationManagerTest {
     final PeerConnection peer = generatePeerConnection();
 
     checkPermissions(denylist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(
+    peerDenylistManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, true);
     checkPermissions(denylist, peer.getPeer(), false);
   }
