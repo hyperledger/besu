@@ -165,7 +165,10 @@ public class SyncState {
   }
 
   public Optional<Boolean> hasReachedTerminalDifficulty() {
-    return reachedTerminalDifficulty;
+    if (isInitialSyncPhaseDone) {
+      return reachedTerminalDifficulty;
+    }
+    return Optional.of(Boolean.FALSE);
   }
 
   private boolean isInSync(

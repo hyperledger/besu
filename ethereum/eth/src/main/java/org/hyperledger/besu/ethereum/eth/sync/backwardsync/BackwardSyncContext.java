@@ -179,8 +179,7 @@ public class BackwardSyncContext {
   }
 
   public boolean isReady() {
-    return syncState.isInitialSyncPhaseDone()
-        && syncState.hasReachedTerminalDifficulty().orElse(false);
+    return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
   }
 
   public CompletableFuture<Void> stop() {
