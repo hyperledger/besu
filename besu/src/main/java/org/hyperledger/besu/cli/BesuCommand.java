@@ -1615,16 +1615,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
-      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0) {
+      if (Wei.ZERO.compareTo(minTransactionGasPrice) < 0
+          && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
+              && (privacyPluginService == null
+                  || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
         // if gas is required, cannot use random keys to sign private tx
         // ie --privacy-marker-transaction-signing-key-file must be set
-        if (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
-            && (privacyPluginService == null
-                || privacyPluginService.getPrivateMarkerTransactionFactory() == null)) {
-          throw new ParameterException(
-              commandLine,
-              "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
-        }
+        throw new ParameterException(
+            commandLine,
+            "Not a free gas network. --privacy-marker-transaction-signing-key-file must be specified and must be a funded account. Private transactions cannot be signed by random (non-funded) accounts in paid gas networks");
       }
 
       if (unstablePrivacyPluginOptions.isPrivacyPluginEnabled()
@@ -1701,7 +1700,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
     }
     if (Boolean.FALSE.equals(minerOptionGroup.isMiningEnabled)
-        && minerOptionGroup.iStratumMiningEnabled) {
+        && Boolean.TRUE.equals(minerOptionGroup.iStratumMiningEnabled)) {
       throw new ParameterException(
           this.commandLine,
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
@@ -2081,7 +2080,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (engineRPCOptionGroup.engineJwtKeyFile != null
+      if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
           && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
         engineConfig.setAuthenticationPublicKeyFile(engineRPCOptionGroup.engineJwtKeyFile.toFile());
       } else {
@@ -2098,7 +2097,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final WebSocketConfiguration webSocketConfiguration =
         webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     webSocketConfiguration.setEnabled(isMergeEnabled());
-    if (engineRPCOptionGroup.isEngineAuthEnabled) {
+    if (Boolean.TRUE.equals(engineRPCOptionGroup.isEngineAuthEnabled)) {
       webSocketConfiguration.setAuthenticationEnabled(true);
       webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (engineRPCOptionGroup.engineJwtKeyFile != null
@@ -2587,7 +2586,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
 
-      if (hasPrivacyPublicKey && privacyOptionGroup.isPrivacyMultiTenancyEnabled) {
+      if (hasPrivacyPublicKey
+          && Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)) {
         throw new ParameterException(
             commandLine, "Privacy multi-tenancy and privacy public key cannot be used together");
       }
