@@ -188,6 +188,18 @@ public class FlexiblePrivacyPrecompiledContractTest {
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
+  @Test
+  public void testPayloadNull() {
+    final Enclave enclave = mock(Enclave.class);
+    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(null, messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
+  }
+
   @Test(expected = RuntimeException.class)
   public void testEnclaveDown() {
     final Enclave enclave = mock(Enclave.class);
