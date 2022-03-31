@@ -650,19 +650,19 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotAddNewPeerWhenReceivedPongFromBlacklistedPeer() {
+  public void shouldNotAddNewPeerWhenReceivedPongFromDenylistedPeer() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
 
     final DiscoveryPeer discoPeer = peers.get(0);
     final DiscoveryPeer otherPeer = peers.get(1);
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
-    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
-            .peerPermissions(blacklist)
+            .peerPermissions(denylist)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
 
@@ -713,8 +713,8 @@ public class PeerDiscoveryControllerTest {
     final Packet pongPacket = MockPacketDataFactory.mockPongPacket(otherPeer, pingPacket.getHash());
     controller.onMessage(pongPacket, otherPeer);
 
-    // Blacklist otherPeer2 before sending return pong
-    blacklist.add(otherPeer2);
+    // Denylist otherPeer2 before sending return pong
+    denylist.add(otherPeer2);
     final Packet pongPacket2 =
         MockPacketDataFactory.mockPongPacket(otherPeer2, pingPacket2.getHash());
     controller.onMessage(pongPacket2, otherPeer2);
@@ -734,19 +734,19 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotBondWithBlacklistedPeer() {
+  public void shouldNotBondWithDenylistedPeer() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 3);
 
     final DiscoveryPeer discoPeer = peers.get(0);
     final DiscoveryPeer otherPeer = peers.get(1);
     final DiscoveryPeer otherPeer2 = peers.get(2);
 
-    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
-            .peerPermissions(blacklist)
+            .peerPermissions(denylist)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
 
@@ -786,8 +786,8 @@ public class PeerDiscoveryControllerTest {
     final Packet pingPacket2 = Packet.create(PacketType.PING, pingPacketData, nodeKeys.get(0));
     mockPingPacketCreation(otherPeer2, pingPacket2);
 
-    // Blacklist peer
-    blacklist.add(otherPeer);
+    // Denylist peer
+    denylist.add(otherPeer);
 
     final Packet neighborsPacket =
         MockPacketDataFactory.mockNeighborsPacket(discoPeer, otherPeer, otherPeer2);
@@ -921,17 +921,17 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotRespondToNeighborsRequestFromBlacklistedPeer() {
+  public void shouldNotRespondToNeighborsRequestFromDenylistedPeer() {
     final List<DiscoveryPeer> peers = createPeersInLastBucket(localPeer, 1);
 
     final DiscoveryPeer discoPeer = peers.get(0);
 
-    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     controller =
         getControllerBuilder()
             .peers(discoPeer)
-            .peerPermissions(blacklist)
+            .peerPermissions(denylist)
             .outboundMessageHandler(outboundMessageHandler)
             .build();
 
@@ -955,7 +955,7 @@ public class PeerDiscoveryControllerTest {
     verify(outboundMessageHandler, times(1))
         .send(eq(discoPeer), matchPacketOfType(PacketType.FIND_NEIGHBORS));
 
-    blacklist.add(discoPeer);
+    denylist.add(discoPeer);
     final Packet findNeighborsPacket = MockPacketDataFactory.mockFindNeighborsPacket(discoPeer);
     controller.onMessage(findNeighborsPacket, discoPeer);
 
