@@ -104,8 +104,8 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;
     }
-    if (input == null) {
-      LOG.debug("Can not fetch private transaction payload with null key");
+    if (input == null || input.size() < 32) {
+      LOG.debug("Can not fetch private transaction payload with key {}", input);
       return NO_RESULT;
     }
 
