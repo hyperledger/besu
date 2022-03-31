@@ -104,6 +104,10 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;
     }
+    if (input == null) {
+      LOG.debug("Can not fetch private transaction payload with null key");
+      return NO_RESULT;
+    }
 
     final Hash pmtHash = messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 
