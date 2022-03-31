@@ -56,6 +56,7 @@ public class DefaultSynchronizer implements Synchronizer {
   private final FullSyncDownloader fullSyncDownloader;
   private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;
+  private final SyncTerminationCondition terminationCondition;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -74,8 +75,9 @@ public class DefaultSynchronizer implements Synchronizer {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
-
     this.protocolContext = protocolContext;
+    this.terminationCondition = terminationCondition;
+
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
         protocolSchedule,
@@ -202,7 +204,9 @@ public class DefaultSynchronizer implements Synchronizer {
         result.getPivotBlockNumber().getAsLong());
     pivotBlockSelector.close();
     syncState.markInitialSyncPhaseAsDone();
-    return startFullSync();
+    return terminationCondition.shouldContinueDownload()
+        ? startFullSync()
+        : CompletableFuture.completedFuture(null);
   }
 
   private CompletableFuture<Void> startFullSync() {
