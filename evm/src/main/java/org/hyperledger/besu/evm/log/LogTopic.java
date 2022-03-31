@@ -35,6 +35,7 @@ public class LogTopic extends DelegatingBytes32 {
   }
 
   public static LogTopic of(final Bytes bytes) {
+    if (bytes == null) return null;
     return new LogTopic(bytes.copy());
   }
 
