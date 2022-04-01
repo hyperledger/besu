@@ -80,10 +80,6 @@ dependencies {
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
 
-  testImplementation 'junit:junit'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':consensus:common', configuration: 'testArtifacts')
@@ -94,6 +90,14 @@ dependencies {
   testImplementation project(':evm')
   testImplementation project(':metrics:core')
   testImplementation project(':testutil')
+
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.mockito:mockito-core'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   integrationTestImplementation project(':crypto')
   integrationTestImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')

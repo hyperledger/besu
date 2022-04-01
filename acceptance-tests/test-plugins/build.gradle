@@ -11,8 +11,11 @@ dependencies {
   implementation 'com.google.auto.service:auto-service'
   implementation 'info.picocli:picocli'
 
-  testImplementation 'org.assertj:assertj-core'
   testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 task testPluginsJar(type: Jar) {

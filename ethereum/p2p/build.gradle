@@ -66,6 +66,7 @@ dependencies {
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation('io.pkts:pkts-core') {
     exclude group: 'io.pkts', module: 'pkts-sdp'
     exclude group: 'io.pkts', module: 'pkts-sip'
@@ -75,6 +76,8 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
