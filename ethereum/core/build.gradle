@@ -80,7 +80,10 @@ dependencies {
   testImplementation 'org.apache.tuweni:tuweni-io'
   testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':testutil')
