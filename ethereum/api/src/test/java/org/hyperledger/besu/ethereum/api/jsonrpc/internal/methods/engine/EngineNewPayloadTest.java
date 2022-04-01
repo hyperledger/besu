@@ -103,8 +103,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
-    assertThat(res.getStatus()).isEqualTo(VALID.name());
+    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
+    assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
   }
 
@@ -123,8 +123,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
-    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("error 42");
   }
 
@@ -142,8 +142,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isNull();
-    assertThat(res.getStatus()).isEqualTo(ACCEPTED.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(ACCEPTED.name());
     assertThat(res.getError()).isNull();
   }
 
@@ -158,8 +158,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash().toString());
-    assertThat(res.getStatus()).isEqualTo(VALID.name());
+    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
+    assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
   }
 
@@ -177,8 +177,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isNull();
-    assertThat(res.getStatus()).isEqualTo(INVALID_TERMINAL_BLOCK.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID_TERMINAL_BLOCK.name());
   }
 
   @Test
@@ -188,8 +188,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isNull();
-    assertThat(res.getStatus()).isEqualTo(INVALID_BLOCK_HASH.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
   }
 
   @Test
@@ -201,8 +201,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isNull();
-    assertThat(res.getStatus()).isEqualTo(INVALID_BLOCK_HASH.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
   }
 
   @Test
@@ -214,9 +214,28 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, List.of("0xDEAD", "0xBEEF")));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(mockHash.toString());
-    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Failed to decode transactions from block parameter");
+  }
+
+  @Test
+  public void shouldReturnInvalidOnOldTimestamp() {
+    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(parent.getHash())
+            .timestamp(parent.getTimestamp())
+            .buildHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash().get()).isEqualTo(parent.getHash());
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("Timestamp must be greater than parent");
   }
 
   @Test
@@ -229,8 +248,8 @@ public class EngineNewPayloadTest {
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getError()).isNull();
-    assertThat(res.getStatus()).isEqualTo(SYNCING.name());
-    assertThat(res.getLatestValidHash()).isNull();
+    assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
   }
 
   @Test
@@ -241,8 +260,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isNull();
-    assertThat(res.getStatus()).isEqualTo(SYNCING.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
     assertThat(res.getError()).isNull();
   }
 
@@ -262,8 +281,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isNull();
-    assertThat(res.getStatus()).isEqualTo(INVALID.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Field extraData must not be null");
   }
 

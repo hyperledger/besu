@@ -25,8 +25,8 @@ import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PeerReputationManager implements DisconnectCallback {
-  private static final Logger LOG = LoggerFactory.getLogger(PeerReputationManager.class);
+public class PeerDenylistManager implements DisconnectCallback {
+  private static final Logger LOG = LoggerFactory.getLogger(PeerDenylistManager.class);
   private static final Set<DisconnectReason> locallyTriggeredDisconnectReasons =
       ImmutableSet.of(
           DisconnectReason.BREACH_OF_PROTOCOL, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
@@ -34,10 +34,10 @@ public class PeerReputationManager implements DisconnectCallback {
   private static final Set<DisconnectReason> remotelyTriggeredDisconnectReasons =
       ImmutableSet.of(DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
 
-  private final PeerPermissionsDenylist blacklist;
+  private final PeerPermissionsDenylist denylist;
 
-  public PeerReputationManager(final PeerPermissionsDenylist blacklist) {
-    this.blacklist = blacklist;
+  public PeerDenylistManager(final PeerPermissionsDenylist denylist) {
+    this.denylist = denylist;
   }
 
   @Override
@@ -46,8 +46,8 @@ public class PeerReputationManager implements DisconnectCallback {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (shouldBlock(reason, initiatedByPeer)) {
-      LOG.trace("blacklisted peer {} for reason {}", connection, reason.name());
-      blacklist.add(connection.getPeer());
+      LOG.debug("Added peer {} to peer denylist for reason {}", connection, reason.name());
+      denylist.add(connection.getPeer());
     }
   }
 

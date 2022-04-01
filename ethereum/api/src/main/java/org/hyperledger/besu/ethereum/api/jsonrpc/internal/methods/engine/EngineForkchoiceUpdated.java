@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -68,7 +69,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     if (mergeContext.isSyncing()) {
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
-          new EngineUpdateForkchoiceResult(SYNCING, null, null));
+          new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
     }
 
     LOG.info(
@@ -92,7 +93,11 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
         return new JsonRpcSuccessResponse(
             requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(INVALID_TERMINAL_BLOCK, null, null));
+            new EngineUpdateForkchoiceResult(
+                INVALID_TERMINAL_BLOCK,
+                null,
+                null,
+                Optional.of(newHead.get() + " did not descend from terminal block")));
       }
 
       // update fork choice
@@ -127,7 +132,17 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             new EngineUpdateForkchoiceResult(
                 VALID,
                 result.getNewHead().map(BlockHeader::getHash).orElse(null),
-                payloadId.orElse(null)));
+                payloadId.orElse(null),
+                Optional.empty()));
+      } else if (result.isFailed()) {
+        final Optional<Hash> latestValid = result.getLatestValid();
+        return new JsonRpcSuccessResponse(
+            requestContext.getRequest().getId(),
+            new EngineUpdateForkchoiceResult(
+                INVALID,
+                latestValid.isPresent() ? latestValid.get() : null,
+                null,
+                result.getErrorMessage()));
       }
     }
 
@@ -136,6 +151,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         .ifPresent(mergeCoordinator::getOrSyncHeaderByHash);
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), new EngineUpdateForkchoiceResult(SYNCING, null, null));
+        requestContext.getRequest().getId(),
+        new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
   }
 }
