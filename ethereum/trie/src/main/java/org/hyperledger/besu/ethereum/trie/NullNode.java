@@ -96,4 +96,14 @@ public class NullNode<V> implements Node<V> {
   public void markDirty() {
     // do nothing
   }
+
+  @Override
+  public boolean isHealNeeded() {
+    return false;
+  }
+
+  @Override
+  public void markHealNeeded() {
+    // do nothing
+  }
 }

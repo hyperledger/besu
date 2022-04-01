@@ -52,7 +52,7 @@ public abstract class AbstractMerklePatriciaTrieTest {
 
   @Test(expected = NullPointerException.class)
   public void throwsOnUpdateWithNull() {
-    trie.put(Bytes.EMPTY, null);
+    trie.put(Bytes.EMPTY, (String) null);
   }
 
   @Test

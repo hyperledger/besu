@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -51,10 +50,8 @@ public class TransactionPoolFactory {
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
 
-    final PeerPendingTransactionTracker pendingTransactionTracker =
-        new PeerPendingTransactionTracker(pendingTransactions);
-    final PendingTransactionsMessageSender pendingTransactionsMessageSender =
-        new PendingTransactionsMessageSender(pendingTransactionTracker);
+    final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
+        new NewPooledTransactionHashesMessageSender(transactionTracker);
 
     return createTransactionPool(
         protocolSchedule,
@@ -67,8 +64,7 @@ public class TransactionPoolFactory {
         pendingTransactions,
         transactionTracker,
         transactionsMessageSender,
-        pendingTransactionTracker,
-        pendingTransactionsMessageSender);
+        newPooledTransactionHashesMessageSender);
   }
 
   static TransactionPool createTransactionPool(
@@ -82,46 +78,37 @@ public class TransactionPoolFactory {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
-      final PeerPendingTransactionTracker pendingTransactionTracker,
-      final PendingTransactionsMessageSender pendingTransactionsMessageSender) {
+      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionSender(transactionTracker, transactionsMessageSender, ethContext),
-            new PendingTransactionSender(
-                pendingTransactionTracker, pendingTransactionsMessageSender, ethContext),
+            new TransactionBroadcaster(
+                ethContext,
+                pendingTransactions,
+                transactionTracker,
+                transactionsMessageSender,
+                newPooledTransactionHashesMessageSender),
             syncState,
             ethContext,
-            transactionTracker,
-            pendingTransactionTracker,
             miningParameters,
             metricsSystem,
             transactionPoolConfiguration);
+
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
-            new TransactionsMessageProcessor(
-                transactionTracker,
-                transactionPool,
-                metricsSystem.createCounter(
-                    BesuMetricCategory.TRANSACTION_POOL,
-                    "transactions_messages_skipped_total",
-                    "Total number of transactions messages skipped by the processor.")),
+            new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
-    final PendingTransactionsMessageHandler pooledTransactionsMessageHandler =
-        new PendingTransactionsMessageHandler(
+    final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
+        new NewPooledTransactionHashesMessageHandler(
             ethContext.getScheduler(),
-            new PendingTransactionsMessageProcessor(
-                pendingTransactionTracker,
+            new NewPooledTransactionHashesMessageProcessor(
+                transactionTracker,
                 transactionPool,
                 transactionPoolConfiguration,
-                metricsSystem.createCounter(
-                    BesuMetricCategory.TRANSACTION_POOL,
-                    "pending_transactions_messages_skipped_total",
-                    "Total number of pending transactions messages skipped by the processor."),
                 ethContext,
                 metricsSystem,
                 syncState),
@@ -129,7 +116,6 @@ public class TransactionPoolFactory {
     ethContext
         .getEthMessages()
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
-    ethContext.getEthPeers().subscribeDisconnect(pendingTransactionTracker);
 
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
@@ -152,7 +138,6 @@ public class TransactionPoolFactory {
       return new BaseFeePendingTransactionsSorter(
           transactionPoolConfiguration.getPendingTxRetentionPeriod(),
           transactionPoolConfiguration.getTxPoolMaxSize(),
-          transactionPoolConfiguration.getPooledTransactionHashesSize(),
           clock,
           metricsSystem,
           protocolContext.getBlockchain()::getChainHeadHeader,
@@ -161,7 +146,6 @@ public class TransactionPoolFactory {
       return new GasPricePendingTransactionsSorter(
           transactionPoolConfiguration.getPendingTxRetentionPeriod(),
           transactionPoolConfiguration.getTxPoolMaxSize(),
-          transactionPoolConfiguration.getPooledTransactionHashesSize(),
           clock,
           metricsSystem,
           protocolContext.getBlockchain()::getChainHeadHeader,

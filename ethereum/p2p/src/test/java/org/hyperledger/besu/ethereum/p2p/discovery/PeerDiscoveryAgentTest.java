@@ -246,7 +246,7 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   public void shouldEvictPeerWhenPermissionsRevoked() {
-    final PeerPermissionsDenylist blacklist = PeerPermissionsDenylist.create();
+    final PeerPermissionsDenylist denylist = PeerPermissionsDenylist.create();
     final MockPeerDiscoveryAgent peerDiscoveryAgent1 = helper.startDiscoveryAgent();
     peerDiscoveryAgent1.start(BROADCAST_TCP_PORT).join();
     assertThat(peerDiscoveryAgent1.getAdvertisedPeer().isPresent()).isTrue();
@@ -254,12 +254,12 @@ public class PeerDiscoveryAgentTest {
 
     final MockPeerDiscoveryAgent peerDiscoveryAgent2 =
         helper.startDiscoveryAgent(
-            helper.agentBuilder().peerPermissions(blacklist).bootstrapPeers(peer));
+            helper.agentBuilder().peerPermissions(denylist).bootstrapPeers(peer));
     peerDiscoveryAgent2.start(BROADCAST_TCP_PORT).join();
 
     assertThat(peerDiscoveryAgent2.streamDiscoveredPeers().count()).isEqualTo(1);
 
-    blacklist.add(peer);
+    denylist.add(peer);
 
     assertThat(peerDiscoveryAgent2.streamDiscoveredPeers().count()).isEqualTo(0);
   }

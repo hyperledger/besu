@@ -133,7 +133,6 @@ public class CliqueBlockCreatorTest {
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 5,
-                5,
                 TestClock.fixed(),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
@@ -168,7 +167,6 @@ public class CliqueBlockCreatorTest {
             parent -> extraData,
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                5,
                 5,
                 TestClock.fixed(),
                 metricsSystem,
@@ -206,7 +204,6 @@ public class CliqueBlockCreatorTest {
             parent -> extraData,
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                5,
                 5,
                 TestClock.fixed(),
                 metricsSystem,

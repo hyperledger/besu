@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMess
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -33,34 +34,34 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PendingTransactionsMessageProcessor {
+public class NewPooledTransactionHashesMessageProcessor {
 
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private static final long SYNC_TOLERANCE = 100L;
 
   private static final Logger LOG =
-      LoggerFactory.getLogger(PendingTransactionsMessageProcessor.class);
+      LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
 
   private final ConcurrentHashMap<EthPeer, BufferedGetPooledTransactionsFromPeerFetcher>
       scheduledTasks;
 
-  private final PeerPendingTransactionTracker transactionTracker;
-  private final Counter totalSkippedTransactionsMessageCounter;
+  private final PeerTransactionTracker transactionTracker;
+  private final Counter totalSkippedNewPooledTransactionHashesMessageCounter;
   private final TransactionPool transactionPool;
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
 
-  public PendingTransactionsMessageProcessor(
-      final PeerPendingTransactionTracker transactionTracker,
+  public NewPooledTransactionHashesMessageProcessor(
+      final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final Counter metricsCounter,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final SyncState syncState) {
@@ -70,12 +71,15 @@ public class PendingTransactionsMessageProcessor {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
-    this.totalSkippedTransactionsMessageCounter =
+    this.totalSkippedNewPooledTransactionHashesMessageCounter =
         new RunnableCounter(
-            metricsCounter,
+            metricsSystem.createCounter(
+                BesuMetricCategory.TRANSACTION_POOL,
+                "new_pooled_transaction_hashes_messages_skipped_total",
+                "Total number of new pooled transaction hashes messages skipped by the processor."),
             () ->
                 LOG.warn(
-                    "{} expired transaction messages have been skipped.",
+                    "{} expired new pooled transaction hashes messages have been skipped.",
                     SKIPPED_MESSAGES_LOGGING_THRESHOLD),
             SKIPPED_MESSAGES_LOGGING_THRESHOLD);
     this.scheduledTasks = new ConcurrentHashMap<>();
@@ -86,11 +90,11 @@ public class PendingTransactionsMessageProcessor {
       final NewPooledTransactionHashesMessage transactionsMessage,
       final Instant startedAt,
       final Duration keepAlive) {
-    // Check if message not expired.
+    // Check if message is not expired.
     if (startedAt.plus(keepAlive).isAfter(now())) {
       this.processNewPooledTransactionHashesMessage(peer, transactionsMessage);
     } else {
-      totalSkippedTransactionsMessageCounter.inc();
+      totalSkippedNewPooledTransactionHashesMessageCounter.inc();
     }
   }
 
@@ -107,8 +111,6 @@ public class PendingTransactionsMessageProcessor {
           incomingTransactionHashes::size,
           incomingTransactionHashes::toString);
 
-      transactionTracker.markTransactionsHashesAsSeen(
-          peer, transactionsMessage.pendingTransactions());
       if (syncState.isInSync(SYNC_TOLERANCE)) {
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
             scheduledTasks.computeIfAbsent(
@@ -119,15 +121,15 @@ public class PendingTransactionsMessageProcessor {
                       .scheduleFutureTask(
                           new FetcherCreatorTask(peer),
                           transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
-                  return new BufferedGetPooledTransactionsFromPeerFetcher(peer, this);
+
+                  return new BufferedGetPooledTransactionsFromPeerFetcher(
+                      ethContext, peer, transactionPool, transactionTracker, metricsSystem);
                 });
 
-        for (final Hash hash : transactionsMessage.pendingTransactions()) {
-          if (transactionPool.getTransactionByHash(hash).isEmpty()
-              && transactionPool.addTransactionHash(hash)) {
-            bufferedTask.addHash(hash);
-          }
-        }
+        bufferedTask.addHashes(
+            incomingTransactionHashes.stream()
+                .filter(hash -> transactionPool.getTransactionByHash(hash).isEmpty())
+                .collect(Collectors.toList()));
       }
     } catch (final RLPException ex) {
       if (peer != null) {
@@ -136,18 +138,6 @@ public class PendingTransactionsMessageProcessor {
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }
-  }
-
-  public TransactionPool getTransactionPool() {
-    return transactionPool;
-  }
-
-  public EthContext getEthContext() {
-    return ethContext;
-  }
-
-  public MetricsSystem getMetricsSystem() {
-    return metricsSystem;
   }
 
   public class FetcherCreatorTask implements Runnable {

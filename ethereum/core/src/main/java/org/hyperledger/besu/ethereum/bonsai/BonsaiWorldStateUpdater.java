@@ -310,8 +310,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   @Override
   public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
-    if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
-      return Optional.ofNullable(localAccountStorage.get(slotHash).getUpdated());
+    if (localAccountStorage != null) {
+      final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
+      if (value != null) {
+        return Optional.ofNullable(value.getUpdated());
+      }
     }
     final Optional<UInt256> valueUInt =
         wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
@@ -328,18 +331,20 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     // TODO maybe log the read into the trie layer?
     final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
     final Hash slotHash = Hash.hash(storageKey);
-    if (localAccountStorage != null && localAccountStorage.containsKey(slotHash)) {
+    if (localAccountStorage != null) {
       final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
-      if (value.isCleared()) {
-        return UInt256.ZERO;
-      }
-      final UInt256 updated = value.getUpdated();
-      if (updated != null) {
-        return updated;
-      }
-      final UInt256 original = value.getPrior();
-      if (original != null) {
-        return original;
+      if (value != null) {
+        if (value.isCleared()) {
+          return UInt256.ZERO;
+        }
+        final UInt256 updated = value.getUpdated();
+        if (updated != null) {
+          return updated;
+        }
+        final UInt256 original = value.getPrior();
+        if (original != null) {
+          return original;
+        }
       }
     }
     if (storageToClear.contains(address)) {

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,21 +29,18 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionsMessageProcessor;
+import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.metrics.StubMetricsSystem;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -51,51 +48,57 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
   @Mock EthPeer ethPeer;
-  @Mock PendingTransactionsMessageProcessor processor;
   @Mock TransactionPool transactionPool;
   @Mock EthContext ethContext;
   @Mock EthScheduler ethScheduler;
 
-  @InjectMocks BufferedGetPooledTransactionsFromPeerFetcher fetcher;
-
-  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
-
   private final BlockDataGenerator generator = new BlockDataGenerator();
+
+  private BufferedGetPooledTransactionsFromPeerFetcher fetcher;
+  private StubMetricsSystem metricsSystem;
+  private PeerTransactionTracker transactionTracker;
 
   @Before
   public void setup() {
-    when(processor.getTransactionPool()).thenReturn(transactionPool);
-    when(processor.getMetricsSystem()).thenReturn(metricsSystem);
-    when(processor.getEthContext()).thenReturn(ethContext);
+    metricsSystem = new StubMetricsSystem();
+    transactionTracker = new PeerTransactionTracker();
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
+
+    fetcher =
+        new BufferedGetPooledTransactionsFromPeerFetcher(
+            ethContext, ethPeer, transactionPool, transactionTracker, metricsSystem);
   }
 
   @Test
   public void requestTransactionShouldStartTaskWhenUnknownTransaction() {
 
-    final Hash hash = generator.transaction().getHash();
-    final List<Transaction> taskResult = Collections.singletonList(Transaction.builder().build());
+    final Transaction transaction = generator.transaction();
+    final Hash hash = transaction.getHash();
+    final List<Transaction> taskResult = List.of(transaction);
     final AbstractPeerTask.PeerTaskResult<List<Transaction>> peerTaskResult =
         new AbstractPeerTask.PeerTaskResult<>(ethPeer, taskResult);
     when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
         .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
 
-    fetcher.addHash(hash);
+    fetcher.addHashes(List.of(hash));
     fetcher.requestTransactions();
 
     verify(ethScheduler).scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class));
     verifyNoMoreInteractions(ethScheduler);
 
     verify(transactionPool, times(1)).addRemoteTransactions(taskResult);
+    assertThat(transactionTracker.hasSeenTransaction(hash)).isTrue();
   }
 
   @Test
   public void requestTransactionShouldSplitRequestIntoSeveralTasks() {
-    for (int i = 0; i < 257; i++) {
-      fetcher.addHash(generator.transaction().getHash());
-    }
+    fetcher.addHashes(
+        IntStream.range(0, 257)
+            .mapToObj(unused -> generator.transaction().getHash())
+            .collect(Collectors.toList()));
+
     final AbstractPeerTask.PeerTaskResult<List<Transaction>> peerTaskResult =
-        new AbstractPeerTask.PeerTaskResult<>(ethPeer, new ArrayList<>());
+        new AbstractPeerTask.PeerTaskResult<>(ethPeer, List.of());
     when(ethScheduler.scheduleSyncWorkerTask(any(GetPooledTransactionsFromPeerTask.class)))
         .thenReturn(CompletableFuture.completedFuture(peerTaskResult));
 
@@ -107,16 +110,17 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   }
 
   @Test
-  public void requestTransactionShouldNotStartTaskWhenTransactionAlreadyInPool() {
+  public void requestTransactionShouldNotStartTaskWhenTransactionAlreadySeen() {
 
-    final Hash hash = generator.transaction().getHash();
-    when(transactionPool.getTransactionByHash(hash))
-        .thenReturn(Optional.of(Transaction.builder().build()));
+    final Transaction transaction = generator.transaction();
+    final Hash hash = transaction.getHash();
+    transactionTracker.markTransactionHashesAsSeen(ethPeer, List.of(hash));
 
-    fetcher.addHash(hash);
+    fetcher.addHashes(List.of(hash));
     fetcher.requestTransactions();
 
     verifyNoInteractions(ethScheduler);
-    verify(transactionPool, never()).addRemoteTransactions(anyList());
+    verify(transactionPool, never()).addRemoteTransactions(List.of(transaction));
+    assertThat(metricsSystem.getCounterValue("remote_already_seen_total", "hashes")).isEqualTo(1);
   }
 }
