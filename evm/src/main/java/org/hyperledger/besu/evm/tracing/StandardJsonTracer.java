@@ -111,7 +111,7 @@ public class StandardJsonTracer implements OperationTracer {
   static String quoteEscape(final Bytes bytes) {
     final StringBuilder result = new StringBuilder(bytes.size());
     for (final byte b : bytes.toArrayUnsafe()) {
-      final int c = ((int) b) & 0xff;
+      final int c = Byte.toUnsignedInt(b);
       // list from RFC-4627 section 2
       if (c == '"') {
         result.append("\\\"");

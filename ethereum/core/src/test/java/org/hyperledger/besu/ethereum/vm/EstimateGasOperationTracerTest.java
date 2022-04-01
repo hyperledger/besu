@@ -76,12 +76,12 @@ public class EstimateGasOperationTracerTest {
     final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
     final long minimumGasRemaining = 2300L;
 
-    assertThat(operationTracer.getStipendNeeded()).isEqualTo(0L);
+    assertThat(operationTracer.getStipendNeeded()).isZero();
 
     final MessageFrame firstFrame = messageFrameTestFixture.build();
     firstFrame.setCurrentOperation(mock(CallCodeOperation.class));
     operationTracer.traceExecution(firstFrame, noExecutionOperation);
-    assertThat(operationTracer.getStipendNeeded()).isEqualTo(0L);
+    assertThat(operationTracer.getStipendNeeded()).isZero();
 
     final MessageFrame secondFrame = messageFrameTestFixture.build();
     secondFrame.setCurrentOperation(

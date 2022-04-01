@@ -147,7 +147,7 @@ public class PrivateTransactionProcessor {
             privateContractAddress,
             senderAddress,
             previousNonce,
-            privacyGroupId.toString());
+            privacyGroupId);
 
         final Bytes initCodeBytes = transaction.getPayload();
         initialFrame =
