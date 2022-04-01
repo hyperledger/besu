@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -83,6 +84,12 @@ public class FastSyncDownloader<REQUEST> {
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       worldStateStorage.clear();
     }
+    return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
+  }
+
+  public CompletableFuture<FastSyncState> findPivotBlock(
+      final FastSyncState fastSyncState,
+      final Function<FastSyncState, CompletableFuture<FastSyncState>> onNewPivotBlock) {
     return exceptionallyCompose(
         fastSyncActions
             .waitForSuitablePeers(fastSyncState)
@@ -90,7 +97,7 @@ public class FastSyncDownloader<REQUEST> {
             .thenCompose(fastSyncActions::downloadPivotBlockHeader)
             .thenApply(this::updateMaxTrailingPeers)
             .thenApply(this::storeState)
-            .thenCompose(fss -> downloadChainAndWorldState(fastSyncActions, fss)),
+            .thenCompose(onNewPivotBlock),
         this::handleFailure);
   }
 

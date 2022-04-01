@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
-
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -56,15 +54,7 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
   @Override
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting snap sync.");
-    return exceptionallyCompose(
-        fastSyncActions
-            .waitForSuitablePeers(fastSyncState)
-            .thenCompose(fastSyncActions::selectPivotBlock)
-            .thenCompose(fastSyncActions::downloadPivotBlockHeader)
-            .thenApply(this::updateMaxTrailingPeers)
-            .thenApply(this::storeState)
-            .thenCompose(fss -> downloadChainAndWorldState(fastSyncActions, fss)),
-        this::handleFailure);
+    return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
 
   @Override
