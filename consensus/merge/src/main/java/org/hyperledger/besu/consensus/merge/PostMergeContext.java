@@ -139,9 +139,11 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void fireNewForkchoiceMessageEvent(
-      final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash) {
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
     newForkchoiceMessageCallbackSubscribers.forEach(
-        cb -> cb.onNewForkchoiceMessage(headBlockHash, finalizedBlockHash, safeBlockHash));
+        cb -> cb.onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash));
   }
 
   @Override

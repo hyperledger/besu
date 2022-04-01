@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -28,11 +29,15 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromFinalizedBlock.class);
 
+  private final GenesisConfigOptions genesisConfig;
   private final Supplier<Optional<Hash>> finalizedBlockHashSupplier;
   private final Runnable cleanupAction;
 
   public PivotSelectorFromFinalizedBlock(
-      final Supplier<Optional<Hash>> finalizedBlockHashSupplier, final Runnable cleanupAction) {
+      final GenesisConfigOptions genesisConfig,
+      final Supplier<Optional<Hash>> finalizedBlockHashSupplier,
+      final Runnable cleanupAction) {
+    this.genesisConfig = genesisConfig;
     this.finalizedBlockHashSupplier = finalizedBlockHashSupplier;
     this.cleanupAction = cleanupAction;
   }
@@ -55,5 +60,10 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   @Override
   public void close() {
     cleanupAction.run();
+  }
+
+  @Override
+  public long getMinRequiredBlockNumber() {
+    return genesisConfig.getTerminalBlockNumber().orElse(0L);
   }
 }

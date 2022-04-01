@@ -85,9 +85,11 @@ public class TransitionContext implements MergeContext {
 
   @Override
   public void fireNewForkchoiceMessageEvent(
-      final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash) {
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
     postMergeContext.fireNewForkchoiceMessageEvent(
-        headBlockHash, finalizedBlockHash, safeBlockHash);
+        headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
   }
 
   @Override

@@ -77,4 +77,9 @@ public class TransitionPivotSelector implements PivotBlockSelector {
     pivotSelectorFromFinalizedBlock.close();
     pivotSelectorFromPeers.close();
   }
+
+  @Override
+  public long getMinRequiredBlockNumber() {
+    return pivotSelectorFromFinalizedBlock.getMinRequiredBlockNumber();
+  }
 }

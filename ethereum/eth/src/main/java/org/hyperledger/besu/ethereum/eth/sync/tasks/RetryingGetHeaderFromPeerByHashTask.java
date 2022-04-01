@@ -77,7 +77,9 @@ public class RetryingGetHeaderFromPeerByHashTask
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
-              result.complete(peerResult.getResult());
+              if (!peerResult.getResult().isEmpty()) {
+                result.complete(peerResult.getResult());
+              }
               return peerResult.getResult();
             });
   }

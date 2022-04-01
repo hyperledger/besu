@@ -60,7 +60,9 @@ public interface MergeContext extends ConsensusContext {
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
 
   void fireNewForkchoiceMessageEvent(
-      final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash);
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash);
 
   interface NewMergeStateCallback {
     void onNewIsPostMergeState(final boolean newIsPostMergeState);
@@ -68,6 +70,8 @@ public interface MergeContext extends ConsensusContext {
 
   interface NewForkchoiceMessageListener {
     void onNewForkchoiceMessage(
-        final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash);
+        final Hash headBlockHash,
+        final Optional<Hash> maybeFinalizedBlockHash,
+        final Hash safeBlockHash);
   }
 }

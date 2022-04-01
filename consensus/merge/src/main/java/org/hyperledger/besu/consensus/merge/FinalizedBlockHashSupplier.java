@@ -27,17 +27,19 @@ public class FinalizedBlockHashSupplier
     implements Supplier<Optional<Hash>>, NewForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(FinalizedBlockHashSupplier.class);
 
-  private volatile Hash lastAnnouncedFinalizedBlockHash;
+  private volatile Optional<Hash> lastAnnouncedFinalizedBlockHash = Optional.empty();
 
   @Override
   public void onNewForkchoiceMessage(
-      final Hash headBlockHash, final Hash finalizedBlockHash, final Hash safeBlockHash) {
-    lastAnnouncedFinalizedBlockHash = finalizedBlockHash;
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    lastAnnouncedFinalizedBlockHash = maybeFinalizedBlockHash;
     LOG.debug("New finalized block hash announced {}", lastAnnouncedFinalizedBlockHash);
   }
 
   @Override
   public Optional<Hash> get() {
-    return Optional.ofNullable(lastAnnouncedFinalizedBlockHash);
+    return lastAnnouncedFinalizedBlockHash;
   }
 }

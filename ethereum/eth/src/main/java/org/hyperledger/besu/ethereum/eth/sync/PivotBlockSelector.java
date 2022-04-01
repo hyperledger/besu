@@ -20,9 +20,14 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import java.util.Optional;
 
 public interface PivotBlockSelector {
+
   Optional<FastSyncState> selectNewPivotBlock(EthPeer peer);
 
   default void close() {
     // do nothing by default
+  }
+
+  default long getMinRequiredBlockNumber() {
+    return 0L;
   }
 }

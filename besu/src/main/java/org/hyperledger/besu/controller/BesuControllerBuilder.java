@@ -453,7 +453,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           genesisConfigOptions,
           pivotSelectorFromPeers,
           new PivotSelectorFromFinalizedBlock(
-              finalizedBlockHashSupplier, unsubscribeFinalizedBlockHashListener));
+              genesisConfigOptions,
+              finalizedBlockHashSupplier,
+              unsubscribeFinalizedBlockHashListener));
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return pivotSelectorFromPeers;
