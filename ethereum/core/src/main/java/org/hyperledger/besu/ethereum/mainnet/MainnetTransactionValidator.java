@@ -106,72 +106,68 @@ public class MainnetTransactionValidator {
       final Transaction transaction,
       final Optional<Wei> baseFee,
       final TransactionValidationParams transactionValidationParams) {
-    try {
-      final ValidationResult<TransactionInvalidReason> signatureResult =
-          validateTransactionSignature(transaction);
-      if (!signatureResult.isValid()) {
-        return signatureResult;
-      }
+    final ValidationResult<TransactionInvalidReason> signatureResult =
+        validateTransactionSignature(transaction);
+    if (!signatureResult.isValid()) {
+      return signatureResult;
+    }
 
-      if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
-            "gasPrice must be set to zero on a GoQuorum compatible network");
-      }
+    if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
+          "gasPrice must be set to zero on a GoQuorum compatible network");
+    }
 
-      final TransactionType transactionType = transaction.getType();
-      if (!acceptedTransactionTypes.contains(transactionType)) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            String.format(
-                "Transaction type %s is invalid, accepted transaction types are %s",
-                transactionType, acceptedTransactionTypes));
-      }
+    final TransactionType transactionType = transaction.getType();
+    if (!acceptedTransactionTypes.contains(transactionType)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          String.format(
+              "Transaction type %s is invalid, accepted transaction types are %s",
+              transactionType, acceptedTransactionTypes));
+    }
 
-      if (baseFee.isPresent()) {
-        final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
-        if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
-            && price.compareTo(baseFee.orElseThrow()) < 0) {
-          return ValidationResult.invalid(
-              TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-              "gasPrice is less than the current BaseFee");
-        }
-
-        // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
-        if (transaction.getType().supports1559FeeMarket()
-            && transaction
-                    .getMaxPriorityFeePerGas()
-                    .get()
-                    .getAsBigInteger()
-                    .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
-                > 0) {
-          return ValidationResult.invalid(
-              TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
-              "max priority fee per gas cannot be greater than max fee per gas");
-        }
-      }
-
-      // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
-      if (!feeMarket.satisfiesFloorTxCost(transaction)
-          && !transactionValidationParams.isAllowExceedingBalance()) {
+    if (baseFee.isPresent()) {
+      final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, baseFee);
+      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+          && price.compareTo(baseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            "effective gas price is too low to execute");
+            "gasPrice is less than the current BaseFee");
       }
 
-      final long intrinsicGasCost =
-          gasCalculator.transactionIntrinsicGasCost(
-                  transaction.getPayload(), transaction.isContractCreation())
-              + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
-      if (intrinsicGasCost > transaction.getGasLimit()) {
+      // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
+      if (transaction.getType().supports1559FeeMarket()
+          && transaction
+                  .getMaxPriorityFeePerGas()
+                  .get()
+                  .getAsBigInteger()
+                  .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
+              > 0) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-            String.format(
-                "intrinsic gas cost %s exceeds gas limit %s",
-                intrinsicGasCost, transaction.getGasLimit()));
+            TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
+            "max priority fee per gas cannot be greater than max fee per gas");
       }
-    } catch (final RuntimeException re) {
-      return ValidationResult.invalid(TransactionInvalidReason.INTERNAL_ERROR);
+    }
+
+    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
+    if (!feeMarket.satisfiesFloorTxCost(transaction)
+        && !transactionValidationParams.isAllowExceedingBalance()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "effective gas price is too low to execute");
+    }
+
+    final long intrinsicGasCost =
+        gasCalculator.transactionIntrinsicGasCost(
+                transaction.getPayload(), transaction.isContractCreation())
+            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+    if (intrinsicGasCost > transaction.getGasLimit()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
+          String.format(
+              "intrinsic gas cost %s exceeds gas limit %s",
+              intrinsicGasCost, transaction.getGasLimit()));
     }
 
     return ValidationResult.valid();

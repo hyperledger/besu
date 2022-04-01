@@ -19,10 +19,10 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.jetbrains.annotations.NotNull;
 
 // The big integer modular exponentiation precompiled contract defined in EIP-198.
 public class BigIntegerModularExponentiationPrecompiledContract
@@ -53,7 +53,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   @Override
-  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);

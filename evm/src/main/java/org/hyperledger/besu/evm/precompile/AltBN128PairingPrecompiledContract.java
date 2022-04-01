@@ -28,9 +28,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
@@ -71,7 +71,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   }
 
   @Override
-  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (input.isEmpty()) {
       return TRUE;
     }

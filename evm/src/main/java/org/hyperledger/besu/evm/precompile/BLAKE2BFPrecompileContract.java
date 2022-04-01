@@ -22,9 +22,9 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       LOG.trace(
           "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());

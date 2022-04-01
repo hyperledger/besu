@@ -22,10 +22,10 @@ import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.jetbrains.annotations.NotNull;
 
 public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
@@ -60,7 +60,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   }
 
   @Override
-  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (useNative) {
       return computeNative(input, messageFrame);
     } else {
