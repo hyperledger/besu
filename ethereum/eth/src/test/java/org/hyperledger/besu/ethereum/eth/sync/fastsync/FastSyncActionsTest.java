@@ -413,13 +413,13 @@ public class FastSyncActionsTest {
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
     return new FastSyncActions(
-        new PivotSelectorFromPeers(syncConfig),
         syncConfig,
         worldStateStorage,
         protocolSchedule,
         protocolContext,
         ethContext,
         new SyncState(blockchain, ethContext.getEthPeers(), true),
+        new PivotSelectorFromPeers(syncConfig),
         new NoOpMetricsSystem());
   }
 }

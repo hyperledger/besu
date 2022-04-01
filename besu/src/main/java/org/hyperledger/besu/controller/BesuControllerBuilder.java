@@ -435,7 +435,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
-          "TTD difficulty is present, creating initial sync phase with transition to Pos support");
+          "TTD difficulty is present, creating initial sync phase with transition to PoS support");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
       final FinalizedBlockHashSupplier finalizedBlockHashSupplier =
@@ -451,6 +451,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
       return new TransitionPivotSelector(
           genesisConfigOptions,
+          finalizedBlockHashSupplier,
           pivotSelectorFromPeers,
           new PivotSelectorFromFinalizedBlock(
               genesisConfigOptions,

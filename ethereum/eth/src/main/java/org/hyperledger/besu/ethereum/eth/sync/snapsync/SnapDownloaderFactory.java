@@ -104,13 +104,13 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             new FastSyncActions(
-                pivotBlockSelector,
                 syncConfig,
                 worldStateStorage,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
                 syncState,
+                pivotBlockSelector,
                 metricsSystem),
             worldStateStorage,
             snapWorldStateDownloader,

@@ -114,13 +114,13 @@ public class FastDownloaderFactory {
     final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
         new FastSyncDownloader<>(
             new FastSyncActions(
-                pivotBlockSelector,
                 syncConfig,
                 worldStateStorage,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
                 syncState,
+                pivotBlockSelector,
                 metricsSystem),
             worldStateStorage,
             worldStateDownloader,

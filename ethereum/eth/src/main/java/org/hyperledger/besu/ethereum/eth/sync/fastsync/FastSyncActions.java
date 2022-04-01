@@ -61,13 +61,13 @@ public class FastSyncActions {
   private final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
   public FastSyncActions(
-      final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final WorldStateStorage worldStateStorage,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
+      final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
     this.worldStateStorage = worldStateStorage;

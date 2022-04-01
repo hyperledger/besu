@@ -15,11 +15,13 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +31,13 @@ public class TransitionPivotSelector implements PivotBlockSelector {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionPivotSelector.class);
 
   private final Difficulty totalTerminalDifficulty;
+  private final Supplier<Optional<Hash>> finalizedBlockHashSupplier;
   private final PivotBlockSelector pivotSelectorFromPeers;
   private final PivotBlockSelector pivotSelectorFromFinalizedBlock;
 
   public TransitionPivotSelector(
       final GenesisConfigOptions genesisConfig,
+      final Supplier<Optional<Hash>> finalizedBlockHashSupplier,
       final PivotBlockSelector pivotSelectorFromPeers,
       final PivotBlockSelector pivotSelectorFromFinalizedBlock) {
     this.totalTerminalDifficulty =
@@ -44,6 +48,7 @@ public class TransitionPivotSelector implements PivotBlockSelector {
                 () ->
                     new IllegalArgumentException(
                         "This class can only be used when TTD is present"));
+    this.finalizedBlockHashSupplier = finalizedBlockHashSupplier;
     this.pivotSelectorFromPeers = pivotSelectorFromPeers;
     this.pivotSelectorFromFinalizedBlock = pivotSelectorFromFinalizedBlock;
   }
@@ -57,19 +62,24 @@ public class TransitionPivotSelector implements PivotBlockSelector {
 
     Difficulty bestPeerEstDifficulty = peer.chainState().getEstimatedTotalDifficulty();
 
-    if (bestPeerEstDifficulty.lessThan(totalTerminalDifficulty)) {
+    if (finalizedBlockHashSupplier.get().isPresent()) {
+      LOG.info("A finalized block is present, us it as pivot", bestPeerEstDifficulty);
+      return pivotSelectorFromFinalizedBlock.selectNewPivotBlock(peer);
+    }
+
+    if (bestPeerEstDifficulty.greaterOrEqualThan(totalTerminalDifficulty)) {
       LOG.info(
-          "Chain has not yet reached TTD, best peer has estimated difficulty {},"
-              + " select pivot from peers",
+          "Chain has reached TTD, best peer has estimated difficulty {},"
+              + " select pivot from finalized block",
           bestPeerEstDifficulty);
-      return pivotSelectorFromPeers.selectNewPivotBlock(peer);
+      return pivotSelectorFromFinalizedBlock.selectNewPivotBlock(peer);
     }
 
     LOG.info(
-        "Chain has reached TTD, best peer has estimated difficulty {},"
-            + " select pivot from finalized block",
+        "Chain has not yet reached TTD, best peer has estimated difficulty {},"
+            + " select pivot from peers",
         bestPeerEstDifficulty);
-    return pivotSelectorFromFinalizedBlock.selectNewPivotBlock(peer);
+    return pivotSelectorFromPeers.selectNewPivotBlock(peer);
   }
 
   @Override

@@ -45,8 +45,8 @@ public class CompleteTaskStep {
                 "world_state_completed_requests_total",
                 "Total number of node data requests completed as part of fast sync world state download"),
             this::displayWorldStateSyncProgress,
-            10,
-            TimeUnit.SECONDS);
+            1,
+            TimeUnit.MINUTES);
     retriedRequestsCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
