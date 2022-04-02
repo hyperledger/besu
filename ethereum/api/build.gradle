@@ -76,6 +76,8 @@ dependencies {
   implementation "org.immutables:value-annotations"
 
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
+  runtimeOnly 'io.netty:netty-transport-native-epoll'
+  runtimeOnly 'io.netty:netty-transport-native-kqueue'
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
@@ -89,6 +91,7 @@ dependencies {
 
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-auth-jwt'
+  testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'io.vertx:vertx-unit'
   testImplementation 'io.vertx:vertx-web-client'
   testImplementation 'junit:junit'
