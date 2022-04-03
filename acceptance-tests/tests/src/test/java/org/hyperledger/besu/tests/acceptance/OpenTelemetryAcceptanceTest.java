@@ -26,7 +26,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConf
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.io.Closer;
 import com.google.protobuf.ByteString;
@@ -131,16 +133,24 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
     MetricsConfiguration configuration =
         MetricsConfiguration.builder()
             .protocol(MetricsProtocol.OPENTELEMETRY)
-            .enabled(true)
+            .pushEnabled(true)
             .port(0)
             .hostsAllowlist(singletonList("*"))
             .build();
+    Map<String, String> env = new HashMap<>();
+    env.put("OTEL_METRIC_EXPORT_INTERVAL", "1000");
+    env.put("OTEL_TRACES_SAMPLER", "always_on");
+    env.put("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317");
+    env.put("OTEL_EXPORTER_OTLP_INSECURE", "true");
+    env.put("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc");
+
     metricsNode =
         besu.create(
             new BesuNodeConfigurationBuilder()
                 .name("metrics-node")
                 .jsonRpcEnabled()
                 .metricsConfiguration(configuration)
+                .environment(env)
                 .build());
     cluster.start(metricsNode);
   }
@@ -170,11 +180,11 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
           net.netVersion().verify(metricsNode);
           List<ResourceSpans> spans = fakeTracesCollector.getReceivedSpans();
           assertThat(spans.isEmpty()).isFalse();
-          Span internalSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(0);
+          Span internalSpan = spans.get(0).getScopeSpans(0).getSpans(0);
           assertThat(internalSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_INTERNAL);
           ByteString parent = internalSpan.getParentSpanId();
           assertThat(parent.isEmpty()).isFalse();
-          Span serverSpan = spans.get(0).getInstrumentationLibrarySpans(0).getSpans(1);
+          Span serverSpan = spans.get(0).getScopeSpans(0).getSpans(1);
           assertThat(serverSpan.getKind()).isEqualTo(Span.SpanKind.SPAN_KIND_SERVER);
           ByteString rootSpanId = serverSpan.getParentSpanId();
           assertThat(rootSpanId.isEmpty()).isTrue();

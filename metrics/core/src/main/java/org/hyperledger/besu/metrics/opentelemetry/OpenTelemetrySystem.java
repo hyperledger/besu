@@ -45,14 +45,16 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
-import io.opentelemetry.sdk.metrics.data.DoubleHistogramPointData;
 import io.opentelemetry.sdk.metrics.data.DoublePointData;
-import io.opentelemetry.sdk.metrics.data.DoubleSummaryPointData;
+import io.opentelemetry.sdk.metrics.data.HistogramPointData;
 import io.opentelemetry.sdk.metrics.data.LongPointData;
 import io.opentelemetry.sdk.metrics.data.MetricData;
 import io.opentelemetry.sdk.metrics.data.MetricDataType;
 import io.opentelemetry.sdk.metrics.data.PointData;
+import io.opentelemetry.sdk.metrics.data.SummaryPointData;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
 import org.slf4j.Logger;
@@ -77,25 +79,33 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   private final Map<String, LabelledMetric<Counter>> cachedCounters = new ConcurrentHashMap<>();
   private final Map<String, LabelledMetric<OperationTimer>> cachedTimers =
       new ConcurrentHashMap<>();
-  private final SdkMeterProvider meterSdkProvider;
+  private final SdkMeterProvider sdkMeterProvider;
+  private final DebugMetricReader debugMetricReader;
 
   public OpenTelemetrySystem(
       final Set<MetricCategory> enabledCategories,
       final boolean timersEnabled,
-      final String jobName) {
+      final String jobName,
+      final boolean setAsGlobal) {
     LOG.info("Starting OpenTelemetry metrics system");
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
+    this.debugMetricReader = new DebugMetricReader();
     Resource resource =
         Resource.getDefault()
             .merge(
                 Resource.create(
                     Attributes.builder().put(ResourceAttributes.SERVICE_NAME, jobName).build()));
-    this.meterSdkProvider = SdkMeterProvider.builder().setResource(resource).build();
-  }
-
-  SdkMeterProvider getMeterSdkProvider() {
-    return meterSdkProvider;
+    AutoConfiguredOpenTelemetrySdk autoSdk =
+        AutoConfiguredOpenTelemetrySdk.builder()
+            .addMeterProviderCustomizer(
+                (provider, config) ->
+                    provider.setResource(resource).registerMetricReader(debugMetricReader))
+            .addTracerProviderCustomizer((provider, config) -> provider.setResource(resource))
+            .setResultAsGlobal(setAsGlobal)
+            .build();
+    OpenTelemetrySdk sdk = autoSdk.getOpenTelemetrySdk();
+    this.sdkMeterProvider = sdk.getSdkMeterProvider();
   }
 
   @Override
@@ -105,14 +115,17 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
 
   @Override
   public Stream<Observation> streamObservations() {
-    Collection<MetricData> metricsList = meterSdkProvider.collectAllMetrics();
-    return metricsList.stream().map(this::convertToObservations).flatMap(stream -> stream);
+    Collection<MetricData> metricsList = this.debugMetricReader.getAllMetrics();
+    return metricsList.stream().flatMap(this::convertToObservations);
   }
 
   private Stream<Observation> convertToObservations(final MetricData metricData) {
     List<Observation> observations = new ArrayList<>();
     MetricCategory category =
-        categoryNameToMetricCategory(metricData.getInstrumentationLibraryInfo().getName());
+        categoryNameToMetricCategory(metricData.getInstrumentationScopeInfo().getName());
+    if (category == null) {
+      return Stream.empty();
+    }
     Collection<?> points;
     switch (metricData.getType()) {
       case DOUBLE_GAUGE:
@@ -122,13 +135,13 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         points = metricData.getDoubleSumData().getPoints();
         break;
       case SUMMARY:
-        points = metricData.getDoubleSummaryData().getPoints();
+        points = metricData.getData().getPoints();
         break;
       case LONG_SUM:
         points = metricData.getLongSumData().getPoints();
         break;
       case HISTOGRAM:
-        points = metricData.getDoubleHistogramData().getPoints();
+        points = metricData.getData().getPoints();
         break;
       case LONG_GAUGE:
         points = metricData.getLongGaugeData().getPoints();
@@ -159,7 +172,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         return category;
       }
     }
-    throw new IllegalArgumentException("Invalid metric category: " + name);
+    return null;
   }
 
   private Object extractValue(final MetricDataType type, final PointData point) {
@@ -170,9 +183,9 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       case DOUBLE_GAUGE:
         return ((DoublePointData) point).getValue();
       case SUMMARY:
-        return ((DoubleSummaryPointData) point).getPercentileValues();
+        return ((SummaryPointData) point).getValues();
       case HISTOGRAM:
-        return ((DoubleHistogramPointData) point).getCounts();
+        return ((HistogramPointData) point).getCounts();
       default:
         throw new UnsupportedOperationException("Unsupported type " + type);
     }
@@ -189,7 +202,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         name,
         (k) -> {
           if (isCategoryEnabled(category)) {
-            final Meter meter = meterSdkProvider.get(category.getName());
+            final Meter meter = sdkMeterProvider.get(category.getName());
 
             final LongCounter counter = meter.counterBuilder(name).setDescription(help).build();
             return new OpenTelemetryCounter(counter, labelNames);
@@ -210,7 +223,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         name,
         (k) -> {
           if (timersEnabled && isCategoryEnabled(category)) {
-            final Meter meter = meterSdkProvider.get(category.getName());
+            final Meter meter = sdkMeterProvider.get(category.getName());
             return new OpenTelemetryTimer(name, help, meter, labelNames);
           } else {
             return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
@@ -226,11 +239,11 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       final DoubleSupplier valueSupplier) {
     LOG.trace("Creating a gauge {}", name);
     if (isCategoryEnabled(category)) {
-      final Meter meter = meterSdkProvider.get(category.getName());
+      final Meter meter = sdkMeterProvider.get(category.getName());
       meter
           .gaugeBuilder(name)
           .setDescription(help)
-          .buildWithCallback(res -> res.observe(valueSupplier.getAsDouble(), Attributes.empty()));
+          .buildWithCallback(res -> res.record(valueSupplier.getAsDouble(), Attributes.empty()));
     }
   }
 
@@ -243,7 +256,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
     LOG.trace("Creating a labelled gauge {}", name);
     if (isCategoryEnabled(category)) {
       return new OpenTelemetryGauge(
-          name, help, meterSdkProvider.get(category.getName()), List.of(labelNames));
+          name, help, sdkMeterProvider.get(category.getName()), List.of(labelNames));
     }
     return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
   }
@@ -264,7 +277,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         ManagementFactory.getGarbageCollectorMXBeans();
     final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
     final List<MemoryPoolMXBean> poolBeans = ManagementFactory.getMemoryPoolMXBeans();
-    final Meter meter = meterSdkProvider.get(StandardMetricCategory.JVM.getName());
+    final Meter meter = sdkMeterProvider.get(StandardMetricCategory.JVM.getName());
     final List<Attributes> labelSets = new ArrayList<>(garbageCollectors.size());
     for (final GarbageCollectorMXBean gc : garbageCollectors) {
       labelSets.add(Attributes.of(AttributeKey.stringKey("gc"), gc.getName()));
@@ -276,7 +289,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
         .buildWithCallback(
             resultLongObserver -> {
               for (int i = 0; i < garbageCollectors.size(); i++) {
-                resultLongObserver.observe(
+                resultLongObserver.record(
                     (double) garbageCollectors.get(i).getCollectionTime(), labelSets.get(i));
               }
             });
@@ -297,12 +310,12 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
             resultLongObserver -> {
               MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
               MemoryUsage nonHeapUsage = memoryBean.getNonHeapMemoryUsage();
-              resultLongObserver.observe(heapUsage.getUsed(), usedHeap);
-              resultLongObserver.observe(nonHeapUsage.getUsed(), usedNonHeap);
-              resultLongObserver.observe(heapUsage.getUsed(), committedHeap);
-              resultLongObserver.observe(nonHeapUsage.getUsed(), committedNonHeap);
-              resultLongObserver.observe(heapUsage.getUsed(), maxHeap);
-              resultLongObserver.observe(nonHeapUsage.getUsed(), maxNonHeap);
+              resultLongObserver.record(heapUsage.getUsed(), usedHeap);
+              resultLongObserver.record(nonHeapUsage.getUsed(), usedNonHeap);
+              resultLongObserver.record(heapUsage.getUsed(), committedHeap);
+              resultLongObserver.record(nonHeapUsage.getUsed(), committedNonHeap);
+              resultLongObserver.record(heapUsage.getUsed(), maxHeap);
+              resultLongObserver.record(nonHeapUsage.getUsed(), maxNonHeap);
             });
     final List<Attributes> usedLabelSets = new ArrayList<>(poolBeans.size());
     final List<Attributes> committedLabelSets = new ArrayList<>(poolBeans.size());
@@ -322,11 +335,11 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
             resultLongObserver -> {
               for (int i = 0; i < poolBeans.size(); i++) {
                 MemoryUsage poolUsage = poolBeans.get(i).getUsage();
-                resultLongObserver.observe(poolUsage.getUsed(), usedLabelSets.get(i));
-                resultLongObserver.observe(poolUsage.getCommitted(), committedLabelSets.get(i));
+                resultLongObserver.record(poolUsage.getUsed(), usedLabelSets.get(i));
+                resultLongObserver.record(poolUsage.getCommitted(), committedLabelSets.get(i));
                 // TODO: Decide if max is needed or not. May be derived with some approximation from
                 //  max(used).
-                resultLongObserver.observe(poolUsage.getMax(), maxLabelSets.get(i));
+                resultLongObserver.record(poolUsage.getMax(), maxLabelSets.get(i));
               }
             });
   }

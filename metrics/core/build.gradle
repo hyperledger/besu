@@ -49,9 +49,10 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-sdk'
   implementation 'io.opentelemetry:opentelemetry-semconv'
   implementation 'io.opentelemetry:opentelemetry-sdk-trace'
+  implementation 'io.opentelemetry:opentelemetry-sdk-metrics'
   implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
   implementation 'io.opentelemetry:opentelemetry-exporter-otlp-metrics'
-  implementation 'io.opentelemetry.proto:opentelemetry-proto'
+  implementation 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure'
 
   implementation 'io.prometheus:simpleclient'
   implementation 'io.prometheus:simpleclient_common'

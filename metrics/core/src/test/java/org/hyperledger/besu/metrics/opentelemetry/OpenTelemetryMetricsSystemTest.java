@@ -50,10 +50,10 @@ public class OpenTelemetryMetricsSystemTest {
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
 
   private final ObservableMetricsSystem metricsSystem =
-      new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, true, "job");
+      new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, true, "job", false);
 
   @Test
-  public void shouldCreateObservationFromCounter() {
+  public void shouldCreateObservationFromCounter() throws InterruptedException {
     final Counter counter = metricsSystem.createCounter(PEERS, "connected", "Some help string");
 
     counter.inc();
@@ -61,12 +61,13 @@ public class OpenTelemetryMetricsSystemTest {
         .containsExactly(new Observation(PEERS, "connected", 1L, emptyList()));
 
     counter.inc();
+    Thread.sleep(1000);
     assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 2L, emptyList()));
   }
 
   @Test
-  public void shouldHandleDuplicateCounterCreation() {
+  public void shouldHandleDuplicateCounterCreation() throws InterruptedException {
     final LabelledMetric<Counter> counter1 =
         metricsSystem.createLabelledCounter(PEERS, "connected", "Some help string");
     final LabelledMetric<Counter> counter2 =
@@ -78,6 +79,7 @@ public class OpenTelemetryMetricsSystemTest {
         .containsExactly(new Observation(PEERS, "connected", 1L, emptyList()));
 
     counter2.labels().inc();
+    Thread.sleep(1000);
     assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 2L, emptyList()));
   }
@@ -98,7 +100,7 @@ public class OpenTelemetryMetricsSystemTest {
   }
 
   @Test
-  public void shouldIncrementCounterBySpecifiedAmount() {
+  public void shouldIncrementCounterBySpecifiedAmount() throws InterruptedException {
     final Counter counter = metricsSystem.createCounter(PEERS, "connected", "Some help string");
 
     counter.inc(5);
@@ -106,6 +108,7 @@ public class OpenTelemetryMetricsSystemTest {
         .containsExactly(new Observation(PEERS, "connected", 5L, emptyList()));
 
     counter.inc(6);
+    Thread.sleep(1000);
     assertThat(metricsSystem.streamObservations())
         .containsExactly(new Observation(PEERS, "connected", 11L, emptyList()));
   }
@@ -153,7 +156,7 @@ public class OpenTelemetryMetricsSystemTest {
   @Test
   public void shouldNotCreateObservationsFromTimerWhenTimersDisabled() {
     final ObservableMetricsSystem metricsSystem =
-        new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, false, "job");
+        new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, false, "job", false);
     final LabelledMetric<OperationTimer> timer =
         metricsSystem.createLabelledTimer(RPC, "request", "Some help", "methodName");
 
@@ -171,8 +174,13 @@ public class OpenTelemetryMetricsSystemTest {
             .enabled(true)
             .protocol(OPENTELEMETRY)
             .build();
-    final ObservableMetricsSystem localMetricSystem =
-        MetricsSystemFactory.create(metricsConfiguration);
+    final OpenTelemetrySystem localMetricSystem =
+        new OpenTelemetrySystem(
+            metricsConfiguration.getMetricCategories(),
+            metricsConfiguration.isTimersEnabled(),
+            metricsConfiguration.getPrometheusJob(),
+            false);
+    localMetricSystem.initDefaults();
     localMetricSystem.createGauge(RPC, "myValue", "Help", () -> 7.0);
 
     assertThat(localMetricSystem.streamObservations())
@@ -195,15 +203,20 @@ public class OpenTelemetryMetricsSystemTest {
   }
 
   @Test
-  public void shouldOnlyObserveEnabledMetrics() {
+  public void shouldOnlyObserveEnabledMetrics() throws InterruptedException {
     final MetricsConfiguration metricsConfiguration =
         MetricsConfiguration.builder()
             .metricCategories(ImmutableSet.of(BesuMetricCategory.RPC))
             .enabled(true)
             .protocol(OPENTELEMETRY)
             .build();
-    final ObservableMetricsSystem localMetricSystem =
-        MetricsSystemFactory.create(metricsConfiguration);
+    final OpenTelemetrySystem localMetricSystem =
+        new OpenTelemetrySystem(
+            metricsConfiguration.getMetricCategories(),
+            metricsConfiguration.isTimersEnabled(),
+            metricsConfiguration.getPrometheusJob(),
+            false);
+    localMetricSystem.initDefaults();
 
     // do a category we are not watching
     final LabelledMetric<Counter> counterN =
@@ -219,6 +232,7 @@ public class OpenTelemetryMetricsSystemTest {
     assertThat(counterR).isNotSameAs(NoOpMetricsSystem.NO_OP_LABELLED_1_COUNTER);
 
     counterR.labels("op").inc();
+    Thread.sleep(1000);
     assertThat(localMetricSystem.streamObservations())
         .containsExactly(new Observation(RPC, "name", (long) 1, singletonList("op")));
   }
@@ -242,19 +256,6 @@ public class OpenTelemetryMetricsSystemTest {
         MetricsConfiguration.builder()
             .enabled(true)
             .pushEnabled(false)
-            .protocol(OPENTELEMETRY)
-            .build();
-    final MetricsSystem localMetricSystem = MetricsSystemFactory.create(metricsConfiguration);
-
-    assertThat(localMetricSystem).isInstanceOf(OpenTelemetrySystem.class);
-  }
-
-  @Test
-  public void returnsNoOpMetricsWhenPushEnabled() {
-    final MetricsConfiguration metricsConfiguration =
-        MetricsConfiguration.builder()
-            .enabled(false)
-            .pushEnabled(true)
             .protocol(OPENTELEMETRY)
             .build();
     final MetricsSystem localMetricSystem = MetricsSystemFactory.create(metricsConfiguration);

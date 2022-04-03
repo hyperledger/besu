@@ -5,6 +5,7 @@
 ### Additions and Improvements
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
+- Upgrade OpenTelemetry to version 1.15.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 
 ## 22.4.3
 
