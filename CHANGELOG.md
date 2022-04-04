@@ -31,7 +31,7 @@
 - Remove the experimental flag for bonsai tries CLI options `--data-storage-format` and `--bonsai-maximum-back-layers-to-load` [#3578](https://github.com/hyperledger/besu/pull/3578)
 
 ### Deprecations
-- `--tx-pool-hashes-max-size` is now deprecated and has no more effect and it will be removed in a future release.
+- `--tx-pool-hashes-max-size` is now deprecated and has no more effect, and it will be removed in a future release.
 
 ### Additions and Improvements
 - Tune transaction synchronization parameter to adapt to mainnet traffic [#3610](https://github.com/hyperledger/besu/pull/3610)
