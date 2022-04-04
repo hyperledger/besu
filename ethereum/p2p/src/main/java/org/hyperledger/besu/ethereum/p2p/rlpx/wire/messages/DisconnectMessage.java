@@ -101,7 +101,8 @@ public final class DisconnectMessage extends AbstractMessageData {
   /**
    * Reasons for disconnection, modelled as specified in the wire protocol DISCONNECT message.
    *
-   * @see <a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md#disconnect-0x01">RLPx Transport Protocol</a>
+   * @see <a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md#disconnect-0x01">RLPx
+   *     Transport Protocol</a>
    */
   public enum DisconnectReason {
     UNKNOWN(null),
