@@ -23,7 +23,7 @@ executors:
   besu_executor_xl: # 8cpu, 16G ram
     docker:
       - image: cimg/openjdk:11.0
-    resource_class: 2xlarge
+    resource_class: xlarge
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
