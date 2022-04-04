@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -59,9 +58,9 @@ public class MainnetContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("EF01010101010101");
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(Gas.of(100));
+    messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -81,9 +80,9 @@ public class MainnetContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("0101010101010101");
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(Gas.of(100));
+    messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -96,9 +95,9 @@ public class MainnetContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("0F01010101010101");
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(Gas.of(100));
+    messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -116,9 +115,9 @@ public class MainnetContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(Gas.of(100));
+    messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -138,9 +137,9 @@ public class MainnetContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024));
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(Gas.of(100));
+    messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -153,9 +152,9 @@ public class MainnetContractCreationProcessorTest {
     final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
     final MessageFrame messageFrame = new MessageFrameTestFixture().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(Gas.of(100));
+    messageFrame.setGasRemaining(100L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(Gas.of(10));
+    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }

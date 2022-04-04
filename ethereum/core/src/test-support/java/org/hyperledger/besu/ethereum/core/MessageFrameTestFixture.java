@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -43,7 +42,7 @@ public class MessageFrameTestFixture {
   private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
   private Optional<Blockchain> blockchain = Optional.empty();
   private Optional<WorldUpdater> worldUpdater = Optional.empty();
-  private Gas initialGas = Gas.MAX_VALUE;
+  private long initialGas = Long.MAX_VALUE;
   private Address address = DEFAUT_ADDRESS;
   private Address sender = DEFAUT_ADDRESS;
   private Address originator = DEFAUT_ADDRESS;
@@ -89,7 +88,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture initialGas(final Gas initialGas) {
+  public MessageFrameTestFixture initialGas(final long initialGas) {
     this.initialGas = initialGas;
     return this;
   }

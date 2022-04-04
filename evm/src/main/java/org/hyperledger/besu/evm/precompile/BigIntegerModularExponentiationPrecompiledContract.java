@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -48,12 +48,12 @@ public class BigIntegerModularExponentiationPrecompiledContract
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     return gasCalculator().modExpGasCost(input);
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);

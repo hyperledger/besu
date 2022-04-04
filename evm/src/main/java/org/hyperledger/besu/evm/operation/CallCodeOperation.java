@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -31,8 +30,12 @@ public class CallCodeOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected Gas gas(final MessageFrame frame) {
-    return Gas.of(frame.getStackItem(0).trimLeadingZeros());
+  protected long gas(final MessageFrame frame) {
+    try {
+      return frame.getStackItem(0).trimLeadingZeros().toLong();
+    } catch (final ArithmeticException | IllegalArgumentException ae) {
+      return Long.MAX_VALUE;
+    }
   }
 
   @Override
@@ -81,7 +84,7 @@ public class CallCodeOperation extends AbstractCallOperation {
   }
 
   @Override
-  public Gas gasAvailableForChildCall(final MessageFrame frame) {
+  public long gasAvailableForChildCall(final MessageFrame frame) {
     return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
   }
 
@@ -91,8 +94,8 @@ public class CallCodeOperation extends AbstractCallOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
-    final Gas stipend = gas(frame);
+  public long cost(final MessageFrame frame) {
+    final long stipend = gas(frame);
     final long inputDataOffset = inputDataOffset(frame);
     final long inputDataLength = inputDataLength(frame);
     final long outputDataOffset = outputDataOffset(frame);

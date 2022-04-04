@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -123,7 +122,7 @@ public class EthEstimateGasIntegrationTest {
         new JsonCallParameter(
             Address.fromHexString("0x0000000000000000000000000000000000000000"),
             null,
-            Gas.of(1),
+            1L,
             Wei.fromHexString("0x9999999999"),
             null,
             null,
@@ -145,7 +144,7 @@ public class EthEstimateGasIntegrationTest {
         new JsonCallParameter(
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
             null,
-            Gas.of(1),
+            1L,
             Wei.fromHexString("0x9999999999"),
             null,
             null,
@@ -164,7 +163,7 @@ public class EthEstimateGasIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForInsufficientGas() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter(null, null, Gas.of(1), null, null, null, null, null, null);
+        new JsonCallParameter(null, null, 1L, null, null, null, null, null, null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, "0x5208");
 

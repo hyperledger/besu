@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -120,9 +119,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
 
-    final Gas depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
+    final long depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
 
-    if (frame.getRemainingGas().compareTo(depositFee) < 0) {
+    if (frame.getRemainingGas() < depositFee) {
       LOG.trace(
           "Not enough gas to pay the code deposit fee for {}: "
               + "remaining gas = {} < {} = deposit fee",
@@ -158,7 +157,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
       } else {
-        Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
+        final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
         frame.setExceptionalHaltReason(exceptionalHaltReason);
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(frame, exceptionalHaltReason);

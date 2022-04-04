@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
@@ -49,15 +48,15 @@ import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * A container object for all of the state associated with a message.
+ * A container object for all the states associated with a message.
  *
  * <p>A message corresponds to an interaction between two accounts. A Transaction spawns at least
  * one message when its processed. Messages can also spawn messages depending on the code executed
  * within a message.
  *
- * <p>Note that there is no specific Message object in the code base. Instead message executions
- * correspond to a {@code MessageFrame} and a specific AbstractMessageProcessor. Currently there are
- * two such AbstractMessageProcessor types:
+ * <p>Note that there is no specific Message object in the code base. Instead, message executions
+ * correspond to a {@code MessageFrame} and a specific AbstractMessageProcessor. Currently, there
+ * are two such AbstractMessageProcessor types:
  *
  * <p><b>Message Call ({@code MESSAGE_CALL})</b>
  *
@@ -198,7 +197,7 @@ public class MessageFrame {
   private State state;
 
   // Machine state fields.
-  private Gas gasRemaining;
+  private long gasRemaining;
   private final Function<Long, Hash> blockHashLookup;
   private final int maxStackSize;
   private int pc;
@@ -210,7 +209,7 @@ public class MessageFrame {
 
   // Transaction substate fields.
   private final List<Log> logs;
-  private Gas gasRefund;
+  private long gasRefund;
   private final Set<Address> selfDestructs;
   private final Map<Address, Wei> refunds;
   private final Set<Address> warmedUpAddresses;
@@ -238,7 +237,6 @@ public class MessageFrame {
   // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
   private Operation currentOperation;
-  private Optional<Gas> gasCost = Optional.empty();
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
   private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
@@ -251,7 +249,7 @@ public class MessageFrame {
       final Type type,
       final Deque<MessageFrame> messageFrameStack,
       final WorldUpdater worldUpdater,
-      final Gas initialGas,
+      final long initialGas,
       final Address recipient,
       final Address originator,
       final Address contract,
@@ -285,7 +283,7 @@ public class MessageFrame {
     this.output = Bytes.EMPTY;
     this.returnData = Bytes.EMPTY;
     this.logs = new ArrayList<>();
-    this.gasRefund = Gas.ZERO;
+    this.gasRefund = 0L;
     this.selfDestructs = new HashSet<>();
     this.refunds = new HashMap<>();
     this.recipient = recipient;
@@ -312,7 +310,7 @@ public class MessageFrame {
     this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
 
     // the warmed up addresses will always be a superset of the address keys in the warmed up
-    // storage so we can do both warm ups in one pass
+    // storage, so we can do both warm-ups in one pass
     accessListWarmAddresses.parallelStream()
         .forEach(
             address ->
@@ -346,7 +344,7 @@ public class MessageFrame {
 
   /** Deducts the remaining gas. */
   public void clearGasRemaining() {
-    this.gasRemaining = Gas.ZERO;
+    this.gasRemaining = 0L;
   }
 
   /**
@@ -354,8 +352,8 @@ public class MessageFrame {
    *
    * @param amount The amount of gas to deduct
    */
-  public void decrementRemainingGas(final Gas amount) {
-    this.gasRemaining = gasRemaining.minus(amount);
+  public void decrementRemainingGas(final long amount) {
+    this.gasRemaining -= amount;
   }
 
   /**
@@ -363,7 +361,7 @@ public class MessageFrame {
    *
    * @return the amount of remaining gas
    */
-  public Gas getRemainingGas() {
+  public long getRemainingGas() {
     return gasRemaining;
   }
 
@@ -372,8 +370,8 @@ public class MessageFrame {
    *
    * @param amount The amount of gas to increment
    */
-  public void incrementRemainingGas(final Gas amount) {
-    this.gasRemaining = gasRemaining.plus(amount);
+  public void incrementRemainingGas(final long amount) {
+    this.gasRemaining += amount;
   }
 
   /**
@@ -381,7 +379,7 @@ public class MessageFrame {
    *
    * @param amount The amount of remaining gas
    */
-  public void setGasRemaining(final Gas amount) {
+  public void setGasRemaining(final long amount) {
     this.gasRemaining = amount;
   }
 
@@ -491,7 +489,7 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether or not the message frame is static or not.
+   * Returns whether the message frame is static or not.
    *
    * @return {@code} true if the frame is static; otherwise {@code false}
    */
@@ -654,8 +652,8 @@ public class MessageFrame {
   /**
    * Write bytes to memory
    *
-   * @param offset The offset in memory to start the write
-   * @param sourceOffset The offset in the source value to start the write
+   * @param offset The offset in memory to start writing
+   * @param sourceOffset The offset in the source value to start writing
    * @param length The length of the bytes to write
    * @param value The value to write
    */
@@ -667,8 +665,8 @@ public class MessageFrame {
   /**
    * Write bytes to memory
    *
-   * @param offset The offset in memory to start the write
-   * @param sourceOffset The offset in the source value to start the write
+   * @param offset The offset in memory to start writing
+   * @param sourceOffset The offset in the source value to start writing
    * @param length The length of the bytes to write
    * @param value The value to write
    * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
@@ -762,13 +760,13 @@ public class MessageFrame {
    *
    * @param amount The amount to increment the refund
    */
-  public void incrementGasRefund(final Gas amount) {
-    this.gasRefund = gasRefund.plus(amount);
+  public void incrementGasRefund(final long amount) {
+    this.gasRefund += amount;
   }
 
   /** Clear the accumulated gas refund. */
   public void clearGasRefund() {
-    gasRefund = Gas.ZERO;
+    gasRefund = 0L;
   }
 
   /**
@@ -776,7 +774,7 @@ public class MessageFrame {
    *
    * @return accumulated gas refund
    */
-  public Gas getGasRefund() {
+  public long getGasRefund() {
     return gasRefund;
   }
 
@@ -1066,10 +1064,6 @@ public class MessageFrame {
     return currentOperation;
   }
 
-  public Optional<Gas> getGasCost() {
-    return gasCost;
-  }
-
   public int getMaxStackSize() {
     return maxStackSize;
   }
@@ -1092,10 +1086,6 @@ public class MessageFrame {
     this.currentOperation = currentOperation;
   }
 
-  public void setGasCost(final Optional<Gas> gasCost) {
-    this.gasCost = gasCost;
-  }
-
   public Optional<MemoryEntry> getMaybeUpdatedMemory() {
     return maybeUpdatedMemory;
   }
@@ -1114,7 +1104,7 @@ public class MessageFrame {
     private Type type;
     private Deque<MessageFrame> messageFrameStack;
     private WorldUpdater worldUpdater;
-    private Gas initialGas;
+    private Long initialGas;
     private Address address;
     private Address originator;
     private Address contract;
@@ -1151,7 +1141,7 @@ public class MessageFrame {
       return this;
     }
 
-    public Builder initialGas(final Gas initialGas) {
+    public Builder initialGas(final long initialGas) {
       this.initialGas = initialGas;
       return this;
     }

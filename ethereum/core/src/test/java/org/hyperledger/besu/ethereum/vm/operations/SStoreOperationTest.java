@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -46,38 +45,38 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class SStoreOperationTest {
 
-  private final Gas minimumGasAvailable;
-  private final Gas initialGas;
-  private final Gas remainingGas;
+  private final long minimumGasAvailable;
+  private final long initialGas;
+  private final long remainingGas;
   private final Optional<ExceptionalHaltReason> expectedHalt;
 
   private static final GasCalculator gasCalculator = new ConstantinopleGasCalculator();
 
   private static final Object[][] testData = {
     {
-      SStoreOperation.FRONTIER_MINIMUM, Gas.of(200), Gas.of(200), null,
+      SStoreOperation.FRONTIER_MINIMUM, 200L, 200L, null,
     },
     {
-      SStoreOperation.EIP_1706_MINIMUM, Gas.of(200), Gas.of(200), INSUFFICIENT_GAS,
+      SStoreOperation.EIP_1706_MINIMUM, 200L, 200L, INSUFFICIENT_GAS,
     },
     {
-      SStoreOperation.FRONTIER_MINIMUM, Gas.of(10_000), Gas.of(10_000), null,
+      SStoreOperation.FRONTIER_MINIMUM, 10_000L, 10_000L, null,
     },
     {
-      SStoreOperation.EIP_1706_MINIMUM, Gas.of(10_000), Gas.of(10_000), null,
+      SStoreOperation.EIP_1706_MINIMUM, 10_000L, 10_000L, null,
     },
     {
-      SStoreOperation.FRONTIER_MINIMUM, Gas.of(10_000), Gas.of(200), null,
+      SStoreOperation.FRONTIER_MINIMUM, 10_000L, 200L, null,
     },
     {
-      SStoreOperation.EIP_1706_MINIMUM, Gas.of(10_000), Gas.of(200), INSUFFICIENT_GAS,
+      SStoreOperation.EIP_1706_MINIMUM, 10_000L, 200L, INSUFFICIENT_GAS,
     },
   };
 
   public SStoreOperationTest(
-      final Gas minimumGasAvailable,
-      final Gas initialGas,
-      final Gas remainingGas,
+      final long minimumGasAvailable,
+      final long initialGas,
+      final long remainingGas,
       final ExceptionalHaltReason expectedHalt) {
     this.minimumGasAvailable = minimumGasAvailable;
     this.initialGas = initialGas;
@@ -92,7 +91,7 @@ public class SStoreOperationTest {
   }
 
   private MessageFrame createMessageFrame(
-      final Address address, final Gas initialGas, final Gas remainingGas) {
+      final Address address, final long initialGas, final long remainingGas) {
     final Blockchain blockchain = mock(Blockchain.class);
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -83,7 +82,7 @@ public class TestCodeExecutor {
             .messageFrameStack(messageFrameStack)
             .blockchain(fixture.getBlockchain())
             .worldUpdater(worldUpdater)
-            .initialGas(Gas.of(gasLimit))
+            .initialGas(gasLimit)
             .address(SENDER_ADDRESS)
             .originator(SENDER_ADDRESS)
             .contract(SENDER_ADDRESS)

@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -139,7 +138,7 @@ public class EthCallIntegrationTest {
         new JsonCallParameter(
             Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
             Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
-            Gas.ZERO,
+            0L,
             null,
             null,
             null,

@@ -18,11 +18,11 @@ import static java.util.Arrays.copyOfRange;
 import static org.hyperledger.besu.crypto.Blake2bfMessageDigest.Blake2bfDigest.MESSAGE_LENGTH_BYTES;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -38,24 +38,24 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       // Input is malformed, we can't read the number of rounds.
-      // Precompile can't be executed so we set its price to 0.
-      return Gas.ZERO;
+      // Precompile can't be executed, so we set its price to 0.
+      return 0L;
     }
     if ((input.get(212) & 0xFE) != 0) {
       // Input is malformed, F value can be only 0 or 1
-      return Gas.ZERO;
+      return 0L;
     }
 
     final byte[] roundsBytes = copyOfRange(input.toArray(), 0, 4);
     final BigInteger rounds = new BigInteger(1, roundsBytes);
-    return Gas.of(rounds);
+    return rounds.longValueExact();
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (input.size() != MESSAGE_LENGTH_BYTES) {
       LOG.trace(
           "Incorrect input length.  Expected {} and got {}", MESSAGE_LENGTH_BYTES, input.size());
