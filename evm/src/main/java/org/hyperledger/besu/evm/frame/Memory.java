@@ -73,7 +73,7 @@ public class Memory {
       final long v = Math.toIntExact(w);
       checkByteIndex(v);
       return (int) v;
-    } catch (final IllegalStateException e) {
+    } catch (final ArithmeticException | IllegalStateException e) {
       throw overflow(w);
     }
   }
@@ -81,7 +81,7 @@ public class Memory {
   private static int asByteLength(final long l) {
     try {
       return Math.toIntExact(l);
-    } catch (final ArithmeticException e) {
+    } catch (final ArithmeticException | IllegalStateException e) {
       throw overflow(l);
     }
   }

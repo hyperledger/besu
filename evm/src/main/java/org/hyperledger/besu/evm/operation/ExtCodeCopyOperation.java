@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -35,17 +36,16 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     super(0x3C, "EXTCODECOPY", 4, 0, 1, gasCalculator);
   }
 
-  protected Gas cost(
+  protected long cost(
       final MessageFrame frame,
       final long memOffset,
       final long length,
       final boolean accountIsWarm) {
-    return gasCalculator()
-        .extCodeCopyOperationGasCost(frame, memOffset, length)
-        .plus(
-            accountIsWarm
-                ? gasCalculator().getWarmStorageReadCost()
-                : gasCalculator().getColdAccountAccessCost());
+    return clampedAdd(
+        gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, length),
+        accountIsWarm
+            ? gasCalculator().getWarmStorageReadCost()
+            : gasCalculator().getColdAccountAccessCost());
   }
 
   @Override
@@ -57,17 +57,17 @@ public class ExtCodeCopyOperation extends AbstractOperation {
 
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-    final Gas cost = cost(frame, memOffset, numBytes, accountIsWarm);
+    final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
 
-    final Optional<Gas> optionalCost = Optional.of(cost);
-    if (frame.getRemainingGas().compareTo(cost) < 0) {
-      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final Account account = frame.getWorldUpdater().get(address);
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, code);
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

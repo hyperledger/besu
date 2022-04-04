@@ -34,13 +34,13 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -185,8 +185,8 @@ public class TraceTransactionIntegrationTest {
 
     TraceFrame frame = traceFrames.get(0);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632748));
-    assertThat(frame.getGasCost()).contains(Gas.of(3));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632748L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(3));
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(0);
     assertStackContainsExactly(frame);
@@ -195,8 +195,8 @@ public class TraceTransactionIntegrationTest {
 
     frame = traceFrames.get(1);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632745));
-    assertThat(frame.getGasCost()).contains(Gas.of(3));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632745L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(3L));
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(2);
     assertStackContainsExactly(
@@ -206,8 +206,8 @@ public class TraceTransactionIntegrationTest {
 
     frame = traceFrames.get(2);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632742));
-    assertThat(frame.getGasCost()).contains(Gas.of(12));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632742L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(12L));
     assertThat(frame.getOpcode()).isEqualTo("MSTORE");
     assertThat(frame.getPc()).isEqualTo(4);
     assertStackContainsExactly(
@@ -228,8 +228,8 @@ public class TraceTransactionIntegrationTest {
 
     frame = traceFrames.get(3);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632730));
-    assertThat(frame.getGasCost()).contains(Gas.of(2));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632730L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(2L));
     assertThat(frame.getOpcode()).isEqualTo("CALLVALUE");
     assertThat(frame.getPc()).isEqualTo(5);
     assertStackContainsExactly(frame);

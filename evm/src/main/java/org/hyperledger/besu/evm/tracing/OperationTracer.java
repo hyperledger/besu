@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -30,7 +29,7 @@ public interface OperationTracer {
   void traceExecution(MessageFrame frame, ExecuteOperation executeOperation);
 
   default void tracePrecompileCall(
-      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {}
+      final MessageFrame frame, final long gasRequirement, final Bytes output) {}
 
   default void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}

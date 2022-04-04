@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.RevertOperation;
@@ -49,7 +48,7 @@ public class RevertOperationTest {
     when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);
     when(messageFrame.memoryWordSize()).thenReturn(0);
     when(messageFrame.calculateMemoryExpansion(anyLong(), anyLong())).thenReturn(14L);
-    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(10_000));
+    when(messageFrame.getRemainingGas()).thenReturn(10_000L);
   }
 
   @Test

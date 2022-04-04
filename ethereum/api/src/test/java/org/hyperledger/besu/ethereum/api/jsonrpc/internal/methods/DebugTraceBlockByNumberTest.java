@@ -34,10 +34,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTran
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.evm.Gas;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -68,9 +68,9 @@ public class DebugTraceBlockByNumberTest {
         new TraceFrame(
             12,
             Optional.of("NONE"),
-            Gas.of(45),
-            Optional.of(Gas.of(56)),
-            Gas.ZERO,
+            45L,
+            OptionalLong.of(56L),
+            0L,
             2,
             Optional.empty(),
             null,

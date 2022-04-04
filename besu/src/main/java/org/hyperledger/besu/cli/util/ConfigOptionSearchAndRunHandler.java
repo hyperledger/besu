@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -47,7 +47,7 @@ public class ConfigOptionSearchAndRunHandler extends AbstractParseResultHandler<
 
   @Override
   public List<Object> handle(final ParseResult parseResult) throws ParameterException {
-    final CommandLine commandLine = parseResult.asCommandLineList().get(0);
+    final CommandLine commandLine = parseResult.commandSpec().commandLine();
     final Optional<File> configFile = findConfigFile(parseResult, commandLine);
     validatePrivacyOptions(parseResult, commandLine);
     commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));

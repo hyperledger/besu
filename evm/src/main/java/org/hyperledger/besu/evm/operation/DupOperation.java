@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class DupOperation extends AbstractFixedCostOperation {
 
@@ -39,7 +40,7 @@ public class DupOperation extends AbstractFixedCostOperation {
     this.index = index;
     this.underflowResponse =
         new Operation.OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
   }
 
   @Override

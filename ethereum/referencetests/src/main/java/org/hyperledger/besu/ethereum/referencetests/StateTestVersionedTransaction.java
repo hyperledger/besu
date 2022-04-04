@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.evm.Gas;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -67,7 +66,7 @@ public class StateTestVersionedTransaction {
 
   private final KeyPair keys;
 
-  private final List<Gas> gasLimits;
+  private final List<Long> gasLimits;
   private final List<Wei> values;
   private final List<Bytes> payloads;
   private final Optional<List<List<AccessListEntry>>> maybeAccessLists;
@@ -112,7 +111,7 @@ public class StateTestVersionedTransaction {
         signatureAlgorithm.createKeyPair(
             signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(secretKey)));
 
-    this.gasLimits = parseArray(gasLimit, Gas::fromHexString);
+    this.gasLimits = parseArray(gasLimit, Long::decode);
     this.values = parseArray(value, Wei::fromHexString);
     this.payloads = parseArray(data, Bytes::fromHexString);
     this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
@@ -131,7 +130,7 @@ public class StateTestVersionedTransaction {
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .nonce(nonce)
-            .gasLimit(gasLimits.get(indexes.gas).asUInt256().toLong())
+            .gasLimit(gasLimits.get(indexes.gas))
             .to(to)
             .value(values.get(indexes.value))
             .payload(payloads.get(indexes.data));
