@@ -71,11 +71,14 @@ dependencies {
   testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.mockito:mockito-core'

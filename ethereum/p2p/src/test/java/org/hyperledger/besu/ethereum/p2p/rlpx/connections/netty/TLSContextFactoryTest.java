@@ -21,7 +21,6 @@ import org.hyperledger.besu.pki.keystore.HardwareKeyStoreWrapper;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
 import org.hyperledger.besu.pki.keystore.SoftwareKeyStoreWrapper;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -45,16 +44,16 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.Assume;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(Parameterized.class)
-public class TLSContextFactoryTest {
+class TLSContextFactoryTest {
 
   private static final String JKS = "JKS";
   private static final String validKeystorePassword = "test123";
@@ -86,19 +85,36 @@ public class TLSContextFactoryTest {
   private Server server;
   private Client client;
 
-  @Parameterized.Parameter public String keyStoreWrapperDescription;
+  static Collection<Object[]> hardwareKeysData() {
+    return Arrays.asList(
+        new Object[][] {
+          {
+            "PKCS11 serverPartner1Client1 -> JKS clientPartner2Client1 SuccessfulConnection",
+            true,
+            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
+          },
+          {
+            "PKCS11 serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
+            false,
+            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                invalidPartner1client1JKSKeystore,
+                invalidPartner1client1JKSTruststore,
+                invalidPartner1client1CRL)
+          },
+          {
+            "PKCS11 serverPartner1Client1 -> JKS clientPartner1Client2rvk FailedConnection",
+            false,
+            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
+            getSoftwareKeyStoreWrapper(
+                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
+          },
+        });
+  }
 
-  @Parameterized.Parameter(1)
-  public boolean testSuccess;
-
-  @Parameterized.Parameter(2)
-  public KeyStoreWrapper serverKeyStoreWrapper;
-
-  @Parameterized.Parameter(3)
-  public KeyStoreWrapper clientKeyStoreWrapper;
-
-  @Parameterized.Parameters(name = "{index}: {0}")
-  public static Collection<Object[]> data() {
+  static Collection<Object[]> softwareKeysData() {
     return Arrays.asList(
         new Object[][] {
           {
@@ -116,13 +132,6 @@ public class TLSContextFactoryTest {
                 partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL),
             getSoftwareKeyStoreWrapper(
                 partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
-          },
-          {
-            "PKCS11 serverPartner1Client1 -> JKS clientPartner2Client1 SuccessfulConnection",
-            true,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
-            getSoftwareKeyStoreWrapper(
-                partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL)
           },
           {
             "JKS serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
@@ -145,15 +154,6 @@ public class TLSContextFactoryTest {
                 partner1client1JKSKeystore, partner1client1JKSTruststore, partner1client1CRL)
           },
           {
-            "PKCS11 serverPartner1Client1 -> JKS clientInvalidPartner1Client1 FailedConnection",
-            false,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
-            getSoftwareKeyStoreWrapper(
-                invalidPartner1client1JKSKeystore,
-                invalidPartner1client1JKSTruststore,
-                invalidPartner1client1CRL)
-          },
-          {
             "JKS serverPartner1Client2rvk -> JKS clientPartner2Client1 FailedConnection",
             false,
             getSoftwareKeyStoreWrapper(
@@ -166,13 +166,6 @@ public class TLSContextFactoryTest {
             false,
             getSoftwareKeyStoreWrapper(
                 partner2client1JKSKeystore, partner2client1JKSTruststore, partner2client1CRL),
-            getSoftwareKeyStoreWrapper(
-                partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
-          },
-          {
-            "PKCS11 serverPartner1Client1 -> JKS clientPartner1Client2rvk FailedConnection",
-            false,
-            getHardwareKeyStoreWrapper(partner1client1PKCS11Config, partner1client1CRL),
             getSoftwareKeyStoreWrapper(
                 partner1client2rvkJKSKeystore, partner1client2rvkJKSTruststore, null)
           },
@@ -195,11 +188,11 @@ public class TLSContextFactoryTest {
         });
   }
 
-  @Before
-  public void init() throws IOException, InterruptedException {}
+  @BeforeEach
+  void init() {}
 
-  @After
-  public void tearDown() {
+  @AfterEach
+  void tearDown() {
     if (client != null) {
       client.stop();
     }
@@ -217,7 +210,13 @@ public class TLSContextFactoryTest {
     try {
       return new HardwareKeyStoreWrapper(
           validKeystorePassword, toPath(config), toPath(crlLocation));
-    } catch (Exception e) {
+    } catch (final Exception e) {
+      if (OS.MAC.isCurrentOs()) {
+        // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
+        // machines.
+        Assume.assumeNoException("Failed to initialize hardware keystore", e);
+      }
+      // Not a mac, probably a production build. Full failure.
       throw new PkiException("Failed to initialize hardware keystore", e);
     }
   }
@@ -233,13 +232,38 @@ public class TLSContextFactoryTest {
           toPath(trustStore),
           null,
           toPath(crl));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new PkiException("Failed to initialize software keystore", e);
     }
   }
 
-  @Test
-  public void testConnection() throws Exception {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("softwareKeysData")
+  void testConnectionSoftwareKeys(
+      final String ignoredTestDescription,
+      final boolean testSuccess,
+      final KeyStoreWrapper serverKeyStoreWrapper,
+      final KeyStoreWrapper clientKeyStoreWrapper)
+      throws Exception {
+    testConnection(testSuccess, serverKeyStoreWrapper, clientKeyStoreWrapper);
+  }
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("hardwareKeysData")
+  void testConnectionHardwareKeys(
+      final String ignoredTestDescription,
+      final boolean testSuccess,
+      final KeyStoreWrapper serverKeyStoreWrapper,
+      final KeyStoreWrapper clientKeyStoreWrapper)
+      throws Exception {
+    testConnection(testSuccess, serverKeyStoreWrapper, clientKeyStoreWrapper);
+  }
+
+  private void testConnection(
+      final boolean testSuccess,
+      final KeyStoreWrapper serverKeyStoreWrapper,
+      final KeyStoreWrapper clientKeyStoreWrapper)
+      throws Exception {
     final CountDownLatch serverLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
     final CountDownLatch clientLatch = new CountDownLatch(MAX_NUMBER_MESSAGES);
     server = startServer(serverKeyStoreWrapper, serverLatch);
@@ -255,7 +279,7 @@ public class TLSContextFactoryTest {
         client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0)).sync();
         serverLatch.await(2, TimeUnit.SECONDS);
         assertThat(client.getChannelFuture().channel().isActive()).isFalse();
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // NOOP
       }
     }
@@ -282,7 +306,7 @@ public class TLSContextFactoryTest {
     private final String id;
     private final CountDownLatch latch;
 
-    public MessageHandler(final String id, final CountDownLatch latch) {
+    MessageHandler(final String id, final CountDownLatch latch) {
       this.id = id;
       this.latch = latch;
     }
@@ -312,7 +336,7 @@ public class TLSContextFactoryTest {
     private ChannelFuture channelFuture;
     private final EventLoopGroup group = new NioEventLoopGroup();
 
-    public ChannelFuture getChannelFuture() {
+    ChannelFuture getChannelFuture() {
       return channelFuture;
     }
 
@@ -335,7 +359,7 @@ public class TLSContextFactoryTest {
           new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(final SocketChannel socketChannel) throws Exception {
-              SslContext sslContext =
+              final SslContext sslContext =
                   TLSContextFactory.getInstance(keystorePassword, keyStoreWrapper)
                       .createNettyClientSslContext();
 
@@ -346,11 +370,10 @@ public class TLSContextFactoryTest {
             }
           });
 
-      final ChannelFuture cf = b.connect("127.0.0.1", this.port).sync();
-      this.channelFuture = cf;
+      this.channelFuture = b.connect("127.0.0.1", this.port).sync();
     }
 
-    public void stop() {
+    void stop() {
       group.shutdownGracefully();
     }
   }
@@ -362,7 +385,6 @@ public class TLSContextFactoryTest {
     private final CountDownLatch latch;
 
     private Channel channel;
-    private ChannelFuture channelFuture;
 
     private final EventLoopGroup parentGroup = new NioEventLoopGroup();
     private final EventLoopGroup childGroup = new NioEventLoopGroup();
@@ -376,10 +398,6 @@ public class TLSContextFactoryTest {
       this.latch = latch;
     }
 
-    public ChannelFuture getChannelFuture() {
-      return channelFuture;
-    }
-
     void start() throws Exception {
       final ServerBootstrap sb = new ServerBootstrap();
       sb.group(parentGroup, childGroup)
@@ -388,7 +406,7 @@ public class TLSContextFactoryTest {
               new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(final SocketChannel socketChannel) throws Exception {
-                  SslContext sslContext =
+                  final SslContext sslContext =
                       TLSContextFactory.getInstance(keystorePassword, keyStoreWrapper)
                           .createNettyServerSslContext();
                   final SslHandler sslHandler = sslContext.newHandler(channel.alloc());
@@ -400,11 +418,10 @@ public class TLSContextFactoryTest {
 
       final ChannelFuture cf = sb.bind(0).sync();
       this.channel = cf.channel();
-      this.channelFuture = cf;
       this.port = ((InetSocketAddress) channel.localAddress()).getPort();
     }
 
-    public void stop() {
+    void stop() {
       childGroup.shutdownGracefully();
       parentGroup.shutdownGracefully();
     }

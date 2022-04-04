@@ -258,6 +258,7 @@ allprojects {
         systemProperty name, System.getProperty(name)
       }
     }
+    useJUnitPlatform {}
   }
 
   javadoc {
