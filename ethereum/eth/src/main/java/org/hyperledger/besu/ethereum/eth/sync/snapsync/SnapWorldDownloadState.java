@@ -119,6 +119,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
+        LOG.info(
+            "Starting world state heal process from peers (generated nodes {})",
+            generatedNodes.get());
+        clearTrieNodes();
         snapSyncState.setHealStatus(true);
         enqueueRequest(
             createAccountTrieNodeDataRequest(
@@ -126,7 +130,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
                 Bytes.EMPTY,
                 inconsistentAccounts));
       } else {
-
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
