@@ -18,9 +18,7 @@ public enum SyncMode {
   // Fully validate all blocks as they sync
   FULL,
   // Perform light validation on older blocks, and switch to full validation for more recent blocks
-  FAST,
-  // Perform snapsync
-  X_SNAP;
+  FAST;
 
   public static SyncMode fromString(final String str) {
     for (final SyncMode mode : SyncMode.values()) {
