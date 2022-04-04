@@ -148,7 +148,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         LOG.info(
             "Starting world state heal process from peers (generated nodes {})",
             generatedNodes.get());
-        clearTrieNodes();
         snapSyncState.setHealStatus(true);
         enqueueRequest(
             createAccountTrieNodeDataRequest(
