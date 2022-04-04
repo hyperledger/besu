@@ -18,7 +18,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -220,7 +219,7 @@ public class SarOperationTest {
   public void shiftOperation() {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
-    when(frame.getRemainingGas()).thenReturn(Gas.of(100));
+    when(frame.getRemainingGas()).thenReturn(100L);
     when(frame.popStackItem())
         .thenReturn(UInt256.fromBytes(Bytes32.fromHexStringLenient(shift)))
         .thenReturn(UInt256.fromHexString(number));

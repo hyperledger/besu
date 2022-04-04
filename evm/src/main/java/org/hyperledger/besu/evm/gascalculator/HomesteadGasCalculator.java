@@ -14,14 +14,12 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.Gas;
-
 public class HomesteadGasCalculator extends FrontierGasCalculator {
 
-  private static final Gas TX_CREATE_EXTRA = Gas.of(32_000L);
+  private static final long TX_CREATE_EXTRA = 32_000L;
 
   @Override
-  protected Gas txCreateExtraGasCost() {
+  protected long txCreateExtraGasCost() {
     return TX_CREATE_EXTRA;
   }
 }

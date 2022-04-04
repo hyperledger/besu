@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ import org.mockito.Mockito;
 @RunWith(Parameterized.class)
 public class BLS12G1AddPrecompiledContractTest {
 
-  BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
+  final BLS12G1AddPrecompiledContract contract = new BLS12G1AddPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
@@ -84,7 +83,7 @@ public class BLS12G1AddPrecompiledContractTest {
       assertThat(expectedComputation.size()).isZero();
     } else {
       assertThat(actualComputation).isEqualTo(expectedComputation);
-      assertThat(contract.gasRequirement(input)).isEqualTo(Gas.of(Long.parseLong(expectedGasUsed)));
+      assertThat(contract.gasRequirement(input)).isEqualTo(Long.parseLong(expectedGasUsed));
     }
   }
 }

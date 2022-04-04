@@ -31,7 +31,9 @@ import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -43,10 +45,10 @@ public class EVM {
 
   protected static final OperationResult OVERFLOW_RESPONSE =
       new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
@@ -80,7 +82,7 @@ public class EVM {
         frame,
         () -> {
           OperationResult result;
-          Operation operation = frame.getCurrentOperation();
+          final Operation operation = frame.getCurrentOperation();
           try {
             result = operation.execute(frame, this);
           } catch (final OverflowException oe) {
@@ -88,15 +90,14 @@ public class EVM {
           } catch (final UnderflowException ue) {
             result = UNDERFLOW_RESPONSE;
           }
-          frame.setGasCost(result.getGasCost());
-          logState(frame, result.getGasCost().orElse(Gas.ZERO));
+          logState(frame, result.getGasCost().orElse(0L));
           final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
           if (haltReason.isPresent()) {
             LOG.trace("MessageFrame evaluation halted because of {}", haltReason.get());
             frame.setExceptionalHaltReason(haltReason);
             frame.setState(State.EXCEPTIONAL_HALT);
           } else if (result.getGasCost().isPresent()) {
-            frame.decrementRemainingGas(result.getGasCost().get());
+            frame.decrementRemainingGas(result.getGasCost().getAsLong());
           }
           if (frame.getState() == State.CODE_EXECUTING) {
             final int currentPC = frame.getPC();
@@ -108,7 +109,7 @@ public class EVM {
         });
   }
 
-  private static void logState(final MessageFrame frame, final Gas currentGasCost) {
+  private static void logState(final MessageFrame frame, final long currentGasCost) {
     if (LOG.isTraceEnabled()) {
       final StringBuilder builder = new StringBuilder();
       builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
@@ -128,18 +129,14 @@ public class EVM {
   @VisibleForTesting
   public Operation operationAtOffset(final Code code, final int offset) {
     final Bytes bytecode = code.getBytes();
-    // If the length of the program code is shorter than the required offset, halt execution.
+    // If the length of the program code is shorter than the offset halt execution.
     if (offset >= bytecode.size()) {
       return endOfScriptStop;
     }
 
     final byte opcode = bytecode.get(offset);
     final Operation operation = operations.get(opcode);
-    if (operation == null) {
-      return new InvalidOperation(opcode, null);
-    } else {
-      return operation;
-    }
+    return Objects.requireNonNullElseGet(operation, () -> new InvalidOperation(opcode, null));
   }
 
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -253,7 +253,7 @@ public class BlocksSubCommand implements Runnable {
             .miningParameters(getMiningParameters())
             .build();
       } catch (final Exception e) {
-        throw new ExecutionException(new CommandLine(parentCommand), e.getMessage(), e);
+        throw new ExecutionException(parentCommand.spec.commandLine(), e.getMessage(), e);
       }
     }
 

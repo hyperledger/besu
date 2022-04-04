@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,7 +36,7 @@ public class VMReferenceTestCaseSpec {
   /** The VM output. */
   private final Bytes out;
 
-  private final Gas finalGas;
+  private final long finalGas;
 
   private final ReferenceTestWorldState initialWorldState;
 
@@ -59,7 +58,7 @@ public class VMReferenceTestCaseSpec {
     exec.setBlockHeader(env);
 
     if (finalGas != null && out != null && finalWorldState != null) {
-      this.finalGas = Gas.fromHexString(finalGas);
+      this.finalGas = Long.decode(finalGas);
       this.finalWorldState = finalWorldState;
       this.out = Bytes.fromHexString(out);
       this.exceptionalHaltExpected = false;
@@ -67,7 +66,7 @@ public class VMReferenceTestCaseSpec {
       this.exceptionalHaltExpected = true;
       // These values should never be checked if this is a test case that
       // exceptionally halts.
-      this.finalGas = null;
+      this.finalGas = -1;
       this.finalWorldState = null;
       this.out = null;
     }
@@ -100,7 +99,7 @@ public class VMReferenceTestCaseSpec {
     return finalWorldState;
   }
 
-  public Gas getFinalGas() {
+  public long getFinalGas() {
     return finalGas;
   }
 

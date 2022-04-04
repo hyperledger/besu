@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -236,14 +235,14 @@ public class TransactionSimulator {
         transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode();
 
     if (goQuorumCompatibilityMode && value.isZero()) {
-      final Gas privateGasEstimateAndState =
+      final long privateGasEstimateAndState =
           protocolSpec.getGasCalculator().getMaximumTransactionCost(64);
-      if (privateGasEstimateAndState.toLong() > result.getEstimateGasUsedByTransaction()) {
+      if (privateGasEstimateAndState > result.getEstimateGasUsedByTransaction()) {
         // modify the result to have the larger estimate
         final TransactionProcessingResult resultPmt =
             TransactionProcessingResult.successful(
                 result.getLogs(),
-                privateGasEstimateAndState.toLong(),
+                privateGasEstimateAndState,
                 result.getGasRemaining(),
                 result.getOutput(),
                 result.getValidationResult());

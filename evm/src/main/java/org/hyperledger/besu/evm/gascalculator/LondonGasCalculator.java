@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -22,9 +21,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class LondonGasCalculator extends BerlinGasCalculator {
 
   // redefinitions for EIP-3529
-  private static final Gas SSTORE_CLEARS_SCHEDULE = SSTORE_RESET_GAS.plus(ACCESS_LIST_STORAGE_COST);
+  private static final long SSTORE_CLEARS_SCHEDULE = SSTORE_RESET_GAS + ACCESS_LIST_STORAGE_COST;
 
-  private static final Gas NEGATIVE_SSTORE_CLEARS_SCHEDULE = Gas.ZERO.minus(SSTORE_CLEARS_SCHEDULE);
+  private static final long NEGATIVE_SSTORE_CLEARS_SCHEDULE = -SSTORE_CLEARS_SCHEDULE;
 
   // redefinitions for EIP-3529
   private static final int NEW_MAX_REFUND_QUOTIENT = 5;
@@ -33,30 +32,30 @@ public class LondonGasCalculator extends BerlinGasCalculator {
 
   // Redefined refund amount from EIP-3529
   @Override
-  public Gas getSelfDestructRefundAmount() {
-    return Gas.ZERO;
+  public long getSelfDestructRefundAmount() {
+    return 0L;
   }
 
   // defined in Berlin, but re-implemented with new constants
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3529
-  public Gas calculateStorageRefundAmount(
+  public long calculateStorageRefundAmount(
       final Account account, final UInt256 key, final UInt256 newValue) {
     final UInt256 currentValue = account.getStorageValue(key);
     if (currentValue.equals(newValue)) {
-      return Gas.ZERO;
+      return 0L;
     } else {
       final UInt256 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         if (originalValue.isZero()) {
-          return Gas.ZERO;
+          return 0L;
         } else if (newValue.isZero()) {
           return SSTORE_CLEARS_SCHEDULE;
         } else {
-          return Gas.ZERO;
+          return 0L;
         }
       } else {
-        Gas refund = Gas.ZERO;
+        long refund = 0L;
         if (!originalValue.isZero()) {
           if (currentValue.isZero()) {
             refund = NEGATIVE_SSTORE_CLEARS_SCHEDULE;
@@ -67,8 +66,8 @@ public class LondonGasCalculator extends BerlinGasCalculator {
 
         if (originalValue.equals(newValue)) {
           refund =
-              refund.plus(
-                  originalValue.isZero()
+              refund
+                  + (originalValue.isZero()
                       ? SSTORE_SET_GAS_LESS_SLOAD_GAS
                       : SSTORE_RESET_GAS_LESS_SLOAD_GAS);
         }

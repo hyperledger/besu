@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -54,7 +54,7 @@ public class DebugOperationTracer implements OperationTracer {
     final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
     final int pc = frame.getPC();
-    final Gas gasRemaining = frame.getRemainingGas();
+    final long gasRemaining = frame.getRemainingGas();
     final Bytes inputData = frame.getInputData();
     final Optional<Bytes32[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
@@ -100,14 +100,14 @@ public class DebugOperationTracer implements OperationTracer {
 
   @Override
   public void tracePrecompileCall(
-      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
+      final MessageFrame frame, final long gasRequirement, final Bytes output) {
     if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
           new TraceFrame(
               frame.getPC(),
               Optional.empty(),
               frame.getRemainingGas(),
-              Optional.empty(),
+              OptionalLong.empty(),
               frame.getGasRefund(),
               frame.getMessageStackDepth(),
               Optional.empty(),
@@ -129,7 +129,7 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty());
       traceFrames.add(traceFrame);
     }
-    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
+    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(OptionalLong.of(gasRequirement));
   }
 
   @Override
@@ -153,7 +153,7 @@ public class DebugOperationTracer implements OperationTracer {
                     frame.getPC(),
                     Optional.empty(),
                     frame.getRemainingGas(),
-                    Optional.empty(),
+                    OptionalLong.empty(),
                     frame.getGasRefund(),
                     frame.getMessageStackDepth(),
                     Optional.of(exceptionalHaltReason),

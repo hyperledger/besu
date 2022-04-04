@@ -16,13 +16,13 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -31,9 +31,9 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private static final int PARAMETER_LENGTH = 128;
 
-  private final Gas gasCost;
+  private final long gasCost;
 
-  private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
+  private AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
         "AltBN128Add",
         gasCalculator,
@@ -43,20 +43,20 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
   }
 
   public static AltBN128AddPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128AddPrecompiledContract(gasCalculator, Gas.of(500));
+    return new AltBN128AddPrecompiledContract(gasCalculator, 500L);
   }
 
   public static AltBN128AddPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128AddPrecompiledContract(gasCalculator, Gas.of(150));
+    return new AltBN128AddPrecompiledContract(gasCalculator, 150L);
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     return gasCost;
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (useNative) {
       return computeNative(input, messageFrame);
     } else {
