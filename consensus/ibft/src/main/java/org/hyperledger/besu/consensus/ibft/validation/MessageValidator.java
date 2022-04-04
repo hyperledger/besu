@@ -78,7 +78,7 @@ public class MessageValidator {
 
   private boolean validateBlock(final Block block) {
     final var validationResult =
-        blockValidator.validateAndProcessBlock(
+        blockValidator.validateBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
     if (validationResult.blockProcessingOutputs.isEmpty()) {

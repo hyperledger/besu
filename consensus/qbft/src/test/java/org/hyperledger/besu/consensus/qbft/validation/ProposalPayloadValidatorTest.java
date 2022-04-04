@@ -100,7 +100,7 @@ public class ProposalPayloadValidatorTest {
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
@@ -124,7 +124,7 @@ public class ProposalPayloadValidatorTest {
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
@@ -147,7 +147,7 @@ public class ProposalPayloadValidatorTest {
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
@@ -223,7 +223,7 @@ public class ProposalPayloadValidatorTest {
     final Proposal proposal =
         messageFactory.createProposal(roundIdentifier, block, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
@@ -257,7 +257,7 @@ public class ProposalPayloadValidatorTest {
     final Hash hashWithoutCms =
         PkiQbftBlockHeaderFunctions.forCmsSignature(pkiQbftExtraDataCodec).hash(block.getHeader());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
@@ -292,7 +292,7 @@ public class ProposalPayloadValidatorTest {
     final Hash hashWithoutCms =
         PkiQbftBlockHeaderFunctions.forCmsSignature(pkiQbftExtraDataCodec).hash(block.getHeader());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),

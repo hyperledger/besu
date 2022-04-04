@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.ArrayList;
@@ -38,13 +37,13 @@ public class MainnetBlockValidator implements BlockValidator {
   private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockValidator.class);
   protected final BlockHeaderValidator blockHeaderValidator;
   protected final BlockBodyValidator blockBodyValidator;
-  protected final BlockProcessor blockProcessor;
+  protected final org.hyperledger.besu.ethereum.mainnet.BlockProcessor blockProcessor;
   protected final BadBlockManager badBlockManager;
 
   public MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
-      final BlockProcessor blockProcessor,
+      final org.hyperledger.besu.ethereum.mainnet.BlockProcessor blockProcessor,
       final BadBlockManager badBlockManager) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
@@ -68,7 +67,30 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
+    return processBlock(
+        context, block, headerValidationMode, ommerValidationMode, this::processBlock);
+  }
 
+  @Override
+  public Result validateBlock(
+      final ProtocolContext context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode) {
+    return processBlock(
+        context,
+        block,
+        headerValidationMode,
+        ommerValidationMode,
+        this::processBlockWithoutPersisting);
+  }
+
+  private Result processBlock(
+      final ProtocolContext context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode,
+      final BlockProcessor blockProcessor) {
     final BlockHeader header = block.getHeader();
 
     final MutableBlockchain blockchain = context.getBlockchain();
@@ -97,7 +119,8 @@ public class MainnetBlockValidator implements BlockValidator {
     }
     final MutableWorldState worldState = maybeWorldState.get();
 
-    final BlockProcessor.Result result = processBlock(context, worldState, block);
+    final org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result result =
+        blockProcessor.processBlock(context, worldState, block);
     if (result.isFailed()) {
       return handleAndReportFailure(block, "Error processing block");
     }
@@ -132,6 +155,11 @@ public class MainnetBlockValidator implements BlockValidator {
     return new Result(reason);
   }
 
+  private interface BlockProcessor {
+    org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result processBlock(
+        final ProtocolContext context, final MutableWorldState worldState, final Block block);
+  }
+
   /**
    * Processes a block, returning the result of the processing
    *
@@ -140,10 +168,27 @@ public class MainnetBlockValidator implements BlockValidator {
    * @param block the block to be processed
    * @return the result of processing the block
    */
-  protected BlockProcessor.Result processBlock(
+  protected org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+    return blockProcessor.processBlock(
+        context.getBlockchain(),
+        worldState,
+        block.getHeader(),
+        block.getBody().getTransactions(),
+        block.getBody().getOmmers(),
+        null);
+  }
 
-    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
+  protected org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result
+      processBlockWithoutPersisting(
+          final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+    return blockProcessor.processBlockWithoutPersisting(
+        context.getBlockchain(),
+        worldState,
+        block.getHeader(),
+        block.getBody().getTransactions(),
+        block.getBody().getOmmers(),
+        null);
   }
 
   @Override

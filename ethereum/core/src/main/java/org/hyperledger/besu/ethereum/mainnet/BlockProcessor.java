@@ -119,6 +119,14 @@ public interface BlockProcessor {
       List<BlockHeader> ommers,
       PrivateMetadataUpdater privateMetadataUpdater);
 
+  Result processBlockWithoutPersisting(
+      Blockchain blockchain,
+      MutableWorldState worldState,
+      BlockHeader blockHeader,
+      List<Transaction> transactions,
+      List<BlockHeader> ommers,
+      PrivateMetadataUpdater privateMetadataUpdater);
+
   /**
    * Processes the block when running Besu in GoQuorum-compatible mode
    *

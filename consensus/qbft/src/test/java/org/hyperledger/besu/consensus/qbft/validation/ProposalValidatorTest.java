@@ -101,7 +101,7 @@ public class ProposalValidatorTest {
                 QbftContext.class, emptyList(), bftExtraDataEncoder));
 
     // typically tests require the blockValidation to be successful
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             any(),
             eq(HeaderValidationMode.LIGHT),
@@ -153,7 +153,7 @@ public class ProposalValidatorTest {
     final RoundSpecificItems roundItem = roundItems.get(ROUND_ID.ZERO);
     final Proposal proposal = createProposal(roundItem, emptyList(), emptyList());
 
-    when(blockValidator.validateAndProcessBlock(
+    when(blockValidator.validateBlock(
             eq(protocolContext),
             any(),
             eq(HeaderValidationMode.LIGHT),

@@ -145,11 +145,35 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final PrivateMetadataUpdater privateMetadataUpdater) {
+    return processBlock(
+        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater, true);
+  }
+
+  @Override
+  public BlockProcessor.Result processBlockWithoutPersisting(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    return processBlock(
+        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater, false);
+  }
+
+  private Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final boolean persistWorldState) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
-        return AbstractBlockProcessor.Result.failed();
+        return Result.failed();
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
@@ -178,7 +202,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (worldState instanceof BonsaiPersistedWorldState) {
           ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
         }
-        return AbstractBlockProcessor.Result.failed();
+        return Result.failed();
       }
 
       worldStateUpdater.commit();
@@ -196,11 +220,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (worldState instanceof BonsaiPersistedWorldState) {
         ((BonsaiWorldStateUpdater) worldState.updater()).reset();
       }
-      return AbstractBlockProcessor.Result.failed();
+      return Result.failed();
     }
 
-    worldState.persist(blockHeader);
-    return AbstractBlockProcessor.Result.successful(receipts);
+    if (persistWorldState) {
+      worldState.persist(blockHeader);
+    }
+    return Result.successful(receipts);
   }
 
   protected boolean hasAvailableBlockBudget(

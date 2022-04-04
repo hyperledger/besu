@@ -104,6 +104,19 @@ public class PrivacyBlockProcessor implements BlockProcessor {
     return result;
   }
 
+  @Override
+  public Result processBlockWithoutPersisting(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    // TODO use the blockProcessor.processBlockWithPersisting method
+    return processBlock(
+        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
+  }
+
   void maybeRehydrate(
       final Blockchain blockchain,
       final BlockHeader blockHeader,

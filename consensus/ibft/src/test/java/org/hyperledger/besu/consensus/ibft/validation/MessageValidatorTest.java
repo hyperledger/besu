@@ -98,7 +98,7 @@ public class MessageValidatorTest {
         new ProtocolContext(
             mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
 
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
+    when(blockValidator.validateBlock(any(), any(), any(), any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
 
     when(roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
@@ -153,8 +153,7 @@ public class MessageValidatorTest {
 
   @Test
   public void blockValidationFailureFailsValidation() {
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new Result("Failed"));
+    when(blockValidator.validateBlock(any(), any(), any(), any())).thenReturn(new Result("Failed"));
 
     final Proposal proposalMsg =
         messageFactory.createProposal(roundIdentifier, block, Optional.empty());
