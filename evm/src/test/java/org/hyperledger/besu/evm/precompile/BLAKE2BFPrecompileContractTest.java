@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.precompile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 
@@ -95,6 +94,6 @@ public class BLAKE2BFPrecompileContractTest {
     final Bytes expectedComputation =
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
     assertThat(contract.compute(input, messageFrame)).isEqualTo(expectedComputation);
-    assertThat(contract.gasRequirement(input)).isEqualTo(Gas.of(expectedGasUsed));
+    assertThat(contract.gasRequirement(input)).isEqualTo(expectedGasUsed);
   }
 }

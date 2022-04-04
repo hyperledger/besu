@@ -36,13 +36,13 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.Gas;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -91,9 +91,9 @@ public class DebugTraceTransactionTest {
         new TraceFrame(
             12,
             Optional.of("NONE"),
-            Gas.of(45),
-            Optional.of(Gas.of(56)),
-            Gas.ZERO,
+            45L,
+            OptionalLong.of(56L),
+            0L,
             2,
             Optional.empty(),
             null,
@@ -156,9 +156,9 @@ public class DebugTraceTransactionTest {
         new TraceFrame(
             12,
             Optional.of("NONE"),
-            Gas.of(45),
-            Optional.of(Gas.of(56)),
-            Gas.ZERO,
+            45L,
+            OptionalLong.of(56L),
+            0L,
             2,
             Optional.empty(),
             null,

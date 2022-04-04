@@ -15,7 +15,7 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.2'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
     dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.2'
 
     dependency 'com.github.ben-manes.caffeine:caffeine:3.0.5'
@@ -153,6 +153,9 @@ dependencyManagement {
 
     dependency 'org.jupnp:org.jupnp.support:2.6.0'
     dependency 'org.jupnp:org.jupnp:2.6.0'
+
+    dependency 'org.junit.jupiter:junit-jupiter:5.8.2'
+    dependency 'org.junit.vintage:junit-vintage-engine:5.8.2'
 
     dependency 'org.mockito:mockito-core:4.4.0'
 

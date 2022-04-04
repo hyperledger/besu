@@ -37,14 +37,17 @@ public class EngineUpdateForkchoiceResult {
       EnumSet.of(VALID, INVALID, SYNCING, INVALID_TERMINAL_BLOCK);
 
   public EngineUpdateForkchoiceResult(
-      final EngineStatus status, final Hash latestValidHash, final PayloadIdentifier payloadId) {
+      final EngineStatus status,
+      final Hash latestValidHash,
+      final PayloadIdentifier payloadId,
+      final Optional<String> errorMessage) {
 
     if (!FORK_CHOICE_ENGINE_STATUS.contains(status)) {
       throw new IllegalStateException(
           String.format("Invalid status response %s for EngineForkChoiceResult", status.name()));
     }
 
-    this.payloadStatus = new EnginePayloadStatusResult(status, latestValidHash, null);
+    this.payloadStatus = new EnginePayloadStatusResult(status, latestValidHash, errorMessage);
     this.payloadId = payloadId;
   }
 

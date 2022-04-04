@@ -20,7 +20,6 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.TestCodeExecutor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -92,7 +91,7 @@ public class LondonSStoreOperationGasCostTest {
             gasLimit,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
-    assertThat(frame.getRemainingGas()).isEqualTo(Gas.of(gasLimit - (expectedGasUsed + 2100)));
-    assertThat(frame.getGasRefund()).isEqualTo(Gas.of(expectedGasRefund));
+    assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - (expectedGasUsed + 2100));
+    assertThat(frame.getGasRefund()).isEqualTo(expectedGasRefund);
   }
 }

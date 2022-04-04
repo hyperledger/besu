@@ -22,7 +22,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
@@ -46,7 +45,8 @@ public class BaseFeeOperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    assertThat(result.getGasCost()).contains(gasCalculator.getBaseTierGasCost());
+    assertThat(result.getGasCost().isPresent()).isTrue();
+    assertThat(result.getGasCost().getAsLong()).isEqualTo(gasCalculator.getBaseTierGasCost());
     assertSuccessResult(result);
   }
 
@@ -79,10 +79,6 @@ public class BaseFeeOperationTest {
   }
 
   private MessageFrame createMessageFrame(final long initialGas, final Optional<Wei> baseFee) {
-    return createMessageFrame(Gas.of(initialGas), baseFee);
-  }
-
-  private MessageFrame createMessageFrame(final Gas initialGas, final Optional<Wei> baseFee) {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.getRemainingGas()).thenReturn(initialGas);
     final BlockHeader blockHeader = mock(BlockHeader.class);

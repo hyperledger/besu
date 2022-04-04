@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -33,18 +34,18 @@ public class JumpOperation extends AbstractFixedCostOperation {
     super(0x56, "JUMP", 2, 0, 1, gasCalculator, gasCalculator.getMidTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
-    jumpResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), 0);
+            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+    jumpResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty(), 0);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final int jumpDestination;
-    Bytes bytes = frame.popStackItem().trimLeadingZeros();
+    final Bytes bytes = frame.popStackItem().trimLeadingZeros();
     try {
       jumpDestination = bytes.toInt();
-    } catch (RuntimeException iae) {
+    } catch (final RuntimeException iae) {
       return invalidJumpResponse;
     }
     final Code code = frame.getCode();

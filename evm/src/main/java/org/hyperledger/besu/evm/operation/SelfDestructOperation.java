@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class SelfDestructOperation extends AbstractOperation {
 
@@ -37,24 +37,23 @@ public class SelfDestructOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final Address recipientAddress = Words.toAddress(frame.popStackItem());
 
-    // because of weird EIP150/158 reasons we care about a null account so we can't merge this.
+    // because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
     final Account recipientNullable = frame.getWorldUpdater().get(recipientAddress);
     final Wei inheritance = frame.getWorldUpdater().get(frame.getRecipientAddress()).getBalance();
 
     final boolean accountIsWarm =
         frame.warmUpAddress(recipientAddress) || gasCalculator().isPrecompile(recipientAddress);
 
-    final Gas cost =
-        gasCalculator()
-            .selfDestructOperationGasCost(recipientNullable, inheritance)
-            .plus(accountIsWarm ? Gas.ZERO : gasCalculator().getColdAccountAccessCost());
-    final Optional<Gas> optionalCost = Optional.of(cost);
+    final long cost =
+        gasCalculator().selfDestructOperationGasCost(recipientNullable, inheritance)
+            + (accountIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
 
     if (frame.isStatic()) {
       return new OperationResult(
-          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-    } else if (frame.getRemainingGas().compareTo(cost) < 0) {
-      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (frame.getRemainingGas() < cost) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final Address address = frame.getRecipientAddress();
@@ -75,6 +74,6 @@ public class SelfDestructOperation extends AbstractOperation {
     account.setBalance(Wei.ZERO);
 
     frame.setState(MessageFrame.State.CODE_SUCCESS);
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

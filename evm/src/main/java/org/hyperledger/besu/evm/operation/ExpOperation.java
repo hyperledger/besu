@@ -15,12 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -37,15 +37,15 @@ public class ExpOperation extends AbstractOperation {
 
     final int numBytes = (power.bitLength() + 7) / 8;
 
-    final Gas cost = gasCalculator().expOperationGasCost(numBytes);
-    final Optional<Gas> optionalCost = Optional.of(cost);
-    if (frame.getRemainingGas().compareTo(cost) < 0) {
-      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    final long cost = gasCalculator().expOperationGasCost(numBytes);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final UInt256 result = number.pow(power);
 
     frame.pushStackItem(result);
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

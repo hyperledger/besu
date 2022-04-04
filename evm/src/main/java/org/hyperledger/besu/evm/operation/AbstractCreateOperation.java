@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -36,7 +36,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
 
   protected AbstractCreateOperation(
       final int opcode,
@@ -55,34 +55,31 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
-    final Gas cost = cost(frame);
-    final Optional<Gas> optionalCost = Optional.ofNullable(cost);
-    if (cost != null) {
-      if (frame.isStatic()) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-      } else if (frame.getRemainingGas().compareTo(cost) < 0) {
-        return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-      }
-      final Wei value = Wei.wrap(frame.getStackItem(0));
+    final long cost = cost(frame);
+    if (frame.isStatic()) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (frame.getRemainingGas() < cost) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    }
+    final Wei value = Wei.wrap(frame.getStackItem(0));
 
-      final Address address = frame.getRecipientAddress();
-      final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
+    final Address address = frame.getRecipientAddress();
+    final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
-      frame.clearReturnData();
+    frame.clearReturnData();
 
-      if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
-        fail(frame);
-      } else {
-        spawnChildMessage(frame, evm);
-      }
+    if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024) {
+      fail(frame);
+    } else {
+      spawnChildMessage(frame, evm);
     }
 
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 
-  protected abstract Gas cost(final MessageFrame frame);
+  protected abstract long cost(final MessageFrame frame);
 
   protected abstract Address targetContractAddress(MessageFrame frame);
 
@@ -96,7 +93,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
   private void spawnChildMessage(final MessageFrame frame, final EVM evm) {
     // memory cost needs to be calculated prior to memory expansion
-    final Gas cost = cost(frame);
+    final long cost = cost(frame);
     frame.decrementRemainingGas(cost);
 
     final Address address = frame.getRecipientAddress();
@@ -111,7 +108,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final Address contractAddress = targetContractAddress(frame);
 
-    final Gas childGasStipend = gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
+    final long childGasStipend =
+        gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
     frame.decrementRemainingGas(childGasStipend);
 
     final MessageFrame childFrame =

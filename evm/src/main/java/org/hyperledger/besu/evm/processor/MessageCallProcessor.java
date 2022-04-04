@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.processor;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -65,7 +64,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       } else {
         frame.setState(MessageFrame.State.CODE_EXECUTING);
       }
-    } catch (ModificationNotAllowedException ex) {
+    } catch (final ModificationNotAllowedException ex) {
       LOG.trace("Message call error: attempt to mutate an immutable account");
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
@@ -137,8 +136,8 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       final PrecompiledContract contract,
       final MessageFrame frame,
       final OperationTracer operationTracer) {
-    final Gas gasRequirement = contract.gasRequirement(frame.getInputData());
-    if (frame.getRemainingGas().compareTo(gasRequirement) < 0) {
+    final long gasRequirement = contract.gasRequirement(frame.getInputData());
+    if (frame.getRemainingGas() < gasRequirement) {
       LOG.trace(
           "Not enough gas available for pre-compiled contract code {}: requiring "
               + "{} but only {} gas available",
@@ -166,7 +165,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
           "Precompiled contract {} {} (gasComsumed: {})",
           contract.getName(),
           result.getState(),
-          result.isRefundGas() ? Gas.ZERO : gasRequirement);
+          result.isRefundGas() ? 0L : gasRequirement);
     }
   }
 }
