@@ -38,6 +38,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.AuthenticatedJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
@@ -1119,10 +1123,22 @@ public class RunnerBuilder {
         .values()
         .forEach(websocketMethodsFactory::addMethods);
 
+    final JsonRpcProcessor jsonRpcProcessor;
+    if (authenticationService.isPresent()) {
+      jsonRpcProcessor =
+          new AuthenticatedJsonRpcProcessor(
+              new BaseJsonRpcProcessor(),
+              authenticationService.get(),
+              configuration.getRpcApisNoAuth());
+    } else {
+      jsonRpcProcessor = new BaseJsonRpcProcessor();
+    }
+    final JsonRpcExecutor jsonRpcExecutor =
+        new JsonRpcExecutor(jsonRpcProcessor, websocketMethodsFactory.methods());
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,
-            websocketMethodsFactory.methods(),
+            jsonRpcExecutor,
             besuController.getProtocolManager().ethContext().getScheduler(),
             webSocketConfiguration.getTimeoutSec());
 
