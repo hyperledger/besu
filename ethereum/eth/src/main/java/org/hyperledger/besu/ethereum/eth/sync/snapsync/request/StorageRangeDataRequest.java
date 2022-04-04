@@ -178,19 +178,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   private int findNbRanges() {
     if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
-      final int nbRangesNeeded =
-          MAX_RANGE
-              .toUnsignedBigInteger()
-              .divide(
-                  slots
-                      .lastKey()
-                      .toUnsignedBigInteger()
-                      .subtract(startKeyHash.toUnsignedBigInteger()))
-              .intValue();
-      if (nbRangesNeeded >= MAX_CHILD) {
-        return MAX_CHILD;
-      }
-      return nbRangesNeeded;
+      return MAX_RANGE
+          .toUnsignedBigInteger()
+          .divide(
+              slots.lastKey().toUnsignedBigInteger().subtract(startKeyHash.toUnsignedBigInteger()))
+          .intValue();
     }
     return 1;
   }

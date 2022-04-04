@@ -250,7 +250,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .inBatches(taskCountPerRequest)
+              .inBatches(84)
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {

@@ -79,8 +79,7 @@ public class CompleteTaskStepTest {
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 
-    assertThat(task.isCompleted()).isFalse();
-    assertThat(task.isFailed()).isTrue();
+    assertThat(task.isCompleted()).isTrue();
     verify(downloadState).notifyTaskAvailable();
     verify(downloadState, never()).checkCompletion(blockHeader);
   }
@@ -93,8 +92,8 @@ public class CompleteTaskStepTest {
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 
-    assertThat(task.isCompleted()).isTrue();
-    assertThat(task.isFailed()).isFalse();
+    assertThat(task.isCompleted()).isFalse();
+    assertThat(task.isFailed()).isTrue();
 
     verify(downloadState).checkCompletion(blockHeader);
   }
