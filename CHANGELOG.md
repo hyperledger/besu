@@ -2,6 +2,9 @@
 
 ## 22.4.0-RC1
 
+### Bug Fixes
+- Flexible Privacy Precompile handles null payload ID [#3664](https://github.com/hyperledger/besu/pull/3664)
+
 ### Breaking Changes
 
 ### Additions and Improvements
