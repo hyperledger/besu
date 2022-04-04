@@ -93,6 +93,7 @@ public class FastSyncActionsTest {
             blockchainSetupUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
     fastSyncActions = createFastSyncActions(syncConfig);
+    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
   }
 
   @Test
