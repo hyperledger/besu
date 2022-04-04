@@ -221,6 +221,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     stackTrie =
         maybeStackTrie
             .filter(StackTrie::addSegment)
-            .orElse(new StackTrie(getRootHash(), 1, 3, startKeyHash));
+            .orElse(new StackTrie(Hash.wrap(getStorageRoot()), 1, 3, startKeyHash));
   }
 }
