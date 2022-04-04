@@ -81,7 +81,7 @@ public class CompleteTaskStepTest {
 
     assertThat(task.isCompleted()).isTrue();
     verify(downloadState).notifyTaskAvailable();
-    verify(downloadState, never()).checkCompletion(blockHeader);
+    verify(downloadState).checkCompletion(blockHeader);
   }
 
   @Test
@@ -95,7 +95,7 @@ public class CompleteTaskStepTest {
     assertThat(task.isCompleted()).isFalse();
     assertThat(task.isFailed()).isTrue();
 
-    verify(downloadState).checkCompletion(blockHeader);
+    verify(downloadState, never()).checkCompletion(blockHeader);
   }
 
   @Test
