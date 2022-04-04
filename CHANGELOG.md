@@ -4,7 +4,7 @@
 
 ### Bug Fixes
 - Flexible Privacy Precompile handles null payload ID [#3664](https://github.com/hyperledger/besu/pull/3664)
-
+- Subcommand blocks import throws execption [#3646](https://github.com/hyperledger/besu/pull/3646)
 ### Breaking Changes
 
 ### Additions and Improvements
