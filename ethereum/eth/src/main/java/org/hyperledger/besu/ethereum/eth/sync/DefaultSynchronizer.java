@@ -19,9 +19,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
@@ -51,7 +51,7 @@ public class DefaultSynchronizer implements Synchronizer {
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final BlockPropagationManager blockPropagationManager;
-  private final Optional<FastSyncDownloader> fastSyncDownloader;
+  private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final FullSyncDownloader fullSyncDownloader;
   private final ProtocolContext protocolContext;
 

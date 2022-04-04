@@ -204,13 +204,15 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       if (!accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
         childRequests.add(
             createStorageRangeDataRequest(
+                getRootHash(),
                 account.getKey(),
                 accountValue.getStorageRoot(),
                 startStorageRange.orElse(MIN_RANGE),
                 endStorageRange.orElse(MAX_RANGE)));
       }
       if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-        childRequests.add(createBytecodeRequest(account.getKey(), accountValue.getCodeHash()));
+        childRequests.add(
+            createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
       }
     }
     return childRequests.stream();
