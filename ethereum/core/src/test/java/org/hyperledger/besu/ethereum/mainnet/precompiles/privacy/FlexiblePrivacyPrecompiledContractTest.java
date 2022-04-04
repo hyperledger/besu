@@ -75,6 +75,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final Bytes privateTransactionLookupId = Bytes.random(32);
+  private final Bytes privateTransactionLookupId64 = Bytes.random(64);
   private MessageFrame messageFrame;
   private final String DEFAULT_OUTPUT = "0x01";
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
@@ -143,7 +144,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
   }
 
   @Test
-  public void testPayloadFoundInEnclave() {
+  public void testPayloadFoundInEnclaveWith32ByteResult() {
     final Enclave enclave = mock(Enclave.class);
     final FlexiblePrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
     final List<Log> logs = new ArrayList<>();
@@ -169,6 +170,38 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contractSpy.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
+  }
+
+  @Test
+  public void testPayloadFoundInEnclaveWith64ByteResult() {
+    final Enclave enclave = mock(Enclave.class);
+    final FlexiblePrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+    final List<Log> logs = new ArrayList<>();
+    contract.setPrivateTransactionProcessor(
+        mockPrivateTxProcessor(
+            TransactionProcessingResult.successful(
+                logs, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null)));
+
+    final VersionedPrivateTransaction versionedPrivateTransaction =
+        versionedPrivateTransactionBesu();
+    final byte[] payload = convertVersionedPrivateTransactionToBytes(versionedPrivateTransaction);
+    final String privateFrom =
+        versionedPrivateTransaction.getPrivateTransaction().getPrivateFrom().toBase64String();
+
+    final ReceiveResponse response =
+        new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
+    when(enclave.receive(any())).thenReturn(response);
+
+    final FlexiblePrivacyPrecompiledContract contractSpy = spy(contract);
+    Mockito.doReturn(true)
+        .when(contractSpy)
+        .canExecute(any(), any(), any(), any(), any(), any(), any(), any());
+
+    final PrecompiledContract.PrecompileContractResult result =
+        contractSpy.computePrecompile(privateTransactionLookupId64, messageFrame);
     final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
@@ -207,6 +240,18 @@ public class FlexiblePrivacyPrecompiledContractTest {
 
     final PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(privateTransactionLookupId.slice(10), messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
+  }
+
+  @Test
+  public void testPayloadMoreThan32LessThan64Bytes() {
+    final Enclave enclave = mock(Enclave.class);
+    final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
+
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId64.slice(40), messageFrame);
     final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
