@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -27,24 +29,23 @@ import java.util.concurrent.TimeUnit;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ComparisonFailure;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TransactionPoolPropagationTest {
+class TransactionPoolPropagationTest {
 
   final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
 
   private Vertx vertx;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     vertx = Vertx.vertx();
   }
 
-  @After
-  public void tearDown() {
+  @AfterEach
+  void tearDown() {
     vertx.close();
   }
 
@@ -67,8 +68,8 @@ public class TransactionPoolPropagationTest {
    * 2nd order test to verify the framework correctly fails if a disconnect occurs It could have a
    * more detailed exception check - more than just the class.
    */
-  @Test(expected = ComparisonFailure.class)
-  public void disconnectShouldThrow() throws Exception {
+  @Test
+  void disconnectShouldThrow() throws Exception {
 
     try (final TestNodeList txNodes = new TestNodeList()) {
       // Create & Start Nodes
@@ -80,7 +81,7 @@ public class TransactionPoolPropagationTest {
 
       node1.network.getPeers().iterator().next().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
 
-      wrapup(txNodes);
+      assertThatThrownBy(() -> wrapup(txNodes)).isInstanceOf(AssertionError.class);
     }
   }
 
@@ -89,7 +90,7 @@ public class TransactionPoolPropagationTest {
    * node. Verify that all nodes get the correct number of pending transactions.
    */
   @Test
-  public void shouldPropagateLocalAndRemoteTransactions() throws Exception {
+  void shouldPropagateLocalAndRemoteTransactions() throws Exception {
     try (final TestNodeList nodes = new TestNodeList()) {
       // Create & Start Nodes
       final TestNode node1 = nodes.create(vertx, null, null, noDiscovery);

@@ -104,6 +104,10 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;
     }
+    if (input == null || (input.size() != 32 && input.size() != 64)) {
+      LOG.error("Can not fetch private transaction payload with key of invalid length {}", input);
+      return NO_RESULT;
+    }
 
     final Hash pmtHash = messageFrame.getContextVariable(KEY_TRANSACTION_HASH);
 

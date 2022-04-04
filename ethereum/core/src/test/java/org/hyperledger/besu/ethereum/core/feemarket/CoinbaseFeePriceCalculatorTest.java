@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Gas;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,14 +35,14 @@ public class CoinbaseFeePriceCalculatorTest {
       CoinbaseFeePriceCalculator.eip1559();
 
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
-  private final Gas coinbaseFee;
+  private final long coinbaseFee;
   private final Wei transactionGasPrice;
   private final Optional<Wei> baseFee;
   private final Wei expectedPrice;
 
   public CoinbaseFeePriceCalculatorTest(
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-      final Gas coinbaseFee,
+      final long coinbaseFee,
       final Wei transactionGasPrice,
       final Optional<Wei> baseFee,
       final Wei expectedPrice) {
@@ -59,9 +58,9 @@ public class CoinbaseFeePriceCalculatorTest {
     return Arrays.asList(
         new Object[][] {
           // legacy transaction must return gas price * gas
-          {FRONTIER_CALCULATOR, Gas.of(100), Wei.of(10L), Optional.empty(), Wei.of(1000L)},
+          {FRONTIER_CALCULATOR, 100L, Wei.of(10L), Optional.empty(), Wei.of(1000L)},
           // EIP-1559 must return gas * (gas price - base fee)
-          {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(10L), Optional.of(Wei.of(4L)), Wei.of(600L)},
+          {EIP_1559_CALCULATOR, 100L, Wei.of(10L), Optional.of(Wei.of(4L)), Wei.of(600L)},
           // Negative transaction gas price case
           // {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(95L), Optional.of(100L), Wei.of(-500L)}
         });

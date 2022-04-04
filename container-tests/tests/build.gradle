@@ -20,9 +20,12 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'org.web3j:core'
   testImplementation 'org.web3j:quorum'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 test.enabled = false

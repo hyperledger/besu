@@ -19,7 +19,6 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -30,6 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
+import org.jetbrains.annotations.NotNull;
 
 public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
@@ -40,17 +40,17 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     return gasCalculator().getEcrecPrecompiledContractGasCost();
   }
 
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public Bytes compute(final Bytes input, @NotNull final MessageFrame messageFrame) {
     final int size = input.size();
     final Bytes d = size >= 128 ? input : Bytes.wrap(input, MutableBytes.create(128 - size));
     final Bytes32 h = Bytes32.wrap(d, 0);
     // Note that the Yellow Paper defines v as the next 32 bytes (so 32..63). Yet, v is a simple
-    // byte in ECDSARECOVER and the Yellow Paper is not very clear on this mismatch but it appears
+    // byte in ECDSARECOVER and the Yellow Paper is not very clear on this mismatch, but it appears
     // it is simply the last byte of those 32 bytes that needs to be used. It does appear we need
     // to check the rest of the bytes are zero though.
     if (!d.slice(32, 31).isZero()) {
@@ -76,7 +76,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     try {
       final Optional<SECPPublicKey> recovered =
           signatureAlgorithm.recoverPublicKeyFromSignature(h, signature);
-      if (!recovered.isPresent()) {
+      if (recovered.isEmpty()) {
         return Bytes.EMPTY;
       }
 

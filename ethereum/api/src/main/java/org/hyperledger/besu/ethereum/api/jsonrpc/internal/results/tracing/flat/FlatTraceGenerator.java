@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
@@ -37,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -110,10 +110,13 @@ public class FlatTraceGenerator {
     }
 
     if (!transactionTrace.getTraceFrames().isEmpty()) {
-      final Optional<Gas> precompiledGasCost =
+      final OptionalLong precompiledGasCost =
           transactionTrace.getTraceFrames().get(0).getPrecompiledGasCost();
-      precompiledGasCost.ifPresent(
-          gas -> firstFlatTraceBuilder.getResultBuilder().gasUsed(gas.toHexString()));
+      if (precompiledGasCost.isPresent()) {
+        firstFlatTraceBuilder
+            .getResultBuilder()
+            .gasUsed("0x" + Long.toHexString(precompiledGasCost.getAsLong()));
+      }
     }
 
     final List<FlatTrace.Builder> flatTraces = new ArrayList<>();
@@ -135,8 +138,7 @@ public class FlatTraceGenerator {
       final TraceFrame traceFrame = nextTraceFrame.get();
       nextTraceFrame = iter.hasNext() ? Optional.of(iter.next()) : Optional.empty();
       cumulativeGasCost +=
-          traceFrame.getGasCost().orElse(Gas.ZERO).toLong()
-              + traceFrame.getPrecompiledGasCost().orElse(Gas.ZERO).toLong();
+          traceFrame.getGasCost().orElse(0L) + traceFrame.getPrecompiledGasCost().orElse(0L);
 
       final String opcodeString = traceFrame.getOpcode();
       if ("CALL".equals(opcodeString)
@@ -290,7 +292,8 @@ public class FlatTraceGenerator {
             .from(callingAddress)
             .input(
                 nextTraceFrame.map(TraceFrame::getInputData).map(Bytes::toHexString).orElse(null))
-            .gas(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO).toHexString())
+            .gas(
+                "0x" + Long.toHexString(nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(0L)))
             .callType(opcodeString.toLowerCase(Locale.US))
             .value(Quantity.create(traceFrame.getValue()));
 
@@ -335,8 +338,7 @@ public class FlatTraceGenerator {
           protocolSchedule
               .getByBlockNumber(block.getHeader().getNumber())
               .getGasCalculator()
-              .getAdditionalCallStipend()
-              .toLong();
+              .getAdditionalCallStipend();
       tracesContexts.stream()
           .filter(
               context ->
@@ -375,12 +377,12 @@ public class FlatTraceGenerator {
       final List<FlatTrace.Builder> flatTraces) {
 
     final Action.Builder actionBuilder = currentContext.getBuilder().getActionBuilder();
-    final Gas gasUsed =
-        Gas.fromHexString(actionBuilder.getGas())
-            .minus(traceFrame.getGasRemaining())
-            .plus(traceFrame.getGasCost().orElse(Gas.ZERO));
+    final long gasUsed =
+        Long.decode(actionBuilder.getGas())
+            - traceFrame.getGasRemaining()
+            + (traceFrame.getGasCost().orElse(0L));
 
-    currentContext.setGasUsed(gasUsed.toLong());
+    currentContext.setGasUsed(gasUsed);
 
     final Bytes[] stack = traceFrame.getStack().orElseThrow();
     final Address refundAddress = toAddress(stack[stack.length - 1]);
@@ -453,7 +455,7 @@ public class FlatTraceGenerator {
     final Action.Builder subTraceActionBuilder =
         Action.builder()
             .from(smartContractAddress.orElse(callingAddress))
-            .gas(computeGas(traceFrame, nextTraceFrame).toHexString())
+            .gas("0x" + Long.toHexString(computeGas(traceFrame, nextTraceFrame)))
             .value(Quantity.create(nextTraceFrame.map(TraceFrame::getValue).orElse(Wei.ZERO)));
 
     traceFrame
@@ -578,33 +580,32 @@ public class FlatTraceGenerator {
     long gasRemainingAfterProcessed;
     long gasRefund = 0;
     if (tracesContexts.size() == 1) {
-      gasRemainingBeforeProcessed =
-          transactionTrace.getTraceFrames().get(0).getGasRemaining().toLong();
+      gasRemainingBeforeProcessed = transactionTrace.getTraceFrames().get(0).getGasRemaining();
       gasRemainingAfterProcessed = transactionTrace.getResult().getGasRemaining();
-      if (gasRemainingAfterProcessed > traceFrame.getGasRemaining().toLong()) {
-        gasRefund = gasRemainingAfterProcessed - traceFrame.getGasRemaining().toLong();
+      if (gasRemainingAfterProcessed > traceFrame.getGasRemaining()) {
+        gasRefund = gasRemainingAfterProcessed - traceFrame.getGasRemaining();
       } else {
-        gasRefund = traceFrame.getGasRefund().toLong();
+        gasRefund = traceFrame.getGasRefund();
       }
     } else {
       final Action.Builder actionBuilder = currentContext.getBuilder().getActionBuilder();
-      gasRemainingBeforeProcessed = Gas.fromHexString(actionBuilder.getGas()).toLong();
-      gasRemainingAfterProcessed = traceFrame.getGasRemaining().toLong();
+      gasRemainingBeforeProcessed = Long.decode(actionBuilder.getGas());
+      gasRemainingAfterProcessed = traceFrame.getGasRemaining();
     }
     return gasRemainingBeforeProcessed - gasRemainingAfterProcessed + gasRefund;
   }
 
-  private static Gas computeGas(
+  private static long computeGas(
       final TraceFrame traceFrame, final Optional<TraceFrame> nextTraceFrame) {
     if (traceFrame.getGasCost().isPresent()) {
-      final Gas gasNeeded = traceFrame.getGasCost().get();
-      final Gas currentGas = traceFrame.getGasRemaining();
-      if (currentGas.compareTo(gasNeeded) >= 0) {
-        final Gas gasRemaining = currentGas.minus(gasNeeded);
-        return gasRemaining.minus(Gas.of(Math.floorDiv(gasRemaining.toLong(), EIP_150_DIVISOR)));
+      final long gasNeeded = traceFrame.getGasCost().getAsLong();
+      final long currentGas = traceFrame.getGasRemaining();
+      if (currentGas >= gasNeeded) {
+        final long gasRemaining = currentGas - gasNeeded;
+        return gasRemaining - Math.floorDiv(gasRemaining, EIP_150_DIVISOR);
       }
     }
-    return nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(Gas.ZERO);
+    return nextTraceFrame.map(TraceFrame::getGasRemaining).orElse(0L);
   }
 
   private static List<Integer> calculateTraceAddress(final Deque<FlatTrace.Context> contexts) {

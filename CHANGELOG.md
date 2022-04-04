@@ -1,7 +1,14 @@
 # Changelog
 
-## 22.1.4
+## 22.4.0-RC1
 
+### Bug Fixes
+- Flexible Privacy Precompile handles null payload ID [#3664](https://github.com/hyperledger/besu/pull/3664)
+
+### Breaking Changes
+
+### Additions and Improvements
+- Unit tests are now executed with JUnit5 [#3620](https://github.com/hyperledger/besu/pull/3620)
 
 ## 22.1.3
 

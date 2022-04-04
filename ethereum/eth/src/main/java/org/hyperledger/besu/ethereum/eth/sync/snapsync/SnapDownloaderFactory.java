@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -31,24 +34,18 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastDownloaderFactory {
+public class SnapDownloaderFactory extends FastDownloaderFactory {
 
-  private static final String FAST_SYNC_FOLDER = "fastsync";
+  private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
-  private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
-
-  public static Optional<FastSyncDownloader> create(
+  public static Optional<FastSyncDownloader<?>> createSnapDownloader(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -63,10 +60,10 @@ public class FastDownloaderFactory {
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
 
-    if (syncConfig.getSyncMode() != SyncMode.FAST) {
+    if (syncConfig.getSyncMode() != SyncMode.X_SNAP) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
-            "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");
+            "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
       } else {
         return Optional.empty();
       }
@@ -80,95 +77,59 @@ public class FastDownloaderFactory {
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
-          "Fast sync was requested, but cannot be enabled because the local blockchain is not empty.");
+          "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
     }
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
-    } else {
-      final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
-      if (queueDataDir.toFile().exists()) {
-        LOG.warn(
-            "Fast sync is picking up after old fast sync version. Pruning the world state and starting from scratch.");
-        clearOldFastSyncWorldStateData(worldStateStorage, queueDataDir);
-      }
-    }
-    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
-        createWorldStateDownloaderTaskCollection(
-            metricsSystem, syncConfig.getWorldStateTaskCacheSize());
-    final WorldStateDownloader worldStateDownloader =
-        new FastWorldStateDownloader(
+
+    final SnapSyncState snapSyncState =
+        new SnapSyncState(
+            fastSyncStateStorage.loadState(
+                ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+    worldStateStorage.clear();
+
+    final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
+        createSnapWorldStateDownloaderTaskCollection(metricsSystem);
+    final WorldStateDownloader snapWorldStateDownloader =
+        new SnapWorldStateDownloader(
             ethContext,
             worldStateStorage,
-            taskCollection,
+            snapTaskCollection,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader fastSyncDownloader =
-        new FastSyncDownloader(
+    final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
+        new SnapSyncDownloader(
             new FastSyncActions(
                 syncConfig,
+                worldStateStorage,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
                 syncState,
                 metricsSystem),
             worldStateStorage,
-            worldStateDownloader,
+            snapWorldStateDownloader,
             fastSyncStateStorage,
-            taskCollection,
+            snapTaskCollection,
             fastSyncDataDirectory,
-            fastSyncState);
-    syncState.setWorldStateDownloadStatus(worldStateDownloader);
+            snapSyncState);
+    syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
 
-  private static void clearOldFastSyncWorldStateData(
-      final WorldStateStorage worldStateStorage, final Path queueDataDir) {
-    worldStateStorage.clear();
-    try (final Stream<Path> stream = Files.list(queueDataDir); ) {
-      stream.forEach(FastDownloaderFactory::deleteFile);
-      deleteFile(queueDataDir);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private static void deleteFile(final Path f) {
-    try {
-      Files.delete(f);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private static void ensureDirectoryExists(final File dir) {
-    if (!dir.mkdirs() && !dir.isDirectory()) {
-      throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
-    }
-  }
-
-  private static InMemoryTasksPriorityQueues<NodeDataRequest>
-      createWorldStateDownloaderTaskCollection(
-          final MetricsSystem metricsSystem, final int worldStateTaskCacheSize) {
-    final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
+  private static InMemoryTasksPriorityQueues<SnapDataRequest>
+      createSnapWorldStateDownloaderTaskCollection(final MetricsSystem metricsSystem) {
+    final InMemoryTasksPriorityQueues<SnapDataRequest> taskCollection =
         new InMemoryTasksPriorityQueues<>();
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
-        "world_state_pending_requests_current",
-        "Number of pending requests for fast sync world state download",
+        "snap_world_state_pending_requests_current",
+        "Number of pending requests for snap sync world state download",
         taskCollection::size);
-
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.SYNCHRONIZER,
-        "world_state_pending_requests_cache_size",
-        "Pending request cache size for fast sync world state download",
-        () -> worldStateTaskCacheSize);
-
     return taskCollection;
   }
 }

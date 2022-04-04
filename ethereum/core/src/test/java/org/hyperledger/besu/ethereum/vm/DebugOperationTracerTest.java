@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -38,6 +37,7 @@ import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -52,7 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class DebugOperationTracerTest {
 
   private static final int DEPTH = 4;
-  private static final Gas INITIAL_GAS = Gas.of(1000);
+  private static final long INITIAL_GAS = 1000L;
 
   @Mock private WorldUpdater worldUpdater;
 
@@ -62,7 +62,7 @@ public class DebugOperationTracerTest {
       new AbstractOperation(0x02, "MUL", 2, 1, 1, null) {
         @Override
         public OperationResult execute(final MessageFrame frame, final EVM evm) {
-          return new OperationResult(Optional.of(Gas.of(20)), Optional.empty());
+          return new OperationResult(OptionalLong.of(20L), Optional.empty());
         }
       };
 
@@ -166,7 +166,7 @@ public class DebugOperationTracerTest {
         frame,
         () ->
             new OperationResult(
-                Optional.of(Gas.of(50)), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS)));
+                OptionalLong.of(50L), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS)));
 
     final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
     assertThat(traceFrame.getExceptionalHaltReason())

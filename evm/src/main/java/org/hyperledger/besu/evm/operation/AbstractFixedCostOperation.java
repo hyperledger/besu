@@ -17,7 +17,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 abstract class AbstractFixedCostOperation extends AbstractOperation {
 
@@ -32,7 +32,7 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
   protected final OperationResult outOfGasResponse;
   private final OperationResult underflowResponse;
   private final OperationResult overflowResponse;
-  protected final Gas gasCost;
+  protected final long gasCost;
 
   protected AbstractFixedCostOperation(
       final int opcode,
@@ -41,25 +41,25 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
       final int stackItemsProduced,
       final int opSize,
       final GasCalculator gasCalculator,
-      final Gas fixedCost) {
+      final long fixedCost) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
     gasCost = fixedCost;
-    successResponse = new OperationResult(Optional.of(gasCost), Optional.empty());
+    successResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty());
     outOfGasResponse =
         new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     underflowResponse =
         new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
     overflowResponse =
         new OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
   }
 
   @Override
   public final OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      if (frame.getRemainingGas().compareTo(gasCost) < 0) {
+      if (frame.getRemainingGas() < gasCost) {
         return outOfGasResponse;
       } else {
         return executeFixedCostOperation(frame, evm);
