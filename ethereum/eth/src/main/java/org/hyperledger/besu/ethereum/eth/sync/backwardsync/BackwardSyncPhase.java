@@ -44,7 +44,7 @@ public class BackwardSyncPhase extends BackwardSyncTask {
     if (context.isOnTTD()) {
       return CompletableFuture.completedFuture(null);
     }
-    LOG.info("Did not reach TTD yet, falling asleep...");
+    LOG.debug("Did not reach TTD yet, falling asleep...");
     return context
         .getEthContext()
         .getScheduler()
