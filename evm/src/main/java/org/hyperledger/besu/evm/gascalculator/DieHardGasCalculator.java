@@ -14,13 +14,11 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.Gas;
-
 public class DieHardGasCalculator extends TangerineWhistleGasCalculator {
-  private static final Gas EXP_OPERATION_BYTE_GAS_COST = Gas.of(50L);
+  private static final long EXP_OPERATION_BYTE_GAS_COST = 50L;
 
   @Override
-  protected Gas expOperationByteGasCost() {
+  protected long expOperationByteGasCost() {
     return EXP_OPERATION_BYTE_GAS_COST;
   }
 }

@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 
 public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(FastImportBlocksStep.class);
+  private static final long TEN_SECONDS = TimeUnit.SECONDS.toMillis(10L);
+
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final ValidationPolicy headerValidationPolicy;
@@ -75,7 +77,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     final long endTime = System.nanoTime();
 
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
-    if (accumulatedTime > 10 * 1000L) {
+    if (accumulatedTime > TEN_SECONDS) {
       LOG.info(
           "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
           logStartBlock.getAsLong(),

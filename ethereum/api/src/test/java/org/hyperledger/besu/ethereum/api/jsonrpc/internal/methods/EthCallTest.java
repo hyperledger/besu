@@ -44,7 +44,6 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.evm.Gas;
 
 import java.util.Optional;
 
@@ -257,7 +256,7 @@ public class EthCallTest {
     return new JsonCallParameter(
         Address.fromHexString("0x0"),
         Address.fromHexString("0x0"),
-        Gas.ZERO,
+        0L,
         gasPrice,
         maxFeesPerGas,
         maxPriorityFeesPerGas,

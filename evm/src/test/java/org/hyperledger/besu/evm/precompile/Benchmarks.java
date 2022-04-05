@@ -29,7 +29,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
@@ -76,7 +75,7 @@ public class Benchmarks {
           .messageFrameStack(new ArrayDeque<>())
           .miningBeneficiary(Address.ZERO)
           .originator(Address.ZERO)
-          .initialGas(Gas.of(100000))
+          .initialGas(100_000L)
           .worldUpdater(mock(WorldUpdater.class))
           .build();
 
@@ -131,7 +130,7 @@ public class Benchmarks {
 
       System.out.printf(
           "sha256 %,d bytes for %,d gas. Charging %,d gas.%n",
-          len, (int) gasSpent, contract.gasRequirement(bytes).asUInt256().toLong());
+          len, (int) gasSpent, contract.gasRequirement(bytes));
     }
   }
 
@@ -183,7 +182,7 @@ public class Benchmarks {
 
       System.out.printf(
           "ripemd %,d bytes for %,d gas. Charging %,d gas.%n",
-          len, (int) gasSpent, contract.gasRequirement(bytes).asUInt256().toLong());
+          len, (int) gasSpent, contract.gasRequirement(bytes));
     }
   }
 
@@ -276,9 +275,7 @@ public class Benchmarks {
 
       System.out.printf(
           "ModEXP %s for \t%,d gas. Charging %,d gas.%n",
-          testCase.getKey(),
-          (int) gasSpent,
-          contract.gasRequirement(testCase.getValue()).asUInt256().toLong());
+          testCase.getKey(), (int) gasSpent, contract.gasRequirement(testCase.getValue()));
     }
   }
 
@@ -304,8 +301,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "BNADD for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "BNADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBNMUL() {
@@ -325,8 +321,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "BNMUL for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "BNMUL for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBNPairing() {
@@ -379,7 +374,7 @@ public class Benchmarks {
 
       System.out.printf(
           "BNPairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]).asUInt256().toLong());
+          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
     }
   }
 
@@ -396,8 +391,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "G1ADD for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "G1ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBLS12G1Mul() {
@@ -413,8 +407,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "G1MUL for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "G1MUL for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBLS12G1MultiExp() {
@@ -463,7 +456,7 @@ public class Benchmarks {
 
       System.out.printf(
           "G1MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]).asUInt256().toLong());
+          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
     }
   }
 
@@ -480,8 +473,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "G2ADD for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "G2ADD for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBLS12G2Mul() {
@@ -496,8 +488,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "G2MUL for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "G2MUL for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBLS12G2MultiExp() {
@@ -546,7 +537,7 @@ public class Benchmarks {
 
       System.out.printf(
           "G2MULTIEXP %d for %,d gas. Charging %,d gas.%n",
-          i + 1, (int) gasSpent, contract.gasRequirement(args[i]).asUInt256().toLong());
+          i + 1, (int) gasSpent, contract.gasRequirement(args[i]));
     }
   }
 
@@ -587,7 +578,7 @@ public class Benchmarks {
 
       System.out.printf(
           "BLS pairings %d pairs for %,d gas. Charging %,d gas.%n",
-          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]).asUInt256().toLong());
+          i * 2 + 2, (int) gasSpent, contract.gasRequirement(args[i]));
     }
   }
 
@@ -601,8 +592,7 @@ public class Benchmarks {
     final double gasSpent = runBenchmark(arg, contract);
 
     System.out.printf(
-        "MAPFPTOG1 for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        "MAPFPTOG1 for %,d gas. Charging %,d gas.%n", (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static void benchBLS12MapFP2TOG2() {
@@ -616,7 +606,7 @@ public class Benchmarks {
 
     System.out.printf(
         "MAPFP2TOG2 for %,d gas. Charging %,d gas.%n",
-        (int) gasSpent, contract.gasRequirement(arg).asUInt256().toLong());
+        (int) gasSpent, contract.gasRequirement(arg));
   }
 
   private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {

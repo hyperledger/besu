@@ -15,26 +15,26 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public interface Operation {
 
   class OperationResult {
-    final Optional<Gas> gasCost;
+    final OptionalLong gasCost;
     final Optional<ExceptionalHaltReason> haltReason;
     final int pcIncrement;
 
     public OperationResult(
-        final Optional<Gas> gasCost, final Optional<ExceptionalHaltReason> haltReason) {
+        final OptionalLong gasCost, final Optional<ExceptionalHaltReason> haltReason) {
       this(gasCost, haltReason, 1);
     }
 
     public OperationResult(
-        final Optional<Gas> gasCost,
+        final OptionalLong gasCost,
         final Optional<ExceptionalHaltReason> haltReason,
         final int pcIncrement) {
       this.gasCost = gasCost;
@@ -42,7 +42,7 @@ public interface Operation {
       this.pcIncrement = pcIncrement;
     }
 
-    public Optional<Gas> getGasCost() {
+    public OptionalLong getGasCost() {
       return gasCost;
     }
 
@@ -65,7 +65,7 @@ public interface Operation {
    *
    * @param frame The frame for execution of this operation.
    * @param evm The EVM for execution of this operation.
-   * @return the gas cost and any exeptional halt reasons of the operation.
+   * @return the gas cost and any exceptional halt reasons of the operation.
    */
   OperationResult execute(final MessageFrame frame, final EVM evm);
 
@@ -80,9 +80,9 @@ public interface Operation {
   int getOpSize();
 
   /**
-   * Determines whether or not this operation has been virtually added to the contract code. For
-   * instance if the contract is not ended by a STOP opcode the {@link EVM} adds an explicit end of
-   * script stop which can be considered as virtual.
+   * Determines whether this operation has been virtually added to the contract code. For instance
+   * if the contract is not ended by a STOP opcode the {@link EVM} adds an explicit end of script
+   * stop which can be considered as virtual.
    *
    * @return a boolean indicating if the operation is virtual.
    */

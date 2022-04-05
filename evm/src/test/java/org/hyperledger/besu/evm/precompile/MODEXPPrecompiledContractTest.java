@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
@@ -170,7 +169,7 @@ public class MODEXPPrecompiledContractTest {
   @Test
   public void testGasPrice() {
     final Bytes input = Bytes.fromHexString(this.input);
-    assertThat(byzantiumContract.gasRequirement(input)).isEqualTo(Gas.of(eip198Gas));
-    assertThat(berlinContract.gasRequirement(input)).isEqualTo(Gas.of(eip2565Gas));
+    assertThat(byzantiumContract.gasRequirement(input)).isEqualTo(eip198Gas);
+    assertThat(berlinContract.gasRequirement(input)).isEqualTo(eip2565Gas);
   }
 }

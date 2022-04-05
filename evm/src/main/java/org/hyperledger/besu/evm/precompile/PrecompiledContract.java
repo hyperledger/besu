@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -45,7 +44,7 @@ public interface PrecompiledContract {
    *     not depend).
    * @return the gas requirement (cost) for the pre-compiled contract.
    */
-  Gas gasRequirement(Bytes input);
+  long gasRequirement(Bytes input);
 
   /**
    * Executes the pre-compiled contract.

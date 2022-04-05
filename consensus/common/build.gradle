@@ -55,8 +55,11 @@ dependencies {
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.mockito:mockito-core'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   testSupportImplementation project( path: ':crypto', configuration: 'testSupportArtifacts')
   testSupportImplementation project( path: ':ethereum:core', configuration: 'testSupportArtifacts')

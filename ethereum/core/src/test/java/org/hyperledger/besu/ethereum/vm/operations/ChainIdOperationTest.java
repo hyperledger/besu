@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
@@ -55,14 +54,14 @@ public class ChainIdOperationTest {
     chainId = Bytes32.fromHexString(chainIdString);
     this.expectedGas = expectedGas;
     operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
-    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100));
+    when(messageFrame.getRemainingGas()).thenReturn(100L);
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Test
   public void shouldReturnChainId() {
     final ArgumentCaptor<UInt256> arg = ArgumentCaptor.forClass(UInt256.class);
-    when(messageFrame.getRemainingGas()).thenReturn(Gas.of(100));
+    when(messageFrame.getRemainingGas()).thenReturn(100L);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();
     Mockito.verify(messageFrame).pushStackItem(arg.capture());
@@ -73,6 +72,7 @@ public class ChainIdOperationTest {
   @Test
   public void shouldCalculateGasPrice() {
     final OperationResult result = operation.execute(messageFrame, null);
-    assertThat(result.getGasCost()).contains(Gas.of(expectedGas));
+    assertThat(result.getGasCost().isPresent()).isTrue();
+    assertThat(result.getGasCost().getAsLong()).isEqualTo(expectedGas);
   }
 }

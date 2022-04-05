@@ -132,7 +132,7 @@ public class EthEstimateGas implements JsonRpcMethod {
     final double subCallMultiplier =
         Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
     // and minimum gas remaining is necessary for some operation (additionalStipend)
-    final long gasStipend = operationTracer.getStipendNeeded().toLong();
+    final long gasStipend = operationTracer.getStipendNeeded();
     final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }

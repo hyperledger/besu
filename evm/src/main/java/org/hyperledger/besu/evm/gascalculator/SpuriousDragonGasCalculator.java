@@ -14,20 +14,21 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 
-  private static final Gas EXP_OPERATION_BYTE_GAS_COST = Gas.of(50L);
+  private static final long EXP_OPERATION_BYTE_GAS_COST = 50L;
 
   @Override
-  public Gas callOperationGasCost(
+  public long callOperationGasCost(
       final MessageFrame frame,
-      final Gas stipend,
+      final long stipend,
       final long inputDataOffset,
       final long inputDataLength,
       final long outputDataOffset,
@@ -35,36 +36,37 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
       final Wei transferValue,
       final Account recipient,
       final Address to) {
-    final Gas inputDataMemoryExpansionCost =
+    final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
-    final Gas outputDataMemoryExpansionCost =
+    final long outputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, outputDataOffset, outputDataLength);
-    final Gas memoryExpansionCost = inputDataMemoryExpansionCost.max(outputDataMemoryExpansionCost);
+    final long memoryExpansionCost =
+        Math.max(inputDataMemoryExpansionCost, outputDataMemoryExpansionCost);
 
-    Gas cost = callOperationBaseGasCost().plus(memoryExpansionCost);
+    long cost = clampedAdd(callOperationBaseGasCost(), memoryExpansionCost);
 
     if (!transferValue.isZero()) {
-      cost = cost.plus(callValueTransferGasCost());
+      cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
     if ((recipient == null || recipient.isEmpty()) && !transferValue.isZero()) {
-      cost = cost.plus(newAccountGasCost());
+      cost = clampedAdd(cost, newAccountGasCost());
     }
 
     return cost;
   }
 
   @Override
-  protected Gas expOperationByteGasCost() {
+  protected long expOperationByteGasCost() {
     return EXP_OPERATION_BYTE_GAS_COST;
   }
 
-  private static final Gas SELFDESTRUCT_OPERATION_GAS_COST = Gas.of(5_000L);
+  private static final long SELFDESTRUCT_OPERATION_GAS_COST = 5_000L;
 
-  private static final Gas SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = Gas.of(30_000L);
+  private static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
 
   @Override
-  public Gas selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
     if ((recipient == null || recipient.isEmpty()) && !inheritance.isZero()) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {

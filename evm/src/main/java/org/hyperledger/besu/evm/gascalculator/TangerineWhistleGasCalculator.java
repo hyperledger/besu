@@ -14,45 +14,46 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
 
-  private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(400L);
+  private static final long BALANCE_OPERATION_GAS_COST = 400L;
 
-  private static final Gas CALL_OPERATION_BASE_GAS_COST = Gas.of(700L);
+  private static final long CALL_OPERATION_BASE_GAS_COST = 700L;
 
-  private static final Gas EXT_CODE_BASE_GAS_COST = Gas.of(700L);
+  private static final long EXT_CODE_BASE_GAS_COST = 700L;
 
-  private static final Gas SELFDESTRUCT_OPERATION_GAS_COST = Gas.of(5_000L);
+  private static final long SELFDESTRUCT_OPERATION_GAS_COST = 5_000L;
 
-  private static final Gas SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = Gas.of(30_000L);
+  private static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
 
-  private static final Gas SLOAD_OPERATION_GAS_COST = Gas.of(200L);
+  private static final long SLOAD_OPERATION_GAS_COST = 200L;
 
   @Override
-  public Gas getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost() {
     return BALANCE_OPERATION_GAS_COST;
   }
 
   // Returns all but 1/64 (n - floor(n /16)) of the provided value
-  private static Gas allButOneSixtyFourth(final Gas value) {
-    return value.minus(value.dividedBy(64));
+  private static long allButOneSixtyFourth(final long value) {
+    return value - value / 64;
   }
 
   @Override
-  public Gas callOperationBaseGasCost() {
+  public long callOperationBaseGasCost() {
     return CALL_OPERATION_BASE_GAS_COST;
   }
 
   @Override
-  public Gas callOperationGasCost(
+  public long callOperationGasCost(
       final MessageFrame frame,
-      final Gas stipend,
+      final long stipend,
       final long inputDataOffset,
       final long inputDataLength,
       final long outputDataOffset,
@@ -60,57 +61,58 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
       final Wei transferValue,
       final Account recipient,
       final Address to) {
-    final Gas inputDataMemoryExpansionCost =
+    final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
-    final Gas outputDataMemoryExpansionCost =
+    final long outputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, outputDataOffset, outputDataLength);
-    final Gas memoryExpansionCost = inputDataMemoryExpansionCost.max(outputDataMemoryExpansionCost);
+    final long memoryExpansionCost =
+        Math.max(inputDataMemoryExpansionCost, outputDataMemoryExpansionCost);
 
-    Gas cost = callOperationBaseGasCost().plus(memoryExpansionCost);
+    long cost = clampedAdd(callOperationBaseGasCost(), memoryExpansionCost);
 
     if (!transferValue.isZero()) {
-      cost = cost.plus(callValueTransferGasCost());
+      cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
     if (recipient == null) {
-      cost = cost.plus(newAccountGasCost());
+      cost = clampedAdd(cost, newAccountGasCost());
     }
 
     return cost;
   }
 
-  private static Gas gasCap(final Gas remaining, final Gas stipend) {
-    return allButOneSixtyFourth(remaining).min(stipend);
+  private static long gasCap(final long remaining, final long stipend) {
+    return Math.min(allButOneSixtyFourth(remaining), stipend);
   }
 
   @Override
-  public Gas gasAvailableForChildCall(
-      final MessageFrame frame, final Gas stipend, final boolean transfersValue) {
-    final Gas gasCap = gasCap(frame.getRemainingGas(), stipend);
+  public long gasAvailableForChildCall(
+      final MessageFrame frame, final long stipend, final boolean transfersValue) {
+    final long gasCap = gasCap(frame.getRemainingGas(), stipend);
 
     // TODO: Integrate this into AbstractCallOperation since it's
     // a little out of place to mutate the frame here.
     frame.decrementRemainingGas(gasCap);
 
     if (transfersValue) {
-      return gasCap.plus(getAdditionalCallStipend());
+      return gasCap + getAdditionalCallStipend();
     } else {
       return gasCap;
     }
   }
 
   @Override
-  public Gas gasAvailableForChildCreate(final Gas stipend) {
+  public long gasAvailableForChildCreate(final long stipend) {
     return allButOneSixtyFourth(stipend);
   }
 
   @Override
-  protected Gas extCodeBaseGasCost() {
+  protected long extCodeBaseGasCost() {
     return EXT_CODE_BASE_GAS_COST;
   }
 
   @Override
-  public Gas selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
     if (recipient == null) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
@@ -119,7 +121,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public Gas getSloadOperationGasCost() {
+  public long getSloadOperationGasCost() {
     return SLOAD_OPERATION_GAS_COST;
   }
 }
