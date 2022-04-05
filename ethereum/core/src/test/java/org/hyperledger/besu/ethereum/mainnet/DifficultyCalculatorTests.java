@@ -58,7 +58,17 @@ public class DifficultyCalculatorTests {
   public static Collection<Object[]> getTestParametersForConfig() throws IOException {
     return List.of(
         new Object[] {
+          "/BasicTests/difficulty.json",
+          MainnetProtocolSchedule.fromConfig(
+              GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
+        },
+        new Object[] {
           "/BasicTests/difficultyMainNetwork.json",
+          MainnetProtocolSchedule.fromConfig(
+              GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
+        },
+        new Object[] {
+          "/BasicTests/difficultyCustomMainNetwork.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
         },
@@ -73,51 +83,9 @@ public class DifficultyCalculatorTests {
               EvmConfiguration.DEFAULT)
         },
         new Object[] {
-          "/BasicTests/difficultyFrontier.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"frontierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyHomestead.json",
+          "/BasicTests/difficultyCustomHomestead.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig("{\"config\": {\"homesteadBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyByzantium.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"byzantiumBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyConstantinople.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"constantinopleBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyEIP2384.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyEIP2384_random.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyEIP2384_random_to20M.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
                   .getConfigOptions(),
               EvmConfiguration.DEFAULT)
         });
