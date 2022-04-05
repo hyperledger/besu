@@ -33,7 +33,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
@@ -73,9 +72,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     return (pairingGasCost * parameters) + baseGasCost;
   }
 
-  @NotNull
-  @Override
   @Nonnull
+  @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (input.isEmpty()) {

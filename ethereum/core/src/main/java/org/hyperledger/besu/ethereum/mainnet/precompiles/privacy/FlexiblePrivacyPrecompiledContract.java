@@ -51,10 +51,10 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,10 +99,10 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     return privateTransactionEventObservers.unsubscribe(observerId);
   }
 
-  @NotNull
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @NotNull final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;
     }

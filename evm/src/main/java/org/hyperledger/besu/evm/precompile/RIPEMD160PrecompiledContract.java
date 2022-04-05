@@ -22,7 +22,6 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 
 public class RIPEMD160PrecompiledContract extends AbstractPrecompiledContract {
 
@@ -35,7 +34,7 @@ public class RIPEMD160PrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().ripemd160PrecompiledContractGasCost(input);
   }
 
-  @NotNull
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {

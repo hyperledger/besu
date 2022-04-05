@@ -26,7 +26,6 @@ import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,9 +63,8 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     return name;
   }
 
-  @NotNull
-  @Override
   @Nonnull
+  @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final byte[] result = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];

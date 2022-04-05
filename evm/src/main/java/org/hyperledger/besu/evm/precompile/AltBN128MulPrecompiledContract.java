@@ -61,8 +61,8 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     return gasCost;
   }
 
-  @Override
   @Nonnull
+  @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (useNative) {

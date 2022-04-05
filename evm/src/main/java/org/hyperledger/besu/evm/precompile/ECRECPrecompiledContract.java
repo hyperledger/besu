@@ -24,12 +24,12 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
-import org.jetbrains.annotations.NotNull;
 
 public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
@@ -44,10 +44,10 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().getEcrecPrecompiledContractGasCost();
   }
 
-  @NotNull
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @NotNull final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final int size = input.size();
     final Bytes d = size >= 128 ? input : Bytes.wrap(input, MutableBytes.create(128 - size));
     final Bytes32 h = Bytes32.wrap(d, 0);
