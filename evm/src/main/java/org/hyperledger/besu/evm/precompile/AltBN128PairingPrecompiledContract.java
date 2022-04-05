@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.crypto.altbn128.Fq12;
 import org.hyperledger.besu.crypto.altbn128.Fq2;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
@@ -28,9 +29,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiledContract {
 
@@ -70,13 +73,17 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     return (pairingGasCost * parameters) + baseGasCost;
   }
 
+  @NotNull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
+  @Nonnull
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (input.isEmpty()) {
-      return TRUE;
+      return PrecompileContractResult.success(TRUE);
     }
     if (input.size() % PARAMETER_LENGTH != 0) {
-      return null;
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     if (useNative) {
       return computeNative(input, messageFrame);
@@ -85,7 +92,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     }
   }
 
-  private static Bytes computeDefault(final Bytes input) {
+  @Nonnull
+  private static PrecompileContractResult computeDefault(final Bytes input) {
     final int parameters = input.size() / PARAMETER_LENGTH;
     final List<AltBn128Point> a = new ArrayList<>();
     final List<AltBn128Fq2Point> b = new ArrayList<>();
@@ -94,7 +102,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       final BigInteger p1_y = extractParameter(input, i * PARAMETER_LENGTH + 32, FIELD_LENGTH);
       final AltBn128Point p1 = new AltBn128Point(Fq.create(p1_x), Fq.create(p1_y));
       if (!p1.isOnCurve()) {
-        return null;
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
       a.add(p1);
 
@@ -106,7 +115,8 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
       final Fq2 p2_y = Fq2.create(p2_yReal, p2_yImag);
       final AltBn128Fq2Point p2 = new AltBn128Fq2Point(p2_x, p2_y);
       if (!p2.isOnCurve() || !p2.isInGroup()) {
-        return null;
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
       b.add(p2);
     }
@@ -117,9 +127,9 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
     }
 
     if (AltBn128Fq12Pairer.finalize(exponent).equals(Fq12.one())) {
-      return TRUE;
+      return PrecompileContractResult.success(TRUE);
     } else {
-      return FALSE;
+      return PrecompileContractResult.success(FALSE);
     }
   }
 

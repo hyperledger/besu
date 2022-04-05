@@ -53,6 +53,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,9 +107,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     return 0L;
   }
 
+  @NotNull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, final MessageFrame messageFrame) {
+      final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;

@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public class IDPrecompiledContract extends AbstractPrecompiledContract {
 
@@ -32,8 +33,10 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().idPrecompiledContractGasCost(input);
   }
 
+  @NotNull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    return input.copy();
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    return PrecompileContractResult.success(input.copy());
   }
 }

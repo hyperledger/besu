@@ -16,12 +16,14 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -60,7 +62,9 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   }
 
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
+  @Nonnull
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (useNative) {
       return computeNative(input, messageFrame);
     } else {
@@ -68,14 +72,16 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     }
   }
 
-  private static Bytes computeDefault(final Bytes input) {
+  @Nonnull
+  private static PrecompileContractResult computeDefault(final Bytes input) {
     final BigInteger x = extractParameter(input, 0, 32);
     final BigInteger y = extractParameter(input, 32, 32);
     final BigInteger n = extractParameter(input, 64, 32);
 
     final AltBn128Point p = new AltBn128Point(Fq.create(x), Fq.create(y));
     if (!p.isOnCurve() || n.compareTo(MAX_N) > 0) {
-      return null;
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     final AltBn128Point product = p.multiply(n);
 
@@ -85,7 +91,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     xResult.copyTo(result, 32 - xResult.size());
     yResult.copyTo(result, 64 - yResult.size());
 
-    return result;
+    return PrecompileContractResult.success(result);
   }
 
   private static BigInteger extractParameter(
