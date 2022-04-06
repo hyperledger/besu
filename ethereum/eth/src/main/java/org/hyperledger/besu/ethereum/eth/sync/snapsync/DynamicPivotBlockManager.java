@@ -41,16 +41,22 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
   private final FastSyncActions syncActions;
 
   private final FastSyncState syncState;
+  private final int pivotBlockWindowValidity;
+  private final int pivotBlockDistanceBeforeCaching;
 
   private Optional<BlockHeader> lastBlockFound;
 
   public DynamicPivotBlockManager(
       final WorldDownloadState<REQUEST> worldDownloadState,
       final FastSyncActions fastSyncActions,
-      final SnapSyncState fastSyncState) {
+      final SnapSyncState fastSyncState,
+      final int pivotBlockWindowValidity,
+      final int pivotBlockDistanceBeforeCaching) {
     this.worldDownloadState = worldDownloadState;
     this.syncActions = fastSyncActions;
     this.syncState = fastSyncState;
+    this.pivotBlockWindowValidity = pivotBlockWindowValidity;
+    this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
     this.lastBlockFound = Optional.empty();
   }
 
@@ -65,7 +71,8 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
                       - lastBlockFound
                           .map(ProcessableBlockHeader::getNumber)
                           .orElse(currentPivotBlockNumber);
-              if (distanceNextPivotBlock > 60 && isSearchingPivotBlock.compareAndSet(false, true)) {
+              if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching
+                  && isSearchingPivotBlock.compareAndSet(false, true)) {
                 syncActions
                     .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
                     .thenCompose(syncActions::selectPivotBlock)
@@ -77,7 +84,8 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
 
               final long distance =
                   syncActions.getSyncState().bestChainHeight() - currentPivotBlockNumber;
-              if (distance > 126 && isUpdatingPivotBlock.compareAndSet(false, true)) {
+              if (distance > pivotBlockWindowValidity
+                  && isUpdatingPivotBlock.compareAndSet(false, true)) {
                 switchToNewPivotBlock(onNewPivotBlock);
                 isUpdatingPivotBlock.set(false);
               }

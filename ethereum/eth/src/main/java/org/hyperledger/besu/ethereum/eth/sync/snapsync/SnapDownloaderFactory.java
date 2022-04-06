@@ -94,7 +94,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             ethContext,
             worldStateStorage,
             snapTaskCollection,
-            syncConfig.getWorldStateHashCountPerRequest(),
+            syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),

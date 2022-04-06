@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.TaskQueueIterator;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
@@ -129,7 +128,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
   public static class Builder {
 
-    private int taskCountPerRequest;
+    private SnapSyncConfiguration snapSyncConfiguration;
     private int maxOutstandingRequests;
     private SnapWorldDownloadState downloadState;
     private MetricsSystem metricsSystem;
@@ -140,8 +139,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private CompleteTaskStep completeTaskStep;
     private DynamicPivotBlockManager<SnapDataRequest> pivotBlockManager;
 
-    public Builder taskCountPerRequest(final int taskCountPerRequest) {
-      this.taskCountPerRequest = taskCountPerRequest;
+    public Builder configuration(final SnapSyncConfiguration snapSyncConfiguration) {
+      this.snapSyncConfiguration = snapSyncConfiguration;
       return this;
     }
 
@@ -201,7 +200,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       checkNotNull(metricsSystem);
 
       // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
-      final int bufferCapacity = taskCountPerRequest * 2;
+      final int bufferCapacity = snapSyncConfiguration.getTrienodeCountPerRequest() * 2;
       final LabelledMetric<Counter> outputCounter =
           metricsSystem.createLabelledCounter(
               BesuMetricCategory.SYNCHRONIZER,
@@ -250,7 +249,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .inBatches(84)
+              .inBatches(snapSyncConfiguration.getStorageCountPerRequest())
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
@@ -305,17 +304,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "code_blocks_download_pipeline")
-              .inBatches(
-                  taskCountPerRequest,
-                  tasks ->
-                      84
-                          - (int)
-                              tasks.stream()
-                                  .map(Task::getData)
-                                  .map(BytecodeRequest.class::cast)
-                                  .map(BytecodeRequest::getCodeHash)
-                                  .distinct()
-                                  .count())
+              .inBatches(snapSyncConfiguration.getBytecodeCountPerRequest())
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
@@ -350,9 +339,9 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenFlatMapInParallel(
                   "requestLoadLocalData",
                   task -> loadLocalDataStep.loadLocalDataTrieNode(task, requestsToComplete),
-                  3,
+                  Runtime.getRuntime().availableProcessors() - 1, // -1 for the main thread
                   bufferCapacity)
-              .inBatches(taskCountPerRequest)
+              .inBatches(snapSyncConfiguration.getTrienodeCountPerRequest())
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
