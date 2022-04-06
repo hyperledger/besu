@@ -30,6 +30,7 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason OUT_OF_BOUNDS = DefaultExceptionalHaltReason.OUT_OF_BOUNDS;
   ExceptionalHaltReason CODE_TOO_LARGE = DefaultExceptionalHaltReason.CODE_TOO_LARGE;
   ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
+  ExceptionalHaltReason PRECOMPILE_ERROR = DefaultExceptionalHaltReason.PRECOMPILE_ERROR;
 
   String name();
 
@@ -46,9 +47,10 @@ public interface ExceptionalHaltReason {
     ILLEGAL_STATE_CHANGE("Illegal state change"),
     OUT_OF_BOUNDS("Out of bounds"),
     CODE_TOO_LARGE("Code is too large"),
-    INVALID_CODE("Code is invalid");
+    INVALID_CODE("Code is invalid"),
+    PRECOMPILE_ERROR("Precompile error");
 
-    String description;
+    final String description;
 
     DefaultExceptionalHaltReason(final String description) {
       this.description = description;

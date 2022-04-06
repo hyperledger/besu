@@ -50,6 +50,7 @@ import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -106,9 +107,10 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     return 0L;
   }
 
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;

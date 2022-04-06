@@ -32,8 +32,10 @@ public class IDPrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().idPrecompiledContractGasCost(input);
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    return input.copy();
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    return PrecompileContractResult.success(input.copy());
   }
 }

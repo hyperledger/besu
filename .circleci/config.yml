@@ -273,6 +273,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
+      - setup_remote_docker
       - run:
           name: Quorum Acceptance Tests
           no_output_timeout: 30m
