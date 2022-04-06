@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.referencetests.EnvironmentInformation;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.VMReferenceTestCaseSpec;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -156,12 +155,10 @@ public class VMReferenceTest extends AbstractRetryingTest {
           .withFailMessage("Final world state differs")
           .isEqualTo(spec.getFinalWorldState().rootHash());
 
-      final Gas actualGas = frame.getRemainingGas();
-      final Gas expectedGas = spec.getFinalGas();
-      final Gas difference =
-          (expectedGas.compareTo(actualGas) > 0)
-              ? expectedGas.minus(actualGas)
-              : actualGas.minus(expectedGas);
+      final long actualGas = frame.getRemainingGas();
+      final long expectedGas = spec.getFinalGas();
+      final long difference =
+          (expectedGas > actualGas) ? expectedGas - actualGas : actualGas - expectedGas;
       assertThat(actualGas)
           .withFailMessage("Final gas does not match, with difference of %s", difference)
           .isEqualTo(expectedGas);

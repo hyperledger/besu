@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -159,12 +158,11 @@ public class MainnetTransactionValidator {
           "effective gas price is too low to execute");
     }
 
-    final Gas intrinsicGasCost =
-        gasCalculator
-            .transactionIntrinsicGasCost(transaction.getPayload(), transaction.isContractCreation())
-            .plus(
-                transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(Gas.ZERO));
-    if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
+    final long intrinsicGasCost =
+        gasCalculator.transactionIntrinsicGasCost(
+                transaction.getPayload(), transaction.isContractCreation())
+            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+    if (intrinsicGasCost > transaction.getGasLimit()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(
@@ -246,7 +244,7 @@ public class MainnetTransactionValidator {
     }
 
     if (!transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)
-        && !chainId.isPresent()
+        && chainId.isEmpty()
         && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,

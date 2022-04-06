@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.core;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.Gas;
 
 import java.util.Set;
 
@@ -27,12 +26,12 @@ import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class GasAndAccessedState {
-  final Gas gas;
+  final long gas;
   final Set<Address> accessListAddressSet;
   final Multimap<Address, Bytes32> accessListStorageByAddress;
 
   public GasAndAccessedState(
-      final Gas gas,
+      final long gas,
       final Set<Address> accessListAddressSet,
       final Multimap<Address, Bytes32> accessedStorage) {
     this.gas = gas;
@@ -40,13 +39,13 @@ public class GasAndAccessedState {
     this.accessListStorageByAddress = accessedStorage;
   }
 
-  public GasAndAccessedState(final Gas gas) {
+  public GasAndAccessedState(final long gas) {
     this.gas = gas;
     this.accessListAddressSet = emptySet();
     this.accessListStorageByAddress = HashMultimap.create();
   }
 
-  public Gas getGas() {
+  public long getGas() {
     return gas;
   }
 

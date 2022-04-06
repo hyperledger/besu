@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -59,14 +58,16 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldCharge400Gas() {
     final OperationResult result = operation.execute(createMessageFrame(REQUESTED_ADDRESS), null);
-    assertThat(result.getGasCost()).contains(Gas.of(400));
+    assertThat(result.getGasCost().isPresent()).isTrue();
+    assertThat(result.getGasCost().getAsLong()).isEqualTo(400L);
   }
 
   @Test
   public void istanbulShouldCharge700Gas() {
     final OperationResult result =
         operationIstanbul.execute(createMessageFrame(REQUESTED_ADDRESS), null);
-    assertThat(result.getGasCost()).contains(Gas.of(700));
+    assertThat(result.getGasCost().isPresent()).isTrue();
+    assertThat(result.getGasCost().getAsLong()).isEqualTo(700L);
   }
 
   @Test

@@ -55,9 +55,9 @@ public abstract class Words {
    *     VM specification (Appendix H. of the Yellow paper)).
    */
   public static Address toAddress(final Bytes bytes) {
-    int size = bytes.size();
+    final int size = bytes.size();
     if (size < 20) {
-      MutableBytes result = MutableBytes.create(20);
+      final MutableBytes result = MutableBytes.create(20);
       bytes.copyTo(result, 20 - size);
       // Addresses get hashed alot in calls, and mutable bytes don't cache the `hashCode`
       // so always return an immutable copy
@@ -91,17 +91,47 @@ public abstract class Words {
    */
   public static long clampedToLong(final Bytes uint) {
     if (uint.size() <= 8) {
-      long result = uint.toLong();
+      final long result = uint.toLong();
       return result < 0 ? Long.MAX_VALUE : result;
     }
 
-    Bytes trimmed = uint.trimLeadingZeros();
+    final Bytes trimmed = uint.trimLeadingZeros();
     if (trimmed.size() <= 8) {
-      long result = trimmed.toLong();
+      final long result = trimmed.toLong();
       return result < 0 ? Long.MAX_VALUE : result;
     } else {
       // clamp to the largest int.
       return Long.MAX_VALUE;
+    }
+  }
+
+  /**
+   * Adds a and b, but if an underflow/overflow occurs return the Long max/min value
+   *
+   * @param a first value
+   * @param b second value
+   * @return value of a plus b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
+   */
+  public static long clampedAdd(final long a, final long b) {
+    try {
+      return Math.addExact(a, b);
+    } catch (final ArithmeticException ae) {
+      return a > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+    }
+  }
+
+  /**
+   * Multiplies a and b, but if an underflow/overflow occurs return the Long max/min value
+   *
+   * @param a first value
+   * @param b second value
+   * @return value of a times b if no over/underflows or Long.MAX_VALUE/Long.MIN_VALUE otherwise
+   */
+  public static long clampedMultiply(final long a, final long b) {
+    try {
+      return Math.multiplyExact(a, b);
+    } catch (final ArithmeticException ae) {
+      return ((a ^ b) < 0) ? Long.MIN_VALUE : Long.MAX_VALUE;
     }
   }
 }

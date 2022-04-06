@@ -19,7 +19,6 @@ import static org.apache.tuweni.units.bigints.UInt256.ZERO;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -47,67 +46,59 @@ public class RefundSstoreGasTest {
     final GasCalculator istanbul = new IstanbulGasCalculator();
     return new Object[][] {
       // Zero no-op
-      {"constantinople", constantinople, ZERO, ZERO, ZERO, Gas.of(200), Gas.ZERO},
-      {"petersburg", petersburg, ZERO, ZERO, ZERO, Gas.of(5_000), Gas.ZERO},
-      {"istanbul", istanbul, ZERO, ZERO, ZERO, Gas.of(800), Gas.ZERO},
+      {"constantinople", constantinople, ZERO, ZERO, ZERO, 200L, 0L},
+      {"petersburg", petersburg, ZERO, ZERO, ZERO, 5_000L, 0L},
+      {"istanbul", istanbul, ZERO, ZERO, ZERO, 800L, 0L},
 
       // Zero fresh change
-      {"constantinople", constantinople, ZERO, ZERO, ONE, Gas.of(20_000), Gas.ZERO},
-      {"petersburg", petersburg, ZERO, ZERO, ONE, Gas.of(20_000), Gas.ZERO},
-      {"istanbul", istanbul, ZERO, ZERO, ONE, Gas.of(20_000), Gas.ZERO},
+      {"constantinople", constantinople, ZERO, ZERO, ONE, 20_000L, 0L},
+      {"petersburg", petersburg, ZERO, ZERO, ONE, 20_000L, 0L},
+      {"istanbul", istanbul, ZERO, ZERO, ONE, 20_000L, 0L},
 
       // Dirty, reset to zero
-      {"constantinople", constantinople, ZERO, ONE, ZERO, Gas.of(200), Gas.of(19_800)},
-      {"petersburg", petersburg, ZERO, ONE, ZERO, Gas.of(5_000), Gas.of(15_000)},
-      {"istanbul", istanbul, ZERO, ONE, ZERO, Gas.of(800), Gas.of(19_200)},
+      {"constantinople", constantinople, ZERO, ONE, ZERO, 200L, 19_800L},
+      {"petersburg", petersburg, ZERO, ONE, ZERO, 5_000L, 15_000L},
+      {"istanbul", istanbul, ZERO, ONE, ZERO, 800L, 19_200L},
 
       // Dirty, changed but not reset
-      {"constantinople", constantinople, ZERO, ONE, TWO, Gas.of(200), Gas.ZERO},
-      {"petersburg", petersburg, ZERO, ONE, TWO, Gas.of(5_000), Gas.ZERO},
-      {"istanbul", istanbul, ZERO, ONE, TWO, Gas.of(800), Gas.ZERO},
+      {"constantinople", constantinople, ZERO, ONE, TWO, 200L, 0L},
+      {"petersburg", petersburg, ZERO, ONE, TWO, 5_000L, 0L},
+      {"istanbul", istanbul, ZERO, ONE, TWO, 800L, 0L},
 
       // Dirty no-op
-      {"constantinople", constantinople, ZERO, ONE, ONE, Gas.of(200), Gas.ZERO},
-      {"petersburg", petersburg, ZERO, ONE, ONE, Gas.of(5_000), Gas.ZERO},
-      {"istanbul", istanbul, ZERO, ONE, ONE, Gas.of(800), Gas.ZERO},
+      {"constantinople", constantinople, ZERO, ONE, ONE, 200L, 0L},
+      {"petersburg", petersburg, ZERO, ONE, ONE, 5_000L, 0L},
+      {"istanbul", istanbul, ZERO, ONE, ONE, 800L, 0L},
 
       // Dirty, zero no-op
-      {"constantinople", constantinople, ONE, ZERO, ZERO, Gas.of(200), Gas.ZERO},
-      {"petersburg", petersburg, ONE, ZERO, ZERO, Gas.of(5_000), Gas.ZERO},
-      {"istanbul", istanbul, ONE, ZERO, ZERO, Gas.of(800), Gas.ZERO},
+      {"constantinople", constantinople, ONE, ZERO, ZERO, 200L, 0L},
+      {"petersburg", petersburg, ONE, ZERO, ZERO, 5_000L, 0L},
+      {"istanbul", istanbul, ONE, ZERO, ZERO, 800L, 0L},
 
       // Dirty, reset to non-zero
-      {
-        "constantinople",
-        constantinople,
-        ONE,
-        ZERO,
-        ONE,
-        Gas.of(200),
-        Gas.of(-15_000).plus(Gas.of(4_800))
-      },
-      {"petersburg", petersburg, ONE, ZERO, ONE, Gas.of(20_000), Gas.ZERO},
-      {"istanbul", istanbul, ONE, ZERO, ONE, Gas.of(800), Gas.of(-15_000).plus(Gas.of(4_200))},
+      {"constantinople", constantinople, ONE, ZERO, ONE, 200L, -15_000L + 4_800L},
+      {"petersburg", petersburg, ONE, ZERO, ONE, 20_000L, 0L},
+      {"istanbul", istanbul, ONE, ZERO, ONE, 800L, -15_000L + 4_200L},
 
       // Fresh change to zero
-      {"constantinople", constantinople, ONE, ONE, ZERO, Gas.of(5_000), Gas.of(15_000)},
-      {"petersburg", petersburg, ONE, ONE, ZERO, Gas.of(5_000), Gas.of(15_000)},
-      {"istanbul", istanbul, ONE, ONE, ZERO, Gas.of(5_000), Gas.of(15_000)},
+      {"constantinople", constantinople, ONE, ONE, ZERO, 5_000L, 15_000L},
+      {"petersburg", petersburg, ONE, ONE, ZERO, 5_000L, 15_000L},
+      {"istanbul", istanbul, ONE, ONE, ZERO, 5_000L, 15_000L},
 
       // Fresh change with all non-zero
-      {"constantinople", constantinople, ONE, ONE, TWO, Gas.of(5_000), Gas.ZERO},
-      {"petersburg", petersburg, ONE, ONE, TWO, Gas.of(5_000), Gas.ZERO},
-      {"istanbul", istanbul, ONE, ONE, TWO, Gas.of(5_000), Gas.ZERO},
+      {"constantinople", constantinople, ONE, ONE, TWO, 5_000L, 0L},
+      {"petersburg", petersburg, ONE, ONE, TWO, 5_000L, 0L},
+      {"istanbul", istanbul, ONE, ONE, TWO, 5_000L, 0L},
 
       // Dirty, clear originally set value
-      {"constantinople", constantinople, ONE, TWO, ZERO, Gas.of(200), Gas.of(15_000)},
-      {"petersburg", petersburg, ONE, TWO, ZERO, Gas.of(5_000), Gas.of(15_000)},
-      {"istanbul", istanbul, ONE, TWO, ZERO, Gas.of(800), Gas.of(15_000)},
+      {"constantinople", constantinople, ONE, TWO, ZERO, 200L, 15_000L},
+      {"petersburg", petersburg, ONE, TWO, ZERO, 5_000L, 15_000L},
+      {"istanbul", istanbul, ONE, TWO, ZERO, 800L, 15_000L},
 
       // Non-zero no-op
-      {"constantinople", constantinople, ONE, ONE, ONE, Gas.of(200), Gas.ZERO},
-      {"petersburg", petersburg, ONE, ONE, ONE, Gas.of(5_000), Gas.ZERO},
-      {"istanbul", istanbul, ONE, ONE, ONE, Gas.of(800), Gas.ZERO},
+      {"constantinople", constantinople, ONE, ONE, ONE, 200L, 0L},
+      {"petersburg", petersburg, ONE, ONE, ONE, 5_000L, 0L},
+      {"istanbul", istanbul, ONE, ONE, ONE, 800L, 0L},
     };
   }
 
@@ -126,10 +117,10 @@ public class RefundSstoreGasTest {
   public UInt256 newValue;
 
   @Parameter(value = 5)
-  public Gas expectedGasCost;
+  public long expectedGasCost;
 
   @Parameter(value = 6)
-  public Gas expectedGasRefund;
+  public long expectedGasRefund;
 
   private final Account account = mock(Account.class);
 

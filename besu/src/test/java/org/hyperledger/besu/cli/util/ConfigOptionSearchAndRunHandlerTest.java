@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,6 +44,7 @@ import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.DefaultExceptionHandler;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.IDefaultValueProvider;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.IGetter;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParseResult;
@@ -71,15 +72,15 @@ public class ConfigOptionSearchAndRunHandlerTest {
       new ConfigOptionSearchAndRunHandler(resultHandler, exceptionHandler, environment);
 
   @Mock ParseResult mockParseResult;
+  @Mock CommandSpec mockCommandSpec;
   @Mock CommandLine mockCommandLine;
   @Mock OptionSpec mockConfigOptionSpec;
   @Mock IGetter mockConfigOptionGetter;
 
   @Before
   public void initMocks() {
-    final List<CommandLine> commandLines = new ArrayList<>();
-    commandLines.add(mockCommandLine);
-    when(mockParseResult.asCommandLineList()).thenReturn(commandLines);
+    when(mockCommandSpec.commandLine()).thenReturn(mockCommandLine);
+    when(mockParseResult.commandSpec()).thenReturn(mockCommandSpec);
     final List<String> originalArgs = new ArrayList<>();
     originalArgs.add(CONFIG_FILE_OPTION_NAME);
     when(mockParseResult.originalArgs()).thenReturn(originalArgs);

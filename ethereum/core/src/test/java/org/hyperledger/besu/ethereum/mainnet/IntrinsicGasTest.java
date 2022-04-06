@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -35,11 +34,11 @@ import org.junit.runners.Parameterized.Parameters;
 public class IntrinsicGasTest {
 
   private final GasCalculator gasCalculator;
-  private final Gas expectedGas;
+  private final long expectedGas;
   private final String txRlp;
 
   public IntrinsicGasTest(
-      final GasCalculator gasCalculator, final Gas expectedGas, final String txRlp) {
+      final GasCalculator gasCalculator, final long expectedGas, final String txRlp) {
     this.gasCalculator = gasCalculator;
     this.expectedGas = expectedGas;
     this.txRlp = txRlp;
@@ -54,56 +53,56 @@ public class IntrinsicGasTest {
           // EnoughGAS
           {
             frontier,
-            Gas.of(21952),
+            21952L,
             "0xf86d80018259d894095e7baea6a6c7c4c2dfeb977efac326af552d870a8e0358ac39584bc98a7c979f984b031ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           {
             istanbul,
-            Gas.of(21224),
+            21224L,
             "0xf86d80018259d894095e7baea6a6c7c4c2dfeb977efac326af552d870a8e0358ac39584bc98a7c979f984b031ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           // FirstZeroBytes
           {
             frontier,
-            Gas.of(21180),
+            21180L,
             "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000010000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           {
             istanbul,
-            Gas.of(21128),
+            21128L,
             "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000010000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           // LastZeroBytes
           {
             frontier,
-            Gas.of(21180),
+            21180L,
             "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d01000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           {
             istanbul,
-            Gas.of(21128),
+            21128L,
             "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d01000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           // NotEnoughGAS
           {
             frontier,
-            Gas.of(21952),
+            21952L,
             "0xf86d800182521c94095e7baea6a6c7c4c2dfeb977efac326af552d870a8e0358ac39584bc98a7c979f984b031ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a0efffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           {
             istanbul,
-            Gas.of(21224),
+            21224L,
             "0xf86d800182521c94095e7baea6a6c7c4c2dfeb977efac326af552d870a8e0358ac39584bc98a7c979f984b031ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a0efffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           // ZeroBytes
           {
             frontier,
-            Gas.of(21116),
+            21116L,
             "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
           {
             istanbul,
-            Gas.of(21116),
+            21116L,
             "0xf87c80018261a894095e7baea6a6c7c4c2dfeb977efac326af552d870a9d00000000000000000000000000000000000000000000000000000000001ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804"
           },
         });

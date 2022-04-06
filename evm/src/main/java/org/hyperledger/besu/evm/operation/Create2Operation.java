@@ -18,7 +18,6 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -48,7 +47,7 @@ public class Create2Operation extends AbstractCreateOperation {
   }
 
   @Override
-  public Gas cost(final MessageFrame frame) {
+  public long cost(final MessageFrame frame) {
     return gasCalculator().create2OperationGasCost(frame);
   }
 }
