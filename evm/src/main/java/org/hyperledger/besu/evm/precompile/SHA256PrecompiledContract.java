@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
 public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
 
@@ -33,8 +34,10 @@ public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().sha256PrecompiledContractGasCost(input);
   }
 
+  @NotNull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    return Hash.sha256(input);
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    return PrecompileContractResult.success(Hash.sha256(input));
   }
 }

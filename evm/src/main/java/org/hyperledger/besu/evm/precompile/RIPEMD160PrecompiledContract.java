@@ -34,8 +34,10 @@ public class RIPEMD160PrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().ripemd160PrecompiledContractGasCost(input);
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    return Bytes32.leftPad(Hash.ripemd160(input));
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    return PrecompileContractResult.success(Bytes32.leftPad(Hash.ripemd160(input)));
   }
 }
