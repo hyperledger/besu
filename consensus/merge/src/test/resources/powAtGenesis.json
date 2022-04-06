@@ -2,7 +2,7 @@
   "config": {
     "chainId": 1337,
     "londonBlock": 0,
-    "preMergeForkBlock": 0,
+    "parisBlock": 0,
     "terminalTotalDifficulty": 1001,
     "contractSizeLimit": 2147483647,
     "ethash": {
