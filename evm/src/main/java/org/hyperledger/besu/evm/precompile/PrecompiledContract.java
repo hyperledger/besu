@@ -54,6 +54,7 @@ public interface PrecompiledContract {
    * @return the output of the pre-compiled contract.
    */
   @SuppressWarnings("deprecation")
+  @Nonnull
   default PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final Bytes result = compute(input, messageFrame);
@@ -86,7 +87,7 @@ public interface PrecompiledContract {
     /**
      * Encapsulated result of precompiled contract.
      *
-     * @param output output if successfull
+     * @param output output if successful
      * @param refundGas Should we charge the gasRequirement?
      * @param state state of the EVM after execution (for format errors this would be
      *     ExceptionalHalt)

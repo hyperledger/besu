@@ -51,6 +51,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -98,9 +99,10 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     return privateTransactionEventObservers.unsubscribe(observerId);
   }
 
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;
     }
@@ -248,7 +250,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       return false;
     }
 
-    if (isContractLocked && !isTargettingFlexiblePrivacyProxy(privateTransaction)) {
+    if (isContractLocked && !isTargetingFlexiblePrivacyProxy(privateTransaction)) {
       LOG.debug(
           "Privacy Group {} is locked while trying to execute transaction with commitment {}",
           privacyGroupId.toHexString(),
@@ -310,13 +312,13 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
     return input.slice(4).toBase64String();
   }
 
-  private boolean isTargettingFlexiblePrivacyProxy(final PrivateTransaction privateTransaction) {
+  private boolean isTargetingFlexiblePrivacyProxy(final PrivateTransaction privateTransaction) {
     return privateTransaction.getTo().isPresent()
         && privateTransaction.getTo().get().equals(FLEXIBLE_PRIVACY_PROXY);
   }
 
   private boolean isAddingParticipant(final PrivateTransaction privateTransaction) {
-    return isTargettingFlexiblePrivacyProxy(privateTransaction)
+    return isTargetingFlexiblePrivacyProxy(privateTransaction)
         && privateTransaction
             .getPayload()
             .toHexString()
@@ -324,7 +326,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
   }
 
   private boolean isRemovingParticipant(final PrivateTransaction privateTransaction) {
-    return isTargettingFlexiblePrivacyProxy(privateTransaction)
+    return isTargetingFlexiblePrivacyProxy(privateTransaction)
         && privateTransaction
             .getPayload()
             .toHexString()

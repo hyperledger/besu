@@ -17,9 +17,11 @@ package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
@@ -61,8 +63,10 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
     return name;
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final byte[] result = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];
     final byte[] error = new byte[LibEthPairings.EIP2537_PREALLOCATE_FOR_ERROR_BYTES];
 
@@ -81,12 +85,13 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
             error,
             err_len);
     if (errorNo == 0) {
-      return Bytes.wrap(result, 0, o_len.getValue());
+      return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
     } else {
       final String errorMessage = new String(error, 0, err_len.getValue(), UTF_8);
       messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
       LOG.trace("Error executing precompiled contract {}: '{}'", name, errorMessage);
-      return null;
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
   }
 
