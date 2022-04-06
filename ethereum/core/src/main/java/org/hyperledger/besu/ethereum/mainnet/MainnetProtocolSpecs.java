@@ -589,7 +589,7 @@ public abstract class MainnetProtocolSpecs {
         .name("ArrowGlacier");
   }
 
-  static ProtocolSpecBuilder preMergeForkDefinition(
+  static ProtocolSpecBuilder parisDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
       final OptionalInt configStackSizeLimit,
@@ -608,9 +608,8 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.preMergeFork(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .name("PreMergeFork");
+                MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .name("ParisFork");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
