@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -38,6 +42,34 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
 
   public ProtocolSchedule getPostMergeSchedule() {
     return getPostMergeObject();
+  }
+
+  public ProtocolSpec getByBlockHeader(final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+    // if we do not have a finalized block we might return pre or post merge protocol schedule:
+    if (mergeContext.getFinalized().isEmpty()) {
+
+      // if head is not post-merge, return pre-merge schedule:
+      if (!mergeContext.isPostMerge()) {
+        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+      }
+
+      // otherwise check to see if this block represents a re-org below TTD:
+      MutableBlockchain blockchain = protocolContext.getBlockchain();
+      Difficulty parentDifficulty =
+          blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
+      Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
+      Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
+
+      // if this block is pre-merge
+      if (thisDifficulty.lessOrEqualThan(terminalDifficulty)
+          || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
+        return getPreMergeSchedule()
+            .getByBlockNumber(blockHeader.getNumber());
+      }
+    }
+
+    // else return post-merge schedule
+    return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
   }
 
   @Override

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public abstract class TransitionUtils<SwitchingObject> {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
-  private final MergeContext mergeContext = PostMergeContext.get();
+  protected final MergeContext mergeContext = PostMergeContext.get();
   private final SwitchingObject preMergeObject;
   private final SwitchingObject postMergeObject;
 

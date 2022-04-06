@@ -55,14 +55,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-
-    this.syncState.set(syncState);
-
-    return new MergeCoordinator(
-        protocolContext,
+    return createTransitionMiningCoordinator(
         protocolSchedule,
-        transactionPool.getPendingTransactions(),
+        protocolContext,
+        transactionPool,
         miningParameters,
+        syncState,
+        ethProtocolManager,
         new BackwardSyncContext(
             protocolContext,
             protocolSchedule,
@@ -72,6 +71,25 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             new BackwardSyncLookupService(
                 protocolSchedule, ethProtocolManager.ethContext(), metricsSystem, protocolContext),
             storageProvider));
+  }
+
+  protected MiningCoordinator createTransitionMiningCoordinator(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final TransactionPool transactionPool,
+      final MiningParameters miningParameters,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final BackwardSyncContext backwardSyncContext) {
+
+    this.syncState.set(syncState);
+
+    return new MergeCoordinator(
+        protocolContext,
+        protocolSchedule,
+        transactionPool.getPendingTransactions(),
+        miningParameters,
+        backwardSyncContext);
   }
 
   @Override
