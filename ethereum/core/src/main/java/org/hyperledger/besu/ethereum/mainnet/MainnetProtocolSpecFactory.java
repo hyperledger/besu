@@ -162,9 +162,8 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder preMergeForkDefinition(
-      final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.preMergeForkDefinition(
+  public ProtocolSpecBuilder parisDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.parisDefinition(
         chainId,
         contractSizeLimit,
         evmStackSize,
