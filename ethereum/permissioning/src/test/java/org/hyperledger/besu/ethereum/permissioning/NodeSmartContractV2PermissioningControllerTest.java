@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -85,18 +84,16 @@ public class NodeSmartContractV2PermissioningControllerTest {
   }
 
   @Test
-  public void nonExpectedCallOutputThrowsIllegalState() {
-    final TransactionSimulatorResult txSimulatorResult =
+  public void nonExpectedCallOutputReturnsNotPermitted() {
+    final TransactionSimulatorResult nonExpectedTxSimulatorResult =
         transactionSimulatorResult(Bytes.random(10), ValidationResult.valid());
 
     when(transactionSimulator.processAtHead(eq(callParams(SOURCE_ENODE_EXPECTED_PAYLOAD_IP))))
-        .thenReturn(Optional.of(txSimulatorResult));
+        .thenReturn(Optional.of(nonExpectedTxSimulatorResult));
 
-    assertThatIllegalStateException()
-        .isThrownBy(
-            () ->
-                permissioningController.checkSmartContractRules(
-                    SOURCE_ENODE_IPV4, DESTINATION_ENODE_IPV4));
+    boolean isPermitted =
+        permissioningController.checkSmartContractRules(SOURCE_ENODE_IPV4, DESTINATION_ENODE_IPV4);
+    assertThat(isPermitted).isFalse();
   }
 
   @Test
