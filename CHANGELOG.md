@@ -8,7 +8,7 @@
 ## 22.4.0-RC2
 
 ### Additions and Improvements
-- Onchain node permissioning - log the enode that was being checked with IllegalStateException. [#3697](https://github.com/hyperledger/besu/pull/3697)
+- Onchain node permissioning - log the enodeURL that was previously only throwing an IllegalStateException during the isPermitted check [#3697](https://github.com/hyperledger/besu/pull/3697)
 
 ### Bug Fixes
 
