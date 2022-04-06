@@ -8,6 +8,7 @@
 ## 22.4.0-RC2
 
 ### Additions and Improvements
+- Onchain node permissioning - log the enode that was being checked with IllegalStateException. [#3697](https://github.com/hyperledger/besu/pull/3697)
 
 ### Bug Fixes
 
@@ -19,7 +20,7 @@
 
 ### Bug Fixes
 - Flexible Privacy Precompile handles null payload ID [#3664](https://github.com/hyperledger/besu/pull/3664)
-- Subcommand blocks import throws execption [#3646](https://github.com/hyperledger/besu/pull/3646)
+- Subcommand blocks import throws exception [#3646](https://github.com/hyperledger/besu/pull/3646)
 
 ## Download Links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.0-RC1/besu-22.4.0-RC1.zip / SHA256 0779082acc20a98eb810eb08778e0c0e1431046c07bc89019a2761fd1baa4c25
