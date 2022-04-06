@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -101,7 +100,8 @@ public class DefaultSynchronizer implements Synchronizer {
             metricsSystem,
             terminationCondition);
 
-    if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
+    // TODO add this code when snapsync will be ready
+    /*if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
           SnapDownloaderFactory.createSnapDownloader(
               syncConfig,
@@ -125,7 +125,19 @@ public class DefaultSynchronizer implements Synchronizer {
               worldStateStorage,
               syncState,
               clock);
-    }
+    }*/
+
+    this.fastSyncDownloader =
+        FastDownloaderFactory.create(
+            syncConfig,
+            dataDirectory,
+            protocolSchedule,
+            protocolContext,
+            metricsSystem,
+            ethContext,
+            worldStateStorage,
+            syncState,
+            clock);
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
