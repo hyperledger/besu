@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -51,6 +53,7 @@ public class FastSyncActions {
   private final MetricsSystem metricsSystem;
   private final Counter pivotBlockSelectionCounter;
   private final AtomicLong pivotBlockGauge = new AtomicLong(0);
+  private final TrailingPeerLimiter trailingPeerLimiter;
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -65,6 +68,12 @@ public class FastSyncActions {
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.metricsSystem = metricsSystem;
+    this.trailingPeerLimiter =
+        new TrailingPeerLimiter(
+            ethContext.getEthPeers(),
+            () ->
+                new TrailingPeerRequirements(
+                    syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance(), syncConfig.getMaxTrailingPeers()));
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
@@ -169,10 +178,15 @@ public class FastSyncActions {
     return ethContext
         .getScheduler()
         .scheduleFutureTask(
-            () ->
-                waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-                    .thenCompose(ignore -> selectPivotBlockFromPeers()),
+            this::limitTrailingPeersAndRetrySelectPivotBlock,
             Duration.ofSeconds(5));
+  }
+
+  private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock () {
+        trailingPeerLimiter.enforceTrailingPeerLimit();
+
+        return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
+            .thenCompose(ignore -> selectPivotBlockFromPeers());
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(

@@ -231,6 +231,10 @@ public class SyncState {
         target.addPeerChainEstimatedHeightListener(estimatedHeight -> checkInSync());
   }
 
+  public long getLocalChainHeight() {
+    return blockchain.getChainHeadBlockNumber();
+  }
+
   public long bestChainHeight() {
     final long localChainHeight = blockchain.getChainHeadBlockNumber();
     return bestChainHeight(localChainHeight);
