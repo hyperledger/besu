@@ -222,7 +222,7 @@ public class GenesisConfigFileTest {
     assertThatThrownBy(() -> dupeOptions.getParisBlockNumber())
         .isInstanceOf(RuntimeException.class);
 
-    // assert empty in neither are present:
+    // assert empty if neither are present:
     GenesisConfigFile londonGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
     assertThat(londonGenesis.getForks()).hasSize(1);
