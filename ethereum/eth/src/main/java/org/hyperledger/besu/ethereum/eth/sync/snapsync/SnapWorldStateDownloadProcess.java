@@ -129,7 +129,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
 
   public static class Builder {
 
-    private int taskCountPerRequest;
+    private SnapSyncConfiguration snapSyncConfiguration;
     private int maxOutstandingRequests;
     private SnapWorldDownloadState downloadState;
     private MetricsSystem metricsSystem;
@@ -140,8 +140,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private CompleteTaskStep completeTaskStep;
     private DynamicPivotBlockManager<SnapDataRequest> pivotBlockManager;
 
-    public Builder taskCountPerRequest(final int taskCountPerRequest) {
-      this.taskCountPerRequest = taskCountPerRequest;
+    public Builder configuration(final SnapSyncConfiguration snapSyncConfiguration) {
+      this.snapSyncConfiguration = snapSyncConfiguration;
       return this;
     }
 
@@ -201,7 +201,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       checkNotNull(metricsSystem);
 
       // Room for the requests we expect to do in parallel plus some buffer but not unlimited.
-      final int bufferCapacity = taskCountPerRequest * 2;
+      final int bufferCapacity = snapSyncConfiguration.getTrienodeCountPerRequest() * 2;
       final LabelledMetric<Counter> outputCounter =
           metricsSystem.createLabelledCounter(
               BesuMetricCategory.SYNCHRONIZER,
@@ -250,7 +250,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .inBatches(84)
+              .inBatches(snapSyncConfiguration.getStorageCountPerRequest())
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
@@ -306,9 +306,9 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "code_blocks_download_pipeline")
               .inBatches(
-                  taskCountPerRequest,
+                  snapSyncConfiguration.getBytecodeCountPerRequest() * 2,
                   tasks ->
-                      84
+                      snapSyncConfiguration.getBytecodeCountPerRequest()
                           - (int)
                               tasks.stream()
                                   .map(Task::getData)
@@ -352,7 +352,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   task -> loadLocalDataStep.loadLocalDataTrieNode(task, requestsToComplete),
                   3,
                   bufferCapacity)
-              .inBatches(taskCountPerRequest)
+              .inBatches(snapSyncConfiguration.getTrienodeCountPerRequest())
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {

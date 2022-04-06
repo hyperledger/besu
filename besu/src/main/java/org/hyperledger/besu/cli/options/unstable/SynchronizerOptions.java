@@ -17,6 +17,8 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
@@ -58,6 +60,17 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-world-state-min-millis-before-stalling";
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
+
+  private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
+      "--Xsnapsync-synchronizer-pivot-block-window-validity";
+  private static final String SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG =
+      "--Xsnapsync-synchronizer-pivot-block-distance-before-caching";
+  private static final String SNAP_STORAGE_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-storage-count-per-request";
+  private static final String SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-bytecode-count-per-request";
+  private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-trienode-count-per-request";
 
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
@@ -212,6 +225,53 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int worldStateTaskCacheSize =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
 
+  @CommandLine.Option(
+      names = SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
+      hidden = true,
+      defaultValue = "126",
+      paramLabel = "<INTEGER>",
+      description =
+          "The size of the pivot block window before having to change it (default: ${DEFAULT-VALUE})")
+  private int snapsyncPivotBlockWindowValidity =
+      SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY;
+
+  @CommandLine.Option(
+      names = SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
+      hidden = true,
+      defaultValue = "60",
+      paramLabel = "<INTEGER>",
+      description =
+          "The distance from the head before loading a pivot block into the cache to have a ready pivot block when the window is finished (default: ${DEFAULT-VALUE})")
+  private int snapsyncPivotBlockDistanceBeforeCaching =
+      SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING;
+
+  @CommandLine.Option(
+      names = SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "384",
+      paramLabel = "<INTEGER>",
+      description = "Snap sync sync storage queried per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncStorageCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "84",
+      paramLabel = "<INTEGER>",
+      description = "Snap sync sync bytecode queried per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncBytecodeCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "384",
+      paramLabel = "<INTEGER>",
+      description = "Snap sync sync trie node queried per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncTrieNodeCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST;
+
   private SynchronizerOptions() {}
 
   public static SynchronizerOptions create() {
@@ -238,6 +298,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.worldStateMaxRequestsWithoutProgress = config.getWorldStateMaxRequestsWithoutProgress();
     options.worldStateMinMillisBeforeStalling = config.getWorldStateMinMillisBeforeStalling();
     options.worldStateTaskCacheSize = config.getWorldStateTaskCacheSize();
+    options.snapsyncPivotBlockWindowValidity =
+        config.getSnapSyncConfiguration().getPivotBlockWindowValidity();
+    options.snapsyncPivotBlockDistanceBeforeCaching =
+        config.getSnapSyncConfiguration().getPivotBlockDistanceBeforeCaching();
+    options.snapsyncStorageCountPerRequest =
+        config.getSnapSyncConfiguration().getStorageCountPerRequest();
+    options.snapsyncBytecodeCountPerRequest =
+        config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
+    options.snapsyncTrieNodeCountPerRequest =
+        config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
     return options;
   }
 
@@ -260,6 +330,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.worldStateMaxRequestsWithoutProgress(worldStateMaxRequestsWithoutProgress);
     builder.worldStateMinMillisBeforeStalling(worldStateMinMillisBeforeStalling);
     builder.worldStateTaskCacheSize(worldStateTaskCacheSize);
+    builder.snapSyncConfiguration(
+        ImmutableSnapSyncConfiguration.builder()
+            .pivotBlockWindowValidity(snapsyncPivotBlockWindowValidity)
+            .pivotBlockDistanceBeforeCaching(snapsyncPivotBlockDistanceBeforeCaching)
+            .storageCountPerRequest(snapsyncStorageCountPerRequest)
+            .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
+            .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
+            .build());
+
     return builder;
   }
 
@@ -297,6 +376,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
         OptionParser.format(worldStateMinMillisBeforeStalling),
         WORLD_STATE_TASK_CACHE_SIZE_FLAG,
-        OptionParser.format(worldStateTaskCacheSize));
+        OptionParser.format(worldStateTaskCacheSize),
+        SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
+        OptionParser.format(snapsyncPivotBlockWindowValidity),
+        SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
+        OptionParser.format(snapsyncPivotBlockDistanceBeforeCaching),
+        SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
+        OptionParser.format(snapsyncStorageCountPerRequest),
+        SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
+        OptionParser.format(snapsyncBytecodeCountPerRequest),
+        SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
+        OptionParser.format(snapsyncTrieNodeCountPerRequest));
   }
 }

@@ -99,6 +99,34 @@ public class DefaultSynchronizer implements Synchronizer {
             syncState,
             metricsSystem,
             terminationCondition);
+
+    // TODO add this code when snapsync will be ready
+    /*if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
+      this.fastSyncDownloader =
+          SnapDownloaderFactory.createSnapDownloader(
+              syncConfig,
+              dataDirectory,
+              protocolSchedule,
+              protocolContext,
+              metricsSystem,
+              ethContext,
+              worldStateStorage,
+              syncState,
+              clock);
+    } else {
+      this.fastSyncDownloader =
+          FastDownloaderFactory.create(
+              syncConfig,
+              dataDirectory,
+              protocolSchedule,
+              protocolContext,
+              metricsSystem,
+              ethContext,
+              worldStateStorage,
+              syncState,
+              clock);
+    }*/
+
     this.fastSyncDownloader =
         FastDownloaderFactory.create(
             syncConfig,
