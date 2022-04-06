@@ -248,7 +248,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "84",
+      defaultValue = "384",
       paramLabel = "<INTEGER>",
       description = "Snap sync sync storage queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncStorageCountPerRequest =
