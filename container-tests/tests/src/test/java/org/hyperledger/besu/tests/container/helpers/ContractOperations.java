@@ -20,19 +20,14 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nonnull;
 
+import org.jetbrains.annotations.NotNull;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.EthGetCode;
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
-import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
-import org.web3j.protocol.core.methods.response.EthSendTransaction;
-import org.web3j.protocol.core.methods.response.Log;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.quorum.Quorum;
 import org.web3j.quorum.tx.QuorumTransactionManager;
@@ -145,7 +140,7 @@ public class ContractOperations {
     return prependZeroesToPadHexStringToGivenLength(str, 64);
   }
 
-  @Nonnull
+  @NotNull
   public static String prependZeroesToPadHexStringToGivenLength(
       final String hexString, final int lenRequested) {
     final StringBuilder sb = new StringBuilder(hexString);
