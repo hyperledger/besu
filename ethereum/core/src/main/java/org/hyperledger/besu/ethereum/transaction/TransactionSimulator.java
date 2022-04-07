@@ -43,11 +43,11 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 /*
  * Used to process transactions for eth_call and eth_estimateGas.
@@ -161,7 +161,7 @@ public class TransactionSimulator {
         callParams, transactionValidationParams, operationTracer, header, updater);
   }
 
-  @NotNull
+  @Nonnull
   public Optional<TransactionSimulatorResult> processWithWorldUpdater(
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
