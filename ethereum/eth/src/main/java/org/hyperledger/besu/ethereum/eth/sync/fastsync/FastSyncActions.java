@@ -77,8 +77,7 @@ public class FastSyncActions {
             ethContext.getEthPeers(),
             () ->
                 new TrailingPeerRequirements(
-                    syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance(),
-                    syncConfig.getMaxTrailingPeers()));
+                    conservatitvelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
@@ -188,6 +187,12 @@ public class FastSyncActions {
         .getScheduler()
         .scheduleFutureTask(
             this::limitTrailingPeersAndRetrySelectPivotBlock, Duration.ofSeconds(5));
+  }
+
+  private long conservatitvelyEstimatedPivotBlock() {
+    long estimatedNextPivot =
+        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
+    return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
   }
 
   private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock() {
