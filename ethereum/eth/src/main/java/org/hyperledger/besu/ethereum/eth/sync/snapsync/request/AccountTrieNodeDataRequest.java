@@ -140,7 +140,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createBytecodeRequest(accountHash, accountValue.getCodeHash()));
+      builder.add(createBytecodeRequest(accountHash, getRootHash(), accountValue.getCodeHash()));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {

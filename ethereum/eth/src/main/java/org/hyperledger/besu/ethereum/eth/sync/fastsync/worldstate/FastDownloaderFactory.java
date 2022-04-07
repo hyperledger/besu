@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
@@ -20,8 +20,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -44,11 +46,11 @@ import org.slf4j.LoggerFactory;
 
 public class FastDownloaderFactory {
 
-  private static final String FAST_SYNC_FOLDER = "fastsync";
+  protected static final String FAST_SYNC_FOLDER = "fastsync";
 
   private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader> create(
+  public static Optional<FastSyncDownloader<?>> create(
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -107,10 +109,11 @@ public class FastDownloaderFactory {
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader fastSyncDownloader =
-        new FastSyncDownloader(
+    final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
+        new FastSyncDownloader<>(
             new FastSyncActions(
                 syncConfig,
+                worldStateStorage,
                 protocolSchedule,
                 protocolContext,
                 ethContext,
@@ -145,7 +148,7 @@ public class FastDownloaderFactory {
     }
   }
 
-  private static void ensureDirectoryExists(final File dir) {
+  protected static void ensureDirectoryExists(final File dir) {
     if (!dir.mkdirs() && !dir.isDirectory()) {
       throw new IllegalStateException("Unable to create directory: " + dir.getAbsolutePath());
     }

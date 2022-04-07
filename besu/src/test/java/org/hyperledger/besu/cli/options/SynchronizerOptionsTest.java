@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +66,19 @@ public class SynchronizerOptionsTest
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE + 2)
         .downloaderParallelism(SynchronizerConfiguration.DEFAULT_DOWNLOADER_PARALLELISM + 2)
         .transactionsParallelism(SynchronizerConfiguration.DEFAULT_TRANSACTIONS_PARALLELISM + 2)
-        .computationParallelism(SynchronizerConfiguration.DEFAULT_COMPUTATION_PARALLELISM + 2);
+        .computationParallelism(SynchronizerConfiguration.DEFAULT_COMPUTATION_PARALLELISM + 2)
+        .snapSyncConfiguration(
+            ImmutableSnapSyncConfiguration.builder()
+                .pivotBlockWindowValidity(
+                    SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY + 2)
+                .pivotBlockDistanceBeforeCaching(
+                    SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING - 2)
+                .trienodeCountPerRequest(
+                    SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST + 2)
+                .storageCountPerRequest(SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST + 2)
+                .bytecodeCountPerRequest(
+                    SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST + 2)
+                .build());
   }
 
   @Override

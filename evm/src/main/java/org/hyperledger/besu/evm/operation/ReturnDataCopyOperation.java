@@ -17,12 +17,12 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -30,9 +30,9 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
   protected static final OperationResult INVALID_RETURN_DATA_BUFFER_ACCESS =
       new OperationResult(
-          Optional.empty(), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
+          OptionalLong.of(0), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
   protected static final OperationResult OUT_OF_BOUNDS =
-      new OperationResult(Optional.empty(), Optional.of(ExceptionalHaltReason.OUT_OF_BOUNDS));
+      new OperationResult(OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.OUT_OF_BOUNDS));
 
   public ReturnDataCopyOperation(final GasCalculator gasCalculator) {
     super(0x3E, "RETURNDATACOPY", 3, 0, 1, gasCalculator);
@@ -47,22 +47,22 @@ public class ReturnDataCopyOperation extends AbstractOperation {
     final int returnDataLength = returnData.size();
 
     try {
-      long end = Math.addExact(sourceOffset, numBytes);
+      final long end = Math.addExact(sourceOffset, numBytes);
       if (end > returnDataLength) {
         return INVALID_RETURN_DATA_BUFFER_ACCESS;
       }
-    } catch (ArithmeticException ae) {
+    } catch (final ArithmeticException ae) {
       return OUT_OF_BOUNDS;
     }
 
-    final Gas cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
-    final Optional<Gas> optionalCost = Optional.of(cost);
-    if (frame.getRemainingGas().compareTo(cost) < 0) {
-      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
 
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

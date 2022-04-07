@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
@@ -273,8 +274,14 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getPreMergeForkBlockNumber() {
-    return getOptionalLong("premergeforkblock");
+  public OptionalLong getParisBlockNumber() {
+    var parisBlock = getOptionalLong("parisblock");
+    var preMergeAlias = getOptionalLong("premergeforkblock");
+    if (parisBlock.isPresent() && preMergeAlias.isPresent()) {
+      throw new RuntimeException(
+          "Found both paris and preMergeFork blocks.  Should have one or the other");
+    }
+    return Streams.concat(parisBlock.stream(), preMergeAlias.stream()).findFirst();
   }
 
   @Override
@@ -432,7 +439,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
-    getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
+    getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
 
@@ -550,7 +557,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
-            getPreMergeForkBlockNumber(),
+            getParisBlockNumber(),
             getTerminalBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),

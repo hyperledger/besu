@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -26,6 +25,7 @@ import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -35,13 +35,11 @@ public class ExtCodeHashOperation extends AbstractOperation {
     super(0x3F, "EXTCODEHASH", 1, 1, 1, gasCalculator);
   }
 
-  protected Gas cost(final boolean accountIsWarm) {
-    return gasCalculator()
-        .extCodeHashOperationGasCost()
-        .plus(
-            accountIsWarm
-                ? gasCalculator().getWarmStorageReadCost()
-                : gasCalculator().getColdAccountAccessCost());
+  protected long cost(final boolean accountIsWarm) {
+    return gasCalculator().extCodeHashOperationGasCost()
+        + (accountIsWarm
+            ? gasCalculator().getWarmStorageReadCost()
+            : gasCalculator().getColdAccountAccessCost());
   }
 
   @Override
@@ -50,10 +48,10 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final Optional<Gas> optionalCost = Optional.of(cost(accountIsWarm));
-      if (frame.getRemainingGas().compareTo(optionalCost.get()) < 0) {
+      final long cost = cost(accountIsWarm);
+      if (frame.getRemainingGas() < cost) {
         return new OperationResult(
-            optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+            OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         final Account account = frame.getWorldUpdater().get(address);
         if (account == null || account.isEmpty()) {
@@ -61,14 +59,14 @@ public class ExtCodeHashOperation extends AbstractOperation {
         } else {
           frame.pushStackItem(UInt256.fromBytes(account.getCodeHash()));
         }
-        return new OperationResult(optionalCost, Optional.empty());
+        return new OperationResult(OptionalLong.of(cost), Optional.empty());
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(
-          Optional.of(cost(true)), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+          OptionalLong.of(cost(true)), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
     } catch (final OverflowException ofe) {
       return new OperationResult(
-          Optional.of(cost(true)), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+          OptionalLong.of(cost(true)), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     }
   }
 }

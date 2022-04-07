@@ -16,11 +16,23 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.TrieGenerator;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+
+import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -147,6 +159,75 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.getAccountStorageTrieNode(accountHash, location, Hash.hash(bytes)))
         .contains(bytes);
+  }
+
+  @Test
+  public void getAccount_loadFromTrieWhenEmpty() {
+    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+
+    // save world state root hash
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    updater
+        .getTrieBranchStorageTransaction()
+        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+    updater.commit();
+
+    // remove flat database
+    storage.clearFlatDatabase();
+
+    assertThat(storage.getAccount(Hash.wrap(accounts.firstKey())))
+        .contains(accounts.firstEntry().getValue());
+
+    verify(storage, times(2)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
+  }
+
+  @Test
+  public void getStorage_loadFromTrieWhenEmpty() {
+    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+
+    final StateTrieAccountValue stateTrieAccountValue =
+        StateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));
+
+    final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) ->
+                storage.getAccountStorageTrieNode(Hash.wrap(accounts.firstKey()), location, hash),
+            stateTrieAccountValue.getStorageRoot(),
+            b -> b,
+            b -> b);
+
+    final TreeMap<Bytes32, Bytes> slots =
+        (TreeMap<Bytes32, Bytes>)
+            storageTrie.entriesFrom(
+                root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+
+    // save world state root hash
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    updater
+        .getTrieBranchStorageTransaction()
+        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+    updater.commit();
+
+    // remove flat database
+    storage.clearFlatDatabase();
+
+    assertThat(
+            storage.getStorageValueBySlotHash(
+                Hash.wrap(accounts.firstKey()), Hash.wrap(slots.firstKey())))
+        .map(Bytes::toShortHexString)
+        .contains(slots.firstEntry().getValue().toShortHexString());
+
+    verify(storage, times(2))
+        .getAccountStorageTrieNode(
+            eq(Hash.wrap(accounts.firstKey())), any(), eq(storageTrie.getRootHash()));
   }
 
   @Test

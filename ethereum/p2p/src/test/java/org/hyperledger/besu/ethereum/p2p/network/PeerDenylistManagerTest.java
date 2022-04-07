@@ -30,71 +30,69 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
-public class PeerReputationManagerTest {
+public class PeerDenylistManagerTest {
   private final Peer localNode = generatePeer();
-  private final PeerReputationManager peerReputationManager;
-  private final PeerPermissionsDenylist blacklist;
+  private final PeerDenylistManager peerDenylistManager;
+  private final PeerPermissionsDenylist denylist;
 
-  public PeerReputationManagerTest() {
-    blacklist = PeerPermissionsDenylist.create();
-    peerReputationManager = new PeerReputationManager(blacklist);
+  public PeerDenylistManagerTest() {
+    denylist = PeerPermissionsDenylist.create();
+    peerDenylistManager = new PeerDenylistManager(denylist);
   }
 
   @Test
-  public void doesNotBlacklistPeerForNormalDisconnect() {
+  public void doesNotDenylistPeerForNormalDisconnect() {
     final PeerConnection peer = generatePeerConnection();
 
-    checkPermissions(blacklist, peer.getPeer(), true);
+    checkPermissions(denylist, peer.getPeer(), true);
 
-    peerReputationManager.onDisconnect(peer, DisconnectReason.TOO_MANY_PEERS, false);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.TOO_MANY_PEERS, false);
 
-    checkPermissions(blacklist, peer.getPeer(), true);
+    checkPermissions(denylist, peer.getPeer(), true);
   }
 
   @Test
-  public void blacklistPeerForBadBehavior() {
+  public void denylistPeerForBadBehavior() {
     final PeerConnection peer = generatePeerConnection();
 
-    checkPermissions(blacklist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, false);
-    checkPermissions(blacklist, peer.getPeer(), false);
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, false);
+    checkPermissions(denylist, peer.getPeer(), false);
   }
 
   @Test
-  public void doesNotBlacklistPeerForOurBadBehavior() {
+  public void doesNotDenylistPeerForOurBadBehavior() {
     final PeerConnection peer = generatePeerConnection();
 
-    checkPermissions(blacklist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, true);
-    checkPermissions(blacklist, peer.getPeer(), true);
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, true);
+    checkPermissions(denylist, peer.getPeer(), true);
   }
 
   @Test
-  public void blacklistIncompatiblePeer() {
+  public void denylistIncompatiblePeer() {
     final PeerConnection peer = generatePeerConnection();
 
-    checkPermissions(blacklist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, false);
-    checkPermissions(blacklist, peer.getPeer(), false);
+    checkPermissions(denylist, peer.getPeer(), false);
   }
 
   @Test
-  public void blacklistIncompatiblePeerWhoIssuesDisconnect() {
+  public void denylistIncompatiblePeerWhoIssuesDisconnect() {
     final PeerConnection peer = generatePeerConnection();
 
-    checkPermissions(blacklist, peer.getPeer(), true);
-    peerReputationManager.onDisconnect(
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, true);
-    checkPermissions(blacklist, peer.getPeer(), false);
+    checkPermissions(denylist, peer.getPeer(), false);
   }
 
   private void checkPermissions(
-      final PeerPermissionsDenylist blacklist,
-      final Peer remotePeer,
-      final boolean expectedResult) {
+      final PeerPermissionsDenylist denylist, final Peer remotePeer, final boolean expectedResult) {
     for (PeerPermissions.Action action : PeerPermissions.Action.values()) {
-      assertThat(blacklist.isPermitted(localNode, remotePeer, action)).isEqualTo(expectedResult);
+      assertThat(denylist.isPermitted(localNode, remotePeer, action)).isEqualTo(expectedResult);
     }
   }
 

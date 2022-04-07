@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -33,8 +34,8 @@ public class JumpiOperation extends AbstractFixedCostOperation {
     super(0x57, "JUMPI", 2, 0, 1, gasCalculator, gasCalculator.getHighTierGasCost());
     invalidJumpResponse =
         new Operation.OperationResult(
-            Optional.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
-    jumpResponse = new OperationResult(Optional.of(gasCost), Optional.empty(), 0);
+            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_JUMP_DESTINATION));
+    jumpResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty(), 0);
   }
 
   @Override
@@ -42,14 +43,14 @@ public class JumpiOperation extends AbstractFixedCostOperation {
     final Bytes dest = frame.popStackItem().trimLeadingZeros();
     final Bytes condition = frame.popStackItem();
 
-    // If condition is zero (false), no jump is will be performed. Therefore skip the test.
+    // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
     if (condition.isZero()) {
       return successResponse;
     } else {
       final int jumpDestination;
       try {
         jumpDestination = dest.toInt();
-      } catch (RuntimeException re) {
+      } catch (final RuntimeException re) {
         return invalidJumpResponse;
       }
       final Code code = frame.getCode();
