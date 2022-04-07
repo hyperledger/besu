@@ -22,6 +22,8 @@ import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
+import java.util.Map;
+
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine.RunLast;
 
 public final class Besu {
+  public static final Map<String, String> SYSTEM_ENVIRONMENT = System.getenv();
   private static final int SUCCESS_EXIT_CODE = 0;
   private static final int ERROR_EXIT_CODE = 1;
 
@@ -44,7 +47,7 @@ public final class Besu {
             new RunnerBuilder(),
             new BesuController.Builder(),
             new BesuPluginContextImpl(),
-            System.getenv());
+            SYSTEM_ENVIRONMENT);
 
     besuCommand.parse(
         new RunLast().andExit(SUCCESS_EXIT_CODE),
