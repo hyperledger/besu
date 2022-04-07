@@ -58,7 +58,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       final WorldStateStorage.Updater updater,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
-    if (!isValid() || isExpired(snapSyncState) || pendingChildren.get() > 0) {
+    if (!isResponseReceived() || isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
       return 0;
     }
@@ -81,7 +81,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
       final SnapSyncState snapSyncState) {
-    if (!isValid()) {
+    if (!isResponseReceived()) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
     }
@@ -122,7 +122,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   }
 
   @Override
-  public boolean isValid() {
+  public boolean isResponseReceived() {
     return !data.isEmpty() && Hash.hash(data).equals(getNodeHash());
   }
 

@@ -218,7 +218,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
-        List.of(pendingStorageRequests, pendingCodeRequests), List.of(pendingAccountRequests));
+        List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
+        List.of(pendingAccountRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {

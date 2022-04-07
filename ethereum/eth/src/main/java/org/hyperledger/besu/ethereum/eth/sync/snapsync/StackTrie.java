@@ -34,6 +34,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.immutables.value.Value;
 
 public class StackTrie {
 
@@ -41,8 +42,15 @@ public class StackTrie {
   private final AtomicInteger nbSegments;
   private final int maxSegments;
   private final Bytes32 startKeyHash;
-  private final List<Bytes> proofs;
-  private final TreeMap<Bytes32, Bytes> keys;
+  private final Map<Bytes32, TaskElement> elements;
+
+  public StackTrie(final Hash rootHash, final Bytes32 startKeyHash) {
+    this.rootHash = rootHash;
+    this.nbSegments = new AtomicInteger(1);
+    this.maxSegments = 1;
+    this.startKeyHash = startKeyHash;
+    this.elements = new HashMap<>();
+  }
 
   public StackTrie(
       final Hash rootHash,
@@ -53,20 +61,34 @@ public class StackTrie {
     this.nbSegments = new AtomicInteger(nbSegments);
     this.maxSegments = maxSegments;
     this.startKeyHash = startKeyHash;
-    this.proofs = new ArrayList<>();
-    this.keys = new TreeMap<>();
+    this.elements = new HashMap<>();
   }
 
-  public void addKeys(final TreeMap<Bytes32, Bytes> keys) {
-    this.keys.putAll(keys);
+  public void addElement(
+      final Bytes32 taskIdentifier, final List<Bytes> proofs, final TreeMap<Bytes32, Bytes> keys) {
+    this.elements.put(
+        taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
   }
 
-  public void addProofs(final List<Bytes> proofs) {
-    this.proofs.addAll(proofs);
+  public TaskElement getElement(final Bytes32 taskIdentifier) {
+    return this.elements.get(taskIdentifier);
   }
 
   public void commit(final NodeUpdater nodeUpdater) {
+
+    final List<Bytes> proofs = new ArrayList<>();
+    final TreeMap<Bytes32, Bytes> keys = new TreeMap<>();
+
+    elements
+        .values()
+        .forEach(
+            taskElement -> {
+              proofs.addAll(taskElement.proofs());
+              keys.putAll(taskElement.keys());
+            });
+
     if (nbSegments.decrementAndGet() <= 0 && (!proofs.isEmpty() || !keys.isEmpty())) {
+
       final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
       for (Bytes proof : proofs) {
         proofsEntries.put(Hash.hash(proof), proof);
@@ -82,7 +104,9 @@ public class StackTrie {
               true);
 
       final MerklePatriciaTrie<Bytes, Bytes> trie =
-          new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, rootHash);
+          new StoredMerklePatriciaTrie<>(
+              snapStoredNodeFactory,
+              proofs.isEmpty() ? MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH : rootHash);
 
       for (Map.Entry<Bytes32, Bytes> account : keys.entrySet()) {
         trie.put(account.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, account.getValue()));
@@ -106,6 +130,20 @@ public class StackTrie {
     } else {
       nbSegments.incrementAndGet();
       return true;
+    }
+  }
+
+  @Value.Immutable
+  public abstract static class TaskElement {
+
+    @Value.Default
+    public List<Bytes> proofs() {
+      return new ArrayList<>();
+    }
+
+    @Value.Default
+    public TreeMap<Bytes32, Bytes> keys() {
+      return new TreeMap<>();
     }
   }
 }
