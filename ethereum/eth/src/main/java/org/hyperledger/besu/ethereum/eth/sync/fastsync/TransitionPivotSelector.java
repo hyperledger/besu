@@ -63,7 +63,7 @@ public class TransitionPivotSelector implements PivotBlockSelector {
     Difficulty bestPeerEstDifficulty = peer.chainState().getEstimatedTotalDifficulty();
 
     if (finalizedBlockHashSupplier.get().isPresent()) {
-      LOG.info("A finalized block is present, us it as pivot", bestPeerEstDifficulty);
+      LOG.info("A finalized block is present, use it as pivot");
       return pivotSelectorFromFinalizedBlock.selectNewPivotBlock(peer);
     }
 

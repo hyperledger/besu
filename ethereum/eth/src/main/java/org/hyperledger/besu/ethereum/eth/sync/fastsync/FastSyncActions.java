@@ -216,18 +216,19 @@ public class FastSyncActions {
       return completedFuture(currentState);
     }
 
-    if (currentState.getPivotBlockHash().isPresent()) {
-      return downloadPivotBlockHeader(currentState.getPivotBlockHash().get());
-    }
-
-    return new PivotBlockRetriever(
-            protocolSchedule,
-            ethContext,
-            metricsSystem,
-            currentState.getPivotBlockNumber().getAsLong(),
-            syncConfig.getFastSyncMinimumPeerCount(),
-            syncConfig.getFastSyncPivotDistance())
-        .downloadPivotBlockHeader();
+    return currentState
+        .getPivotBlockHash()
+        .map(this::downloadPivotBlockHeader)
+        .orElseGet(
+            () ->
+                new PivotBlockRetriever(
+                        protocolSchedule,
+                        ethContext,
+                        metricsSystem,
+                        currentState.getPivotBlockNumber().getAsLong(),
+                        syncConfig.getFastSyncMinimumPeerCount(),
+                        syncConfig.getFastSyncPivotDistance())
+                    .downloadPivotBlockHeader());
   }
 
   private FastSyncState updateStats(final FastSyncState fastSyncState) {
