@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.abi.EventEncoder;
@@ -143,7 +143,7 @@ public class ContainerTests extends ContainerTestBase {
     assertThat(goQuorumPayload.getPrivatePayload()).isEqualTo(besuPayload.getPrivatePayload());
   }
 
-  @NotNull
+  @Nonnull
   private String getEnclaveKey(final String transactionHash) throws IOException {
     final EthTransaction send = besuWeb3j.ethGetTransactionByHash(transactionHash).send();
     return send.getTransaction().get().getInput();

@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -191,7 +191,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     assertThat(result.getResult()).isEqualTo("0x");
   }
 
-  @NotNull
+  @Nonnull
   private String constructInvalidString(final String privacyGroupId) {
     final char[] chars = privacyGroupId.toCharArray();
     if (chars[3] == '0') {
@@ -202,7 +202,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     return String.valueOf(chars);
   }
 
-  @NotNull
+  @Nonnull
   private Request<Object, EthCall> privCall(
       final String privacyGroupId,
       final Contract eventEmitter,

@@ -194,7 +194,7 @@ public class NettyConnectionInitializer
   }
 
   /** @return a channel initializer for outbound connections */
-  @NotNull
+  @Nonnull
   private ChannelInitializer<SocketChannel> outboundChannelInitializer(
       final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
     return new ChannelInitializer<SocketChannel>() {
@@ -229,7 +229,7 @@ public class NettyConnectionInitializer
     };
   }
 
-  @NotNull
+  @Nonnull
   private HandshakeHandlerInbound inboundHandler(
       final CompletableFuture<PeerConnection> connectionFuture) {
     return new HandshakeHandlerInbound(
@@ -243,7 +243,7 @@ public class NettyConnectionInitializer
         this);
   }
 
-  @NotNull
+  @Nonnull
   private HandshakeHandlerOutbound outboundHandler(
       final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
     return new HandshakeHandlerOutbound(
