@@ -48,13 +48,13 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
   }
 
   /**
-   * Choose the correct protocolSchedule and blockvalidator by block rather than number.
-   * This should be used in the merge transition, specifically when the chain has not
-   * yet finalized.
+   * Choose the correct protocolSchedule and blockvalidator by block rather than number. This should
+   * be used in the merge transition, specifically when the chain has not yet finalized.
    */
   @Override
   public BlockValidator getBlockValidatorForBlock(final Block block) {
-    return transitionProtocolSchedule.getByBlockHeader(protocolContext, block.getHeader())
+    return transitionProtocolSchedule
+        .getByBlockHeader(protocolContext, block.getHeader())
         .getBlockValidator();
   }
 }

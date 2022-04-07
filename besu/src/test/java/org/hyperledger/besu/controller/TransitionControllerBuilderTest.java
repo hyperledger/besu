@@ -71,16 +71,17 @@ public class TransitionControllerBuilderTest {
 
   @Before
   public void setup() {
-    transitionProtocolSchedule = spy(new TransitionProtocolSchedule(
-        preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
+    transitionProtocolSchedule =
+        spy(
+            new TransitionProtocolSchedule(
+                preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
     when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     when(transitionProtocolSchedule.getPostMergeSchedule()).thenReturn(postMergeProtocolSchedule);
     when(transitionProtocolSchedule.getPreMergeSchedule()).thenReturn(preMergeProtocolSchedule);
     when(protocolContext.getConsensusContext(CliqueContext.class))
         .thenReturn(mock(CliqueContext.class));
-    when(protocolContext.getConsensusContext(PostMergeContext.class))
-        .thenReturn(mergeContext);
+    when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
   }
 
   @Test
@@ -110,8 +111,7 @@ public class TransitionControllerBuilderTest {
     var preMergeProtocolSpec = mock(ProtocolSpec.class);
     when(mergeContext.isPostMerge()).thenReturn(Boolean.FALSE);
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
-    when(preMergeProtocolSchedule.getByBlockNumber(anyLong()))
-        .thenReturn(preMergeProtocolSpec);
+    when(preMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(preMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
@@ -120,25 +120,21 @@ public class TransitionControllerBuilderTest {
   public void assertPostMergeScheduleForAnyBlockWhenPostMergeAndFinalized() {
     var mockBlock = new BlockHeaderTestFixture().buildHeader();
     var postMergeProtocolSpec = mock(ProtocolSpec.class);
-    when(mergeContext.isPostMerge()).thenReturn(Boolean.TRUE);
     when(mergeContext.getFinalized()).thenReturn(Optional.of(mockBlock));
-    when(postMergeProtocolSchedule.getByBlockNumber(anyLong()))
-        .thenReturn(postMergeProtocolSpec);
+    when(postMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(postMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
         .isEqualTo(postMergeProtocolSpec);
   }
 
-
   @Test
   public void assertPreMergeScheduleForBelowTerminalBlockWhenPostMergeIfNotFinalized() {
-    var mockParentBlock = new BlockHeaderTestFixture()
-        .number(100)
-        .buildHeader();
-    var mockBlock = new BlockHeaderTestFixture()
-        .number(101)
-        .difficulty(Difficulty.of(1L))
-        .parentHash(mockParentBlock.getHash())
-        .buildHeader();
+    var mockParentBlock = new BlockHeaderTestFixture().number(100).buildHeader();
+    var mockBlock =
+        new BlockHeaderTestFixture()
+            .number(101)
+            .difficulty(Difficulty.of(1L))
+            .parentHash(mockParentBlock.getHash())
+            .buildHeader();
 
     var preMergeProtocolSpec = mock(ProtocolSpec.class);
 
@@ -148,8 +144,7 @@ public class TransitionControllerBuilderTest {
     when(mockBlockchain.getTotalDifficultyByHash(any()))
         .thenReturn(Optional.of(Difficulty.of(1335L)));
 
-    when(preMergeProtocolSchedule.getByBlockNumber(anyLong()))
-        .thenReturn(preMergeProtocolSpec);
+    when(preMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(preMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
         .isEqualTo(preMergeProtocolSpec);
   }
