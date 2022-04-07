@@ -46,7 +46,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  private static final int DISPLAY_PROGRESS_STEP = 100000;
+  private static final int DISPLAY_SNAP_PROGRESS_STEP = 25000;
+  private static final int DISPLAY_HEAL_PROGRESS_STEP = 10000;
 
   protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
       new InMemoryTaskQueue<>();
@@ -62,7 +63,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private final SnapSyncState snapSyncState;
 
-  // metrics round the snapsync
+  // metrics around the snapsync
   private final RunnableCounter generatedNodes;
   private final RunnableCounter healedNodes;
 
@@ -82,21 +83,21 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         clock);
     this.snapSyncState = snapSyncState;
     this.generatedNodes =
-        new RunnableCounter(
+        new SnapCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "snapsync_world_state_generated_nodes_total",
                 "Total number of data nodes generated as part of snap sync world state download"),
             this::displayWorldStateSyncProgress,
-            DISPLAY_PROGRESS_STEP);
+            DISPLAY_SNAP_PROGRESS_STEP);
     this.healedNodes =
-        new RunnableCounter(
+        new SnapCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "snapsync_world_state_healed_nodes_total",
                 "Total number of data nodes healed as part of snap sync world state heal process"),
             this::displayHealProgress,
-            DISPLAY_PROGRESS_STEP);
+            DISPLAY_HEAL_PROGRESS_STEP);
   }
 
   @Override
@@ -256,7 +257,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   private void displayWorldStateSyncProgress() {
-    LOG.info("Generated {} world state nodes", generatedNodes.get());
+    LOG.info("Retrieved {} world state nodes", generatedNodes.get());
   }
 
   private void displayHealProgress() {

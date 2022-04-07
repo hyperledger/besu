@@ -127,21 +127,15 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> accounts,
       final ArrayDeque<Bytes> proofs) {
-    if (!worldStateProofProvider.isValidRangeProof(
-        startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
-      isProofValid = Optional.of(false);
-    } else {
-      stackTrie.addElement(startKeyHash, proofs, accounts);
-      isProofValid = Optional.of(true);
+    if (!accounts.isEmpty() || !proofs.isEmpty()) {
+      if (!worldStateProofProvider.isValidRangeProof(
+          startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
+        isProofValid = Optional.of(false);
+      } else {
+        stackTrie.addElement(startKeyHash, proofs, accounts);
+        isProofValid = Optional.of(true);
+      }
     }
-  }
-
-  @Override
-  public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider,
-      final SnapSyncState snapSyncState) {
-    return isProofValid.orElse(false);
   }
 
   @Override

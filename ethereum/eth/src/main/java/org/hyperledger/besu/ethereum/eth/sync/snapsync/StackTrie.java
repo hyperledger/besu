@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -49,7 +50,7 @@ public class StackTrie {
     this.nbSegments = new AtomicInteger(1);
     this.maxSegments = 1;
     this.startKeyHash = startKeyHash;
-    this.elements = new HashMap<>();
+    this.elements = new ConcurrentHashMap<>();
   }
 
   public StackTrie(
@@ -76,18 +77,18 @@ public class StackTrie {
 
   public void commit(final NodeUpdater nodeUpdater) {
 
-    final List<Bytes> proofs = new ArrayList<>();
-    final TreeMap<Bytes32, Bytes> keys = new TreeMap<>();
+    if (nbSegments.decrementAndGet() <= 0 && !elements.isEmpty()) {
 
-    elements
-        .values()
-        .forEach(
-            taskElement -> {
-              proofs.addAll(taskElement.proofs());
-              keys.putAll(taskElement.keys());
-            });
+      final List<Bytes> proofs = new ArrayList<>();
+      final TreeMap<Bytes32, Bytes> keys = new TreeMap<>();
 
-    if (nbSegments.decrementAndGet() <= 0 && (!proofs.isEmpty() || !keys.isEmpty())) {
+      elements
+          .values()
+          .forEach(
+              taskElement -> {
+                proofs.addAll(taskElement.proofs());
+                keys.putAll(taskElement.keys());
+              });
 
       final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
       for (Bytes proof : proofs) {

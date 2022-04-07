@@ -102,24 +102,18 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
-    if (!worldStateProofProvider.isValidRangeProof(
-        startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
-      downloadState.enqueueRequest(
-          createAccountDataRequest(
-              getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
-      isProofValid = Optional.of(false);
-    } else {
-      stackTrie.addElement(startKeyHash, proofs, slots);
-      isProofValid = Optional.of(true);
+    if (!slots.isEmpty() || !proofs.isEmpty()) {
+      if (!worldStateProofProvider.isValidRangeProof(
+          startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+        downloadState.enqueueRequest(
+            createAccountDataRequest(
+                getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
+        isProofValid = Optional.of(false);
+      } else {
+        stackTrie.addElement(startKeyHash, proofs, slots);
+        isProofValid = Optional.of(true);
+      }
     }
-  }
-
-  @Override
-  public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider,
-      final SnapSyncState snapSyncState) {
-    return isProofValid.orElse(false);
   }
 
   @Override
