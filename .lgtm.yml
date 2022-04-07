@@ -2,3 +2,4 @@ extraction:
   java:
     index:
       java_version: "11"
+      build_command: JAVA_OPTS="-Xmx1000M" ./gradlew 
