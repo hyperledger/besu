@@ -114,7 +114,7 @@ public class ForwardSyncPhaseTest {
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
 
-    when(context.getBlockValidator(anyLong()).validateAndProcessBlock(any(), any(), any(), any()))
+    when(context.getBlockValidatorForBlock(any()).validateAndProcessBlock(any(), any(), any(), any()))
         .thenAnswer(
             invocation -> {
               final Object[] arguments = invocation.getArguments();
