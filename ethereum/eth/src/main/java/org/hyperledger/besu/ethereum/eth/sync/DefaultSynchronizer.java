@@ -161,6 +161,7 @@ public class DefaultSynchronizer implements Synchronizer {
         future = fastSyncDownloader.get().start().thenCompose(this::handleFastSyncResult);
 
       } else {
+        syncState.markInitialSyncPhaseAsDone();
         future = startFullSync();
       }
       future = future.thenApply(this::finalizeSync);
