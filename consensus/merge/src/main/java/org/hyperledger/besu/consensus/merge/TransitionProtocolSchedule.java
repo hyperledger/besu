@@ -36,6 +36,13 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
     super(preMergeProtocolSchedule, postMergeProtocolSchedule);
   }
 
+  public TransitionProtocolSchedule(
+      final ProtocolSchedule preMergeProtocolSchedule,
+      final ProtocolSchedule postMergeProtocolSchedule,
+      final MergeContext mergeContext) {
+    super(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
+  }
+
   public ProtocolSchedule getPreMergeSchedule() {
     return getPreMergeObject();
   }
@@ -67,7 +74,6 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
             .getByBlockNumber(blockHeader.getNumber());
       }
     }
-
     // else return post-merge schedule
     return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
   }
