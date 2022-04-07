@@ -44,8 +44,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -278,13 +278,13 @@ public class BackwardSyncPhaseTest {
     return chain;
   }
 
-  @NotNull
+  @Nonnull
   private BackwardChain createBackwardChain(final int number) {
     return new BackwardChain(
         headersStorage, blocksStorage, remoteBlockchain.getBlockByNumber(number).orElseThrow());
   }
 
-  @NotNull
+  @Nonnull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }

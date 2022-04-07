@@ -47,8 +47,8 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -240,7 +240,7 @@ public class ForwardSyncPhaseTest {
   }
 
   @Test
-  public void shouldAddSuccessorsWhenNoUnknownBlockSet() throws Exception {
+  public void shouldAddSuccessorsWhenNoUnknownBlockSet() {
     BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 3, LOCAL_HEIGHT);
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
     backwardChain.appendExpectedBlock(getBlockByNumber(LOCAL_HEIGHT + 2));
@@ -263,13 +263,13 @@ public class ForwardSyncPhaseTest {
     return chain;
   }
 
-  @NotNull
+  @Nonnull
   private BackwardChain backwardChainFromBlock(final int number) {
     return new BackwardChain(
         headersStorage, blocksStorage, remoteBlockchain.getBlockByNumber(number).orElseThrow());
   }
 
-  @NotNull
+  @Nonnull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }

@@ -22,8 +22,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     implements TaskCollection<T> {
@@ -42,7 +41,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     }
   }
 
-  @NotNull
+  @Nonnull
   private PriorityQueue<T> newEmptyQueue() {
     return new PriorityQueue<>(Comparator.comparingLong(TasksPriorityProvider::getPriority));
   }
