@@ -42,6 +42,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntSupplier;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nonnull;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -55,7 +56,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
-import org.jetbrains.annotations.NotNull;
 
 public class NettyConnectionInitializer
     implements ConnectionInitializer, HandshakerProvider, FramerProvider {
@@ -194,7 +194,7 @@ public class NettyConnectionInitializer
   }
 
   /** @return a channel initializer for outbound connections */
-  @NotNull
+  @Nonnull
   private ChannelInitializer<SocketChannel> outboundChannelInitializer(
       final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
     return new ChannelInitializer<SocketChannel>() {
@@ -229,7 +229,7 @@ public class NettyConnectionInitializer
     };
   }
 
-  @NotNull
+  @Nonnull
   private HandshakeHandlerInbound inboundHandler(
       final CompletableFuture<PeerConnection> connectionFuture) {
     return new HandshakeHandlerInbound(
@@ -243,7 +243,7 @@ public class NettyConnectionInitializer
         this);
   }
 
-  @NotNull
+  @Nonnull
   private HandshakeHandlerOutbound outboundHandler(
       final Peer peer, final CompletableFuture<PeerConnection> connectionFuture) {
     return new HandshakeHandlerOutbound(
@@ -258,7 +258,7 @@ public class NettyConnectionInitializer
         this);
   }
 
-  @NotNull
+  @Nonnull
   private TimeoutHandler<Channel> timeoutHandler(
       final CompletableFuture<PeerConnection> connectionFuture, final String s) {
     return new TimeoutHandler<>(
