@@ -55,7 +55,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
-import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nonnull;
 
 public class NettyConnectionInitializer
     implements ConnectionInitializer, HandshakerProvider, FramerProvider {
@@ -258,7 +259,7 @@ public class NettyConnectionInitializer
         this);
   }
 
-  @NotNull
+  @Nonnull
   private TimeoutHandler<Channel> timeoutHandler(
       final CompletableFuture<PeerConnection> connectionFuture, final String s) {
     return new TimeoutHandler<>(

@@ -23,8 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
 import org.testcontainers.containers.Network;
+
+import javax.annotation.Nonnull;
 
 public class TesseraTestHarnessFactory {
   private static final String storage = "memory";
@@ -68,7 +69,7 @@ public class TesseraTestHarnessFactory {
         containerNetwork);
   }
 
-  @NotNull
+  @Nonnull
   private static Path[] stringArrayToPathArray(final Path tempDir, final String[] privKeyPaths) {
     return Arrays.stream(privKeyPaths)
         .map(
