@@ -50,11 +50,12 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     final byte[] val2 = bytesFromHexString("1337");
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
     Supplier<ColumnFamilyHandle> segment = () -> store.getSegmentIdentifierByName(TestSegment.FOO);
-    final Consumer<byte[]> insert = value -> {
-      final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
-      tx.put(segment.get(), key, value);
-      tx.commit();
-    };
+    final Consumer<byte[]> insert =
+        value -> {
+          final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
+          tx.put(segment.get(), key, value);
+          tx.commit();
+        };
 
     // insert val:
     insert.accept(val1);

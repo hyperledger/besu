@@ -41,7 +41,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -49,7 +48,6 @@ import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
-import org.rocksdb.FlushOptions;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
@@ -199,14 +197,16 @@ public class RocksDBColumnarKeyValueStorage
   public ColumnFamilyHandle clear(final ColumnFamilyHandle segmentHandle) {
     try {
 
-      var entry = columnHandlesByName.entrySet().stream()
-          .filter(e -> e.getValue().equals(segmentHandle))
-          .findAny();
+      var entry =
+          columnHandlesByName.entrySet().stream()
+              .filter(e -> e.getValue().equals(segmentHandle))
+              .findAny();
 
       if (entry.isPresent()) {
         String segmentName = entry.get().getKey();
-        ColumnFamilyDescriptor descriptor = new ColumnFamilyDescriptor(
-            segmentHandle.getName(), segmentHandle.getDescriptor().getOptions());
+        ColumnFamilyDescriptor descriptor =
+            new ColumnFamilyDescriptor(
+                segmentHandle.getName(), segmentHandle.getDescriptor().getOptions());
         db.dropColumnFamily(segmentHandle);
         segmentHandle.close();
         ColumnFamilyHandle newHandle = db.createColumnFamily(descriptor);
