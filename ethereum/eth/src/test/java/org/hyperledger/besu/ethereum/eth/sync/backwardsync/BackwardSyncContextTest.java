@@ -49,8 +49,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -152,7 +152,7 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void shouldNotAppendWhenAlreadySyncingHash() throws Exception {
+  public void shouldNotAppendWhenAlreadySyncingHash() {
     final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
     when(backwardSyncLookupService.lookup(hash))
         .thenReturn(CompletableFuture.completedFuture(Collections.emptyList()));
@@ -213,7 +213,7 @@ public class BackwardSyncContextTest {
     peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
   }
 
-  @NotNull
+  @Nonnull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }

@@ -23,7 +23,6 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.jetbrains.annotations.NotNull;
 
 // The big integer modular exponentiation precompiled contract defined in EIP-198.
 public class BigIntegerModularExponentiationPrecompiledContract
@@ -53,7 +52,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return gasCalculator().modExpGasCost(input);
   }
 
-  @NotNull
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {

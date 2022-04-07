@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
@@ -145,7 +145,7 @@ public class ContractOperations {
     return prependZeroesToPadHexStringToGivenLength(str, 64);
   }
 
-  @NotNull
+  @Nonnull
   public static String prependZeroesToPadHexStringToGivenLength(
       final String hexString, final int lenRequested) {
     final StringBuilder sb = new StringBuilder(hexString);

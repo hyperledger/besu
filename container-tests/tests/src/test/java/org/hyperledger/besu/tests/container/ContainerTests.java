@@ -27,10 +27,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nonnull;
 
 import io.reactivex.disposables.Disposable;
 import okhttp3.OkHttpClient;
-import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.Test;
 import org.web3j.abi.EventEncoder;
