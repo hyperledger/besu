@@ -55,7 +55,6 @@ public class FastSyncActions {
   private final MetricsSystem metricsSystem;
   private final Counter pivotBlockSelectionCounter;
   private final AtomicLong pivotBlockGauge = new AtomicLong(0);
-  private final TrailingPeerLimiter trailingPeerLimiter;
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -72,12 +71,6 @@ public class FastSyncActions {
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.metricsSystem = metricsSystem;
-    this.trailingPeerLimiter =
-        new TrailingPeerLimiter(
-            ethContext.getEthPeers(),
-            () ->
-                new TrailingPeerRequirements(
-                    conservatitvelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
 
     pivotBlockSelectionCounter =
         metricsSystem.createCounter(
@@ -196,6 +189,12 @@ public class FastSyncActions {
   }
 
   private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock() {
+    final TrailingPeerLimiter trailingPeerLimiter =
+        new TrailingPeerLimiter(
+            ethContext.getEthPeers(),
+            () ->
+                new TrailingPeerRequirements(
+                    conservatitvelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
     trailingPeerLimiter.enforceTrailingPeerLimit();
 
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
