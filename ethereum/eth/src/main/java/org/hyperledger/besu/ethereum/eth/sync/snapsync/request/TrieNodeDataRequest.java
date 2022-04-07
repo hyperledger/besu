@@ -57,7 +57,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       final WorldStateStorage.Updater updater,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState) {
-    if (!isResponseReceived() || isExpired(snapSyncState) || pendingChildren.get() > 0) {
+    if (isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
       return 0;
     }

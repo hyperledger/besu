@@ -46,7 +46,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  private static final int DISPLAY_SNAP_PROGRESS_STEP = 25000;
+  private static final int DISPLAY_SNAP_PROGRESS_STEP = 200000;
   private static final int DISPLAY_HEAL_PROGRESS_STEP = 10000;
 
   protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =

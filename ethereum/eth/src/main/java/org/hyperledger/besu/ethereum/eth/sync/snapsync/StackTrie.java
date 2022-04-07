@@ -25,11 +25,11 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -46,11 +46,7 @@ public class StackTrie {
   private final Map<Bytes32, TaskElement> elements;
 
   public StackTrie(final Hash rootHash, final Bytes32 startKeyHash) {
-    this.rootHash = rootHash;
-    this.nbSegments = new AtomicInteger(1);
-    this.maxSegments = 1;
-    this.startKeyHash = startKeyHash;
-    this.elements = new ConcurrentHashMap<>();
+    this(rootHash, 1, 1, startKeyHash);
   }
 
   public StackTrie(
@@ -62,7 +58,7 @@ public class StackTrie {
     this.nbSegments = new AtomicInteger(nbSegments);
     this.maxSegments = maxSegments;
     this.startKeyHash = startKeyHash;
-    this.elements = new HashMap<>();
+    this.elements = new LinkedHashMap<>();
   }
 
   public void addElement(

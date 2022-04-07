@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -50,7 +51,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
   private static final Logger LOG = LoggerFactory.getLogger(StorageRangeDataRequest.class);
 
-  private final Bytes32 accountHash;
+  private final Hash accountHash;
   private final Bytes32 storageRoot;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
@@ -65,7 +66,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash) {
     super(STORAGE_RANGE, rootHash);
-    this.accountHash = accountHash;
+    this.accountHash = Hash.wrap(accountHash);
     this.storageRoot = storageRoot;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
@@ -88,11 +89,19 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
+    final AtomicReference<Updater> updaterTmp = new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
-        (location, hash, value) ->
-            updater.putAccountStorageTrieNode(Hash.wrap(accountHash), location, hash, value);
+        (location, hash, value) -> {
+          updaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
+          if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
+            updaterTmp.get().commit();
+            updaterTmp.set(worldStateStorage.updater());
+          }
+        };
 
     stackTrie.commit(nodeUpdater);
+
+    updaterTmp.get().commit();
 
     return nbNodesSaved.get();
   }

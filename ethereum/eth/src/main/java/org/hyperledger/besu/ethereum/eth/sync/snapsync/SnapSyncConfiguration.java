@@ -22,9 +22,9 @@ public class SnapSyncConfiguration {
   // we use 126 and not the max value (128) to avoid sending requests that will be refused
   public static final int DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY = 126;
   public static final int DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING = 60;
-  public static final int DEFAULT_STORAGE_COUNT_PER_REQUEST = 1024;
+  public static final int DEFAULT_STORAGE_COUNT_PER_REQUEST = 384;
   public static final int DEFAULT_BYTECODE_COUNT_PER_REQUEST = 84;
-  public static final int DEFAULT_TRIENODE_COUNT_PER_REQUEST = 1024;
+  public static final int DEFAULT_TRIENODE_COUNT_PER_REQUEST = 384;
 
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
