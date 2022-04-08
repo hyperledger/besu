@@ -55,7 +55,7 @@ public class MainnetBlockValidatorTest {
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private MainnetBlockValidator mainnetBlockValidator;
-  private Block badBlock;
+  private Block block;
 
   @Before
   public void setup() {
@@ -64,7 +64,7 @@ public class MainnetBlockValidatorTest {
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
-    badBlock =
+    block =
         new BlockDataGenerator()
             .block(
                 BlockDataGenerator.BlockOptions.create()
@@ -79,7 +79,7 @@ public class MainnetBlockValidatorTest {
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
@@ -99,7 +99,7 @@ public class MainnetBlockValidatorTest {
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
@@ -121,7 +121,7 @@ public class MainnetBlockValidatorTest {
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
@@ -139,7 +139,7 @@ public class MainnetBlockValidatorTest {
         .thenReturn(true);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(
             new BlockProcessor.Result() {
               @SuppressWarnings("unchecked")
@@ -162,7 +162,7 @@ public class MainnetBlockValidatorTest {
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
@@ -180,7 +180,7 @@ public class MainnetBlockValidatorTest {
         .thenReturn(true);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(
             new BlockProcessor.Result() {
               @SuppressWarnings("unchecked")
@@ -203,7 +203,7 @@ public class MainnetBlockValidatorTest {
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
@@ -221,7 +221,7 @@ public class MainnetBlockValidatorTest {
         .thenReturn(true);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(block)))
         .thenReturn(
             new BlockProcessor.Result() {
               @SuppressWarnings("unchecked")
@@ -242,16 +242,12 @@ public class MainnetBlockValidatorTest {
               }
             });
     when(blockBodyValidator.validateBody(
-            eq(protocolContext),
-            eq(badBlock),
-            any(),
-            any(),
-            eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(protocolContext), eq(block), any(), any(), eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -269,9 +265,61 @@ public class MainnetBlockValidatorTest {
         .thenReturn(false);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        block,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
-    assertThat(badBlockManager.getBadBlock(badBlock.getHash())).containsSame(badBlock);
+    assertThat(badBlockManager.getBadBlock(block.getHash())).containsSame(block);
+  }
+
+  @Test
+  public void validateBlock_shouldNotPersistState() {
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    when(blockHeaderValidator.validateHeader(
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
+        .thenReturn(true);
+    final MutableWorldState worldState = mock(MutableWorldState.class);
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
+        .thenReturn(Optional.of(worldState));
+    when(blockProcessor.processBlockWithoutPersisting(
+            eq(blockchain),
+            eq(worldState),
+            eq(block.getHeader()),
+            eq(block.getBody().getTransactions()),
+            eq(block.getBody().getOmmers()),
+            eq(null)))
+        .thenReturn(
+            new BlockProcessor.Result() {
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
+              @Override
+              public boolean isSuccessful() {
+                return true;
+              }
+            });
+    when(blockBodyValidator.validateBody(
+            eq(protocolContext), eq(block), any(), any(), eq(HeaderValidationMode.DETACHED_ONLY)))
+        .thenReturn(true);
+
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
+    mainnetBlockValidator.validateBlock(
+        protocolContext,
+        block,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY);
+    assertThat(badBlockManager.getBadBlocks()).isEmpty();
   }
 }
