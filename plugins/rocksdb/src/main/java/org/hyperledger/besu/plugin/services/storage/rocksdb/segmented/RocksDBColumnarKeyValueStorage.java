@@ -31,6 +31,7 @@ import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransaction
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +41,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -123,15 +123,14 @@ public class RocksDBColumnarKeyValueStorage
                   Collectors.toMap(
                       segment -> Bytes.wrap(segment.getId()), SegmentIdentifier::getName));
 
-      final ImmutableMap.Builder<String, ColumnFamilyHandle> builder = ImmutableMap.builder();
+      columnHandlesByName = new HashMap<>();
 
       for (ColumnFamilyHandle columnHandle : columnHandles) {
         final String segmentName =
             requireNonNullElse(
                 segmentsById.get(Bytes.wrap(columnHandle.getName())), DEFAULT_COLUMN);
-        builder.put(segmentName, columnHandle);
+        columnHandlesByName.put(segmentName, columnHandle);
       }
-      columnHandlesByName = builder.build();
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -195,18 +194,28 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public void clear(final ColumnFamilyHandle segmentHandle) {
-    try (final RocksIterator rocksIterator = db.newIterator(segmentHandle)) {
-      rocksIterator.seekToFirst();
-      if (rocksIterator.isValid()) {
-        final byte[] firstKey = rocksIterator.key();
-        rocksIterator.seekToLast();
-        if (rocksIterator.isValid()) {
-          final byte[] lastKey = rocksIterator.key();
-          db.deleteRange(segmentHandle, firstKey, lastKey);
-          db.delete(segmentHandle, lastKey);
-        }
+  public ColumnFamilyHandle clear(final ColumnFamilyHandle segmentHandle) {
+    try {
+
+      var entry =
+          columnHandlesByName.entrySet().stream()
+              .filter(e -> e.getValue().equals(segmentHandle))
+              .findAny();
+
+      if (entry.isPresent()) {
+        String segmentName = entry.get().getKey();
+        ColumnFamilyDescriptor descriptor =
+            new ColumnFamilyDescriptor(
+                segmentHandle.getName(), segmentHandle.getDescriptor().getOptions());
+        db.dropColumnFamily(segmentHandle);
+        segmentHandle.close();
+        ColumnFamilyHandle newHandle = db.createColumnFamily(descriptor);
+        columnHandlesByName.put(segmentName, newHandle);
+        return newHandle;
       }
+
+      return segmentHandle;
+
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
