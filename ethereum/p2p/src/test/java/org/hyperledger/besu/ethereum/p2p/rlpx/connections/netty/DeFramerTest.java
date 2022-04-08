@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
+import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerChannelClosedException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
@@ -337,6 +338,29 @@ public class DeFramerTest {
     assertThatThrownBy(connectFuture::get)
         .hasCauseInstanceOf(PeerDisconnectedException.class)
         .hasMessageContaining(disconnectMessage.getReason().toString());
+    verify(ctx).close();
+    assertThat(out).isEmpty();
+  }
+
+  @Test
+  public void decode_shouldHandleRemoteSocketAddressIsNull() {
+    final Peer peer = createRemotePeer();
+    final PeerInfo remotePeerInfo =
+        new PeerInfo(p2pVersion, clientId, capabilities, 0, peer.getId());
+    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    when(framer.deframe(any()))
+        .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
+        .thenReturn(null);
+    when(ctx.channel().remoteAddress()).thenReturn(null);
+    ChannelFuture future = NettyMocks.channelFuture(true);
+    when(ctx.writeAndFlush(any())).thenReturn(future);
+    List<Object> out = new ArrayList<>();
+    deFramer.decode(ctx, data, out);
+
+    assertThat(connectFuture).isDone();
+    assertThat(connectFuture).isCompletedExceptionally();
+    assertThatThrownBy(connectFuture::get).hasCauseInstanceOf(PeerChannelClosedException.class);
     verify(ctx).close();
     assertThat(out).isEmpty();
   }
