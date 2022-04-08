@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
-  private final S segmentHandle;
+  private S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
   public SegmentedKeyValueStorageAdapter(
@@ -37,7 +37,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   @Override
   public void clear() {
-    storage.clear(segmentHandle);
+    segmentHandle = storage.clear(segmentHandle);
   }
 
   @Override

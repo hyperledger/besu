@@ -74,7 +74,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
-  void clear(S segmentHandle);
+  S clear(S segmentHandle);
 
   /**
    * Represents a set of changes to be committed atomically. A single transaction is not
