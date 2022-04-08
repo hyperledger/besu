@@ -27,9 +27,8 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,14 +72,14 @@ public class BackwardSyncTaskTest {
         .hasMessageContaining("No pivot");
   }
 
-  @NotNull
+  @Nonnull
   private BackwardSyncTask createBackwardSyncTask() {
     final BackwardChain backwardChain =
         new BackwardChain(headersStorage, blocksStorage, blocks.get(1));
     return createBackwardSyncTask(backwardChain);
   }
 
-  @NotNull
+  @Nonnull
   private BackwardSyncTask createBackwardSyncTask(final BackwardChain backwardChain) {
     return new BackwardSyncTask(context, backwardChain) {
       @Override
@@ -91,8 +90,7 @@ public class BackwardSyncTaskTest {
   }
 
   @Test
-  public void shouldFinishImmediatellyFailWhenPivotIsDifferent()
-      throws ExecutionException, InterruptedException {
+  public void shouldFinishImmediatelyFailWhenPivotIsDifferent() {
     final BackwardChain backwardChain =
         new BackwardChain(headersStorage, blocksStorage, blocks.get(0));
     when(context.getCurrentChain()).thenReturn(Optional.of(backwardChain));
