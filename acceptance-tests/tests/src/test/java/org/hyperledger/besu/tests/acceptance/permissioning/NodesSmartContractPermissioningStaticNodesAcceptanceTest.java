@@ -22,8 +22,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +72,7 @@ public class NodesSmartContractPermissioningStaticNodesAcceptanceTest
         .build();
   }
 
-  @NotNull
+  @Nonnull
   private List<String> mapNodesToEnodeURLs(final List<Node> staticNodes) {
     return staticNodes.stream()
         .map(node -> (RunnableNode) node)
