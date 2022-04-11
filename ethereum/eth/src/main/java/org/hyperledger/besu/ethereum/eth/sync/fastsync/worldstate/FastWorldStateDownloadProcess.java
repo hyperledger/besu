@@ -192,7 +192,7 @@ public class FastWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   3,
                   bufferCapacity)
               .inBatches(hashCountPerRequest)
-              .thenProcessAsyncOrdered(
+              .thenProcessAsync(
                   "batchDownloadData",
                   requestTasks ->
                       requestDataStep.requestData(requestTasks, pivotBlockHeader, downloadState),

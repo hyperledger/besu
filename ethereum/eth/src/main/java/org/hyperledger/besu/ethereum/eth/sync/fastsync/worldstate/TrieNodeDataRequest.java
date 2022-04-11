@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -39,23 +40,29 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
     }
-
     final List<Node<Bytes>> nodes =
         TrieNodeDecoder.decodeNodes(getLocation().orElse(Bytes.EMPTY), getData());
     return nodes.stream()
         .flatMap(
             node -> {
+              Stream<NodeDataRequest> childRequests;
               if (nodeIsHashReferencedDescendant(node)) {
-                return Stream.of(
-                    createChildNodeDataRequest(Hash.wrap(node.getHash()), node.getLocation()));
+                childRequests =
+                    Stream.of(
+                        createChildNodeDataRequest(Hash.wrap(node.getHash()), node.getLocation()));
               } else {
-                return node.getValue()
-                    .map(
-                        value ->
-                            getRequestsFromTrieNodeValue(
-                                worldStateStorage, node.getLocation(), node.getPath(), value))
-                    .orElseGet(Stream::empty);
+                childRequests =
+                    node.getValue()
+                        .map(
+                            value ->
+                                getRequestsFromTrieNodeValue(
+                                    worldStateStorage, node.getLocation(), node.getPath(), value))
+                        .orElseGet(Stream::empty);
               }
+              return childRequests
+                  .peek(request -> request.registerParent(this))
+                  .collect(Collectors.toList())
+                  .stream();
             })
         .peek(request -> request.registerParent(this));
   }
