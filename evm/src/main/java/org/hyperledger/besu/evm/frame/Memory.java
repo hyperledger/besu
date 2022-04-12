@@ -345,7 +345,7 @@ public class Memory {
 
     int length = toIndex-fromIndex;
     byte[] newArray = new byte[length];
-    byteFill(newArray, value);
+    if (value != 0) byteFill(newArray, value);
     System.arraycopy(newArray, 0, array, fromIndex, length);
   }
 
