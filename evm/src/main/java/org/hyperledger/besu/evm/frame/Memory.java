@@ -333,7 +333,7 @@ public class Memory {
       System.arraycopy(value.toArrayUnsafe(), 0, memBytes, start, length);
     } else {
       int divider = end - srcLength;
-      byteFill(memBytes, start, divider, (byte) 0);
+      //byteFill(memBytes, start, divider, (byte) 0);
       if (srcLength > 0) {
         System.arraycopy(value.toArrayUnsafe(), 0, memBytes, divider, srcLength);
       }
