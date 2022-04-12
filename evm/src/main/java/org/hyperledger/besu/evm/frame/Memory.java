@@ -341,17 +341,24 @@ public class Memory {
   }
 
   public void byteFill(
-      final byte[] array, final int fromIndex, final int toIndex, final byte value) {
-    int len = toIndex;
-    if (len > 0) {
-      array[fromIndex] = value;
+          final byte[] array, final int fromIndex, final int toIndex, final byte value) {
+
+    int length = toIndex-fromIndex;
+    byte[] newArray = new byte[length];
+    byteFill(newArray, value);
+    System.arraycopy(newArray, 0, array, fromIndex, length);
+  }
+
+  public void byteFill(final byte[] array, final byte value) {
+    int len = array.length;
+
+    if (len > 0){
+      array[0] = value;
     }
 
-    // Value of i will be [1, 2, 4, 8, 16, 32, ..., len]
-    int j = 0;
+    //Value of i will be [1, 2, 4, 8, 16, 32, ..., len]
     for (int i = 1; i < len; i += i) {
-      j = fromIndex + i;
-      System.arraycopy(array, fromIndex, array, j, ((len - j) < j) ? (len - j) : j);
+      System.arraycopy(array, 0, array, i, ((len - i) < i) ? (len - i) : i);
     }
   }
 
