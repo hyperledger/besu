@@ -80,8 +80,9 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
-    if (isPostMerge.get().orElse(Boolean.FALSE)) {
-      // we never switch back to a pre-merge once we have transitioned post-TTD.
+    if (isPostMerge.get().orElse(Boolean.FALSE) && lastFinalized.get() != null) {
+      // if we have finalized, we never switch back to a pre-merge once we have transitioned
+      // post-TTD.
       return;
     }
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
