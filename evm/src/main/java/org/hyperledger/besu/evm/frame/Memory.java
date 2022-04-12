@@ -389,7 +389,7 @@ public class Memory {
     }
 
     ensureCapacityForBytes(location, numBytes);
-    Arrays.fill(memBytes, location, location + numBytes, (byte) 0);
+    byteFill(memBytes, location, location + numBytes, (byte) 0);
   }
 
   /**
