@@ -5,6 +5,7 @@ ARG VERSION="dev"
 RUN apt-get update && \
  apt-get install --no-install-recommends -q --assume-yes openjdk-17-jre-headless=17* && \
  apt-get clean  && \
+  apt-get wget  && \
  rm -rf /var/lib/apt/lists/*  && \
  wget https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2022.3-docker.zip -P /tmp/ && \
    unzip /tmp/YourKit-JavaProfiler-2022.3-docker.zip -d /usr/local && \
