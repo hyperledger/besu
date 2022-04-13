@@ -333,32 +333,10 @@ public class Memory {
       System.arraycopy(value.toArrayUnsafe(), 0, memBytes, start, length);
     } else {
       int divider = end - srcLength;
-      byteFill(memBytes, start, divider, (byte) 0);
+      Arrays.fill(memBytes, start, divider, (byte) 0);
       if (srcLength > 0) {
         System.arraycopy(value.toArrayUnsafe(), 0, memBytes, divider, srcLength);
       }
-    }
-  }
-
-  public void byteFill(
-      final byte[] array, final int fromIndex, final int toIndex, final byte value) {
-
-    int length = toIndex - fromIndex;
-    byte[] newArray = new byte[length];
-    if (value != 0) byteFill(newArray, value);
-    System.arraycopy(newArray, 0, array, fromIndex, length);
-  }
-
-  public void byteFill(final byte[] array, final byte value) {
-    int len = array.length;
-
-    if (len > 0) {
-      array[0] = value;
-    }
-
-    // Value of i will be [1, 2, 4, 8, 16, 32, ..., len]
-    for (int i = 1; i < len; i += i) {
-      System.arraycopy(array, 0, array, i, ((len - i) < i) ? (len - i) : i);
     }
   }
 
@@ -389,7 +367,7 @@ public class Memory {
     }
 
     ensureCapacityForBytes(location, numBytes);
-    byteFill(memBytes, location, location + numBytes, (byte) 0);
+    Arrays.fill(memBytes, location, location + numBytes, (byte) 0);
   }
 
   /**

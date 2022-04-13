@@ -41,7 +41,7 @@ public class ReturnOperation extends AbstractOperation {
           OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    frame.setOutputData(frame.readMemory(from, length));
+    frame.setOutputData(frame.readMutableMemory(from, length));
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
