@@ -273,6 +273,24 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .isTrue();
   }
 
+  @Test
+  public void isWorldStateAvailable_afterCallingSaveWorldstate() {
+
+    final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+
+    final Bytes blockHash = Bytes32.fromHexString("0x01");
+    final Bytes32 nodeHashKey = Bytes32.fromHexString("0x02");
+    final Bytes nodeValue = Bytes32.fromHexString("0x03");
+
+    assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isFalse();
+
+    updater.saveWorldState(blockHash, nodeHashKey, nodeValue);
+    updater.commit();
+
+    assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isTrue();
+  }
+
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
     return new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
   }

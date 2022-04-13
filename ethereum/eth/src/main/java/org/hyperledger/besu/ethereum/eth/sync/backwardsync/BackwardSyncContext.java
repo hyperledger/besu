@@ -46,7 +46,7 @@ public class BackwardSyncContext {
   public static final int BATCH_SIZE = 200;
   private static final int MAX_RETRIES = 100;
 
-  private final ProtocolContext protocolContext;
+  protected final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
@@ -255,6 +255,10 @@ public class BackwardSyncContext {
 
   public BlockValidator getBlockValidator(final long blockNumber) {
     return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
+  }
+
+  public BlockValidator getBlockValidatorForBlock(final Block block) {
+    return getBlockValidator(block.getHeader().getNumber());
   }
 
   public Optional<BackwardChain> findCorrectChainFromPivot(final long number) {

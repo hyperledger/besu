@@ -170,7 +170,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
     debugLambda(LOG, "Going to validate block {}", () -> block.getHeader().getHash().toHexString());
     var optResult =
         context
-            .getBlockValidator(block.getHeader().getNumber())
+            .getBlockValidatorForBlock(block)
             .validateAndProcessBlock(
                 context.getProtocolContext(),
                 block,
