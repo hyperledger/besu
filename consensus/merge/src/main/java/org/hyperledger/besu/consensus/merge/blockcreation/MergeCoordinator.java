@@ -362,13 +362,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
   }
 
-  // TODO: post-merge cleanup
-  static final long MAX_TTD_SEARCH_DEPTH = 131072L; // 32 * 4096 epochs
-
   // package visibility for testing
   boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
     // this should only happen very close to the transition from PoW to PoS, prior to a finalized
-    // block
+    // block.  For example, after a full sync of an already-merged chain which does not have
+    // terminal block info in the genesis config.
 
     // check a 'cached' block which was determined to descend from terminal to short circuit
     // in the case of a long period of non-finality
@@ -382,16 +380,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     var blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> parent = blockchain.getBlockHeader(blockheader.getParentHash());
     do {
-
       LOG.debug(
           "checking ancestor {} is valid terminal PoW for {}",
           parent.map(BlockHeader::toLogString).orElse("empty"),
           blockheader.toLogString());
 
       if (parent.isPresent()) {
-        if (MAX_TTD_SEARCH_DEPTH < blockheader.getNumber() - parent.get().getNumber()) {
-          return false;
-        }
         if (!parent.get().getDifficulty().equals(Difficulty.ZERO)) {
           break;
         }
