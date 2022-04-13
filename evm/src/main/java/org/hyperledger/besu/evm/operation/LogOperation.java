@@ -56,7 +56,7 @@ public class LogOperation extends AbstractOperation {
 
     final Address address = frame.getRecipientAddress();
 
-    final Bytes data = frame.readMemory(dataLocation, numBytes);
+    final Bytes data = frame.readMutableMemory(dataLocation, numBytes);
 
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
