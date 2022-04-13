@@ -86,7 +86,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         new SnapCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
-                "snapsync_world_state_generated_nodes_total",
+                "snap_world_state_generated_nodes_total",
                 "Total number of data nodes generated as part of snap sync world state download"),
             this::displayWorldStateSyncProgress,
             DISPLAY_SNAP_PROGRESS_STEP);
@@ -94,10 +94,35 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         new SnapCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
-                "snapsync_world_state_healed_nodes_total",
+                "snap_world_state_healed_nodes_total",
                 "Total number of data nodes healed as part of snap sync world state heal process"),
             this::displayHealProgress,
             DISPLAY_HEAL_PROGRESS_STEP);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_account_requests_current",
+        "Number of pending requests for snap sync world state download",
+        pendingAccountRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_storage_requests_current",
+        "Number of pending requests for snap sync world state download",
+        pendingStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_big_storage_requests_current",
+        "Number of pending requests for snap sync world state download",
+        pendingBigStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_code_requests_current",
+        "Number of pending requests for snap sync world state download",
+        pendingCodeRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_trie_node_requests_current",
+        "Number of pending requests for snap sync world state download",
+        pendingTrieNodeRequests::size);
   }
 
   @Override
@@ -246,6 +271,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     pendingTrieNodeRequests.clearInternalQueues();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);
+    snapSyncState.getPivotBlockHeader().ifPresent(this::checkCompletion);
   }
 
   public RunnableCounter getGeneratedNodes() {
