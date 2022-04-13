@@ -143,7 +143,7 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeCoordinator.updateForkChoice(mockHeader.getHash(), parent.getHash()))
         .thenReturn(
             ForkchoiceResult.withFailure(
-                "new head timestamp not greater than parent", parent.getHash()));
+                "new head timestamp not greater than parent", Optional.of(parent.getHash())));
 
     EngineForkchoiceUpdatedParameter param =
         new EngineForkchoiceUpdatedParameter(

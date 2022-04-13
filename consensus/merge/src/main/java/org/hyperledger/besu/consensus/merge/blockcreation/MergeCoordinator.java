@@ -258,9 +258,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final Hash headBlockHash, final Hash finalizedBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
-    BlockHeader latestValid = protocolContext.getBlockchain().getChainHeadHeader();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
-
+    BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
+    final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
     if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
       // we should only fail to find when it's the special value 0x000..000
       return ForkchoiceResult.withFailure(
@@ -280,7 +280,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
 
     // ensure we have headBlock:
-    BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
 
     if (newHead == null) {
       return ForkchoiceResult.withFailure(
@@ -306,10 +305,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
     if (parentOfNewHead.isPresent()
         && parentOfNewHead.get().getTimestamp() >= newHead.getTimestamp()) {
-      final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
       return ForkchoiceResult.withFailure(
-          "new head timestamp not greater than parent",
-          latestValid.isPresent() ? latestValid.get() : null);
+          "new head timestamp not greater than parent", latestValid);
     }
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
