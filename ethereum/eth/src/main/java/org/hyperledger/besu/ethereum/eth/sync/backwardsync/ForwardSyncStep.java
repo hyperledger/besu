@@ -194,7 +194,7 @@ public class ForwardSyncStep {
   protected Void saveBlocks(final List<Block> blocks) {
     if (blocks.isEmpty()) {
       LOG.info("No blocks to save...");
-      context.halfBatchSize();
+      context.halveBatchSize();
       return null;
     }
 
@@ -205,7 +205,7 @@ public class ForwardSyncStep {
               .getBlockchain()
               .getBlockByHash(block.getHeader().getParentHash());
       if (parent.isEmpty()) {
-        context.halfBatchSize();
+        context.halveBatchSize();
         return null;
       } else {
         saveBlock(block);

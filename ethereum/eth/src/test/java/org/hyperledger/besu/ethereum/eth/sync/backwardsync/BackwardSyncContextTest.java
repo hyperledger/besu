@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,13 +47,14 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 
@@ -60,8 +62,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -98,7 +101,6 @@ public class BackwardSyncContextTest {
   public void setup() {
     when(mockProtocolSpec.getBlockValidator()).thenReturn(blockValidator);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
-    when(syncState.hasReachedTerminalDifficulty()).thenReturn(Optional.of(true));
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -142,7 +144,8 @@ public class BackwardSyncContextTest {
                 ethContext,
                 syncState,
                 backwardChain));
-    when(context.getBatchSize()).thenReturn(2);
+    doReturn(true).when(context).isOnTTD();
+    doReturn(2).when(context).getBatchSize();
   }
 
   private BackwardChain newBackwardChain() {
@@ -214,12 +217,38 @@ public class BackwardSyncContextTest {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }
 
+  @Captor ArgumentCaptor<BesuEvents.TTDReachedListener> captor;
+
   @Test
   public void shouldWaitWhenTTDNotReached()
       throws ExecutionException, InterruptedException, TimeoutException {
-    doReturn(false, false, true).when(context).isOnTTD();
-    context.waitForTTD();
-    verify(context, Mockito.times(2)).getEthContext();
+    doReturn(false).when(context).isOnTTD();
+    when(syncState.subscribeTTDReached(any())).thenReturn(88L);
+
+    final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
+
+    verify(syncState).subscribeTTDReached(captor.capture());
+    verify(syncState, never()).unsubscribeTTDReached(anyLong());
+    assertThat(voidCompletableFuture).isNotCompleted();
+
+    captor.getValue().onTTDReached(true);
+
+    voidCompletableFuture.get(1, TimeUnit.SECONDS);
+
+    verify(syncState).unsubscribeTTDReached(88L);
+  }
+
+  @Test
+  public void shouldNotWaitWhenTTDReached()
+      throws ExecutionException, InterruptedException, TimeoutException {
+    doReturn(true).when(context).isOnTTD();
+    when(syncState.subscribeTTDReached(any())).thenReturn(88L);
+    final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
+    voidCompletableFuture.get(1, TimeUnit.SECONDS);
+    assertThat(voidCompletableFuture).isCompleted();
+
+    verify(syncState).subscribeTTDReached(captor.capture());
+    verify(syncState).unsubscribeTTDReached(88L);
   }
 
   @Test

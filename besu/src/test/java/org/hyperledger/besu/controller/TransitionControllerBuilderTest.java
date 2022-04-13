@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 
 import java.util.Optional;
 
@@ -62,6 +63,7 @@ public class TransitionControllerBuilderTest {
   @Mock SyncState syncState;
   @Mock EthProtocolManager ethProtocolManager;
   @Mock PostMergeContext mergeContext;
+  StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
   @Spy CliqueBesuControllerBuilder cliqueBuilder = new CliqueBesuControllerBuilder();
   @Spy BesuControllerBuilder powBuilder = new MainnetBesuControllerBuilder();
@@ -77,7 +79,7 @@ public class TransitionControllerBuilderTest {
             new TransitionProtocolSchedule(
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
-    postMergeBuilder.storageProvider(new InMemoryKeyValueStorageProvider());
+    postMergeBuilder.storageProvider(storageProvider);
     when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     when(transitionProtocolSchedule.getPostMergeSchedule()).thenReturn(postMergeProtocolSchedule);
     when(transitionProtocolSchedule.getPreMergeSchedule()).thenReturn(preMergeProtocolSchedule);
@@ -154,6 +156,7 @@ public class TransitionControllerBuilderTest {
   TransitionCoordinator buildTransitionCoordinator(
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
+    builder.storageProvider(storageProvider);
     var coordinator =
         builder.createMiningCoordinator(
             transitionProtocolSchedule,

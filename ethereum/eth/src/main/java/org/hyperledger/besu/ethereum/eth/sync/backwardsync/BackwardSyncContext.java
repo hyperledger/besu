@@ -30,6 +30,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -228,13 +230,31 @@ public class BackwardSyncContext {
 
   @VisibleForTesting
   protected CompletableFuture<Void> waitForTTD() {
-    if (isOnTTD()) {
-      return CompletableFuture.completedFuture(null);
-    }
-    LOG.debug("Did not reach TTD yet, falling asleep...");
-    return getEthContext()
-        .getScheduler()
-        .scheduleFutureTask(this::waitForTTD, Duration.ofSeconds(5));
+    final CountDownLatch latch = new CountDownLatch(1);
+    final long id =
+        syncState.subscribeTTDReached(
+            reached -> {
+              if (reached) {
+                latch.countDown();
+              }
+            });
+    return CompletableFuture.runAsync(
+        () -> {
+          try {
+            if (!isOnTTD()) {
+              LOG.info("Waiting for TTD...");
+              final boolean await = latch.await(2, TimeUnit.MINUTES);
+              if (await) {
+                LOG.info("TTD reached...");
+              }
+            }
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BackwardSyncException("Wait for TTD was interrupted");
+          } finally {
+            syncState.unsubscribeTTDReached(id);
+          }
+        });
   }
 
   // In rare case when we request too many headers/blocks we get response that does not contain all
@@ -243,7 +263,7 @@ public class BackwardSyncContext {
     return batchSize;
   }
 
-  public void halfBatchSize() {
+  public void halveBatchSize() {
     this.batchSize = batchSize / 2 + 1;
   }
 
