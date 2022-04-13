@@ -101,27 +101,27 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_pending_account_requests_current",
-        "Number of pending requests for snap sync world state download",
+        "Number of account pending requests for snap sync world state download",
         pendingAccountRequests::size);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_pending_storage_requests_current",
-        "Number of pending requests for snap sync world state download",
+        "Number of storage pending requests for snap sync world state download",
         pendingStorageRequests::size);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_pending_big_storage_requests_current",
-        "Number of pending requests for snap sync world state download",
+        "Number of storage pending requests for snap sync world state download",
         pendingBigStorageRequests::size);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_pending_code_requests_current",
-        "Number of pending requests for snap sync world state download",
+        "Number of code pending requests for snap sync world state download",
         pendingCodeRequests::size);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_pending_trie_node_requests_current",
-        "Number of pending requests for snap sync world state download",
+        "Number of trie node pending requests for snap sync world state download",
         pendingTrieNodeRequests::size);
   }
 
