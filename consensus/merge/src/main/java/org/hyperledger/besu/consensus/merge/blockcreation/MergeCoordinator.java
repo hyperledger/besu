@@ -260,6 +260,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
     BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
+    if (newHead == null) {
+      return ForkchoiceResult.withFailure(
+          String.format("not able to find new head block %s", headBlockHash), Optional.empty());
+    }
     final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
     if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
       // we should only fail to find when it's the special value 0x000..000
@@ -280,11 +284,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
 
     // ensure we have headBlock:
-
-    if (newHead == null) {
-      return ForkchoiceResult.withFailure(
-          String.format("not able to find new head block %s", headBlockHash), latestValid);
-    }
 
     // ensure new head is descendant of finalized
     Optional<String> descendantError =
