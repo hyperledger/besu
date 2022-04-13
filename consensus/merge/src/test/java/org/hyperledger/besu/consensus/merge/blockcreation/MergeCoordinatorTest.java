@@ -266,7 +266,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     coordinator.executeBlock(headBlock);
-    //    when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockHeader(lastFinalizedBlock.getHash()))
         .thenReturn(Optional.of(lastFinalizedHeader));
     when(blockchain.getBlockHeader(headBlockHeader.getHash()))
