@@ -34,7 +34,7 @@ public class InMemoryTasksPriorityQueues<T extends TasksPriorityProvider>
     clearInternalQueues();
   }
 
-  public void clearInternalQueues() {
+  public synchronized void clearInternalQueues() {
     internalQueues.clear();
     for (int i = 0; i < 16; i++) {
       internalQueues.add(newEmptyQueue());

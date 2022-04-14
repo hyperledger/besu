@@ -45,7 +45,7 @@ public class LoadLocalDataStep {
     existingNodeCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_existing_nodes_total",
+            "snap_world_state_existing_trie_nodes_total",
             "Total number of node data requests completed using existing data");
     this.snapSyncState = snapSyncState;
   }

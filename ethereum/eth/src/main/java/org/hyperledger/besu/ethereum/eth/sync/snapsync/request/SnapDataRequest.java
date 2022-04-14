@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
-import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
@@ -111,12 +110,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldDownloadState<SnapDataRequest> downloadState,
       final SnapSyncState snapSyncState);
 
-  public abstract boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
-      final WorldStateProofProvider worldStateProofProvider,
-      SnapSyncState snapSyncState);
-
-  public abstract boolean isValid();
+  public abstract boolean isResponseReceived();
 
   public boolean isExpired(final SnapSyncState snapSyncState) {
     return false;

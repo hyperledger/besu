@@ -89,7 +89,7 @@ public class LoadLocalDataStepTest {
         loadLocalDataStep.loadLocalDataTrieNode(task, completedTasks);
 
     assertThat(completedTasks.poll()).isSameAs(task);
-    assertThat(request.isValid()).isTrue();
+    assertThat(request.isResponseReceived()).isTrue();
     assertThat(output).isEmpty();
 
     verify(updater).commit();
