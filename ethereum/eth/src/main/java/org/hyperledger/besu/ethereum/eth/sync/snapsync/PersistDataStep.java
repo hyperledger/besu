@@ -40,7 +40,7 @@ public class PersistDataStep {
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
-      if (task.getData().isValid()) {
+      if (task.getData().isResponseReceived()) {
         // enqueue child requests
         final Stream<SnapDataRequest> childRequests =
             task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
