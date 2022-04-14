@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -88,6 +89,8 @@ public class EthStatsService {
 
   private static final Duration SEND_REPORT_DELAY = Duration.ofSeconds(5);
   private static final int HISTORY_RANGE = 50;
+
+  private final AtomicBoolean retryInProgress = new AtomicBoolean(false);
 
   private final NetstatsUrl netstatsUrl;
   private final EthProtocolManager protocolManager;
@@ -134,8 +137,8 @@ public class EthStatsService {
     this.webSocketConnectOptions =
         new WebSocketConnectOptions()
             .setURI("/api")
-            .setPort(netstatsUrl.getPort())
             .setHost(netstatsUrl.getHost())
+            .setPort(netstatsUrl.getPort())
             .setSsl(true);
   }
 
@@ -174,6 +177,7 @@ public class EthStatsService {
                         }
                       });
 
+                  retryInProgress.set(false);
                   // sending a hello to initiate the connection using the secret
                   sendHello();
                 } else {
@@ -184,9 +188,11 @@ public class EthStatsService {
                     errorMessage += " (trying without ssl)";
                   }
                   LOG.error(errorMessage);
+                  retryInProgress.set(false);
                   retryConnect();
                 }
               });
+
     } catch (Exception e) {
       retryConnect();
     }
@@ -204,11 +210,13 @@ public class EthStatsService {
 
   /** Ends the current connection and restart a new one. */
   private void retryConnect() {
-    stop();
-    protocolManager
-        .ethContext()
-        .getScheduler()
-        .scheduleFutureTask(this::start, Duration.ofSeconds(10));
+    if (retryInProgress.getAndSet(true) == FALSE) {
+      stop();
+      protocolManager
+          .ethContext()
+          .getScheduler()
+          .scheduleFutureTask(this::start, Duration.ofSeconds(10));
+    }
   }
 
   /** Sends a hello request to the ethstats server in order to log in. */
