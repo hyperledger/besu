@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -215,7 +214,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     if (optHeader.isPresent()) {
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
-      infoLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
+      debugLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
       backwardSyncContext.syncBackwardsUntil(blockhash);
     }
     return optHeader;

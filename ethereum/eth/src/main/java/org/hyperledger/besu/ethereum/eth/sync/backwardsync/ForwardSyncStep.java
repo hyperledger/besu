@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,31 +30,31 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ForwardSyncPhase extends BackwardSyncTask {
+public class ForwardSyncStep {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncPhase.class);
-  private int batchSize = BackwardSyncContext.BATCH_SIZE;
+  private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
+  private final BackwardSyncContext context;
+  private final BackwardChain backwardChain;
 
-  public ForwardSyncPhase(final BackwardSyncContext context, final BackwardChain backwardChain) {
-    super(context, backwardChain);
+  public ForwardSyncStep(final BackwardSyncContext context, final BackwardChain backwardChain) {
+    this.context = context;
+    this.backwardChain = backwardChain;
   }
 
-  @Override
-  public CompletableFuture<Void> executeStep() {
+  public CompletableFuture<Void> executeAsync() {
     return CompletableFuture.supplyAsync(() -> returnFirstNUnknownHeaders(null))
         .thenCompose(this::possibleRequestBodies)
         .thenApply(this::processKnownAncestors)
-        .thenCompose(this::possiblyMoreForwardSteps);
+        .thenCompose(context::executeNextStep);
   }
 
   @VisibleForTesting
-  protected BlockHeader processKnownAncestors(final Void unused) {
+  protected Void processKnownAncestors(final Void unused) {
     while (backwardChain.getFirstAncestorHeader().isPresent()) {
       BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
       if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
@@ -63,7 +63,8 @@ public class ForwardSyncPhase extends BackwardSyncTask {
             "Block {} is already imported, we can ignore it for the sync process",
             () -> header.getHash().toHexString());
         backwardChain.dropFirstHeader();
-      } else if (backwardChain.isTrusted(header.getHash())) {
+      } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())
+          && backwardChain.isTrusted(header.getHash())) {
         debugLambda(
             LOG,
             "Importing trusted block {}({})",
@@ -72,7 +73,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
         debugLambda(LOG, "First unprocessed header is {}", header::getNumber);
-        return header;
+        return null;
       }
     }
     return null;
@@ -86,7 +87,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
         debugLambda(
             LOG,
             "Block {}({}) is already imported, we can ignore it for the sync process",
-            () -> header.getNumber(),
+            header::getNumber,
             () -> header.getHash().toHexString());
         backwardChain.dropFirstHeader();
       } else if (backwardChain.isTrusted(header.getHash())) {
@@ -96,7 +97,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
             () -> header.getHash().toHexString());
         saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
-        return backwardChain.getFirstNAncestorHeaders(batchSize);
+        return backwardChain.getFirstNAncestorHeaders(context.getBatchSize());
       }
     }
     return Collections.emptyList();
@@ -167,7 +168,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
 
   @VisibleForTesting
   protected Void saveBlock(final Block block) {
-    debugLambda(LOG, "Going to validate block {}", () -> block.getHeader().getHash().toHexString());
+    traceLambda(LOG, "Going to validate block {}", () -> block.getHeader().getHash().toHexString());
     var optResult =
         context
             .getBlockValidatorForBlock(block)
@@ -179,7 +180,7 @@ public class ForwardSyncPhase extends BackwardSyncTask {
 
     optResult.blockProcessingOutputs.ifPresent(
         result -> {
-          debugLambda(
+          traceLambda(
               LOG,
               "Block {} was validated, going to import it",
               () -> block.getHeader().getHash().toHexString());
@@ -191,6 +192,11 @@ public class ForwardSyncPhase extends BackwardSyncTask {
 
   @VisibleForTesting
   protected Void saveBlocks(final List<Block> blocks) {
+    if (blocks.isEmpty()) {
+      LOG.info("No blocks to save...");
+      context.halveBatchSize();
+      return null;
+    }
 
     for (Block block : blocks) {
       final Optional<Block> parent =
@@ -199,59 +205,20 @@ public class ForwardSyncPhase extends BackwardSyncTask {
               .getBlockchain()
               .getBlockByHash(block.getHeader().getParentHash());
       if (parent.isEmpty()) {
-        batchSize = batchSize / 2 + 1;
+        context.halveBatchSize();
         return null;
       } else {
-        batchSize = BackwardSyncContext.BATCH_SIZE;
         saveBlock(block);
       }
     }
-    backwardChain.commit();
     infoLambda(
         LOG,
-        "Saved blocks {}->{}",
+        "Saved blocks {} -> {} (target: {})",
         () -> blocks.get(0).getHeader().getNumber(),
-        () -> blocks.get(blocks.size() - 1).getHeader().getNumber());
+        () -> blocks.get(blocks.size() - 1).getHeader().getNumber(),
+        () ->
+            backwardChain.getPivot().orElse(blocks.get(blocks.size() - 1)).getHeader().getNumber());
+    context.resetBatchSize();
     return null;
-  }
-
-  @VisibleForTesting
-  protected CompletableFuture<Void> possiblyMoreForwardSteps(final BlockHeader firstNotSynced) {
-    CompletableFuture<Void> completableFuture = CompletableFuture.completedFuture(null);
-    if (firstNotSynced == null) {
-      final List<Block> successors = backwardChain.getSuccessors();
-      LOG.info(
-          "Forward Sync Phase is finished. Importing {} block(s) provided by consensus layer...",
-          successors.size());
-      successors.forEach(
-          block -> {
-            if (!context.getProtocolContext().getBlockchain().contains(block.getHash())) {
-              saveBlock(block);
-            }
-          });
-      LOG.info("The Backward sync is done...");
-      backwardChain.clear();
-      return CompletableFuture.completedFuture(null);
-    }
-    if (context.getProtocolContext().getBlockchain().contains(firstNotSynced.getParentHash())) {
-      debugLambda(
-          LOG,
-          "Block {} is not yet imported, we need to run another step of ForwardSync",
-          firstNotSynced::toLogString);
-      return completableFuture.thenCompose(this::executeAsync);
-    }
-
-    warnLambda(
-        LOG,
-        "Block {} is not yet imported but its parent {} is not imported either... "
-            + "This should not normally happen and indicates a wrong behaviour somewhere...",
-        firstNotSynced::toLogString,
-        () -> firstNotSynced.getParentHash().toHexString());
-    return completableFuture.thenCompose(this::executeBackwardAsync);
-  }
-
-  @VisibleForTesting
-  protected CompletionStage<Void> executeBackwardAsync(final Void unused) {
-    return new BackwardSyncPhase(context, backwardChain).executeAsync(unused);
   }
 }
