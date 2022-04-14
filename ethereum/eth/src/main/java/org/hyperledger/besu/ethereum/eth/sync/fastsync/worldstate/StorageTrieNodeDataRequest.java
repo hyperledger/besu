@@ -49,9 +49,12 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
     return getAccountHash()
         .flatMap(
             accountHash ->
-                worldStateStorage
-                    .getAccountStateTrieNode(accountHash, getHash())
-                    .filter(data -> Hash.hash(data).equals(getHash())));
+                getLocation()
+                    .flatMap(
+                        location ->
+                            worldStateStorage
+                                .getAccountStorageTrieNode(accountHash, location, getHash())
+                                .filter(data -> Hash.hash(data).equals(getHash()))));
   }
 
   @Override
