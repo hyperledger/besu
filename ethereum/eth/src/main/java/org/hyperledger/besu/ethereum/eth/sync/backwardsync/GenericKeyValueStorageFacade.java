@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 public class GenericKeyValueStorageFacade<K, V> implements Closeable {
@@ -40,9 +41,19 @@ public class GenericKeyValueStorageFacade<K, V> implements Closeable {
     return storage.get(keyConvertor.toBytes(key)).map(valueConvertor::fromBytes);
   }
 
+  public Optional<V> get(final byte[] key) {
+    return storage.get(key).map(valueConvertor::fromBytes);
+  }
+
   public void put(final K key, final V value) {
     final KeyValueStorageTransaction keyValueStorageTransaction = storage.startTransaction();
     keyValueStorageTransaction.put(keyConvertor.toBytes(key), valueConvertor.toBytes(value));
+    keyValueStorageTransaction.commit();
+  }
+
+  public void put(final byte[] key, final V value) {
+    final KeyValueStorageTransaction keyValueStorageTransaction = storage.startTransaction();
+    keyValueStorageTransaction.put(key, valueConvertor.toBytes(value));
     keyValueStorageTransaction.commit();
   }
 
@@ -57,5 +68,14 @@ public class GenericKeyValueStorageFacade<K, V> implements Closeable {
   @Override
   public void close() throws IOException {
     storage.close();
+  }
+
+  public void putAll(final Map<K, V> map) {
+    final KeyValueStorageTransaction keyValueStorageTransaction = storage.startTransaction();
+    for (Map.Entry<K, V> entry : map.entrySet()) {
+      keyValueStorageTransaction.put(
+          keyConvertor.toBytes(entry.getKey()), valueConvertor.toBytes(entry.getValue()));
+    }
+    keyValueStorageTransaction.commit();
   }
 }

@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncLookupService;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -98,11 +97,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             metricsSystem,
             ethProtocolManager.ethContext(),
             syncState,
-            new BackwardSyncLookupService(
-                transitionProtocolSchedule,
-                ethProtocolManager.ethContext(),
-                metricsSystem,
-                protocolContext),
             storageProvider);
 
     final TransitionCoordinator composedCoordinator =

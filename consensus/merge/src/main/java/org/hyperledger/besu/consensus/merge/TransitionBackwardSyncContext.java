@@ -18,9 +18,10 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncLookupService;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -34,7 +35,6 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
       final SyncState syncState,
-      final BackwardSyncLookupService backwardSyncLookupService,
       final StorageProvider storageProvider) {
     super(
         protocolContext,
@@ -42,8 +42,8 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
         metricsSystem,
         ethContext,
         syncState,
-        backwardSyncLookupService,
-        storageProvider);
+        BackwardChain.from(
+            storageProvider, ScheduleBasedBlockHeaderFunctions.create(transitionProtocolSchedule)));
     this.transitionProtocolSchedule = transitionProtocolSchedule;
   }
 

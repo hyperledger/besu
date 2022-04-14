@@ -414,16 +414,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
-  public void ancestorExceedsDepthValidTerminalProofOfWork() {
-    final long howDeep = MergeCoordinator.MAX_TTD_SEARCH_DEPTH + 2;
-    assertThat(
-            terminalAncestorMock(howDeep, true)
-                .ancestorIsValidTerminalProofOfWork(
-                    new BlockHeaderTestFixture().number(howDeep).buildHeader()))
-        .isFalse();
-  }
-
-  @Test
   public void ancestorNotFoundValidTerminalProofOfWork() {
     final long howDeep = 10L;
     assertThat(

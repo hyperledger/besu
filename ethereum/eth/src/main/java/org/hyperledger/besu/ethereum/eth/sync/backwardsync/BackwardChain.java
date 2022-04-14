@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -26,81 +25,75 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Queue;
 
 import org.slf4j.Logger;
 
 public class BackwardChain {
   private static final Logger LOG = getLogger(BackwardChain.class);
 
-  private final List<Hash> ancestors = new ArrayList<>();
-  private final List<Hash> successors = new ArrayList<>();
-
-  protected final GenericKeyValueStorageFacade<Hash, BlockHeader> headers;
-  protected final GenericKeyValueStorageFacade<Hash, Block> blocks;
-
-  public BackwardChain(
-      final StorageProvider provider,
-      final BlockHeaderFunctions blockHeaderFunctions,
-      final Block pivot) {
-    this(
-        new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
-            BlocksHeadersConvertor.of(blockHeaderFunctions),
-            provider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.BACKWARD_SYNC_HEADERS)),
-        new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
-            BlocksConvertor.of(blockHeaderFunctions),
-            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BACKWARD_SYNC_BLOCKS)),
-        pivot);
-  }
+  private final GenericKeyValueStorageFacade<Hash, BlockHeader> headers;
+  private final GenericKeyValueStorageFacade<Hash, Block> blocks;
+  private final GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
+  private Optional<BlockHeader> firstStoredAncestor = Optional.empty();
+  private Optional<BlockHeader> lastStoredPivot = Optional.empty();
+  private final Queue<Hash> hashesToAppend = new ArrayDeque<>();
 
   public BackwardChain(
       final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage,
       final GenericKeyValueStorageFacade<Hash, Block> blocksStorage,
-      final Block pivot) {
-
+      final GenericKeyValueStorageFacade<Hash, Hash> chainStorage) {
     this.headers = headersStorage;
     this.blocks = blocksStorage;
-    headersStorage.put(pivot.getHeader().getHash(), pivot.getHeader());
-    blocksStorage.put(pivot.getHash(), pivot);
-    ancestors.add(pivot.getHeader().getHash());
-    successors.add(pivot.getHash());
+    this.chainStorage = chainStorage;
   }
 
-  public Optional<BlockHeader> getFirstAncestorHeader() {
-    if (ancestors.isEmpty()) {
-      return Optional.empty();
+  public static BackwardChain from(
+      final StorageProvider storageProvider, final BlockHeaderFunctions blockHeaderFunctions) {
+    return new BackwardChain(
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            BlocksHeadersConvertor.of(blockHeaderFunctions),
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.BACKWARD_SYNC_HEADERS)),
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            BlocksConvertor.of(blockHeaderFunctions),
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.BACKWARD_SYNC_BLOCKS)),
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe,
+            new HashConvertor(),
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)));
+  }
+
+  public synchronized Optional<BlockHeader> getFirstAncestorHeader() {
+    return firstStoredAncestor;
+  }
+
+  public synchronized List<BlockHeader> getFirstNAncestorHeaders(final int size) {
+    List<BlockHeader> result = new ArrayList<>(size);
+    Optional<BlockHeader> it = firstStoredAncestor;
+    while (it.isPresent() && result.size() < size) {
+      result.add(it.get());
+      it = chainStorage.get(it.get().getHash()).flatMap(headers::get);
     }
-    return headers.get(ancestors.get(ancestors.size() - 1));
+    return result;
   }
 
-  public List<BlockHeader> getFirstNAncestorHeaders(final int size) {
-    List<Hash> resultList = new ArrayList<>(size);
-    for (int i = Math.min(size, ancestors.size()); i > 0; --i) {
-      resultList.add(ancestors.get(ancestors.size() - i));
+  public synchronized void prependAncestorsHeader(final BlockHeader blockHeader) {
+    if (firstStoredAncestor.isEmpty()) {
+      firstStoredAncestor = Optional.of(blockHeader);
+      lastStoredPivot = Optional.of(blockHeader);
+      headers.put(blockHeader.getHash(), blockHeader);
+      return;
     }
-    return resultList.stream()
-        .map(h -> this.headers.get(h).orElseThrow())
-        .collect(Collectors.toList());
-  }
-
-  public List<BlockHeader> getAllAncestors() {
-    return getFirstNAncestorHeaders(ancestors.size());
-  }
-
-  public void prependAncestorsHeader(final BlockHeader blockHeader) {
-    BlockHeader firstHeader =
-        getFirstAncestorHeader()
-            .orElseThrow(
-                () ->
-                    new BackwardSyncException(
-                        "Cannot save more headers during forward sync", true));
+    BlockHeader firstHeader = firstStoredAncestor.get();
     if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
       throw new BackwardSyncException(
           "Wrong height of header "
@@ -118,134 +111,81 @@ public class BackwardChain {
               + firstHeader.getParentHash().toHexString());
     }
     headers.put(blockHeader.getHash(), blockHeader);
-    ancestors.add(blockHeader.getHash());
+    chainStorage.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
+    firstStoredAncestor = Optional.of(blockHeader);
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
         () -> blockHeader.getHash().toHexString(),
         blockHeader::getNumber,
-        () -> firstHeader.getHash().toHexString(),
+        () -> lastStoredPivot.orElseThrow().getHash().toHexString(),
         firstHeader::getNumber);
   }
 
-  public void prependChain(final BackwardChain historicalBackwardChain) {
-    BlockHeader firstHeader =
-        getFirstAncestorHeader()
-            .orElseThrow(
-                () -> new BackwardSyncException("Cannot merge when syncing forward...", true));
-    Optional<BlockHeader> historicalHeader =
-        historicalBackwardChain.getHeaderOnHeight(firstHeader.getNumber() - 1);
-    if (historicalHeader.isEmpty()) {
+  public synchronized Optional<Block> getPivot() {
+    if (lastStoredPivot.isEmpty()) {
+      return Optional.empty();
+    }
+    return blocks.get(lastStoredPivot.get().getHash());
+  }
+
+  public synchronized void dropFirstHeader() {
+    if (firstStoredAncestor.isEmpty()) {
       return;
     }
-    if (firstHeader.getParentHash().equals(historicalHeader.orElseThrow().getHash())) {
-      for (Block successor : historicalBackwardChain.getSuccessors()) {
-        if (successor.getHeader().getNumber() > getPivot().getHeader().getNumber()) {
-          this.successors.add(successor.getHeader().getHash());
-        }
-      }
-      Collections.reverse(historicalBackwardChain.getSuccessors());
-      for (Block successor : historicalBackwardChain.getSuccessors()) {
-        if (successor.getHeader().getNumber()
-            < getFirstAncestorHeader().orElseThrow().getNumber()) {
-          this.ancestors.add(successor.getHeader().getHash());
-        }
-      }
-      for (BlockHeader ancestor : historicalBackwardChain.getAllAncestors()) {
-        if (ancestor.getNumber() < getFirstAncestorHeader().orElseThrow().getNumber()) {
-          this.ancestors.add(ancestor.getHash());
-        }
-      }
-      debugLambda(
-          LOG,
-          "Merged backward chain. New chain starts at height {} and ends at height {}",
-          () -> getPivot().getHeader().getNumber(),
-          () -> getFirstAncestorHeader().orElseThrow().getNumber());
-    } else {
-      warnLambda(
-          LOG,
-          "Cannot merge previous historical run because headers on height {} ({}) of {} and {} are not equal. Ignoring previous run. Did someone lie to us?",
-          () -> firstHeader.getNumber() - 1,
-          () -> historicalHeader.orElseThrow().getNumber(),
-          () -> firstHeader.getParentHash().toHexString(),
-          () -> historicalHeader.orElseThrow().getHash().toHexString());
+    headers.drop(firstStoredAncestor.get().getHash());
+    final Optional<Hash> hash = chainStorage.get(firstStoredAncestor.get().getHash());
+    chainStorage.drop(firstStoredAncestor.get().getHash());
+    firstStoredAncestor = hash.flatMap(headers::get);
+    if (firstStoredAncestor.isEmpty()) {
+      lastStoredPivot = Optional.empty();
     }
   }
 
-  public Block getPivot() {
-    return blocks.get(successors.get(successors.size() - 1)).orElseThrow();
-  }
-
-  public void dropFirstHeader() {
-    headers.drop(ancestors.get(ancestors.size() - 1));
-    ancestors.remove(ancestors.size() - 1);
-  }
-
-  public void appendExpectedBlock(final Block newPivot) {
-    successors.add(newPivot.getHash());
+  public synchronized void appendTrustedBlock(final Block newPivot) {
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
+    if (lastStoredPivot.isEmpty()) {
+      firstStoredAncestor = Optional.of(newPivot.getHeader());
+    } else {
+      if (newPivot.getHeader().getParentHash().equals(lastStoredPivot.get().getHash())) {
+        chainStorage.put(lastStoredPivot.get().getHash(), newPivot.getHash());
+      } else {
+        firstStoredAncestor = Optional.of(newPivot.getHeader());
+      }
+    }
+    lastStoredPivot = Optional.of(newPivot.getHeader());
   }
 
-  public List<Block> getSuccessors() {
-    return successors.stream()
-        .map(hash -> blocks.get(hash).orElseThrow())
-        .collect(Collectors.toList());
-  }
-
-  public boolean isTrusted(final Hash hash) {
+  public synchronized boolean isTrusted(final Hash hash) {
     return blocks.get(hash).isPresent();
   }
 
-  public Block getTrustedBlock(final Hash hash) {
+  public synchronized Block getTrustedBlock(final Hash hash) {
     return blocks.get(hash).orElseThrow();
   }
 
-  public void clear() {
-    ancestors.clear();
-    successors.clear();
+  public synchronized void clear() {
     blocks.clear();
     headers.clear();
+    chainStorage.clear();
+    firstStoredAncestor = Optional.empty();
+    lastStoredPivot = Optional.empty();
+    hashesToAppend.clear();
   }
 
-  public void commit() {}
+  public synchronized Optional<BlockHeader> getHeader(final Hash hash) {
+    return headers.get(hash);
+  }
 
-  public Optional<BlockHeader> getHeaderOnHeight(final long height) {
-    if (ancestors.isEmpty()) {
-      return Optional.empty();
+  public synchronized void addNewHash(final Hash newBlockHash) {
+    if (hashesToAppend.contains(newBlockHash)) {
+      return;
     }
-    final long firstAncestor = headers.get(ancestors.get(0)).orElseThrow().getNumber();
-    if (firstAncestor >= height) {
-      if (firstAncestor - height < ancestors.size()) {
-        final Optional<BlockHeader> blockHeader =
-            headers.get(ancestors.get((int) (firstAncestor - height)));
-        blockHeader.ifPresent(
-            blockHeader1 ->
-                LOG.debug(
-                    "First: {} Height: {}, result: {}",
-                    firstAncestor,
-                    height,
-                    blockHeader.orElseThrow().getNumber()));
-        return blockHeader;
-      } else {
-        return Optional.empty();
-      }
-    } else {
-      if (successors.isEmpty()) {
-        return Optional.empty();
-      }
-      final long firstSuccessor = headers.get(successors.get(0)).orElseThrow().getNumber();
-      if (height - firstSuccessor < successors.size()) {
-        LOG.debug(
-            "First: {} Height: {}, result: {}",
-            firstSuccessor,
-            height,
-            headers.get(successors.get((int) (height - firstSuccessor))).orElseThrow().getNumber());
+    this.hashesToAppend.add(newBlockHash);
+  }
 
-        return headers.get(successors.get((int) (height - firstSuccessor)));
-      } else {
-        return Optional.empty();
-      }
-    }
+  public synchronized Optional<Hash> getFirstHash() {
+    return Optional.ofNullable(hashesToAppend.poll());
   }
 }

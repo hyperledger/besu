@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,10 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
@@ -55,7 +50,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BackwardSyncPhaseTest {
+public class BackwardSyncStepTest {
 
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
@@ -71,6 +66,7 @@ public class BackwardSyncPhaseTest {
   private RespondingEthPeer peer;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
+  GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
 
   @Before
   public void setup() {
@@ -84,6 +80,10 @@ public class BackwardSyncPhaseTest {
             Hash::toArrayUnsafe,
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
+
+    chainStorage =
+        new GenericKeyValueStorageFacade<>(
+            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
 
     Block genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
@@ -104,6 +104,9 @@ public class BackwardSyncPhaseTest {
     }
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
+    when(context.getBatchSize()).thenReturn(5);
+    when(context.executeNextStep(null)).thenReturn(CompletableFuture.completedFuture(null));
+
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -112,25 +115,16 @@ public class BackwardSyncPhaseTest {
   }
 
   @Test
-  public void shouldWaitWhenTTDNotReached()
-      throws ExecutionException, InterruptedException, TimeoutException {
-    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
-    when(context.isOnTTD()).thenReturn(false).thenReturn(false).thenReturn(true);
-    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
-    step.waitForTTD();
-    verify(context, Mockito.times(2)).getEthContext();
-  }
-
-  @Test
   public void shouldFindHeaderWhenRequested() throws Exception {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
-    when(context.isOnTTD()).thenReturn(true);
-    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
+    when(context.getBatchSize()).thenReturn(5);
+    BackwardSyncStep step = spy(new BackwardSyncStep(context, backwardChain));
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
-    final CompletableFuture<Void> future = step.executeStep();
+    final CompletableFuture<Void> future =
+        step.executeAsync(backwardChain.getFirstAncestorHeader().orElseThrow());
     peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
     future.get();
   }
@@ -138,49 +132,38 @@ public class BackwardSyncPhaseTest {
   @Test
   public void shouldFindHashToSync() {
 
-    BackwardSyncPhase step =
-        new BackwardSyncPhase(context, createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT));
-
-    final Hash hash = step.earliestUnprocessedHash(null);
-
+    final BackwardChain backwardChain = createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT);
+    BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
+    final Hash hash =
+        step.possibleRestoreOldNodes(backwardChain.getFirstAncestorHeader().orElseThrow());
     assertThat(hash).isEqualTo(getBlockByNumber(REMOTE_HEIGHT - 4).getHeader().getParentHash());
   }
 
   @Test
-  public void shouldFailWhenNothingToSync() {
-    final BackwardChain chain = createBackwardChain(REMOTE_HEIGHT);
-    chain.dropFirstHeader();
-    BackwardSyncPhase step = new BackwardSyncPhase(context, chain);
-    assertThatThrownBy(() -> step.earliestUnprocessedHash(null))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("No unprocessed hashes during backward sync");
-  }
-
-  @Test
   public void shouldRequestHeaderWhenAsked() throws Exception {
-    BackwardSyncPhase step = new BackwardSyncPhase(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
-    final CompletableFuture<BlockHeader> future =
-        step.requestHeader(lookingForBlock.getHeader().getHash());
+    final CompletableFuture<List<BlockHeader>> future =
+        step.requestHeaders(lookingForBlock.getHeader().getHash());
     peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
-    final BlockHeader blockHeader = future.get();
+    final BlockHeader blockHeader = future.get().get(0);
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
   }
 
   @Test
   public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() throws Exception {
-    BackwardSyncPhase step = new BackwardSyncPhase(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
     final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
 
-    final CompletableFuture<BlockHeader> future =
-        step.requestHeader(lookingForBlock.getHeader().getHash());
+    final CompletableFuture<List<BlockHeader>> future =
+        step.requestHeaders(lookingForBlock.getHeader().getHash());
     peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     assertThatThrownBy(future::get)
@@ -194,80 +177,11 @@ public class BackwardSyncPhaseTest {
     final BackwardChain chain = Mockito.mock(BackwardChain.class);
     final BlockHeader header = Mockito.mock(BlockHeader.class);
 
-    when(header.getNumber()).thenReturn(12345L);
-
-    BackwardSyncPhase step = new BackwardSyncPhase(context, chain);
+    BackwardSyncStep step = new BackwardSyncStep(context, chain);
 
     step.saveHeader(header);
 
     verify(chain).prependAncestorsHeader(header);
-    verify(context).putCurrentChainToHeight(12345L, chain);
-  }
-
-  @Test
-  public void shouldMergeWhenPossible() {
-    BackwardChain backwardChain = createBackwardChain(REMOTE_HEIGHT - 3, REMOTE_HEIGHT);
-    backwardChain = spy(backwardChain);
-    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
-
-    final BackwardChain historicalChain =
-        createBackwardChain(REMOTE_HEIGHT - 10, REMOTE_HEIGHT - 4);
-    when(context.findCorrectChainFromPivot(REMOTE_HEIGHT - 4))
-        .thenReturn(Optional.of(historicalChain));
-
-    assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
-        .isEqualTo(getBlockByNumber(REMOTE_HEIGHT - 3).getHeader());
-    step.possibleMerge(null);
-    assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
-        .isEqualTo(getBlockByNumber(REMOTE_HEIGHT - 10).getHeader());
-
-    verify(backwardChain).prependChain(historicalChain);
-  }
-
-  @Test
-  public void shouldNotMergeWhenNotPossible() {
-    BackwardChain backwardChain = createBackwardChain(REMOTE_HEIGHT - 5, REMOTE_HEIGHT);
-    backwardChain = spy(backwardChain);
-    when(context.findCorrectChainFromPivot(any(Long.class))).thenReturn(Optional.empty());
-    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
-
-    step.possibleMerge(null);
-
-    verify(backwardChain, never()).prependChain(any());
-  }
-
-  @Test
-  public void shouldFinishWhenNoMoreSteps() {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
-    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
-
-    final CompletableFuture<Void> completableFuture =
-        step.possiblyMoreBackwardSteps(getBlockByNumber(LOCAL_HEIGHT).getHeader());
-
-    assertThat(completableFuture.isDone()).isTrue();
-    assertThat(completableFuture.isCompletedExceptionally()).isFalse();
-  }
-
-  @Test
-  public void shouldFinishExceptionallyWhenHeaderIsBellowBlockchainHeightButUnknown() {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
-    BackwardSyncPhase step = new BackwardSyncPhase(context, backwardChain);
-
-    final CompletableFuture<Void> completableFuture =
-        step.possiblyMoreBackwardSteps(
-            ChainForTestCreator.createEmptyBlock((long) LOCAL_HEIGHT - 1).getHeader());
-
-    assertThat(completableFuture.isCompletedExceptionally()).isTrue();
-  }
-
-  @Test
-  public void shouldCreateAnotherStepWhenThereIsWorkToBeDone() {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
-    BackwardSyncPhase step = spy(new BackwardSyncPhase(context, backwardChain));
-
-    step.possiblyMoreBackwardSteps(backwardChain.getFirstAncestorHeader().orElseThrow());
-
-    verify(step).executeAsync(any());
   }
 
   private BackwardChain createBackwardChain(final int from, final int until) {
@@ -280,8 +194,10 @@ public class BackwardSyncPhaseTest {
 
   @Nonnull
   private BackwardChain createBackwardChain(final int number) {
-    return new BackwardChain(
-        headersStorage, blocksStorage, remoteBlockchain.getBlockByNumber(number).orElseThrow());
+    final BackwardChain backwardChain =
+        new BackwardChain(headersStorage, blocksStorage, chainStorage);
+    backwardChain.appendTrustedBlock(remoteBlockchain.getBlockByNumber(number).orElseThrow());
+    return backwardChain;
   }
 
   @Nonnull
