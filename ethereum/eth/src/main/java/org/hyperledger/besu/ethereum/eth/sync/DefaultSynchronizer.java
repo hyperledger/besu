@@ -115,6 +115,7 @@ public class DefaultSynchronizer implements Synchronizer {
     if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
           SnapDownloaderFactory.createSnapDownloader(
+              pivotBlockSelector,
               syncConfig,
               dataDirectory,
               protocolSchedule,
