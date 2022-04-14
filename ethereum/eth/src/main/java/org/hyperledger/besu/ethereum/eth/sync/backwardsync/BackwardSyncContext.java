@@ -234,7 +234,7 @@ public class BackwardSyncContext {
     final long id =
         syncState.subscribeTTDReached(
             reached -> {
-              if (reached) {
+              if (reached && syncState.isInitialSyncPhaseDone()) {
                 latch.countDown();
               }
             });

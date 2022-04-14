@@ -223,6 +223,7 @@ public class BackwardSyncContextTest {
   public void shouldWaitWhenTTDNotReached()
       throws ExecutionException, InterruptedException, TimeoutException {
     doReturn(false).when(context).isReady();
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(Boolean.TRUE);
     when(syncState.subscribeTTDReached(any())).thenReturn(88L);
 
     final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
