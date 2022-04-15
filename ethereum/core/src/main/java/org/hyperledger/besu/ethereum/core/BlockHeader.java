@@ -335,4 +335,8 @@ public class BlockHeader extends SealableBlockHeader
   public String toLogString() {
     return getNumber() + " (" + getHash() + ")";
   }
+
+  public Bytes getRlp() {
+    throw new RuntimeException();
+  }
 }

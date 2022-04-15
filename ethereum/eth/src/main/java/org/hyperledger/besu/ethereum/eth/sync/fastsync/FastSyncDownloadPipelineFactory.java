@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderValidationStep;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointRange;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
+import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStepV2;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -108,8 +108,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             target.commonAncestor(),
             syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
             SyncTerminationCondition.never());
-    final DownloadHeadersStep downloadHeadersStep =
-        new DownloadHeadersStep(
+    final DownloadHeadersStepV2 downloadHeadersStep =
+        new DownloadHeadersStepV2(
             protocolSchedule,
             protocolContext,
             ethContext,

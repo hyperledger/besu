@@ -153,11 +153,12 @@ public class MainnetBlockValidator implements BlockValidator {
       final List<TransactionReceipt> receipts,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
-    final BlockHeader header = block.getHeader();
-    if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
+    // we already did this verification on the  DownloadHeaderSequenceTaskV2 see validateHeader
+    // method
+    /*if (!blockHeaderValidator.validateHeader(header, context, headerValidationMode)) {
       badBlockManager.addBadBlock(block);
       return false;
-    }
+    }*/
 
     if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
       badBlockManager.addBadBlock(block);

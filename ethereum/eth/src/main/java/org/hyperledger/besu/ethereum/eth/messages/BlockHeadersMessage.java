@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.LightBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -70,5 +71,9 @@ public final class BlockHeadersMessage extends AbstractMessageData {
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
         .readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions));
+  }
+
+  public List<LightBlockHeader> getLightHeaders() {
+    return new BytesValueRLPInput(data, false).readList(LightBlockHeader::readFrom);
   }
 }
