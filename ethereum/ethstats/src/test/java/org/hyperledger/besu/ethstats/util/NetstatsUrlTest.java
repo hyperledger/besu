@@ -26,7 +26,7 @@ public class NetstatsUrlTest {
   private final String CONTACT = "contact@mail.fr";
 
   private final String ERROR_MESSAGE =
-      "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port'.";
+      "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port' or 'nodename:secret@host'.";
 
   @Test
   public void buildWithValidParams() {
@@ -50,6 +50,17 @@ public class NetstatsUrlTest {
   }
 
   @Test
+  public void buildWithValidHostWithoutPort() {
+    final String[] validHosts =
+        new String[] {"url-test.test.com", "url.test.com", "test.com", "10.10.10.15"};
+    for (String host : validHosts) {
+      final NetstatsUrl netstatsUrl = NetstatsUrl.fromParams("Dev-Node-1:secret@" + host, CONTACT);
+      assertThat(netstatsUrl.getHost()).isEqualTo(host);
+      assertThat(netstatsUrl.getPort()).isEqualTo(3000);
+    }
+  }
+
+  @Test
   public void shouldDetectEmptyParams() {
     assertThatThrownBy(() -> NetstatsUrl.fromParams("", CONTACT))
         .isInstanceOf(IllegalArgumentException.class)
@@ -64,17 +75,12 @@ public class NetstatsUrlTest {
         .hasMessageEndingWith(ERROR_MESSAGE);
 
     // missing host
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@3001", CONTACT))
+    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@", CONTACT))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
 
     // missing port
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@127.0.0.1", CONTACT))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageEndingWith(ERROR_MESSAGE);
-
-    // missing port
-    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@127.0.0.1", CONTACT))
+    assertThatThrownBy(() -> NetstatsUrl.fromParams("Dev-Node-1:secret@127.0.0.1:", CONTACT))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageEndingWith(ERROR_MESSAGE);
   }

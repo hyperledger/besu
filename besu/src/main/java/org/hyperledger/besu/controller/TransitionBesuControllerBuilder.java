@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
+import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -79,29 +81,41 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final EthProtocolManager ethProtocolManager) {
 
     // cast to transition schedule for explicit access to pre and post objects:
-    final TransitionProtocolSchedule tps = (TransitionProtocolSchedule) protocolSchedule;
+    final TransitionProtocolSchedule transitionProtocolSchedule =
+        (TransitionProtocolSchedule) protocolSchedule;
 
     // PoA consensus mines by default, get consensus-specific mining parameters for
     // TransitionCoordinator:
     MiningParameters transitionMiningParameters =
         preMergeBesuControllerBuilder.getMiningParameterOverrides(miningParameters);
 
+    // construct a transition backward sync context
+    BackwardSyncContext transitionBackwardsSyncContext =
+        new TransitionBackwardSyncContext(
+            protocolContext,
+            transitionProtocolSchedule,
+            metricsSystem,
+            ethProtocolManager.ethContext(),
+            syncState,
+            storageProvider);
+
     final TransitionCoordinator composedCoordinator =
         new TransitionCoordinator(
             preMergeBesuControllerBuilder.createMiningCoordinator(
-                tps.getPreMergeSchedule(),
+                transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
                 new MiningParameters.Builder(miningParameters).miningEnabled(false).build(),
                 syncState,
                 ethProtocolManager),
-            mergeBesuControllerBuilder.createMiningCoordinator(
-                tps.getPostMergeSchedule(),
+            mergeBesuControllerBuilder.createTransitionMiningCoordinator(
+                transitionProtocolSchedule,
                 protocolContext,
                 transactionPool,
                 transitionMiningParameters,
                 syncState,
-                ethProtocolManager));
+                ethProtocolManager,
+                transitionBackwardsSyncContext));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -147,7 +161,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 .setBlockChoiceRule((newBlockHeader, currentBlockHeader) -> -1);
 
           } else if (composedCoordinator.isMiningBeforeMerge()) {
-            // if our merge state is set to pre-merge and we are mining, start mining
+            // if our merge state is set to mine pre-merge and we are mining, start mining
             composedCoordinator.getPreMergeObject().enable();
             composedCoordinator.getPreMergeObject().start();
           }

@@ -9,6 +9,7 @@
 
 ### Additions and Improvements
 - Onchain node permissioning - log the enodeURL that was previously only throwing an IllegalStateException during the isPermitted check [#3697](https://github.com/hyperledger/besu/pull/3697)
+- \[EXPERIMENTAL\] Add snapsync `--sync-mode="X_SNAP"` (only as client) [#3710](https://github.com/hyperledger/besu/pull/3710)
 
 ### Bug Fixes
 

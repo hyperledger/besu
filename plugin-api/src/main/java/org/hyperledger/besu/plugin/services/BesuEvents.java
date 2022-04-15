@@ -236,4 +236,16 @@ public interface BesuEvents extends BesuService {
      */
     void onLogEmitted(LogWithMetadata logWithMetadata);
   }
+
+  interface TTDReachedListener {
+
+    /**
+     * Emitted when Total Terminal Difficulty is reached on a chain and dependent merge
+     * functionality should trigger.
+     *
+     * @param reached is true when we reached TTD, can be potentially false in case we reorg under
+     *     TTD
+     */
+    void onTTDReached(boolean reached);
+  }
 }
