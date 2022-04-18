@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicLong;
 /** Counter that triggers a specific task each time a step is hit. */
 public class RunnableCounter implements Counter {
 
-  private final Counter backedCounter;
-  private final Runnable task;
-  private final int step;
-  private final AtomicLong stepCounter;
+  protected final Counter backedCounter;
+  protected final Runnable task;
+  protected final int step;
+  protected final AtomicLong stepCounter;
 
   public RunnableCounter(final Counter backedCounter, final Runnable task, final int step) {
     this.backedCounter = backedCounter;
