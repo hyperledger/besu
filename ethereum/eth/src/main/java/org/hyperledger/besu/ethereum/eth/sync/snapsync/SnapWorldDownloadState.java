@@ -46,7 +46,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  private static final int DISPLAY_PROGRESS_STEP = 100000;
+  private static final int DISPLAY_SNAP_PROGRESS_STEP = 200000;
+  private static final int DISPLAY_HEAL_PROGRESS_STEP = 10000;
 
   protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
       new InMemoryTaskQueue<>();
@@ -62,7 +63,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private final SnapSyncState snapSyncState;
 
-  // metrics round the snapsync
+  // metrics around the snapsync
   private final RunnableCounter generatedNodes;
   private final RunnableCounter healedNodes;
 
@@ -82,21 +83,46 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         clock);
     this.snapSyncState = snapSyncState;
     this.generatedNodes =
-        new RunnableCounter(
+        new SnapCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
-                "snapsync_world_state_generated_nodes_total",
+                "snap_world_state_generated_nodes_total",
                 "Total number of data nodes generated as part of snap sync world state download"),
             this::displayWorldStateSyncProgress,
-            DISPLAY_PROGRESS_STEP);
+            DISPLAY_SNAP_PROGRESS_STEP);
     this.healedNodes =
-        new RunnableCounter(
+        new SnapCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
-                "snapsync_world_state_healed_nodes_total",
+                "snap_world_state_healed_nodes_total",
                 "Total number of data nodes healed as part of snap sync world state heal process"),
             this::displayHealProgress,
-            DISPLAY_PROGRESS_STEP);
+            DISPLAY_HEAL_PROGRESS_STEP);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_account_requests_current",
+        "Number of account pending requests for snap sync world state download",
+        pendingAccountRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_storage_requests_current",
+        "Number of storage pending requests for snap sync world state download",
+        pendingStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_big_storage_requests_current",
+        "Number of storage pending requests for snap sync world state download",
+        pendingBigStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_code_requests_current",
+        "Number of code pending requests for snap sync world state download",
+        pendingCodeRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_trie_node_requests_current",
+        "Number of trie node pending requests for snap sync world state download",
+        pendingTrieNodeRequests::size);
   }
 
   @Override
@@ -218,7 +244,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
-        List.of(pendingStorageRequests, pendingCodeRequests), List.of(pendingAccountRequests));
+        List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
+        List.of(pendingAccountRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
@@ -244,6 +271,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     pendingTrieNodeRequests.clearInternalQueues();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);
+    snapSyncState.getPivotBlockHeader().ifPresent(this::checkCompletion);
   }
 
   public RunnableCounter getGeneratedNodes() {
@@ -255,7 +283,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   private void displayWorldStateSyncProgress() {
-    LOG.info("Generated {} world state nodes", generatedNodes.get());
+    LOG.info("Retrieved {} world state nodes", generatedNodes.get());
   }
 
   private void displayHealProgress() {
