@@ -86,8 +86,8 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
-
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final boolean persistWorldState) {
     if (privateMetadataUpdater != null) {
       throw new IllegalArgumentException("PrivateMetadataUpdater passed in is not null.");
     }
@@ -100,21 +100,10 @@ public class PrivacyBlockProcessor implements BlockProcessor {
     final Result result =
         blockProcessor.processBlock(
             blockchain, worldState, blockHeader, transactions, ommers, metadataUpdater);
-    metadataUpdater.commit();
+    if (persistWorldState) {
+      metadataUpdater.commit();
+    }
     return result;
-  }
-
-  @Override
-  public Result processBlockWithoutPersisting(
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
-    // TODO use the blockProcessor.processBlockWithPersisting method
-    return processBlock(
-        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
   }
 
   void maybeRehydrate(

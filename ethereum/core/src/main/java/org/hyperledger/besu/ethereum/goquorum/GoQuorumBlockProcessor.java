@@ -82,7 +82,8 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState publicWorldState,
       final MutableWorldState privateWorldState,
-      final Block block) {
+      final Block block,
+      final boolean persistWorldState) {
     final BlockHeader blockHeader = block.getHeader();
     final List<Transaction> transactions = block.getBody().getTransactions();
     final List<BlockHeader> ommers = block.getBody().getOmmers();
@@ -170,7 +171,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               .getOrCreate(effectiveTransaction.getSender())
               .getMutable()
               .incrementNonce();
-          effectiveWorldUpdater.commit();
+          if (persistWorldState) {
+            effectiveWorldUpdater.commit();
+          }
         } else { // public transaction
           final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
           currentGasUsed += gasUsed;
@@ -179,7 +182,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
               transactionReceiptFactory.create(
                   transaction.getType(), result, publicWorldState, currentGasUsed));
           privateTxReceipts.add(null);
-          effectiveWorldUpdater.commit();
+          if (persistWorldState) {
+            effectiveWorldUpdater.commit();
+          }
         }
       } else { // private transaction we are not party to
         publicTxReceipts.add(
@@ -192,7 +197,9 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
         publicWorldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
       }
 
-      publicWorldStateUpdater.commit();
+      if (persistWorldState) {
+        publicWorldStateUpdater.commit();
+      }
     }
 
     if (!rewardCoinbase(publicWorldState, blockHeader, ommers, skipZeroBlockRewards)) {

@@ -111,21 +111,37 @@ public interface BlockProcessor {
    * @param privateMetadataUpdater the updater used to update the private metadata for the block
    * @return the block processing result
    */
-  Result processBlock(
-      Blockchain blockchain,
-      MutableWorldState worldState,
-      BlockHeader blockHeader,
-      List<Transaction> transactions,
-      List<BlockHeader> ommers,
-      PrivateMetadataUpdater privateMetadataUpdater);
+  default Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    return processBlock(
+        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater, true);
+  }
 
-  Result processBlockWithoutPersisting(
-      Blockchain blockchain,
-      MutableWorldState worldState,
-      BlockHeader blockHeader,
-      List<Transaction> transactions,
-      List<BlockHeader> ommers,
-      PrivateMetadataUpdater privateMetadataUpdater);
+  /**
+   * Processes the block.
+   *
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param blockHeader the block header for the block
+   * @param transactions the transactions in the block
+   * @param ommers the block ommers
+   * @param privateMetadataUpdater the updater used to update the private metadata for the block
+   * @param persistWorldState whether the world state should be persisted
+   * @return the block processing result
+   */
+  Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      boolean persistWorldState);
 
   /**
    * Processes the block when running Besu in GoQuorum-compatible mode
@@ -134,13 +150,15 @@ public interface BlockProcessor {
    * @param worldState the world state to apply public transactions to
    * @param privateWorldState the private world state to apply private transaction to
    * @param block the block to process
+   * @param persistWorldState whether the world state should be persisted
    * @return the block processing result
    */
   default Result processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final MutableWorldState privateWorldState,
-      final Block block) {
+      final Block block,
+      final boolean persistWorldState) {
     /*
      This method should never be executed. All GoQuorum processing must happen in the GoQuorumBlockProcessor.
     */

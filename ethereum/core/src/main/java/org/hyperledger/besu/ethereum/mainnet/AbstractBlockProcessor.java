@@ -138,30 +138,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   @Override
-  public AbstractBlockProcessor.Result processBlock(
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
-    return processBlock(
-        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater, true);
-  }
-
-  @Override
-  public BlockProcessor.Result processBlockWithoutPersisting(
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final BlockHeader blockHeader,
-      final List<Transaction> transactions,
-      final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
-    return processBlock(
-        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater, false);
-  }
-
-  private Result processBlock(
+  public Result processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,

@@ -68,8 +68,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
-    return processBlock(
-        context, block, headerValidationMode, ommerValidationMode, this::processBlock);
+    return processBlock(context, block, headerValidationMode, ommerValidationMode, true);
   }
 
   @Override
@@ -78,12 +77,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
-    return processBlock(
-        context,
-        block,
-        headerValidationMode,
-        ommerValidationMode,
-        this::processBlockWithoutPersisting);
+    return processBlock(context, block, headerValidationMode, ommerValidationMode, false);
   }
 
   private Result processBlock(
@@ -91,7 +85,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
-      final BlockProcessorRunner blockProcessorRunner) {
+      final boolean persistWorldState) {
     final BlockHeader header = block.getHeader();
 
     final MutableBlockchain blockchain = context.getBlockchain();
@@ -121,7 +115,7 @@ public class MainnetBlockValidator implements BlockValidator {
     final MutableWorldState worldState = maybeWorldState.get();
 
     final BlockProcessor.Result result =
-        blockProcessorRunner.processBlock(context, worldState, block);
+        processBlock(context, worldState, block, persistWorldState);
     if (result.isFailed()) {
       return handleAndReportFailure(block, "Error processing block");
     }
@@ -156,34 +150,28 @@ public class MainnetBlockValidator implements BlockValidator {
     return new Result(reason);
   }
 
-  private interface BlockProcessorRunner {
-    BlockProcessor.Result processBlock(
-        final ProtocolContext context, final MutableWorldState worldState, final Block block);
-  }
-
   /**
    * Processes a block, returning the result of the processing
    *
    * @param context the ProtocolContext
    * @param worldState the world state for the parent block state root hash
    * @param block the block to be processed
+   * @param persistWorldState whether to persist the world state
    * @return the result of processing the block
    */
   protected BlockProcessor.Result processBlock(
-      final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
-  }
-
-  protected org.hyperledger.besu.ethereum.mainnet.BlockProcessor.Result
-      processBlockWithoutPersisting(
-          final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-    return blockProcessor.processBlockWithoutPersisting(
+      final ProtocolContext context,
+      final MutableWorldState worldState,
+      final Block block,
+      final boolean persistWorldState) {
+    return blockProcessor.processBlock(
         context.getBlockchain(),
         worldState,
         block.getHeader(),
         block.getBody().getTransactions(),
         block.getBody().getOmmers(),
-        null);
+        null,
+        persistWorldState);
   }
 
   @Override
