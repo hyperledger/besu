@@ -150,7 +150,7 @@ public class GoQuorumBlockProcessorTest {
     when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
     when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
 
-    assertThatThrownBy(() -> blockProcessor.processBlock(blockchain, worldState, worldState, block))
+    assertThatThrownBy(() -> blockProcessor.processBlock(blockchain, worldState, worldState, block, true))
         .isExactlyInstanceOf(EnclaveServerException.class)
         .hasMessageContaining("a");
   }
