@@ -284,32 +284,6 @@ public class MainnetBlockValidatorTest {
     final MutableWorldState worldState = mock(MutableWorldState.class);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(worldState));
-    when(blockProcessor.processBlockWithoutPersisting(
-            eq(blockchain),
-            eq(worldState),
-            eq(block.getHeader()),
-            eq(block.getBody().getTransactions()),
-            eq(block.getBody().getOmmers()),
-            eq(null)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return true;
-              }
-            });
     when(blockBodyValidator.validateBody(
             eq(protocolContext), eq(block), any(), any(), eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
