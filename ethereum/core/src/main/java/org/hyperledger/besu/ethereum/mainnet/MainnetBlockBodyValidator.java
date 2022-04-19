@@ -80,10 +80,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    /*final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
     if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
-    }
+    }*/
 
     final long gasUsed =
         receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
@@ -132,6 +132,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
+  @SuppressWarnings("unused")
   private static boolean validateReceiptsRoot(final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
       LOG.warn("Invalid block: receipts root mismatch (expected={}, actual={})", expected, actual);

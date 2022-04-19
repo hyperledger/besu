@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.ethereum.core.Block;
@@ -22,15 +23,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.FutureUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+@SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class DownloadReceiptsStep
     implements Function<List<Block>, CompletableFuture<List<BlockWithReceipts>>> {
   private final EthContext ethContext;
@@ -43,14 +43,15 @@ public class DownloadReceiptsStep
 
   @Override
   public CompletableFuture<List<BlockWithReceipts>> apply(final List<Block> blocks) {
-    final List<BlockHeader> headers = blocks.stream().map(Block::getHeader).collect(toList());
+    /*final List<BlockHeader> headers = blocks.stream().map(Block::getHeader).collect(toList());
     final CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> getReceipts =
         GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem).run();
     final CompletableFuture<List<BlockWithReceipts>> combineWithBlocks =
         getReceipts.thenApply(
             receiptsByHeader -> combineBlocksAndReceipts(blocks, receiptsByHeader));
-    FutureUtils.propagateCancellation(combineWithBlocks, getReceipts);
-    return combineWithBlocks;
+    FutureUtils.propagateCancellation(combineWithBlocks, getReceipts);*/
+
+    return CompletableFuture.completedFuture(combineBlocksAndReceipts(blocks, emptyMap()));
   }
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(
