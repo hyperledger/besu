@@ -179,7 +179,8 @@ public class BackwardSyncContext {
   }
 
   public boolean isReady() {
-    return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE);
+    return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)
+        && syncState.isInitialSyncPhaseDone();
   }
 
   public CompletableFuture<Void> stop() {
@@ -242,10 +243,10 @@ public class BackwardSyncContext {
         () -> {
           try {
             if (!isReady()) {
-              LOG.info("Waiting for TTD...");
+              LOG.info("Waiting for preconditions...");
               final boolean await = latch.await(2, TimeUnit.MINUTES);
               if (await) {
-                LOG.info("TTD reached...");
+                LOG.info("Preconditions meet...");
               }
             }
           } catch (InterruptedException e) {

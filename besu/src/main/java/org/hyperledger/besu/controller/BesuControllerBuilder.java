@@ -86,6 +86,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -336,7 +337,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncConfig.getComputationParallelism(),
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
+    final boolean fastSyncEnabled =
+        EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled);
 
     final TransactionPool transactionPool =
