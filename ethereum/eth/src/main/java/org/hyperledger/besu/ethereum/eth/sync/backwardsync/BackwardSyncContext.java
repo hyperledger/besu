@@ -251,7 +251,7 @@ public class BackwardSyncContext {
             }
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new BackwardSyncException("Wait for TTD was interrupted");
+            throw new BackwardSyncException("Wait for TTD preconditions interrupted");
           } finally {
             syncState.unsubscribeTTDReached(id);
           }
