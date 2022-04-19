@@ -44,7 +44,12 @@ public class DynamicPivotBlockManagerTest {
   private final SyncState syncState = mock(SyncState.class);
 
   private final DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager =
-      new DynamicPivotBlockManager<>(downloadState, fastSyncActions, snapSyncState);
+      new DynamicPivotBlockManager<>(
+          downloadState,
+          fastSyncActions,
+          snapSyncState,
+          SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY,
+          SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING);
 
   @Before
   public void setup() {

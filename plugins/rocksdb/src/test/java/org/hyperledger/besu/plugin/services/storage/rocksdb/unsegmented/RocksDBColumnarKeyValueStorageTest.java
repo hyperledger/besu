@@ -31,6 +31,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +42,38 @@ import org.rocksdb.ColumnFamilyHandle;
 public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
+
+  @Test
+  public void assertClear() throws Exception {
+    final byte[] key = bytesFromHexString("0001");
+    final byte[] val1 = bytesFromHexString("0FFF");
+    final byte[] val2 = bytesFromHexString("1337");
+    final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
+    Supplier<ColumnFamilyHandle> segment = () -> store.getSegmentIdentifierByName(TestSegment.FOO);
+    final Consumer<byte[]> insert =
+        value -> {
+          final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
+          tx.put(segment.get(), key, value);
+          tx.commit();
+        };
+
+    // insert val:
+    insert.accept(val1);
+    final Optional<byte[]> result = store.get(segment.get(), key);
+    assertThat(result.orElse(null)).isEqualTo(val1);
+
+    // clear and assert empty:
+    store.clear(segment.get());
+    final Optional<byte[]> truncResult = store.get(segment.get(), key);
+    assertThat(truncResult).isEmpty();
+
+    // insert into empty:
+    insert.accept(val2);
+    final Optional<byte[]> nextResult = store.get(segment.get(), key);
+    assertThat(nextResult.orElse(null)).isEqualTo(val2);
+
+    store.close();
+  }
 
   @Test
   public void twoSegmentsAreIndependent() throws Exception {

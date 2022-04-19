@@ -78,7 +78,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
               if (err != null) {
                 // Mark peer as invalid on error
                 LOG.debug(
-                    "Peer {} is invalid because required block block ({}) is unavailable: {}",
+                    "Peer {} is invalid because required block ({}) is unavailable: {}",
                     ethPeer,
                     blockNumber,
                     err.toString());

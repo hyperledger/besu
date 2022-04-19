@@ -47,7 +47,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   private final EthContext ethContext;
   private final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection;
-  private final int hashCountPerRequest;
+  private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
   private final WorldStateStorage worldStateStorage;
@@ -61,7 +61,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
-      final int hashCountPerRequest,
+      final SnapSyncConfiguration snapSyncConfiguration,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
       final long minMillisBeforeStalling,
@@ -70,7 +70,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
     this.snapTaskCollection = snapTaskCollection;
-    this.hashCountPerRequest = hashCountPerRequest;
+    this.snapSyncConfiguration = snapSyncConfiguration;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.maxNodeRequestsWithoutProgress = maxNodeRequestsWithoutProgress;
     this.minMillisBeforeStalling = minMillisBeforeStalling;
@@ -140,10 +140,15 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
-              .taskCountPerRequest(hashCountPerRequest)
+              .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
               .pivotBlockManager(
-                  new DynamicPivotBlockManager<>(newDownloadState, fastSyncActions, snapSyncState))
+                  new DynamicPivotBlockManager<>(
+                      newDownloadState,
+                      fastSyncActions,
+                      snapSyncState,
+                      snapSyncConfiguration.getPivotBlockWindowValidity(),
+                      snapSyncConfiguration.getPivotBlockDistanceBeforeCaching()))
               .loadLocalDataStep(
                   new LoadLocalDataStep(
                       worldStateStorage, newDownloadState, metricsSystem, snapSyncState))

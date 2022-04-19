@@ -33,8 +33,10 @@ public class SHA256PrecompiledContract extends AbstractPrecompiledContract {
     return gasCalculator().sha256PrecompiledContractGasCost(input);
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
-    return Hash.sha256(input);
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
+    return PrecompileContractResult.success(Hash.sha256(input));
   }
 }

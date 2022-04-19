@@ -52,8 +52,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
     return gasCalculator().modExpGasCost(input);
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, @Nonnull final MessageFrame messageFrame) {
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final BigInteger baseLength = baseLength(input);
     final BigInteger exponentLength = exponentLength(input);
     final BigInteger modulusLength = modulusLength(input);
@@ -61,7 +63,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     // we could have a massively overflowing exp because it wouldn't have been filtered out at the
     // gas cost phase
     if (baseLength.equals(BigInteger.ZERO) && modulusLength.equals(BigInteger.ZERO)) {
-      return Bytes.EMPTY;
+      return PrecompileContractResult.success(Bytes.EMPTY);
     }
     final BigInteger exponentOffset = BASE_OFFSET.add(baseLength);
     final BigInteger modulusOffset = exponentOffset.add(exponentLength);
@@ -81,7 +83,7 @@ public class BigIntegerModularExponentiationPrecompiledContract
     }
 
     modExp.copyTo(result, result.size() - modExp.size());
-    return result;
+    return PrecompileContractResult.success(result);
   }
 
   // Equation to estimate the multiplication complexity.

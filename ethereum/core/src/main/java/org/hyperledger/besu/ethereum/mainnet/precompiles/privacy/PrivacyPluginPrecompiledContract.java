@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -43,9 +44,10 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
     this.privacyParameters = privacyParameters;
   }
 
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;
     }
