@@ -85,7 +85,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }*/
 
-    final long gasUsed =
+    /*final long gasUsed =
         receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
     if (!validateGasUsed(header.getGasUsed(), gasUsed)) {
       return false;
@@ -93,7 +93,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
     if (!validateLogsBloom(header.getLogsBloom(), BodyValidation.logsBloom(receipts))) {
       return false;
-    }
+    }*/
 
     if (!validateEthHash(context, block, ommerValidationMode)) {
       return false;
