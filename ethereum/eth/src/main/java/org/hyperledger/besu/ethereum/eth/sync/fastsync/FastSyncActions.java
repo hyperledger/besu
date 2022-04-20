@@ -182,7 +182,7 @@ public class FastSyncActions {
             this::limitTrailingPeersAndRetrySelectPivotBlock, Duration.ofSeconds(5));
   }
 
-  private long conservatitvelyEstimatedPivotBlock() {
+  private long conservativelyEstimatedPivotBlock() {
     long estimatedNextPivot =
         syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
     return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
@@ -194,7 +194,7 @@ public class FastSyncActions {
             ethContext.getEthPeers(),
             () ->
                 new TrailingPeerRequirements(
-                    conservatitvelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
+                    conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
     trailingPeerLimiter.enforceTrailingPeerLimit();
 
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
