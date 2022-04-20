@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -152,7 +152,7 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
 
     final Builder builder =
         builder()
-            .nonce(input.readLongScalar())
+            .nonce(input.readUnsignedLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
             .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
@@ -565,7 +565,7 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
         RLP.encode(
             out -> {
               out.startList();
-              out.writeLongScalar(nonce);
+              out.writeUnsignedLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
               out.writeLongScalar(gasLimit);
               out.writeBytes(to == null ? Bytes.EMPTY : to);

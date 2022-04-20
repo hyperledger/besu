@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -108,6 +108,15 @@ public interface RLPOutput {
    */
   default void writeLongScalar(final long v) {
     checkArgument(v >= 0, "Invalid negative value %s for scalar encoding", v);
+    writeBytes(Bytes.minimalBytes(v));
+  }
+
+  /**
+   * Writes a scalar (encoded with no leading zeroes).
+   *
+   * @param v The scalar to write.
+   */
+  default void writeUnsignedLongScalar(final long v) {
     writeBytes(Bytes.minimalBytes(v));
   }
 

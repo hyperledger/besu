@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -130,7 +130,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
 
-    final long nonce = in.readLongScalar();
+    final long nonce = in.readUnsignedLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
@@ -223,7 +223,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeLongScalar(nonce);
+    out.writeUnsignedLongScalar(nonce);
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);

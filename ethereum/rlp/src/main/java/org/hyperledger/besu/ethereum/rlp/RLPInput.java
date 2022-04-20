@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -144,6 +144,17 @@ public interface RLPInput {
    *     fit a long or has leading zeros.
    */
   long readLongScalar();
+
+  /**
+   * Reads a non-negative scalar from the input and return is as a long value which is interpreted
+   * as an unsigned long.
+   *
+   * @return The next scalar item of this input as a long value.
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
+   *     fit a long or has leading zeros.
+   */
+  long readUnsignedLongScalar();
 
   /**
    * Reads a scalar from the input and return is as an int value.

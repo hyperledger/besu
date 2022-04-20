@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -76,7 +76,7 @@ public class TransactionEncoder {
 
   static void encodeFrontier(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeLongScalar(transaction.getNonce());
+    out.writeUnsignedLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
@@ -119,7 +119,7 @@ public class TransactionEncoder {
       final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
     rlpOutput.writeLongScalar(chainId.orElseThrow().longValue());
-    rlpOutput.writeLongScalar(nonce);
+    rlpOutput.writeUnsignedLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
     rlpOutput.writeLongScalar(gasLimit);
     rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));

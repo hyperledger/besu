@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -288,16 +288,29 @@ abstract class AbstractRLPInput implements RLPInput {
   @Override
   public long readLongScalar() {
     checkScalar("long scalar", 8);
+    long res = readGenericLongScalar();
+    if (res < 0) {
+      error("long scalar %s is not non-negative", res);
+    }
+    setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public long readUnsignedLongScalar() {
+    checkScalar("unsigned long scalar", 8);
+    long res = readGenericLongScalar();
+    setTo(nextItem());
+    return res;
+  }
+
+  private long readGenericLongScalar() {
     long res = 0;
     int shift = 0;
     for (int i = 0; i < currentPayloadSize; i++) {
       res |= ((long) payloadByte(currentPayloadSize - i - 1) & 0xFF) << shift;
       shift += 8;
     }
-    if (res < 0) {
-      error("long scalar %s is not non-negative", res);
-    }
-    setTo(nextItem());
     return res;
   }
 

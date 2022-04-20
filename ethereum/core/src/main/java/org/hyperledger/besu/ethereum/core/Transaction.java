@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -759,7 +759,7 @@ public class Transaction
     return RLP.encode(
         rlpOutput -> {
           rlpOutput.startList();
-          rlpOutput.writeLongScalar(nonce);
+          rlpOutput.writeUnsignedLongScalar(nonce);
           rlpOutput.writeUInt256Scalar(gasPrice);
           rlpOutput.writeLongScalar(gasLimit);
           rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
@@ -789,7 +789,7 @@ public class Transaction
             rlpOutput -> {
               rlpOutput.startList();
               rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
-              rlpOutput.writeLongScalar(nonce);
+              rlpOutput.writeUnsignedLongScalar(nonce);
               rlpOutput.writeUInt256Scalar(maxPriorityFeePerGas);
               rlpOutput.writeUInt256Scalar(maxFeePerGas);
               rlpOutput.writeLongScalar(gasLimit);

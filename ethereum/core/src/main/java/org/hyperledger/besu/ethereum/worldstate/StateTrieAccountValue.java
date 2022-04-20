@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -99,7 +99,7 @@ public class StateTrieAccountValue {
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeLongScalar(nonce);
+    out.writeUnsignedLongScalar(nonce);
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
@@ -110,7 +110,7 @@ public class StateTrieAccountValue {
   public static StateTrieAccountValue readFrom(final RLPInput in) {
     in.enterList();
 
-    final long nonce = in.readLongScalar();
+    final long nonce = in.readUnsignedLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
     Bytes32 storageRoot;
     Bytes32 codeHash;

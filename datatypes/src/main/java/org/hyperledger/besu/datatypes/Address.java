@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -161,7 +161,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
                 out -> {
                   out.startList();
                   out.writeBytes(senderAddress);
-                  out.writeLongScalar(nonce);
+                  out.writeUnsignedLongScalar(nonce);
                   out.endList();
                 })));
   }
@@ -182,7 +182,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
                 out -> {
                   out.startList();
                   out.writeBytes(senderAddress);
-                  out.writeLongScalar(nonce);
+                  out.writeUnsignedLongScalar(nonce);
                   out.writeBytes(privacyGroupId);
                   out.endList();
                 })));

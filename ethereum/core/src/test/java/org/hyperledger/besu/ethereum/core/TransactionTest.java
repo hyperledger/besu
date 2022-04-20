@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -47,14 +47,15 @@ public class TransactionTest {
 
   private final TransactionTestCaseSpec spec;
 
-  private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
+  private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests";
 
   @Parameters(name = "Name: {0}")
   public static Collection<Object[]> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
         // ignore tests that expect transactions with large gasLimits to properly decode
         .ignore("TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
-        // Nonce is tracked with type long, large valued nonces can't currently be decoded
+        // The test contains a nonce with 256 bits, which is longer than the spec allows,
+        // but incorrectly is specified as a successful test
         .ignore("TransactionWithHighNonce256")
         .generator((name, spec, collector) -> collector.add(name, spec, true))
         .generate(TEST_CONFIG_FILE_DIR_PATH);
