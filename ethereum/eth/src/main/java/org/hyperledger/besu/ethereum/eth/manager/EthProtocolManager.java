@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
+  private static final int LOG_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF = 10;
 
   private final EthScheduler scheduler;
   private final CountDownLatch shutdown;
@@ -305,6 +306,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
+    LOG.trace("handleNewConnection START " + ethPeers.toString());
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     if (peer.statusHasBeenSentToPeer()) {
@@ -331,6 +333,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
+    LOG.trace("handleNewConnection END " + ethPeers.toString());
   }
 
   @Override
@@ -374,7 +377,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.debug("Unable to parse status message.", e);
-      // Parsing errors can happen when clients broadcast network ids outside of the int range,
+      // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
     }
@@ -391,6 +394,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
                     new IllegalStateException(
                         "Unable to get total difficulty from blockchain for mined block."));
     blockBroadcaster.propagate(block, totalDifficulty);
+
+    if (block.getHeader().getNumber() % LOG_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF == 0) {
+      LOG.info(ethPeers.toString());
+    }
   }
 
   public List<Bytes> getForkIdAsBytesList() {

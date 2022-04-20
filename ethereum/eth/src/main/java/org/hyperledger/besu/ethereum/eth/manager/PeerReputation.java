@@ -25,10 +25,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PeerReputation {
+public class PeerReputation implements Comparable<PeerReputation> {
   private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
   private static final int TIMEOUT_THRESHOLD = 3;
   private static final int USELESS_RESPONSE_THRESHOLD = 5;
@@ -39,12 +40,20 @@ public class PeerReputation {
       new ConcurrentHashMap<>();
   private final Queue<Long> uselessResponseTimes = new ConcurrentLinkedQueue<>();
 
+  private static final int DEFAULT_SCORE = 100;
+  private static final int SMALL_ADJUSTMENT = 1;
+  private static final int LARGE_ADJUSTMENT = 10;
+
+  private int score = DEFAULT_SCORE;
+
   public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
       LOG.debug("Disconnection triggered by repeated timeouts");
+      score -= LARGE_ADJUSTMENT;
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
+      score -= SMALL_ADJUSTMENT;
       return Optional.empty();
     }
   }
@@ -67,14 +76,26 @@ public class PeerReputation {
       uselessResponseTimes.poll();
     }
     if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
+      score -= LARGE_ADJUSTMENT;
       LOG.debug("Disconnection triggered by exceeding useless response threshold");
       return Optional.of(DisconnectReason.USELESS_PEER);
     } else {
+      score -= SMALL_ADJUSTMENT;
       return Optional.empty();
     }
   }
 
   private boolean shouldRemove(final Long timestamp, final long currentTimestamp) {
     return timestamp != null && timestamp + USELESS_RESPONSE_WINDOW_IN_MILLIS < currentTimestamp;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("PeerReputation " + score);
+  }
+
+  @Override
+  public int compareTo(final @NotNull PeerReputation otherReputation) {
+    return Integer.compare(this.score, otherReputation.score);
   }
 }

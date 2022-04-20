@@ -58,10 +58,11 @@ import java.util.function.Consumer;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthPeer {
+public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
@@ -522,7 +523,19 @@ public class EthPeer {
 
   @Override
   public String toString() {
-    return String.format("Peer %s...", nodeId().toString().substring(0, 20));
+    return String.format(
+        "Peer %s... %s, validated? %s, disconnected? %s",
+        getShortNodeId(), reputation, isFullyValidated(), isDisconnected());
+  }
+
+  @NotNull
+  public String getShortNodeId() {
+    return nodeId().toString().substring(0, 20);
+  }
+
+  @Override
+  public int compareTo(final @NotNull EthPeer ethPeer) {
+    return this.reputation.compareTo(ethPeer.reputation);
   }
 
   @FunctionalInterface

@@ -216,4 +216,16 @@ public final class StatusMessage extends AbstractMessageData {
           protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
     }
   }
+
+  @Override
+  public String toString() {
+    final StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append("StatusMessage [");
+    stringBuilder.append("code=");
+    stringBuilder.append(getCode());
+    stringBuilder.append(", size=");
+    stringBuilder.append(getSize());
+    stringBuilder.append("]");
+    return stringBuilder.toString();
+  }
 }
