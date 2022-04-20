@@ -71,6 +71,9 @@ public class RetryingGetHeaderFromPeerByNumberTask
               if (!peerResult.getResult().isEmpty()) {
                 result.complete(peerResult.getResult());
               }
+              assignedPeer.ifPresent(
+                  ethPeer ->
+                      ethPeer.setLastPivotHeaderDownloadTime(getHeadersTask.getTaskTimeInSec()));
               return peerResult.getResult();
             });
   }

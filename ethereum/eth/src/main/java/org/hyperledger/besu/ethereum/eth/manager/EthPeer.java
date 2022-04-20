@@ -96,6 +96,8 @@ public class EthPeer {
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
 
+  private double lastPivotHeaderDownloadTime;
+
   private static final Map<Integer, Integer> roundMessages;
 
   static {
@@ -204,6 +206,15 @@ public class EthPeer {
   public void recordUselessResponse(final String requestType) {
     LOG.debug("Received useless response for {} from peer {}", requestType, this);
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
+  }
+
+  public void setLastPivotHeaderDownloadTime(double time) {
+    LOG.debug("Updated pivot header download time for peer {} to {}", this, time);
+    this.lastPivotHeaderDownloadTime = time;
+  }
+
+  public double getLastPivotHeaderDownloadTime() {
+    return this.lastPivotHeaderDownloadTime;
   }
 
   public void disconnect(final DisconnectReason reason) {

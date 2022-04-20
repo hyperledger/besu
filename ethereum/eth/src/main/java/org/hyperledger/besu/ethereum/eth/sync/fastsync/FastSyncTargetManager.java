@@ -66,7 +66,8 @@ class FastSyncTargetManager extends SyncTargetManager {
   @Override
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
-    final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
+    final Optional<EthPeer> maybeBestPeer =
+        ethContext.getEthPeers().bestPeerWithHeightEstimateForFastSync();
     if (!maybeBestPeer.isPresent()) {
       LOG.info(
           "No sync target, checking current peers for usefulness: {}",

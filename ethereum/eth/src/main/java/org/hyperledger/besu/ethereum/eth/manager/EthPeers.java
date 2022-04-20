@@ -193,6 +193,13 @@ public class EthPeers {
         p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight());
   }
 
+  public Optional<EthPeer> bestPeerWithHeightEstimateForFastSync() {
+    return streamAvailablePeers()
+        .filter(p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight())
+        .sorted(BEST_CHAIN)
+        .max(Comparator.comparing(EthPeer::getLastPivotHeaderDownloadTime));
+  }
+
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
     return streamAvailablePeers().filter(matchesCriteria).max(BEST_CHAIN);
   }
