@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -177,10 +179,26 @@ public class FastSyncActions {
     return ethContext
         .getScheduler()
         .scheduleFutureTask(
+            this::limitTrailingPeersAndRetrySelectPivotBlock, Duration.ofSeconds(5));
+  }
+
+  private long conservativelyEstimatedPivotBlock() {
+    long estimatedNextPivot =
+        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
+    return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
+  }
+
+  private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock() {
+    final TrailingPeerLimiter trailingPeerLimiter =
+        new TrailingPeerLimiter(
+            ethContext.getEthPeers(),
             () ->
-                waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-                    .thenCompose(ignore -> selectPivotBlockFromPeers()),
-            Duration.ofSeconds(5));
+                new TrailingPeerRequirements(
+                    conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
+        .thenCompose(ignore -> selectPivotBlockFromPeers());
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(
