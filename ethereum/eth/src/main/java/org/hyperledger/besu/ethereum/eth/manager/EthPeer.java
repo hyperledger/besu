@@ -208,7 +208,7 @@ public class EthPeer {
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 
-  public void setLastPivotHeaderDownloadTime(double time) {
+  public void setLastPivotHeaderDownloadTime(final double time) {
     LOG.debug("Updated pivot header download time for peer {} to {}", this, time);
     this.lastPivotHeaderDownloadTime = time;
   }
