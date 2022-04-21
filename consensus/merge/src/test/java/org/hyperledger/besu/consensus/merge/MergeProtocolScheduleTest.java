@@ -61,10 +61,7 @@ public class MergeProtocolScheduleTest {
     assertThat(london.isSkipZeroBlockRewards()).isEqualTo(true);
 
     Bytes diffOp = Bytes.fromHexString("0x44");
-    var op = london.getEvm()
-        .operationAtOffset(Code.createLegacyCode(diffOp, Hash.hash(diffOp)), 0);
-    assertThat(op)
-        .isInstanceOf(PrevRanDaoOperation.class);
-
+    var op = london.getEvm().operationAtOffset(Code.createLegacyCode(diffOp, Hash.hash(diffOp)), 0);
+    assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 }
