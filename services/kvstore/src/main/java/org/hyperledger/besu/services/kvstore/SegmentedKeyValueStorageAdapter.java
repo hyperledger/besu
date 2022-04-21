@@ -22,12 +22,11 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
-  private final AtomicReference<S> segmentHandle;
+  private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
   public SegmentedKeyValueStorageAdapter(
@@ -38,32 +37,32 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   @Override
   public void clear() {
-    storage.clear(segmentHandle.get());
+    storage.clear(segmentHandle);
   }
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
-    return storage.containsKey(segmentHandle.get(), key);
+    return storage.containsKey(segmentHandle, key);
   }
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
-    return storage.get(segmentHandle.get(), key);
+    return storage.get(segmentHandle, key);
   }
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return storage.getAllKeysThat(segmentHandle.get(), returnCondition);
+    return storage.getAllKeysThat(segmentHandle, returnCondition);
   }
 
   @Override
   public Stream<byte[]> streamKeys() {
-    return storage.streamKeys(segmentHandle.get());
+    return storage.streamKeys(segmentHandle);
   }
 
   @Override
   public boolean tryDelete(final byte[] key) {
-    return storage.tryDelete(segmentHandle.get(), key);
+    return storage.tryDelete(segmentHandle, key);
   }
 
   @Override
@@ -78,12 +77,12 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
       @Override
       public void put(final byte[] key, final byte[] value) {
-        transaction.put(segmentHandle.get(), key, value);
+        transaction.put(segmentHandle, key, value);
       }
 
       @Override
       public void remove(final byte[] key) {
-        transaction.remove(segmentHandle.get(), key);
+        transaction.remove(segmentHandle, key);
       }
 
       @Override

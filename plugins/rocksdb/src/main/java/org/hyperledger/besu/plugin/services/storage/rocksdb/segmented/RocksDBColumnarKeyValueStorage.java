@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
@@ -36,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,7 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RocksDBColumnarKeyValueStorage
-    implements SegmentedKeyValueStorage<ColumnFamilyHandle> {
+    implements SegmentedKeyValueStorage<RocksDbSegmentIdentifier> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   private static final String DEFAULT_COLUMN = "default";
@@ -75,7 +75,7 @@ public class RocksDBColumnarKeyValueStorage
   private final TransactionDBOptions txOptions;
   private final TransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
-  private final Map<String, AtomicReference<ColumnFamilyHandle>> columnHandlesByName;
+  private final Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
   private final RocksDBMetrics metrics;
   private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
 
@@ -128,14 +128,13 @@ public class RocksDBColumnarKeyValueStorage
                   Collectors.toMap(
                       segment -> Bytes.wrap(segment.getId()), SegmentIdentifier::getName));
 
-      final ImmutableMap.Builder<String, AtomicReference<ColumnFamilyHandle>> builder =
-          ImmutableMap.builder();
+      final ImmutableMap.Builder<String, RocksDbSegmentIdentifier> builder = ImmutableMap.builder();
 
       for (ColumnFamilyHandle columnHandle : columnHandles) {
         final String segmentName =
             requireNonNullElse(
                 segmentsById.get(Bytes.wrap(columnHandle.getName())), DEFAULT_COLUMN);
-        builder.put(segmentName, new AtomicReference<>(columnHandle));
+        builder.put(segmentName, new RocksDbSegmentIdentifier(db, columnHandle));
       }
       columnHandlesByName = builder.build();
 
@@ -150,25 +149,24 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public AtomicReference<ColumnFamilyHandle> getSegmentIdentifierByName(
-      final SegmentIdentifier segment) {
+  public RocksDbSegmentIdentifier getSegmentIdentifierByName(final SegmentIdentifier segment) {
     return columnHandlesByName.get(segment.getName());
   }
 
   @Override
-  public Optional<byte[]> get(final ColumnFamilyHandle segment, final byte[] key)
+  public Optional<byte[]> get(final RocksDbSegmentIdentifier segment, final byte[] key)
       throws StorageException {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(db.get(segment, key));
+      return Optional.ofNullable(db.get(segment.get(), key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
   }
 
   @Override
-  public Transaction<ColumnFamilyHandle> startTransaction() throws StorageException {
+  public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
@@ -176,16 +174,16 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public Stream<byte[]> streamKeys(final ColumnFamilyHandle segmentHandle) {
-    final RocksIterator rocksIterator = db.newIterator(segmentHandle);
+  public Stream<byte[]> streamKeys(final RocksDbSegmentIdentifier segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
     rocksIterator.seekToFirst();
     return RocksDbKeyIterator.create(rocksIterator).toStream();
   }
 
   @Override
-  public boolean tryDelete(final ColumnFamilyHandle segmentHandle, final byte[] key) {
+  public boolean tryDelete(final RocksDbSegmentIdentifier segmentHandle, final byte[] key) {
     try {
-      db.delete(segmentHandle, tryDeleteOptions, key);
+      db.delete(segmentHandle.get(), tryDeleteOptions, key);
       return true;
     } catch (RocksDBException e) {
       if (e.getStatus().getCode() == Status.Code.Incomplete) {
@@ -198,33 +196,17 @@ public class RocksDBColumnarKeyValueStorage
 
   @Override
   public Set<byte[]> getAllKeysThat(
-      final ColumnFamilyHandle segmentHandle, final Predicate<byte[]> returnCondition) {
+      final RocksDbSegmentIdentifier segmentHandle, final Predicate<byte[]> returnCondition) {
     return streamKeys(segmentHandle).filter(returnCondition).collect(toUnmodifiableSet());
   }
 
   @Override
-  public void clear(final ColumnFamilyHandle segmentHandle) {
+  public void clear(final RocksDbSegmentIdentifier segmentHandle) {
 
-    var entry =
-        columnHandlesByName.values().stream().filter(e -> e.get().equals(segmentHandle)).findAny();
-
-    if (entry.isPresent()) {
-      AtomicReference<ColumnFamilyHandle> segmentHandleRef = entry.get();
-      segmentHandleRef.getAndUpdate(
-          oldHandle -> {
-            try {
-              ColumnFamilyDescriptor descriptor =
-                  new ColumnFamilyDescriptor(
-                      segmentHandle.getName(), segmentHandle.getDescriptor().getOptions());
-              db.dropColumnFamily(oldHandle);
-              ColumnFamilyHandle newHandle = db.createColumnFamily(descriptor);
-              segmentHandle.close();
-              return newHandle;
-            } catch (final RocksDBException e) {
-              throw new StorageException(e);
-            }
-          });
-    }
+    columnHandlesByName.values().stream()
+        .filter(e -> e.equals(segmentHandle))
+        .findAny()
+        .ifPresent(segmentIdentifier -> segmentIdentifier.recreate());
   }
 
   @Override
@@ -234,7 +216,7 @@ public class RocksDBColumnarKeyValueStorage
       options.close();
       tryDeleteOptions.close();
       columnHandlesByName.values().stream()
-          .map(AtomicReference::get)
+          .map(RocksDbSegmentIdentifier::get)
           .forEach(ColumnFamilyHandle::close);
       db.close();
     }
@@ -247,7 +229,7 @@ public class RocksDBColumnarKeyValueStorage
     }
   }
 
-  private class RocksDbTransaction implements Transaction<ColumnFamilyHandle> {
+  private class RocksDbTransaction implements Transaction<RocksDbSegmentIdentifier> {
 
     private final org.rocksdb.Transaction innerTx;
     private final WriteOptions options;
@@ -258,9 +240,9 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     @Override
-    public void put(final ColumnFamilyHandle segment, final byte[] key, final byte[] value) {
+    public void put(final RocksDbSegmentIdentifier segment, final byte[] key, final byte[] value) {
       try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
-        innerTx.put(segment, key, value);
+        innerTx.put(segment.get(), key, value);
       } catch (final RocksDBException e) {
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());
@@ -271,9 +253,9 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     @Override
-    public void remove(final ColumnFamilyHandle segment, final byte[] key) {
+    public void remove(final RocksDbSegmentIdentifier segment, final byte[] key) {
       try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
-        innerTx.delete(segment, key);
+        innerTx.delete(segment.get(), key);
       } catch (final RocksDBException e) {
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());
