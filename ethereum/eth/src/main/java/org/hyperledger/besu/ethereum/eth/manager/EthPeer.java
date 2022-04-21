@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -396,7 +397,14 @@ public class EthPeer implements Comparable<EthPeer> {
     return reputation.timeoutCounts();
   }
 
+  public PeerReputation getReputation() {
+    return reputation;
+  }
+
   void handleDisconnect() {
+    traceLambda(
+        LOG, "handleDisconnect - peer... {}, {}", this::getShortNodeId, this::getReputation);
+
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));
   }

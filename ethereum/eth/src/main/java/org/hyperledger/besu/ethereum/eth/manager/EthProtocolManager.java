@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -305,7 +306,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    LOG.trace("handleNewConnection START " + ethPeers.toString());
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     if (peer.statusHasBeenSentToPeer()) {
@@ -332,8 +332,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
-    LOG.trace("handleNewConnection END " + ethPeers.toString());
-    LOG.trace(ethPeers.toString());
+    traceLambda(LOG, ethPeers.toString());
   }
 
   @Override
@@ -348,7 +347,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
-    LOG.trace(ethPeers.toString());
+    traceLambda(LOG, ethPeers.toString());
   }
 
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {

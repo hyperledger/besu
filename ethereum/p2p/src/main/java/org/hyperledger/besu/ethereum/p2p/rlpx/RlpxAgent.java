@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -180,12 +181,12 @@ public class RlpxAgent {
         .forEach(this::connect);
   }
 
-  private void logConnectionsById() {
+  private String logConnectionsByIdToString() {
     final String connectionsList =
         connectionsById.values().stream()
             .map(RlpxConnection::toString)
             .collect(Collectors.joining(",\n"));
-    LOG.trace(connectionsById.size() + " ConnectionsById {\n" + connectionsList + "}");
+    return connectionsById.size() + " ConnectionsById {\n" + connectionsList + "}";
   }
 
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
@@ -271,7 +272,7 @@ public class RlpxAgent {
           }
         });
 
-    logConnectionsById();
+    traceLambda(LOG, logConnectionsByIdToString());
 
     return connectionFuture.get();
   }
@@ -286,7 +287,7 @@ public class RlpxAgent {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
-    logConnectionsById();
+    traceLambda(LOG, logConnectionsByIdToString());
     cleanUpPeerConnection(peerConnection.getPeer().getId());
   }
 
@@ -428,7 +429,7 @@ public class RlpxAgent {
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
     enforceConnectionLimits();
-    logConnectionsById();
+    traceLambda(LOG, logConnectionsByIdToString());
   }
 
   private boolean shouldLimitRemoteConnections() {
