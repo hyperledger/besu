@@ -182,10 +182,10 @@ public class RlpxAgent {
 
   private void logConnectionsById() {
     final String connectionsList =
-        connectionsById.keySet().stream()
-            .map((b) -> b + " : " + connectionsById.get(b))
-            .collect(Collectors.joining(","));
-    LOG.trace(connectionsById.size() + " ConnectionsById=" + connectionsList);
+        connectionsById.values().stream()
+            .map(RlpxConnection::toString)
+            .collect(Collectors.joining(",\n"));
+    LOG.trace(connectionsById.size() + " ConnectionsById {\n" + connectionsList + "}");
   }
 
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
@@ -419,7 +419,6 @@ public class RlpxAgent {
           }
         });
 
-    logConnectionsById();
     if (!isNull(disconnectAction.get())) {
       disconnectAction.get().run();
     }
