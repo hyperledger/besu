@@ -90,6 +90,25 @@ public class StatusMessageTest {
     assertThat(copy.forkId()).isEqualTo(forkId);
   }
 
+  @Test
+  public void toStringHasExpectedInfo() {
+    final int version = EthProtocol.EthVersion.V64;
+    final BigInteger networkId = BigInteger.ONE;
+    final Difficulty td = Difficulty.of(1000L);
+    final Hash bestHash = randHash(1L);
+    final Hash genesisHash = randHash(2L);
+    final ForkId forkId = new ForkId(Bytes.fromHexString("0xa00bc334"), 0L);
+
+    final MessageData msg =
+        StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
+
+    final StatusMessage copy = new StatusMessage(msg.getData());
+    final String copyToString = copy.toString();
+
+    assertThat(copyToString).contains("size=" + copy.getSize());
+    assertThat(copyToString).contains("code=" + copy.getCode());
+  }
+
   private Hash randHash(final long seed) {
     final Random random = new Random(seed);
     final byte[] bytes = new byte[32];

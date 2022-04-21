@@ -398,7 +398,6 @@ public class RlpxAgent {
             newConnectionAccepted.set(true);
             return inboundConnection;
           }
-          // TODO weirdness
           // We already have an existing connection, figure out which connection to keep
           if (compareDuplicateConnections(inboundConnection, existingConnection) < 0) {
             // Keep the inbound connection
