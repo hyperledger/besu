@@ -98,9 +98,9 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long SELFDESTRUCT_OPERATION_GAS_COST = 0L;
 
-  private static final long SHA3_OPERATION_BASE_GAS_COST = 30L;
+  private static final long KECCAK256_OPERATION_BASE_GAS_COST = 30L;
 
-  static final long SHA3_OPERATION_WORD_GAS_COST = 6L;
+  static final long KECCAK256_OPERATION_WORD_GAS_COST = 6L;
 
   private static final long SLOAD_OPERATION_GAS_COST = 50L;
 
@@ -394,9 +394,14 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long sha3OperationGasCost(final MessageFrame frame, final long offset, final long length) {
+  public long keccak256OperationGasCost(
+      final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
-        frame, SHA3_OPERATION_BASE_GAS_COST, SHA3_OPERATION_WORD_GAS_COST, offset, length);
+        frame,
+        KECCAK256_OPERATION_BASE_GAS_COST,
+        KECCAK256_OPERATION_WORD_GAS_COST,
+        offset,
+        length);
   }
 
   @Override
