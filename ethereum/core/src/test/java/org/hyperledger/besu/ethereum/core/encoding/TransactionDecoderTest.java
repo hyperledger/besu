@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,6 +37,8 @@ public class TransactionDecoderTest {
       "b8a902f8a686796f6c6f7632800285012a05f20082753094000000000000000000000000000000000000aaaa8080f838f794000000000000000000000000000000000000aaaae1a0000000000000000000000000000000000000000000000000000000000000000001a00c1d69648e348fe26155b45de45004f0e4195f6352d8f0935bc93e98a3e2a862a060064e5b9765c0ac74223b0cf49635c59ae0faf82044fd17bcc68a549ade6f95";
   private static final String GOQUORUM_PRIVATE_TX_RLP =
       "0xf88d0b808347b7608080b840290a80a37d198ff06abe189b638ff53ac8a8dc51a0aff07609d2aa75342783ae493b3e3c6b564c0eebe49284b05a0726fb33087b9e0231d349ea0c7b5661c8c526a07144db7045a395e608cda6ab051c86cc4fb42e319960b82087f3b26f0cbc3c2da00223ac129b22aec7a6c2ace3c3ef39c5eaaa54070fd82d8ee2140b0e70b1dca9";
+  private static final String NONCE_64_BIT_MAX_MINUS_2_TX_RLP =
+      "0xf86788fffffffffffffffe0182520894095e7baea6a6c7c4c2dfeb977efac326af552d8780801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804";
 
   @Test
   public void decodeGoQuorumPrivateTransactionRlp() {
@@ -80,5 +82,14 @@ public class TransactionDecoderTest {
                 TransactionDecoder.decodeOpaqueBytes(
                     Bytes.fromHexString(txWithBigFees), goQuorumCompatibilityMode))
         .isInstanceOf(RLPException.class);
+  }
+
+  @Test
+  public void shouldDecodeWithHighNonce() {
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(
+            RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
+    assertThat(transaction).isNotNull();
+    assertThat(Long.toUnsignedString(transaction.getNonce())).isEqualTo("18446744073709551614");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -43,7 +43,7 @@ public class Quantity {
   }
 
   public static String create(final long value) {
-    return uint256ToHex(UInt256.valueOf(value));
+    return uint256ToHex(UInt256.fromHexString(Long.toHexString(value)));
   }
 
   public static String create(final Bytes value) {
