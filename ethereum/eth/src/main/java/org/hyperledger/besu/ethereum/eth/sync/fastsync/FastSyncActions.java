@@ -24,8 +24,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -44,6 +47,7 @@ public class FastSyncActions {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
   private final SynchronizerConfiguration syncConfig;
+  private final WorldStateStorage worldStateStorage;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
@@ -54,12 +58,14 @@ public class FastSyncActions {
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
+      final WorldStateStorage worldStateStorage,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
+    this.worldStateStorage = worldStateStorage;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -76,6 +82,10 @@ public class FastSyncActions {
         "fast_sync_pivot_block_current",
         "The current fast sync pivot block",
         pivotBlockGauge::get);
+  }
+
+  public SyncState getSyncState() {
+    return syncState;
   }
 
   public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
@@ -169,10 +179,26 @@ public class FastSyncActions {
     return ethContext
         .getScheduler()
         .scheduleFutureTask(
+            this::limitTrailingPeersAndRetrySelectPivotBlock, Duration.ofSeconds(5));
+  }
+
+  private long conservativelyEstimatedPivotBlock() {
+    long estimatedNextPivot =
+        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
+    return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
+  }
+
+  private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock() {
+    final TrailingPeerLimiter trailingPeerLimiter =
+        new TrailingPeerLimiter(
+            ethContext.getEthPeers(),
             () ->
-                waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-                    .thenCompose(ignore -> selectPivotBlockFromPeers()),
-            Duration.ofSeconds(5));
+                new TrailingPeerRequirements(
+                    conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
+        .thenCompose(ignore -> selectPivotBlockFromPeers());
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(
@@ -193,6 +219,7 @@ public class FastSyncActions {
   public ChainDownloader createChainDownloader(final FastSyncState currentState) {
     return FastSyncChainDownloader.create(
         syncConfig,
+        worldStateStorage,
         protocolSchedule,
         protocolContext,
         ethContext,

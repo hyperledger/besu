@@ -22,30 +22,24 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUN
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.CommitVisitor;
-import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.SnapPutVisitor;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -59,12 +53,11 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   protected final Bytes32 startKeyHash;
   protected final Bytes32 endKeyHash;
-
-  protected TreeMap<Bytes32, Bytes> accounts;
-  protected ArrayDeque<Bytes> proofs;
-
   private final Optional<Bytes32> startStorageRange;
   private final Optional<Bytes32> endStorageRange;
+
+  private final StackTrie stackTrie;
+  private Optional<Boolean> isProofValid;
 
   protected AccountRangeDataRequest(
       final Hash rootHash,
@@ -75,10 +68,10 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     super(ACCOUNT_RANGE, rootHash);
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
-    this.accounts = new TreeMap<>();
-    this.proofs = new ArrayDeque<>();
     this.startStorageRange = startStorageRange;
     this.endStorageRange = endStorageRange;
+    this.isProofValid = Optional.empty();
+    this.stackTrie = new StackTrie(rootHash, startKeyHash);
     LOG.trace(
         "create get account range data request with root hash={} from {} to {}",
         rootHash,
@@ -117,30 +110,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       return 0;
     }
 
-    final Bytes32 storageRoot =
-        proofs.isEmpty() ? MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH : getRootHash();
-
-    final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
-    for (Bytes proof : proofs) {
-      proofsEntries.put(Hash.hash(proof), proof);
-    }
-
-    final InnerNodeDiscoveryManager<Bytes> snapStoredNodeFactory =
-        new InnerNodeDiscoveryManager<>(
-            (location, hash) -> Optional.ofNullable(proofsEntries.get(hash)),
-            Function.identity(),
-            Function.identity(),
-            startKeyHash,
-            accounts.lastKey(),
-            true);
-
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
-        new StoredMerklePatriciaTrie<>(snapStoredNodeFactory, storageRoot);
-
-    for (Map.Entry<Bytes32, Bytes> account : accounts.entrySet()) {
-      trie.put(account.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, account.getValue()));
-    }
-
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
@@ -149,38 +118,29 @@ public class AccountRangeDataRequest extends SnapDataRequest {
           nbNodesSaved.getAndIncrement();
         };
 
-    trie.commit(
-        nodeUpdater,
-        (new CommitVisitor<>(nodeUpdater) {
-          @Override
-          public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
-            if (!node.isHealNeeded()) {
-              super.maybeStoreNode(location, node);
-            }
-          }
-        }));
+    stackTrie.commit(nodeUpdater);
 
     return nbNodesSaved.get();
   }
 
-  @Override
-  public boolean checkProof(
-      final WorldDownloadState<SnapDataRequest> downloadState,
+  public void addResponse(
       final WorldStateProofProvider worldStateProofProvider,
-      final SnapSyncState snapSyncState) {
-
-    // validate the range proof
-    if (!worldStateProofProvider.isValidRangeProof(
-        startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
-      clear();
-      return false;
+      final TreeMap<Bytes32, Bytes> accounts,
+      final ArrayDeque<Bytes> proofs) {
+    if (!accounts.isEmpty() || !proofs.isEmpty()) {
+      if (!worldStateProofProvider.isValidRangeProof(
+          startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
+        isProofValid = Optional.of(false);
+      } else {
+        stackTrie.addElement(startKeyHash, proofs, accounts);
+        isProofValid = Optional.of(true);
+      }
     }
-    return true;
   }
 
   @Override
-  public boolean isValid() {
-    return !accounts.isEmpty() || !proofs.isEmpty();
+  public boolean isResponseReceived() {
+    return isProofValid.orElse(false);
   }
 
   @Override
@@ -190,27 +150,30 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final SnapSyncState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
+    final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
     // new request is added if the response does not match all the requested range
-    findNewBeginElementInRange(getRootHash(), proofs, accounts, endKeyHash)
+    findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement ->
                 childRequests.add(
                     createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash)));
 
     // find missing storages and code
-    for (Map.Entry<Bytes32, Bytes> account : accounts.entrySet()) {
+    for (Map.Entry<Bytes32, Bytes> account : taskElement.keys().entrySet()) {
       final StateTrieAccountValue accountValue =
           StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
       if (!accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
         childRequests.add(
             createStorageRangeDataRequest(
+                getRootHash(),
                 account.getKey(),
                 accountValue.getStorageRoot(),
                 startStorageRange.orElse(MIN_RANGE),
                 endStorageRange.orElse(MAX_RANGE)));
       }
       if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-        childRequests.add(createBytecodeRequest(account.getKey(), accountValue.getCodeHash()));
+        childRequests.add(
+            createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
       }
     }
     return childRequests.stream();
@@ -224,25 +187,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     return endKeyHash;
   }
 
+  @VisibleForTesting
   public TreeMap<Bytes32, Bytes> getAccounts() {
-    return accounts;
-  }
-
-  public void setAccounts(final TreeMap<Bytes32, Bytes> accounts) {
-    this.accounts = accounts;
-  }
-
-  public ArrayDeque<Bytes> getProofs() {
-    return proofs;
-  }
-
-  public void setProofs(final ArrayDeque<Bytes> proofs) {
-    this.proofs = proofs;
-  }
-
-  @Override
-  public void clear() {
-    accounts = new TreeMap<>();
-    proofs = new ArrayDeque<>();
+    return stackTrie.getElement(startKeyHash).keys();
   }
 }

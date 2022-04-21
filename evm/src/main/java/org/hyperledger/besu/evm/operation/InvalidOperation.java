@@ -15,12 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public class InvalidOperation extends AbstractOperation {
 
@@ -34,7 +34,7 @@ public class InvalidOperation extends AbstractOperation {
     super(opcode, "INVALID", -1, -1, 1, gasCalculator);
     invalidOperation =
         new OperationResult(
-            Optional.of(Gas.ZERO), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
+            OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
   }
 
   @Override

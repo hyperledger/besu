@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.CallCodeOperation;
@@ -75,14 +74,14 @@ public class EstimateGasOperationTracerTest {
   public void shouldDetectMinimumGasRemainingForSStoreOperation() {
 
     final ExecuteOperation noExecutionOperation = mock(ExecuteOperation.class);
-    final Gas minimumGasRemaining = Gas.of(2300);
+    final long minimumGasRemaining = 2300L;
 
-    assertThat(operationTracer.getStipendNeeded()).isEqualTo(Gas.ZERO);
+    assertThat(operationTracer.getStipendNeeded()).isZero();
 
     final MessageFrame firstFrame = messageFrameTestFixture.build();
     firstFrame.setCurrentOperation(mock(CallCodeOperation.class));
     operationTracer.traceExecution(firstFrame, noExecutionOperation);
-    assertThat(operationTracer.getStipendNeeded()).isEqualTo(Gas.ZERO);
+    assertThat(operationTracer.getStipendNeeded()).isZero();
 
     final MessageFrame secondFrame = messageFrameTestFixture.build();
     secondFrame.setCurrentOperation(

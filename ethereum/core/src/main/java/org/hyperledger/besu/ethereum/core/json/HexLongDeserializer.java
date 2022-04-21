@@ -14,26 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.core.json;
 
-import org.hyperledger.besu.evm.Gas;
-
 import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-public class GasDeserializer extends StdDeserializer<Gas> {
-  public GasDeserializer() {
+public class HexLongDeserializer extends StdDeserializer<Long> {
+  public HexLongDeserializer() {
     this(null);
   }
 
-  public GasDeserializer(final Class<?> vc) {
+  public HexLongDeserializer(final Class<?> vc) {
     super(vc);
   }
 
   @Override
-  public Gas deserialize(final JsonParser jsonparser, final DeserializationContext context)
+  public Long deserialize(final JsonParser jsonparser, final DeserializationContext context)
       throws IOException {
-    return Gas.fromHexString(jsonparser.getCodec().readValue(jsonparser, String.class));
+    return Long.decode(jsonparser.getCodec().readValue(jsonparser, String.class));
   }
 }

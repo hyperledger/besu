@@ -16,13 +16,15 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.crypto.altbn128.AltBn128Point;
 import org.hyperledger.besu.crypto.altbn128.Fq;
-import org.hyperledger.besu.evm.Gas;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -35,9 +37,9 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
       new BigInteger(
           "115792089237316195423570985008687907853269984665640564039457584007913129639935");
 
-  private final Gas gasCost;
+  private final long gasCost;
 
-  private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final Gas gasCost) {
+  private AltBN128MulPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(
         "AltBN128Mul",
         gasCalculator,
@@ -47,20 +49,22 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   }
 
   public static AltBN128MulPrecompiledContract byzantium(final GasCalculator gasCalculator) {
-    return new AltBN128MulPrecompiledContract(gasCalculator, Gas.of(40_000));
+    return new AltBN128MulPrecompiledContract(gasCalculator, 40_000L);
   }
 
   public static AltBN128MulPrecompiledContract istanbul(final GasCalculator gasCalculator) {
-    return new AltBN128MulPrecompiledContract(gasCalculator, Gas.of(6_000));
+    return new AltBN128MulPrecompiledContract(gasCalculator, 6_000L);
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     return gasCost;
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     if (useNative) {
       return computeNative(input, messageFrame);
     } else {
@@ -68,14 +72,16 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     }
   }
 
-  private static Bytes computeDefault(final Bytes input) {
+  @Nonnull
+  private static PrecompileContractResult computeDefault(final Bytes input) {
     final BigInteger x = extractParameter(input, 0, 32);
     final BigInteger y = extractParameter(input, 32, 32);
     final BigInteger n = extractParameter(input, 64, 32);
 
     final AltBn128Point p = new AltBn128Point(Fq.create(x), Fq.create(y));
     if (!p.isOnCurve() || n.compareTo(MAX_N) > 0) {
-      return null;
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     final AltBn128Point product = p.multiply(n);
 
@@ -85,7 +91,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
     xResult.copyTo(result, 32 - xResult.size());
     yResult.copyTo(result, 64 - yResult.size());
 
-    return result;
+    return PrecompileContractResult.success(result);
   }
 
   private static BigInteger extractParameter(

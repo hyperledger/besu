@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -51,6 +50,7 @@ import org.hyperledger.besu.plugin.data.Hash;
 
 import java.util.Base64;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -103,13 +103,14 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
-    return Gas.of(0L);
+  public long gasRequirement(final Bytes input) {
+    return 0L;
   }
 
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     if (skipContractExecution(messageFrame)) {
       return NO_RESULT;

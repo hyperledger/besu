@@ -18,7 +18,6 @@ package org.hyperledger.besu.evm.tracing;
 
 import static com.google.common.base.Strings.padStart;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -46,38 +45,45 @@ public class StandardJsonTracer implements OperationTracer {
     return number.isZero() ? "0x0" : number.toShortHexString();
   }
 
+  public static String shortNumber(final long number) {
+    return "0x" + Long.toHexString(number);
+  }
+
   private static String shortBytes(final Bytes bytes) {
     return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 
-  Joiner commaJoiner = Joiner.on(',');
+  final Joiner commaJoiner = Joiner.on(',');
 
   @Override
   public void traceExecution(
       final MessageFrame messageFrame, final ExecuteOperation executeOperation) {
     final Operation currentOp = messageFrame.getCurrentOperation();
-    int pc = messageFrame.getPC();
-    int opcode = currentOp.getOpcode();
-    String remainingGas = shortNumber(messageFrame.getRemainingGas().asUInt256());
-    List<String> stack = new ArrayList<>(messageFrame.stackSize());
+    final int pc = messageFrame.getPC();
+    final int opcode = currentOp.getOpcode();
+    final String remainingGas = shortNumber(messageFrame.getRemainingGas());
+    final List<String> stack = new ArrayList<>(messageFrame.stackSize());
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
       stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
     }
-    Bytes returnData = messageFrame.getReturnData();
-    int depth = messageFrame.getMessageStackDepth() + 1;
+    final Bytes returnData = messageFrame.getReturnData();
+    final int depth = messageFrame.getMessageStackDepth() + 1;
 
     final Operation.OperationResult executeResult = executeOperation.execute();
 
-    StringBuilder sb = new StringBuilder(1024);
+    final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
     sb.append("\"op\":").append(opcode).append(",");
     sb.append("\"gas\":\"").append(remainingGas).append("\",");
     sb.append("\"gasCost\":\"")
-        .append(executeResult.getGasCost().map(gas -> shortNumber(gas.asUInt256())).orElse(""))
+        .append(
+            executeResult.getGasCost().isPresent()
+                ? shortNumber(executeResult.getGasCost().getAsLong())
+                : "")
         .append("\",");
     if (showMemory) {
-      Bytes memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
+      final Bytes memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
       sb.append("\"memSize\":").append(memory.size()).append(",");
     } else {
@@ -89,7 +95,7 @@ public class StandardJsonTracer implements OperationTracer {
         .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "null")
         .append(",");
     sb.append("\"depth\":").append(depth).append(",");
-    sb.append("\"refund\":").append(messageFrame.getGasRefund().toLong()).append(",");
+    sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
     sb.append("\"error\":\"")
         .append(
@@ -103,9 +109,9 @@ public class StandardJsonTracer implements OperationTracer {
   }
 
   static String quoteEscape(final Bytes bytes) {
-    StringBuilder result = new StringBuilder(bytes.size());
-    for (byte b : bytes.toArrayUnsafe()) {
-      int c = ((int) b) & 0xff;
+    final StringBuilder result = new StringBuilder(bytes.size());
+    for (final byte b : bytes.toArrayUnsafe()) {
+      final int c = Byte.toUnsignedInt(b);
       // list from RFC-4627 section 2
       if (c == '"') {
         result.append("\\\"");
@@ -135,7 +141,7 @@ public class StandardJsonTracer implements OperationTracer {
 
   @Override
   public void tracePrecompileCall(
-      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {}
+      final MessageFrame frame, final long gasRequirement, final Bytes output) {}
 
   @Override
   public void traceAccountCreationResult(

@@ -19,12 +19,12 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -40,21 +40,23 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
+  public long gasRequirement(final Bytes input) {
     return gasCalculator().getEcrecPrecompiledContractGasCost();
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes input, final MessageFrame messageFrame) {
+  public PrecompileContractResult computePrecompile(
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
     final int size = input.size();
     final Bytes d = size >= 128 ? input : Bytes.wrap(input, MutableBytes.create(128 - size));
     final Bytes32 h = Bytes32.wrap(d, 0);
     // Note that the Yellow Paper defines v as the next 32 bytes (so 32..63). Yet, v is a simple
-    // byte in ECDSARECOVER and the Yellow Paper is not very clear on this mismatch but it appears
+    // byte in ECDSARECOVER and the Yellow Paper is not very clear on this mismatch, but it appears
     // it is simply the last byte of those 32 bytes that needs to be used. It does appear we need
     // to check the rest of the bytes are zero though.
     if (!d.slice(32, 31).isZero()) {
-      return Bytes.EMPTY;
+      return PrecompileContractResult.success(Bytes.EMPTY);
     }
 
     final int recId = d.get(63) - V_BASE;
@@ -66,7 +68,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     try {
       signature = signatureAlgorithm.createSignature(r, s, (byte) recId);
     } catch (final IllegalArgumentException e) {
-      return Bytes.EMPTY;
+      return PrecompileContractResult.success(Bytes.EMPTY);
     }
 
     // SECP256K1#PublicKey#recoverFromSignature throws an Illegal argument exception
@@ -76,16 +78,16 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     try {
       final Optional<SECPPublicKey> recovered =
           signatureAlgorithm.recoverPublicKeyFromSignature(h, signature);
-      if (!recovered.isPresent()) {
-        return Bytes.EMPTY;
+      if (recovered.isEmpty()) {
+        return PrecompileContractResult.success(Bytes.EMPTY);
       }
 
       final Bytes32 hashed = Hash.keccak256(recovered.get().getEncodedBytes());
       final MutableBytes32 result = MutableBytes32.create();
       hashed.slice(12).copyTo(result, 12);
-      return result;
+      return PrecompileContractResult.success(result);
     } catch (final IllegalArgumentException e) {
-      return Bytes.EMPTY;
+      return PrecompileContractResult.success(Bytes.EMPTY);
     }
   }
 }

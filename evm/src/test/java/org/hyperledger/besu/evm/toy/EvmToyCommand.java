@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -68,7 +67,7 @@ public class EvmToyCommand implements Runnable {
       names = {"--gas"},
       description = "Amount of gas for this invocation.",
       paramLabel = "<int>")
-  private final Gas gas = Gas.of(10_000_000_000L);
+  private final Long gas = 10_000_000_000L;
 
   @CommandLine.Option(
       names = {"--price"},
@@ -130,7 +129,6 @@ public class EvmToyCommand implements Runnable {
     // add sub commands here
     commandLine.registerConverter(Address.class, Address::fromHexString);
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
-    commandLine.registerConverter(Gas.class, (arg) -> Gas.of(Long.parseUnsignedLong(arg)));
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
 
     commandLine.parseWithHandlers(resultHandler, exceptionHandler, args);
@@ -138,7 +136,7 @@ public class EvmToyCommand implements Runnable {
 
   @Override
   public void run() {
-    WorldUpdater worldUpdater = new ToyWorld();
+    final WorldUpdater worldUpdater = new ToyWorld();
     worldUpdater.getOrCreate(sender).getMutable().setBalance(Wei.of(BigInteger.TWO.pow(20)));
     worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
 
@@ -212,11 +210,11 @@ public class EvmToyCommand implements Runnable {
         }
 
         if (lastLoop && messageFrameStack.isEmpty()) {
-          final Gas evmGas = gas.minus(messageFrame.getRemainingGas());
+          final long evmGas = gas - messageFrame.getRemainingGas();
           out.println();
           out.printf(
-              "{ \"gasUser\": \"%s\", \"timens\": %d, \"time\": %d }%n",
-              evmGas.asUInt256().toShortHexString(), lastTime, lastTime / 1000);
+              "{ \"gasUser\": \"0x%s\", \"timens\": %d, \"time\": %d }%n",
+              Long.toHexString(evmGas), lastTime, lastTime / 1000);
         }
       }
       lastTime = stopwatch.elapsed().toNanos();

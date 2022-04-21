@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -54,7 +53,7 @@ public class EVMExecutor {
   private PrecompileContractRegistry precompileContractRegistry;
   private boolean commitWorldState = false;
   private WorldUpdater worldUpdater = new SimpleWorld();
-  private Gas gas = Gas.MAX_VALUE;
+  private long gas = Long.MAX_VALUE;
   private Address receiver = Address.ZERO;
   private Address sender = Address.ZERO;
   private Wei gasPriceGWei = Wei.ZERO;
@@ -261,7 +260,7 @@ public class EVMExecutor {
     return this;
   }
 
-  public EVMExecutor gas(final Gas gas) {
+  public EVMExecutor gas(final long gas) {
     this.gas = gas;
     return this;
   }

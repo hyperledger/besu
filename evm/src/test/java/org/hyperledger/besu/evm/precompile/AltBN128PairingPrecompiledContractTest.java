@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -123,11 +122,11 @@ public class AltBN128PairingPrecompiledContractTest {
 
   @Test
   public void gasPrice_byzantium() {
-    assertThat(byzantiumContract.gasRequirement(validPointBytes())).isEqualTo(Gas.of(260_000));
+    assertThat(byzantiumContract.gasRequirement(validPointBytes())).isEqualTo(260_000L);
   }
 
   @Test
   public void gasPrice_istanbul() {
-    assertThat(istanbulContract.gasRequirement(validPointBytes())).isEqualTo(Gas.of(113_000));
+    assertThat(istanbulContract.gasRequirement(validPointBytes())).isEqualTo(113_000L);
   }
 }

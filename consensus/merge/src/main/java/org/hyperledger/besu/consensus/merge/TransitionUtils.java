@@ -30,14 +30,22 @@ import org.slf4j.LoggerFactory;
 public abstract class TransitionUtils<SwitchingObject> {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
-  private final MergeContext mergeContext = PostMergeContext.get();
+  protected final MergeContext mergeContext;
   private final SwitchingObject preMergeObject;
   private final SwitchingObject postMergeObject;
 
   public TransitionUtils(
       final SwitchingObject preMergeObject, final SwitchingObject postMergeObject) {
+    this(preMergeObject, postMergeObject, PostMergeContext.get());
+  }
+
+  public TransitionUtils(
+      final SwitchingObject preMergeObject,
+      final SwitchingObject postMergeObject,
+      final MergeContext mergeContext) {
     this.preMergeObject = preMergeObject;
     this.postMergeObject = postMergeObject;
+    this.mergeContext = mergeContext;
   }
 
   protected void dispatchConsumerAccordingToMergeState(final Consumer<SwitchingObject> consumer) {
