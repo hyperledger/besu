@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,8 +38,10 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -180,6 +183,39 @@ public class PrivacyBlockProcessorTest {
             eq(secondBlock.getBody().getTransactions()),
             eq(secondBlock.getBody().getOmmers()),
             any());
+  }
+
+  @Test
+  public void mustNotPersistWorldStateWhenPersistIsFalse() {
+    final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+    final Blockchain blockchain = mock(Blockchain.class);
+    final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
+
+    final Block block =
+        blockDataGenerator.block(
+            BlockDataGenerator.BlockOptions.create()
+                .addTransaction(PrivateTransactionDataFixture.privateMarkerTransactionOnchain()));
+
+    // Add data to the updater so that we can later check that world state is not updated
+    doAnswer(
+            invocation -> {
+              final PrivateMetadataUpdater metadataUpdater =
+                  invocation.getArgument(5, PrivateMetadataUpdater.class);
+              metadataUpdater.putTransactionReceipt(Bytes32.ZERO, PrivateTransactionReceipt.FAILED);
+              return null;
+            })
+        .when(blockProcessor)
+        .processBlock(any(), any(), any(), any(), any(), any());
+
+    privacyBlockProcessor.processBlock(
+        blockchain,
+        mutableWorldState,
+        block.getHeader(),
+        block.getBody().getTransactions(),
+        block.getBody().getOmmers(),
+        null,
+        false);
+    assertThat(privateStateStorage.isEmpty()).isTrue();
   }
 
   private MutableWorldState mockPrivateStateArchive() {
