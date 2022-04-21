@@ -419,17 +419,12 @@ public class RlpxAgent {
           }
         });
 
-    // TODO some race condition?
     logConnectionsById();
-    LOG.debug("newConnectionAccepted? " + newConnectionAccepted.get());
-    LOG.debug("disconnectAction? " + !isNull(disconnectAction.get()));
     if (!isNull(disconnectAction.get())) {
       disconnectAction.get().run();
-      logConnectionsById();
     }
     if (newConnectionAccepted.get()) {
       dispatchConnect(peerConnection);
-      logConnectionsById();
     }
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
@@ -542,13 +537,9 @@ public class RlpxAgent {
       // If we have connections initiated in different directions, keep the connection initiated
       // by the node with the lower id
       if (localId.compareTo(peerId) < 0) {
-        final int i = a.initiatedLocally() ? -1 : 1;
-        LOG.trace("localId < peerId; returning " + i);
-        return i;
+        return a.initiatedLocally() ? -1 : 1;
       } else {
-        final int i = a.initiatedLocally() ? 1 : -1;
-        LOG.trace("localId >= peerId; returning " + i);
-        return i;
+        return a.initiatedLocally() ? 1 : -1;
       }
     }
     // Otherwise, keep older connection
