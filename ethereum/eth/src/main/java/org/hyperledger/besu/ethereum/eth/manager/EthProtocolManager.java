@@ -333,7 +333,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // Nothing to do.
     }
     LOG.trace("handleNewConnection END " + ethPeers.toString());
-    LOG.debug(ethPeers.toString());
+    LOG.trace(ethPeers.toString());
   }
 
   @Override
@@ -348,7 +348,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
-    LOG.debug(ethPeers.toString());
+    LOG.trace(ethPeers.toString());
   }
 
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {

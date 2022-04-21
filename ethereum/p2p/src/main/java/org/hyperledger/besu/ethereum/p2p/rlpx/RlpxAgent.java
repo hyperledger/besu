@@ -180,6 +180,14 @@ public class RlpxAgent {
         .forEach(this::connect);
   }
 
+  private void logConnectionsById() {
+    final String connectionsList =
+        connectionsById.keySet().stream()
+            .map((b) -> b + " : " + connectionsById.get(b))
+            .collect(Collectors.joining(","));
+    LOG.trace(connectionsById.size() + " ConnectionsById=" + connectionsList);
+  }
+
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     final RlpxConnection connection = connectionsById.remove(peerId);
     if (connection != null) {
@@ -227,7 +235,7 @@ public class RlpxAgent {
     // Check max peers
     if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
       final String errorMsg =
-          "Max peer peer connections established ("
+          "Max peer connections established ("
               + maxConnections
               + "). Cannot connect to peer: "
               + peer;
@@ -263,6 +271,8 @@ public class RlpxAgent {
           }
         });
 
+    logConnectionsById();
+
     return connectionFuture.get();
   }
 
@@ -276,6 +286,7 @@ public class RlpxAgent {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
+    logConnectionsById();
     cleanUpPeerConnection(peerConnection.getPeer().getId());
   }
 
@@ -386,6 +397,7 @@ public class RlpxAgent {
             newConnectionAccepted.set(true);
             return inboundConnection;
           }
+          // TODO weirdness
           // We already have an existing connection, figure out which connection to keep
           if (compareDuplicateConnections(inboundConnection, existingConnection) < 0) {
             // Keep the inbound connection
@@ -407,15 +419,22 @@ public class RlpxAgent {
           }
         });
 
+    // TODO some race condition?
+    logConnectionsById();
+    LOG.debug("newConnectionAccepted? " + newConnectionAccepted.get());
+    LOG.debug("disconnectAction? " + !isNull(disconnectAction.get()));
     if (!isNull(disconnectAction.get())) {
       disconnectAction.get().run();
+      logConnectionsById();
     }
     if (newConnectionAccepted.get()) {
       dispatchConnect(peerConnection);
+      logConnectionsById();
     }
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
     enforceConnectionLimits();
+    logConnectionsById();
   }
 
   private boolean shouldLimitRemoteConnections() {
@@ -518,16 +537,22 @@ public class RlpxAgent {
 
     final Bytes peerId = a.getPeer().getId();
     final Bytes localId = localNode.getPeer().getId();
+    // at this point a.Id == b.Id
     if (a.initiatedRemotely() != b.initiatedRemotely()) {
       // If we have connections initiated in different directions, keep the connection initiated
       // by the node with the lower id
       if (localId.compareTo(peerId) < 0) {
-        return a.initiatedLocally() ? -1 : 1;
+        final int i = a.initiatedLocally() ? -1 : 1;
+        LOG.trace("localId < peerId; returning " + i);
+        return i;
       } else {
-        return a.initiatedLocally() ? 1 : -1;
+        final int i = a.initiatedLocally() ? 1 : -1;
+        LOG.trace("localId >= peerId; returning " + i);
+        return i;
       }
     }
     // Otherwise, keep older connection
+    LOG.info("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
     return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 
