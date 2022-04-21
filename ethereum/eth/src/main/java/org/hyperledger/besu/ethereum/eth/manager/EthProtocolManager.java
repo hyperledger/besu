@@ -56,7 +56,6 @@ import org.slf4j.LoggerFactory;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
-  private static final int LOG_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF = 10;
 
   private final EthScheduler scheduler;
   private final CountDownLatch shutdown;
@@ -334,6 +333,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // Nothing to do.
     }
     LOG.trace("handleNewConnection END " + ethPeers.toString());
+    LOG.debug(ethPeers.toString());
   }
 
   @Override
@@ -348,6 +348,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
+    LOG.debug(ethPeers.toString());
   }
 
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {
@@ -394,10 +395,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
                     new IllegalStateException(
                         "Unable to get total difficulty from blockchain for mined block."));
     blockBroadcaster.propagate(block, totalDifficulty);
-
-    if (block.getHeader().getNumber() % LOG_PEERS_WHEN_BLOCK_NUMBER_MULTIPLE_OF == 0) {
-      LOG.info(ethPeers.toString());
-    }
   }
 
   public List<Bytes> getForkIdAsBytesList() {
