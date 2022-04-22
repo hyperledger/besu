@@ -26,13 +26,13 @@ import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
 import org.hyperledger.besu.evm.operation.MLoadOperation;
 import org.hyperledger.besu.evm.operation.MStore8Operation;
 import org.hyperledger.besu.evm.operation.MStoreOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
-import org.hyperledger.besu.evm.operation.Sha3Operation;
 import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
@@ -329,14 +329,14 @@ public interface GasCalculator {
   long selfDestructOperationGasCost(Account recipient, Wei inheritance);
 
   /**
-   * Returns the cost for executing a {@link Sha3Operation}.
+   * Returns the cost for executing a {@link Keccak256Operation}.
    *
    * @param frame The current frame
    * @param offset The offset in memory where the data to be hashed exists
    * @param length The hashed data length
    * @return the cost for executing the memory byte store operation
    */
-  long sha3OperationGasCost(MessageFrame frame, long offset, long length);
+  long keccak256OperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost for executing a {@link SLoadOperation}.

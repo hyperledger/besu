@@ -41,7 +41,7 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   public long create2OperationGasCost(final MessageFrame frame) {
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
     final long numWords = clampedAdd(initCodeLength, 31) / Bytes32.SIZE;
-    final long initCodeHashCost = clampedMultiply(SHA3_OPERATION_WORD_GAS_COST, numWords);
+    final long initCodeHashCost = clampedMultiply(KECCAK256_OPERATION_WORD_GAS_COST, numWords);
     return clampedAdd(createOperationGasCost(frame), initCodeHashCost);
   }
 
