@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.metrics.RunnableCounter;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
-public class SnapCounter extends RunnableCounter {
+public class SnapTimer extends RunnableCounter {
 
   long oldRunValue = 0;
 
-  public SnapCounter(final Counter backedCounter, final Runnable task, final int step) {
+  public SnapTimer(final Counter backedCounter, final Runnable task, final int step) {
     super(backedCounter, task, step);
   }
 

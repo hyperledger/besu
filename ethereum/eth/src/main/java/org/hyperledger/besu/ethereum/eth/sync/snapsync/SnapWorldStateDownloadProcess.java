@@ -231,7 +231,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> {});
+                    pivotBlockManager.check((___, __) -> {});
                     return tasks;
                   })
               .thenProcessAsync(
@@ -254,7 +254,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> {});
+                    pivotBlockManager.check((___, __) -> {});
                     return tasks;
                   })
               .thenProcessAsyncOrdered(
@@ -280,7 +280,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> {});
+                    pivotBlockManager.check((___, __) -> {});
                     return tasks;
                   })
               .thenProcessAsyncOrdered(
@@ -320,8 +320,10 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "checkNewPivotBlock",
                   tasks -> {
                     pivotBlockManager.check(
-                        blockHeader -> {
-                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
+                        (blockHeader, newBlockFound) -> {
+                          if (snapSyncState.isHealInProgress() && newBlockFound) {
+                            downloadState.reloadHeal();
+                          }
                         });
                     return tasks;
                   })
@@ -357,8 +359,10 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "checkNewPivotBlock",
                   tasks -> {
                     pivotBlockManager.check(
-                        blockHeader -> {
-                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
+                        (blockHeader, newBlockFound) -> {
+                          if (snapSyncState.isHealInProgress() && newBlockFound) {
+                            downloadState.reloadHeal();
+                          }
                         });
                     return tasks;
                   })

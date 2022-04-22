@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
@@ -101,7 +100,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
 
     if (startStorageRange.isPresent() && endStorageRange.isPresent()) {
@@ -119,6 +118,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         };
 
     stackTrie.commit(nodeUpdater);
+
+    downloadState.getMetricsManager().notifyAccountsDownloaded(getAccounts().size());
 
     return nbNodesSaved.get();
   }
@@ -153,10 +154,15 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
     // new request is added if the response does not match all the requested range
     findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
-        .ifPresent(
-            missingRightElement ->
-                childRequests.add(
-                    createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash)));
+        .ifPresentOrElse(
+            missingRightElement -> {
+              downloadState
+                  .getMetricsManager()
+                  .notifyStateDownloaded(missingRightElement, endKeyHash);
+              childRequests.add(
+                  createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
+            },
+            () -> downloadState.getMetricsManager().notifyStateDownloaded(endKeyHash, endKeyHash));
 
     // find missing storages and code
     for (Map.Entry<Bytes32, Bytes> account : taskElement.keys().entrySet()) {
