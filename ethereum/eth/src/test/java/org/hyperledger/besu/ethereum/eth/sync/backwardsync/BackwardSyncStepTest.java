@@ -105,7 +105,6 @@ public class BackwardSyncStepTest {
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(5);
-    when(context.executeNextStep(null)).thenReturn(CompletableFuture.completedFuture(null));
 
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
 
@@ -169,7 +168,7 @@ public class BackwardSyncStepTest {
     assertThatThrownBy(future::get)
         .getCause()
         .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Did not receive a header for hash");
+        .hasMessageContaining("Did not receive a headers for hash");
   }
 
   @Test

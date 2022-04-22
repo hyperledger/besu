@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatus;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents.InitialSyncCompletionListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
 import org.hyperledger.besu.util.Subscribers;
@@ -44,6 +45,10 @@ public class SyncState {
   private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private final Subscribers<TTDReachedListener> ttdReachedListeners = Subscribers.create();
+
+  private final Subscribers<InitialSyncCompletionListener> completionListenerSubscribers =
+      Subscribers.create();
+
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
@@ -123,12 +128,20 @@ public class SyncState {
     return ttdReachedListeners.subscribe(listener);
   }
 
+  public long subscribeCompletionReached(final InitialSyncCompletionListener listener) {
+    return completionListenerSubscribers.subscribe(listener);
+  }
+
   public boolean unsubscribeSyncStatus(final long listenerId) {
     return syncStatusListeners.unsubscribe(listenerId);
   }
 
   public boolean unsubscribeTTDReached(final long listenerId) {
     return ttdReachedListeners.unsubscribe(listenerId);
+  }
+
+  public boolean unsubscribeInitialConditionReached(final long listenerId) {
+    return completionListenerSubscribers.unsubscribe(listenerId);
   }
 
   public Optional<SyncStatus> syncStatus() {
@@ -292,6 +305,7 @@ public class SyncState {
 
   public void markInitialSyncPhaseAsDone() {
     isInitialSyncPhaseDone = true;
+    completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
   }
 
   public boolean isInitialSyncPhaseDone() {

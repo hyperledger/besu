@@ -185,7 +185,7 @@ public class BackwardChain {
     this.hashesToAppend.add(newBlockHash);
   }
 
-  public synchronized Optional<Hash> getFirstHash() {
+  public synchronized Optional<Hash> getFirstHashToAppend() {
     return Optional.ofNullable(hashesToAppend.poll());
   }
 }

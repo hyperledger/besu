@@ -51,6 +51,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   boolean isMiningBeforeMerge();
 
+  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockhash, Hash finalizedBlockHash);
+
   class ForkchoiceResult {
     private final Optional<String> errorMessage;
     private final Optional<BlockHeader> newFinalized;

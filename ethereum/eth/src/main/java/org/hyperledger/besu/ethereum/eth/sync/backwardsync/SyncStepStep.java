@@ -44,8 +44,7 @@ public class SyncStepStep {
   public CompletableFuture<Void> executeAsync(final Hash hash) {
     return CompletableFuture.supplyAsync(() -> hash)
         .thenCompose(this::requestBlock)
-        .thenApply(this::saveBlock)
-        .thenCompose(context::executeNextStep);
+        .thenApply(this::saveBlock);
   }
 
   private CompletableFuture<Block> requestBlock(final Hash targetHash) {

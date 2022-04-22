@@ -18,13 +18,12 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -47,23 +46,18 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
-import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -73,6 +67,7 @@ public class BackwardSyncContextTest {
 
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
+  public static final int UNCLE_HEIGHT = 25 - 3;
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   private BackwardSyncContext context;
@@ -87,15 +82,16 @@ public class BackwardSyncContextTest {
 
   @Spy private ProtocolSpec mockProtocolSpec = protocolSchedule.getByBlockNumber(0L);
 
-  @Mock private ProtocolContext protocolContext;
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private ProtocolContext protocolContext;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private MetricsSystem metricsSystem;
 
   @Mock private BlockValidator blockValidator;
   @Mock private SyncState syncState;
-
   private BackwardChain backwardChain;
+  private Block uncle;
 
   @Before
   public void setup() {
@@ -106,15 +102,21 @@ public class BackwardSyncContextTest {
     localBlockchain = createInMemoryBlockchain(genesisBlock);
 
     for (int i = 1; i <= REMOTE_HEIGHT; i++) {
+      final Hash parentHash = remoteBlockchain.getBlockHashByNumber(i - 1).orElseThrow();
       final BlockDataGenerator.BlockOptions options =
-          new BlockDataGenerator.BlockOptions()
-              .setBlockNumber(i)
-              .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).orElseThrow());
+          new BlockDataGenerator.BlockOptions().setBlockNumber(i).setParentHash(parentHash);
       final Block block = blockDataGenerator.block(options);
       final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
 
       remoteBlockchain.appendBlock(block, receipts);
       if (i <= LOCAL_HEIGHT) {
+        if (i == UNCLE_HEIGHT) {
+          uncle =
+              createUncle(
+                  i, localBlockchain.getBlockByNumber(LOCAL_HEIGHT - 4).orElseThrow().getHash());
+          localBlockchain.appendBlock(uncle, blockDataGenerator.receipts(uncle));
+          localBlockchain.rewindToBlock(i - 1);
+        }
         localBlockchain.appendBlock(block, receipts);
       }
     }
@@ -134,7 +136,15 @@ public class BackwardSyncContextTest {
                       new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
             });
 
-    backwardChain = newBackwardChain();
+    backwardChain = inMemoryBackwardChain();
+    backwardChain.appendTrustedBlock(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
+    backwardChain.appendTrustedBlock(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 2).orElseThrow());
+    backwardChain.appendTrustedBlock(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 3).orElseThrow());
+    backwardChain.appendTrustedBlock(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 4).orElseThrow());
     context =
         spy(
             new BackwardSyncContext(
@@ -148,7 +158,17 @@ public class BackwardSyncContextTest {
     doReturn(2).when(context).getBatchSize();
   }
 
-  private BackwardChain newBackwardChain() {
+  private Block createUncle(final int i, final Hash parentHash) {
+    final BlockDataGenerator.BlockOptions options =
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(i)
+            .setParentHash(parentHash)
+            .transactionTypes(TransactionType.ACCESS_LIST);
+    final Block block = blockDataGenerator.block(options);
+    return block;
+  }
+
+  public static BackwardChain inMemoryBackwardChain() {
     final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage =
         new GenericKeyValueStorageFacade<>(
             Hash::toArrayUnsafe,
@@ -217,69 +237,90 @@ public class BackwardSyncContextTest {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
   }
 
-  @Captor ArgumentCaptor<BesuEvents.TTDReachedListener> captor;
-
   @Test
-  public void shouldWaitWhenTTDNotReached()
-      throws ExecutionException, InterruptedException, TimeoutException {
-    doReturn(false).when(context).isReady();
-    when(syncState.isInitialSyncPhaseDone()).thenReturn(Boolean.TRUE);
-    when(syncState.subscribeTTDReached(any())).thenReturn(88L);
+  public void testUpdatingHead() {
+    context.updateHeads(null, null);
+    context.possiblyMoveHead(null);
+    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(LOCAL_HEIGHT);
 
-    final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
+    context.updateHeads(Hash.ZERO, null);
+    context.possiblyMoveHead(null);
 
-    verify(syncState).subscribeTTDReached(captor.capture());
-    verify(syncState, never()).unsubscribeTTDReached(anyLong());
-    assertThat(voidCompletableFuture).isNotCompleted();
+    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(LOCAL_HEIGHT);
 
-    captor.getValue().onTTDReached(true);
+    context.updateHeads(localBlockchain.getBlockByNumber(4).orElseThrow().getHash(), null);
+    context.possiblyMoveHead(null);
 
-    voidCompletableFuture.get(1, TimeUnit.SECONDS);
-
-    verify(syncState).unsubscribeTTDReached(88L);
+    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(4);
   }
 
   @Test
-  public void shouldNotWaitWhenTTDReached()
-      throws ExecutionException, InterruptedException, TimeoutException {
-    doReturn(true).when(context).isReady();
-    when(syncState.subscribeTTDReached(any())).thenReturn(88L);
-    final CompletableFuture<Void> voidCompletableFuture = context.waitForTTD();
-    voidCompletableFuture.get(1, TimeUnit.SECONDS);
-    assertThat(voidCompletableFuture).isCompleted();
+  public void testSuccessionRuleAfterUpdatingFinalized() {
 
-    verify(syncState).subscribeTTDReached(captor.capture());
-    verify(syncState).unsubscribeTTDReached(88L);
+    backwardChain.appendTrustedBlock(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
+    // null check
+    context.updateHeads(null, null);
+    context.checkFinalizedSuccessionRuleBeforeSave(null);
+    // zero check
+    context.updateHeads(null, Hash.ZERO);
+    context.checkFinalizedSuccessionRuleBeforeSave(null);
+
+    // cannot save if we don't know what is finalized
+    context.updateHeads(
+        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 10).orElseThrow());
+    assertThatThrownBy(() -> context.checkFinalizedSuccessionRuleBeforeSave(null))
+        .isInstanceOf(BackwardSyncException.class)
+        .hasMessageContaining(
+            "was finalized, but we don't have it downloaded yet, cannot save new block");
+
+    // updating with new finalized
+    context.updateHeads(
+        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 1).orElseThrow());
+    context.checkFinalizedSuccessionRuleBeforeSave(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
+
+    // updating when we know finalized is in futre
+    context.updateHeads(
+        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 4).orElseThrow());
+    context.checkFinalizedSuccessionRuleBeforeSave(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
+
+    // updating with block that is not finalized when we expected finalized on this height
+    context.updateHeads(
+        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 1).orElseThrow());
+    assertThatThrownBy(
+            () ->
+                context.checkFinalizedSuccessionRuleBeforeSave(
+                    createUncle(LOCAL_HEIGHT + 1, localBlockchain.getChainHeadHash())))
+        .isInstanceOf(BackwardSyncException.class)
+        .hasMessageContaining("This block is not the target finalized block");
+
+    // updating with a block when finalized is not on canonical chain
+    context.updateHeads(null, uncle.getHash());
+    assertThatThrownBy(
+            () ->
+                context.checkFinalizedSuccessionRuleBeforeSave(
+                    remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow()))
+        .isInstanceOf(BackwardSyncException.class)
+        .hasMessageContaining("is not on canonical chain. Canonical is");
+
+    // updating when finalized is on canonical chain
+    context.updateHeads(null, localBlockchain.getBlockHashByNumber(UNCLE_HEIGHT).orElseThrow());
+    context.checkFinalizedSuccessionRuleBeforeSave(
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
   }
 
   @Test
-  public void shouldStartForwardStepWhenOnLocalHeight() {
-    createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
-    doReturn(CompletableFuture.completedFuture(null)).when(context).executeForwardAsync(any());
-
-    context.executeNextStep(null);
-    verify(context).executeForwardAsync(any());
-  }
-
-  @Test
-  public void shouldFinishWhenWorkIsDone() {
-
-    final CompletableFuture<Void> completableFuture = context.executeNextStep(null);
-    assertThat(completableFuture.isDone()).isTrue();
-  }
-
-  @Test
-  public void shouldCreateAnotherBackwardStepWhenNotOnLocalHeight() {
-    createBackwardChain(LOCAL_HEIGHT + 3, LOCAL_HEIGHT + 10);
-    doReturn(CompletableFuture.completedFuture(null)).when(context).executeBackwardAsync(any());
-
-    context.executeNextStep(null);
-    verify(context).executeBackwardAsync(any());
-  }
-
-  private void createBackwardChain(final int from, final int until) {
-    for (int i = until; i > from; --i) {
-      backwardChain.prependAncestorsHeader(getBlockByNumber(i - 1).getHeader());
-    }
+  public void shouldProcessExceptionsCorrectly() {
+    assertThatThrownBy(
+            () ->
+                context.processException(
+                    new RuntimeException(new BackwardSyncException("shouldThrow"))))
+        .isInstanceOf(BackwardSyncException.class)
+        .hasMessageContaining("shouldThrow");
+    context.processException(
+        new RuntimeException(new BackwardSyncException("shouldNotThrow", true)));
+    context.processException(new RuntimeException(new RuntimeException("shouldNotThrow")));
   }
 }

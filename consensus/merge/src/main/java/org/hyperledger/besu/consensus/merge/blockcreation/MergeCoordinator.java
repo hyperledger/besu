@@ -221,6 +221,22 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
+  public Optional<BlockHeader> getOrSyncHeaderByHash(
+      final Hash blockhash, final Hash finalizedBlockHash) {
+    final var chain = protocolContext.getBlockchain();
+    final var optHeader = chain.getBlockHeader(blockhash);
+
+    if (optHeader.isPresent()) {
+      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
+    } else {
+      debugLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
+      backwardSyncContext.updateHeads(blockhash, finalizedBlockHash);
+      backwardSyncContext.syncBackwardsUntil(blockhash);
+    }
+    return optHeader;
+  }
+
+  @Override
   public Result executeBlock(final Block block) {
 
     final var chain = protocolContext.getBlockchain();
