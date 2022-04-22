@@ -197,7 +197,7 @@ public class EthPeers {
     return streamAvailablePeers()
         .filter(p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight())
         .sorted(BEST_CHAIN)
-        .max(Comparator.comparing(EthPeer::getLastPivotHeaderDownloadTime));
+        .min(Comparator.comparing(EthPeer::getLastPivotHeaderDownloadTime));
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
