@@ -19,13 +19,11 @@ import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -39,11 +37,11 @@ public class SnapsyncMetricsManager {
   private final MetricsSystem metricsSystem;
 
   private final AtomicLong percentageDownloaded;
-  private final AtomicReference<BigDecimal> nbAccounts;
-  private final AtomicReference<BigDecimal> nbSlots;
-  private final AtomicReference<BigDecimal> nbCodes;
-  private final AtomicReference<BigDecimal> nbNodesGenerated;
-  private final AtomicReference<BigDecimal> nbNodesHealed;
+  private final AtomicLong nbAccounts;
+  private final AtomicLong nbSlots;
+  private final AtomicLong nbCodes;
+  private final AtomicLong nbNodesGenerated;
+  private final AtomicLong nbNodesHealed;
 
   private final Map<Bytes32, BigInteger> lastRangeIndex = new ConcurrentHashMap<>();
 
@@ -51,43 +49,43 @@ public class SnapsyncMetricsManager {
 
   public SnapsyncMetricsManager(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    percentageDownloaded = new AtomicLong();
-    nbAccounts = new AtomicReference<>();
-    nbSlots = new AtomicReference<>();
-    nbCodes = new AtomicReference<>();
-    nbNodesGenerated = new AtomicReference<>();
-    nbNodesHealed = new AtomicReference<>();
+    percentageDownloaded = new AtomicLong(0);
+    nbAccounts = new AtomicLong(0);
+    nbSlots = new AtomicLong(0);
+    nbCodes = new AtomicLong(0);
+    nbNodesGenerated = new AtomicLong(0);
+    nbNodesHealed = new AtomicLong(0);
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_download_percentage",
         "Percentage of world state downloaded during Snapsync",
-        () -> nbNodesGenerated.get().longValue());
+        percentageDownloaded::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_generated_nodes_total",
         "Total number of data nodes generated as part of snap sync world state download",
-        () -> nbNodesGenerated.get().longValue());
+        nbNodesGenerated::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_healed_nodes_total",
         "Total number of data nodes healed as part of snap sync world state heal process",
-        () -> nbNodesHealed.get().longValue());
+        nbNodesHealed::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_accounts_total",
         "Total number of accounts downloaded as part of snap sync world state",
-        () -> nbAccounts.get().longValue());
+        nbAccounts::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_slots_total",
         "Total number of slots downloaded as part of snap sync world state",
-        () -> nbSlots.get().longValue());
+        nbSlots::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_codes_total",
         "Total number of codes downloaded as part of snap sync world state",
-        () -> nbCodes.get().longValue());
+        nbCodes::get);
   }
 
   public void initRange(final Map<Bytes32, Bytes32> ranges) {
@@ -109,24 +107,24 @@ public class SnapsyncMetricsManager {
     print(false);
   }
 
-  public void notifyAccountsDownloaded(final double nbAccounts) {
-    this.nbAccounts.getAndAccumulate(BigDecimal.valueOf(nbAccounts), BigDecimal::add);
+  public void notifyAccountsDownloaded(final long nbAccounts) {
+    this.nbAccounts.getAndAdd(nbAccounts);
   }
 
-  public void notifySlotsDownloaded(final double nbSlots) {
-    this.nbSlots.getAndAccumulate(BigDecimal.valueOf(nbSlots), BigDecimal::add);
+  public void notifySlotsDownloaded(final long nbSlots) {
+    this.nbSlots.getAndAdd(nbSlots);
   }
 
   public void notifyCodeDownloaded() {
-    this.nbCodes.getAndAccumulate(BigDecimal.ONE, BigDecimal::add);
+    this.nbCodes.incrementAndGet();
   }
 
-  public void notifyNodesGenerated(final double nbNodes) {
-    this.nbNodesGenerated.getAndAccumulate(BigDecimal.valueOf(nbNodes), BigDecimal::add);
+  public void notifyNodesGenerated(final long nbNodes) {
+    this.nbNodesGenerated.getAndAdd(nbNodes);
   }
 
-  public void notifyNodesHealed(final double nbNodes) {
-    this.nbNodesHealed.getAndAccumulate(BigDecimal.valueOf(nbNodes), BigDecimal::add);
+  public void notifyNodesHealed(final long nbNodes) {
+    this.nbNodesHealed.getAndAdd(nbNodes);
     print(true);
   }
 
