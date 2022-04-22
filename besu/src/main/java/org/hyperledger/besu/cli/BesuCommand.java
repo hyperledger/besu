@@ -3055,6 +3055,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         jsonRPCWebsocketOptionGroup.rpcWsPort,
         jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
+    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcHttpPort, isMergeEnabled());
+    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcWsPort, isMergeEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
