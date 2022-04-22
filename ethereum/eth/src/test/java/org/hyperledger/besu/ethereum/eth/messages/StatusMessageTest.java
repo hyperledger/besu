@@ -105,8 +105,8 @@ public class StatusMessageTest {
     final StatusMessage copy = new StatusMessage(msg.getData());
     final String copyToString = copy.toString();
 
-    assertThat(copyToString).contains("size=" + copy.getSize());
-    assertThat(copyToString).contains("code=" + copy.getCode());
+    assertThat(copyToString).contains("bestHash=" + bestHash);
+    assertThat(copyToString).contains("genesisHash=" + genesisHash);
   }
 
   private Hash randHash(final long seed) {
