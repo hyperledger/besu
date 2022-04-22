@@ -19,11 +19,15 @@ import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -36,7 +40,7 @@ public class SnapsyncMetricsManager {
 
   private final MetricsSystem metricsSystem;
 
-  private final AtomicLong percentageDownloaded;
+  private final AtomicReference<BigDecimal> percentageDownloaded;
   private final AtomicLong nbAccounts;
   private final AtomicLong nbSlots;
   private final AtomicLong nbCodes;
@@ -49,18 +53,13 @@ public class SnapsyncMetricsManager {
 
   public SnapsyncMetricsManager(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    percentageDownloaded = new AtomicLong(0);
+    percentageDownloaded = new AtomicReference<>(new BigDecimal(0));
     nbAccounts = new AtomicLong(0);
     nbSlots = new AtomicLong(0);
     nbCodes = new AtomicLong(0);
     nbNodesGenerated = new AtomicLong(0);
     nbNodesHealed = new AtomicLong(0);
 
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.SYNCHRONIZER,
-        "snap_world_state_download_percentage",
-        "Percentage of world state downloaded during Snapsync",
-        percentageDownloaded::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_generated_nodes_total",
@@ -98,11 +97,13 @@ public class SnapsyncMetricsManager {
     checkNonEmpty(lastRangeIndex, "snapsync range collection");
     final BigInteger lastPos = lastRangeIndex.get(endKeyHash);
     final BigInteger newPos = startKeyHash.toUnsignedBigInteger();
-    percentageDownloaded.addAndGet(
-        BigInteger.valueOf(100)
-            .multiply(newPos.subtract(lastPos))
-            .divide(RangeManager.MAX_RANGE.toUnsignedBigInteger())
-            .longValue());
+    percentageDownloaded.getAndAccumulate(
+        BigDecimal.valueOf(100)
+            .multiply(new BigDecimal(newPos.subtract(lastPos)))
+            .divide(
+                new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
+                MathContext.DECIMAL32),
+        BigDecimal::add);
     lastRangeIndex.put(endKeyHash, newPos);
     print(false);
   }
@@ -135,7 +136,11 @@ public class SnapsyncMetricsManager {
       if (!isHeal) {
         LOG.info(
             "Snapsync in progress synced={}%, accounts={}, slots={}, codes={}, nodes={}",
-            percentageDownloaded, nbAccounts, nbSlots, nbCodes, nbNodesGenerated);
+            percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP),
+            nbAccounts,
+            nbSlots,
+            nbCodes,
+            nbNodesGenerated);
       } else {
         LOG.info("Healed {} world state nodes", nbNodesHealed.get());
       }
