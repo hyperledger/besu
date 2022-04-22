@@ -31,8 +31,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,7 +49,10 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     final byte[] val1 = bytesFromHexString("0FFF");
     final byte[] val2 = bytesFromHexString("1337");
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-    Supplier<ColumnFamilyHandle> segment = () -> store.getSegmentIdentifierByName(TestSegment.FOO);
+    AtomicReference<ColumnFamilyHandle> segment = store.getSegmentIdentifierByName(TestSegment.FOO);
+    KeyValueStorage duplicateSegmentRef =
+        new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
+
     final Consumer<byte[]> insert =
         value -> {
           final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
@@ -59,18 +62,18 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
 
     // insert val:
     insert.accept(val1);
-    final Optional<byte[]> result = store.get(segment.get(), key);
-    assertThat(result.orElse(null)).isEqualTo(val1);
+    assertThat(store.get(segment.get(), key).orElse(null)).isEqualTo(val1);
+    assertThat(duplicateSegmentRef.get(key).orElse(null)).isEqualTo(val1);
 
     // clear and assert empty:
     store.clear(segment.get());
-    final Optional<byte[]> truncResult = store.get(segment.get(), key);
-    assertThat(truncResult).isEmpty();
+    assertThat(store.get(segment.get(), key)).isEmpty();
+    assertThat(duplicateSegmentRef.get(key)).isEmpty();
 
     // insert into empty:
     insert.accept(val2);
-    final Optional<byte[]> nextResult = store.get(segment.get(), key);
-    assertThat(nextResult.orElse(null)).isEqualTo(val2);
+    assertThat(store.get(segment.get(), key).orElse(null)).isEqualTo(val2);
+    assertThat(duplicateSegmentRef.get(key).orElse(null)).isEqualTo(val2);
 
     store.close();
   }
@@ -81,13 +84,14 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
 
     final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
     tx.put(
-        store.getSegmentIdentifierByName(TestSegment.BAR),
+        store.getSegmentIdentifierByName(TestSegment.BAR).get(),
         bytesFromHexString("0001"),
         bytesFromHexString("0FFF"));
     tx.commit();
 
     final Optional<byte[]> result =
-        store.get(store.getSegmentIdentifierByName(TestSegment.FOO), bytesFromHexString("0001"));
+        store.get(
+            store.getSegmentIdentifierByName(TestSegment.FOO).get(), bytesFromHexString("0001"));
 
     assertThat(result).isEmpty();
 
@@ -100,8 +104,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     // properly
     for (int i = 0; i < 50; i++) {
       final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-      final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
-      final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
+      final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO).get();
+      final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR).get();
 
       final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
       tx.put(fooSegment, bytesOf(1), bytesOf(1));
@@ -144,8 +148,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
   @Test
   public void canGetThroughSegmentIteration() throws Exception {
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-    final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
-    final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
+    final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO).get();
+    final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR).get();
 
     final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
     tx.put(fooSegment, bytesOf(1), bytesOf(1));
