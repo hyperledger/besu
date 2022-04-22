@@ -543,7 +543,16 @@ public class EthPeer implements Comparable<EthPeer> {
 
   @Override
   public int compareTo(final @NotNull EthPeer ethPeer) {
-    return this.reputation.compareTo(ethPeer.reputation);
+    int repCompare = this.reputation.compareTo(ethPeer.reputation);
+    if (repCompare != 0) return repCompare;
+
+    int headStateCompare =
+        Long.compare(
+            this.chainHeadState.getBestBlock().getNumber(),
+            ethPeer.chainHeadState.getBestBlock().getNumber());
+    if (headStateCompare != 0) return headStateCompare;
+
+    return getConnection().getPeerInfo().compareTo(ethPeer.getConnection().getPeerInfo());
   }
 
   @FunctionalInterface
