@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -56,10 +56,10 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.base.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -92,9 +92,9 @@ public class BlockDataGenerator {
   }
 
   private KeyPairGenerator createKeyPairGenerator(final long seed) {
-    final KeyPairGenerator keyPairGenerator;
+    final KeyPairGenerator localKeyPairGenerator;
     try {
-      keyPairGenerator =
+      localKeyPairGenerator =
           KeyPairGenerator.getInstance(
               SignatureAlgorithm.ALGORITHM, signatureAlgorithm.getProvider());
     } catch (final Exception e) {
@@ -105,11 +105,11 @@ public class BlockDataGenerator {
     try {
       final SecureRandom secureRandom = SecureRandomProvider.createSecureRandom();
       secureRandom.setSeed(seed);
-      keyPairGenerator.initialize(ecGenParameterSpec, secureRandom);
+      localKeyPairGenerator.initialize(ecGenParameterSpec, secureRandom);
     } catch (final InvalidAlgorithmParameterException e) {
       throw new RuntimeException(e);
     }
-    return keyPairGenerator;
+    return localKeyPairGenerator;
   }
 
   /**
@@ -192,7 +192,7 @@ public class BlockDataGenerator {
           }
         }
       }
-      account.setNonce(random.nextInt(10));
+      account.setNonce(random.nextLong());
       account.setBalance(Wei.of(positiveLong()));
 
       accounts.add(account);
@@ -382,7 +382,7 @@ public class BlockDataGenerator {
   private Transaction accessListTransaction(final Bytes payload, final Address to) {
     return Transaction.builder()
         .type(TransactionType.ACCESS_LIST)
-        .nonce(positiveLong())
+        .nonce(random.nextLong())
         .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
@@ -395,7 +395,7 @@ public class BlockDataGenerator {
 
   private List<AccessListEntry> accessList() {
     final List<Address> accessedAddresses =
-        Stream.generate(this::address).limit(1 + random.nextInt(3)).collect(toUnmodifiableList());
+        Stream.generate(this::address).limit(1L + random.nextInt(3)).collect(toUnmodifiableList());
     final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
@@ -409,7 +409,7 @@ public class BlockDataGenerator {
   private Transaction eip1559Transaction(final Bytes payload, final Address to) {
     return Transaction.builder()
         .type(TransactionType.EIP1559)
-        .nonce(positiveLong())
+        .nonce(random.nextLong())
         .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
         .maxFeePerGas(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
@@ -423,7 +423,7 @@ public class BlockDataGenerator {
   private Transaction frontierTransaction(final Bytes payload, final Address to) {
     return Transaction.builder()
         .type(TransactionType.FRONTIER)
-        .nonce(positiveLong())
+        .nonce(random.nextLong())
         .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)

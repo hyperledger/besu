@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -61,12 +60,17 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   @Override
   protected Object pendingResult(final JsonRpcRequestContext request) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    final OptionalLong pendingNonce = pendingTransactions.get().getNextNonceForSender(address);
+    final long pendingNonce = pendingTransactions.get().getNextNonceForSender(address).orElse(0);
     final long latestNonce =
         getBlockchainQueries()
             .getTransactionCount(
                 address, getBlockchainQueries().getBlockchain().getChainHead().getHash());
-    return Quantity.create(Math.max(pendingNonce.orElse(0), latestNonce));
+
+    if (Long.compareUnsigned(pendingNonce, latestNonce) > 0) {
+      return Quantity.create(pendingNonce);
+    }
+
+    return Quantity.create(latestNonce);
   }
 
   @Override

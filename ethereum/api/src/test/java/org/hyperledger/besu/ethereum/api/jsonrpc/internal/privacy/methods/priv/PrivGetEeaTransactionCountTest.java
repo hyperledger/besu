@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,10 +33,15 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-import org.junit.Before;
-import org.junit.Test;
+import java.util.stream.Stream;
 
-public class PrivGetEeaTransactionCountTest {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+class PrivGetEeaTransactionCountTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private static final String[] PRIVATE_FOR = {
     "sgFkVOyFndZe/5SAZJO5UYbrl7pezHetveriBBWWnE8=",
@@ -52,7 +57,7 @@ public class PrivGetEeaTransactionCountTest {
       Address.fromHexString("0x1000000000000000000000000000000000000001");
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(privacyParameters.isEnabled()).thenReturn(true);
     final Object[] jsonBody = new Object[] {address.toString(), ENCLAVE_PUBLIC_KEY, PRIVATE_FOR};
@@ -61,25 +66,23 @@ public class PrivGetEeaTransactionCountTest {
             new JsonRpcRequest("2.0", "priv_getEeaTransactionCount", jsonBody));
   }
 
-  @Test
-  public void validRequestProducesExpectedNonce() {
-    final long reportedNonce = 8L;
+  @ParameterizedTest(name = "{index}: {1}")
+  @MethodSource({"provideNonces"})
+  void validRequestProducesExpectedNonce(final long nonce, final String ignoredName) {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineNonce(any(), any(), eq(ENCLAVE_PUBLIC_KEY)))
-        .thenReturn(reportedNonce);
+    when(privacyController.determineNonce(any(), any(), eq(ENCLAVE_PUBLIC_KEY))).thenReturn(nonce);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
-    final int returnedValue = Integer.decode((String) successResponse.getResult());
-    assertThat(returnedValue).isEqualTo(reportedNonce);
+    assertThat(successResponse.getResult()).isEqualTo("0x" + Long.toHexString(nonce));
   }
 
   @Test
-  public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
+  void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
@@ -95,7 +98,7 @@ public class PrivGetEeaTransactionCountTest {
   }
 
   @Test
-  public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
+  void nonceProviderThrowsAnExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
@@ -111,7 +114,7 @@ public class PrivGetEeaTransactionCountTest {
   }
 
   @Test
-  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+  void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
     final PrivGetEeaTransactionCount method =
         new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
@@ -124,5 +127,11 @@ public class PrivGetEeaTransactionCountTest {
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError())
         .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+  }
+
+  private static Stream<Arguments> provideNonces() {
+    return Stream.of(
+        Arguments.of(8, "low nonce"),
+        Arguments.of(Long.parseUnsignedLong("18446744073709551614"), "high nonce"));
   }
 }

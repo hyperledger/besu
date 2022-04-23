@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -45,14 +45,17 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EthGetProofTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class EthGetProofTest {
   @Mock private Blockchain blockchain;
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ChainHead chainHead;
@@ -67,18 +70,18 @@ public class EthGetProofTest {
       UInt256.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
   private final long blockNumber = 1;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthGetProof(blockchainQueries);
   }
 
   @Test
-  public void returnsCorrectMethodName() {
+  void returnsCorrectMethodName() {
     assertThat(method.getName()).isEqualTo(ETH_METHOD);
   }
 
   @Test
-  public void errorWhenNoAddressAccountSupplied() {
+  void errorWhenNoAddressAccountSupplied() {
     final JsonRpcRequestContext request = requestWithParams(null, null, "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
@@ -90,7 +93,7 @@ public class EthGetProofTest {
   }
 
   @Test
-  public void errorWhenNoStorageKeysSupplied() {
+  void errorWhenNoStorageKeysSupplied() {
     final JsonRpcRequestContext request = requestWithParams(address.toString(), null, "latest");
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
@@ -102,7 +105,7 @@ public class EthGetProofTest {
   }
 
   @Test
-  public void errorWhenNoBlockNumberSupplied() {
+  void errorWhenNoBlockNumberSupplied() {
     final JsonRpcRequestContext request = requestWithParams(address.toString(), new String[] {});
 
     Assertions.assertThatThrownBy(() -> method.response(request))
@@ -111,7 +114,7 @@ public class EthGetProofTest {
   }
 
   @Test
-  public void errorWhenAccountNotFound() {
+  void errorWhenAccountNotFound() {
 
     generateWorldState();
 
@@ -132,7 +135,7 @@ public class EthGetProofTest {
   }
 
   @Test
-  public void errorWhenWorldStateUnavailable() {
+  void errorWhenWorldStateUnavailable() {
 
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchainQueries.getWorldState(any())).thenReturn(Optional.empty());
@@ -152,7 +155,7 @@ public class EthGetProofTest {
   }
 
   @Test
-  public void getProof() {
+  void getProof() {
 
     final GetProofResult expectedResponse = generateWorldState();
 
@@ -164,7 +167,10 @@ public class EthGetProofTest {
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
-    assertThat(response.getResult()).usingRecursiveComparison().isEqualTo(expectedResponse);
+    final GetProofResult result = (GetProofResult) response.getResult();
+
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
@@ -176,7 +182,7 @@ public class EthGetProofTest {
     final Wei balance = Wei.of(1);
     final Hash codeHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    final long nonce = 1;
+    final long nonce = Long.parseUnsignedLong("18446744073709551614");
     final Hash rootHash =
         Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b431");
     final Hash storageRoot =

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -32,13 +32,18 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+import java.util.stream.Stream;
+
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class PrivGetTransactionCountTest {
+class PrivGetTransactionCountTest {
 
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
@@ -48,20 +53,21 @@ public class PrivGetTransactionCountTest {
 
   private final Address senderAddress =
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
-  private final long NONCE = 5;
   private final User user =
       new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY)) {};
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @Before
-  public void before() {
+  @BeforeEach
+  public void setup() {
     when(privacyParameters.isEnabled()).thenReturn(true);
-    when(privacyController.determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
-        .thenReturn(NONCE);
   }
 
-  @Test
-  public void verifyTransactionCount() {
+  @ParameterizedTest(name = "{index}: {1}")
+  @MethodSource({"provideNonces"})
+  void verifyTransactionCount(final long nonce, final String ignoredName) {
+    when(privacyController.determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY))
+        .thenReturn(nonce);
+
     final PrivGetTransactionCount privGetTransactionCount =
         new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
@@ -73,12 +79,12 @@ public class PrivGetTransactionCountTest {
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) privGetTransactionCount.response(request);
 
-    assertThat(response.getResult()).isEqualTo(String.format("0x%X", NONCE));
+    assertThat(response.getResult()).isEqualTo("0x" + Long.toHexString(nonce));
     verify(privacyController).determineNonce(senderAddress, PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
   }
 
   @Test
-  public void failsWithNonceErrorIfExceptionIsThrown() {
+  void failsWithNonceErrorIfExceptionIsThrown() {
     final PrivGetTransactionCount privGetTransactionCount =
         new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
@@ -98,7 +104,7 @@ public class PrivGetTransactionCountTest {
   }
 
   @Test
-  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+  void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
     final PrivGetTransactionCount privGetTransactionCount =
         new PrivGetTransactionCount(privacyController, privacyIdProvider);
 
@@ -115,5 +121,11 @@ public class PrivGetTransactionCountTest {
             request.getRequest().getId(), JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     final JsonRpcResponse response = privGetTransactionCount.response(request);
     assertThat(response).isEqualTo(expectedResponse);
+  }
+
+  private static Stream<Arguments> provideNonces() {
+    return Stream.of(
+        Arguments.of(5, "low nonce"),
+        Arguments.of(Long.parseUnsignedLong("18446744073709551614"), "high nonce"));
   }
 }
