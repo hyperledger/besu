@@ -86,7 +86,7 @@ public class FastDownloaderFactory {
       return Optional.empty();
     }
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
+      worldStateStorage.clearFlatDatabase();
     } else {
       final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
       if (queueDataDir.toFile().exists()) {
