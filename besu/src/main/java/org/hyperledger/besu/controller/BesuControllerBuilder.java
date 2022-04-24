@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -330,6 +331,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
+    syncState.subscribeTTDReached(new PandaPrinter());
     final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
     final TransactionPool transactionPool =
