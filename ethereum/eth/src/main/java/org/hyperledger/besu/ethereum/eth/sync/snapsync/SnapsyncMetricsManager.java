@@ -156,11 +156,8 @@ public class SnapsyncMetricsManager {
   public void notifySnapSyncCompleted() {
     final Duration duration = Duration.ofMillis(System.currentTimeMillis() - startSyncTime);
     LOG.info(
-        "Finished snapsync with {} accounts, {} slots, {} codes and {} nodes (healed={}) duration {}{}:{},{}",
-        nbAccounts,
-        nbSlots,
-        nbCodes,
-        nbNodesGenerated,
+        "Finished snapsync with nodes {} (healed={}) duration {}{}:{},{}",
+        nbNodesGenerated.addAndGet(nbNodesHealed.get()),
         nbNodesHealed,
         duration.toHoursPart() > 0 ? (duration.toHoursPart() + ":") : "",
         duration.toMinutesPart(),
