@@ -46,8 +46,15 @@ class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(
-        getAccountHash().orElse(Hash.EMPTY), getLocation().orElse(Hash.EMPTY), getHash());
+    return getAccountHash()
+        .flatMap(
+            accountHash ->
+                getLocation()
+                    .flatMap(
+                        location ->
+                            worldStateStorage
+                                .getAccountStorageTrieNode(accountHash, location, getHash())
+                                .filter(data -> Hash.hash(data).equals(getHash()))));
   }
 
   @Override
