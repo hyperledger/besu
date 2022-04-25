@@ -55,11 +55,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -536,13 +536,13 @@ public class EthPeer implements Comparable<EthPeer> {
         getShortNodeId(), reputation, isFullyValidated(), isDisconnected());
   }
 
-  @NotNull
+  @Nonnull
   public String getShortNodeId() {
     return nodeId().toString().substring(0, 20);
   }
 
   @Override
-  public int compareTo(final @NotNull EthPeer ethPeer) {
+  public int compareTo(final @Nonnull EthPeer ethPeer) {
     int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 

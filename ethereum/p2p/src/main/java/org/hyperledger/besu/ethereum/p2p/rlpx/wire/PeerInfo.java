@@ -27,9 +27,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Encapsulates information about a peer, including their protocol version, client ID, capabilities
@@ -146,7 +146,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
   }
 
   @Override
-  public int compareTo(final @NotNull PeerInfo peerInfo) {
+  public int compareTo(final @Nonnull PeerInfo peerInfo) {
     return this.nodeId.compareTo(peerInfo.nodeId);
   }
 }

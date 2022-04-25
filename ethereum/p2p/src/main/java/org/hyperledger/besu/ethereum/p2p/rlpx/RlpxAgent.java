@@ -272,7 +272,7 @@ public class RlpxAgent {
           }
         });
 
-    traceLambda(LOG, logConnectionsByIdToString());
+    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
 
     return connectionFuture.get();
   }
@@ -287,7 +287,7 @@ public class RlpxAgent {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
-    traceLambda(LOG, logConnectionsByIdToString());
+    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
     cleanUpPeerConnection(peerConnection.getPeer().getId());
   }
 
@@ -428,7 +428,7 @@ public class RlpxAgent {
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
     enforceConnectionLimits();
-    traceLambda(LOG, logConnectionsByIdToString());
+    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
   }
 
   private boolean shouldLimitRemoteConnections() {
