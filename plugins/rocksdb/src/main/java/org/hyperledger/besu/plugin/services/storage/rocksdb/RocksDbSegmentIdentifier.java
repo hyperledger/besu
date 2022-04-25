@@ -35,7 +35,7 @@ public class RocksDbSegmentIdentifier {
     this.reference = new AtomicReference<>(columnFamilyHandle);
   }
 
-  public void recreate() {
+  public void reset() {
     reference.getAndUpdate(
         oldHandle -> {
           try {
