@@ -17,11 +17,12 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.RunnableCounter;
+import org.hyperledger.besu.metrics.RunnableTimedCounter;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
 import org.slf4j.Logger;
@@ -29,24 +30,23 @@ import org.slf4j.LoggerFactory;
 
 public class CompleteTaskStep {
   private static final Logger LOG = LoggerFactory.getLogger(CompleteTaskStep.class);
-  private static final int DISPLAY_PROGRESS_STEP = 100000;
-  private final RunnableCounter completedRequestsCounter;
+  private final RunnableTimedCounter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
   private final LongSupplier worldStatePendingRequestsCurrentSupplier;
-  private long lastLogAt = System.currentTimeMillis();
 
   public CompleteTaskStep(
       final MetricsSystem metricsSystem,
       final LongSupplier worldStatePendingRequestsCurrentSupplier) {
     this.worldStatePendingRequestsCurrentSupplier = worldStatePendingRequestsCurrentSupplier;
     completedRequestsCounter =
-        new RunnableCounter(
+        new RunnableTimedCounter(
             metricsSystem.createCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "world_state_completed_requests_total",
                 "Total number of node data requests completed as part of fast sync world state download"),
             this::displayWorldStateSyncProgress,
-            DISPLAY_PROGRESS_STEP);
+            1,
+            TimeUnit.MINUTES);
     retriedRequestsCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -72,14 +72,10 @@ public class CompleteTaskStep {
   }
 
   private void displayWorldStateSyncProgress() {
-    final long now = System.currentTimeMillis();
-    if (now - lastLogAt > 10 * 1000L) {
-      LOG.info(
-          "Downloaded {} world state nodes. At least {} nodes remaining.",
-          getCompletedRequests(),
-          worldStatePendingRequestsCurrentSupplier.getAsLong());
-      lastLogAt = now;
-    }
+    LOG.info(
+        "Downloaded {} world state nodes. At least {} nodes remaining.",
+        getCompletedRequests(),
+        worldStatePendingRequestsCurrentSupplier.getAsLong());
   }
 
   long getCompletedRequests() {

@@ -178,8 +178,9 @@ public class BackwardSyncContext {
     return getBlockValidator(block.getHeader().getNumber());
   }
 
-  public boolean isOnTTD() {
-    return syncState.hasReachedTerminalDifficulty().orElse(false);
+  public boolean isReady() {
+    return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)
+        && syncState.isInitialSyncPhaseDone();
   }
 
   public CompletableFuture<Void> stop() {
@@ -191,7 +192,7 @@ public class BackwardSyncContext {
     if (firstHash.isPresent()) {
       return executeSyncStep(firstHash.get());
     }
-    if (!isOnTTD()) {
+    if (!isReady()) {
       return waitForTTD().thenCompose(this::executeNextStep);
     }
     final Optional<BlockHeader> firstAncestorHeader = backwardChain.getFirstAncestorHeader();
@@ -234,23 +235,23 @@ public class BackwardSyncContext {
     final long id =
         syncState.subscribeTTDReached(
             reached -> {
-              if (reached) {
+              if (reached && syncState.isInitialSyncPhaseDone()) {
                 latch.countDown();
               }
             });
     return CompletableFuture.runAsync(
         () -> {
           try {
-            if (!isOnTTD()) {
-              LOG.info("Waiting for TTD...");
+            if (!isReady()) {
+              LOG.info("Waiting for preconditions...");
               final boolean await = latch.await(2, TimeUnit.MINUTES);
               if (await) {
-                LOG.info("TTD reached...");
+                LOG.info("Preconditions meet...");
               }
             }
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new BackwardSyncException("Wait for TTD was interrupted");
+            throw new BackwardSyncException("Wait for TTD preconditions interrupted");
           } finally {
             syncState.unsubscribeTTDReached(id);
           }

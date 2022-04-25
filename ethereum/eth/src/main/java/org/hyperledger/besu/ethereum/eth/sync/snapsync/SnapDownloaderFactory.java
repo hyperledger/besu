@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
@@ -45,6 +46,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> createSnapDownloader(
+      final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -108,6 +110,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 protocolContext,
                 ethContext,
                 syncState,
+                pivotBlockSelector,
                 metricsSystem),
             worldStateStorage,
             snapWorldStateDownloader,
