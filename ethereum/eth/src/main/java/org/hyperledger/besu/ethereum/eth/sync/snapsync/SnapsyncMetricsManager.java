@@ -23,8 +23,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class SnapsyncMetricsManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapsyncMetricsManager.class);
-  private static final long PRINT_DELAY = TimeUnit.MINUTES.toNanos(1);
+  private static final long PRINT_DELAY = TimeUnit.MINUTES.toMillis(1);
 
   private final MetricsSystem metricsSystem;
 
@@ -46,8 +47,9 @@ public class SnapsyncMetricsManager {
   private final AtomicLong nbCodes;
   private final AtomicLong nbNodesGenerated;
   private final AtomicLong nbNodesHealed;
+  private long startSyncTime;
 
-  private final Map<Bytes32, BigInteger> lastRangeIndex = new ConcurrentHashMap<>();
+  private final Map<Bytes32, BigInteger> lastRangeIndex = new HashMap<>();
 
   private long lastNotifyTimestamp;
 
@@ -91,21 +93,25 @@ public class SnapsyncMetricsManager {
     for (Map.Entry<Bytes32, Bytes32> entry : ranges.entrySet()) {
       lastRangeIndex.put(entry.getValue(), entry.getKey().toUnsignedBigInteger());
     }
+    startSyncTime = System.currentTimeMillis();
+    lastNotifyTimestamp = startSyncTime;
   }
 
   public void notifyStateDownloaded(final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     checkNonEmpty(lastRangeIndex, "snapsync range collection");
-    final BigInteger lastPos = lastRangeIndex.get(endKeyHash);
-    final BigInteger newPos = startKeyHash.toUnsignedBigInteger();
-    percentageDownloaded.getAndAccumulate(
-        BigDecimal.valueOf(100)
-            .multiply(new BigDecimal(newPos.subtract(lastPos)))
-            .divide(
-                new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
-                MathContext.DECIMAL32),
-        BigDecimal::add);
-    lastRangeIndex.put(endKeyHash, newPos);
-    print(false);
+    if (lastRangeIndex.containsKey(endKeyHash)) {
+      final BigInteger lastPos = lastRangeIndex.get(endKeyHash);
+      final BigInteger newPos = startKeyHash.toUnsignedBigInteger();
+      percentageDownloaded.getAndAccumulate(
+          BigDecimal.valueOf(100)
+              .multiply(new BigDecimal(newPos.subtract(lastPos)))
+              .divide(
+                  new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
+                  MathContext.DECIMAL32),
+          BigDecimal::add);
+      lastRangeIndex.put(endKeyHash, newPos);
+      print(false);
+    }
   }
 
   public void notifyAccountsDownloaded(final long nbAccounts) {
@@ -117,7 +123,7 @@ public class SnapsyncMetricsManager {
   }
 
   public void notifyCodeDownloaded() {
-    this.nbCodes.incrementAndGet();
+    this.nbCodes.getAndIncrement();
   }
 
   public void notifyNodesGenerated(final long nbNodes) {
@@ -129,8 +135,8 @@ public class SnapsyncMetricsManager {
     print(true);
   }
 
-  private synchronized void print(final boolean isHeal) {
-    final long now = System.nanoTime();
+  private void print(final boolean isHeal) {
+    final long now = System.currentTimeMillis();
     if (now - lastNotifyTimestamp >= PRINT_DELAY) {
       lastNotifyTimestamp = now;
       if (!isHeal) {
@@ -147,14 +153,19 @@ public class SnapsyncMetricsManager {
     }
   }
 
-  public synchronized void notifySnapSyncCompleted() {
+  public void notifySnapSyncCompleted() {
+    final Duration duration = Duration.ofMillis(System.currentTimeMillis() - startSyncTime);
     LOG.info(
-        "Finished snapsync with {} accounts, {} slots, {} codes and {} nodes (healed={})",
+        "Finished snapsync with {} accounts, {} slots, {} codes and {} nodes (healed={}) duration {}{}:{},{}",
         nbAccounts,
         nbSlots,
         nbCodes,
         nbNodesGenerated,
-        nbNodesHealed);
+        nbNodesHealed,
+        duration.toHoursPart() > 0 ? (duration.toHoursPart() + ":") : "",
+        duration.toMinutesPart(),
+        duration.toSecondsPart(),
+        duration.toMillisPart());
   }
 
   public MetricsSystem getMetricsSystem() {

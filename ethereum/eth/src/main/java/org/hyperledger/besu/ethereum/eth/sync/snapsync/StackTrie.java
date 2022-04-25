@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -44,6 +45,7 @@ public class StackTrie {
   private final int maxSegments;
   private final Bytes32 startKeyHash;
   private final Map<Bytes32, TaskElement> elements;
+  private final AtomicLong nbElements;
 
   public StackTrie(final Hash rootHash, final Bytes32 startKeyHash) {
     this(rootHash, 1, 1, startKeyHash);
@@ -59,16 +61,22 @@ public class StackTrie {
     this.maxSegments = maxSegments;
     this.startKeyHash = startKeyHash;
     this.elements = new LinkedHashMap<>();
+    this.nbElements = new AtomicLong();
   }
 
   public void addElement(
       final Bytes32 taskIdentifier, final List<Bytes> proofs, final TreeMap<Bytes32, Bytes> keys) {
+    this.nbElements.addAndGet(keys.size());
     this.elements.put(
         taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
   }
 
   public TaskElement getElement(final Bytes32 taskIdentifier) {
     return this.elements.get(taskIdentifier);
+  }
+
+  public AtomicLong getNbElements() {
+    return nbElements;
   }
 
   public void commit(final NodeUpdater nodeUpdater) {

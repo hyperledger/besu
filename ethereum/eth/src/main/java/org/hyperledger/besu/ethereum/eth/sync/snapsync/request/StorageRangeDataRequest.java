@@ -103,7 +103,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     updaterTmp.get().commit();
 
-    downloadState.getMetricsManager().notifySlotsDownloaded(getSlots().size());
+    downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getNbElements().get());
 
     return nbNodesSaved.get();
   }
