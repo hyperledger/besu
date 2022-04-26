@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -27,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.OptionalLong;
@@ -39,13 +37,11 @@ import org.junit.Test;
 public class DynamicPivotBlockManagerTest {
 
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
-  private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
   private final SyncState syncState = mock(SyncState.class);
 
-  private final DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager =
-      new DynamicPivotBlockManager<>(
-          downloadState,
+  private final DynamicPivotBlockManager dynamicPivotBlockManager =
+      new DynamicPivotBlockManager(
           fastSyncActions,
           snapSyncState,
           SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY,
@@ -63,9 +59,7 @@ public class DynamicPivotBlockManagerTest {
 
     when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(999));
     dynamicPivotBlockManager.check(
-        blockHeader -> {
-          fail("new pivot block not expected");
-        });
+        (blockHeader, newBlockFound) -> assertThat(newBlockFound).isFalse());
     verify(fastSyncActions, never()).waitForSuitablePeers(any());
   }
 
@@ -87,9 +81,7 @@ public class DynamicPivotBlockManagerTest {
 
     when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(939));
     dynamicPivotBlockManager.check(
-        blockHeader -> {
-          fail("new pivot block not expected");
-        });
+        (blockHeader, newBlockFound) -> assertThat(newBlockFound).isFalse());
     verify(fastSyncActions).waitForSuitablePeers(any());
   }
 
@@ -111,15 +103,17 @@ public class DynamicPivotBlockManagerTest {
 
     when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(939));
     dynamicPivotBlockManager.check(
-        blockHeader -> {
-          fail("new pivot block not expected");
+        (blockHeader, newBlockFound) -> {
+          assertThat(blockHeader.getNumber()).isEqualTo(939);
+          assertThat(newBlockFound).isFalse();
         });
 
     when(syncState.bestChainHeight()).thenReturn(1066L);
 
     dynamicPivotBlockManager.check(
-        blockHeader -> {
+        (blockHeader, newBlockFound) -> {
           assertThat(blockHeader.getNumber()).isEqualTo(pivotBlockHeader.getNumber());
+          assertThat(newBlockFound).isTrue();
         });
 
     verify(snapSyncState).setCurrentHeader(pivotBlockHeader);
