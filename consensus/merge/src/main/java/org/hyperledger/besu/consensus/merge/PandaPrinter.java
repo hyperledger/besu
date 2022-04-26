@@ -16,27 +16,28 @@
 
 package org.hyperledger.besu.consensus.merge;
 
+import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PandaPrinter implements TTDReachedListener {
 
-  private final static Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
-  private final static String pandaBanner = PandaPrinter.loadBanner();
+  private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
+  private static final String pandaBanner = PandaPrinter.loadBanner();
 
   private static String loadBanner() {
     Class<PandaPrinter> c = PandaPrinter.class;
     InputStream is = c.getResourceAsStream("/ProofOfPanda3.txt");
     StringBuilder resultStringBuilder = new StringBuilder();
-    try (BufferedReader br
-        = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+    try (BufferedReader br =
+        new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
       String line;
       while ((line = br.readLine()) != null) {
         resultStringBuilder.append(line).append("\n");
@@ -49,8 +50,8 @@ public class PandaPrinter implements TTDReachedListener {
 
   @Override
   public void onTTDReached(final boolean reached) {
-    if(reached) {
-      LOG.info("\n"+pandaBanner);
+    if (reached) {
+      LOG.info("\n" + pandaBanner);
     }
   }
 }

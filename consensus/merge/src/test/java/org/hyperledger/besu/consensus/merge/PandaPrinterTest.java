@@ -25,5 +25,4 @@ public class PandaPrinterTest {
     PandaPrinter panda = new PandaPrinter();
     panda.onTTDReached(true);
   }
-
 }
