@@ -39,8 +39,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.Statistics;
+import org.rocksdb.TransactionDB;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RocksDBMetricsTest {
@@ -49,7 +49,7 @@ public class RocksDBMetricsTest {
   @Mock private LabelledMetric<OperationTimer> labelledMetricOperationTimerMock;
   @Mock private LabelledMetric<Counter> labelledMetricCounterMock;
   @Mock private OperationTimer operationTimerMock;
-  @Mock private OptimisticTransactionDB db;
+  @Mock private TransactionDB db;
   @Mock private Statistics stats;
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();

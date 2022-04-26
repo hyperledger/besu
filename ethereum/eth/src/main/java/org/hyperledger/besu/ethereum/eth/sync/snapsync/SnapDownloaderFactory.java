@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
@@ -46,6 +46,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> createSnapDownloader(
+      final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -88,7 +89,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     worldStateStorage.clear();
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
-        createSnapWorldStateDownloaderTaskCollection(metricsSystem);
+        createSnapWorldStateDownloaderTaskCollection();
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
@@ -109,6 +110,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 protocolContext,
                 ethContext,
                 syncState,
+                pivotBlockSelector,
                 metricsSystem),
             worldStateStorage,
             snapWorldStateDownloader,
@@ -121,15 +123,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
   }
 
   private static InMemoryTasksPriorityQueues<SnapDataRequest>
-      createSnapWorldStateDownloaderTaskCollection(final MetricsSystem metricsSystem) {
-    final InMemoryTasksPriorityQueues<SnapDataRequest> taskCollection =
-        new InMemoryTasksPriorityQueues<>();
-
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.SYNCHRONIZER,
-        "snap_world_state_pending_requests_current",
-        "Number of pending requests for snap sync world state download",
-        taskCollection::size);
-    return taskCollection;
+      createSnapWorldStateDownloaderTaskCollection() {
+    return new InMemoryTasksPriorityQueues<>();
   }
 }

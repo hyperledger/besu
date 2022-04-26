@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,21 +16,25 @@ package org.hyperledger.besu.metrics;
 
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-/** Counter that triggers a specific task each time a step is hit. */
-public class RunnableCounter implements Counter {
+/** Counter that triggers a specific task if the specified interval has elapsed. */
+public class RunnableTimedCounter implements Counter {
 
-  protected final Counter backedCounter;
-  protected final Runnable task;
-  protected final int step;
-  protected final AtomicLong stepCounter;
+  private final Counter backedCounter;
+  private final Runnable task;
+  private final long intervalMillis;
+  private final AtomicLong stepCounter;
+  private volatile long nextExecutionAtMillis;
 
-  public RunnableCounter(final Counter backedCounter, final Runnable task, final int step) {
+  public RunnableTimedCounter(
+      final Counter backedCounter, final Runnable task, final long interval, final TimeUnit unit) {
     this.backedCounter = backedCounter;
     this.task = task;
-    this.step = step;
     this.stepCounter = new AtomicLong(0);
+    this.intervalMillis = unit.toMillis(interval);
+    this.nextExecutionAtMillis = System.currentTimeMillis() + intervalMillis;
   }
 
   /**
@@ -44,15 +48,18 @@ public class RunnableCounter implements Counter {
   }
 
   /**
-   * Increments the stepCounter by amount. Triggers the runnable if the step is hit.
+   * Increments the stepCounter by amount. Triggers the runnable if interval has elapsed
    *
    * @param amount the value to add to the stepCounter.
    */
   @Override
   public void inc(final long amount) {
     backedCounter.inc(amount);
-    if (stepCounter.addAndGet(amount) % step == 0) {
+    stepCounter.addAndGet(amount);
+    final long now = System.currentTimeMillis();
+    if (nextExecutionAtMillis < now) {
       task.run();
+      nextExecutionAtMillis = now + intervalMillis;
     }
   }
 
