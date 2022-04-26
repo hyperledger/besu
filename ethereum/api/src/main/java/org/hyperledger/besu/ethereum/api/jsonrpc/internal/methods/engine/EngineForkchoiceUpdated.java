@@ -66,6 +66,13 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
+    Optional<Hash> maybeFinalizedHash =
+        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
+            .filter(finalized -> !Hash.ZERO.equals(finalized));
+
+    mergeContext.fireNewForkchoiceMessageEvent(
+        forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
+
     if (mergeContext.isSyncing()) {
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
@@ -80,14 +87,10 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     Optional<BlockHeader> newHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
-    Optional<Hash> finalizedHash =
-        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
-            .filter(finalized -> !Hash.ZERO.equals(finalized));
-
     Optional<BlockHeader> finalizedHead =
-        finalizedHash.flatMap(protocolContext.getBlockchain()::getBlockHeader);
+        maybeFinalizedHash.flatMap(protocolContext.getBlockchain()::getBlockHeader);
 
-    if (newHead.isPresent() && (finalizedHash.isEmpty() || finalizedHead.isPresent())) {
+    if (newHead.isPresent() && (maybeFinalizedHash.isEmpty() || finalizedHead.isPresent())) {
 
       // TODO: post-merge cleanup, this should be unnecessary after merge
       if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
