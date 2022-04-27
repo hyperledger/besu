@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.DynamicPivotBlockManager.doNothingOnPivotChange;
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -322,8 +321,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   tasks -> {
                     pivotBlockManager.check(
                         (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(
-                                snapSyncState, downloadState, blockHeader, newBlockFound));
+                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
                     return tasks;
                   })
               .thenProcessAsyncOrdered(
@@ -359,8 +357,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   tasks -> {
                     pivotBlockManager.check(
                         (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(
-                                snapSyncState, downloadState, blockHeader, newBlockFound));
+                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
                     return tasks;
                   })
               .thenProcessAsync(
@@ -390,7 +387,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
   private static void reloadHealWhenNeeded(
       final SnapSyncState snapSyncState,
       final SnapWorldDownloadState downloadState,
-      final BlockHeader blockHeader,
       final boolean newBlockFound) {
     if (snapSyncState.isHealInProgress() && newBlockFound) {
       downloadState.reloadHeal();
