@@ -39,6 +39,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
@@ -148,6 +149,7 @@ public final class RunnerBuilderTest {
             .permissioningService(mock(PermissioningServiceImpl.class))
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
@@ -192,6 +194,7 @@ public final class RunnerBuilderTest {
             .jsonRpcConfiguration(mock(JsonRpcConfiguration.class))
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
@@ -247,6 +250,7 @@ public final class RunnerBuilderTest {
             .engineJsonRpcConfiguration(engine)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(mock(WebSocketConfiguration.class))
+            .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
@@ -285,6 +289,7 @@ public final class RunnerBuilderTest {
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(JsonRpcConfiguration.createDefault())
             .webSocketConfiguration(wsRpc)
+            .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .engineWebSocketConfiguration(engineWsRpc)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
@@ -326,6 +331,7 @@ public final class RunnerBuilderTest {
             .jsonRpcConfiguration(defaultRpcConfig)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .webSocketConfiguration(defaultWebSockConfig)
+            .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
@@ -372,6 +378,7 @@ public final class RunnerBuilderTest {
         .engineJsonRpcConfiguration(engine)
         .graphQLConfiguration(mock(GraphQLConfiguration.class))
         .webSocketConfiguration(mock(WebSocketConfiguration.class))
+        .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
         .metricsConfiguration(mock(MetricsConfiguration.class))
         .vertx(Vertx.vertx())
         .dataDir(dataDir.getRoot().toPath())

@@ -202,6 +202,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .networkingConfiguration(node.getNetworkingConfiguration())
             .jsonRpcConfiguration(node.jsonRpcConfiguration())
             .webSocketConfiguration(node.webSocketConfiguration())
+            .jsonRpcIpcConfiguration(node.jsonRpcIpcConfiguration())
             .dataDir(node.homeDirectory())
             .metricsSystem(metricsSystem)
             .permissioningService(new PermissioningServiceImpl())

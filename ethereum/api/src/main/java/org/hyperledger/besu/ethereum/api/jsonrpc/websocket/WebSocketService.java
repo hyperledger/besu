@@ -32,6 +32,7 @@ import com.google.common.collect.Iterables;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -126,7 +127,7 @@ public class WebSocketService {
 
       LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
 
-      websocket.binaryMessageHandler(
+      final Handler<Buffer> socketHandler =
           buffer -> {
             LOG.debug(
                 "Received Websocket request (binary frame) {} ({})",
@@ -137,52 +138,13 @@ public class WebSocketService {
               authenticationService
                   .get()
                   .authenticate(
-                      token,
-                      user ->
-                          websocketRequestHandler.handle(
-                              authenticationService,
-                              websocket,
-                              buffer.toString(),
-                              user,
-                              configuration.getRpcApisNoAuth()));
+                      token, user -> websocketRequestHandler.handle(websocket, buffer, user));
             } else {
-              websocketRequestHandler.handle(
-                  Optional.empty(),
-                  websocket,
-                  buffer.toString(),
-                  Optional.empty(),
-                  configuration.getRpcApisNoAuth());
+              websocketRequestHandler.handle(websocket, buffer, Optional.empty());
             }
-          });
-
-      websocket.textMessageHandler(
-          payload -> {
-            LOG.debug(
-                "Received Websocket request {} ({})",
-                payload,
-                socketAddressAsString(socketAddress));
-
-            if (authenticationService.isPresent()) {
-              authenticationService
-                  .get()
-                  .authenticate(
-                      token,
-                      user ->
-                          websocketRequestHandler.handle(
-                              authenticationService,
-                              websocket,
-                              payload,
-                              user,
-                              configuration.getRpcApisNoAuth()));
-            } else {
-              websocketRequestHandler.handle(
-                  Optional.empty(),
-                  websocket,
-                  payload,
-                  Optional.empty(),
-                  configuration.getRpcApisNoAuth());
-            }
-          });
+          };
+      websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
+      websocket.binaryMessageHandler(socketHandler);
 
       websocket.closeHandler(
           v -> {

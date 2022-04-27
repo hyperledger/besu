@@ -70,8 +70,8 @@ public class NodeSmartContractV2PermissioningController
       LOG.trace("Permitted? {} for DNS {}", isIpToDNSEnodePermitted, ipToDNSEnode);
       return isIpToDNSEnodePermitted;
     } catch (final IllegalStateException illegalStateException) {
-      LOG.info("Unable to check permissions for enode {} ", enode, illegalStateException);
-      return false;
+      throw new IllegalStateException(
+          "Unable to check permissions for " + enode, illegalStateException);
     }
   }
 

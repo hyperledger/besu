@@ -38,12 +38,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.AuthenticatedJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.LivenessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.ReadinessCheck;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
@@ -184,6 +190,7 @@ public class RunnerBuilder {
   private StorageProvider storageProvider;
   private Supplier<List<Bytes>> forkIdSupplier;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
+  private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -391,6 +398,12 @@ public class RunnerBuilder {
 
   public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
     this.rpcEndpointServiceImpl = rpcEndpointService;
+    return this;
+  }
+
+  public RunnerBuilder jsonRpcIpcConfiguration(
+      final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
+    this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     return this;
   }
 
@@ -828,6 +841,45 @@ public class RunnerBuilder {
       ethStatsService = Optional.empty();
     }
 
+    final Optional<JsonRpcIpcService> jsonRpcIpcService;
+    if (jsonRpcIpcConfiguration.isEnabled()) {
+      Map<String, JsonRpcMethod> ipcMethods =
+          jsonRpcMethods(
+              protocolSchedule,
+              context,
+              besuController,
+              peerNetwork,
+              blockchainQueries,
+              synchronizer,
+              transactionPool,
+              miningCoordinator,
+              metricsSystem,
+              supportedCapabilities,
+              jsonRpcIpcConfiguration.getEnabledApis().stream()
+                  .filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine"))
+                  .collect(Collectors.toList()),
+              filterManager,
+              accountLocalConfigPermissioningController,
+              nodeLocalConfigPermissioningController,
+              privacyParameters,
+              jsonRpcConfiguration,
+              webSocketConfiguration,
+              metricsConfiguration,
+              natService,
+              besuPluginContext.getNamedPlugins(),
+              dataDir,
+              rpcEndpointServiceImpl);
+
+      jsonRpcIpcService =
+          Optional.of(
+              new JsonRpcIpcService(
+                  vertx,
+                  jsonRpcIpcConfiguration.getPath(),
+                  new JsonRpcExecutor(new BaseJsonRpcProcessor(), ipcMethods)));
+    } else {
+      jsonRpcIpcService = Optional.empty();
+    }
+
     return new Runner(
         vertx,
         networkRunner,
@@ -837,6 +889,7 @@ public class RunnerBuilder {
         graphQLHttpService,
         webSocketService,
         engineWebSocketService,
+        jsonRpcIpcService,
         stratumServer,
         metricsService,
         ethStatsService,
@@ -1119,10 +1172,22 @@ public class RunnerBuilder {
         .values()
         .forEach(websocketMethodsFactory::addMethods);
 
+    final JsonRpcProcessor jsonRpcProcessor;
+    if (authenticationService.isPresent()) {
+      jsonRpcProcessor =
+          new AuthenticatedJsonRpcProcessor(
+              new BaseJsonRpcProcessor(),
+              authenticationService.get(),
+              configuration.getRpcApisNoAuth());
+    } else {
+      jsonRpcProcessor = new BaseJsonRpcProcessor();
+    }
+    final JsonRpcExecutor jsonRpcExecutor =
+        new JsonRpcExecutor(jsonRpcProcessor, websocketMethodsFactory.methods());
     final WebSocketRequestHandler websocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,
-            websocketMethodsFactory.methods(),
+            jsonRpcExecutor,
             besuController.getProtocolManager().ethContext().getScheduler(),
             webSocketConfiguration.getTimeoutSec());
 
