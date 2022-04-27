@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 public class DynamicPivotBlockManager {
 
+  public static final BiConsumer<BlockHeader, Boolean> doNothingOnPivotChange = (___, __) -> {};
+
   private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockManager.class);
 
   private final AtomicBoolean isSearchingPivotBlock = new AtomicBoolean(false);
@@ -40,7 +42,7 @@ public class DynamicPivotBlockManager {
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
-  private Optional<BlockHeader> lastBlockFound;
+  private Optional<BlockHeader> lastPivotBlockFound;
 
   public DynamicPivotBlockManager(
       final FastSyncActions fastSyncActions,
@@ -51,18 +53,17 @@ public class DynamicPivotBlockManager {
     this.syncState = fastSyncState;
     this.pivotBlockWindowValidity = pivotBlockWindowValidity;
     this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
-    this.lastBlockFound = Optional.empty();
+    this.lastPivotBlockFound = Optional.empty();
   }
 
   public void check(final BiConsumer<BlockHeader, Boolean> onNewPivotBlock) {
     syncState
         .getPivotBlockNumber()
         .ifPresent(
-            blockNumber -> {
-              final long currentPivotBlockNumber = syncState.getPivotBlockNumber().orElseThrow();
+            currentPivotBlockNumber -> {
               final long distanceNextPivotBlock =
                   syncActions.getSyncState().bestChainHeight()
-                      - lastBlockFound
+                      - lastPivotBlockFound
                           .map(ProcessableBlockHeader::getNumber)
                           .orElse(currentPivotBlockNumber);
               if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching
@@ -71,7 +72,7 @@ public class DynamicPivotBlockManager {
                     .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
                     .thenCompose(syncActions::selectPivotBlock)
                     .thenCompose(syncActions::downloadPivotBlockHeader)
-                    .thenAccept(fss -> lastBlockFound = fss.getPivotBlockHeader())
+                    .thenAccept(fss -> lastPivotBlockFound = fss.getPivotBlockHeader())
                     .orTimeout(5, TimeUnit.MINUTES)
                     .whenComplete((unused, throwable) -> isSearchingPivotBlock.set(false));
               }
@@ -87,7 +88,7 @@ public class DynamicPivotBlockManager {
   }
 
   public void switchToNewPivotBlock(final BiConsumer<BlockHeader, Boolean> onSwitchDone) {
-    lastBlockFound.ifPresentOrElse(
+    lastPivotBlockFound.ifPresentOrElse(
         blockHeader -> {
           LOG.info(
               "Select new pivot block {} {}", blockHeader.getNumber(), blockHeader.getStateRoot());
@@ -95,6 +96,6 @@ public class DynamicPivotBlockManager {
           onSwitchDone.accept(blockHeader, true);
         },
         () -> onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false));
-    lastBlockFound = Optional.empty();
+    lastPivotBlockFound = Optional.empty();
   }
 }
