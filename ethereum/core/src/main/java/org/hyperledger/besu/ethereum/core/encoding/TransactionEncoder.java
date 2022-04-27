@@ -46,11 +46,12 @@ public class TransactionEncoder {
           TransactionEncoder::encodeEIP1559);
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
+
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      encodeFrontier(transaction, rlpOutput);
+      rlpOutput.writeRaw(encodeOpaqueBytes(transaction));
     } else {
       rlpOutput.writeBytes(encodeOpaqueBytes(transaction));
     }
@@ -60,6 +61,9 @@ public class TransactionEncoder {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    if (transaction.getRlp().isPresent()) {
+      return transaction.getRlp().get();
+    }
     if (TransactionType.FRONTIER.equals(transactionType)) {
       return RLP.encode(rlpOutput -> encodeFrontier(transaction, rlpOutput));
     } else {

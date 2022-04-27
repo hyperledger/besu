@@ -64,7 +64,6 @@ public class MainnetBlockImporter implements BlockImporter {
       context.getBlockchain().appendBlock(block, receipts);
       return true;
     }
-
     return false;
   }
 }

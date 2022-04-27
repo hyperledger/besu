@@ -45,6 +45,12 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<ParsedExtraData> parsedExtraData;
 
+  private Optional<Bytes32> receiptRoot = Optional.empty();
+  private Optional<Bytes32> transactionRoot = Optional.empty();
+  private Optional<Bytes32> ommerHash = Optional.empty();
+
+  private Optional<Bytes> rlp = Optional.empty();
+
   public BlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -205,31 +211,40 @@ public class BlockHeader extends SealableBlockHeader
    * @param out The RLP output to write to
    */
   public void writeTo(final RLPOutput out) {
-    out.startList();
+    if (getRlp().isPresent()) {
+      out.writeRaw(getRlp().get());
+    } else {
+      out.startList();
 
-    out.writeBytes(parentHash);
-    out.writeBytes(ommersHash);
-    out.writeBytes(coinbase);
-    out.writeBytes(stateRoot);
-    out.writeBytes(transactionsRoot);
-    out.writeBytes(receiptsRoot);
-    out.writeBytes(logsBloom);
-    out.writeUInt256Scalar(difficulty);
-    out.writeLongScalar(number);
-    out.writeLongScalar(gasLimit);
-    out.writeLongScalar(gasUsed);
-    out.writeLongScalar(timestamp);
-    out.writeBytes(extraData);
-    out.writeBytes(mixHashOrPrevRandao);
-    out.writeLong(nonce);
-    if (baseFee != null) {
-      out.writeUInt256Scalar(baseFee);
+      out.writeBytes(parentHash);
+      out.writeBytes(ommersHash);
+      out.writeBytes(coinbase);
+      out.writeBytes(stateRoot);
+      out.writeBytes(transactionsRoot);
+      out.writeBytes(receiptsRoot);
+      out.writeBytes(logsBloom);
+      out.writeUInt256Scalar(difficulty);
+      out.writeLongScalar(number);
+      out.writeLongScalar(gasLimit);
+      out.writeLongScalar(gasUsed);
+      out.writeLongScalar(timestamp);
+      out.writeBytes(extraData);
+      out.writeBytes(mixHashOrPrevRandao);
+      out.writeLong(nonce);
+      if (baseFee != null) {
+        out.writeUInt256Scalar(baseFee);
+      }
+      out.endList();
     }
-    out.endList();
   }
 
   public static BlockHeader readFrom(
-      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+      final RLPInput rlpInput, final BlockHeaderFunctions blockHeaderFunctions) {
+
+    RLPInput input = rlpInput.readAsRlp();
+    Bytes raw = input.raw();
+    input.reset();
+
     input.enterList();
     final Hash parentHash = Hash.wrap(input.readBytes32());
     final Hash ommersHash = Hash.wrap(input.readBytes32());
@@ -248,24 +263,59 @@ public class BlockHeader extends SealableBlockHeader
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
     input.leaveList();
-    return new BlockHeader(
-        parentHash,
-        ommersHash,
-        coinbase,
-        stateRoot,
-        transactionsRoot,
-        receiptsRoot,
-        logsBloom,
-        difficulty,
-        number,
-        gasLimit,
-        gasUsed,
-        timestamp,
-        extraData,
-        baseFee,
-        mixHashOrPrevRandao,
-        nonce,
-        blockHeaderFunctions);
+    final BlockHeader blockHeader =
+        new BlockHeader(
+            parentHash,
+            ommersHash,
+            coinbase,
+            stateRoot,
+            transactionsRoot,
+            receiptsRoot,
+            logsBloom,
+            difficulty,
+            number,
+            gasLimit,
+            gasUsed,
+            timestamp,
+            extraData,
+            baseFee,
+            mixHashOrPrevRandao,
+            nonce,
+            blockHeaderFunctions);
+    blockHeader.setRlp(Optional.of(raw));
+    return blockHeader;
+  }
+
+  public Optional<Bytes32> getReceiptRoot() {
+    return receiptRoot;
+  }
+
+  public void setReceiptRoot(final Optional<Bytes32> receiptRoot) {
+    this.receiptRoot = receiptRoot;
+  }
+
+  public Optional<Bytes32> getTransactionRoot() {
+    return transactionRoot;
+  }
+
+  public void setTransactionRoot(final Optional<Bytes32> transactionRoot) {
+    this.transactionRoot = transactionRoot;
+  }
+
+  public Optional<Bytes32> getOmmerHash() {
+    return ommerHash;
+  }
+
+  public void setOmmerHash(final Optional<Bytes32> ommerHash) {
+    this.ommerHash = ommerHash;
+  }
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   @Override

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -114,17 +115,34 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       return Optional.empty();
     }
 
-    final List<Block> blocks = new ArrayList<>();
-    for (final BlockBody body : bodies) {
-      final List<BlockHeader> headers = bodyToHeaders.get(new BodyIdentifier(body));
-      if (headers == null) {
-        // This message contains unrelated bodies - exit
-        LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
-        return Optional.empty();
-      }
-      headers.forEach(h -> blocks.add(new Block(h, body)));
-      // Clear processed headers
-      headers.clear();
+    final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
+
+    final AtomicBoolean error = new AtomicBoolean(false);
+    bodies.stream()
+        .parallel()
+        .forEach(
+            body -> {
+              final BodyIdentifier bodyIdentifier = new BodyIdentifier(body);
+              final List<BlockHeader> headers = bodyToHeaders.get(bodyIdentifier);
+              if (headers == null) {
+                LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
+                error.set(true);
+                return;
+              }
+              // force getHash generation
+              body.getTransactions().stream().parallel().forEach(Transaction::getHash);
+              headers.forEach(
+                  h -> {
+                    h.setTransactionRoot(Optional.of(bodyIdentifier.transactionsRoot));
+                    h.setOmmerHash(Optional.of(bodyIdentifier.ommersHash));
+                    blocks.add(new Block(h, body));
+                  });
+              // Clear processed headers
+              headers.clear();
+            });
+
+    if (error.get()) {
+      return Optional.empty();
     }
     return Optional.of(blocks);
   }

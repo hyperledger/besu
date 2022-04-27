@@ -59,6 +59,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   private final TransactionReceiptType transactionReceiptType;
   private final Optional<Bytes> revertReason;
 
+  private Optional<Bytes> rlp = Optional.empty();
+
   /**
    * Creates an instance of a state root-encoded transaction receipt.
    *
@@ -180,7 +182,9 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
-    if (transactionType.equals(TransactionType.FRONTIER)) {
+    if (getRlp().isPresent()) {
+      rlpOutput.writeRaw(getRlp().get());
+    } else if (transactionType.equals(TransactionType.FRONTIER)) {
       writeToForReceiptTrie(rlpOutput, withRevertReason);
     } else {
       rlpOutput.writeBytes(RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason)));
@@ -229,12 +233,20 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    */
   public static TransactionReceipt readFrom(
       final RLPInput rlpInput, final boolean revertReasonAllowed) {
-    RLPInput input = rlpInput;
+
+    RLPInput input;
+    Bytes raw;
+
     TransactionType transactionType = TransactionType.FRONTIER;
     if (!rlpInput.nextIsList()) {
-      final Bytes typedTransactionReceiptBytes = input.readBytes();
+      final Bytes typedTransactionReceiptBytes = rlpInput.readBytes();
       transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
       input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
+      raw = typedTransactionReceiptBytes;
+    } else {
+      input = rlpInput.readAsRlp();
+      raw = input.raw();
+      input.reset();
     }
 
     input.enterList();
@@ -256,19 +268,24 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       revertReason = Optional.of(input.readBytes());
     }
 
+    final TransactionReceipt transactionReceipt;
     // Status code-encoded transaction receipts have a single
     // byte for success (0x01) or failure (0x80).
     if (firstElement.raw().size() == 1) {
       final int status = firstElement.readIntScalar();
       input.leaveList();
-      return new TransactionReceipt(
-          transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
+      transactionReceipt =
+          new TransactionReceipt(
+              transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
       final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
       input.leaveList();
-      return new TransactionReceipt(
-          transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
+      transactionReceipt =
+          new TransactionReceipt(
+              transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }
+    transactionReceipt.setRlp(Optional.of(raw));
+    return transactionReceipt;
   }
 
   /**
@@ -336,6 +353,14 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   @Override
   public Optional<Bytes> getRevertReason() {
     return revertReason;
+  }
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   @Override

@@ -20,6 +20,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
@@ -28,6 +31,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
+
+  private Optional<Bytes> rlp = Optional.empty();
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
@@ -56,24 +61,42 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    * @param output Output to write to
    */
   public void writeTo(final RLPOutput output) {
-    output.startList();
+    if (getRlp().isPresent()) {
+      output.writeRaw(getRlp().get());
+    } else {
+      output.startList();
 
-    output.writeList(getTransactions(), Transaction::writeTo);
-    output.writeList(getOmmers(), BlockHeader::writeTo);
+      output.writeList(getTransactions(), Transaction::writeTo);
+      output.writeList(getOmmers(), BlockHeader::writeTo);
 
-    output.endList();
+      output.endList();
+    }
   }
 
   public static BlockBody readFrom(
-      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+      final RLPInput rlpInput, final BlockHeaderFunctions blockHeaderFunctions) {
+
+    RLPInput input = rlpInput.readAsRlp();
+    Bytes raw = input.raw();
+    input.reset();
+
     input.enterList();
     // TODO: Support multiple hard fork transaction formats.
     final BlockBody body =
         new BlockBody(
             input.readList(Transaction::readFrom),
             input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+    body.setRlp(Optional.of(raw));
     input.leaveList();
     return body;
+  }
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   @Override

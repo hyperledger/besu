@@ -35,6 +35,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,16 +109,33 @@ public class GetReceiptsFromPeerTask
       return Optional.empty();
     }
 
-    final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader = new HashMap<>();
-    for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
-      final List<BlockHeader> blockHeaders =
-          headersByReceiptsRoot.get(receiptsRoot(receiptsInBlock));
-      if (blockHeaders == null) {
-        // Contains receipts that we didn't request, so mustn't be the response we're looking for.
-        return Optional.empty();
-      }
-      blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+    final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader = new ConcurrentHashMap<>();
+
+    final AtomicBoolean error = new AtomicBoolean(false);
+    receiptsByBlock.stream()
+        .parallel()
+        .forEach(
+            receiptsInBlock -> {
+              final Hash receiptRoot = receiptsRoot(receiptsInBlock);
+              final List<BlockHeader> blockHeaders =
+                  headersByReceiptsRoot.get(receiptsRoot(receiptsInBlock));
+              if (blockHeaders == null) {
+                // Contains receipts that we didn't request, so mustn't be the response we're
+                // looking for.
+                error.set(true);
+                return;
+              }
+              blockHeaders.forEach(
+                  header -> {
+                    header.setReceiptRoot(Optional.of(receiptRoot));
+                    receiptsByHeader.put(header, receiptsInBlock);
+                  });
+            });
+
+    if (error.get()) {
+      return Optional.empty();
     }
+
     return Optional.of(receiptsByHeader);
   }
 }

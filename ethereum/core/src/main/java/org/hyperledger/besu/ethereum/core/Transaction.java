@@ -110,6 +110,8 @@ public class Transaction
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
+  private Optional<Bytes> rlp = Optional.empty();
+
   public static Builder builder() {
     return new Builder();
   }
@@ -658,6 +660,14 @@ public class Transaction
   @Override
   public TransactionType getType() {
     return this.transactionType;
+  }
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   /**

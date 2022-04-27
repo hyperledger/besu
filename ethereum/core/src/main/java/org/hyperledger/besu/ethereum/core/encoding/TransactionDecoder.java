@@ -68,12 +68,21 @@ public class TransactionDecoder {
   public static Transaction decodeForWire(
       final RLPInput rlpInput, final boolean goQuorumCompatibilityMode) {
     if (rlpInput.nextIsList()) {
-      return decodeFrontier(rlpInput, goQuorumCompatibilityMode);
+
+      RLPInput input = rlpInput.readAsRlp();
+      Bytes raw = input.raw();
+      input.reset();
+      Transaction transaction = decodeFrontier(input, goQuorumCompatibilityMode);
+      transaction.setRlp(Optional.of(raw));
+      return transaction;
     } else {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
+      Transaction decode =
+          getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
+      decode.setRlp(Optional.of(typedTransactionBytes));
+      return decode;
     }
   }
 

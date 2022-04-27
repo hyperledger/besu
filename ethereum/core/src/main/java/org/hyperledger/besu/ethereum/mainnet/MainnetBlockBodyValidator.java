@@ -75,12 +75,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+    final Bytes32 transactionsRoot =
+        header
+            .getTransactionRoot()
+            .orElseGet(() -> BodyValidation.transactionsRoot(body.getTransactions()));
     if (!validateTransactionsRoot(header.getTransactionsRoot(), transactionsRoot)) {
       return false;
     }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    final Bytes32 receiptsRoot =
+        header.getReceiptRoot().orElseGet(() -> BodyValidation.receiptsRoot(receipts));
     if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
@@ -157,7 +161,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 ommerHash = BodyValidation.ommersHash(body.getOmmers());
+    final Bytes32 ommerHash =
+        header.getOmmerHash().orElseGet(() -> (BodyValidation.ommersHash(body.getOmmers())));
     if (!validateOmmersHash(header.getOmmersHash(), ommerHash)) {
       return false;
     }
