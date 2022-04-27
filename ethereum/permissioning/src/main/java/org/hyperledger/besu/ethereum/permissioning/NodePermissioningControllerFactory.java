@@ -104,7 +104,6 @@ public class NodePermissioningControllerFactory {
     final NodePermissioningController nodePermissioningController =
         new NodePermissioningController(syncStatusProviderOptional, providers, goQuorumQip714Gate);
 
-    // use a controller
     permissioningConfiguration
         .getSmartContractConfig()
         .ifPresent(
