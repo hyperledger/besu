@@ -17,6 +17,7 @@ package org.hyperledger.besu;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
@@ -64,6 +65,7 @@ public class Runner implements AutoCloseable {
   private final Optional<JsonRpcHttpService> jsonRpc;
   private final Optional<JsonRpcHttpService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
+  private final Optional<JsonRpcIpcService> ipcJsonRpc;
   private final Optional<Path> pidPath;
   private final Optional<WebSocketService> webSocketRpc;
   private final Optional<WebSocketService> engineWebSocketRpc;
@@ -84,6 +86,7 @@ public class Runner implements AutoCloseable {
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> webSocketRpc,
       final Optional<WebSocketService> engineWebSocketRpc,
+      final Optional<JsonRpcIpcService> ipcJsonRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
       final Optional<EthStatsService> ethStatsService,
@@ -101,6 +104,7 @@ public class Runner implements AutoCloseable {
     this.engineJsonRpc = engineJsonRpc;
     this.webSocketRpc = webSocketRpc;
     this.engineWebSocketRpc = engineWebSocketRpc;
+    this.ipcJsonRpc = ipcJsonRpc;
     this.metrics = metrics;
     this.ethStatsService = ethStatsService;
     this.besuController = besuController;
@@ -123,6 +127,10 @@ public class Runner implements AutoCloseable {
     webSocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
     engineWebSocketRpc.ifPresent(
         service -> waitForServiceToStart("engineWebsocketRpc", service.start()));
+    ipcJsonRpc.ifPresent(
+        service ->
+            waitForServiceToStart(
+                "ipcJsonRpc", service.start().toCompletionStage().toCompletableFuture()));
     stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
     ethStatsService.ifPresent(EthStatsService::start);
@@ -158,6 +166,10 @@ public class Runner implements AutoCloseable {
     webSocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
     engineWebSocketRpc.ifPresent(
         service -> waitForServiceToStop("engineWebsocketRpc", service.stop()));
+    ipcJsonRpc.ifPresent(
+        service ->
+            waitForServiceToStop(
+                "ipcJsonRpc", service.stop().toCompletionStage().toCompletableFuture()));
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();

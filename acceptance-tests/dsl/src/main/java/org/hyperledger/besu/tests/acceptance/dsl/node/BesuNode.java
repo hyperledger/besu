@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -102,6 +103,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final JsonRpcConfiguration jsonRpcConfiguration;
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
+  private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private final GenesisConfigurationProvider genesisConfigProvider;
@@ -132,6 +134,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final JsonRpcConfiguration jsonRpcConfiguration,
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyfilePath,
@@ -178,6 +181,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.jsonRpcConfiguration = jsonRpcConfiguration;
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
+    this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
@@ -232,6 +236,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private boolean isWebSocketsRpcEnabled() {
     return webSocketConfiguration().isEnabled();
+  }
+
+  public boolean isJsonRpcIpcEnabled() {
+    return jsonRpcIpcConfiguration().isEnabled();
   }
 
   boolean isMetricsEnabled() {
@@ -591,6 +599,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   WebSocketConfiguration webSocketConfiguration() {
     return webSocketConfiguration;
+  }
+
+  JsonRpcIpcConfiguration jsonRpcIpcConfiguration() {
+    return jsonRpcIpcConfiguration;
   }
 
   Optional<String> wsRpcListenHost() {
