@@ -44,6 +44,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
+  private static final int DISPLAY_SNAP_PROGRESS_STEP = 200000;
+  private static final int DISPLAY_HEAL_PROGRESS_STEP = 10000;
+
   protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
       new InMemoryTaskQueue<>();
   protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
@@ -56,7 +59,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTasksPriorityQueues<>();
   public final HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
-  private DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager;
+  private DynamicPivotBlockManager dynamicPivotBlockManager;
   private final SnapSyncState snapSyncState;
 
   // metrics around the snapsync
@@ -274,8 +277,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return metricsManager;
   }
 
-  public void setDynamicPivotBlockManager(
-      final DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager) {
+  public void setDynamicPivotBlockManager(final DynamicPivotBlockManager dynamicPivotBlockManager) {
     this.dynamicPivotBlockManager = dynamicPivotBlockManager;
   }
 }

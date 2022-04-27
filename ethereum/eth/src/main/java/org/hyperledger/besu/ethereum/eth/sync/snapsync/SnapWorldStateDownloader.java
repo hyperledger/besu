@@ -144,8 +144,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
-      final DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager =
-          new DynamicPivotBlockManager<>(
+      final DynamicPivotBlockManager dynamicPivotBlockManager =
+          new DynamicPivotBlockManager(
               fastSyncActions,
               snapSyncState,
               snapSyncConfiguration.getPivotBlockWindowValidity(),

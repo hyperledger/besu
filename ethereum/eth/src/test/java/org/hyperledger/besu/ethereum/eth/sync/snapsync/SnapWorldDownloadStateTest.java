@@ -106,8 +106,7 @@ public class SnapWorldDownloadStateTest {
             MIN_MILLIS_BEFORE_STALLING,
             metricsManager,
             clock);
-    final DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager =
-        mock(DynamicPivotBlockManager.class);
+    final DynamicPivotBlockManager dynamicPivotBlockManager = mock(DynamicPivotBlockManager.class);
     doAnswer(
             invocation -> {
               BiConsumer<BlockHeader, Boolean> callback = invocation.getArgument(0);

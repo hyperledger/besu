@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +27,9 @@ import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
+public class DynamicPivotBlockManager {
+
+  public static final BiConsumer<BlockHeader, Boolean> doNothingOnPivotChange = (___, __) -> {};
 
   private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockManager.class);
 
@@ -41,7 +42,7 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
-  private Optional<BlockHeader> lastBlockFound;
+  private Optional<BlockHeader> lastPivotBlockFound;
 
   public DynamicPivotBlockManager(
       final FastSyncActions fastSyncActions,
@@ -52,18 +53,17 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
     this.syncState = fastSyncState;
     this.pivotBlockWindowValidity = pivotBlockWindowValidity;
     this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
-    this.lastBlockFound = Optional.empty();
+    this.lastPivotBlockFound = Optional.empty();
   }
 
   public void check(final BiConsumer<BlockHeader, Boolean> onNewPivotBlock) {
     syncState
         .getPivotBlockNumber()
         .ifPresent(
-            blockNumber -> {
-              final long currentPivotBlockNumber = syncState.getPivotBlockNumber().orElseThrow();
+            currentPivotBlockNumber -> {
               final long distanceNextPivotBlock =
                   syncActions.getSyncState().bestChainHeight()
-                      - lastBlockFound
+                      - lastPivotBlockFound
                           .map(ProcessableBlockHeader::getNumber)
                           .orElse(currentPivotBlockNumber);
               if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching
@@ -72,7 +72,7 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
                     .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
                     .thenCompose(syncActions::selectPivotBlock)
                     .thenCompose(syncActions::downloadPivotBlockHeader)
-                    .thenAccept(fss -> lastBlockFound = fss.getPivotBlockHeader())
+                    .thenAccept(fss -> lastPivotBlockFound = fss.getPivotBlockHeader())
                     .orTimeout(5, TimeUnit.MINUTES)
                     .whenComplete((unused, throwable) -> isSearchingPivotBlock.set(false));
               }
@@ -88,7 +88,7 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
   }
 
   public void switchToNewPivotBlock(final BiConsumer<BlockHeader, Boolean> onSwitchDone) {
-    lastBlockFound.ifPresentOrElse(
+    lastPivotBlockFound.ifPresentOrElse(
         blockHeader -> {
           LOG.info(
               "Select new pivot block {} {}", blockHeader.getNumber(), blockHeader.getStateRoot());
@@ -96,6 +96,6 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
           onSwitchDone.accept(blockHeader, true);
         },
         () -> onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false));
-    lastBlockFound = Optional.empty();
+    lastPivotBlockFound = Optional.empty();
   }
 }

@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.OptionalLong;
@@ -41,8 +40,8 @@ public class DynamicPivotBlockManagerTest {
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
   private final SyncState syncState = mock(SyncState.class);
 
-  private final DynamicPivotBlockManager<SnapDataRequest> dynamicPivotBlockManager =
-      new DynamicPivotBlockManager<>(
+  private final DynamicPivotBlockManager dynamicPivotBlockManager =
+      new DynamicPivotBlockManager(
           fastSyncActions,
           snapSyncState,
           SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY,
