@@ -175,6 +175,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .build();
       newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
 
+      newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }
   }

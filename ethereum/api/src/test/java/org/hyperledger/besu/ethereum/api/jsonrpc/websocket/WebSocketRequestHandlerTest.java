@@ -22,6 +22,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -35,9 +37,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
@@ -78,7 +83,7 @@ public class WebSocketRequestHandlerTest {
     handler =
         new WebSocketRequestHandler(
             vertx,
-            methods,
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
             mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
@@ -105,7 +110,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, requestJson.toString());
+    handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -133,7 +138,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, arrayJson.toString());
+    handler.handle(websocketMock, arrayJson.toBuffer(), Optional.empty());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
     // can verify only after async not before
@@ -152,7 +157,7 @@ public class WebSocketRequestHandlerTest {
     WebSocketRequestHandler handleBadCalls =
         new WebSocketRequestHandler(
             vertx,
-            methods,
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
             mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
 
@@ -170,7 +175,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handleBadCalls.handle(websocketMock, arrayJson.toString());
+    handleBadCalls.handle(websocketMock, arrayJson.toBuffer(), Optional.empty());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -189,7 +194,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, "");
+    handler.handle(websocketMock, Buffer.buffer(), Optional.empty());
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -208,7 +213,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, "{}");
+    handler.handle(websocketMock, new JsonObject().toBuffer(), Optional.empty());
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -229,7 +234,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, requestJson.toString());
+    handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -253,7 +258,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, requestJson.toString());
+    handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -275,7 +280,7 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    handler.handle(websocketMock, requestJson.toString());
+    handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
     async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
@@ -292,10 +297,10 @@ public class WebSocketRequestHandlerTest {
     return frame.isFinal();
   }
 
-  private Answer<ServerWebSocket> completeOnLastFrame(final Async async) {
+  private Answer<Future<Void>> completeOnLastFrame(final Async async) {
     return invocation -> {
       async.complete();
-      return websocketMock;
+      return Future.succeededFuture();
     };
   }
 }

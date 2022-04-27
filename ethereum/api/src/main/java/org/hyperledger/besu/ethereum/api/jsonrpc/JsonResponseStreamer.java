@@ -24,7 +24,7 @@ import io.vertx.core.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class JsonResponseStreamer extends OutputStream {
+public class JsonResponseStreamer extends OutputStream {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonResponseStreamer.class);
 
