@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
@@ -51,6 +52,7 @@ public class FastDownloaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> create(
+      final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
       final ProtocolSchedule protocolSchedule,
@@ -86,7 +88,7 @@ public class FastDownloaderFactory {
       return Optional.empty();
     }
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
+      worldStateStorage.clearFlatDatabase();
     } else {
       final Path queueDataDir = fastSyncDataDirectory.resolve("statequeue");
       if (queueDataDir.toFile().exists()) {
@@ -118,6 +120,7 @@ public class FastDownloaderFactory {
                 protocolContext,
                 ethContext,
                 syncState,
+                pivotBlockSelector,
                 metricsSystem),
             worldStateStorage,
             worldStateDownloader,
