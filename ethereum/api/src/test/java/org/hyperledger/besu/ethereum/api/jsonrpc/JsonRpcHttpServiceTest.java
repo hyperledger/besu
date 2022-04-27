@@ -1413,13 +1413,17 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     when(jsonRpcMethod.getName()).thenReturn("foo");
     when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
 
-    doReturn(Optional.of(jsonRpcMethod)).when(rpcMethods).get("foo");
+    doReturn(jsonRpcMethod).when(rpcMethods).get("foo");
 
     final RequestBody body =
         RequestBody.create(JSON, "{\"jsonrpc\":\"2.0\",\"id\":\"666\",\"method\":\"foo\"}");
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(500);
+      assertThat(resp.code()).isEqualTo(200);
+      final JsonObject json = new JsonObject(resp.body().string());
+      final JsonRpcError expectedError = JsonRpcError.INTERNAL_ERROR;
+      testHelper.assertValidJsonRpcError(
+          json, "666", expectedError.getCode(), expectedError.getMessage());
     }
   }
 
@@ -1428,7 +1432,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final JsonRpcMethod jsonRpcMethod = mock(JsonRpcMethod.class);
     when(jsonRpcMethod.getName()).thenReturn("foo");
     when(jsonRpcMethod.response(any())).thenThrow(new RuntimeException("test exception"));
-    doReturn(Optional.of(jsonRpcMethod)).when(rpcMethods).get("foo");
+    doReturn(jsonRpcMethod).when(rpcMethods).get("foo");
 
     final RequestBody body =
         RequestBody.create(
@@ -1438,7 +1442,13 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
                 + "{\"jsonrpc\":\"2.0\",\"id\":\"222\",\"method\":\"net_version\"}]");
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
-      assertThat(resp.code()).isEqualTo(400);
+      assertThat(resp.code()).isEqualTo(200);
+      final JsonArray array = new JsonArray(resp.body().string());
+      testHelper.assertValidJsonRpcResult(array.getJsonObject(0), "000");
+      final JsonRpcError expectedError = JsonRpcError.INTERNAL_ERROR;
+      testHelper.assertValidJsonRpcError(
+          array.getJsonObject(1), "111", expectedError.getCode(), expectedError.getMessage());
+      testHelper.assertValidJsonRpcResult(array.getJsonObject(2), "222");
     }
   }
 
