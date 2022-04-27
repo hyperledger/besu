@@ -173,7 +173,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .fastSyncState(snapSyncState)
               .metricsSystem(metricsSystem)
               .build();
-      newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
 
       newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
 

@@ -45,7 +45,7 @@ public class StackTrie {
   private final int maxSegments;
   private final Bytes32 startKeyHash;
   private final Map<Bytes32, TaskElement> elements;
-  private final AtomicLong nbElements;
+  private final AtomicLong elementsCount;
 
   public StackTrie(final Hash rootHash, final Bytes32 startKeyHash) {
     this(rootHash, 1, 1, startKeyHash);
@@ -61,12 +61,12 @@ public class StackTrie {
     this.maxSegments = maxSegments;
     this.startKeyHash = startKeyHash;
     this.elements = new LinkedHashMap<>();
-    this.nbElements = new AtomicLong();
+    this.elementsCount = new AtomicLong();
   }
 
   public void addElement(
       final Bytes32 taskIdentifier, final List<Bytes> proofs, final TreeMap<Bytes32, Bytes> keys) {
-    this.nbElements.addAndGet(keys.size());
+    this.elementsCount.addAndGet(keys.size());
     this.elements.put(
         taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
   }
@@ -75,8 +75,8 @@ public class StackTrie {
     return this.elements.get(taskIdentifier);
   }
 
-  public AtomicLong getNbElements() {
-    return nbElements;
+  public AtomicLong getElementsCount() {
+    return elementsCount;
   }
 
   public void commit(final NodeUpdater nodeUpdater) {

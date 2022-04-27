@@ -119,7 +119,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
     stackTrie.commit(nodeUpdater);
 
-    downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getNbElements().get());
+    downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
 
     return nbNodesSaved.get();
   }
