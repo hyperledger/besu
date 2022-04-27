@@ -67,7 +67,7 @@ public class AutoTransactionLogBloomCachingService {
       blockAddedSubscriptionId =
           OptionalLong.of(blockchain.observeBlockAdded(this::onBlockAddedListener));
       fastBlockAddedSubscriptionId =
-          OptionalLong.of(blockchain.observeBlockAdded(this::onBlockAddedListener));
+          OptionalLong.of(blockchain.observeFastBlockAdded(this::onBlockAddedListener));
       transactionLogBloomCacher
           .getScheduler()
           .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
