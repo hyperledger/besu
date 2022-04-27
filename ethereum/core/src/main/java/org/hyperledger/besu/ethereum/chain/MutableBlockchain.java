@@ -34,6 +34,8 @@ public interface MutableBlockchain extends Blockchain {
    */
   void appendBlock(Block block, List<TransactionReceipt> receipts);
 
+  void fastAppendBlock(Block block, List<TransactionReceipt> receipts);
+
   /**
    * Rolls back the canonical chainhead to the specified block number.
    *

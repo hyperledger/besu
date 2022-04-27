@@ -45,10 +45,6 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<ParsedExtraData> parsedExtraData;
 
-  private Optional<Bytes32> receiptRoot = Optional.empty();
-  private Optional<Bytes32> transactionRoot = Optional.empty();
-  private Optional<Bytes32> ommerHash = Optional.empty();
-
   private Optional<Bytes> rlp = Optional.empty();
 
   public BlockHeader(
@@ -284,30 +280,6 @@ public class BlockHeader extends SealableBlockHeader
             blockHeaderFunctions);
     blockHeader.setRlp(Optional.of(raw));
     return blockHeader;
-  }
-
-  public Optional<Bytes32> getReceiptRoot() {
-    return receiptRoot;
-  }
-
-  public void setReceiptRoot(final Optional<Bytes32> receiptRoot) {
-    this.receiptRoot = receiptRoot;
-  }
-
-  public Optional<Bytes32> getTransactionRoot() {
-    return transactionRoot;
-  }
-
-  public void setTransactionRoot(final Optional<Bytes32> transactionRoot) {
-    this.transactionRoot = transactionRoot;
-  }
-
-  public Optional<Bytes32> getOmmerHash() {
-    return ommerHash;
-  }
-
-  public void setOmmerHash(final Optional<Bytes32> ommerHash) {
-    this.ommerHash = ommerHash;
   }
 
   public Optional<Bytes> getRlp() {

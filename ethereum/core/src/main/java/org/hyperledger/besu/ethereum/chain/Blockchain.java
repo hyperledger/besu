@@ -200,6 +200,8 @@ public interface Blockchain {
    */
   long observeBlockAdded(BlockAddedObserver observer);
 
+  long observeFastBlockAdded(BlockAddedObserver observer);
+
   /**
    * Adds an observer that will get called on for every added and removed log when a new block is
    * added.

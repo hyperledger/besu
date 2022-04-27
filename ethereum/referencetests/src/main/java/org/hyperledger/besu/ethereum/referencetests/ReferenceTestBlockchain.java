@@ -155,6 +155,11 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  public long observeFastBlockAdded(final BlockAddedObserver observer) {
+    throw new NonDeterministicOperationException("Listening for new blocks is not deterministic");
+  }
+
+  @Override
   public boolean removeObserver(final long observerId) {
     throw new NonDeterministicOperationException("Listening for new blocks is not deterministic");
   }

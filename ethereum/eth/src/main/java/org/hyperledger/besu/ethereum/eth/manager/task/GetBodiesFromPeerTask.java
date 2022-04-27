@@ -131,10 +131,11 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
               }
               // force getHash generation
               body.getTransactions().stream().parallel().forEach(Transaction::getHash);
+              body.setTransactionRoot(Optional.of(bodyIdentifier.transactionsRoot));
+              body.setOmmerHash(Optional.of(bodyIdentifier.ommersHash));
+
               headers.forEach(
                   h -> {
-                    h.setTransactionRoot(Optional.of(bodyIdentifier.transactionsRoot));
-                    h.setOmmerHash(Optional.of(bodyIdentifier.ommersHash));
                     blocks.add(new Block(h, body));
                   });
               // Clear processed headers

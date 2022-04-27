@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ListReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -76,15 +77,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockBody body = block.getBody();
 
     final Bytes32 transactionsRoot =
-        header
-            .getTransactionRoot()
+        body.getTransactionRoot()
             .orElseGet(() -> BodyValidation.transactionsRoot(body.getTransactions()));
     if (!validateTransactionsRoot(header.getTransactionsRoot(), transactionsRoot)) {
       return false;
     }
 
+    final ListReceipts listReceipts = new ListReceipts(receipts);
+
     final Bytes32 receiptsRoot =
-        header.getReceiptRoot().orElseGet(() -> BodyValidation.receiptsRoot(receipts));
+        listReceipts.getReceiptRoot().orElseGet(() -> BodyValidation.receiptsRoot(receipts));
     if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
@@ -95,7 +97,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateLogsBloom(header.getLogsBloom(), BodyValidation.logsBloom(receipts))) {
+    final LogsBloomFilter logsBloom =
+        listReceipts.getLogsBloom().orElseGet(() -> BodyValidation.logsBloom(receipts));
+    if (!validateLogsBloom(header.getLogsBloom(), logsBloom)) {
       return false;
     }
 
@@ -162,7 +166,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockBody body = block.getBody();
 
     final Bytes32 ommerHash =
-        header.getOmmerHash().orElseGet(() -> (BodyValidation.ommersHash(body.getOmmers())));
+        body.getOmmerHash().orElseGet(() -> (BodyValidation.ommersHash(body.getOmmers())));
     if (!validateOmmersHash(header.getOmmersHash(), ommerHash)) {
       return false;
     }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.query.cache;
 
 import static org.hyperledger.besu.ethereum.api.query.cache.LogBloomCacheMetadata.DEFAULT_VERSION;
 
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -37,6 +38,7 @@ public class AutoTransactionLogBloomCachingService {
   private final Blockchain blockchain;
   private final TransactionLogBloomCacher transactionLogBloomCacher;
   private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
+  private OptionalLong fastBlockAddedSubscriptionId = OptionalLong.empty();
 
   public AutoTransactionLogBloomCachingService(
       final Blockchain blockchain, final TransactionLogBloomCacher transactionLogBloomCacher) {
@@ -63,18 +65,9 @@ public class AutoTransactionLogBloomCachingService {
       }
 
       blockAddedSubscriptionId =
-          OptionalLong.of(
-              blockchain.observeBlockAdded(
-                  event -> {
-                    if (event.isNewCanonicalHead()) {
-                      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
-                      final Optional<BlockHeader> commonAncestorBlockHeader =
-                          blockchain.getBlockHeader(event.getCommonAncestorHash());
-                      transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-                          eventBlockHeader, commonAncestorBlockHeader, Optional.empty());
-                    }
-                  }));
-
+          OptionalLong.of(blockchain.observeBlockAdded(this::onBlockAddedListener));
+      fastBlockAddedSubscriptionId =
+          OptionalLong.of(blockchain.observeBlockAdded(this::onBlockAddedListener));
       transactionLogBloomCacher
           .getScheduler()
           .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
@@ -83,8 +76,19 @@ public class AutoTransactionLogBloomCachingService {
     }
   }
 
+  private final void onBlockAddedListener(final BlockAddedEvent event) {
+    if (event.isNewCanonicalHead()) {
+      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+      final Optional<BlockHeader> commonAncestorBlockHeader =
+          blockchain.getBlockHeader(event.getCommonAncestorHash());
+      transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
+          eventBlockHeader, commonAncestorBlockHeader, Optional.empty());
+    }
+  }
+
   public void stop() {
     LOG.info("Shutting down Auto transaction logs caching service.");
     blockAddedSubscriptionId.ifPresent(blockchain::removeObserver);
+    fastBlockAddedSubscriptionId.ifPresent(blockchain::removeObserver);
   }
 }

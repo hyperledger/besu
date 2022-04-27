@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.ListReceipts;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -61,6 +62,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   protected final BlockchainStorage blockchainStorage;
 
+  private final Subscribers<BlockAddedObserver> fastBlockAddedObservers = Subscribers.create();
   private final Subscribers<BlockAddedObserver> blockAddedObservers = Subscribers.create();
   private final Subscribers<ChainReorgObserver> blockReorgObservers = Subscribers.create();
   private final long reorgLoggingThreshold;
@@ -277,6 +279,19 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+    appendBlock(block, receipts, blockAddedObservers);
+  }
+
+  @Override
+  public synchronized void fastAppendBlock(
+      final Block block, final List<TransactionReceipt> receipts) {
+    appendBlock(block, receipts, fastBlockAddedObservers);
+  }
+
+  private synchronized void appendBlock(
+      final Block block,
+      final List<TransactionReceipt> receipts,
+      final Subscribers<BlockAddedObserver> observers) {
     checkArgument(
         block.getBody().getTransactions().size() == receipts.size(),
         "Supplied receipts do not match block transactions.");
@@ -287,7 +302,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final BlockAddedEvent blockAddedEvent =
         appendBlockHelper(new BlockWithReceipts(block, receipts));
-    blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
+    observers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
   }
 
   private BlockAddedEvent appendBlockHelper(final BlockWithReceipts blockWithReceipts) {
@@ -300,7 +315,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
-    updater.putTransactionReceipts(hash, receipts);
+    updater.putTransactionReceipts(hash, new ListReceipts(receipts));
     updater.putTotalDifficulty(hash, td);
 
     // Update canonical chain data
@@ -569,7 +584,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Hash hash = genesisBlock.getHash();
       updater.putBlockHeader(hash, genesisBlock.getHeader());
       updater.putBlockBody(hash, genesisBlock.getBody());
-      updater.putTransactionReceipts(hash, emptyList());
+      updater.putTransactionReceipts(hash, new ListReceipts(emptyList()));
       updater.putTotalDifficulty(hash, calculateTotalDifficulty(genesisBlock.getHeader()));
       updater.putBlockHash(genesisBlock.getHeader().getNumber(), hash);
       updater.setChainHead(hash);
@@ -643,6 +658,12 @@ public class DefaultBlockchain implements MutableBlockchain {
   public long observeBlockAdded(final BlockAddedObserver observer) {
     checkNotNull(observer);
     return blockAddedObservers.subscribe(observer);
+  }
+
+  @Override
+  public long observeFastBlockAdded(final BlockAddedObserver observer) {
+    checkNotNull(observer);
+    return fastBlockAddedObservers.subscribe(observer);
   }
 
   @Override

@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
@@ -31,6 +32,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
+
+  private Optional<Bytes> rlpTransactionReceipts = Optional.empty();
+  private Optional<Bytes32> transactionRoot = Optional.empty();
+  private Optional<Bytes32> ommerHash = Optional.empty();
 
   private Optional<Bytes> rlp = Optional.empty();
 
@@ -89,6 +94,30 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     body.setRlp(Optional.of(raw));
     input.leaveList();
     return body;
+  }
+
+  public Optional<Bytes32> getTransactionRoot() {
+    return transactionRoot;
+  }
+
+  public void setTransactionRoot(final Optional<Bytes32> transactionRoot) {
+    this.transactionRoot = transactionRoot;
+  }
+
+  public Optional<Bytes32> getOmmerHash() {
+    return ommerHash;
+  }
+
+  public void setOmmerHash(final Optional<Bytes32> ommerHash) {
+    this.ommerHash = ommerHash;
+  }
+
+  public Optional<Bytes> getRlpTransactionReceipts() {
+    return rlpTransactionReceipts;
+  }
+
+  public void setRlpTransactionReceipts(final Optional<Bytes> rlpTransactionReceipts) {
+    this.rlpTransactionReceipts = rlpTransactionReceipts;
   }
 
   public Optional<Bytes> getRlp() {

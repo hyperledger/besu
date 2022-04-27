@@ -61,7 +61,7 @@ public class MainnetBlockImporter implements BlockImporter {
 
     if (blockValidator.fastBlockValidation(
         context, block, receipts, headerValidationMode, ommerValidationMode)) {
-      context.getBlockchain().appendBlock(block, receipts);
+      context.getBlockchain().fastAppendBlock(block, receipts);
       return true;
     }
     return false;
