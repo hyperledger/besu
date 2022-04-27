@@ -21,6 +21,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
@@ -33,9 +35,11 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
@@ -69,7 +73,7 @@ public class EthSubscribeIntegrationTest {
     webSocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,
-            webSocketMethodsFactory.methods(),
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), webSocketMethodsFactory.methods()),
             Mockito.mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
@@ -88,7 +92,8 @@ public class EthSubscribeIntegrationTest {
     when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
         .then(completeOnLastFrame(async, websocketMock));
 
-    webSocketRequestHandler.handle(websocketMock, Json.encode(subscribeRequestBody));
+    webSocketRequestHandler.handle(
+        websocketMock, Json.encodeToBuffer(subscribeRequestBody), Optional.empty());
 
     async.awaitSuccess(ASYNC_TIMEOUT);
 
@@ -113,16 +118,16 @@ public class EthSubscribeIntegrationTest {
 
     final ServerWebSocket websocketMock1 = mock(ServerWebSocket.class);
     when(websocketMock1.textHandlerID()).thenReturn(CONNECTION_ID_1);
-    when(websocketMock1.writeFrame(argThat(this::isFinalFrame)))
-        .then(countDownOnLastFrame(async, websocketMock1));
+    when(websocketMock1.writeFrame(argThat(this::isFinalFrame))).then(countDownOnLastFrame(async));
 
     final ServerWebSocket websocketMock2 = mock(ServerWebSocket.class);
     when(websocketMock2.textHandlerID()).thenReturn(CONNECTION_ID_2);
-    when(websocketMock2.writeFrame(argThat(this::isFinalFrame)))
-        .then(countDownOnLastFrame(async, websocketMock2));
+    when(websocketMock2.writeFrame(argThat(this::isFinalFrame))).then(countDownOnLastFrame(async));
 
-    webSocketRequestHandler.handle(websocketMock1, Json.encode(subscribeRequestBody1));
-    webSocketRequestHandler.handle(websocketMock2, Json.encode(subscribeRequestBody2));
+    webSocketRequestHandler.handle(
+        websocketMock1, Json.encodeToBuffer(subscribeRequestBody1), Optional.empty());
+    webSocketRequestHandler.handle(
+        websocketMock2, Json.encodeToBuffer(subscribeRequestBody2), Optional.empty());
 
     async.awaitSuccess(ASYNC_TIMEOUT);
 
@@ -178,11 +183,10 @@ public class EthSubscribeIntegrationTest {
     };
   }
 
-  private Answer<ServerWebSocket> countDownOnLastFrame(
-      final Async async, final ServerWebSocket websocket) {
+  private Answer<Future<Void>> countDownOnLastFrame(final Async async) {
     return invocation -> {
       async.countDown();
-      return websocket;
+      return Future.succeededFuture();
     };
   }
 }

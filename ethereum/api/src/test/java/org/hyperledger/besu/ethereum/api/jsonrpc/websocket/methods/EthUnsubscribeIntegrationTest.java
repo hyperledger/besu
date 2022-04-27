@@ -21,6 +21,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
@@ -31,7 +33,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
+import java.util.Optional;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
@@ -63,7 +67,7 @@ public class EthUnsubscribeIntegrationTest {
     webSocketRequestHandler =
         new WebSocketRequestHandler(
             vertx,
-            webSocketMethodsFactory.methods(),
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), webSocketMethodsFactory.methods()),
             mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
@@ -86,10 +90,10 @@ public class EthUnsubscribeIntegrationTest {
 
     final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
     when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID);
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
-        .then(completeOnLastFrame(async, websocketMock));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    webSocketRequestHandler.handle(websocketMock, Json.encode(unsubscribeRequestBody));
+    webSocketRequestHandler.handle(
+        websocketMock, Json.encodeToBuffer(unsubscribeRequestBody), Optional.empty());
 
     async.awaitSuccess(ASYNC_TIMEOUT);
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId)).isNull();
@@ -118,10 +122,10 @@ public class EthUnsubscribeIntegrationTest {
 
     final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
     when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID);
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
-        .then(completeOnLastFrame(async, websocketMock));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
-    webSocketRequestHandler.handle(websocketMock, Json.encode(unsubscribeRequestBody));
+    webSocketRequestHandler.handle(
+        websocketMock, Json.encodeToBuffer(unsubscribeRequestBody), Optional.empty());
 
     async.awaitSuccess(ASYNC_TIMEOUT);
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId1)).isNotNull();
@@ -149,11 +153,10 @@ public class EthUnsubscribeIntegrationTest {
     return frame.isFinal();
   }
 
-  private Answer<ServerWebSocket> completeOnLastFrame(
-      final Async async, final ServerWebSocket websocket) {
+  private Answer<Future<Void>> completeOnLastFrame(final Async async) {
     return invocation -> {
       async.complete();
-      return websocket;
+      return Future.succeededFuture();
     };
   }
 }
