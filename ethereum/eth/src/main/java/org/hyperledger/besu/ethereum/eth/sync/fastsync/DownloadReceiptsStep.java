@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -44,7 +44,7 @@ public class DownloadReceiptsStep
   @Override
   public CompletableFuture<List<BlockWithReceipts>> apply(final List<Block> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(Block::getHeader).collect(toList());
-    final CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> getReceipts =
+    final CompletableFuture<Map<BlockHeader, Receipts>> getReceipts =
         GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem).run();
     final CompletableFuture<List<BlockWithReceipts>> combineWithBlocks =
         getReceipts.thenApply(
@@ -54,12 +54,11 @@ public class DownloadReceiptsStep
   }
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(
-      final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
+      final List<Block> blocks, final Map<BlockHeader, Receipts> receiptsByHeader) {
     return blocks.stream()
         .map(
             block -> {
-              final List<TransactionReceipt> receipts =
-                  receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
+              final Receipts receipts = receiptsByHeader.getOrDefault(block.getHeader(), EMPTY);
               return new BlockWithReceipts(block, receipts);
             })
         .collect(toList());

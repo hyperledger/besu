@@ -118,29 +118,24 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
 
     final AtomicBoolean error = new AtomicBoolean(false);
-    bodies.stream()
-        .parallel()
-        .forEach(
-            body -> {
-              final BodyIdentifier bodyIdentifier = new BodyIdentifier(body);
-              final List<BlockHeader> headers = bodyToHeaders.get(bodyIdentifier);
-              if (headers == null) {
-                LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
-                error.set(true);
-                return;
-              }
-              // force getHash generation
-              body.getTransactions().stream().parallel().forEach(Transaction::getHash);
-              body.setTransactionRoot(Optional.of(bodyIdentifier.transactionsRoot));
-              body.setOmmerHash(Optional.of(bodyIdentifier.ommersHash));
+    bodies.forEach(
+        body -> {
+          final BodyIdentifier bodyIdentifier = new BodyIdentifier(body);
+          final List<BlockHeader> headers = bodyToHeaders.get(bodyIdentifier);
+          if (headers == null) {
+            LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
+            error.set(true);
+            return;
+          }
+          // force getHash generation
+          body.getTransactions().stream().parallel().forEach(Transaction::getHash);
+          body.setTransactionRoot(Optional.of(bodyIdentifier.transactionsRoot));
+          body.setOmmerHash(Optional.of(bodyIdentifier.ommersHash));
 
-              headers.forEach(
-                  h -> {
-                    blocks.add(new Block(h, body));
-                  });
-              // Clear processed headers
-              headers.clear();
-            });
+          headers.forEach(h -> blocks.add(new Block(h, body)));
+          // Clear processed headers
+          headers.clear();
+        });
 
     if (error.get()) {
       return Optional.empty();

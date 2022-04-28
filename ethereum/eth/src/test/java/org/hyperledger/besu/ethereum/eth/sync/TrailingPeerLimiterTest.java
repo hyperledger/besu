@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -117,7 +118,7 @@ public class TrailingPeerLimiterTest {
                 new BlockHeaderTestFixture().number(500).buildHeader(),
                 new BlockBody(emptyList(), emptyList())),
             Collections.emptyList(),
-            Collections.emptyList());
+            EMPTY);
     trailingPeerLimiter.onBlockAdded(blockAddedEvent);
 
     assertDisconnections(ethPeer1);
@@ -135,7 +136,7 @@ public class TrailingPeerLimiterTest {
                 new BlockHeaderTestFixture().number(599).buildHeader(),
                 new BlockBody(emptyList(), emptyList())),
             Collections.emptyList(),
-            Collections.emptyList());
+            EMPTY);
     trailingPeerLimiter.onBlockAdded(blockAddedEvent);
 
     assertDisconnections();

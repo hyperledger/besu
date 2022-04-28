@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -72,7 +73,7 @@ public class FastImportBlocksStepTest {
     final List<Block> blocks = gen.blockSequence(5);
     final List<BlockWithReceipts> blocksWithReceipts =
         blocks.stream()
-            .map(block -> new BlockWithReceipts(block, gen.receipts(block)))
+            .map(block -> new BlockWithReceipts(block, new Receipts(gen.receipts(block))))
             .collect(toList());
 
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
@@ -95,7 +96,8 @@ public class FastImportBlocksStepTest {
   @Test
   public void shouldThrowExceptionWhenValidationFails() {
     final Block block = gen.block();
-    final BlockWithReceipts blockWithReceipts = new BlockWithReceipts(block, gen.receipts(block));
+    final BlockWithReceipts blockWithReceipts =
+        new BlockWithReceipts(block, new Receipts(gen.receipts(block)));
 
     when(blockImporter.fastImportBlock(
             protocolContext, block, blockWithReceipts.getReceipts(), FULL, LIGHT))

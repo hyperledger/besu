@@ -16,10 +16,9 @@ package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface BlockValidator {
@@ -41,10 +40,9 @@ public interface BlockValidator {
 
   class BlockProcessingOutputs {
     public final MutableWorldState worldState;
-    public final List<TransactionReceipt> receipts;
+    public final Receipts receipts;
 
-    public BlockProcessingOutputs(
-        final MutableWorldState worldState, final List<TransactionReceipt> receipts) {
+    public BlockProcessingOutputs(final MutableWorldState worldState, final Receipts receipts) {
       this.worldState = worldState;
       this.receipts = receipts;
     }
@@ -59,7 +57,7 @@ public interface BlockValidator {
   boolean fastBlockValidation(
       final ProtocolContext context,
       final Block block,
-      final List<TransactionReceipt> receipts,
+      final Receipts receipts,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode);
 }

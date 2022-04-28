@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -186,7 +187,7 @@ public class BesuEventsImpl implements BesuEvents {
   private static AddedBlockContext blockAddedContext(
       final Supplier<BlockHeader> blockHeaderSupplier,
       final Supplier<BlockBody> blockBodySupplier,
-      final Supplier<List<TransactionReceipt>> transactionReceiptsSupplier) {
+      final Supplier<Receipts> transactionReceiptsSupplier) {
     return new AddedBlockContext() {
       @Override
       public BlockHeader getBlockHeader() {
@@ -200,7 +201,7 @@ public class BesuEventsImpl implements BesuEvents {
 
       @Override
       public List<TransactionReceipt> getTransactionReceipts() {
-        return transactionReceiptsSupplier.get();
+        return transactionReceiptsSupplier.get().getItems();
       }
     };
   }

@@ -17,33 +17,36 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 
-public class ListReceipts extends ArrayList<TransactionReceipt> {
+public class Receipts {
 
-  private final Optional<Bytes> rlp;
+  public static final Receipts EMPTY = new Receipts();
+
+  private final List<TransactionReceipt> items;
+  private Optional<Bytes> rlp = Optional.empty();
   private Optional<LogsBloomFilter> logsBloom = Optional.empty();
   private Optional<Bytes32> receiptRoot = Optional.empty();
 
-  public ListReceipts(final int size, final Bytes rlp) {
-    super(size);
+  public Receipts() {
+    this.items = new ArrayList<>();
+  }
+
+  public Receipts(final List<TransactionReceipt> receipts) {
+    this.items = receipts;
+  }
+
+  public Receipts(final int size, final Bytes rlp) {
+    this.items = new ArrayList<>(size);
     this.rlp = Optional.ofNullable(rlp);
   }
 
-  public ListReceipts(@NotNull final Collection<? extends TransactionReceipt> c) {
-    super(c);
-    if (c instanceof ListReceipts) {
-      this.rlp = ((ListReceipts) c).getRlp();
-      this.receiptRoot = ((ListReceipts) c).getReceiptRoot();
-      this.logsBloom = ((ListReceipts) c).getLogsBloom();
-    } else {
-      this.rlp = Optional.empty();
-    }
+  public List<TransactionReceipt> getItems() {
+    return items;
   }
 
   public Optional<Bytes32> getReceiptRoot() {
@@ -64,5 +67,9 @@ public class ListReceipts extends ArrayList<TransactionReceipt> {
 
   public Optional<Bytes> getRlp() {
     return rlp;
+  }
+
+  public int size() {
+    return items.size();
   }
 }

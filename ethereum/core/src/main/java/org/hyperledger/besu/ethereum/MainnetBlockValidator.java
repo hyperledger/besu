@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -103,8 +104,9 @@ public class MainnetBlockValidator implements BlockValidator {
     }
 
     List<TransactionReceipt> receipts = result.getReceipts();
+    final Receipts receiptsWrapper = new Receipts(receipts);
     if (!blockBodyValidator.validateBody(
-        context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
+        context, block, receiptsWrapper, worldState.rootHash(), ommerValidationMode)) {
       return handleAndReportFailure(block, "Block body not valid");
     }
 
@@ -123,7 +125,7 @@ public class MainnetBlockValidator implements BlockValidator {
       receipts = Collections.unmodifiableList(resultingList);
     }
 
-    return new Result(new BlockProcessingOutputs(worldState, receipts));
+    return new Result(new BlockProcessingOutputs(worldState, receiptsWrapper));
   }
 
   private Result handleAndReportFailure(final Block invalidBlock, final String reason) {
@@ -150,7 +152,7 @@ public class MainnetBlockValidator implements BlockValidator {
   public boolean fastBlockValidation(
       final ProtocolContext context,
       final Block block,
-      final List<TransactionReceipt> receipts,
+      final Receipts receipts,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
 

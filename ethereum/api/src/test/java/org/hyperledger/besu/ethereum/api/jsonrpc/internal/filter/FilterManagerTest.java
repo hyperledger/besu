@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -236,8 +237,7 @@ public class FilterManagerTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(blockNumber).setParentHash(parentHash);
     currentBlock = blockGenerator.block(options);
     filterManager.recordBlockEvent(
-        BlockAddedEvent.createForHeadAdvancement(
-            currentBlock, Collections.emptyList(), Collections.emptyList()));
+        BlockAddedEvent.createForHeadAdvancement(currentBlock, Collections.emptyList(), EMPTY));
     return currentBlock.getHash();
   }
 

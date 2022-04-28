@@ -18,9 +18,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-
-import java.util.List;
+import org.hyperledger.besu.ethereum.core.Receipts;
 
 public class MainnetBlockImporter implements BlockImporter {
 
@@ -55,7 +53,7 @@ public class MainnetBlockImporter implements BlockImporter {
   public boolean fastImportBlock(
       final ProtocolContext context,
       final Block block,
-      final List<TransactionReceipt> receipts,
+      final Receipts receipts,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
 

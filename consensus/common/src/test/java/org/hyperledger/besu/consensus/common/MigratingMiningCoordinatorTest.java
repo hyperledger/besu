@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.common;
 
 import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -62,7 +63,7 @@ public class MigratingMiningCoordinatorTest {
   public void setup() {
     coordinatorSchedule = createCoordinatorSchedule(coordinator1, coordinator2);
     final Block block = new Block(blockHeader, blockBody);
-    blockEvent = BlockAddedEvent.createForHeadAdvancement(block, emptyList(), emptyList());
+    blockEvent = BlockAddedEvent.createForHeadAdvancement(block, emptyList(), EMPTY);
   }
 
   private ForksSchedule<MiningCoordinator> createCoordinatorSchedule(

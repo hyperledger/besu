@@ -16,16 +16,15 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Hash;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
 public class BlockWithReceipts {
   private final Block block;
-  private final List<TransactionReceipt> receipts;
+  private final Receipts receipts;
 
-  public BlockWithReceipts(final Block block, final List<TransactionReceipt> receipts) {
+  public BlockWithReceipts(final Block block, final Receipts receipts) {
     this.block = block;
     this.receipts = receipts;
   }
@@ -38,7 +37,7 @@ public class BlockWithReceipts {
     return block;
   }
 
-  public List<TransactionReceipt> getReceipts() {
+  public Receipts getReceipts() {
     return receipts;
   }
 

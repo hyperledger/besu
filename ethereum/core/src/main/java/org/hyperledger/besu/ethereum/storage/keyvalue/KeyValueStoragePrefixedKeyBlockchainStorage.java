@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ListReceipts;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -93,8 +93,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   @Override
-  public Optional<List<TransactionReceipt>> getTransactionReceipts(final Hash blockHash) {
-    return get(TRANSACTION_RECEIPTS_PREFIX, blockHash).map(this::rlpDecodeTransactionReceipts);
+  public Optional<Receipts> getTransactionReceipts(final Hash blockHash) {
+    return get(TRANSACTION_RECEIPTS_PREFIX, blockHash)
+        .map(this::rlpDecodeTransactionReceipts)
+        .map(Receipts::new);
   }
 
   @Override
@@ -155,12 +157,13 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     @Override
-    public void putTransactionReceipts(
-        final Hash blockHash, final ListReceipts transactionReceipts) {
+    public void putTransactionReceipts(final Hash blockHash, final Receipts transactionReceipts) {
       set(
           TRANSACTION_RECEIPTS_PREFIX,
           blockHash,
-          transactionReceipts.getRlp().orElseGet(() -> (rlpEncode(transactionReceipts))));
+          transactionReceipts
+              .getRlp()
+              .orElseGet(() -> (rlpEncode(transactionReceipts.getItems()))));
     }
 
     @Override

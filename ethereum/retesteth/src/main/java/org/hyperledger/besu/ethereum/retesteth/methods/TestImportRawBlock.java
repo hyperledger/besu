@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -71,10 +72,11 @@ public class TestImportRawBlock implements JsonRpcMethod {
           .getBlockchain()
           .appendBlock(
               block,
-              context
-                  .getBlockchain()
-                  .getTxReceipts(block.getHash())
-                  .orElse(Collections.emptyList()));
+              new Receipts(
+                  context
+                      .getBlockchain()
+                      .getTxReceipts(block.getHash())
+                      .orElse(Collections.emptyList())));
     } else {
       // otherwise attempt to import the block
       final BlockImporter blockImporter =

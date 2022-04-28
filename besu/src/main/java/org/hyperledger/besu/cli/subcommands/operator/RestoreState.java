@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -154,7 +155,7 @@ public class RestoreState implements Runnable {
         }
         receiptsRlp.leaveList();
 
-        blockchain.appendBlock(new Block(header, body), receipts);
+        blockchain.appendBlock(new Block(header, body), new Receipts(receipts));
       }
     }
     LOG.info("Chain data loaded");

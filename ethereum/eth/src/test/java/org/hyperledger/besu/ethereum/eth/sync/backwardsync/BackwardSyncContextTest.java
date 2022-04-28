@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -51,7 +51,6 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -111,7 +110,7 @@ public class BackwardSyncContextTest {
               .setBlockNumber(i)
               .setParentHash(remoteBlockchain.getBlockHashByNumber(i - 1).orElseThrow());
       final Block block = blockDataGenerator.block(options);
-      final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
+      final Receipts receipts = new Receipts(blockDataGenerator.receipts(block));
 
       remoteBlockchain.appendBlock(block, receipts);
       if (i <= LOCAL_HEIGHT) {
@@ -131,7 +130,8 @@ public class BackwardSyncContextTest {
               Block block = (Block) arguments[1];
               return new Result(
                   new BlockValidator.BlockProcessingOutputs(
-                      new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
+                      new ReferenceTestWorldState(),
+                      new Receipts(blockDataGenerator.receipts(block))));
             });
 
     backwardChain = newBackwardChain();

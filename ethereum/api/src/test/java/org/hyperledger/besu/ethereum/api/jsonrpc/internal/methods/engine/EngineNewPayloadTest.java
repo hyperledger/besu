@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Receipts;
 
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +99,7 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.executeBlock(any()))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
+        .thenReturn(new Result(new BlockProcessingOutputs(null, Receipts.EMPTY)));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.common.bft.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -98,8 +99,7 @@ public class BftMiningCoordinatorTest {
   @Test
   public void addsNewChainHeadEventWhenNewCanonicalHeadBlockEventReceived() throws Exception {
     BlockAddedEvent headAdvancement =
-        BlockAddedEvent.createForHeadAdvancement(
-            block, Collections.emptyList(), Collections.emptyList());
+        BlockAddedEvent.createForHeadAdvancement(block, Collections.emptyList(), EMPTY);
     bftMiningCoordinator.onBlockAdded(headAdvancement);
 
     assertThat(eventQueue.size()).isEqualTo(1);

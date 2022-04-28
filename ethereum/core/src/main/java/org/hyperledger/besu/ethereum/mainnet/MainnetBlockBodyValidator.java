@@ -19,8 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ListReceipts;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
@@ -48,7 +47,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   public boolean validateBody(
       final ProtocolContext context,
       final Block block,
-      final List<TransactionReceipt> receipts,
+      final Receipts receipts,
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode) {
 
@@ -58,9 +57,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
     if (!validateStateRoot(block.getHeader().getStateRoot(), worldStateRootHash)) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
-      receipts.forEach(
-          receipt ->
-              LOG.warn("Transaction receipt found in the invalid block {}", receipt.toString()));
+      receipts
+          .getItems()
+          .forEach(
+              receipt ->
+                  LOG.warn(
+                      "Transaction receipt found in the invalid block {}", receipt.toString()));
       return false;
     }
 
@@ -71,7 +73,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   public boolean validateBodyLight(
       final ProtocolContext context,
       final Block block,
-      final List<TransactionReceipt> receipts,
+      final Receipts receipts,
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
@@ -82,23 +84,22 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     if (!validateTransactionsRoot(header.getTransactionsRoot(), transactionsRoot)) {
       return false;
     }
-
-    final ListReceipts listReceipts = new ListReceipts(receipts);
-
     final Bytes32 receiptsRoot =
-        listReceipts.getReceiptRoot().orElseGet(() -> BodyValidation.receiptsRoot(receipts));
+        receipts.getReceiptRoot().orElseGet(() -> BodyValidation.receiptsRoot(receipts.getItems()));
     if (!validateReceiptsRoot(header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
 
     final long gasUsed =
-        receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
+        receipts.size() == 0
+            ? 0
+            : receipts.getItems().get(receipts.size() - 1).getCumulativeGasUsed();
     if (!validateGasUsed(header.getGasUsed(), gasUsed)) {
       return false;
     }
 
     final LogsBloomFilter logsBloom =
-        listReceipts.getLogsBloom().orElseGet(() -> BodyValidation.logsBloom(receipts));
+        receipts.getLogsBloom().orElseGet(() -> BodyValidation.logsBloom(receipts.getItems()));
     if (!validateLogsBloom(header.getLogsBloom(), logsBloom)) {
       return false;
     }

@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +30,7 @@ public class BlockAddedEvent {
   private final Block block;
   private final List<Transaction> addedTransactions;
   private final List<Transaction> removedTransactions;
-  private final List<TransactionReceipt> transactionReceipts;
+  private final Receipts transactionReceipts;
   private final EventType eventType;
   private final List<LogWithMetadata> logsWithMetadata;
   private final Hash commonAncestorHash;
@@ -44,7 +46,7 @@ public class BlockAddedEvent {
       final Block block,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
-      final List<TransactionReceipt> transactionReceipts,
+      final Receipts transactionReceipts,
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
     this.eventType = eventType;
@@ -59,7 +61,7 @@ public class BlockAddedEvent {
   public static BlockAddedEvent createForHeadAdvancement(
       final Block block,
       final List<LogWithMetadata> logsWithMetadata,
-      final List<TransactionReceipt> transactionReceipts) {
+      final Receipts transactionReceipts) {
     return new BlockAddedEvent(
         EventType.HEAD_ADVANCED,
         block,
@@ -74,7 +76,7 @@ public class BlockAddedEvent {
       final Block block,
       final List<Transaction> addedTransactions,
       final List<Transaction> removedTransactions,
-      final List<TransactionReceipt> transactionReceipts,
+      final Receipts transactionReceipts,
       final List<LogWithMetadata> logsWithMetadata,
       final Hash commonAncestorHash) {
     return new BlockAddedEvent(
@@ -93,7 +95,7 @@ public class BlockAddedEvent {
         block,
         Collections.emptyList(),
         Collections.emptyList(),
-        Collections.emptyList(),
+        EMPTY,
         Collections.emptyList(),
         block.getHeader().getParentHash());
   }
@@ -118,7 +120,7 @@ public class BlockAddedEvent {
     return removedTransactions;
   }
 
-  public List<TransactionReceipt> getTransactionReceipts() {
+  public Receipts getTransactionReceipts() {
     return transactionReceipts;
   }
 

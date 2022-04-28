@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.ListReceipts;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -238,7 +238,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
-    return blockchainStorage.getTransactionReceipts(blockHeaderHash);
+    return blockchainStorage.getTransactionReceipts(blockHeaderHash).map(Receipts::getItems);
   }
 
   @Override
@@ -278,20 +278,17 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+  public synchronized void appendBlock(final Block block, final Receipts receipts) {
     appendBlock(block, receipts, blockAddedObservers);
   }
 
   @Override
-  public synchronized void fastAppendBlock(
-      final Block block, final List<TransactionReceipt> receipts) {
+  public synchronized void fastAppendBlock(final Block block, final Receipts receipts) {
     appendBlock(block, receipts, fastBlockAddedObservers);
   }
 
   private synchronized void appendBlock(
-      final Block block,
-      final List<TransactionReceipt> receipts,
-      final Subscribers<BlockAddedObserver> observers) {
+      final Block block, final Receipts receipts, final Subscribers<BlockAddedObserver> observers) {
     checkArgument(
         block.getBody().getTransactions().size() == receipts.size(),
         "Supplied receipts do not match block transactions.");
@@ -307,7 +304,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private BlockAddedEvent appendBlockHelper(final BlockWithReceipts blockWithReceipts) {
     final Block block = blockWithReceipts.getBlock();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
+    final Receipts receipts = blockWithReceipts.getReceipts();
     final Hash hash = block.getHash();
     final Difficulty td = calculateTotalDifficulty(block.getHeader());
 
@@ -315,7 +312,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
-    updater.putTransactionReceipts(hash, new ListReceipts(receipts));
+    updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
     // Update canonical chain data
@@ -360,7 +357,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         return BlockAddedEvent.createForHeadAdvancement(
             newBlock,
             LogWithMetadata.generate(
-                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
+                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts().getItems(), false),
             blockWithReceipts.getReceipts());
       } else if (blockChoiceRule.compare(newBlock.getHeader(), chainHeader) > 0) {
         // New block represents a chain reorganization
@@ -584,7 +581,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final Hash hash = genesisBlock.getHash();
       updater.putBlockHeader(hash, genesisBlock.getHeader());
       updater.putBlockBody(hash, genesisBlock.getBody());
-      updater.putTransactionReceipts(hash, new ListReceipts(emptyList()));
+      updater.putTransactionReceipts(hash, EMPTY);
       updater.putTotalDifficulty(hash, calculateTotalDifficulty(genesisBlock.getHeader()));
       updater.putBlockHash(genesisBlock.getHeader().getNumber(), hash);
       updater.setChainHead(hash);
@@ -625,7 +622,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     logsWithMetadata.addAll(
         0,
         LogWithMetadata.generate(
-            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false));
+            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts().getItems(), false));
   }
 
   private void addRemovedLogsWithMetadata(
@@ -633,7 +630,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     logsWithMetadata.addAll(
         Lists.reverse(
             LogWithMetadata.generate(
-                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), true)));
+                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts().getItems(), true)));
   }
 
   private Optional<BlockWithReceipts> getBlockWithReceipts(final BlockHeader blockHeader) {

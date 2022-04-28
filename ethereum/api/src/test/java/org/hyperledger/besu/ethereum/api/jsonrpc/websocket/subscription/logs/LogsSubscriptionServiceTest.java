@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.evm.log.Log;
@@ -87,7 +88,7 @@ public class LogsSubscriptionServiceTest {
   public void singleMatchingLogEvent() {
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
     final Block block = blockWithReceipts.getBlock();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
+    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts().getItems();
 
     final int txIndex = 1;
     final int logIndex = 1;
@@ -112,7 +113,7 @@ public class LogsSubscriptionServiceTest {
     // Create block that emits an event
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
     final Block block = blockWithReceipts.getBlock();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
+    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts().getItems();
 
     final int txIndex = 1;
     final int logIndex = 1;
@@ -148,7 +149,7 @@ public class LogsSubscriptionServiceTest {
     // Create block that emits an event
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
     final Block block = blockWithReceipts.getBlock();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
+    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts().getItems();
 
     final int txIndex = 1;
     final int logIndex = 1;
@@ -186,7 +187,12 @@ public class LogsSubscriptionServiceTest {
     assertLogResultMatches(removedLog, block, receipts, txIndex, logIndex, true);
     final LogResult updatedLog = logResults.get(2);
     assertLogResultMatches(
-        updatedLog, newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), 0, 0, false);
+        updatedLog,
+        newBlockWithLog.getBlock(),
+        newBlockWithLog.getReceipts().getItems(),
+        0,
+        0,
+        false);
   }
 
   @Test
@@ -225,7 +231,7 @@ public class LogsSubscriptionServiceTest {
         assertLogResultMatches(
             logResults.get(resultIndex),
             targetBlock.getBlock(),
-            targetBlock.getReceipts(),
+            targetBlock.getReceipts().getItems(),
             j,
             0,
             false);
@@ -237,7 +243,7 @@ public class LogsSubscriptionServiceTest {
   public void multipleSubscriptionsForSingleMatchingLog() {
     final BlockWithReceipts blockWithReceipts = generateBlock(2, 2, 2);
     final Block block = blockWithReceipts.getBlock();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
+    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts().getItems();
 
     final int txIndex = 1;
     final int logIndex = 1;
@@ -388,7 +394,7 @@ public class LogsSubscriptionServiceTest {
     blockOptions.setBlockNumber(parentHeader.getNumber() + 1L);
     final Block block = gen.block(blockOptions);
 
-    return new BlockWithReceipts(block, receipts);
+    return new BlockWithReceipts(block, new Receipts(receipts));
   }
 
   private PrivateLogsSubscription createPrivateSubscription(

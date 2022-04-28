@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -174,9 +175,7 @@ public class FilterManagerLogFilterTest {
                   final Block block =
                       gen.block(new BlockDataGenerator.BlockOptions().setBlockNumber(3));
                   return BlockAddedEvent.createForHeadAdvancement(
-                      block,
-                      LogWithMetadata.generate(block, gen.receipts(block), false),
-                      emptyList());
+                      block, LogWithMetadata.generate(block, gen.receipts(block), false), EMPTY);
                 })
             .limit(numEvents)
             .collect(toUnmodifiableList());

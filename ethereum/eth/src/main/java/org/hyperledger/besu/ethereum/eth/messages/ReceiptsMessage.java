@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import org.hyperledger.besu.ethereum.core.ListReceipts;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -63,18 +63,18 @@ public final class ReceiptsMessage extends AbstractMessageData {
     return EthPV63.RECEIPTS;
   }
 
-  public List<ListReceipts> receipts() {
+  public List<Receipts> receipts() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    final List<ListReceipts> receipts = new ArrayList<>();
+    final List<Receipts> receipts = new ArrayList<>();
     while (input.nextIsList()) {
       final RLPInput rlp = input.readAsRlp();
       final Bytes raw = rlp.raw();
       rlp.reset();
       final int setSize = rlp.enterList();
-      final ListReceipts receiptSet = new ListReceipts(setSize, raw);
+      final Receipts receiptSet = new Receipts(setSize, raw);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(TransactionReceipt.readFrom(rlp, false));
+        receiptSet.getItems().add(TransactionReceipt.readFrom(rlp, false));
       }
       rlp.leaveList();
       receipts.add(receiptSet);

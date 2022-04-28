@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.ListReceipts;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -51,7 +51,7 @@ public final class ReceiptsMessageTest {
     final ReceiptsMessage message = ReceiptsMessage.readFrom(raw);
 
     // Read data back out after round trip and check they match originals.
-    final Iterator<ListReceipts> readData = message.receipts().iterator();
+    final Iterator<Receipts> readData = message.receipts().iterator();
     for (int i = 0; i < dataCount; ++i) {
       Assertions.assertThat(readData.next()).isEqualTo(receipts.get(i));
     }

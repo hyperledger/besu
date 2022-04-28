@@ -2,6 +2,7 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.core.Receipts.EMPTY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -103,7 +104,6 @@ public class GoQuorumQip714GateTest {
   private void updateChainHead(final int height) {
     final Block block = new BlockDataGenerator().block(new BlockOptions().setBlockNumber(height));
     gate.checkChainHeight(
-        BlockAddedEvent.createForHeadAdvancement(
-            block, Collections.emptyList(), Collections.emptyList()));
+        BlockAddedEvent.createForHeadAdvancement(block, Collections.emptyList(), EMPTY));
   }
 }

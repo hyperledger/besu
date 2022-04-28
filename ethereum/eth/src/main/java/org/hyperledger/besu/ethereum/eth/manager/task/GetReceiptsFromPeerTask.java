@@ -20,8 +20,7 @@ import static org.hyperledger.besu.ethereum.mainnet.BodyValidation.receiptsRoot;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ListReceipts;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -44,8 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GetReceiptsFromPeerTask
-    extends AbstractPeerRequestTask<Map<BlockHeader, List<TransactionReceipt>>> {
+public class GetReceiptsFromPeerTask extends AbstractPeerRequestTask<Map<BlockHeader, Receipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsFromPeerTask.class);
 
   private final Collection<BlockHeader> blockHeaders;
@@ -95,7 +93,7 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  protected Optional<Map<BlockHeader, List<TransactionReceipt>>> processResponse(
+  protected Optional<Map<BlockHeader, Receipts>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
       // All outstanding requests have been responded to and we still haven't found the response
@@ -105,37 +103,35 @@ public class GetReceiptsFromPeerTask
     }
 
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
-    final List<ListReceipts> receiptsByBlock = receiptsMessage.receipts();
+    final List<Receipts> receiptsByBlock = receiptsMessage.receipts();
     if (receiptsByBlock.isEmpty()) {
       return Optional.empty();
     } else if (receiptsByBlock.size() > blockHeaders.size()) {
       return Optional.empty();
     }
 
-    final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader = new ConcurrentHashMap<>();
+    final Map<BlockHeader, Receipts> receiptsByHeader = new ConcurrentHashMap<>();
 
     final AtomicBoolean error = new AtomicBoolean(false);
-    receiptsByBlock.stream()
-        .parallel()
-        .forEach(
-            receiptsInBlock -> {
-              final Hash receiptRoot = receiptsRoot(receiptsInBlock);
-              final List<BlockHeader> blockHeaders =
-                  headersByReceiptsRoot.get(receiptsRoot(receiptsInBlock));
-              if (blockHeaders == null) {
-                // Contains receipts that we didn't request, so mustn't be the response we're
-                // looking for.
-                error.set(true);
-                return;
-              }
-              final LogsBloomFilter logsBloomFilter = BodyValidation.logsBloom(receiptsInBlock);
-              blockHeaders.forEach(
-                  header -> {
-                    receiptsInBlock.setLogsBloom(Optional.of(logsBloomFilter));
-                    receiptsInBlock.setReceiptRoot(Optional.of(receiptRoot));
-                    receiptsByHeader.put(header, receiptsInBlock);
-                  });
-            });
+    receiptsByBlock.forEach(
+        receiptsInBlock -> {
+          final Hash receiptRoot = receiptsRoot(receiptsInBlock.getItems());
+          final List<BlockHeader> blockHeaders = headersByReceiptsRoot.get(receiptRoot);
+          if (blockHeaders == null) {
+            // Contains receipts that we didn't request, so mustn't be the response we're
+            // looking for.
+            error.set(true);
+            return;
+          }
+          final LogsBloomFilter logsBloomFilter =
+              BodyValidation.logsBloom(receiptsInBlock.getItems());
+          blockHeaders.forEach(
+              header -> {
+                receiptsInBlock.setLogsBloom(Optional.of(logsBloomFilter));
+                receiptsInBlock.setReceiptRoot(Optional.of(receiptRoot));
+                receiptsByHeader.put(header, receiptsInBlock);
+              });
+        });
 
     if (error.get()) {
       return Optional.empty();
