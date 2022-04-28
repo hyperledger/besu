@@ -17,6 +17,9 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Receipts;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+
+import java.util.List;
 
 public interface MutableBlockchain extends Blockchain {
 
@@ -30,7 +33,7 @@ public interface MutableBlockchain extends Blockchain {
    * @param block The block to append.
    * @param receipts The list of receipts associated with this block's transactions.
    */
-  void appendBlock(Block block, Receipts receipts);
+  void appendBlock(Block block, List<TransactionReceipt> receipts);
 
   void fastAppendBlock(Block block, Receipts receipts);
 

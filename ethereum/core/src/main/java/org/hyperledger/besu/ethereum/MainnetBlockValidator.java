@@ -104,9 +104,8 @@ public class MainnetBlockValidator implements BlockValidator {
     }
 
     List<TransactionReceipt> receipts = result.getReceipts();
-    final Receipts receiptsWrapper = new Receipts(receipts);
     if (!blockBodyValidator.validateBody(
-        context, block, receiptsWrapper, worldState.rootHash(), ommerValidationMode)) {
+        context, block, new Receipts(receipts), worldState.rootHash(), ommerValidationMode)) {
       return handleAndReportFailure(block, "Block body not valid");
     }
 
@@ -125,7 +124,7 @@ public class MainnetBlockValidator implements BlockValidator {
       receipts = Collections.unmodifiableList(resultingList);
     }
 
-    return new Result(new BlockProcessingOutputs(worldState, receiptsWrapper));
+    return new Result(new BlockProcessingOutputs(worldState, receipts));
   }
 
   private Result handleAndReportFailure(final Block invalidBlock, final String reason) {

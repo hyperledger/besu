@@ -278,8 +278,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized void appendBlock(final Block block, final Receipts receipts) {
-    appendBlock(block, receipts, blockAddedObservers);
+  public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+    appendBlock(block, new Receipts(receipts), blockAddedObservers);
   }
 
   @Override
