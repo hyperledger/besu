@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -96,6 +97,6 @@ public class DownloadReceiptsStepTest {
   private BlockWithReceipts blockWithReceipts(final long number) {
     final Block block = block(number);
     final List<TransactionReceipt> receipts = blockchain.getTxReceipts(block.getHash()).get();
-    return new BlockWithReceipts(block, receipts);
+    return new BlockWithReceipts(block, new Receipts(receipts));
   }
 }

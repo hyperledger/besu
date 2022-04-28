@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -57,6 +58,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
@@ -319,7 +321,9 @@ public class RespondingEthPeer {
         case EthPV63.GET_RECEIPTS:
           final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(originalResponse);
           final List<List<TransactionReceipt>> originalReceipts =
-              Lists.newArrayList(receiptsMessage.receipts());
+              receiptsMessage.receipts().stream()
+                  .map(Receipts::getItems)
+                  .collect(Collectors.toList());
           final List<List<TransactionReceipt>> partialReceipts =
               originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
           partialResponse = ReceiptsMessage.create(partialReceipts);

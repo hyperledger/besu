@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
+import org.hyperledger.besu.ethereum.core.Receipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -718,7 +719,9 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV63.RECEIPTS);
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
-                Lists.newArrayList(receiptsMessage.receipts());
+                receiptsMessage.receipts().stream()
+                    .map(Receipts::getItems)
+                    .collect(Collectors.toList());
             assertThat(receipts.size()).isEqualTo(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
@@ -766,7 +769,10 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV63.RECEIPTS);
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
-                Lists.newArrayList(receiptsMessage.receipts());
+                receiptsMessage.receipts().stream()
+                    .map(Receipts::getItems)
+                    .collect(Collectors.toList());
+            ;
             assertThat(receipts.size()).isEqualTo(limit);
             for (int i = 0; i < limit; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
@@ -810,7 +816,9 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV63.RECEIPTS);
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
-                Lists.newArrayList(receiptsMessage.receipts());
+                receiptsMessage.receipts().stream()
+                    .map(Receipts::getItems)
+                    .collect(Collectors.toList());
             assertThat(receipts.size()).isEqualTo(1);
             assertThat(expectedReceipts).isEqualTo(receipts.get(0));
             done.complete(null);
