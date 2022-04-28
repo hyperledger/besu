@@ -138,17 +138,18 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
+      final DynamicPivotBlockManager dynamicPivotBlockManager =
+          new DynamicPivotBlockManager(
+              fastSyncActions,
+              snapSyncState,
+              snapSyncConfiguration.getPivotBlockWindowValidity(),
+              snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());
+
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
-              .pivotBlockManager(
-                  new DynamicPivotBlockManager<>(
-                      newDownloadState,
-                      fastSyncActions,
-                      snapSyncState,
-                      snapSyncConfiguration.getPivotBlockWindowValidity(),
-                      snapSyncConfiguration.getPivotBlockDistanceBeforeCaching()))
+              .pivotBlockManager(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
                       worldStateStorage, newDownloadState, metricsSystem, snapSyncState))
@@ -166,6 +167,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .fastSyncState(snapSyncState)
               .metricsSystem(metricsSystem)
               .build();
+
+      newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }
