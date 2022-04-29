@@ -294,6 +294,18 @@ public class EthProtocolManagerTestUtil {
         .estimatedHeight(estimatedHeight)
         .build();
   }
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final Difficulty td,
+      final long estimatedHeight,
+      final double lastPivotHeaderDownloadTime) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .estimatedHeight(estimatedHeight)
+        .lastPivotHeaderDownloadTime(lastPivotHeaderDownloadTime)
+        .build();
+  }
 
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,

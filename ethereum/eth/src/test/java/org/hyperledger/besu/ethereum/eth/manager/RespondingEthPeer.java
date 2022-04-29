@@ -115,7 +115,8 @@ public class RespondingEthPeer {
       final Hash chainHeadHash,
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
-      final List<PeerValidator> peerValidators) {
+      final List<PeerValidator> peerValidators,
+      final double lastPivotHeaderDownloadTime) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
@@ -125,6 +126,7 @@ public class RespondingEthPeer {
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
     ethPeers.registerConnection(peerConnection, peerValidators);
     final EthPeer peer = ethPeers.peer(peerConnection);
+    peer.setLastPivotHeaderDownloadTime(lastPivotHeaderDownloadTime);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     peer.registerStatusSent();
@@ -374,13 +376,14 @@ public class RespondingEthPeer {
     private Hash chainHeadHash = gen.hash();
     private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
+    private double lastPivotHeaderDownloadTime = 0.0;
     private final List<PeerValidator> peerValidators = new ArrayList<>();
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
 
       return RespondingEthPeer.create(
-          ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight, peerValidators);
+          ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight, peerValidators, lastPivotHeaderDownloadTime);
     }
 
     public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {
@@ -409,6 +412,11 @@ public class RespondingEthPeer {
 
     public Builder estimatedHeight(final long estimatedHeight) {
       this.estimatedHeight = OptionalLong.of(estimatedHeight);
+      return this;
+    }
+
+    public Builder lastPivotHeaderDownloadTime(final double time) {
+      this.lastPivotHeaderDownloadTime = time;
       return this;
     }
 
