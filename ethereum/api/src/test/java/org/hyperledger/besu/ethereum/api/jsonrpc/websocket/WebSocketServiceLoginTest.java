@@ -29,6 +29,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.AuthenticatedJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
@@ -187,7 +191,12 @@ public class WebSocketServiceLoginTest {
         spy(
             new WebSocketRequestHandler(
                 vertx,
-                websocketMethods,
+                new JsonRpcExecutor(
+                    new AuthenticatedJsonRpcProcessor(
+                        new BaseJsonRpcProcessor(),
+                        DefaultAuthenticationService.create(vertx, websocketConfiguration).get(),
+                        websocketConfiguration.getRpcApisNoAuth()),
+                    websocketMethods),
                 mock(EthScheduler.class),
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 

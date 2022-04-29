@@ -60,7 +60,6 @@ public class LoadLocalDataStep {
         existingNodeCounter.inc();
         request.setData(existingData.get());
         request.setRequiresPersisting(false);
-        request.setRootHash(snapSyncState.getPivotBlockHeader().get().getStateRoot());
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         request.persist(worldStateStorage, updater, downloadState, snapSyncState);
         updater.commit();

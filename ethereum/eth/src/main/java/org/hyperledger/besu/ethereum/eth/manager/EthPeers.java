@@ -211,9 +211,15 @@ public class EthPeers {
 
   @Override
   public String toString() {
+    if (connections.isEmpty()) {
+      return "0 EthPeers {}";
+    }
     final String connectionsList =
-        connections.values().stream().map(EthPeer::toString).collect(Collectors.joining(","));
-    return "EthPeers{connections=" + connectionsList + '}';
+        connections.values().stream()
+            .sorted()
+            .map(EthPeer::toString)
+            .collect(Collectors.joining(", \n"));
+    return connections.size() + " EthPeers {\n" + connectionsList + '}';
   }
 
   private void invokeConnectionCallbacks(final EthPeer peer) {

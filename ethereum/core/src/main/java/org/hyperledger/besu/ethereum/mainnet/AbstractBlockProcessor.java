@@ -199,7 +199,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    worldState.persist(blockHeader);
+    try {
+      worldState.persist(blockHeader);
+    } catch (Exception e) {
+      LOG.error("failed persisting block", e);
+      return AbstractBlockProcessor.Result.failed();
+    }
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

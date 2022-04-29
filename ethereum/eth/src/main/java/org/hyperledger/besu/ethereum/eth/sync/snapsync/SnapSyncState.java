@@ -23,7 +23,10 @@ public class SnapSyncState extends FastSyncState {
   private boolean isHealInProgress;
 
   public SnapSyncState(final FastSyncState fastSyncState) {
-    super(fastSyncState.getPivotBlockNumber(), fastSyncState.getPivotBlockHeader());
+    super(
+        fastSyncState.getPivotBlockNumber(),
+        fastSyncState.getPivotBlockHash(),
+        fastSyncState.getPivotBlockHeader());
   }
 
   public boolean isHealInProgress() {

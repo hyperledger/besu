@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.MutableBytes;
 /*
  * Bloom filter implementation for storing persistent logs, describes a 2048-bit representation of
  * all log entries of a transaction, except data. Sets the bits of the 2048 byte array, where
- * indices are given by: The lower order 11-bits, of the first three double-bytes, of the SHA3, of
+ * indices are given by: The lower order 11-bits, of the first three double-bytes, of the KECCAK256, of
  * each value. For instance the address "0x0F572E5295C57F15886F9B263E2F6D2D6C7B5EC6" results in the
  * KECCAK256 hash "bd2b01afcd27800b54d2179edc49e2bffde5078bb6d0b204694169b1643fb108", of which the
  * corresponding double-bytes are: bd2b, 01af, cd27, corresponding to the following bits in the
@@ -145,8 +145,8 @@ public class LogsBloomFilter extends DelegatingBytes {
     }
 
     /**
-     * Discover the low order 11-bits, of the first three double-bytes, of the SHA3 hash, of each
-     * value and update the bloom filter accordingly.
+     * Discover the low order 11-bits, of the first three double-bytes, of the KECCAK256 hash, of
+     * each value and update the bloom filter accordingly.
      *
      * @param hashValue The hash of the log item.
      */
