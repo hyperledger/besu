@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -87,12 +86,18 @@ public class TxPoolBesuPendingTransactionsTest {
     final Set<TransactionPendingResult> result =
         (Set<TransactionPendingResult>) actualResponse.getResult();
 
-    assertThat(result).extracting(TransactionPendingResult::getGasPrice).filteredOn(
-        Objects::nonNull).allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
-    assertThat(result).extracting(TransactionPendingResult::getMaxFeePerGas).filteredOn(
-        Objects::nonNull).allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
-    assertThat(result).extracting(TransactionPendingResult::getMaxPriorityFeePerGas).filteredOn(
-        Objects::nonNull).allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
+    assertThat(result)
+        .extracting(TransactionPendingResult::getGasPrice)
+        .filteredOn(Objects::nonNull)
+        .allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
+    assertThat(result)
+        .extracting(TransactionPendingResult::getMaxFeePerGas)
+        .filteredOn(Objects::nonNull)
+        .allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
+    assertThat(result)
+        .extracting(TransactionPendingResult::getMaxPriorityFeePerGas)
+        .filteredOn(Objects::nonNull)
+        .allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
   }
 
   @Test
