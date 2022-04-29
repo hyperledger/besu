@@ -410,6 +410,7 @@ public class RunnerBuilder {
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
+    com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider.install();
 
     final DiscoveryConfiguration discoveryConfiguration =
         DiscoveryConfiguration.create()

@@ -40,6 +40,8 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:secp256k1'
   implementation 'org.hyperledger.besu:secp256r1'
+  implementation 'software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.+:linux-x86_64'
+
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
