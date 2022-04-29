@@ -60,6 +60,7 @@ import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
+import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MergeOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
@@ -111,6 +112,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
@@ -284,6 +286,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
+  private final IpcOptions unstableIpcOptions = IpcOptions.create();
 
   // stable CLI options
   private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1275,6 +1278,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private WebSocketConfiguration engineWebSocketConfiguration;
+  private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -1486,6 +1490,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Launcher", unstableLauncherOptions)
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
+            .put("IPC Options", unstableIpcOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1579,6 +1584,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         engineJsonRpcConfiguration,
         webSocketConfiguration,
         engineWebSocketConfiguration,
+        jsonRpcIpcConfiguration,
         apiConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
@@ -1907,6 +1913,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     engineWebSocketConfiguration =
         engineWebSocketConfiguration(
             engineRPCOptionGroup.engineRpcWsPort, engineRPCOptionGroup.engineHostsAllowlist);
+    jsonRpcIpcConfiguration =
+        jsonRpcIpcConfiguration(
+            unstableIpcOptions.isEnabled(),
+            unstableIpcOptions.getIpcPath(),
+            unstableIpcOptions.getRpcIpcApis());
     apiConfiguration = apiConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1935,6 +1946,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info("Security Module: {}", securityModuleName);
     instantiateSignatureAlgorithmFactory();
+  }
+
+  private JsonRpcIpcConfiguration jsonRpcIpcConfiguration(
+      final Boolean enabled, final Path ipcPath, final List<String> rpcIpcApis) {
+    final Path actualPath;
+    if (ipcPath == null) {
+      actualPath = IpcOptions.getDefaultPath(dataDir());
+    } else {
+      actualPath = ipcPath;
+    }
+    return new JsonRpcIpcConfiguration(
+        vertx.isNativeTransportEnabled() && enabled, actualPath, rpcIpcApis);
   }
 
   private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
@@ -2745,6 +2768,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final WebSocketConfiguration engineWebSocketConfiguration,
+      final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
@@ -2781,6 +2805,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
             .engineWebSocketConfiguration(engineWebSocketConfiguration)
+            .jsonRpcIpcConfiguration(jsonRpcIpcConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
@@ -2810,6 +2835,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
     return new VertxOptions()
+        .setPreferNativeTransport(true)
         .setMetricsOptions(
             new MetricsOptions()
                 .setEnabled(true)

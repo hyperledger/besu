@@ -61,6 +61,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTasksPriorityQueues<>();
   public final HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
+  private DynamicPivotBlockManager dynamicPivotBlockManager;
   private final SnapSyncState snapSyncState;
 
   // metrics around the snapsync
@@ -145,15 +146,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
-        LOG.info(
-            "Starting world state heal process from peers (generated nodes {})",
-            generatedNodes.get());
-        snapSyncState.setHealStatus(true);
-        enqueueRequest(
-            createAccountTrieNodeDataRequest(
-                snapSyncState.getPivotBlockHeader().orElseThrow().getStateRoot(),
-                Bytes.EMPTY,
-                inconsistentAccounts));
+        LOG.info("Starting world state heal process from peers");
+        startHeal();
       } else {
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
@@ -178,6 +172,30 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     pendingBigStorageRequests.clear();
     pendingCodeRequests.clear();
     pendingTrieNodeRequests.clear();
+  }
+
+  public synchronized void startHeal() {
+    snapSyncState.setHealStatus(true);
+    // try to find new pivot block before healing
+    dynamicPivotBlockManager.switchToNewPivotBlock(
+        (blockHeader, newPivotBlockFound) -> {
+          enqueueRequest(
+              createAccountTrieNodeDataRequest(
+                  blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
+        });
+  }
+
+  public synchronized void reloadHeal() {
+    worldStateStorage.clearFlatDatabase();
+    pendingTrieNodeRequests.clearInternalQueues();
+    pendingCodeRequests.clearInternalQueue();
+    enqueueRequest(
+        createAccountTrieNodeDataRequest(
+            snapSyncState.getPivotBlockHeader().orElseThrow().getStateRoot(),
+            Bytes.EMPTY,
+            inconsistentAccounts));
+    requestComplete(true);
+    notifyTaskAvailable();
   }
 
   @Override
@@ -266,14 +284,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         List.of(pendingTrieNodeRequests));
   }
 
-  public void clearTrieNodes() {
-    worldStateStorage.clearFlatDatabase();
-    pendingTrieNodeRequests.clearInternalQueues();
-    pendingCodeRequests.clearInternalQueue();
-    snapSyncState.setHealStatus(false);
-    snapSyncState.getPivotBlockHeader().ifPresent(this::checkCompletion);
-  }
-
   public RunnableCounter getGeneratedNodes() {
     return generatedNodes;
   }
@@ -288,5 +298,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private void displayHealProgress() {
     LOG.info("Healed {} world sync nodes", healedNodes.get());
+  }
+
+  public void setDynamicPivotBlockManager(final DynamicPivotBlockManager dynamicPivotBlockManager) {
+    this.dynamicPivotBlockManager = dynamicPivotBlockManager;
   }
 }
