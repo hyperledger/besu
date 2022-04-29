@@ -194,7 +194,7 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimateForFastSync() {
-      return streamAvailablePeers()
+    return streamAvailablePeers()
         .filter(p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight())
         .sorted(BEST_CHAIN.reversed())
         .min(Comparator.comparing(EthPeer::getLastPivotHeaderDownloadTime));

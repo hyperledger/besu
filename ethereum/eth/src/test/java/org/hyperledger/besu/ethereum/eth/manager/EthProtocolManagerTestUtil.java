@@ -294,6 +294,7 @@ public class EthProtocolManagerTestUtil {
         .estimatedHeight(estimatedHeight)
         .build();
   }
+
   public static RespondingEthPeer createPeer(
       final EthProtocolManager ethProtocolManager,
       final Difficulty td,

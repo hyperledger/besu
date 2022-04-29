@@ -383,7 +383,12 @@ public class RespondingEthPeer {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
 
       return RespondingEthPeer.create(
-          ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight, peerValidators, lastPivotHeaderDownloadTime);
+          ethProtocolManager,
+          chainHeadHash,
+          totalDifficulty,
+          estimatedHeight,
+          peerValidators,
+          lastPivotHeaderDownloadTime);
     }
 
     public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {

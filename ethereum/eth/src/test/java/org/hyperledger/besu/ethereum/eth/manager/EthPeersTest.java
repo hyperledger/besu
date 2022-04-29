@@ -110,62 +110,95 @@ public class EthPeersTest {
   @Test
   public void comparesPeersWithTdAndHeightAndLastPivotHeaderDownloadTime() {
     final EthPeer peerWithLessDifficultyButBetterDownloadTime =
-        EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, Difficulty.of(50), 20, 0.1)
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20, 0.1)
             .getEthPeer();
     final EthPeer peerWithMoreDifficultyButWorseDownloadTime =
-        EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, Difficulty.of(100), 20, 0.2)
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 20, 0.2)
             .getEthPeer();
 
     // Sanity check
-    assertThat(peerWithLessDifficultyButBetterDownloadTime.chainState().getEstimatedHeight()).isEqualTo(20);
-    assertThat(peerWithMoreDifficultyButWorseDownloadTime.chainState().getEstimatedHeight()).isEqualTo(20);
+    assertThat(peerWithLessDifficultyButBetterDownloadTime.chainState().getEstimatedHeight())
+        .isEqualTo(20);
+    assertThat(peerWithMoreDifficultyButWorseDownloadTime.chainState().getEstimatedHeight())
+        .isEqualTo(20);
 
-    assertThat(EthPeers.CHAIN_HEIGHT.compare(peerWithLessDifficultyButBetterDownloadTime, peerWithMoreDifficultyButWorseDownloadTime)).isEqualTo(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerWithLessDifficultyButBetterDownloadTime, peerWithMoreDifficultyButWorseDownloadTime)).isLessThan(0);
+    assertThat(
+            EthPeers.CHAIN_HEIGHT.compare(
+                peerWithLessDifficultyButBetterDownloadTime,
+                peerWithMoreDifficultyButWorseDownloadTime))
+        .isEqualTo(0);
+    assertThat(
+            EthPeers.TOTAL_DIFFICULTY.compare(
+                peerWithLessDifficultyButBetterDownloadTime,
+                peerWithMoreDifficultyButWorseDownloadTime))
+        .isLessThan(0);
 
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithLessDifficultyButBetterDownloadTime, peerWithMoreDifficultyButWorseDownloadTime)).isLessThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithMoreDifficultyButWorseDownloadTime, peerWithLessDifficultyButBetterDownloadTime)).isGreaterThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithLessDifficultyButBetterDownloadTime, peerWithLessDifficultyButBetterDownloadTime)).isEqualTo(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithMoreDifficultyButWorseDownloadTime, peerWithMoreDifficultyButWorseDownloadTime)).isEqualTo(0);
+    assertThat(
+            EthPeers.BEST_CHAIN.compare(
+                peerWithLessDifficultyButBetterDownloadTime,
+                peerWithMoreDifficultyButWorseDownloadTime))
+        .isLessThan(0);
+    assertThat(
+            EthPeers.BEST_CHAIN.compare(
+                peerWithMoreDifficultyButWorseDownloadTime,
+                peerWithLessDifficultyButBetterDownloadTime))
+        .isGreaterThan(0);
+    assertThat(
+            EthPeers.BEST_CHAIN.compare(
+                peerWithLessDifficultyButBetterDownloadTime,
+                peerWithLessDifficultyButBetterDownloadTime))
+        .isEqualTo(0);
+    assertThat(
+            EthPeers.BEST_CHAIN.compare(
+                peerWithMoreDifficultyButWorseDownloadTime,
+                peerWithMoreDifficultyButWorseDownloadTime))
+        .isEqualTo(0);
 
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerWithMoreDifficultyButWorseDownloadTime);
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer())
+        .contains(peerWithMoreDifficultyButWorseDownloadTime);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
         .contains(peerWithMoreDifficultyButWorseDownloadTime);
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimateForFastSync())
+    assertThat(
+            ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimateForFastSync())
         .contains(peerWithLessDifficultyButBetterDownloadTime);
   }
 
   @Test
   public void comparesPeersWithTdAndHeightAndEqualLastPivotHeaderDownloadTime() {
     final EthPeer peerWithLessDifficulty =
-        EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, Difficulty.of(50), 20, 0.1)
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20, 0.1)
             .getEthPeer();
     final EthPeer peerWithMoreDifficulty =
-        EthProtocolManagerTestUtil.createPeer(
-                ethProtocolManager, Difficulty.of(100), 20, 0.1)
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(100), 20, 0.1)
             .getEthPeer();
 
     // Sanity check
     assertThat(peerWithLessDifficulty.chainState().getEstimatedHeight()).isEqualTo(20);
     assertThat(peerWithMoreDifficulty.chainState().getEstimatedHeight()).isEqualTo(20);
 
-    assertThat(EthPeers.CHAIN_HEIGHT.compare(peerWithLessDifficulty, peerWithMoreDifficulty)).isEqualTo(0);
-    assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerWithMoreDifficulty, peerWithLessDifficulty)).isGreaterThan(0);
+    assertThat(EthPeers.CHAIN_HEIGHT.compare(peerWithLessDifficulty, peerWithMoreDifficulty))
+        .isEqualTo(0);
+    assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerWithMoreDifficulty, peerWithLessDifficulty))
+        .isGreaterThan(0);
 
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithLessDifficulty, peerWithMoreDifficulty)).isLessThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithMoreDifficulty, peerWithLessDifficulty)).isGreaterThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithLessDifficulty, peerWithLessDifficulty)).isEqualTo(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerWithMoreDifficulty, peerWithMoreDifficulty)).isEqualTo(0);
+    assertThat(EthPeers.BEST_CHAIN.compare(peerWithLessDifficulty, peerWithMoreDifficulty))
+        .isLessThan(0);
+    assertThat(EthPeers.BEST_CHAIN.compare(peerWithMoreDifficulty, peerWithLessDifficulty))
+        .isGreaterThan(0);
+    assertThat(EthPeers.BEST_CHAIN.compare(peerWithLessDifficulty, peerWithLessDifficulty))
+        .isEqualTo(0);
+    assertThat(EthPeers.BEST_CHAIN.compare(peerWithMoreDifficulty, peerWithMoreDifficulty))
+        .isEqualTo(0);
 
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerWithMoreDifficulty);
+    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer())
+        .contains(peerWithMoreDifficulty);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
         .contains(peerWithMoreDifficulty);
-    assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimateForFastSync())
+    assertThat(
+            ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimateForFastSync())
         .contains(peerWithMoreDifficulty);
   }
+
   @Test
   public void shouldExecutePeerRequestImmediatelyWhenPeerIsAvailable() throws Exception {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
