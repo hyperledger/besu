@@ -76,7 +76,7 @@ public class TxPoolBesuPendingTransactionsTest {
   }
 
   @Test
-  public void pendingTranasctionGasPricesDoNotHaveLeadingZeroes() {
+  public void pendingTransactionsGasPricesDoNotHaveLeadingZeroes() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
