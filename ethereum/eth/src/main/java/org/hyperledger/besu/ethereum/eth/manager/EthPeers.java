@@ -49,6 +49,11 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
 
+  public static final Comparator<EthPeer> DOWNLOAD_TIME = Comparator.comparing((EthPeer::getLastPivotHeaderDownloadTime));
+
+  // BEST_CHAIN.reversed because we're using a min on this comparator
+  public static final Comparator<EthPeer> BEST_DOWNLOAD_TIME = DOWNLOAD_TIME.thenComparing(BEST_CHAIN.reversed());
+
   private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
   private final String protocolName;
   private final Clock clock;
@@ -196,8 +201,7 @@ public class EthPeers {
   public Optional<EthPeer> bestPeerWithHeightEstimateForFastSync() {
     return streamAvailablePeers()
         .filter(p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight())
-        .sorted(BEST_CHAIN.reversed())
-        .min(Comparator.comparing(EthPeer::getLastPivotHeaderDownloadTime));
+        .min(BEST_DOWNLOAD_TIME);
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
