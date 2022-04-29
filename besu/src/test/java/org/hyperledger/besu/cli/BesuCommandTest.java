@@ -186,12 +186,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Before
-  void setup() {
+  public void setup() {
     MergeConfigOptions.setMergeEnabled(false);
   }
 
   @After
-  void tearDown() {
+  public void tearDown() {
     MergeConfigOptions.setMergeEnabled(false);
   }
 
