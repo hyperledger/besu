@@ -205,7 +205,7 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
     final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
-    for (int i = 0; i < lengthOfList.toLong(); ++i) {
+    for (int i = 0; i < lengthOfList.toInt(); ++i) {
       decodedElements.add(
           Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
     }

@@ -233,8 +233,8 @@ public class FlexiblePrivacyGroupContract {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
     if (rlpEncodedList.size() < 64) return decodedElements;
-    final long lengthOfList =
-        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toLong(); // length of list
+    final int lengthOfList =
+        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
     if (rlpEncodedList.size() < 64 + lengthOfList * 32) return decodedElements;
 
     for (int i = 0; i < lengthOfList; ++i) {
