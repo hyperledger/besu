@@ -68,12 +68,10 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       this.latestValid = latestValid;
     }
 
-    public static ForkchoiceResult withFailure(final String errorMessage, final Hash latestValid) {
+    public static ForkchoiceResult withFailure(
+        final String errorMessage, final Optional<Hash> latestValid) {
       return new ForkchoiceResult(
-          Optional.of(errorMessage),
-          Optional.empty(),
-          Optional.empty(),
-          Optional.ofNullable(latestValid));
+          Optional.of(errorMessage), Optional.empty(), Optional.empty(), latestValid);
     }
 
     public static ForkchoiceResult withResult(

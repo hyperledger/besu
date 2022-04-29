@@ -28,10 +28,10 @@ import java.util.OptionalLong;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class Sha3Operation extends AbstractOperation {
+public class Keccak256Operation extends AbstractOperation {
 
-  public Sha3Operation(final GasCalculator gasCalculator) {
-    super(0x20, "SHA3", 2, 1, 1, gasCalculator);
+  public Keccak256Operation(final GasCalculator gasCalculator) {
+    super(0x20, "KECCAK256", 2, 1, 1, gasCalculator);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class Sha3Operation extends AbstractOperation {
     final long from = clampedToLong(frame.popStackItem());
     final long length = clampedToLong(frame.popStackItem());
 
-    final long cost = gasCalculator().sha3OperationGasCost(frame, from, length);
+    final long cost = gasCalculator().keccak256OperationGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(
           OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));

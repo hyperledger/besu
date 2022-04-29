@@ -82,7 +82,8 @@ public class FastSyncDownloader<REQUEST> {
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting fast sync.");
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      worldStateStorage.clear();
+      LOG.info("Clearing bonsai flat account db");
+      worldStateStorage.clearFlatDatabase();
     }
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
