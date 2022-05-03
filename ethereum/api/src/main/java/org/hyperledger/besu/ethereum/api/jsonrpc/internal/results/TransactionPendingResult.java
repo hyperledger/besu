@@ -84,8 +84,8 @@ public class TransactionPendingResult implements TransactionResult {
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
     this.maxPriorityFeePerGas =
-        transaction.getMaxPriorityFeePerGas().map(Wei::toHexString).orElse(null);
-    this.maxFeePerGas = transaction.getMaxFeePerGas().map(Wei::toHexString).orElse(null);
+        transaction.getMaxPriorityFeePerGas().map(Wei::toShortHexString).orElse(null);
+    this.maxFeePerGas = transaction.getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
     this.gasPrice = transaction.getGasPrice().map(Quantity::create).orElse(maxFeePerGas);
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();

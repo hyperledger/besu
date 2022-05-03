@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -238,5 +239,22 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.pendingStorageRequests.isEmpty()).isTrue();
     verify(worldStateDownloadProcess).abort();
     assertThat(downloadState.isDownloading()).isFalse();
+  }
+
+  @Test
+  public void shouldRestartHealWhenNewPivotBlock() {
+    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(snapSyncState.isHealInProgress()).thenReturn(false);
+    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isTrue();
+    // start heal
+    downloadState.checkCompletion(header);
+    verify(snapSyncState).setHealStatus(true);
+    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
+    // reload the heal
+    downloadState.reloadHeal();
+    verify(snapSyncState).setHealStatus(false);
+    spy(downloadState.pendingTrieNodeRequests).clearInternalQueues();
+    spy(downloadState).checkCompletion(header);
+    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
   }
 }

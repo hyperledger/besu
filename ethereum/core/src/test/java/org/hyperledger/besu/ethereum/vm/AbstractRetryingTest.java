@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
+import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,7 +73,7 @@ public abstract class AbstractRetryingTest {
   }
 
   private void resetLogging() {
-    ((LoggerContext) LogManager.getContext(false)).reconfigure();
+    Log4j2ConfiguratorUtil.reconfigure();
   }
 
   /** Subclasses should implement this method to run the actual JUnit test. */

@@ -68,13 +68,13 @@ public final class Besu {
               + e.getMessage());
     }
     final Logger logger = LoggerFactory.getLogger(Besu.class);
-    Thread.setDefaultUncaughtExceptionHandler(log4jExceptionHandler(logger));
-    Thread.currentThread().setUncaughtExceptionHandler(log4jExceptionHandler(logger));
+    Thread.setDefaultUncaughtExceptionHandler(slf4jExceptionHandler(logger));
+    Thread.currentThread().setUncaughtExceptionHandler(slf4jExceptionHandler(logger));
 
     return logger;
   }
 
-  private static Thread.UncaughtExceptionHandler log4jExceptionHandler(final Logger logger) {
+  private static Thread.UncaughtExceptionHandler slf4jExceptionHandler(final Logger logger) {
     return (thread, error) -> {
       if (logger.isErrorEnabled()) {
         logger.error(String.format("Uncaught exception in thread \"%s\"", thread.getName()), error);
