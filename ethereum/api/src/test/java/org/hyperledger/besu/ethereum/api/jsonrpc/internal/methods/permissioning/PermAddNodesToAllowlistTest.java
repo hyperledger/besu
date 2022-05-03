@@ -110,7 +110,7 @@ public class PermAddNodesToAllowlistTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.addNodes(eq(Collections.emptyList())))
+    when(nodeLocalConfigPermissioningController.addNodes(Collections.emptyList()))
         .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);

@@ -93,7 +93,7 @@ public class PermRemoveNodesFromAllowlistTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.removeNodes(eq(Collections.emptyList())))
+    when(nodeLocalConfigPermissioningController.removeNodes(Collections.emptyList()))
         .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
