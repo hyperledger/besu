@@ -44,7 +44,9 @@ public class BannedMethod extends BugChecker implements MethodInvocationTreeMatc
           staticMethod().onClass("com.google.common.base.Objects").withAnyName(),
           "Do not use com.google.common.base.Objects methods, use java.util.Objects methods instead.",
           staticMethod().onClass("org.junit.Assert"),
-          "Do not use junit assertions. Use assertj assertions instead.");
+          "Do not use junit assertions. Use assertj assertions instead.",
+          staticMethod().onClass("org.apache.logging.log4j.LogManager"),
+          "Do not use org.apache.logging.log4j.LogManager, use org.slf4j.LoggerFactory methods instead.");
 
   @Override
   public Description matchMethodInvocation(
