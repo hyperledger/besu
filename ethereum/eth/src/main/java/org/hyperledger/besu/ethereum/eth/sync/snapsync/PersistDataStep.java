@@ -60,9 +60,9 @@ public class PersistDataStep {
             task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
         if (persistedNodes > 0) {
           if (task.getData() instanceof TrieNodeDataRequest) {
-            downloadState.getHealedNodes().inc(persistedNodes);
+            downloadState.getMetricsManager().notifyNodesHealed(persistedNodes);
           } else {
-            downloadState.getGeneratedNodes().inc(persistedNodes);
+            downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
           }
         }
       }
