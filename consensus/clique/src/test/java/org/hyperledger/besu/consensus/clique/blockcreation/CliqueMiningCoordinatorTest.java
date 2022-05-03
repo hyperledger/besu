@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -119,7 +120,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -147,7 +148,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -159,7 +160,7 @@ public class CliqueMiningCoordinatorTest {
   @Test
   public void outOfTurnBlockImportedInterruptsOutOfTurnMiningOperation() {
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Lists.emptyList());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Collections.emptyList());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -178,7 +179,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -190,7 +191,7 @@ public class CliqueMiningCoordinatorTest {
   @Test
   public void outOfTurnBlockImportedInterruptsNonRunningMiner() {
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Lists.emptyList());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Collections.emptyList());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -209,7 +210,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -234,7 +235,7 @@ public class CliqueMiningCoordinatorTest {
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys);
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -248,6 +249,6 @@ public class CliqueMiningCoordinatorTest {
     headerTestFixture.number(blockNumber).parentHash(parentHash);
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerTestFixture, signer, validators);
-    return new Block(header, new BlockBody(Lists.emptyList(), Lists.emptyList()));
+    return new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
   }
 }

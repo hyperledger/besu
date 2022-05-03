@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,7 +61,7 @@ public class BftMiningCoordinatorTest {
             bftExecutors, controller, bftProcessor, bftBlockCreatorFactory, blockChain, eventQueue);
     when(block.getBody()).thenReturn(blockBody);
     when(block.getHeader()).thenReturn(blockHeader);
-    when(blockBody.getTransactions()).thenReturn(Lists.emptyList());
+    when(blockBody.getTransactions()).thenReturn(Collections.emptyList());
   }
 
   @Test

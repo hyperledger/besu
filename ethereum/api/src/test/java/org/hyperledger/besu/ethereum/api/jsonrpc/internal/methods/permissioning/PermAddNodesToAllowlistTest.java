@@ -104,12 +104,12 @@ public class PermAddNodesToAllowlistTest {
 
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenEmptyEnode() {
-    final JsonRpcRequestContext request = buildRequest(Lists.emptyList());
+    final JsonRpcRequestContext request = buildRequest(Collections.emptyList());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.addNodes(eq(Lists.emptyList())))
+    when(nodeLocalConfigPermissioningController.addNodes(eq(Collections.emptyList())))
         .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);

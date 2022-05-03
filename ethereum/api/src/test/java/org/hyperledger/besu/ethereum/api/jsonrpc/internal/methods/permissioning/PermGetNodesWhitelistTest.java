@@ -87,7 +87,7 @@ public class PermGetNodesWhitelistTest {
   public void shouldReturnSuccessResponseWhenListSetAndEmpty() {
     final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), Lists.emptyList());
+        new JsonRpcSuccessResponse(request.getRequest().getId(), Collections.emptyList());
 
     when(nodeLocalConfigPermissioningController.getNodesAllowlist()).thenReturn(buildNodesList());
 
