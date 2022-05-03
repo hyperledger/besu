@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
