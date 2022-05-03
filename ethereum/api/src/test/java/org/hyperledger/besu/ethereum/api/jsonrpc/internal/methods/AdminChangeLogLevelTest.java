@@ -22,9 +22,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +40,7 @@ public class AdminChangeLogLevelTest {
   @Before
   public void before() {
     adminChangeLogLevel = new AdminChangeLogLevel();
-    Configurator.setAllLevels("", Level.INFO);
+    Log4j2ConfiguratorUtil.setAllLevels("", Level.INFO);
   }
 
   @Test
@@ -52,7 +52,7 @@ public class AdminChangeLogLevelTest {
   public void shouldReturnCorrectResponseWhenRequestHasLogLevel() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG}));
+            new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG.name()}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 
@@ -71,7 +71,9 @@ public class AdminChangeLogLevelTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", "admin_changeLogLevel", new Object[] {Level.DEBUG, new String[] {"com"}}));
+                "2.0",
+                "admin_changeLogLevel",
+                new Object[] {Level.DEBUG.name(), new String[] {"com"}}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId());
 

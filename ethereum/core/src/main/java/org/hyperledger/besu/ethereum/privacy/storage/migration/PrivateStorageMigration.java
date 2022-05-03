@@ -80,7 +80,7 @@ public class PrivateStorageMigration {
 
     LOG.info("Migrating private storage database...");
 
-    for (int blockNumber = 0; blockNumber <= chainHeadBlockNumber; blockNumber++) {
+    for (long blockNumber = 0; blockNumber <= chainHeadBlockNumber; blockNumber++) {
       final Block block =
           blockchain
               .getBlockByNumber(blockNumber)
