@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
@@ -99,7 +98,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   public int persist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
     return doPersist(worldStateStorage, updater, downloadState, snapSyncState);
   }
@@ -107,7 +106,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   protected abstract int doPersist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState);
 
   public abstract boolean isResponseReceived();
@@ -137,7 +136,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   protected int saveParent(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
     if (pendingChildren.decrementAndGet() == 0) {
       return persist(worldStateStorage, updater, downloadState, snapSyncState);
