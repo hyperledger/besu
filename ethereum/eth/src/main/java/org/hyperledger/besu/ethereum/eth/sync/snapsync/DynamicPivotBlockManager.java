@@ -18,25 +18,23 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
-import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
+public class DynamicPivotBlockManager {
+
+  public static final BiConsumer<BlockHeader, Boolean> doNothingOnPivotChange = (___, __) -> {};
 
   private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockManager.class);
 
   private final AtomicBoolean isSearchingPivotBlock = new AtomicBoolean(false);
   private final AtomicBoolean isUpdatingPivotBlock = new AtomicBoolean(false);
-
-  private final WorldDownloadState<REQUEST> worldDownloadState;
 
   private final FastSyncActions syncActions;
 
@@ -44,31 +42,28 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
-  private Optional<BlockHeader> lastBlockFound;
+  private Optional<BlockHeader> lastPivotBlockFound;
 
   public DynamicPivotBlockManager(
-      final WorldDownloadState<REQUEST> worldDownloadState,
       final FastSyncActions fastSyncActions,
       final SnapSyncState fastSyncState,
       final int pivotBlockWindowValidity,
       final int pivotBlockDistanceBeforeCaching) {
-    this.worldDownloadState = worldDownloadState;
     this.syncActions = fastSyncActions;
     this.syncState = fastSyncState;
     this.pivotBlockWindowValidity = pivotBlockWindowValidity;
     this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
-    this.lastBlockFound = Optional.empty();
+    this.lastPivotBlockFound = Optional.empty();
   }
 
-  public void check(final Consumer<BlockHeader> onNewPivotBlock) {
+  public void check(final BiConsumer<BlockHeader, Boolean> onNewPivotBlock) {
     syncState
         .getPivotBlockNumber()
         .ifPresent(
-            blockNumber -> {
-              final long currentPivotBlockNumber = syncState.getPivotBlockNumber().orElseThrow();
+            currentPivotBlockNumber -> {
               final long distanceNextPivotBlock =
                   syncActions.getSyncState().bestChainHeight()
-                      - lastBlockFound
+                      - lastPivotBlockFound
                           .map(ProcessableBlockHeader::getNumber)
                           .orElse(currentPivotBlockNumber);
               if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching
@@ -77,7 +72,7 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
                     .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
                     .thenCompose(syncActions::selectPivotBlock)
                     .thenCompose(syncActions::downloadPivotBlockHeader)
-                    .thenAccept(fss -> lastBlockFound = fss.getPivotBlockHeader())
+                    .thenAccept(fss -> lastPivotBlockFound = fss.getPivotBlockHeader())
                     .orTimeout(5, TimeUnit.MINUTES)
                     .whenComplete((unused, throwable) -> isSearchingPivotBlock.set(false));
               }
@@ -92,16 +87,15 @@ public class DynamicPivotBlockManager<REQUEST extends TasksPriorityProvider> {
             });
   }
 
-  private void switchToNewPivotBlock(final Consumer<BlockHeader> onNewPivotBlock) {
-    lastBlockFound.ifPresent(
+  public void switchToNewPivotBlock(final BiConsumer<BlockHeader, Boolean> onSwitchDone) {
+    lastPivotBlockFound.ifPresentOrElse(
         blockHeader -> {
           LOG.info(
               "Select new pivot block {} {}", blockHeader.getNumber(), blockHeader.getStateRoot());
           syncState.setCurrentHeader(blockHeader);
-          onNewPivotBlock.accept(blockHeader);
-          worldDownloadState.requestComplete(true);
-          worldDownloadState.notifyTaskAvailable();
-        });
-    lastBlockFound = Optional.empty();
+          onSwitchDone.accept(blockHeader, true);
+        },
+        () -> onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false));
+    lastPivotBlockFound = Optional.empty();
   }
 }

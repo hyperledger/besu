@@ -292,7 +292,7 @@ public class StateBackupService {
             new RollingFileWriter(this::bodyFileName, backupStatus.compressed);
         final RollingFileWriter receiptsWriter =
             new RollingFileWriter(this::receiptFileName, backupStatus.compressed)) {
-      for (int blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
+      for (long blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
         final Optional<Block> block = blockchain.getBlockByNumber(blockNumber);
         checkState(
             block.isPresent(), "Block data for %s was not found in the archive", blockNumber);
