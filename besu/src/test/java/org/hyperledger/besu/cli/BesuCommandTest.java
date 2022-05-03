@@ -55,6 +55,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -115,6 +116,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -180,6 +183,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     DEFAULT_GRAPH_QL_CONFIGURATION = GraphQLConfiguration.createDefault();
     DEFAULT_WEB_SOCKET_CONFIGURATION = WebSocketConfiguration.createDefault();
     DEFAULT_METRICS_CONFIGURATION = MetricsConfiguration.builder().build();
+  }
+
+  @Before
+  public void setup() {
+    MergeConfigOptions.setMergeEnabled(false);
+  }
+
+  @After
+  public void tearDown() {
+    MergeConfigOptions.setMergeEnabled(false);
   }
 
   @Test
@@ -4749,6 +4762,23 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Port number '8546' has been specified multiple times. Please review the supplied configuration.");
+  }
+
+  @Test
+  public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
+    // use WS port for HTTP
+    final int port = 8551;
+    parseCommand(
+        "--Xmerge-support",
+        "true",
+        "--rpc-http-enabled",
+        "--engine-rpc-http-port",
+        String.valueOf(port),
+        "--rpc-ws-enabled");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Port number '8551' has been specified multiple times. Please review the supplied configuration.");
   }
 
   @Test
