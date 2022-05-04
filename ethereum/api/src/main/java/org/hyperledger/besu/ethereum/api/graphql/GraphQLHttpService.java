@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLRespon
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponseType;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLSuccessResponse;
 import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
-import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -41,6 +40,7 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
@@ -66,6 +66,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.TimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,8 +165,9 @@ public class GraphQLHttpService {
         .method(POST)
         .produces(APPLICATION_JSON)
         .handler(
-            TimeoutHandler.handler(
-                Optional.of(new TimeoutOptions(config.getHttpTimeoutSec())), false))
+            TimeoutHandler.create(
+                TimeUnit.SECONDS.toMillis(config.getHttpTimeoutSec()),
+                TimeoutOptions.DEFAULT_ERROR_CODE))
         .handler(this::handleGraphQLRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();

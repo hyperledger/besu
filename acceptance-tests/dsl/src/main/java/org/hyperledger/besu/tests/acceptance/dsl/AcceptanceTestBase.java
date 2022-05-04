@@ -57,7 +57,6 @@ import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.logging.log4j.ThreadContext;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -65,6 +64,7 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class AcceptanceTestBase {
 
@@ -184,8 +184,8 @@ public class AcceptanceTestBase {
 
         @Override
         protected void starting(final Description description) {
-          ThreadContext.put("test", description.getMethodName());
-          ThreadContext.put("class", description.getClassName());
+          MDC.put("test", description.getMethodName());
+          MDC.put("class", description.getClassName());
 
           final String errorMessage = "Uncaught exception in thread \"{}\"";
           Thread.currentThread()

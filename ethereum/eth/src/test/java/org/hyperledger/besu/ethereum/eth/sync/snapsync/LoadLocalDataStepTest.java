@@ -73,11 +73,30 @@ public class LoadLocalDataStepTest {
 
   @Test
   public void shouldReturnStreamWithUnchangedTaskWhenDataNotPresent() {
+
     final Stream<Task<SnapDataRequest>> output =
         loadLocalDataStep.loadLocalDataTrieNode(task, completedTasks);
 
     assertThat(completedTasks.poll()).isNull();
     assertThat(output).containsExactly(task);
+  }
+
+  @Test
+  public void shouldReturnStreamWithSameRootHashTaskWhenDataArePresent() {
+
+    task.getData().setRootHash(blockHeader.getStateRoot());
+
+    when(worldStateStorage.getAccountStateTrieNode(any(), any())).thenReturn(Optional.of(DATA));
+    when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+
+    final BlockHeader newBlockHeader =
+        new BlockHeaderTestFixture().stateRoot(Hash.EMPTY).buildHeader();
+    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(newBlockHeader));
+
+    loadLocalDataStep.loadLocalDataTrieNode(task, completedTasks);
+
+    assertThat(completedTasks.poll()).isEqualTo(task);
+    assertThat(task.getData().getRootHash()).isEqualTo(blockHeader.getStateRoot());
   }
 
   @Test

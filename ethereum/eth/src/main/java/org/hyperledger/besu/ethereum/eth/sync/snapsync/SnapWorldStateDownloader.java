@@ -29,12 +29,14 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,6 +122,9 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           header.getHash(),
           stateRoot);
 
+      final SnapsyncMetricsManager snapsyncMetricsManager =
+          new SnapsyncMetricsManager(metricsSystem);
+
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
               worldStateStorage,
@@ -127,28 +132,30 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
-              metricsSystem,
+              snapsyncMetricsManager,
               clock);
 
-      RangeManager.generateAllRanges(16)
-          .forEach(
-              (key, value) ->
-                  newDownloadState.enqueueRequest(
-                      createAccountRangeDataRequest(stateRoot, key, value)));
+      final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
+      snapsyncMetricsManager.initRange(ranges);
+      ranges.forEach(
+          (key, value) ->
+              newDownloadState.enqueueRequest(
+                  createAccountRangeDataRequest(stateRoot, key, value)));
 
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
+
+      final DynamicPivotBlockManager dynamicPivotBlockManager =
+          new DynamicPivotBlockManager(
+              fastSyncActions,
+              snapSyncState,
+              snapSyncConfiguration.getPivotBlockWindowValidity(),
+              snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());
 
       downloadProcess =
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
-              .pivotBlockManager(
-                  new DynamicPivotBlockManager<>(
-                      newDownloadState,
-                      fastSyncActions,
-                      snapSyncState,
-                      snapSyncConfiguration.getPivotBlockWindowValidity(),
-                      snapSyncConfiguration.getPivotBlockDistanceBeforeCaching()))
+              .pivotBlockManager(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
                       worldStateStorage, newDownloadState, metricsSystem, snapSyncState))
@@ -166,6 +173,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .fastSyncState(snapSyncState)
               .metricsSystem(metricsSystem)
               .build();
+
+      newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }

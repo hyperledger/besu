@@ -14,32 +14,40 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 public class HandlerFactory {
-  private static final Map<HandlerName, Handler<RoutingContext>> HANDLERS =
-      new ConcurrentHashMap<>();
 
   public static Handler<RoutingContext> timeout(
-      final TimeoutOptions globalOptions,
-      final Map<String, JsonRpcMethod> methods,
-      final boolean decodeJSON) {
+      final TimeoutOptions globalOptions, final Map<String, JsonRpcMethod> methods) {
     assert methods != null && globalOptions != null;
-    return HANDLERS.computeIfAbsent(
-        HandlerName.TIMEOUT,
-        handlerName ->
-            TimeoutHandler.handler(
-                Optional.of(globalOptions),
-                methods.keySet().stream()
-                    .collect(Collectors.toMap(String::new, ignored -> globalOptions)),
-                decodeJSON));
+    return TimeoutHandler.handler(
+        Optional.of(globalOptions),
+        methods.keySet().stream().collect(Collectors.toMap(String::new, ignored -> globalOptions)));
+  }
+
+  public static Handler<RoutingContext> authentication(
+      final AuthenticationService authenticationService, final Collection<String> noAuthRpcApis) {
+    return AuthenticationHandler.handler(authenticationService, noAuthRpcApis);
+  }
+
+  public static Handler<RoutingContext> jsonRpcParser() {
+    return JsonRpcParserHandler.handler();
+  }
+
+  public static Handler<RoutingContext> jsonRpcExecutor(
+      final JsonRpcExecutor jsonRpcExecutor, final Tracer tracer) {
+    return JsonRpcExecutorHandler.handler(jsonRpcExecutor, tracer);
   }
 }

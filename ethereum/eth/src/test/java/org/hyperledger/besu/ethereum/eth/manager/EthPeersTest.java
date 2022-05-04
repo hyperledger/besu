@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
@@ -262,6 +263,18 @@ public class EthPeersTest {
     ethPeers.registerDisconnect(ethPeer.getConnection());
 
     assertRequestFailure(pendingRequest, CancellationException.class);
+  }
+
+  @Test
+  public void toString_hasExpectedInfo() {
+    assertThat(ethPeers.toString()).isEqualTo("0 EthPeers {}");
+
+    final EthPeer peerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
+            .getEthPeer();
+    ethPeers.registerConnection(peerA.getConnection(), Collections.emptyList());
+    assertThat(ethPeers.toString()).contains("1 EthPeers {");
+    assertThat(ethPeers.toString()).contains(peerA.getShortNodeId());
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {

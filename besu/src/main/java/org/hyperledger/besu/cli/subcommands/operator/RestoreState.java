@@ -130,7 +130,7 @@ public class RestoreState implements Runnable {
             new RollingFileReader(this::receiptFileName, compressed)) {
       final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
       // target block is "including" the target block, so LE test not LT.
-      for (int i = 0; i <= targetBlock; i++) {
+      for (long i = 0; i <= targetBlock; i++) {
         if (i % 100000 == 0) {
           LOG.info("Loading chain data {} / {}", i, targetBlock);
         }
@@ -173,7 +173,7 @@ public class RestoreState implements Runnable {
 
     try (final RollingFileReader reader =
         new RollingFileReader(this::accountFileName, compressed)) {
-      for (int i = 0; i < accountCount; i++) {
+      for (long i = 0; i < accountCount; i++) {
         if (i % 100000 == 0) {
           LOG.info("Loading account data {} / {}", i, accountCount);
         }

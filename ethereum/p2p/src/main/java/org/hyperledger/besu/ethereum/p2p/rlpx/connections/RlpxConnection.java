@@ -143,6 +143,14 @@ public abstract class RlpxConnection {
     public int hashCode() {
       return Objects.hash(peerConnection);
     }
+
+    @Override
+    public String toString() {
+      return "RemotelyInitiatedRlpxConnection initiatedAt:"
+          + getInitiatedAt()
+          + " to "
+          + peerConnection.getPeer().getId();
+    }
   }
 
   private static class LocallyInitiatedRlpxConnection extends RlpxConnection {
@@ -212,6 +220,16 @@ public abstract class RlpxConnection {
     @Override
     public int hashCode() {
       return Objects.hash(peer, future);
+    }
+
+    @Override
+    public String toString() {
+      return "LocallyInitiatedRlpxConnection initiatedAt:"
+          + getInitiatedAt()
+          + " to "
+          + getPeer().getId()
+          + " disconnected? "
+          + isFailedOrDisconnected();
     }
   }
 

@@ -72,6 +72,7 @@ downloadLicenses {
   ext.cc0 = license('Public Domain (CC0) License 1.0', 'https://creativecommons.org/publicdomain/zero/1.0')
   ext.cddl = license('Common Development and Distribution License 1.0', 'http://opensource.org/licenses/CDDL-1.0')
   ext.epl1 = license('Eclipse Public License 1.0', 'https://www.eclipse.org/legal/epl-v10.html')
+  ext.epl2 = license('Eclipse Public License - v 2.0', 'https://www.eclipse.org/legal/epl-v20.html')
   ext.mit = license('MIT License', 'http://www.opensource.org/licenses/mit-license.php')
   aliases = [
     (apache) : [
@@ -123,6 +124,10 @@ downloadLicenses {
       'Eclipse Public License - v 1.0',
       'Eclipse Public License 1.0 ',
     ],
+    (epl2) : [
+      'Eclipse Public License - v 2.0',
+      'Eclipse Public License version 2.0'
+    ],
     (mit) : [
       'MIT',
       'The MIT License',
@@ -160,6 +165,9 @@ downloadLicenses {
     // javax.persistence is dual licensed under EPL 1.0 and EDL 1.0.
     // Explicitly declare that we are using the EPL 1.0 license
     (group('javax.persistence')) : epl1,
+
+    // jnr-posix is released under a tri EPL v2.0/GPL/LGPL license
+    'com.github.jnr:jnr-posix:3.0.47' : epl2,
 
     // io.netty:netty-tcnative-boringssl-static license markings are not machine readable.
     // io.netty:netty-tcnative-classes license markings are not machine readable.

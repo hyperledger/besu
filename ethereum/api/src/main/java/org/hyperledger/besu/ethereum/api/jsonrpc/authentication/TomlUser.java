@@ -93,6 +93,7 @@ public class TomlUser implements User {
     return principle;
   }
 
+  @Override
   public void setAuthProvider(final AuthProvider authProvider) {
     // we only use Toml for authentication
     throw new UnsupportedOperationException("Not implemented");

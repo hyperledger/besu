@@ -19,7 +19,9 @@ import java.util.function.Supplier;
 import io.vertx.ext.web.RoutingContext;
 
 public enum ContextKey {
-  REQUEST_BODY_AS_JSON_OBJECT;
+  REQUEST_BODY_AS_JSON_OBJECT,
+  REQUEST_BODY_AS_JSON_ARRAY,
+  AUTHENTICATED_USER;
 
   public <T> T extractFrom(final RoutingContext ctx, final Supplier<T> defaultSupplier) {
     final T value = ctx.get(this.name());
