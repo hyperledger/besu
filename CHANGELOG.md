@@ -4,11 +4,15 @@
 
 ### Breaking Changes
 - Version 22.4.x will be the last series to support Java 11. Version 22.7.0 will require Java 17 to build and run.
-- In the Besu EVM Library all references to SHA3 have been renamed to the more accurate name Kecack256, including class names and comment. [#3749](https://github.com/hyperledger/besu/pull/3749)
+- In the Besu EVM Library all references to SHA3 have been renamed to the more accurate name Keccak256, including class names and comment. [#3749](https://github.com/hyperledger/besu/pull/3749)
 
 ### Bug Fixes
 - Fix nullpointer on snapsync [#3773](https://github.com/hyperledger/besu/pull/3773)
 - Introduce RocksDbSegmentIdentifier to avoid changing the storage plug [#3755](https://github.com/hyperledger/besu/pull/3755)
+
+## Download Links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.0/besu-22.4.0.zip / SHA256 TBD
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.0/besu-22.4.0.tar.gz / SHA256 TBD
 
 ## 22.4.0-RC2
 
