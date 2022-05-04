@@ -730,12 +730,13 @@ task acceptanceTestsQuorum {
   }
 }
 
+def dockerImage = "hyperledger/besu"
+
 task dockerUpload {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "hyperledger/besu"
-  def azureImageName = "hyperledger.azurecr.io/besu"
-  def image = "${imageName}:${dockerBuildVersion}"
+  def arch = System.getenv('architecture')
+  def image = "${dockerImage}:${dockerBuildVersion}"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
@@ -751,9 +752,10 @@ task dockerUpload {
     for (def variant in dockerVariants) {
       def variantImage = "${image}-${variant}"
       exec {
-        def cmd = "docker push '${variantImage}'"
+        def archVariantImage = "${variantImage}-${arch}"
+        def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'`"
         additionalTags.each { tag ->
-          cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}' && docker push '${imageName}:${tag.trim()}-${variant}'"
+          cmd += " && docker tag '${variantImage}' '${dockerImage}:${tag.trim()}-${variant}-${arch}' && docker push '${dockerImage}:${tag.trim()}-${variant}-${arch}'"
         }
         executable "sh"
         args "-c", cmd
@@ -761,11 +763,10 @@ task dockerUpload {
     }
 
     exec {
-      def cmd = "docker push '${image}'"
+      def archImage = "${image}-${arch}"
+      def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
       additionalTags.each { tag ->
-        cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
-        // temporarily commented out because AWS credentials are broken
-        // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
+        cmd += " && docker tag '${image}' '${dockerImage}:${tag.trim()}-${arch}' && docker push '${dockerImage}:${tag.trim()}-${arch}'"
       }
       executable "sh"
       args "-c", cmd

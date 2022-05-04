@@ -463,6 +463,7 @@ workflows:
               only:
                 - main
                 - /^release-.*/
+                - /feature/arm64-docker
           requires:
             - integrationTests
             - unitTests
