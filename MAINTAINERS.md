@@ -6,7 +6,6 @@
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
-| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
@@ -28,7 +27,6 @@
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |
-| Rai Sur          | RatanRSur        | ratanraisur      |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
@@ -39,12 +37,14 @@
 
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
+| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Trent Mohay      | rain-on          | trent.mohay      |
+| Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |

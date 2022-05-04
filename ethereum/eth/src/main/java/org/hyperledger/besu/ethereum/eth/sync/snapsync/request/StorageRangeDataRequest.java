@@ -84,7 +84,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   protected int doPersist(
       final WorldStateStorage worldStateStorage,
       final Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
 
     // search incomplete nodes in the range
@@ -102,6 +102,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     stackTrie.commit(nodeUpdater);
 
     updaterTmp.get().commit();
+
+    downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
     return nbNodesSaved.get();
   }

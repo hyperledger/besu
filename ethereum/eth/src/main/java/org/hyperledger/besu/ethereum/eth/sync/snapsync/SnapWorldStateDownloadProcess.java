@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.DynamicPivotBlockManager.doNothingOnPivotChange;
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -138,15 +139,14 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private SnapSyncState snapSyncState;
     private PersistDataStep persistDataStep;
     private CompleteTaskStep completeTaskStep;
-    private DynamicPivotBlockManager<SnapDataRequest> pivotBlockManager;
+    private DynamicPivotBlockManager pivotBlockManager;
 
     public Builder configuration(final SnapSyncConfiguration snapSyncConfiguration) {
       this.snapSyncConfiguration = snapSyncConfiguration;
       return this;
     }
 
-    public Builder pivotBlockManager(
-        final DynamicPivotBlockManager<SnapDataRequest> pivotBlockManager) {
+    public Builder pivotBlockManager(final DynamicPivotBlockManager pivotBlockManager) {
       this.pivotBlockManager = pivotBlockManager;
       return this;
     }
@@ -231,7 +231,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> {});
+                    pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
                   })
               .thenProcessAsync(
@@ -254,7 +254,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> {});
+                    pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
                   })
               .thenProcessAsyncOrdered(
@@ -280,7 +280,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcess(
                   "checkNewPivotBlock",
                   tasks -> {
-                    pivotBlockManager.check(blockHeader -> {});
+                    pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
                   })
               .thenProcessAsyncOrdered(
@@ -320,9 +320,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "checkNewPivotBlock",
                   tasks -> {
                     pivotBlockManager.check(
-                        blockHeader -> {
-                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
-                        });
+                        (blockHeader, newBlockFound) ->
+                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
                     return tasks;
                   })
               .thenProcessAsyncOrdered(
@@ -357,9 +356,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "checkNewPivotBlock",
                   tasks -> {
                     pivotBlockManager.check(
-                        blockHeader -> {
-                          if (snapSyncState.isHealInProgress()) downloadState.clearTrieNodes();
-                        });
+                        (blockHeader, newBlockFound) ->
+                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
                     return tasks;
                   })
               .thenProcessAsync(
@@ -383,6 +381,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
           fetchHealDataPipeline,
           completionPipeline,
           requestsToComplete);
+    }
+  }
+
+  private static void reloadHealWhenNeeded(
+      final SnapSyncState snapSyncState,
+      final SnapWorldDownloadState downloadState,
+      final boolean newBlockFound) {
+    if (snapSyncState.isHealInProgress() && newBlockFound) {
+      downloadState.reloadHeal();
     }
   }
 }

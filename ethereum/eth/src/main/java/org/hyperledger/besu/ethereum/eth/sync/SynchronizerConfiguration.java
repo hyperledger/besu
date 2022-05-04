@@ -147,7 +147,7 @@ public class SynchronizerConfiguration {
    * The range of block numbers (relative to the current chain head and the best network block) that
    * are considered appropriate to import as new blocks are announced on the network.
    *
-   * @return the range of blocks considered valid to import from the network, relative to the the
+   * @return the range of blocks considered valid to import from the network, relative to the
    *     current chain head.
    */
   public Range<Long> getBlockPropagationRange() {

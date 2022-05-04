@@ -59,6 +59,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -146,7 +147,8 @@ public class EthGetFilterChangesIntegrationTest {
     assertThatFilterExists(filterId);
 
     final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
-    final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
+    final JsonRpcSuccessResponse expected =
+        new JsonRpcSuccessResponse(null, Collections.emptyList());
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -165,7 +167,8 @@ public class EthGetFilterChangesIntegrationTest {
     final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any transactions, so the list of pending transactions should be empty.
-    final JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
+    final JsonRpcSuccessResponse expected =
+        new JsonRpcSuccessResponse(null, Collections.emptyList());
     final JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
@@ -183,7 +186,7 @@ public class EthGetFilterChangesIntegrationTest {
     final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any blocks, so the list of new blocks should be empty.
-    JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
+    JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Collections.emptyList());
     JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
@@ -195,7 +198,7 @@ public class EthGetFilterChangesIntegrationTest {
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     // The queue should be flushed and return no results.
-    expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
+    expected = new JsonRpcSuccessResponse(null, Collections.emptyList());
     actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
@@ -213,7 +216,7 @@ public class EthGetFilterChangesIntegrationTest {
     final JsonRpcRequestContext request = requestWithParams(String.valueOf(filterId));
 
     // We haven't added any transactions, so the list of pending transactions should be empty.
-    JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
+    JsonRpcSuccessResponse expected = new JsonRpcSuccessResponse(null, Collections.emptyList());
     JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
@@ -226,7 +229,7 @@ public class EthGetFilterChangesIntegrationTest {
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     // The queue should be flushed and return no results.
-    expected = new JsonRpcSuccessResponse(null, Lists.emptyList());
+    expected = new JsonRpcSuccessResponse(null, Collections.emptyList());
     actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -69,6 +70,26 @@ public class TransitionContext implements MergeContext {
   @Override
   public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
     postMergeContext.observeNewIsPostMergeState(newMergeStateCallback);
+  }
+
+  @Override
+  public long addNewForkchoiceMessageListener(
+      final NewForkchoiceMessageListener newForkchoiceMessageListener) {
+    return postMergeContext.addNewForkchoiceMessageListener(newForkchoiceMessageListener);
+  }
+
+  @Override
+  public void removeNewForkchoiceMessageListener(final long subscriberId) {
+    postMergeContext.removeNewForkchoiceMessageListener(subscriberId);
+  }
+
+  @Override
+  public void fireNewForkchoiceMessageEvent(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    postMergeContext.fireNewForkchoiceMessageEvent(
+        headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
   }
 
   @Override

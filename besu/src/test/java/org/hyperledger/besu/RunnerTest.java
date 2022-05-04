@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -201,6 +202,7 @@ public final class RunnerTest {
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
     final GraphQLConfiguration aheadGraphQLConfiguration = graphQLConfiguration();
     final WebSocketConfiguration aheadWebSocketConfiguration = wsRpcConfiguration();
+    final JsonRpcIpcConfiguration aheadJsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
     final MetricsConfiguration aheadMetricsConfiguration = metricsConfiguration();
     final Path pidPath = temp.getRoot().toPath().resolve("pid");
     final RunnerBuilder runnerBuilder =
@@ -225,6 +227,7 @@ public final class RunnerTest {
             .jsonRpcConfiguration(aheadJsonRpcConfiguration)
             .graphQLConfiguration(aheadGraphQLConfiguration)
             .webSocketConfiguration(aheadWebSocketConfiguration)
+            .jsonRpcIpcConfiguration(aheadJsonRpcIpcConfiguration)
             .metricsConfiguration(aheadMetricsConfiguration)
             .dataDir(dbAhead)
             .pidPath(pidPath)
