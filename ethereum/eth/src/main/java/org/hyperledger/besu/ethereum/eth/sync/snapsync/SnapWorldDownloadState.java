@@ -189,13 +189,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     worldStateStorage.clearFlatDatabase();
     pendingTrieNodeRequests.clearInternalQueues();
     pendingCodeRequests.clearInternalQueue();
-    enqueueRequest(
-        createAccountTrieNodeDataRequest(
-            snapSyncState.getPivotBlockHeader().orElseThrow().getStateRoot(),
-            Bytes.EMPTY,
-            inconsistentAccounts));
-    requestComplete(true);
-    notifyTaskAvailable();
+    snapSyncState.setHealStatus(false);
+    checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
   }
 
   @Override
