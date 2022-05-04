@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -41,7 +42,8 @@ public class VoteTallyCacheTestBase {
   protected Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
     return new Block(
-        headerBuilder.buildHeader(), new BlockBody(Lists.emptyList(), Lists.emptyList()));
+        headerBuilder.buildHeader(),
+        new BlockBody(Collections.emptyList(), Collections.emptyList()));
   }
 
   protected MutableBlockchain blockChain;
@@ -67,8 +69,8 @@ public class VoteTallyCacheTestBase {
     block_1 = createEmptyBlock(1, genesisBlock.getHeader().getHash());
     block_2 = createEmptyBlock(2, block_1.getHeader().getHash());
 
-    blockChain.appendBlock(block_1, Lists.emptyList());
-    blockChain.appendBlock(block_2, Lists.emptyList());
+    blockChain.appendBlock(block_1, Collections.emptyList());
+    blockChain.appendBlock(block_2, Collections.emptyList());
 
     when(blockInterface.validatorsInBlock(any())).thenReturn(validators);
   }
