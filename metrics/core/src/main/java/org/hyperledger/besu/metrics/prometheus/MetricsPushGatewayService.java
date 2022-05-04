@@ -86,7 +86,7 @@ public class MetricsPushGatewayService implements MetricsService {
       try {
         pushGateway.delete(config.getPrometheusJob());
       } catch (final Exception e) {
-        LOG.error("Could not clean up results on the  Prometheus Push Gateway.", e);
+        LOG.error("Could not clean up results on the Prometheus Push Gateway.", e);
         // Do not complete exceptionally, the gateway may be down and failures
         // here cause the shutdown to loop.  Failure is acceptable.
       }
