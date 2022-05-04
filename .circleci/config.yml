@@ -22,7 +22,7 @@ executors:
 
   besu_arm64_executor_med: # 2cpu, 8G ram
     docker:
-      - image: circleci/openjdk:11.0.12-jdk-buster
+      - image: adoptopenjdk/openjdk11:aarch64-ubuntu-jre-11.0.12_7
     resource_class: arm.medium
     working_directory: ~/project
     environment:
@@ -468,7 +468,6 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
-            - acceptanceTestsQuorum
             - referenceTests
             - buildArm64Docker
           context:
