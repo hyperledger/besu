@@ -116,10 +116,10 @@ input BlockFilterCriteria {
   # Examples:
   #  - [] or null         matches any topic list
   #  - [[A]]              matches topic A in first position
-  #  - [[null], [B]]      matches any topic in first position, B in second position
+  #  - [[], [B]]      matches any topic in first position, B in second position
   #  - [[A], [B]]         matches topic A in first position, B in second position
   #  - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
-    topics: [[Bytes32]!]
+    topics: [[Bytes32!]!]
 }
 
 # Block is an Ethereum block.
@@ -239,10 +239,10 @@ input FilterCriteria {
   # Examples:
   #  - [] or null         matches any topic list
   #  - [[A]]              matches topic A in first position
-  #  - [[null], [B]]      matches any topic in first position, B in second position
+  #  - [[], [B]]      matches any topic in first position, B in second position
   #  - [[A], [B]]         matches topic A in first position, B in second position
   #  - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
-    topics: [[Bytes32]!]
+    topics: [[Bytes32!]!]
 }
 
 # SyncState contains the current synchronisation state of the client.

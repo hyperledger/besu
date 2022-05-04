@@ -78,6 +78,7 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_getCode");
     specs.add("eth_getCode_noCode");
 
+    specs.add("eth_getLogs_emptyListParam");
     specs.add("eth_getLogs_matchTopic");
     specs.add("eth_getLogs_matchAnyTopic");
     specs.add("eth_getLogs_range");

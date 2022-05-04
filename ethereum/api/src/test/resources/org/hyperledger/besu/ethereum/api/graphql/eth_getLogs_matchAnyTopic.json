@@ -1,5 +1,5 @@
 {
-  "request": "{  block(number: \"0x17\") { logs( filter: {  topics :  [[null]]}) { index  topics  data account{address} transaction{hash} }  } }",
+  "request": "{  block(number: \"0x17\") { logs( filter: {  topics :  []}) { index  topics  data account{address} transaction{hash} }  } }",
   "response": {
     "data" : {
       "block" : {
