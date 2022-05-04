@@ -32,4 +32,9 @@ public class SizeLimitedMap<K, V> extends LinkedHashMap<K, V> {
   protected boolean removeEldestEntry(final Map.Entry<K, V> ignored) {
     return size() > maxEntries;
   }
+
+  @Override
+  public Object clone() {
+    return super.clone();
+  }
 }
