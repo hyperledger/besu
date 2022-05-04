@@ -8,7 +8,7 @@
 
 ### Bug Fixes
 - Fix nullpointer on snapsync [#3773](https://github.com/hyperledger/besu/pull/3773)
-- Introduce RocksDbSegmentIdentifier to avoid changing the storage plug [#3755](https://github.com/hyperledger/besu/pull/3755)
+- Introduce RocksDbSegmentIdentifier to avoid changing the storage plugin [#3755](https://github.com/hyperledger/besu/pull/3755)
 
 ## Download Links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.0/besu-22.4.0.zip / SHA256 TBD
