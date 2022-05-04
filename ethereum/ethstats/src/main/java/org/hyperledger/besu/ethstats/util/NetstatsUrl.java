@@ -16,17 +16,17 @@ package org.hyperledger.besu.ethstats.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.primitives.Ints;
 import org.immutables.value.Value;
 import org.slf4j.LoggerFactory;
 
 @Value.Immutable
 public interface NetstatsUrl {
 
-  Pattern NETSTATS_URL_REGEX = Pattern.compile("([-\\w]+):([\\w]+)?@([-.\\w]+):([\\d]+)");
+  Pattern NETSTATS_URL_REGEX = Pattern.compile("([-\\w]+):([\\w]+)?@([-.\\w]+)(:([\\d]+))?");
 
   String getNodeName();
 
@@ -48,7 +48,7 @@ public interface NetstatsUrl {
             .nodeName(netStatsUrl.group(1))
             .secret(netStatsUrl.group(2))
             .host(netStatsUrl.group(3))
-            .port(Ints.tryParse(netStatsUrl.group(4)))
+            .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("3000")))
             .contact(contact)
             .build();
       }
@@ -57,6 +57,6 @@ public interface NetstatsUrl {
       LoggerFactory.getLogger(NetstatsUrl.class).error(e.getMessage());
     }
     throw new IllegalArgumentException(
-        "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port'.");
+        "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port' or 'nodename:secret@host'.");
   }
 }

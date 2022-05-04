@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,17 +35,20 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,6 +64,7 @@ public class FastSyncActionsTest {
   private final SynchronizerConfiguration.Builder syncConfigBuilder =
       new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).fastSyncPivotDistance(1000);
 
+  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
   private final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private SynchronizerConfiguration syncConfig = syncConfigBuilder.build();
@@ -90,7 +96,7 @@ public class FastSyncActionsTest {
             blockchainSetupUtil.getWorldArchive(),
             blockchainSetupUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
   }
 
   @Test
@@ -133,7 +139,7 @@ public class FastSyncActionsTest {
     final int minPeers = 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
 
@@ -148,7 +154,7 @@ public class FastSyncActionsTest {
     final int minPeers = 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 5500);
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(2000), 4000);
@@ -165,7 +171,7 @@ public class FastSyncActionsTest {
     final int minPeers = 2;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
 
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
@@ -190,7 +196,7 @@ public class FastSyncActionsTest {
     final int minPeers = 3;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
     final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -235,7 +241,7 @@ public class FastSyncActionsTest {
     final PeerValidator validator = mock(PeerValidator.class);
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
     final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -296,7 +302,7 @@ public class FastSyncActionsTest {
     final int peerCount = minPeers + 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
     final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -342,7 +348,7 @@ public class FastSyncActionsTest {
     final int minPeers = 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
     final long pivotDistance = syncConfig.getFastSyncPivotDistance();
 
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
@@ -393,7 +399,7 @@ public class FastSyncActionsTest {
   @Test
   public void downloadPivotBlockHeaderShouldRetrievePivotBlockHeader() {
     syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
-    fastSyncActions = createFastSyncActions(syncConfig);
+    fastSyncActions = createFastSyncActions(syncConfig, new PivotSelectorFromPeers(syncConfig));
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
@@ -406,16 +412,43 @@ public class FastSyncActionsTest {
     assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(1).get()));
   }
 
-  private FastSyncActions createFastSyncActions(final SynchronizerConfiguration syncConfig) {
+  @Test
+  public void downloadPivotBlockHeaderShouldRetrievePivotBlockHash() {
+    syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
+    GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
+    when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
+
+    final Optional<Hash> finalizedHash = blockchain.getBlockHashByNumber(2L);
+
+    fastSyncActions =
+        createFastSyncActions(
+            syncConfig,
+            new PivotSelectorFromFinalizedBlock(genesisConfig, () -> finalizedHash, () -> {}));
+
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
+    final CompletableFuture<FastSyncState> result =
+        fastSyncActions.downloadPivotBlockHeader(new FastSyncState(finalizedHash.get()));
+    assertThat(result).isNotCompleted();
+
+    final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
+    peer.respond(responder);
+
+    assertThat(result).isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(2).get()));
+  }
+
+  private FastSyncActions createFastSyncActions(
+      final SynchronizerConfiguration syncConfig, final PivotBlockSelector pivotBlockSelector) {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
     return new FastSyncActions(
         syncConfig,
+        worldStateStorage,
         protocolSchedule,
         protocolContext,
         ethContext,
-        new SyncState(blockchain, ethContext.getEthPeers()),
+        new SyncState(blockchain, ethContext.getEthPeers(), true),
+        pivotBlockSelector,
         new NoOpMetricsSystem());
   }
 }

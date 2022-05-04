@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
@@ -45,13 +45,13 @@ public class LogOperation extends AbstractOperation {
     final long dataLocation = clampedToLong(frame.popStackItem());
     final long numBytes = clampedToLong(frame.popStackItem());
 
-    final Gas cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
-    final Optional<Gas> optionalCost = Optional.of(cost);
+    final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     if (frame.isStatic()) {
       return new OperationResult(
-          optionalCost, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-    } else if (frame.getRemainingGas().compareTo(cost) < 0) {
-      return new OperationResult(optionalCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+    } else if (frame.getRemainingGas() < cost) {
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final Address address = frame.getRecipientAddress();
@@ -65,6 +65,6 @@ public class LogOperation extends AbstractOperation {
     }
 
     frame.addLog(new Log(address, data, builder.build()));
-    return new OperationResult(optionalCost, Optional.empty());
+    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

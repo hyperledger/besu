@@ -19,9 +19,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
 
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
@@ -34,8 +33,8 @@ public final class StorageRangeMessageTest {
   @Test
   public void roundTripTest() {
 
-    final ArrayDeque<Map<Bytes32, Bytes>> keys = new ArrayDeque<>();
-    final Map<Bytes32, Bytes> storage = new HashMap<>();
+    final ArrayDeque<TreeMap<Bytes32, Bytes>> keys = new ArrayDeque<>();
+    final TreeMap<Bytes32, Bytes> storage = new TreeMap<>();
     storage.put(Hash.wrap(Bytes32.leftPad(Bytes.of(1))), Bytes32.random());
     keys.add(storage);
 

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
@@ -32,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(FastImportBlocksStep.class);
+  private static final long TEN_SECONDS = TimeUnit.SECONDS.toMillis(10L);
+
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final ValidationPolicy headerValidationPolicy;
@@ -63,6 +67,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
             blockWithReceipts.getHeader().getNumber(),
             blockWithReceipts.getHash());
       }
+      traceLambda(LOG, "Imported block {}", blockWithReceipts.getBlock()::toLogString);
     }
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
@@ -75,7 +80,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     final long endTime = System.nanoTime();
 
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
-    if (accumulatedTime > 10 * 1000L) {
+    if (accumulatedTime > TEN_SECONDS) {
       LOG.info(
           "Completed importing chain segment {} to {} ({} blocks in {}ms), Peers: {}",
           logStartBlock.getAsLong(),

@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
@@ -29,90 +30,90 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class FrontierGasCalculator implements GasCalculator {
 
-  private static final Gas TX_DATA_ZERO_COST = Gas.of(4L);
+  private static final long TX_DATA_ZERO_COST = 4L;
 
-  private static final Gas TX_DATA_NON_ZERO_COST = Gas.of(68L);
+  private static final long TX_DATA_NON_ZERO_COST = 68L;
 
-  private static final Gas TX_BASE_COST = Gas.of(21_000L);
+  private static final long TX_BASE_COST = 21_000L;
 
-  private static final Gas TX_CREATE_EXTRA_COST = Gas.of(0L);
+  private static final long TX_CREATE_EXTRA_COST = 0L;
 
-  private static final Gas CODE_DEPOSIT_BYTE_COST = Gas.of(200L);
+  private static final long CODE_DEPOSIT_BYTE_COST = 200L;
 
-  private static final Gas ID_PRECOMPILED_BASE_GAS_COST = Gas.of(15L);
+  private static final long ID_PRECOMPILED_BASE_GAS_COST = 15L;
 
-  private static final Gas ID_PRECOMPILED_WORD_GAS_COST = Gas.of(3L);
+  private static final long ID_PRECOMPILED_WORD_GAS_COST = 3L;
 
-  private static final Gas ECREC_PRECOMPILED_GAS_COST = Gas.of(3_000L);
+  private static final long ECREC_PRECOMPILED_GAS_COST = 3_000L;
 
-  private static final Gas SHA256_PRECOMPILED_BASE_GAS_COST = Gas.of(60L);
+  private static final long SHA256_PRECOMPILED_BASE_GAS_COST = 60L;
 
-  private static final Gas SHA256_PRECOMPILED_WORD_GAS_COST = Gas.of(12L);
+  private static final long SHA256_PRECOMPILED_WORD_GAS_COST = 12L;
 
-  private static final Gas RIPEMD160_PRECOMPILED_WORD_GAS_COST = Gas.of(120L);
+  private static final long RIPEMD160_PRECOMPILED_WORD_GAS_COST = 120L;
 
-  private static final Gas RIPEMD160_PRECOMPILED_BASE_GAS_COST = Gas.of(600L);
+  private static final long RIPEMD160_PRECOMPILED_BASE_GAS_COST = 600L;
 
-  private static final Gas VERY_LOW_TIER_GAS_COST = Gas.of(3L);
+  private static final long VERY_LOW_TIER_GAS_COST = 3L;
 
-  private static final Gas LOW_TIER_GAS_COST = Gas.of(5L);
+  private static final long LOW_TIER_GAS_COST = 5L;
 
-  private static final Gas BASE_TIER_GAS_COST = Gas.of(2L);
+  private static final long BASE_TIER_GAS_COST = 2L;
 
-  private static final Gas MID_TIER_GAS_COST = Gas.of(8L);
+  private static final long MID_TIER_GAS_COST = 8L;
 
-  private static final Gas HIGH_TIER_GAS_COST = Gas.of(10L);
+  private static final long HIGH_TIER_GAS_COST = 10L;
 
-  private static final Gas CALL_OPERATION_BASE_GAS_COST = Gas.of(40L);
+  private static final long CALL_OPERATION_BASE_GAS_COST = 40L;
 
-  private static final Gas CALL_VALUE_TRANSFER_GAS_COST = Gas.of(9_000L);
+  private static final long CALL_VALUE_TRANSFER_GAS_COST = 9_000L;
 
-  private static final Gas ADDITIONAL_CALL_STIPEND = Gas.of(2_300L);
+  private static final long ADDITIONAL_CALL_STIPEND = 2_300L;
 
-  private static final Gas NEW_ACCOUNT_GAS_COST = Gas.of(25_000L);
+  private static final long NEW_ACCOUNT_GAS_COST = 25_000L;
 
-  private static final Gas CREATE_OPERATION_GAS_COST = Gas.of(32_000L);
+  private static final long CREATE_OPERATION_GAS_COST = 32_000L;
 
-  private static final Gas COPY_WORD_GAS_COST = Gas.of(3L);
+  private static final long COPY_WORD_GAS_COST = 3L;
 
-  private static final Gas MEMORY_WORD_GAS_COST = Gas.of(3L);
+  private static final long MEMORY_WORD_GAS_COST = 3L;
 
-  private static final Gas BALANCE_OPERATION_GAS_COST = Gas.of(20L);
+  private static final long BALANCE_OPERATION_GAS_COST = 20L;
 
-  private static final Gas BLOCKHASH_OPERATION_GAS_COST = Gas.of(20L);
+  private static final long BLOCKHASH_OPERATION_GAS_COST = 20L;
 
-  private static final Gas EXP_OPERATION_BASE_GAS_COST = Gas.of(10);
+  private static final long EXP_OPERATION_BASE_GAS_COST = 10L;
 
-  private static final Gas EXP_OPERATION_BYTE_GAS_COST = Gas.of(10);
+  private static final long EXP_OPERATION_BYTE_GAS_COST = 10L;
 
-  private static final Gas EXT_CODE_BASE_GAS_COST = Gas.of(20L);
+  private static final long EXT_CODE_BASE_GAS_COST = 20L;
 
-  private static final Gas JUMPDEST_OPERATION_GAS_COST = Gas.of(1);
+  private static final long JUMPDEST_OPERATION_GAS_COST = 1L;
 
-  private static final Gas LOG_OPERATION_BASE_GAS_COST = Gas.of(375L);
+  private static final long LOG_OPERATION_BASE_GAS_COST = 375L;
 
-  private static final Gas LOG_OPERATION_DATA_BYTE_GAS_COST = Gas.of(8L);
+  private static final long LOG_OPERATION_DATA_BYTE_GAS_COST = 8L;
 
-  private static final Gas LOG_OPERATION_TOPIC_GAS_COST = Gas.of(375L);
+  private static final long LOG_OPERATION_TOPIC_GAS_COST = 375L;
 
-  private static final Gas SELFDESTRUCT_OPERATION_GAS_COST = Gas.of(0);
+  private static final long SELFDESTRUCT_OPERATION_GAS_COST = 0L;
 
-  private static final Gas SHA3_OPERATION_BASE_GAS_COST = Gas.of(30L);
+  private static final long KECCAK256_OPERATION_BASE_GAS_COST = 30L;
 
-  static final Gas SHA3_OPERATION_WORD_GAS_COST = Gas.of(6L);
+  static final long KECCAK256_OPERATION_WORD_GAS_COST = 6L;
 
-  private static final Gas SLOAD_OPERATION_GAS_COST = Gas.of(50);
+  private static final long SLOAD_OPERATION_GAS_COST = 50L;
 
-  public static final Gas STORAGE_SET_GAS_COST = Gas.of(20_000L);
+  public static final long STORAGE_SET_GAS_COST = 20_000L;
 
-  public static final Gas STORAGE_RESET_GAS_COST = Gas.of(5_000L);
+  public static final long STORAGE_RESET_GAS_COST = 5_000L;
 
-  public static final Gas STORAGE_RESET_REFUND_AMOUNT = Gas.of(15_000L);
+  public static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
-  private static final Gas SELF_DESTRUCT_REFUND_AMOUNT = Gas.of(24_000L);
+  private static final long SELF_DESTRUCT_REFUND_AMOUNT = 24_000L;
 
   @Override
-  public Gas transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {
+  public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {
     int zeros = 0;
     for (int i = 0; i < payload.size(); i++) {
       if (payload.get(i) == 0) {
@@ -121,12 +122,9 @@ public class FrontierGasCalculator implements GasCalculator {
     }
     final int nonZeros = payload.size() - zeros;
 
-    Gas cost =
-        TX_BASE_COST
-            .plus(TX_DATA_ZERO_COST.times(zeros))
-            .plus(TX_DATA_NON_ZERO_COST.times(nonZeros));
+    final long cost = TX_BASE_COST + TX_DATA_ZERO_COST * zeros + TX_DATA_NON_ZERO_COST * nonZeros;
 
-    return isContractCreate ? cost.plus(txCreateExtraGasCost()) : cost;
+    return isContractCreate ? (cost + txCreateExtraGasCost()) : cost;
   }
 
   /**
@@ -134,68 +132,64 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the additional gas cost for contract creation transactions
    */
-  protected Gas txCreateExtraGasCost() {
+  protected long txCreateExtraGasCost() {
     return TX_CREATE_EXTRA_COST;
   }
 
   @Override
-  public Gas codeDepositGasCost(final int codeSize) {
-    return CODE_DEPOSIT_BYTE_COST.times(codeSize);
+  public long codeDepositGasCost(final int codeSize) {
+    return CODE_DEPOSIT_BYTE_COST * codeSize;
   }
 
   @Override
-  public Gas idPrecompiledContractGasCost(final Bytes input) {
-    return ID_PRECOMPILED_WORD_GAS_COST
-        .times(Words.numWords(input))
-        .plus(ID_PRECOMPILED_BASE_GAS_COST);
+  public long idPrecompiledContractGasCost(final Bytes input) {
+    return ID_PRECOMPILED_WORD_GAS_COST * Words.numWords(input) + ID_PRECOMPILED_BASE_GAS_COST;
   }
 
   @Override
-  public Gas getEcrecPrecompiledContractGasCost() {
+  public long getEcrecPrecompiledContractGasCost() {
     return ECREC_PRECOMPILED_GAS_COST;
   }
 
   @Override
-  public Gas sha256PrecompiledContractGasCost(final Bytes input) {
-    return SHA256_PRECOMPILED_WORD_GAS_COST
-        .times(Words.numWords(input))
-        .plus(SHA256_PRECOMPILED_BASE_GAS_COST);
+  public long sha256PrecompiledContractGasCost(final Bytes input) {
+    return SHA256_PRECOMPILED_WORD_GAS_COST * Words.numWords(input)
+        + SHA256_PRECOMPILED_BASE_GAS_COST;
   }
 
   @Override
-  public Gas ripemd160PrecompiledContractGasCost(final Bytes input) {
-    return RIPEMD160_PRECOMPILED_WORD_GAS_COST
-        .times(Words.numWords(input))
-        .plus(RIPEMD160_PRECOMPILED_BASE_GAS_COST);
+  public long ripemd160PrecompiledContractGasCost(final Bytes input) {
+    return RIPEMD160_PRECOMPILED_WORD_GAS_COST * Words.numWords(input)
+        + RIPEMD160_PRECOMPILED_BASE_GAS_COST;
   }
 
   @Override
-  public Gas getZeroTierGasCost() {
-    return Gas.ZERO;
+  public long getZeroTierGasCost() {
+    return 0L;
   }
 
   @Override
-  public Gas getVeryLowTierGasCost() {
+  public long getVeryLowTierGasCost() {
     return VERY_LOW_TIER_GAS_COST;
   }
 
   @Override
-  public Gas getLowTierGasCost() {
+  public long getLowTierGasCost() {
     return LOW_TIER_GAS_COST;
   }
 
   @Override
-  public Gas getBaseTierGasCost() {
+  public long getBaseTierGasCost() {
     return BASE_TIER_GAS_COST;
   }
 
   @Override
-  public Gas getMidTierGasCost() {
+  public long getMidTierGasCost() {
     return MID_TIER_GAS_COST;
   }
 
   @Override
-  public Gas getHighTierGasCost() {
+  public long getHighTierGasCost() {
     return HIGH_TIER_GAS_COST;
   }
 
@@ -205,7 +199,7 @@ public class FrontierGasCalculator implements GasCalculator {
    * @return the base gas cost to execute a call operation
    */
   @Override
-  public Gas callOperationBaseGasCost() {
+  public long callOperationBaseGasCost() {
     return CALL_OPERATION_BASE_GAS_COST;
   }
 
@@ -214,7 +208,7 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the gas cost to transfer funds in a call operation
    */
-  Gas callValueTransferGasCost() {
+  long callValueTransferGasCost() {
     return CALL_VALUE_TRANSFER_GAS_COST;
   }
 
@@ -223,14 +217,14 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the gas cost to create a new account
    */
-  Gas newAccountGasCost() {
+  long newAccountGasCost() {
     return NEW_ACCOUNT_GAS_COST;
   }
 
   @Override
-  public Gas callOperationGasCost(
+  public long callOperationGasCost(
       final MessageFrame frame,
-      final Gas stipend,
+      final long stipend,
       final long inputDataOffset,
       final long inputDataLength,
       final long outputDataOffset,
@@ -238,20 +232,21 @@ public class FrontierGasCalculator implements GasCalculator {
       final Wei transferValue,
       final Account recipient,
       final Address to) {
-    final Gas inputDataMemoryExpansionCost =
+    final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
-    final Gas outputDataMemoryExpansionCost =
+    final long outputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, outputDataOffset, outputDataLength);
-    final Gas memoryExpansionCost = inputDataMemoryExpansionCost.max(outputDataMemoryExpansionCost);
+    final long memoryExpansionCost =
+        Math.max(inputDataMemoryExpansionCost, outputDataMemoryExpansionCost);
 
-    Gas cost = callOperationBaseGasCost().plus(stipend).plus(memoryExpansionCost);
+    long cost = clampedAdd(clampedAdd(callOperationBaseGasCost(), stipend), memoryExpansionCost);
 
     if (!transferValue.isZero()) {
-      cost = cost.plus(callValueTransferGasCost());
+      cost = clampedAdd(cost, callValueTransferGasCost());
     }
 
     if (recipient == null) {
-      cost = cost.plus(newAccountGasCost());
+      cost = clampedAdd(cost, newAccountGasCost());
     }
 
     return cost;
@@ -263,58 +258,60 @@ public class FrontierGasCalculator implements GasCalculator {
    * @return the additional call stipend for calls with value transfers
    */
   @Override
-  public Gas getAdditionalCallStipend() {
+  public long getAdditionalCallStipend() {
     return ADDITIONAL_CALL_STIPEND;
   }
 
   @Override
-  public Gas gasAvailableForChildCall(
-      final MessageFrame frame, final Gas stipend, final boolean transfersValue) {
+  public long gasAvailableForChildCall(
+      final MessageFrame frame, final long stipend, final boolean transfersValue) {
     if (transfersValue) {
-      return stipend.plus(getAdditionalCallStipend());
+      return stipend + getAdditionalCallStipend();
     } else {
       return stipend;
     }
   }
 
   @Override
-  public Gas createOperationGasCost(final MessageFrame frame) {
+  public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeOffset = clampedToLong(frame.getStackItem(1));
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
 
-    final Gas memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
-    return CREATE_OPERATION_GAS_COST.plus(memoryGasCost);
+    final long memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
+    return clampedAdd(CREATE_OPERATION_GAS_COST, memoryGasCost);
   }
 
   @Override
-  public Gas gasAvailableForChildCreate(final Gas stipend) {
+  public long gasAvailableForChildCreate(final long stipend) {
     return stipend;
   }
 
   @Override
-  public Gas dataCopyOperationGasCost(
+  public long dataCopyOperationGasCost(
       final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
         frame, VERY_LOW_TIER_GAS_COST, COPY_WORD_GAS_COST, offset, length);
   }
 
   @Override
-  public Gas memoryExpansionGasCost(
+  public long memoryExpansionGasCost(
       final MessageFrame frame, final long offset, final long length) {
 
-    final Gas pre = memoryCost(frame.memoryWordSize());
-    final Gas post = memoryCost(frame.calculateMemoryExpansion(offset, length));
-
-    return post.minus(pre);
+    final long pre = memoryCost(frame.memoryWordSize());
+    final long post = memoryCost(frame.calculateMemoryExpansion(offset, length));
+    if (post == Long.MAX_VALUE) {
+      return Long.MAX_VALUE;
+    }
+    return post - pre;
   }
 
   @Override
-  public Gas getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost() {
     return BALANCE_OPERATION_GAS_COST;
   }
 
   @Override
-  public Gas getBlockHashOperationGasCost() {
+  public long getBlockHashOperationGasCost() {
     return BLOCKHASH_OPERATION_GAS_COST;
   }
 
@@ -323,13 +320,13 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the gas cost for a byte in the exponent operation
    */
-  protected Gas expOperationByteGasCost() {
+  protected long expOperationByteGasCost() {
     return EXP_OPERATION_BYTE_GAS_COST;
   }
 
   @Override
-  public Gas expOperationGasCost(final int numBytes) {
-    return expOperationByteGasCost().times(Gas.of(numBytes)).plus(EXP_OPERATION_BASE_GAS_COST);
+  public long expOperationGasCost(final int numBytes) {
+    return expOperationByteGasCost() * numBytes + EXP_OPERATION_BASE_GAS_COST;
   }
 
   /**
@@ -337,82 +334,89 @@ public class FrontierGasCalculator implements GasCalculator {
    *
    * @return the base gas cost for external code accesses
    */
-  protected Gas extCodeBaseGasCost() {
+  protected long extCodeBaseGasCost() {
     return EXT_CODE_BASE_GAS_COST;
   }
 
   @Override
-  public Gas extCodeCopyOperationGasCost(
+  public long extCodeCopyOperationGasCost(
       final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
         frame, extCodeBaseGasCost(), COPY_WORD_GAS_COST, offset, length);
   }
 
   @Override
-  public Gas extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost() {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }
 
   @Override
-  public Gas getExtCodeSizeOperationGasCost() {
+  public long getExtCodeSizeOperationGasCost() {
     return extCodeBaseGasCost();
   }
 
   @Override
-  public Gas getJumpDestOperationGasCost() {
+  public long getJumpDestOperationGasCost() {
     return JUMPDEST_OPERATION_GAS_COST;
   }
 
   @Override
-  public Gas logOperationGasCost(
+  public long logOperationGasCost(
       final MessageFrame frame, final long dataOffset, final long dataLength, final int numTopics) {
-    return Gas.ZERO
-        .plus(LOG_OPERATION_BASE_GAS_COST)
-        .plus(LOG_OPERATION_DATA_BYTE_GAS_COST.times(Gas.of(dataLength)))
-        .plus(LOG_OPERATION_TOPIC_GAS_COST.times(numTopics))
-        .plus(memoryExpansionGasCost(frame, dataOffset, dataLength));
+    return clampedAdd(
+        LOG_OPERATION_BASE_GAS_COST,
+        clampedAdd(
+            clampedMultiply(LOG_OPERATION_DATA_BYTE_GAS_COST, dataLength),
+            clampedAdd(
+                clampedMultiply(LOG_OPERATION_TOPIC_GAS_COST, numTopics),
+                memoryExpansionGasCost(frame, dataOffset, dataLength))));
   }
 
   @Override
-  public Gas mLoadOperationGasCost(final MessageFrame frame, final long offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, 32));
+  public long mLoadOperationGasCost(final MessageFrame frame, final long offset) {
+    return clampedAdd(VERY_LOW_TIER_GAS_COST, memoryExpansionGasCost(frame, offset, 32));
   }
 
   @Override
-  public Gas mStoreOperationGasCost(final MessageFrame frame, final long offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, 32));
+  public long mStoreOperationGasCost(final MessageFrame frame, final long offset) {
+    return clampedAdd(VERY_LOW_TIER_GAS_COST, memoryExpansionGasCost(frame, offset, 32));
   }
 
   @Override
-  public Gas mStore8OperationGasCost(final MessageFrame frame, final long offset) {
-    return VERY_LOW_TIER_GAS_COST.plus(memoryExpansionGasCost(frame, offset, 1));
+  public long mStore8OperationGasCost(final MessageFrame frame, final long offset) {
+    return clampedAdd(VERY_LOW_TIER_GAS_COST, memoryExpansionGasCost(frame, offset, 1));
   }
 
   @Override
-  public Gas selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
   @Override
-  public Gas sha3OperationGasCost(final MessageFrame frame, final long offset, final long length) {
+  public long keccak256OperationGasCost(
+      final MessageFrame frame, final long offset, final long length) {
     return copyWordsToMemoryGasCost(
-        frame, SHA3_OPERATION_BASE_GAS_COST, SHA3_OPERATION_WORD_GAS_COST, offset, length);
+        frame,
+        KECCAK256_OPERATION_BASE_GAS_COST,
+        KECCAK256_OPERATION_WORD_GAS_COST,
+        offset,
+        length);
   }
 
   @Override
-  public Gas create2OperationGasCost(final MessageFrame frame) {
+  public long create2OperationGasCost(final MessageFrame frame) {
     throw new UnsupportedOperationException(
         "CREATE2 operation not supported by " + getClass().getSimpleName());
   }
 
   @Override
-  public Gas getSloadOperationGasCost() {
+  public long getSloadOperationGasCost() {
     return SLOAD_OPERATION_GAS_COST;
   }
 
   @Override
-  public Gas calculateStorageCost(
+  public long calculateStorageCost(
       final Account account, final UInt256 key, final UInt256 newValue) {
     return !newValue.isZero() && account.getStorageValue(key).isZero()
         ? STORAGE_SET_GAS_COST
@@ -420,41 +424,44 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public Gas calculateStorageRefundAmount(
+  public long calculateStorageRefundAmount(
       final Account account, final UInt256 key, final UInt256 newValue) {
     return newValue.isZero() && !account.getStorageValue(key).isZero()
         ? STORAGE_RESET_REFUND_AMOUNT
-        : Gas.ZERO;
+        : 0L;
   }
 
   @Override
-  public Gas getSelfDestructRefundAmount() {
+  public long getSelfDestructRefundAmount() {
     return SELF_DESTRUCT_REFUND_AMOUNT;
   }
 
-  protected Gas copyWordsToMemoryGasCost(
+  protected long copyWordsToMemoryGasCost(
       final MessageFrame frame,
-      final Gas baseGasCost,
-      final Gas wordGasCost,
+      final long baseGasCost,
+      final long wordGasCost,
       final long offset,
       final long length) {
     final long numWords = length / 32 + (length % 32 == 0 ? 0 : 1);
 
-    final Gas copyCost = wordGasCost.times(Gas.of(numWords)).plus(baseGasCost);
-    final Gas memoryCost = memoryExpansionGasCost(frame, offset, length);
+    final long copyCost = clampedAdd(clampedMultiply(wordGasCost, numWords), baseGasCost);
+    final long memoryCost = memoryExpansionGasCost(frame, offset, length);
 
-    return copyCost.plus(memoryCost);
+    return clampedAdd(copyCost, memoryCost);
   }
 
-  private static Gas memoryCost(final long length) {
-    final Gas len = Gas.of(length);
-    final Gas base = len.times(len).dividedBy(512);
+  static long memoryCost(final long length) {
+    final long lengthSquare = clampedMultiply(length, length);
+    final long base =
+        (lengthSquare == Long.MAX_VALUE)
+            ? clampedMultiply(length / 512, length)
+            : lengthSquare / 512;
 
-    return MEMORY_WORD_GAS_COST.times(len).plus(base);
+    return clampedAdd(clampedMultiply(MEMORY_WORD_GAS_COST, length), base);
   }
 
   @Override
-  public Gas getMaximumTransactionCost(final int size) {
-    return TX_BASE_COST.plus(TX_DATA_NON_ZERO_COST.times(size));
+  public long getMaximumTransactionCost(final int size) {
+    return TX_BASE_COST + TX_DATA_NON_ZERO_COST * size;
   }
 }

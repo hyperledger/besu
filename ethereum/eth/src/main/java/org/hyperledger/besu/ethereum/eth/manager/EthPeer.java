@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -54,6 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -61,7 +63,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthPeer {
+public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
@@ -395,7 +397,14 @@ public class EthPeer {
     return reputation.timeoutCounts();
   }
 
+  public PeerReputation getReputation() {
+    return reputation;
+  }
+
   void handleDisconnect() {
+    traceLambda(
+        LOG, "handleDisconnect - peer... {}, {}", this::getShortNodeId, this::getReputation);
+
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));
   }
@@ -522,7 +531,28 @@ public class EthPeer {
 
   @Override
   public String toString() {
-    return String.format("Peer %s...", nodeId().toString().substring(0, 20));
+    return String.format(
+        "Peer %s... %s, validated? %s, disconnected? %s",
+        getShortNodeId(), reputation, isFullyValidated(), isDisconnected());
+  }
+
+  @Nonnull
+  public String getShortNodeId() {
+    return nodeId().toString().substring(0, 20);
+  }
+
+  @Override
+  public int compareTo(final @Nonnull EthPeer ethPeer) {
+    int repCompare = this.reputation.compareTo(ethPeer.reputation);
+    if (repCompare != 0) return repCompare;
+
+    int headStateCompare =
+        Long.compare(
+            this.chainHeadState.getBestBlock().getNumber(),
+            ethPeer.chainHeadState.getBestBlock().getNumber());
+    if (headStateCompare != 0) return headStateCompare;
+
+    return getConnection().getPeerInfo().compareTo(ethPeer.getConnection().getPeerInfo());
   }
 
   @FunctionalInterface

@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
@@ -39,7 +38,7 @@ import org.mockito.ArgumentCaptor;
 @RunWith(Parameterized.class)
 public class BLS12PairingPrecompiledContractTest {
 
-  BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
+  final BLS12PairingPrecompiledContract contract = new BLS12PairingPrecompiledContract();
 
   private final MessageFrame messageFrame = mock(MessageFrame.class);
 
@@ -94,7 +93,7 @@ public class BLS12PairingPrecompiledContractTest {
       assertThat(expectedComputation.size()).isZero();
     } else {
       assertThat(actualComputation).isEqualTo(expectedComputation);
-      assertThat(contract.gasRequirement(input)).isEqualTo(Gas.of(Long.parseLong(expectedGasUsed)));
+      assertThat(contract.gasRequirement(input)).isEqualTo(Long.parseLong(expectedGasUsed));
     }
   }
 }

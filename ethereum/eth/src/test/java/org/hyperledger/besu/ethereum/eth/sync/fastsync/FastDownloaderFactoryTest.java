@@ -24,8 +24,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -57,14 +59,16 @@ public class FastDownloaderFactoryTest {
   @Mock private SyncState syncState;
   @Mock private Clock clock;
   @Mock private Path dataDirectory;
+  @Mock private PivotBlockSelector pivotBlockSelector;
 
   @SuppressWarnings("unchecked")
   @Test(expected = IllegalStateException.class)
-  public void shouldThrowIfSyncModeChangedWhileFastSyncIncomplete() throws NoSuchFieldException {
+  public void shouldThrowIfSyncModeChangedWhileFastSyncIncomplete() {
     initDataDirectory(true);
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
     FastDownloaderFactory.create(
+        pivotBlockSelector,
         syncConfig,
         dataDirectory,
         protocolSchedule,
@@ -78,12 +82,13 @@ public class FastDownloaderFactoryTest {
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
-  public void shouldNotThrowIfSyncModeChangedWhileFastSyncComplete() throws NoSuchFieldException {
+  public void shouldNotThrowIfSyncModeChangedWhileFastSyncComplete() {
     initDataDirectory(false);
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
     final Optional result =
         FastDownloaderFactory.create(
+            pivotBlockSelector,
             syncConfig,
             dataDirectory,
             protocolSchedule,
@@ -107,6 +112,7 @@ public class FastDownloaderFactoryTest {
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
     FastDownloaderFactory.create(
+        pivotBlockSelector,
         syncConfig,
         dataDirectory,
         protocolSchedule,
@@ -136,6 +142,7 @@ public class FastDownloaderFactoryTest {
     assertThat(Files.exists(stateQueueDir)).isTrue();
 
     FastDownloaderFactory.create(
+        pivotBlockSelector,
         syncConfig,
         dataDirectory,
         protocolSchedule,
@@ -167,6 +174,7 @@ public class FastDownloaderFactoryTest {
     Assertions.assertThatThrownBy(
             () ->
                 FastDownloaderFactory.create(
+                    pivotBlockSelector,
                     syncConfig,
                     dataDirectory,
                     protocolSchedule,

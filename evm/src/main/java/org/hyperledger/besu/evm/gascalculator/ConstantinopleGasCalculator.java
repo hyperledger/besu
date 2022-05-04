@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.Gas;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -23,28 +26,28 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
-  private static final Gas SSTORE_NO_OP_COST = Gas.of(200);
-  private static final Gas SSTORE_ADDITIONAL_WRITE_COST = Gas.of(200);
-  private static final Gas SSTORE_FIRST_DIRTY_NEW_STORAGE_COST = Gas.of(20_000);
-  private static final Gas SSTORE_FIRST_DIRTY_EXISTING_STORAGE_COST = Gas.of(5_000);
-  private static final Gas STORAGE_RESET_REFUND_AMOUNT = Gas.of(15_000);
-  private static final Gas NEGATIVE_STORAGE_RESET_REFUND_AMOUNT = Gas.of(-15_000);
-  private static final Gas SSTORE_DIRTY_RETURN_TO_UNUSED_REFUND_AMOUNT = Gas.of(19800);
-  private static final Gas SSTORE_DIRTY_RETURN_TO_ORIGINAL_VALUE_REFUND_AMOUNT = Gas.of(4800);
+  private static final long SSTORE_NO_OP_COST = 200L;
+  private static final long SSTORE_ADDITIONAL_WRITE_COST = 200L;
+  private static final long SSTORE_FIRST_DIRTY_NEW_STORAGE_COST = 20_000L;
+  private static final long SSTORE_FIRST_DIRTY_EXISTING_STORAGE_COST = 5_000L;
+  private static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
+  private static final long NEGATIVE_STORAGE_RESET_REFUND_AMOUNT = -STORAGE_RESET_REFUND_AMOUNT;
+  private static final long SSTORE_DIRTY_RETURN_TO_UNUSED_REFUND_AMOUNT = 19800L;
+  private static final long SSTORE_DIRTY_RETURN_TO_ORIGINAL_VALUE_REFUND_AMOUNT = 4800L;
 
-  private static final Gas EXTCODE_HASH_COST = Gas.of(400);
+  private static final long EXTCODE_HASH_COST = 400L;
 
   @Override
-  public Gas create2OperationGasCost(final MessageFrame frame) {
-    final UInt256 initCodeLength = UInt256.fromBytes(frame.getStackItem(2));
-    final UInt256 numWords = UInt256.fromBytes(initCodeLength.divideCeil(Bytes32.SIZE));
-    final Gas initCodeHashCost = SHA3_OPERATION_WORD_GAS_COST.times(Gas.of(numWords));
-    return createOperationGasCost(frame).plus(initCodeHashCost);
+  public long create2OperationGasCost(final MessageFrame frame) {
+    final long initCodeLength = clampedToLong(frame.getStackItem(2));
+    final long numWords = clampedAdd(initCodeLength, 31) / Bytes32.SIZE;
+    final long initCodeHashCost = clampedMultiply(KECCAK256_OPERATION_WORD_GAS_COST, numWords);
+    return clampedAdd(createOperationGasCost(frame), initCodeHashCost);
   }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1283
-  public Gas calculateStorageCost(
+  public long calculateStorageCost(
       final Account account, final UInt256 key, final UInt256 newValue) {
 
     final UInt256 currentValue = account.getStorageValue(key);
@@ -64,24 +67,24 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1283
-  public Gas calculateStorageRefundAmount(
+  public long calculateStorageRefundAmount(
       final Account account, final UInt256 key, final UInt256 newValue) {
 
     final UInt256 currentValue = account.getStorageValue(key);
     if (currentValue.equals(newValue)) {
-      return Gas.ZERO;
+      return 0L;
     } else {
       final UInt256 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         if (originalValue.isZero()) {
-          return Gas.ZERO;
+          return 0L;
         } else if (newValue.isZero()) {
           return STORAGE_RESET_REFUND_AMOUNT;
         } else {
-          return Gas.ZERO;
+          return 0L;
         }
       } else {
-        Gas refund = Gas.ZERO;
+        long refund = 0L;
         if (!originalValue.isZero()) {
           if (currentValue.isZero()) {
             refund = NEGATIVE_STORAGE_RESET_REFUND_AMOUNT;
@@ -92,8 +95,8 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
         if (originalValue.equals(newValue)) {
           refund =
-              refund.plus(
-                  originalValue.isZero()
+              refund
+                  + (originalValue.isZero()
                       ? SSTORE_DIRTY_RETURN_TO_UNUSED_REFUND_AMOUNT
                       : SSTORE_DIRTY_RETURN_TO_ORIGINAL_VALUE_REFUND_AMOUNT);
         }
@@ -103,7 +106,7 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   }
 
   @Override
-  public Gas extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost() {
     return EXTCODE_HASH_COST;
   }
 }

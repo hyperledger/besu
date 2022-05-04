@@ -64,6 +64,7 @@ import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
+import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
 import org.hyperledger.besu.evm.operation.LtOperation;
 import org.hyperledger.besu.evm.operation.MLoadOperation;
@@ -95,7 +96,6 @@ import org.hyperledger.besu.evm.operation.SStoreOperation;
 import org.hyperledger.besu.evm.operation.SarOperation;
 import org.hyperledger.besu.evm.operation.SelfBalanceOperation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
-import org.hyperledger.besu.evm.operation.Sha3Operation;
 import org.hyperledger.besu.evm.operation.ShlOperation;
 import org.hyperledger.besu.evm.operation.ShrOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
@@ -155,7 +155,7 @@ public abstract class MainnetEVMs {
     registry.put(new XorOperation(gasCalculator));
     registry.put(new NotOperation(gasCalculator));
     registry.put(new ByteOperation(gasCalculator));
-    registry.put(new Sha3Operation(gasCalculator));
+    registry.put(new Keccak256Operation(gasCalculator));
     registry.put(new AddressOperation(gasCalculator));
     registry.put(new BalanceOperation(gasCalculator));
     registry.put(new OriginOperation(gasCalculator));
@@ -369,26 +369,25 @@ public abstract class MainnetEVMs {
     registry.put(new BaseFeeOperation(gasCalculator));
   }
 
-  public static EVM preMergeFork(
-      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return preMergeFork(new LondonGasCalculator(), chainId, evmConfiguration);
+  public static EVM paris(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return paris(new LondonGasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM preMergeFork(
+  public static EVM paris(
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return new EVM(preMergeForkOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(parisOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
-  public static OperationRegistry preMergeForkOperations(
+  public static OperationRegistry parisOperations(
       final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerPreMergeForkOperations(operationRegistry, gasCalculator, chainId);
+    registerParisOperations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
-  public static void registerPreMergeForkOperations(
+  public static void registerParisOperations(
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {

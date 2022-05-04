@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.gascalculator;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
@@ -27,13 +26,13 @@ import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
 import org.hyperledger.besu.evm.operation.MLoadOperation;
 import org.hyperledger.besu.evm.operation.MStore8Operation;
 import org.hyperledger.besu.evm.operation.MStoreOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
-import org.hyperledger.besu.evm.operation.Sha3Operation;
 import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
@@ -48,8 +47,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 /**
  * Provides various gas cost lookups and calculations used during block processing.
  *
- * <p>The {@code GasCalculator} is meant to encapsulate all {@link Gas}-related calculations except
- * for the following "safe" operations:
+ * <p>The {@code GasCalculator} is meant to encapsulate all Gas-related calculations except for the
+ * following "safe" operations:
  *
  * <ul>
  *   <li><b>Operation Gas Deductions:</b> Deducting the operation's gas cost from the VM's current
@@ -66,14 +65,14 @@ public interface GasCalculator {
    * @param input The input to the ID precompiled contract
    * @return the gas cost to execute the ID precompiled contract
    */
-  Gas idPrecompiledContractGasCost(Bytes input);
+  long idPrecompiledContractGasCost(Bytes input);
 
   /**
    * Returns the gas cost to execute the {@link ECRECPrecompiledContract}.
    *
    * @return the gas cost to execute the ECREC precompiled contract
    */
-  Gas getEcrecPrecompiledContractGasCost();
+  long getEcrecPrecompiledContractGasCost();
 
   /**
    * Returns the gas cost to execute the {@link SHA256PrecompiledContract}.
@@ -81,7 +80,7 @@ public interface GasCalculator {
    * @param input The input to the SHA256 precompiled contract
    * @return the gas cost to execute the SHA256 precompiled contract
    */
-  Gas sha256PrecompiledContractGasCost(Bytes input);
+  long sha256PrecompiledContractGasCost(Bytes input);
 
   /**
    * Returns the gas cost to execute the {@link RIPEMD160PrecompiledContract}.
@@ -89,7 +88,7 @@ public interface GasCalculator {
    * @param input The input to the RIPEMD160 precompiled contract
    * @return the gas cost to execute the RIPEMD160 precompiled contract
    */
-  Gas ripemd160PrecompiledContractGasCost(Bytes input);
+  long ripemd160PrecompiledContractGasCost(Bytes input);
 
   // Gas Tier Lookups
 
@@ -98,42 +97,42 @@ public interface GasCalculator {
    *
    * @return the gas cost for the zero gas tier
    */
-  Gas getZeroTierGasCost();
+  long getZeroTierGasCost();
 
   /**
    * Returns the gas cost for the very low gas tier.
    *
    * @return the gas cost for the very low gas tier
    */
-  Gas getVeryLowTierGasCost();
+  long getVeryLowTierGasCost();
 
   /**
    * Returns the gas cost for the low gas tier.
    *
    * @return the gas cost for the low gas tier
    */
-  Gas getLowTierGasCost();
+  long getLowTierGasCost();
 
   /**
    * Returns the gas cost for the base gas tier.
    *
    * @return the gas cost for the base gas tier
    */
-  Gas getBaseTierGasCost();
+  long getBaseTierGasCost();
 
   /**
    * Returns the gas cost for the mid gas tier.
    *
    * @return the gas cost for the mid gas tier
    */
-  Gas getMidTierGasCost();
+  long getMidTierGasCost();
 
   /**
    * Returns the gas cost for the high gas tier.
    *
    * @return the gas cost for the high gas tier
    */
-  Gas getHighTierGasCost();
+  long getHighTierGasCost();
 
   // Call/Create Operation Calculations
 
@@ -142,7 +141,7 @@ public interface GasCalculator {
    *
    * @return the base gas cost to execute a call operation
    */
-  Gas callOperationBaseGasCost();
+  long callOperationBaseGasCost();
 
   /**
    * Returns the gas cost for one of the various CALL operations.
@@ -158,9 +157,9 @@ public interface GasCalculator {
    * @param contract The address of the recipient (never null)
    * @return The gas cost for the CALL operation
    */
-  Gas callOperationGasCost(
+  long callOperationGasCost(
       MessageFrame frame,
-      Gas stipend,
+      long stipend,
       long inputDataOffset,
       long inputDataLength,
       long outputDataOffset,
@@ -169,17 +168,17 @@ public interface GasCalculator {
       Account recipient,
       Address contract);
 
-  Gas getAdditionalCallStipend();
+  long getAdditionalCallStipend();
 
   /**
    * Returns the amount of gas parent will provide its child CALL.
    *
    * @param frame The current frame
    * @param stipend The gas stipend being provided by the CALL caller
-   * @param transfersValue Whether or not the call transfers any wei
+   * @param transfersValue Whether call transfers any wei
    * @return the amount of gas parent will provide its child CALL
    */
-  Gas gasAvailableForChildCall(MessageFrame frame, Gas stipend, boolean transfersValue);
+  long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
 
   /**
    * Returns the amount of gas the CREATE operation will consume.
@@ -187,7 +186,7 @@ public interface GasCalculator {
    * @param frame The current frame
    * @return the amount of gas the CREATE operation will consume
    */
-  Gas createOperationGasCost(MessageFrame frame);
+  long createOperationGasCost(MessageFrame frame);
 
   /**
    * Returns the amount of gas the CREATE2 operation will consume.
@@ -195,7 +194,7 @@ public interface GasCalculator {
    * @param frame The current frame
    * @return the amount of gas the CREATE2 operation will consume
    */
-  Gas create2OperationGasCost(MessageFrame frame);
+  long create2OperationGasCost(MessageFrame frame);
 
   /**
    * Returns the amount of gas parent will provide its child CREATE.
@@ -203,7 +202,7 @@ public interface GasCalculator {
    * @param stipend The gas stipend being provided by the CREATE caller
    * @return the amount of gas parent will provide its child CREATE
    */
-  Gas gasAvailableForChildCreate(Gas stipend);
+  long gasAvailableForChildCreate(long stipend);
 
   // Re-used Operation Calculations
 
@@ -215,7 +214,7 @@ public interface GasCalculator {
    * @param length The length of the data being copied into memory
    * @return the amount of gas consumed by the data copy operation
    */
-  Gas dataCopyOperationGasCost(MessageFrame frame, long offset, long length);
+  long dataCopyOperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost of expanding memory for the specified access.
@@ -225,7 +224,7 @@ public interface GasCalculator {
    * @param length the length of the memory access
    * @return The gas required to expand memory for the specified access
    */
-  Gas memoryExpansionGasCost(MessageFrame frame, long offset, long length);
+  long memoryExpansionGasCost(MessageFrame frame, long offset, long length);
 
   // Specific Non-call Operation Calculations
 
@@ -234,14 +233,14 @@ public interface GasCalculator {
    *
    * @return the cost for executing the balance operation
    */
-  Gas getBalanceOperationGasCost();
+  long getBalanceOperationGasCost();
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
    *
    * @return the cost for executing the block hash operation
    */
-  Gas getBlockHashOperationGasCost();
+  long getBlockHashOperationGasCost();
 
   /**
    * Returns the cost for executing a {@link ExpOperation}.
@@ -249,7 +248,7 @@ public interface GasCalculator {
    * @param numBytes The number of bytes for the exponent parameter
    * @return the cost for executing the exp operation
    */
-  Gas expOperationGasCost(int numBytes);
+  long expOperationGasCost(int numBytes);
 
   /**
    * Returns the cost for executing a {@link ExtCodeCopyOperation}.
@@ -259,28 +258,28 @@ public interface GasCalculator {
    * @param length The length of the code being copied into memory
    * @return the cost for executing the external code size operation
    */
-  Gas extCodeCopyOperationGasCost(MessageFrame frame, long offset, long length);
+  long extCodeCopyOperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost for executing a {@link ExtCodeHashOperation}.
    *
    * @return the cost for executing the external code hash operation
    */
-  Gas extCodeHashOperationGasCost();
+  long extCodeHashOperationGasCost();
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
    *
    * @return the cost for executing the external code size operation
    */
-  Gas getExtCodeSizeOperationGasCost();
+  long getExtCodeSizeOperationGasCost();
 
   /**
    * Returns the cost for executing a {@link JumpDestOperation}.
    *
    * @return the cost for executing the jump destination operation
    */
-  Gas getJumpDestOperationGasCost();
+  long getJumpDestOperationGasCost();
 
   /**
    * Returns the cost for executing a {@link LogOperation}.
@@ -291,7 +290,7 @@ public interface GasCalculator {
    * @param numTopics The number of topics in the log
    * @return the cost for executing the external code size operation
    */
-  Gas logOperationGasCost(MessageFrame frame, long dataOffset, long dataLength, int numTopics);
+  long logOperationGasCost(MessageFrame frame, long dataOffset, long dataLength, int numTopics);
 
   /**
    * Returns the cost for executing a {@link MLoadOperation}.
@@ -300,7 +299,7 @@ public interface GasCalculator {
    * @param offset The offset in memory where the access takes place
    * @return the cost for executing the memory load operation
    */
-  Gas mLoadOperationGasCost(MessageFrame frame, long offset);
+  long mLoadOperationGasCost(MessageFrame frame, long offset);
 
   /**
    * Returns the cost for executing a {@link MStoreOperation}.
@@ -309,7 +308,7 @@ public interface GasCalculator {
    * @param offset The offset in memory where the access takes place
    * @return the cost for executing the memory store operation
    */
-  Gas mStoreOperationGasCost(MessageFrame frame, long offset);
+  long mStoreOperationGasCost(MessageFrame frame, long offset);
 
   /**
    * Returns the cost for executing a {@link MStore8Operation}.
@@ -318,7 +317,7 @@ public interface GasCalculator {
    * @param offset The offset in memory where the access takes place
    * @return the cost for executing the memory byte store operation
    */
-  Gas mStore8OperationGasCost(MessageFrame frame, long offset);
+  long mStore8OperationGasCost(MessageFrame frame, long offset);
 
   /**
    * Returns the cost for executing a {@link SelfDestructOperation}.
@@ -327,24 +326,24 @@ public interface GasCalculator {
    * @param inheritance The amount the recipient will receive
    * @return the cost for executing the self destruct operation
    */
-  Gas selfDestructOperationGasCost(Account recipient, Wei inheritance);
+  long selfDestructOperationGasCost(Account recipient, Wei inheritance);
 
   /**
-   * Returns the cost for executing a {@link Sha3Operation}.
+   * Returns the cost for executing a {@link Keccak256Operation}.
    *
    * @param frame The current frame
    * @param offset The offset in memory where the data to be hashed exists
    * @param length The hashed data length
    * @return the cost for executing the memory byte store operation
    */
-  Gas sha3OperationGasCost(MessageFrame frame, long offset, long length);
+  long keccak256OperationGasCost(MessageFrame frame, long offset, long length);
 
   /**
    * Returns the cost for executing a {@link SLoadOperation}.
    *
    * @return the cost for executing the storage load operation
    */
-  Gas getSloadOperationGasCost();
+  long getSloadOperationGasCost();
 
   /**
    * Returns the cost for an SSTORE operation.
@@ -354,7 +353,7 @@ public interface GasCalculator {
    * @param newValue the new value to be stored
    * @return the gas cost for the SSTORE operation
    */
-  Gas calculateStorageCost(Account account, UInt256 key, UInt256 newValue);
+  long calculateStorageCost(Account account, UInt256 key, UInt256 newValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
@@ -364,22 +363,22 @@ public interface GasCalculator {
    * @param newValue the new value to be stored
    * @return the gas refund for the SSTORE operation
    */
-  Gas calculateStorageRefundAmount(Account account, UInt256 key, UInt256 newValue);
+  long calculateStorageRefundAmount(Account account, UInt256 key, UInt256 newValue);
 
   /**
    * Returns the refund amount for deleting an account in a {@link SelfDestructOperation}.
    *
    * @return the refund amount for deleting an account in a self destruct operation
    */
-  Gas getSelfDestructRefundAmount();
+  long getSelfDestructRefundAmount();
 
   /**
    * Returns the cost of a SLOAD to a storage slot not previously loaded in the TX context.
    *
    * @return the cost of a SLOAD to a storage slot not previously loaded in the TX context.
    */
-  default Gas getColdSloadCost() {
-    return Gas.ZERO;
+  default long getColdSloadCost() {
+    return 0L;
   }
 
   /**
@@ -387,8 +386,8 @@ public interface GasCalculator {
    *
    * @return the cost to access an account not previously accessed in the TX context.
    */
-  default Gas getColdAccountAccessCost() {
-    return Gas.ZERO;
+  default long getColdAccountAccessCost() {
+    return 0L;
   }
 
   /**
@@ -398,8 +397,8 @@ public interface GasCalculator {
    * @return the cost of a SLOAD to a storage slot that has previously been loaded in the TX
    *     context.
    */
-  default Gas getWarmStorageReadCost() {
-    return Gas.ZERO;
+  default long getWarmStorageReadCost() {
+    return 0L;
   }
 
   /**
@@ -412,8 +411,8 @@ public interface GasCalculator {
     return false;
   }
 
-  default Gas modExpGasCost(final Bytes input) {
-    return Gas.ZERO;
+  default long modExpGasCost(final Bytes input) {
+    return 0L;
   }
 
   /**
@@ -422,7 +421,7 @@ public interface GasCalculator {
    * @param codeSize The size of the code in bytes
    * @return the code deposit cost
    */
-  Gas codeDepositGasCost(int codeSize);
+  long codeDepositGasCost(int codeSize);
 
   /**
    * Returns the intrinsic gas cost of a transaction pauload, i.e. the cost deriving from its
@@ -432,7 +431,7 @@ public interface GasCalculator {
    * @param isContractCreate Is this transaction a contract creation transaction?
    * @return the transaction's intrinsic gas cost
    */
-  Gas transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
+  long transactionIntrinsicGasCost(Bytes transactionPayload, boolean isContractCreate);
 
   /**
    * Returns the gas cost of the explicitly declared access list.
@@ -440,7 +439,7 @@ public interface GasCalculator {
    * @param accessListEntries The access list entries
    * @return the access list's gas cost
    */
-  default Gas accessListGasCost(final List<AccessListEntry> accessListEntries) {
+  default long accessListGasCost(final List<AccessListEntry> accessListEntries) {
     return accessListGasCost(
         accessListEntries.size(),
         accessListEntries.stream().mapToInt(e -> e.getStorageKeys().size()).sum());
@@ -453,8 +452,8 @@ public interface GasCalculator {
    * @param storageSlots The count of storage slots accessed
    * @return the access list's gas cost
    */
-  default Gas accessListGasCost(final int addresses, final int storageSlots) {
-    return Gas.ZERO;
+  default long accessListGasCost(final int addresses, final int storageSlots) {
+    return 0L;
   }
 
   /**
@@ -473,5 +472,5 @@ public interface GasCalculator {
    * @return the maximum gas cost
    */
   // what would be the gas for a PMT with hash of all non-zeros
-  Gas getMaximumTransactionCost(int size);
+  long getMaximumTransactionCost(int size);
 }

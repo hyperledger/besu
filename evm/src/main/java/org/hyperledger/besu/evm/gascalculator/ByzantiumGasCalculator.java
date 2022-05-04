@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
@@ -28,10 +27,10 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
   private static final BigInteger BITS_IN_BYTE = BigInteger.valueOf(8);
 
   public static final BigInteger MAX_FIRST_EXPONENT_BYTES = BigInteger.valueOf(32);
-  public static final int MAX_GAS_BITS = 255;
+  public static final int MAX_GAS_BITS = 63;
 
   @Override
-  public Gas modExpGasCost(final Bytes input) {
+  public long modExpGasCost(final Bytes input) {
     final BigInteger baseLength =
         BigIntegerModularExponentiationPrecompiledContract.baseLength(input);
     final BigInteger exponentLength =
@@ -53,12 +52,12 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
             .multiply(adjustedExponentLength.max(BigInteger.ONE))
             .divide(GQUADDIVISOR);
 
-    // Gas price is so large it will not fit in a Gas type, so an
+    // Gas price is so large it will not fit in a Gas type, so a
     // very very very unlikely high gas price is used instead.
     if (gasRequirement.bitLength() > MAX_GAS_BITS) {
-      return Gas.of(Long.MAX_VALUE);
+      return Long.MAX_VALUE;
     } else {
-      return Gas.of(gasRequirement);
+      return gasRequirement.longValueExact();
     }
   }
 

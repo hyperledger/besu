@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatu
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
+import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
@@ -42,15 +43,24 @@ public class SyncState {
   private final AtomicLong inSyncSubscriberId = new AtomicLong();
   private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
+  private final Subscribers<TTDReachedListener> ttdReachedListeners = Subscribers.create();
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
   private Optional<Long> newPeerListenerId;
   private Optional<Boolean> reachedTerminalDifficulty = Optional.empty();
+  private volatile boolean isInitialSyncPhaseDone;
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
+    this(blockchain, ethPeers, false);
+  }
+
+  public SyncState(
+      final Blockchain blockchain, final EthPeers ethPeers, final boolean hasInitialSyncPhase) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
+    isInitialSyncPhaseDone = !hasInitialSyncPhase;
+
     blockchain.observeBlockAdded(
         event -> {
           if (event.isNewCanonicalHead()) {
@@ -109,8 +119,16 @@ public class SyncState {
     return syncStatusListeners.subscribe(listener);
   }
 
+  public long subscribeTTDReached(final TTDReachedListener listener) {
+    return ttdReachedListeners.subscribe(listener);
+  }
+
   public boolean unsubscribeSyncStatus(final long listenerId) {
     return syncStatusListeners.unsubscribe(listenerId);
+  }
+
+  public boolean unsubscribeTTDReached(final long listenerId) {
+    return ttdReachedListeners.unsubscribe(listenerId);
   }
 
   public Optional<SyncStatus> syncStatus() {
@@ -143,10 +161,14 @@ public class SyncState {
     // TODO: this is an inexpensive way to stop sync when we reach TTD,
     //      we should revisit when merge sync is better defined
     this.reachedTerminalDifficulty = Optional.of(stoppedAtTerminalDifficulty);
+    ttdReachedListeners.forEach(listener -> listener.onTTDReached(stoppedAtTerminalDifficulty));
   }
 
   public Optional<Boolean> hasReachedTerminalDifficulty() {
-    return reachedTerminalDifficulty;
+    if (isInitialSyncPhaseDone) {
+      return reachedTerminalDifficulty;
+    }
+    return Optional.of(Boolean.FALSE);
   }
 
   private boolean isInSync(
@@ -154,7 +176,8 @@ public class SyncState {
       final Optional<ChainHeadEstimate> syncTargetChain,
       final Optional<ChainHeadEstimate> bestPeerChain,
       final long syncTolerance) {
-    return reachedTerminalDifficulty.orElse(true)
+    return isInitialSyncPhaseDone
+        && reachedTerminalDifficulty.orElse(true)
         // Sync target may be temporarily empty while we switch sync targets during a sync, so
         // check both the sync target and our best peer to determine if we're in sync or not
         && isInSync(localChain, syncTargetChain, syncTolerance)
@@ -231,6 +254,10 @@ public class SyncState {
         target.addPeerChainEstimatedHeightListener(estimatedHeight -> checkInSync());
   }
 
+  public long getLocalChainHeight() {
+    return blockchain.getChainHeadBlockNumber();
+  }
+
   public long bestChainHeight() {
     final long localChainHeight = blockchain.getChainHeadBlockNumber();
     return bestChainHeight(localChainHeight);
@@ -261,5 +288,13 @@ public class SyncState {
         .values()
         .forEach(
             (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
+  }
+
+  public void markInitialSyncPhaseAsDone() {
+    isInitialSyncPhaseDone = true;
+  }
+
+  public boolean isInitialSyncPhaseDone() {
+    return isInitialSyncPhaseDone;
   }
 }

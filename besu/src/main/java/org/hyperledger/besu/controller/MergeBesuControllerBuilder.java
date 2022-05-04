@@ -28,11 +28,12 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
-import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncLookupService;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
@@ -40,12 +41,12 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
-  private static final Logger LOG = LogManager.getLogger(MergeBesuControllerBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -55,6 +56,31 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
+    return createTransitionMiningCoordinator(
+        protocolSchedule,
+        protocolContext,
+        transactionPool,
+        miningParameters,
+        syncState,
+        ethProtocolManager,
+        new BackwardSyncContext(
+            protocolContext,
+            protocolSchedule,
+            metricsSystem,
+            ethProtocolManager.ethContext(),
+            syncState,
+            BackwardChain.from(
+                storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))));
+  }
+
+  protected MiningCoordinator createTransitionMiningCoordinator(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final TransactionPool transactionPool,
+      final MiningParameters miningParameters,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final BackwardSyncContext backwardSyncContext) {
 
     this.syncState.set(syncState);
 
@@ -63,15 +89,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         protocolSchedule,
         transactionPool.getPendingTransactions(),
         miningParameters,
-        new BackwardSyncContext(
-            protocolContext,
-            protocolSchedule,
-            metricsSystem,
-            ethProtocolManager.ethContext(),
-            syncState,
-            new BackwardSyncLookupService(
-                protocolSchedule, ethProtocolManager.ethContext(), metricsSystem, protocolContext),
-            storageProvider));
+        backwardSyncContext);
   }
 
   @Override

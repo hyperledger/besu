@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
@@ -147,8 +149,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
       if (parentHeader.isPresent()
           && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
-        return respondWithInvalid(
-            reqId, parentHeader.get().getHash(), "Timestamp must be greater than parent");
+        LOG.info("method parameter timestamp not greater than parent");
+        return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);
       }
     }
 

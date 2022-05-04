@@ -215,5 +215,28 @@ public final class StatusMessage extends AbstractMessageData {
       return new EthStatus(
           protocolVersion, networkId, totalDifficulty, bestHash, genesisHash, forkId);
     }
+
+    @Override
+    public String toString() {
+      return "EthStatus{"
+          + "protocolVersion="
+          + protocolVersion
+          + ", networkId="
+          + networkId
+          + ", totalDifficulty="
+          + totalDifficulty
+          + ", bestHash="
+          + bestHash
+          + ", genesisHash="
+          + genesisHash
+          + ", forkId="
+          + forkId
+          + '}';
+    }
+  }
+
+  @Override
+  public String toString() {
+    return status().toString();
   }
 }

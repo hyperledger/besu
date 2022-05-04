@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -30,7 +31,7 @@ import java.util.stream.Stream;
  */
 public interface SegmentedKeyValueStorage<S> extends Closeable {
 
-  S getSegmentIdentifierByName(SegmentIdentifier segment);
+  AtomicReference<S> getSegmentIdentifierByName(SegmentIdentifier segment);
 
   /**
    * Get the value from the associated segment and key.

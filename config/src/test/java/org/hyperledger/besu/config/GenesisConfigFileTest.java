@@ -199,6 +199,37 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void shouldFindParisForkAndAlias() {
+    GenesisConfigFile parisGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"parisBlock\":10},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(parisGenesis.getForks()).hasSize(1);
+    assertThat(parisGenesis.getConfigOptions().getParisBlockNumber()).isPresent();
+    assertThat(parisGenesis.getConfigOptions().getParisBlockNumber().getAsLong()).isEqualTo(10L);
+
+    GenesisConfigFile premergeForkGenesis =
+        GenesisConfigFile.fromConfig(
+            "{\"config\":{\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(premergeForkGenesis.getForks()).hasSize(1);
+    assertThat(premergeForkGenesis.getConfigOptions().getParisBlockNumber()).isPresent();
+    assertThat(premergeForkGenesis.getConfigOptions().getParisBlockNumber().getAsLong())
+        .isEqualTo(11L);
+
+    // assert fail if both paris and alias are present
+    var dupeOptions =
+        GenesisConfigFile.fromConfig(
+                "{\"config\":{\"parisBlock\":10,\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}")
+            .getConfigOptions();
+    assertThatThrownBy(() -> dupeOptions.getParisBlockNumber())
+        .isInstanceOf(RuntimeException.class);
+
+    // assert empty if neither are present:
+    GenesisConfigFile londonGenesis =
+        GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(londonGenesis.getForks()).hasSize(1);
+    assertThat(londonGenesis.getConfigOptions().getParisBlockNumber()).isEmpty();
+  }
+
+  @Test
   public void shouldDefaultTimestampToZero() {
     assertThat(EMPTY_CONFIG.getTimestamp()).isZero();
   }

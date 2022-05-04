@@ -84,16 +84,19 @@ dependencies {
   testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
-  testImplementation 'tech.pegasys.discovery:discovery'
   testImplementation 'com.google.auto.service:auto-service'
   testImplementation 'com.squareup.okhttp3:okhttp'
+  testImplementation 'commons-io:commons-io'
   testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-text'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-  testImplementation 'commons-io:commons-io'
   testImplementation 'org.testcontainers:testcontainers'
+  testImplementation 'tech.pegasys.discovery:discovery'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

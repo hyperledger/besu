@@ -46,6 +46,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,7 +55,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -256,7 +256,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     final String privateFrom = validSignedPrivateTransaction.getPrivateFrom().toBase64String();
     final String[] privateFor =
         validSignedPrivateTransaction.getPrivateFor().orElseThrow().stream()
-            .map(pf -> pf.toBase64String())
+            .map(Bytes::toBase64String)
             .toArray(String[]::new);
     node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 0));
 
@@ -267,7 +267,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     node.verify(priv.getEeaTransactionCount(accountAddress, privateFrom, privateFor, 1));
   }
 
-  @NotNull
+  @Nonnull
   private Bytes32 getPrivacyGroupIdFromEeaTransaction(
       final PrivateTransaction validSignedPrivateTransaction) {
     return PrivacyGroupUtil.calculateEeaPrivacyGroupId(
@@ -307,7 +307,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
     members.add(tx.getPrivateFrom().toBase64String());
     members.addAll(
         tx.getPrivateFor().orElseThrow().stream()
-            .map(pf -> pf.toBase64String())
+            .map(Bytes::toBase64String)
             .collect(Collectors.toList()));
     final String retrieveGroupResponse =
         mapper.writeValueAsString(testPrivacyGroupEea(members, PrivacyGroup.Type.LEGACY));

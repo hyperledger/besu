@@ -15,7 +15,6 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import org.hyperledger.besu.evm.Gas;
 import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,7 +28,7 @@ public class BLS12G1AddPrecompiledContract extends AbstractBLS12PrecompiledContr
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
-    return Gas.of(600);
+  public long gasRequirement(final Bytes input) {
+    return 600L;
   }
 }

@@ -31,6 +31,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,18 +44,54 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
   @Test
+  public void assertClear() throws Exception {
+    final byte[] key = bytesFromHexString("0001");
+    final byte[] val1 = bytesFromHexString("0FFF");
+    final byte[] val2 = bytesFromHexString("1337");
+    final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
+    AtomicReference<ColumnFamilyHandle> segment = store.getSegmentIdentifierByName(TestSegment.FOO);
+    KeyValueStorage duplicateSegmentRef =
+        new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
+
+    final Consumer<byte[]> insert =
+        value -> {
+          final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
+          tx.put(segment.get(), key, value);
+          tx.commit();
+        };
+
+    // insert val:
+    insert.accept(val1);
+    assertThat(store.get(segment.get(), key).orElse(null)).isEqualTo(val1);
+    assertThat(duplicateSegmentRef.get(key).orElse(null)).isEqualTo(val1);
+
+    // clear and assert empty:
+    store.clear(segment.get());
+    assertThat(store.get(segment.get(), key)).isEmpty();
+    assertThat(duplicateSegmentRef.get(key)).isEmpty();
+
+    // insert into empty:
+    insert.accept(val2);
+    assertThat(store.get(segment.get(), key).orElse(null)).isEqualTo(val2);
+    assertThat(duplicateSegmentRef.get(key).orElse(null)).isEqualTo(val2);
+
+    store.close();
+  }
+
+  @Test
   public void twoSegmentsAreIndependent() throws Exception {
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
 
     final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
     tx.put(
-        store.getSegmentIdentifierByName(TestSegment.BAR),
+        store.getSegmentIdentifierByName(TestSegment.BAR).get(),
         bytesFromHexString("0001"),
         bytesFromHexString("0FFF"));
     tx.commit();
 
     final Optional<byte[]> result =
-        store.get(store.getSegmentIdentifierByName(TestSegment.FOO), bytesFromHexString("0001"));
+        store.get(
+            store.getSegmentIdentifierByName(TestSegment.FOO).get(), bytesFromHexString("0001"));
 
     assertThat(result).isEmpty();
 
@@ -66,8 +104,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     // properly
     for (int i = 0; i < 50; i++) {
       final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-      final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
-      final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
+      final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO).get();
+      final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR).get();
 
       final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
       tx.put(fooSegment, bytesOf(1), bytesOf(1));
@@ -110,8 +148,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
   @Test
   public void canGetThroughSegmentIteration() throws Exception {
     final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-    final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
-    final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
+    final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO).get();
+    final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR).get();
 
     final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
     tx.put(fooSegment, bytesOf(1), bytesOf(1));

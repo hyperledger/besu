@@ -28,9 +28,9 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 public class ChainForTestCreator {
 
@@ -105,7 +105,7 @@ public class ChainForTestCreator {
     return prepareHeader(number, Optional.empty());
   }
 
-  @NotNull
+  @Nonnull
   private static BlockHeader prepareEmptyHeader(final BlockHeader parent) {
     return new BlockHeader(
         parent.getHash(),

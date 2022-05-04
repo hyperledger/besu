@@ -42,7 +42,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
-  private OptionalLong preMergeForkBlockNumber = OptionalLong.empty();
+  private OptionalLong parisBlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
@@ -201,8 +201,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getPreMergeForkBlockNumber() {
-    return preMergeForkBlockNumber;
+  public OptionalLong getParisBlockNumber() {
+    return parisBlockNumber;
   }
 
   @Override
@@ -331,7 +331,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
-    getPreMergeForkBlockNumber().ifPresent(l -> builder.put("preMergeForkBlock", l));
+    getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
     // classic fork blocks
@@ -460,8 +460,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions preMergeForkBlock(final long blockNumber) {
-    preMergeForkBlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions parisBlock(final long blockNumber) {
+    parisBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

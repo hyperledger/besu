@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,6 +42,8 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Optional<Boolean>> isPostMerge =
       new AtomicReference<>(Optional.empty());
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
+      Subscribers.create();
+  private final Subscribers<NewForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
       Subscribers.create();
 
   private final EvictingQueue<PayloadTuple> blocksInProgress =
@@ -80,8 +83,9 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
-    if (isPostMerge.get().orElse(Boolean.FALSE)) {
-      // we never switch back to a pre-merge once we have transitioned post-TTD.
+    if (isPostMerge.get().orElse(Boolean.FALSE) && lastFinalized.get() != null) {
+      // if we have finalized, we never switch back to a pre-merge once we have transitioned
+      // post-TTD.
       return;
     }
     final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
@@ -120,6 +124,26 @@ public class PostMergeContext implements MergeContext {
   @Override
   public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
     newMergeStateCallbackSubscribers.subscribe(newMergeStateCallback);
+  }
+
+  @Override
+  public long addNewForkchoiceMessageListener(
+      final NewForkchoiceMessageListener newForkchoiceMessageListener) {
+    return newForkchoiceMessageCallbackSubscribers.subscribe(newForkchoiceMessageListener);
+  }
+
+  @Override
+  public void removeNewForkchoiceMessageListener(final long subscriberId) {
+    newForkchoiceMessageCallbackSubscribers.unsubscribe(subscriberId);
+  }
+
+  @Override
+  public void fireNewForkchoiceMessageEvent(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    newForkchoiceMessageCallbackSubscribers.forEach(
+        cb -> cb.onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash));
   }
 
   @Override
