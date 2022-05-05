@@ -774,6 +774,29 @@ task dockerUpload {
   }
 }
 
+task manifestDocker {
+
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def image = "${dockerImage}:${dockerBuildVersion}"
+  def archs = ["arm64", "amd64"]
+  def tags = []
+
+  doLast {
+    for (def variant in dockerVariants) {
+      // Just do variant images for now, later add tags and such
+      def variantImage = "${image}-${variant}"
+      def targets = ""
+      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+      exec {
+        def cmd = "docker manifest create '${variantImage}' ${targets} && docker push '${variantImage}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+  }
+}
+
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
 
