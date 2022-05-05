@@ -166,6 +166,9 @@ downloadLicenses {
     // Explicitly declare that we are using the EPL 1.0 license
     (group('javax.persistence')) : epl1,
 
+    // jnr-posix is released under a tri EPL v2.0/GPL/LGPL license
+    'com.github.jnr:jnr-posix:3.1.15' : epl2,
+
     // io.netty:netty-tcnative-boringssl-static license markings are not machine readable.
     // io.netty:netty-tcnative-classes license markings are not machine readable.
     // Explicitly state Apache 2 License for license scanning.
