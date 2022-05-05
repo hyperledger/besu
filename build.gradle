@@ -774,41 +774,6 @@ task dockerUpload {
   }
 }
 
-task manifestDocker {
-  def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
-  def versionPrefixes = [dockerBuildVersion]
-  def platforms = ["arm64", "amd64"]
-
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
-    versionPrefixes.add('develop')
-  }
-
-  if (!isDevelopBuild) {
-    versionPrefixes.add('latest')
-    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
-
-  doLast {
-    for (def variant in dockerJdkVariants) {
-      def tags = []
-      def cmd = ""
-      versionPrefixes.forEach { prefix -> tags.add("${dockerImage}:${prefix.trim()}-${variant}") }
-
-      if (variant == dockerJdkVariants[0]) {
-        versionPrefixes.forEach { prefix -> tags.add("${dockerImage}:${prefix.trim()}") }
-      }
-
-      for (def tag in tags) {
-        platforms.forEach { platform -> cmd += "${tag}-${platform} " }
-        exec {
-          executable "sh"
-          args "-c", "docker manifest create ${tag} ${cmd} && docker manifest push ${tag}"
-        }
-      }
-    }
-  }
-}
-
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
 
