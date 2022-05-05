@@ -98,7 +98,10 @@ dependencies {
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'tech.pegasys.discovery:discovery'
   constraints {
-    implementation('com.github.jnr:jnr-posix:3.1.15') {
+    implementation('com.github.jnr:jnr-posix') {
+      version {
+        require '3.1.15'
+      }
       because '3.0.47 from web3j has issues'
     }
   }
