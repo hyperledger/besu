@@ -400,6 +400,7 @@ jobs:
     executor: besu_executor_med
     steps:
       - prepare
+      - setup_remote_docker
       - run:
           name: Create and publish docker manifest
           command: |
