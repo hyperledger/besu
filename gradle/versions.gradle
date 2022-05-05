@@ -175,6 +175,9 @@ dependencyManagement {
     dependency 'org.web3j:abi:4.8.9'
     dependency 'org.web3j:besu:4.8.9'
     dependency 'org.web3j:core:4.8.9'
+    dependency ('org.web3j:core:4.8.9') {
+      exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
+    }
     dependency 'org.web3j:crypto:4.8.9'
     dependency 'org.web3j:quorum:4.8.4'
 
