@@ -18,6 +18,7 @@ executors:
     resource_class: medium
     working_directory: ~/project
     environment:
+      architecture: "amd64"
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_arm64_executor_med: # 2cpu, 8G ram
@@ -26,6 +27,7 @@ executors:
     resource_class: arm.medium
     working_directory: ~/project
     environment:
+      architecture: "arm64"
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_executor_xl: # 8cpu, 16G ram
