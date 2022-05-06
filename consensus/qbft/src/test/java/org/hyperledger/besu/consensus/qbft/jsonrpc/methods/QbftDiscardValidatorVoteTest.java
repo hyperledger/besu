@@ -58,7 +58,7 @@ public class QbftDiscardValidatorVoteTest {
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessage("Missing required json rpc parameter at index 0");
   }
 
   @Test
