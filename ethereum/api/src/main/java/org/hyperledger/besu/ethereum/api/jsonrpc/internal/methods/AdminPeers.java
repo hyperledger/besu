@@ -45,7 +45,7 @@ public class AdminPeers implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(),
           ethPeers.streamAllPeers().map(PeerResult::fromEthPeer).collect(Collectors.toList()));
-    } catch (P2PDisabledException e) {
+    } catch (final P2PDisabledException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
     }

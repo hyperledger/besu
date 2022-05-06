@@ -36,7 +36,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class EthPeers {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
+
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
 
@@ -49,7 +56,7 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
 
-  private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
+  private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<Bytes, EthPeer>();
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
@@ -85,25 +92,48 @@ public class EthPeers {
 
   public void registerConnection(
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
-    final EthPeer peer =
-        new EthPeer(
-            peerConnection,
-            protocolName,
-            this::invokeConnectionCallbacks,
-            peerValidators,
-            clock,
-            permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
+    final Bytes peerId = peerConnection.getPeer().getId();
+    connections.compute(
+        peerId,
+        (id, existingPeer) -> {
+          if (existingPeer != null) {
+            existingPeer.setConnection(peerConnection); // just replace the connection
+            return existingPeer;
+          } else {
+            final EthPeer newEthPeer =
+                new EthPeer(
+                    peerConnection,
+                    protocolName,
+                    this::invokeConnectionCallbacks,
+                    peerValidators,
+                    clock,
+                    permissioningProviders);
+            return newEthPeer;
+          }
+        });
   }
 
   public void registerDisconnect(final PeerConnection connection) {
-    final EthPeer peer = connections.remove(connection);
-    if (peer != null) {
-      disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
-      peer.handleDisconnect();
-      abortPendingRequestsAssignedToDisconnectedPeers();
-    }
-    reattemptPendingPeerRequests();
+    connections.compute(
+        connection.getPeer().getId(),
+        (id, existingEthPeer) -> {
+          if (existingEthPeer != null) {
+            // TODO: We have to make sure that replacement connections have been done prior to this
+            if (existingEthPeer.getConnection().equals(connection)) {
+              disconnectCallbacks.forEach(
+                  callback ->
+                      callback.onDisconnect(existingEthPeer)); // Clean up PeerTransactionTracker
+              existingEthPeer.handleDisconnect(); // close the RequestManagers
+              abortPendingRequestsAssignedToDisconnectedPeers(); // clean up requests
+              return null; // The connection has not been replaced, so we remove that EthPeer
+            } else {
+              return existingEthPeer; // The existing EthPeer has a different connection, so keep it
+            }
+          } else {
+            return null; // No EthPeer for this node id exists
+          }
+        });
+    reattemptPendingPeerRequests(); // clean up pending requests
   }
 
   private void abortPendingRequestsAssignedToDisconnectedPeers() {
@@ -119,7 +149,7 @@ public class EthPeers {
   }
 
   public EthPeer peer(final PeerConnection peerConnection) {
-    return connections.get(peerConnection);
+    return connections.get(peerConnection.getPeer().getId());
   }
 
   public PendingPeerRequest executePeerRequest(

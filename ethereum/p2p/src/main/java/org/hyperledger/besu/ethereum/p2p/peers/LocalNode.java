@@ -32,7 +32,7 @@ public interface LocalNode {
       final int p2pVersion,
       final List<Capability> supportedCapabilities,
       final EnodeURL enode) {
-    DefaultLocalNode localNode =
+    final DefaultLocalNode localNode =
         DefaultLocalNode.create(clientId, p2pVersion, supportedCapabilities);
     localNode.setEnode(enode);
     return localNode;

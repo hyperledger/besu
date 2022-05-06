@@ -128,7 +128,7 @@ public class TransactionPoolFactory {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
-    boolean isFeeMarketImplementBaseFee =
+    final boolean isFeeMarketImplementBaseFee =
         protocolSchedule
             .streamMilestoneBlocks()
             .map(protocolSchedule::getByBlockNumber)

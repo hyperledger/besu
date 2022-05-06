@@ -172,6 +172,7 @@ public class RlpxAgent {
     if (!localNode.isReady()) {
       return;
     }
+    // TODO clean up failed and disconnected connections?
     peerStream
         .takeWhile(peer -> Math.max(0, maxConnections - getConnectionCount()) > 0)
         .filter(peer -> !connectionsById.containsKey(peer.getId()))
@@ -224,6 +225,7 @@ public class RlpxAgent {
     if (peerConnection.isPresent()) {
       return peerConnection.get();
     }
+    // TODO: clean up failed and disconnected connections?
     // Check max peers
     if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
       final String errorMsg =
@@ -339,10 +341,17 @@ public class RlpxAgent {
   }
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {
-    final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {
       LOG.debug("Node is not ready. Disconnect incoming connection: {}", peerConnection);
+      peerConnection.disconnect(DisconnectReason.UNKNOWN);
+      return;
+    }
+    final Peer peer = peerConnection.getPeer();
+    // Disconnect if not permitted
+    if (!peerPermissions.allowNewInboundConnectionFrom(peer)) {
+      LOG.debug(
+          "Node is not permitted to connect. Disconnect incoming connection: {}", peerConnection);
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
@@ -362,13 +371,6 @@ public class RlpxAgent {
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return;
       }
-    }
-    // Disconnect if not permitted
-    if (!peerPermissions.allowNewInboundConnectionFrom(peer)) {
-      LOG.debug(
-          "Node is not permitted to connect. Disconnect incoming connection: {}", peerConnection);
-      peerConnection.disconnect(DisconnectReason.UNKNOWN);
-      return;
     }
 
     // Track this new connection, deduplicating existing connection if necessary
@@ -407,11 +409,13 @@ public class RlpxAgent {
           }
         });
 
+    if (newConnectionAccepted.get()) {
+      // TODO: We have to do the connect first and then the disconnect to make sure that
+      // replacing connection works in EthPeers
+      dispatchConnect(peerConnection);
+    }
     if (!isNull(disconnectAction.get())) {
       disconnectAction.get().run();
-    }
-    if (newConnectionAccepted.get()) {
-      dispatchConnect(peerConnection);
     }
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();

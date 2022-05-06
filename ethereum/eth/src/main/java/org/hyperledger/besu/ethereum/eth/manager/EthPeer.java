@@ -66,8 +66,6 @@ public class EthPeer {
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
 
-  private final PeerConnection connection;
-
   private final int maxTrackedSeenBlocks = 300;
 
   private final Set<Hash> knownBlocks =
@@ -87,6 +85,7 @@ public class EthPeer {
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
+  private PeerConnection connection;
 
   private volatile long lastRequestTimestamp = 0;
 
@@ -433,6 +432,12 @@ public class EthPeer {
    * @return true if the peer is ready to accept requests for data.
    */
   public boolean readyForRequests() {
+    LOG.debug(
+        "status has been sent {}, status has been received {} from peer {}, is connected {}",
+        statusHasBeenSentToPeer.get(),
+        statusHasBeenReceivedFromPeer.get(),
+        this.getConnection().getPeer().getId(),
+        !this.getConnection().isDisconnected());
     return statusHasBeenSentToPeer.get() && statusHasBeenReceivedFromPeer.get();
   }
 
@@ -512,7 +517,7 @@ public class EthPeer {
   }
 
   public Bytes nodeId() {
-    return connection.getPeerInfo().getNodeId();
+    return connection.getPeer().getId();
   }
 
   public boolean hasSupportForMessage(final int messageCode) {
@@ -523,6 +528,10 @@ public class EthPeer {
   @Override
   public String toString() {
     return String.format("Peer %s...", nodeId().toString().substring(0, 20));
+  }
+
+  public void setConnection(final PeerConnection peerConnection) {
+    this.connection = peerConnection;
   }
 
   @FunctionalInterface
