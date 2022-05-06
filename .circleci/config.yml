@@ -454,7 +454,6 @@ workflows:
               only:
                 - main
                 - /^release-.*/
-                - arm64-docker
           requires:
             - assemble
             - integrationTests
@@ -472,7 +471,6 @@ workflows:
               only:
                 - main
                 - /^release-.*/
-                - arm64-docker
           requires:
             - integrationTests
             - unitTests
@@ -489,7 +487,6 @@ workflows:
               only:
                 - master
                 - /^release-.*/
-                - arm64-docker
           requires:
             - publishDocker
             - publishArm64Docker
