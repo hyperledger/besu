@@ -794,6 +794,14 @@ task manifestDocker {
         args "-c", cmd
       }
     }
+
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${image}-${arch}' " }
+      def cmd = "docker manifest create '${image}' ${targets} && docker manifest push '${image}'"
+      executable "sh"
+      args "-c", cmd
+    }
   }
 }
 
