@@ -331,6 +331,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
+    LOG.trace("{}", ethPeers);
   }
 
   @Override
@@ -345,6 +346,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
+    LOG.trace("{}", ethPeers);
   }
 
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {
@@ -374,7 +376,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.debug("Unable to parse status message.", e);
-      // Parsing errors can happen when clients broadcast network ids outside of the int range,
+      // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
     }

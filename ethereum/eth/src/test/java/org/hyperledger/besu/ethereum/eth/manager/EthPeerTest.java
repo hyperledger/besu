@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
@@ -47,11 +48,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class EthPeerTest {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
   private final TestClock clock = new TestClock();
+  private static final Bytes NODE_ID = Bytes.random(32);
 
   @Test
   public void getHeadersStream() throws PeerNotConnected {
@@ -342,6 +345,22 @@ public class EthPeerTest {
     verify(peer.getConnection(), times(0)).sendForProtocol(any(), eq(PingMessage.get()));
   }
 
+  @Test
+  public void compareTo_withSameNodeId() {
+    final EthPeer peer1 = createPeerWithPeerInfo(NODE_ID);
+    final EthPeer peer2 = createPeerWithPeerInfo(NODE_ID);
+    assertThat(peer1.compareTo(peer2)).isEqualTo(0);
+    assertThat(peer2.compareTo(peer1)).isEqualTo(0);
+  }
+
+  @Test
+  public void compareTo_withDifferentNodeId() {
+    final EthPeer peer1 = createPeerWithPeerInfo(NODE_ID);
+    final EthPeer peer2 = createPeerWithPeerInfo(Bytes.fromHexString("0x00"));
+    assertThat(peer1.compareTo(peer2)).isEqualTo(1);
+    assertThat(peer2.compareTo(peer1)).isEqualTo(-1);
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,
@@ -429,6 +448,22 @@ public class EthPeerTest {
 
   private EthPeer createPeer(final List<PeerValidator> peerValidators) {
     return createPeer(peerValidators, Collections.emptyList());
+  }
+
+  private EthPeer createPeerWithPeerInfo(final Bytes nodeId) {
+    final PeerConnection peerConnection = mock(PeerConnection.class);
+    final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
+    // that extend the sub-protocol work correctly
+    PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
+    return new EthPeer(
+        peerConnection,
+        "foo",
+        onPeerReady,
+        Collections.emptyList(),
+        clock,
+        Collections.emptyList());
   }
 
   private EthPeer createPeer(

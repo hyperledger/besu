@@ -9,6 +9,7 @@ USER besu
 WORKDIR /opt/besu
 
 COPY --chown=besu:besu besu /opt/besu/
+RUN chmod -R 755 /opt/besu
 
 # Expose services ports
 # 8545 HTTP JSON-RPC

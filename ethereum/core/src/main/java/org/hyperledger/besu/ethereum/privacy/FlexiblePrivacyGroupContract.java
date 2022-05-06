@@ -64,8 +64,7 @@ import org.apache.tuweni.units.bigints.UInt256;
     parameter must be supplied to subsequent method calls. All methods
     operate on the state specified by the given MessageFrame. Only
     when constructed this way, the class can be used to query state
-    that is not on a block boundary. Used this way, the object's life
-    time is intended to be short.
+    that is not on a block boundary. Used this way, the object's lifetime is intended to be short.
 */
 public class FlexiblePrivacyGroupContract {
   @FunctionalInterface
@@ -229,12 +228,13 @@ public class FlexiblePrivacyGroupContract {
         Address.ZERO, FLEXIBLE_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
   }
 
-  private List<String> decodeList(final Bytes rlpEncodedList) {
+  public static List<String> decodeList(final Bytes rlpEncodedList) {
     final ArrayList<String> decodedElements = new ArrayList<>();
     // first 32 bytes is dynamic list offset
     if (rlpEncodedList.size() < 64) return decodedElements;
-    final long lengthOfList =
-        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toLong(); // length of list
+    // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
+    final int lengthOfList =
+        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
     if (rlpEncodedList.size() < 64 + lengthOfList * 32) return decodedElements;
 
     for (int i = 0; i < lengthOfList; ++i) {

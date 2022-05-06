@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -143,7 +144,7 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeCoordinator.updateForkChoice(mockHeader.getHash(), parent.getHash()))
         .thenReturn(
             ForkchoiceResult.withFailure(
-                "new head timestamp not greater than parent", parent.getHash()));
+                "new head timestamp not greater than parent", Optional.of(parent.getHash())));
 
     EngineForkchoiceUpdatedParameter param =
         new EngineForkchoiceUpdatedParameter(
@@ -228,6 +229,10 @@ public class EngineForkchoiceUpdatedTest {
       assertThat(res.getPayloadStatus().getLatestValidHash()).isEmpty();
       assertThat(res.getPayloadId()).isNull();
     }
+
+    // assert that listeners are always notified
+    verify(mergeContext).fireNewForkchoiceMessageEvent(mockHash, Optional.of(mockHash), mockHash);
+
     return res;
   }
 

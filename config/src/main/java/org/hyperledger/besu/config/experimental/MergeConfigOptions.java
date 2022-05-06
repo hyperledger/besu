@@ -21,9 +21,7 @@ public class MergeConfigOptions {
   private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
 
   public static void setMergeEnabled(final boolean bool) {
-    if (!mergeEnabled.get()) {
-      mergeEnabled.set(bool);
-    }
+    mergeEnabled.set(bool);
   }
 
   public static boolean isMergeEnabled() {

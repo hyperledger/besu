@@ -17,7 +17,11 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+
 import org.hyperledger.besu.consensus.merge.PandaPrinter;
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -50,8 +54,12 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.TransitionPivotSelector;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -80,6 +88,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -330,9 +339,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncConfig.getComputationParallelism(),
             metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final SyncState syncState = new SyncState(blockchain, ethPeers);
+    final boolean fastSyncEnabled =
+        EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled);
     syncState.subscribeTTDReached(new PandaPrinter());
-    final boolean fastSyncEnabled = SyncMode.FAST.equals(syncConfig.getSyncMode());
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -362,6 +372,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
+    final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
+
     final Synchronizer synchronizer =
         new DefaultSynchronizer(
             syncConfig,
@@ -370,12 +382,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             worldStateStorage,
             ethProtocolManager.getBlockBroadcaster(),
             maybePruner,
-            ethProtocolManager.ethContext(),
+            ethContext,
             syncState,
             dataDirectory,
             clock,
             metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()));
+            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            pivotBlockSelector);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -418,6 +431,41 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
+
+    final PivotSelectorFromPeers pivotSelectorFromPeers = new PivotSelectorFromPeers(syncConfig);
+    final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
+
+    if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
+      LOG.info(
+          "TTD difficulty is present, creating initial sync phase with transition to PoS support");
+
+      final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
+      final FinalizedBlockHashSupplier finalizedBlockHashSupplier =
+          new FinalizedBlockHashSupplier();
+      final long subscriptionId =
+          mergeContext.addNewForkchoiceMessageListener(finalizedBlockHashSupplier);
+
+      final Runnable unsubscribeFinalizedBlockHashListener =
+          () -> {
+            mergeContext.removeNewForkchoiceMessageListener(subscriptionId);
+            LOG.info("Initial sync done, unsubscribe finalized block hash supplier");
+          };
+
+      return new TransitionPivotSelector(
+          genesisConfigOptions,
+          finalizedBlockHashSupplier,
+          pivotSelectorFromPeers,
+          new PivotSelectorFromFinalizedBlock(
+              genesisConfigOptions,
+              finalizedBlockHashSupplier,
+              unsubscribeFinalizedBlockHashListener));
+    } else {
+      LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
+      return pivotSelectorFromPeers;
+    }
   }
 
   protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
