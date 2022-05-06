@@ -354,7 +354,7 @@ jobs:
           name: test image
           command: |
             mkdir -p docker/reports
-            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-amd64
+            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
             ./gradlew --no-daemon testDocker
 
   publish:
