@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_small:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:11.0.13
     resource_class: small
     working_directory: ~/project
     environment:
@@ -14,7 +14,7 @@ executors:
 
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:11.0.13
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -34,7 +34,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:11.0.13
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -42,7 +42,7 @@ executors:
       
   quorum_ats_executor_xl:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:11.0.13
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -302,7 +302,8 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: hadoLint_openjdk_11
           command: |
