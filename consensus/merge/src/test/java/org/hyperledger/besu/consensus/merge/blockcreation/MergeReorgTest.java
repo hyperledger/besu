@@ -149,7 +149,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
       final BlockHeader parentHeader, final long length, final Difficulty each) {
     BlockHeader newParent = parentHeader;
     List<Block> retval = new ArrayList<>();
-    for (int i = 1; i <= length; i++) {
+    for (long i = 1; i <= length; i++) {
       headerGenerator
           .parentHash(newParent.getHash())
           .number(newParent.getNumber() + 1)

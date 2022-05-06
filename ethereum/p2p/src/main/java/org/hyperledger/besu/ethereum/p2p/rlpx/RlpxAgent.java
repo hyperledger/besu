@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -181,6 +182,14 @@ public class RlpxAgent {
         .forEach(this::connect);
   }
 
+  private String logConnectionsByIdToString() {
+    final String connectionsList =
+        connectionsById.values().stream()
+            .map(RlpxConnection::toString)
+            .collect(Collectors.joining(",\n"));
+    return connectionsById.size() + " ConnectionsById {\n" + connectionsList + "}";
+  }
+
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     final RlpxConnection connection = connectionsById.remove(peerId);
     if (connection != null) {
@@ -229,7 +238,7 @@ public class RlpxAgent {
     // Check max peers
     if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
       final String errorMsg =
-          "Max peer peer connections established ("
+          "Max peer connections established ("
               + maxConnections
               + "). Cannot connect to peer: "
               + peer;
@@ -265,6 +274,8 @@ public class RlpxAgent {
           }
         });
 
+    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
+
     return connectionFuture.get();
   }
 
@@ -278,6 +289,7 @@ public class RlpxAgent {
       final PeerConnection peerConnection,
       final DisconnectReason disconnectReason,
       final boolean initiatedByPeer) {
+    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
     cleanUpPeerConnection(peerConnection.getPeer().getId());
   }
 
@@ -420,6 +432,7 @@ public class RlpxAgent {
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
     enforceConnectionLimits();
+    traceLambda(LOG, "{}", this::logConnectionsByIdToString);
   }
 
   private boolean shouldLimitRemoteConnections() {
@@ -522,6 +535,7 @@ public class RlpxAgent {
 
     final Bytes peerId = a.getPeer().getId();
     final Bytes localId = localNode.getPeer().getId();
+    // at this point a.Id == b.Id
     if (a.initiatedRemotely() != b.initiatedRemotely()) {
       // If we have connections initiated in different directions, keep the connection initiated
       // by the node with the lower id
@@ -532,6 +546,7 @@ public class RlpxAgent {
       }
     }
     // Otherwise, keep older connection
+    LOG.info("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
     return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 

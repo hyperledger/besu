@@ -25,6 +25,7 @@ import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.logging.log4j.Level;
 import org.slf4j.Logger;
@@ -33,6 +34,8 @@ import org.slf4j.LoggerFactory;
 public class AdminChangeLogLevel implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(AdminChangeLogLevel.class);
+  private static final Set<String> VALID_PARAMS =
+      Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
 
   @Override
   public String getName() {
@@ -42,7 +45,12 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Level logLevel = requestContext.getRequiredParameter(0, Level.class);
+      final String rawLogLevel = requestContext.getRequiredParameter(0, String.class);
+      if (!VALID_PARAMS.contains(rawLogLevel)) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+      }
+      final Level logLevel = Level.toLevel(rawLogLevel);
       final Optional<String[]> optionalLogFilters =
           requestContext.getOptionalParameter(1, String[].class);
       optionalLogFilters.ifPresentOrElse(

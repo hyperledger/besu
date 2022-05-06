@@ -156,13 +156,20 @@ public class NodePermissioningControllerFactory {
       final SmartContractPermissioningConfiguration smartContractPermissioningConfig) {
     LOG.debug("Validating onchain node permissioning smart contract configuration");
 
+    // eliminate the sync status and other checks, so we can just check the smart contract function
+    final NodePermissioningController tempControllerCheckingSmartContractOnly =
+        new NodePermissioningController(
+            Optional.empty(), nodePermissioningController.getProviders(), Optional.empty());
+
     try {
       // the enodeURLs don't matter. We just want to check if a call to the smart contract succeeds
-      nodePermissioningController.isPermitted(
+      tempControllerCheckingSmartContractOnly.isPermitted(
           EnodeURLImpl.fromString(
               "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@10.3.58.6:30303"),
           EnodeURLImpl.fromString(
               "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@10.3.58.6:30303"));
+      LOG.debug(
+          "Successful validation of onchain node permissioning smart contract configuration!");
     } catch (Exception e) {
       final String msg =
           String.format(

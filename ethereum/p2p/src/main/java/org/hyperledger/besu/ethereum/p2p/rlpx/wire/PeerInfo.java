@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -36,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * <p>The peer info is shared between peers during the <code>HELLO</code> wire protocol handshake.
  */
-public class PeerInfo {
+public class PeerInfo implements Comparable<PeerInfo> {
   private final int version;
   private final String clientId;
   private final List<Capability> capabilities;
@@ -142,5 +143,10 @@ public class PeerInfo {
   @Override
   public int hashCode() {
     return Objects.hash(version, clientId, capabilities, port, nodeId);
+  }
+
+  @Override
+  public int compareTo(final @Nonnull PeerInfo peerInfo) {
+    return this.nodeId.compareTo(peerInfo.nodeId);
   }
 }

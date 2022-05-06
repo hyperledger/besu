@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
- * Service provided by besu to facilitate persistent data storage.
+ * Service provided by Besu to facilitate persistent data storage.
  *
  * @param <S> the segment identifier type
  */
@@ -74,7 +74,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
 
-  S clear(S segmentHandle);
+  void clear(S segmentHandle);
 
   /**
    * Represents a set of changes to be committed atomically. A single transaction is not

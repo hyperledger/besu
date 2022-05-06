@@ -26,18 +26,18 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
-  private S segmentHandle;
+  private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
-    this.segmentHandle = storage.getSegmentIdentifierByName(segment);
+    segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
   }
 
   @Override
   public void clear() {
-    segmentHandle = storage.clear(segmentHandle);
+    storage.clear(segmentHandle);
   }
 
   @Override

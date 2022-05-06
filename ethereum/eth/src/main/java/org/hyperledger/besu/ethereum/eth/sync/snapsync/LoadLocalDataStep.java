@@ -45,7 +45,7 @@ public class LoadLocalDataStep {
     existingNodeCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_existing_nodes_total",
+            "snap_world_state_existing_trie_nodes_total",
             "Total number of node data requests completed using existing data");
     this.snapSyncState = snapSyncState;
   }
@@ -60,7 +60,6 @@ public class LoadLocalDataStep {
         existingNodeCounter.inc();
         request.setData(existingData.get());
         request.setRequiresPersisting(false);
-        request.setRootHash(snapSyncState.getPivotBlockHeader().get().getStateRoot());
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         request.persist(worldStateStorage, updater, downloadState, snapSyncState);
         updater.commit();

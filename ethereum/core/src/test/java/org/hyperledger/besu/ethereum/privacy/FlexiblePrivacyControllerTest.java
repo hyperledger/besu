@@ -57,6 +57,7 @@ import org.hyperledger.enclave.testutil.EnclaveKeyUtils;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.io.Base64;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -212,7 +212,7 @@ public class FlexiblePrivacyControllerTest {
   @Test
   public void createsPrivacyGroup() {
     Assertions.assertThatThrownBy(
-            () -> privacyController.createPrivacyGroup(Lists.emptyList(), "", "", ADDRESS1))
+            () -> privacyController.createPrivacyGroup(Collections.emptyList(), "", "", ADDRESS1))
         .isInstanceOf(PrivacyConfigurationNotSupportedException.class)
         .hasMessageContaining("Method not supported when using flexible privacy");
   }
@@ -230,7 +230,7 @@ public class FlexiblePrivacyControllerTest {
     final TransactionProcessingResult transactionProcessingResult =
         new TransactionProcessingResult(
             TransactionProcessingResult.Status.SUCCESSFUL,
-            Lists.emptyList(),
+            Collections.emptyList(),
             0,
             0,
             Bytes32.ZERO,

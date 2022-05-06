@@ -87,10 +87,8 @@ public class RequestDataStep {
               if (response != null) {
                 downloadState.removeOutstandingTask(getAccountTask);
                 accountDataRequest.setRootHash(blockHeader.getStateRoot());
-                accountDataRequest.setAccounts(response.accounts());
-                accountDataRequest.setProofs(response.proofs());
-                accountDataRequest.checkProof(
-                    downloadState, worldStateProofProvider, fastSyncState);
+                accountDataRequest.addResponse(
+                    worldStateProofProvider, response.accounts(), response.proofs());
               }
               return requestTask;
             });
@@ -127,10 +125,11 @@ public class RequestDataStep {
                   final StorageRangeDataRequest request =
                       (StorageRangeDataRequest) requestTasks.get(i).getData();
                   request.setRootHash(blockHeader.getStateRoot());
-                  request.setSlots(response.slots().get(i));
-                  request.setProofs(
+                  request.addResponse(
+                      downloadState,
+                      worldStateProofProvider,
+                      response.slots().get(i),
                       i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
-                  request.checkProof(downloadState, worldStateProofProvider, fastSyncState);
                 }
               }
               return requestTasks;
