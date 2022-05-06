@@ -19,7 +19,6 @@ executors:
     working_directory: ~/project
     environment:
       architecture: "amd64"
-      platform: "linux/amd64"
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_arm64_executor_med: # 2cpu, 8G ram
@@ -29,7 +28,6 @@ executors:
     working_directory: ~/project
     environment:
       architecture: "arm64"
-      platform: "linux/arm64"
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_executor_xl: # 8cpu, 16G ram
@@ -302,8 +300,7 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker:
-          version: 20.10.14
+      - setup_remote_docker
       - run:
           name: hadoLint_openjdk_11
           command: |

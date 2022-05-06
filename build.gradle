@@ -648,8 +648,6 @@ task distDocker {
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerBuildDir = "build/docker-besu/"
   def imageName = "hyperledger/besu"
-  def platform = System.getenv('architecture')
-
 
   doLast {
     for (def variant in dockerVariants) {
@@ -661,7 +659,7 @@ task distDocker {
         def image = "${imageName}:${dockerBuildVersion}-${variant}"
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build --platform=${platform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
     // tag the "default" (which is the variant in the zero position)
