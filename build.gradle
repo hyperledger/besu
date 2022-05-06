@@ -789,7 +789,7 @@ task manifestDocker {
       archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
 
       exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets} && docker push '${variantImage}'"
+        def cmd = "docker manifest create --amend '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
         executable "sh"
         args "-c", cmd
       }
