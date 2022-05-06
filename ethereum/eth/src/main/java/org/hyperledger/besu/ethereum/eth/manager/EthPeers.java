@@ -37,12 +37,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EthPeers {
-
-  private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
 
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
