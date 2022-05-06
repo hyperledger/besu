@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.qbft.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalMatchers.lt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -41,9 +42,7 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class QbftGetSignerMetricsTest {
 
@@ -58,8 +57,6 @@ public class QbftGetSignerMetricsTest {
   private ValidatorProvider validatorProvider;
   private BlockchainQueries blockchainQueries;
   private BlockInterface blockInterface;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -76,22 +73,16 @@ public class QbftGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidStartBlockSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("INVALID");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 0");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams("INVALID")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenInvalidEndBlockSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("1", "INVALID");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 1");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams("1", "INVALID")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 1");
   }
 
   @Test
