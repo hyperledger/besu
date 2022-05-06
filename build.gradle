@@ -779,28 +779,38 @@ task manifestDocker {
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def image = "${dockerImage}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
-  def tags = []
+  def tags = ["${image}"]
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
+    tags.add("${dockerImage}-develop")
+  }
+
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+    tags.add('${dockerImage}-latest')
+    tags.add('${dockerImage}-' + dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
 
   doLast {
-    for (def variant in dockerVariants) {
-      // Just do variant images for now, later add tags and such
-      def variantImage = "${image}-${variant}"
-      def targets = ""
-      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+    for (baseTag in tags) {
+      for (def variant in dockerVariants) {
+        // Just do variant images for now, later add tags and such
+        def variantImage = "${baseTag}-${variant}"
+        def targets = ""
+        archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+        exec {
+          def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+          executable "sh"
+          args "-c", cmd
+        }
+      }
 
       exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+        def targets = ""
+        archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+        def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
         executable "sh"
         args "-c", cmd
       }
-    }
-
-    exec {
-      def targets = ""
-      archs.forEach { arch -> targets += "'${image}-${arch}' " }
-      def cmd = "docker manifest create '${image}' ${targets} && docker manifest push '${image}'"
-      executable "sh"
-      args "-c", cmd
     }
   }
 }
