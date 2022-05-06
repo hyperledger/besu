@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_small:
     docker:
-      - image: cimg/openjdk:11.0.13
+      - image: cimg/openjdk:11.0
     resource_class: small
     working_directory: ~/project
     environment:
@@ -14,7 +14,7 @@ executors:
 
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: cimg/openjdk:11.0.13
+      - image: cimg/openjdk:11.0
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -32,7 +32,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: cimg/openjdk:11.0.13
+      - image: cimg/openjdk:11.0
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -40,7 +40,7 @@ executors:
       
   quorum_ats_executor_xl:
     docker:
-      - image: cimg/openjdk:11.0.13
+      - image: cimg/openjdk:11.0
     resource_class: xlarge
     working_directory: ~/project
     environment:
