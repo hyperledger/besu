@@ -524,7 +524,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void killBesuProcess(final String name) {
     final Process process = besuProcesses.remove(name);
     if (process == null) {
-      LOG.error("Process {} wasn't in our list, pid {}", name, process.pid());
+      LOG.error("Process {} wasn't in our list", name);
       return;
     }
     if (!process.isAlive()) {
