@@ -109,9 +109,7 @@ public class MetricsHttpService implements MetricsService {
                 final int actualPort = httpServer.actualPort();
                 config.setActualPort(actualPort);
                 LOG.info(
-                    "Metrics service started and listening on {}:{}",
-                    config.getHost(),
-                    actualPort);
+                    "Metrics service started and listening on {}:{}", config.getHost(), actualPort);
                 return;
               }
               httpServer = null;
