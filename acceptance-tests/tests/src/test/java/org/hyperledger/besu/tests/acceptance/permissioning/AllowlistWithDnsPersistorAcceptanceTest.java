@@ -67,7 +67,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     cluster.start(this.node);
   }
 
-  @Ignore ("test is failing in CI")
+  @Ignore("test is failing in CI")
   @Test
   public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
 
