@@ -28,12 +28,8 @@ import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(AllowlistWithDnsPersistorAcceptanceTest.class);
 
   private String ENODE_ONE;
   private String ENODE_TWO;
@@ -74,9 +70,6 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
 
     node.verify(perm.addNodesToAllowlist(ENODE_ONE, ENODE_TWO));
-    LOG.info("enode one " + ENODE_ONE);
-    LOG.info("enode two " + ENODE_TWO);
-    LOG.info("temp file " + tempFile.toAbsolutePath());
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE, ENODE_TWO));
