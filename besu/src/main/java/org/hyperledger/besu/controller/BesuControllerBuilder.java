@@ -600,5 +600,4 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext);
-
 }
