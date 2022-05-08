@@ -117,7 +117,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 syncState,
                 ethProtocolManager,
                 transitionBackwardsSyncContext));
-    // initTransitionWatcher(protocolContext, composedCoordinator, blockPropagationManager);
     return composedCoordinator;
   }
 
