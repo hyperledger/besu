@@ -18,9 +18,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,62 +29,44 @@ import org.slf4j.LoggerFactory;
 
 public class PeerReputation implements Comparable<PeerReputation> {
   private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
-  private static final int TIMEOUT_THRESHOLD = 3;
-  private static final int USELESS_RESPONSE_THRESHOLD = 5;
   static final long USELESS_RESPONSE_WINDOW_IN_MILLIS =
       TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 
   private final ConcurrentMap<Integer, AtomicInteger> timeoutCountByRequestType =
       new ConcurrentHashMap<>();
-  private final Queue<Long> uselessResponseTimes = new ConcurrentLinkedQueue<>();
 
-  private static final int DEFAULT_SCORE = 100;
-  private static final int SMALL_ADJUSTMENT = 1;
-  private static final int LARGE_ADJUSTMENT = 10;
+  private static final int DEFAULT_SCORE = 20;
+  private static final int LARGE_ADJUSTMENT = 5;
 
   private int score = DEFAULT_SCORE;
 
-  public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
-    final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
-    if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
-      LOG.debug("Disconnection triggered by repeated timeouts");
+  public Optional<DisconnectReason> recordRequestTimeout() {
+    score -= LARGE_ADJUSTMENT;
+    if (score <= 0) {
+      LOG.debug("Disconnection triggered by timeout");
       score -= LARGE_ADJUSTMENT;
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
-      score -= SMALL_ADJUSTMENT;
       return Optional.empty();
     }
-  }
-
-  public void resetTimeoutCount(final int requestCode) {
-    timeoutCountByRequestType.remove(requestCode);
-  }
-
-  private AtomicInteger getOrCreateTimeoutCount(final int requestCode) {
-    return timeoutCountByRequestType.computeIfAbsent(requestCode, code -> new AtomicInteger());
   }
 
   public Map<Integer, AtomicInteger> timeoutCounts() {
     return timeoutCountByRequestType;
   }
 
-  public Optional<DisconnectReason> recordUselessResponse(final long timestamp) {
-    uselessResponseTimes.add(timestamp);
-    while (shouldRemove(uselessResponseTimes.peek(), timestamp)) {
-      uselessResponseTimes.poll();
-    }
-    if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
-      score -= LARGE_ADJUSTMENT;
-      LOG.debug("Disconnection triggered by exceeding useless response threshold");
+  public Optional<DisconnectReason> recordUselessResponse() {
+    score -= LARGE_ADJUSTMENT;
+    if (score <= 0) {
+      LOG.debug("Disconnection triggered by by useless response");
       return Optional.of(DisconnectReason.USELESS_PEER);
     } else {
-      score -= SMALL_ADJUSTMENT;
       return Optional.empty();
     }
   }
 
-  private boolean shouldRemove(final Long timestamp, final long currentTimestamp) {
-    return timestamp != null && timestamp + USELESS_RESPONSE_WINDOW_IN_MILLIS < currentTimestamp;
+  public void recordUselessPeer() {
+    score -= LARGE_ADJUSTMENT;
   }
 
   @Override

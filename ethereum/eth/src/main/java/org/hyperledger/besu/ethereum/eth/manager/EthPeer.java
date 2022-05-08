@@ -200,12 +200,17 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordRequestTimeout(final int requestCode) {
     LOG.debug("Timed out while waiting for response from peer {}", this);
-    reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
+    reputation.recordRequestTimeout().ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
     LOG.debug("Received useless response for {} from peer {}", requestType, this);
-    reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
+    reputation.recordUselessResponse().ifPresent(this::disconnect);
+  }
+
+  public void recordUselessAndDisconnect() {
+    reputation.recordUselessPeer();
+    disconnect(DisconnectReason.USELESS_PEER);
   }
 
   public void disconnect(final DisconnectReason reason) {
@@ -360,7 +365,6 @@ public class EthPeer implements Comparable<EthPeer> {
     checkArgument(
         ethMessage.getPeer().equals(this), "Mismatched Eth message sent to peer for dispatch");
     final int messageCode = ethMessage.getData().getCode();
-    reputation.resetTimeoutCount(messageCode);
 
     getRequestManager(protocolName, messageCode)
         .ifPresentOrElse(

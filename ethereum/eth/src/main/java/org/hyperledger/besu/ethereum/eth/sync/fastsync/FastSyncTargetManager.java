@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -107,7 +106,7 @@ class FastSyncTargetManager extends SyncTargetManager {
                     pivotBlockHeader.getHash(),
                     result.size() == 1 ? result.get(0).getHash() : "invalid response",
                     bestPeer);
-                bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                bestPeer.recordUselessAndDisconnect();
                 return Optional.<EthPeer>empty();
               } else {
                 return Optional.of(bestPeer);

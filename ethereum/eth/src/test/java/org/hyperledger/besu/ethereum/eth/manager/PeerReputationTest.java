@@ -28,56 +28,53 @@ public class PeerReputationTest {
 
   @Test
   public void shouldOnlyDisconnectWhenTimeoutLimitReached() {
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
   }
 
   @Test
   public void shouldTrackTimeoutsSeparatelyForDifferentRequestTypes() {
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES)).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
 
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).contains(TIMEOUT);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES)).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
   }
 
   @Test
   public void shouldResetTimeoutCountForRequestType() {
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
 
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES)).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
 
     reputation.resetTimeoutCount(EthPV62.GET_BLOCK_HEADERS);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES)).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout()).isEmpty();
+    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
   }
 
   @Test
   public void shouldOnlyDisconnectWhenEmptyResponseThresholdReached() {
-    assertThat(reputation.recordUselessResponse(1001)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1002)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1003)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1004)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1005)).contains(USELESS_PEER);
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).contains(USELESS_PEER);
   }
 
   @Test
   public void shouldDiscardEmptyResponseRecordsAfterTimeWindowElapses() {
     // Bring it to the brink of disconnection.
-    assertThat(reputation.recordUselessResponse(1001)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1002)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1003)).isEmpty();
-    assertThat(reputation.recordUselessResponse(1004)).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
 
     // But then the next empty response doesn't come in until after the window expires on the first
-    assertThat(
-            reputation.recordUselessResponse(
-                1001 + PeerReputation.USELESS_RESPONSE_WINDOW_IN_MILLIS + 1))
-        .isEmpty();
+    assertThat(reputation.recordUselessResponse()).isEmpty();
   }
 }

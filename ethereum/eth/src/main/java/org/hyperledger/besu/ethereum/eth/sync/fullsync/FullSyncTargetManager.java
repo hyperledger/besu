@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncTargetManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
@@ -67,7 +66,7 @@ class FullSyncTargetManager extends SyncTargetManager {
           syncTarget.peer(),
           commonAncestor.getNumber(),
           commonAncestor.getHash());
-      syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER);
+      syncTarget.peer().recordUselessAndDisconnect();
       return Optional.empty();
     }
   }

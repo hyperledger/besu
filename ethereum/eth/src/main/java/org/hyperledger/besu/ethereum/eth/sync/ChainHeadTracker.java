@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers.ConnectCallback;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.function.Supplier;
@@ -90,7 +89,7 @@ public class ChainHeadTracker implements ConnectCallback {
                     () -> peer);
               } else {
                 LOG.debug("Failed to retrieve chain head info. Disconnecting {}", peer, error);
-                peer.disconnect(DisconnectReason.USELESS_PEER);
+                peer.recordUselessAndDisconnect();
               }
             });
   }
