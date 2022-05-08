@@ -193,6 +193,11 @@ public class DefaultSynchronizer implements Synchronizer {
   }
 
   @Override
+  public void stopBlockPropagation() {
+    blockPropagationManager.ifPresent(BlockPropagationManager::stop);
+  }
+
+  @Override
   public void awaitStop() throws InterruptedException {
     if (maybePruner.isPresent()) {
       maybePruner.get().awaitStop();

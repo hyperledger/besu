@@ -30,6 +30,8 @@ public interface Synchronizer {
 
   void stop();
 
+  void stopBlockPropagation();
+
   void awaitStop() throws InterruptedException;
 
   /**

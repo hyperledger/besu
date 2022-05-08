@@ -85,7 +85,6 @@ public class TransitionControllerBuilderTest {
     when(transitionProtocolSchedule.getPreMergeSchedule()).thenReturn(preMergeProtocolSchedule);
     when(protocolContext.getConsensusContext(CliqueContext.class))
         .thenReturn(mock(CliqueContext.class));
-    when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
   }
 
   @Test

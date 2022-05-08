@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -116,7 +117,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 syncState,
                 ethProtocolManager,
                 transitionBackwardsSyncContext));
-    initTransitionWatcher(protocolContext, composedCoordinator);
+    // initTransitionWatcher(protocolContext, composedCoordinator, blockPropagationManager);
     return composedCoordinator;
   }
 
@@ -146,7 +147,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   private void initTransitionWatcher(
-      final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
+      final ProtocolContext protocolContext,
+      final TransitionCoordinator composedCoordinator,
+      final Synchronizer synchronizer) {
 
     PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
     postMergeContext.observeNewIsPostMergeState(
@@ -155,6 +158,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             // if we transitioned to post-merge, stop and disable any mining
             composedCoordinator.getPreMergeObject().disable();
             composedCoordinator.getPreMergeObject().stop();
+            synchronizer.stopBlockPropagation();
             // set the blockchoiceRule to never reorg, rely on forkchoiceUpdated instead
             protocolContext
                 .getBlockchain()
@@ -183,6 +187,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     BesuController controller = super.build();
+    initTransitionWatcher(
+        controller.getProtocolContext(),
+        (TransitionCoordinator) controller.getMiningCoordinator(),
+        controller.getSynchronizer());
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
   }

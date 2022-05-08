@@ -37,6 +37,9 @@ public class DummySynchronizer implements Synchronizer {
   public void stop() {}
 
   @Override
+  public void stopBlockPropagation() {}
+
+  @Override
   public void awaitStop() throws InterruptedException {}
 
   @Override
