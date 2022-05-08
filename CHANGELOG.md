@@ -1,5 +1,10 @@
 # Changelog
 
+## 22.4.1
+
+### Additions and Improvements
+- GraphQL - allow null log topics in queries which match any topic [#3662](https://github.com/hyperledger/besu/pull/3662)
+
 ## 22.4.0
 
 ### Breaking Changes

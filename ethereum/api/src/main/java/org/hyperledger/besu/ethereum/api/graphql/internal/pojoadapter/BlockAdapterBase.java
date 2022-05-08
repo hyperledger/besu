@@ -35,6 +35,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -160,7 +161,11 @@ public class BlockAdapterBase extends AdapterBase {
 
     final List<List<LogTopic>> transformedTopics = new ArrayList<>();
     for (final List<Bytes32> topic : topics) {
-      transformedTopics.add(topic.stream().map(LogTopic::of).collect(Collectors.toList()));
+      if (topic.isEmpty()) {
+        transformedTopics.add(Collections.singletonList(null));
+      } else {
+        transformedTopics.add(topic.stream().map(LogTopic::of).collect(Collectors.toList()));
+      }
     }
     final LogsQuery query =
         new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
