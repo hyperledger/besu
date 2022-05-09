@@ -43,9 +43,7 @@ public class PrivacyAccountResolver {
       case 0:
         // ALICE
         return PrivacyAccount.create(
-            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                ? resolveResource("ec_key")
-                : resolveResource("key"),
+            resolveResource("key"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_0.pub")
                 : resolveResource("enclave_key_0.pub"),
@@ -55,9 +53,7 @@ public class PrivacyAccountResolver {
       case 1:
         // BOB
         return PrivacyAccount.create(
-            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                ? resolveResource("ec_key1")
-                : resolveResource("key1"),
+            resolveResource("key1"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_1.pub")
                 : resolveResource("enclave_key_1.pub"),
@@ -67,9 +63,7 @@ public class PrivacyAccountResolver {
       case 2:
         // CHARLIE
         return PrivacyAccount.create(
-            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                ? resolveResource("ec_key2")
-                : resolveResource("key2"),
+            resolveResource("key2"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_2.pub")
                 : resolveResource("enclave_key_2.pub"),
