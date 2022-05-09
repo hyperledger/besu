@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
+import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
+
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -140,6 +142,16 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   public CompletableFuture<?> stop() {
     isRunning = false;
     return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  protected void handleOutgoingPacketErrors(
+      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+    LOG.warn(
+        "Sending to peer {} failed, packet: {}, stacktrace: {}",
+        peer,
+        wrapBuffer(packet.encode()),
+        err);
   }
 
   public NodeKey getNodeKey() {

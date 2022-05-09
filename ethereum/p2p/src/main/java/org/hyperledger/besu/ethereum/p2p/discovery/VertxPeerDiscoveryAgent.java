@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +44,8 @@ import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.unix.Errors;
+import io.netty.channel.unix.Errors.NativeIoException;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
@@ -194,6 +198,53 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
           }
         });
     return completion;
+  }
+
+  @Override
+  protected void handleOutgoingPacketErrors(
+      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+    if (err instanceof NativeIoException) {
+      final var nativeErr = (NativeIoException) err;
+      if (nativeErr.expectedErr() == Errors.ERROR_ENETUNREACH_NEGATIVE) {
+        LOG.debug(
+            "Peer {} is unreachable, native error code {}, packet: {}, stacktrace: {}",
+            peer,
+            nativeErr.expectedErr(),
+            wrapBuffer(packet.encode()),
+            err);
+      } else {
+        LOG.warn(
+            "Sending to peer {} failed, native error code {}, packet: {}, stacktrace: {}",
+            peer,
+            nativeErr.expectedErr(),
+            wrapBuffer(packet.encode()),
+            err);
+      }
+    } else if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
+      LOG.debug("Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
+    } else if (err instanceof SocketException
+        && err.getMessage().contentEquals("Operation not permitted")) {
+      LOG.debug(
+          "Operation not permitted sending to peer {}, this might be caused by firewall rules blocking traffic to a specific route.",
+          peer,
+          err);
+    } else if (err instanceof UnsupportedAddressTypeException) {
+      LOG.warn(
+          "Unsupported address type exception when connecting to peer {}, this is likely due to ipv6 not being enabled at runtime. "
+              + "Set logging level to TRACE to see full stacktrace",
+          peer);
+      LOG.trace(
+          "Sending to peer {} failed, packet: {}, stacktrace: {}",
+          peer,
+          wrapBuffer(packet.encode()),
+          err);
+    } else {
+      LOG.warn(
+          "Sending to peer {} failed, packet: {}, stacktrace: {}",
+          peer,
+          wrapBuffer(packet.encode()),
+          err);
+    }
   }
 
   /**

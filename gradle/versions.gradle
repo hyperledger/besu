@@ -67,6 +67,7 @@ dependencyManagement {
     dependency 'io.kubernetes:client-java:14.0.1'
 
     dependency 'io.netty:netty-all:4.1.74.Final'
+    dependency 'io.netty:netty-transport-native-unix-common:4.1.74.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.50.Final'
     dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.74.Final', classifier: 'linux-x86_64'
     dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.74.Final', classifier: 'osx-x86_64'

@@ -42,6 +42,8 @@ dependencies {
   implementation 'dnsjava:dnsjava'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
+  implementation 'io.netty:netty-transport-native-unix-common'
+
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-crypto'
   implementation('org.apache.tuweni:tuweni-devp2p') {
