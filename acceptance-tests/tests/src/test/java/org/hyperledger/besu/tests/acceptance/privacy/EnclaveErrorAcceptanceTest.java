@@ -16,15 +16,20 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
+import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Optional;
@@ -47,19 +52,25 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   private final PrivacyNode bob;
   private final String wrongPublicKey;
 
-  @Parameters(name = "{0}")
-  public static Collection<EnclaveType> enclaveTypes() {
-    return EnclaveType.valuesForTests();
+  @Parameters(name = "{0} enclave type with {1} encryptor")
+  public static Collection<Object[]> enclaveParameters() {
+    return Arrays.asList(
+        new Object[][] {
+          {TESSERA, NACL},
+          {TESSERA, EC}
+        });
   }
 
-  public EnclaveErrorAcceptanceTest(final EnclaveType enclaveType) throws IOException {
+  public EnclaveErrorAcceptanceTest(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws IOException {
 
     final Network containerNetwork = Network.newNetwork();
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
-            privacyAccountResolver.resolve(0),
+            privacyAccountResolver.resolve(0, enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),
@@ -70,7 +81,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node2",
-            privacyAccountResolver.resolve(1),
+            privacyAccountResolver.resolve(1, enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),

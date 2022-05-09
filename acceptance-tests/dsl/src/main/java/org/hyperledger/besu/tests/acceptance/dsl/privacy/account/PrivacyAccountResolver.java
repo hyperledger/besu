@@ -14,28 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.account;
 
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
+
 import java.net.URL;
 
 /** Supplier of known funded accounts defined in dev.json */
 public class PrivacyAccountResolver {
-
-  public static final PrivacyAccount ALICE =
-      PrivacyAccount.create(
-          resolveResource("key"),
-          resolveResource("enclave_key_0.pub"),
-          resolveResource("enclave_key_0.key"));
-
-  public static final PrivacyAccount BOB =
-      PrivacyAccount.create(
-          resolveResource("key1"),
-          resolveResource("enclave_key_1.pub"),
-          resolveResource("enclave_key_1.key"));
-
-  public static final PrivacyAccount CHARLIE =
-      PrivacyAccount.create(
-          resolveResource("key2"),
-          resolveResource("enclave_key_2.pub"),
-          resolveResource("enclave_key_2.key"));
 
   public static final PrivacyAccount MULTI_TENANCY =
       PrivacyAccount.create(
@@ -51,22 +35,53 @@ public class PrivacyAccountResolver {
             resolveResource("enclave_key_2.key")
           });
 
-  private static URL resolveResource(final String resource) {
-    return PrivacyAccountResolver.class.getClassLoader().getResource(resource);
-  }
-
   public PrivacyAccountResolver() {}
 
-  public PrivacyAccount resolve(final Integer account) {
+  public PrivacyAccount resolve(
+      final Integer account, final EnclaveEncryptorType enclaveEncryptorType) {
     switch (account) {
       case 0:
-        return ALICE;
+        // ALICE
+        return PrivacyAccount.create(
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("ec_key")
+                : resolveResource("key"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_0.pub")
+                : resolveResource("enclave_key_0.pub"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_0.key")
+                : resolveResource("enclave_key_0.key"));
       case 1:
-        return BOB;
+        // BOB
+        return PrivacyAccount.create(
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("ec_key1")
+                : resolveResource("key1"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_1.pub")
+                : resolveResource("enclave_key_1.pub"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_1.key")
+                : resolveResource("enclave_key_1.key"));
       case 2:
-        return CHARLIE;
+        // CHARLIE
+        return PrivacyAccount.create(
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("ec_key2")
+                : resolveResource("key2"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_2.pub")
+                : resolveResource("enclave_key_2.pub"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_2.key")
+                : resolveResource("enclave_key_2.key"));
       default:
         throw new RuntimeException("Unknown privacy account");
     }
+  }
+
+  private static URL resolveResource(final String resource) {
+    return PrivacyAccountResolver.class.getClassLoader().getResource(resource);
   }
 }

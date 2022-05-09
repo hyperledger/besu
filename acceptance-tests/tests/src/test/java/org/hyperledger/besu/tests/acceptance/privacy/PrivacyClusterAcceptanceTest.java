@@ -16,6 +16,9 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
+import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import static org.web3j.utils.Restriction.RESTRICTED;
 
 import org.hyperledger.besu.enclave.Enclave;
@@ -24,11 +27,13 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -59,17 +64,23 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   private final Vertx vertx = Vertx.vertx();
   private final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
 
-  @Parameters(name = "{0}")
-  public static Collection<EnclaveType> enclaveTypes() {
-    return EnclaveType.valuesForTests();
+  @Parameters(name = "{0} enclave type with {1} encryptor")
+  public static Collection<Object[]> enclaveParameters() {
+    return Arrays.asList(
+        new Object[][] {
+          {TESSERA, NACL},
+          {TESSERA, EC}
+        });
   }
 
-  public PrivacyClusterAcceptanceTest(final EnclaveType enclaveType) throws IOException {
+  public PrivacyClusterAcceptanceTest(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
+      throws IOException {
     final Network containerNetwork = Network.newNetwork();
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             "node1",
-            privacyAccountResolver.resolve(0),
+            privacyAccountResolver.resolve(0, enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
@@ -78,7 +89,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob =
         privacyBesu.createPrivateTransactionEnabledNode(
             "node2",
-            privacyAccountResolver.resolve(1),
+            privacyAccountResolver.resolve(1, enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
@@ -87,7 +98,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie =
         privacyBesu.createPrivateTransactionEnabledNode(
             "node3",
-            privacyAccountResolver.resolve(2),
+            privacyAccountResolver.resolve(2, enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,

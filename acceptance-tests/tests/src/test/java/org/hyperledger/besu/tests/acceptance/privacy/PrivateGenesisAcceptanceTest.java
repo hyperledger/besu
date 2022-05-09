@@ -20,8 +20,8 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -38,15 +38,18 @@ import org.web3j.utils.Restriction;
 public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
   private final PrivacyNode alice;
 
-  public PrivateGenesisAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+  public PrivateGenesisAcceptanceTest(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
 
-    super(restriction, enclaveType);
+    super(restriction, enclaveType, enclaveEncryptorType);
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabledWithGenesis(
             "node1",
-            PrivacyAccountResolver.ALICE,
+            privacyAccountResolver.resolve(0, enclaveEncryptorType),
             true,
             enclaveType,
             Optional.empty(),

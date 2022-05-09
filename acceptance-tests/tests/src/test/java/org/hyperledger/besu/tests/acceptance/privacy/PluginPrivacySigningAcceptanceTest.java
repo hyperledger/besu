@@ -15,13 +15,14 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver.BOB;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy.PrivacyNodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccount;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -42,6 +43,8 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
 
   @Before
   public void setup() throws IOException {
+    final PrivacyAccount BOB = privacyAccountResolver.resolve(1, EnclaveEncryptorType.NACL);
+
     minerNode =
         privacyBesu.create(
             new PrivacyNodeConfiguration(

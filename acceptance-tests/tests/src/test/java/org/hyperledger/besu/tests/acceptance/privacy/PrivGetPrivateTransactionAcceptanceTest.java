@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -40,16 +41,19 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
   private final PrivacyNode bob;
 
   public PrivGetPrivateTransactionAcceptanceTest(
-      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws IOException {
 
-    super(restriction, enclaveType);
+    super(restriction, enclaveType, enclaveEncryptorType);
 
     final Network containerNetwork = Network.newNetwork();
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
-            privacyAccountResolver.resolve(0),
+            privacyAccountResolver.resolve(0, enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),
@@ -60,7 +64,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node2",
-            privacyAccountResolver.resolve(1),
+            privacyAccountResolver.resolve(1, enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),

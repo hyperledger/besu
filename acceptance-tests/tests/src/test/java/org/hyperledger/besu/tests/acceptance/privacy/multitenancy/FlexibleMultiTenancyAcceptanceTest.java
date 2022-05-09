@@ -16,6 +16,9 @@ package org.hyperledger.besu.tests.acceptance.privacy.multitenancy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
+import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -31,6 +34,7 @@ import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -57,9 +61,13 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
     this.enclaveType = enclaveType;
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Collection<EnclaveType> enclaveTypes() {
-    return EnclaveType.valuesForTests();
+  @Parameterized.Parameters(name = "{0} enclave type with {1} encryptor")
+  public static Collection<Object[]> enclaveParameters() {
+    return Arrays.asList(
+        new Object[][] {
+          {TESSERA, NACL},
+          {TESSERA, EC}
+        });
   }
 
   private static final PermissioningTransactions permissioningTransactions =

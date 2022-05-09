@@ -18,8 +18,8 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -33,13 +33,16 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
   private final PrivacyNode minerNode;
 
   public DeployPrivateSmartContractAcceptanceTest(
-      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
-    super(restriction, enclaveType);
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws IOException {
+    super(restriction, enclaveType, enclaveEncryptorType);
 
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-node",
-            PrivacyAccountResolver.ALICE,
+            privacyAccountResolver.resolve(0, enclaveEncryptorType),
             enclaveType,
             Optional.empty(),
             false,

@@ -18,6 +18,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBa
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -41,14 +42,17 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   public static class BftPrivacyType {
     private final EnclaveType enclaveType;
+    private final EnclaveEncryptorType enclaveEncryptorType;
     private final ConsensusType consensusType;
     private final Restriction restriction;
 
     public BftPrivacyType(
         final EnclaveType enclaveType,
+        final EnclaveEncryptorType enclaveEncryptorType,
         final ConsensusType consensusType,
         final Restriction restriction) {
       this.enclaveType = enclaveType;
+      this.enclaveEncryptorType = enclaveEncryptorType;
       this.consensusType = consensusType;
       this.restriction = restriction;
     }
@@ -69,13 +73,21 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final List<BftPrivacyType> bftPrivacyTypes = new ArrayList<>();
     for (EnclaveType x : EnclaveType.valuesForTests()) {
       for (ConsensusType consensusType : ConsensusType.values()) {
-        bftPrivacyTypes.add(new BftPrivacyType(x, consensusType, Restriction.RESTRICTED));
+        bftPrivacyTypes.add(
+            new BftPrivacyType(
+                x, EnclaveEncryptorType.NACL, consensusType, Restriction.RESTRICTED));
+        bftPrivacyTypes.add(
+            new BftPrivacyType(x, EnclaveEncryptorType.EC, consensusType, Restriction.RESTRICTED));
       }
     }
 
     for (ConsensusType consensusType : ConsensusType.values()) {
       bftPrivacyTypes.add(
-          new BftPrivacyType(EnclaveType.NOOP, consensusType, Restriction.UNRESTRICTED));
+          new BftPrivacyType(
+              EnclaveType.NOOP,
+              EnclaveEncryptorType.NOOP,
+              consensusType,
+              Restriction.UNRESTRICTED));
     }
 
     return bftPrivacyTypes;
@@ -102,7 +114,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     if (bftPrivacyType.consensusType == ConsensusType.IBFT2) {
       return privacyBesu.createIbft2NodePrivacyEnabled(
           nodeName,
-          privacyAccountResolver.resolve(privacyAccount),
+          privacyAccountResolver.resolve(privacyAccount, bftPrivacyType.enclaveEncryptorType),
           true,
           bftPrivacyType.enclaveType,
           Optional.of(containerNetwork),
@@ -113,7 +125,7 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     } else if (bftPrivacyType.consensusType == ConsensusType.QBFT) {
       return privacyBesu.createQbftNodePrivacyEnabled(
           nodeName,
-          privacyAccountResolver.resolve(privacyAccount),
+          privacyAccountResolver.resolve(privacyAccount, bftPrivacyType.enclaveEncryptorType),
           bftPrivacyType.enclaveType,
           Optional.of(containerNetwork),
           false,

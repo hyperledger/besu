@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
+import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
 import static org.hyperledger.enclave.testutil.EnclaveType.NOOP;
 import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import static org.web3j.utils.Restriction.RESTRICTED;
@@ -22,6 +24,7 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.PluginCreateRandomPrivacyGroupIdTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.RestrictedCreatePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.util.Arrays;
@@ -36,19 +39,24 @@ import org.web3j.utils.Restriction;
 public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTestBase {
   protected final Restriction restriction;
   protected final EnclaveType enclaveType;
+  protected final EnclaveEncryptorType enclaveEncryptorType;
 
   protected ParameterizedEnclaveTestBase(
-      final Restriction restriction, final EnclaveType enclaveType) {
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType) {
     this.restriction = restriction;
     this.enclaveType = enclaveType;
+    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
-  @Parameters(name = "{0} tx with {1} enclave")
+  @Parameters(name = "{0} tx with {1} enclave and {2} encryptor type")
   public static Collection<Object[]> params() {
     return Arrays.asList(
         new Object[][] {
-          {RESTRICTED, TESSERA},
-          {UNRESTRICTED, NOOP}
+          {RESTRICTED, TESSERA, NACL},
+          {RESTRICTED, TESSERA, EC},
+          {UNRESTRICTED, NOOP, EnclaveEncryptorType.NOOP}
         });
   }
 
