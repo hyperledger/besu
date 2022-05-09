@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,9 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class IbftProposeValidatorVoteTest {
   private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
@@ -41,8 +40,6 @@ public class IbftProposeValidatorVoteTest {
   private final String IBFT_METHOD = "ibft_proposeValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private IbftProposeValidatorVote method;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -57,42 +54,30 @@ public class IbftProposeValidatorVoteTest {
 
   @Test
   public void exceptionWhenNoParamsSupplied() {
-    final JsonRpcRequestContext request = requestWithParams();
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Missing required json rpc parameter at index 0");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams()))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Missing required json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenNoAuthSupplied() {
-    final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"));
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Missing required json rpc parameter at index 1");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams(Address.fromHexString("1"))))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Missing required json rpc parameter at index 1");
   }
 
   @Test
   public void exceptionWhenNoAddressSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("true");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 0");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams("true")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenInvalidBoolParameterSupplied() {
-    final JsonRpcRequestContext request = requestWithParams(Address.fromHexString("1"), "c");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 1");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams(Address.fromHexString("1"), "c")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 1");
   }
 
   @Test

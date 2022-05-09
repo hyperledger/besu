@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
@@ -31,7 +32,6 @@ import java.util.Map;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -48,8 +48,6 @@ public class TomlConfigFileDefaultProviderTest {
   @Mock CommandSpec mockCommandSpec;
 
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
-
-  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void defaultValueForMatchingKey() throws IOException {
@@ -210,74 +208,78 @@ public class TomlConfigFileDefaultProviderTest {
   @Test
   public void configFileNotFoundMustThrow() {
 
-    exceptionRule.expect(ParameterException.class);
-
     final File nonExistingFile = new File("doesnt.exit");
-    exceptionRule.expectMessage("Unable to read TOML configuration, file not found.");
 
     final TomlConfigFileDefaultProvider providerUnderTest =
         new TomlConfigFileDefaultProvider(mockCommandLine, nonExistingFile);
 
-    providerUnderTest.defaultValue(OptionSpec.builder("an-option").type(String.class).build());
+    assertThatThrownBy(
+            () ->
+                providerUnderTest.defaultValue(
+                    OptionSpec.builder("an-option").type(String.class).build()))
+        .isInstanceOf(ParameterException.class)
+        .hasMessage("Unable to read TOML configuration, file not found.");
   }
 
   @Test
   public void invalidConfigMustThrow() throws IOException {
-
-    exceptionRule.expect(ParameterException.class);
-    exceptionRule.expectMessage("Unable to read TOML configuration file");
 
     final File tempConfigFile = temp.newFile("config.toml");
 
     final TomlConfigFileDefaultProvider providerUnderTest =
         new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
 
-    providerUnderTest.defaultValue(OptionSpec.builder("an-option").type(String.class).build());
+    assertThatThrownBy(
+            () ->
+                providerUnderTest.defaultValue(
+                    OptionSpec.builder("an-option").type(String.class).build()))
+        .isInstanceOf(ParameterException.class)
+        .hasMessageContaining("Unable to read TOML configuration file");
   }
 
   @Test
   public void invalidConfigContentMustThrow() throws IOException {
 
-    exceptionRule.expect(ParameterException.class);
-    exceptionRule.expectMessage(
-        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', "
-            + "\"\"\", a number, a boolean, a date/time, an array, or a table (line 1, column 19)");
-
     final File tempConfigFile = temp.newFile("config.toml");
-    try (final BufferedWriter fileWriter =
-        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
-      fileWriter.write("an-invalid-syntax=======....");
-      fileWriter.flush();
+    fileWriter.write("an-invalid-syntax=======....");
+    fileWriter.flush();
 
-      final TomlConfigFileDefaultProvider providerUnderTest =
-          new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigFileDefaultProvider providerUnderTest =
+        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
 
-      providerUnderTest.defaultValue(OptionSpec.builder("an-option").type(String.class).build());
-    }
+    assertThatThrownBy(
+            () ->
+                providerUnderTest.defaultValue(
+                    OptionSpec.builder("an-option").type(String.class).build()))
+        .isInstanceOf(ParameterException.class)
+        .hasMessage(
+            "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', "
+                + "\"\"\", a number, a boolean, a date/time, an array, or a table (line 1, column 19)");
   }
 
   @Test
   public void unknownOptionMustThrow() throws IOException {
-
-    exceptionRule.expect(ParameterException.class);
-    exceptionRule.expectMessage("Unknown option in TOML configuration file: invalid_option");
 
     when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
     Map<String, OptionSpec> validOptionsMap = new HashMap<>();
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
     final File tempConfigFile = temp.newFile("config.toml");
-    try (final BufferedWriter fileWriter =
-        Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
+    final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
-      fileWriter.write("invalid_option=true");
-      fileWriter.flush();
+    fileWriter.write("invalid_option=true");
+    fileWriter.flush();
 
-      final TomlConfigFileDefaultProvider providerUnderTest =
-          new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+    final TomlConfigFileDefaultProvider providerUnderTest =
+        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
 
-      providerUnderTest.defaultValue(OptionSpec.builder("an-option").type(String.class).build());
-    }
+    assertThatThrownBy(
+            () ->
+                providerUnderTest.defaultValue(
+                    OptionSpec.builder("an-option").type(String.class).build()))
+        .isInstanceOf(ParameterException.class)
+        .hasMessage("Unknown option in TOML configuration file: invalid_option");
   }
 }
