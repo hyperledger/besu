@@ -17,5 +17,29 @@ package org.hyperledger.enclave.testutil;
 public enum EnclaveEncryptorType {
   NACL,
   EC,
-  NOOP
+  NOOP;
+
+  @Override
+  public String toString() {
+    switch (this) {
+      case NACL:
+        return "    \"encryptor\":{\n"
+            + "        \"type\":\"NACL\",\n"
+            + "        \"properties\":{\n"
+            + "        }\n"
+            + "    },\n";
+      case EC:
+        return "    \"encryptor\":{\n"
+            + "        \"type\":\"EC\",\n"
+            + "        \"properties\":{\n"
+            + "            \"symmetricCipher\": \"AES/GCM/NoPadding\",\n"
+            + "            \"ellipticCurve\": \"secp256r1\",\n"
+            + "            \"nonceLength\": \"24\",\n"
+            + "            \"sharedKeyLength\": \"32\"\n"
+            + "        }\n"
+            + "    },\n";
+      default:
+        return "";
+    }
+  }
 }

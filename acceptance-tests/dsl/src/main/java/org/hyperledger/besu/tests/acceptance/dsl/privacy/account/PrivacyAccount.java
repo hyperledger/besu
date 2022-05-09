@@ -14,36 +14,50 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.account;
 
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
+
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Optional;
 
 public class PrivacyAccount {
 
   private final URL privateKeyPath;
   private final URL[] enclaveKeyPaths;
   private final URL[] enclavePrivateKeyPaths;
+  private EnclaveEncryptorType enclaveEncryptorType;
 
   private PrivacyAccount(
       final URL privateKeyPath,
       final URL[] enclavePublicKeyPaths,
-      final URL[] enclavePrivateKeyPaths) {
+      final URL[] enclavePrivateKeyPaths,
+      final Optional<EnclaveEncryptorType> optionalEnclaveEncryptorType) {
     this.privateKeyPath = privateKeyPath;
     this.enclaveKeyPaths = enclavePublicKeyPaths;
     this.enclavePrivateKeyPaths = enclavePrivateKeyPaths;
+    optionalEnclaveEncryptorType.ifPresent(
+        enclaveEncryptorType -> this.enclaveEncryptorType = enclaveEncryptorType);
   }
 
   public static PrivacyAccount create(
-      final URL privateKeyPath, final URL enclavePublicKeyPath, final URL enclavePrivateKeyPath) {
+      final URL privateKeyPath,
+      final URL enclavePublicKeyPath,
+      final URL enclavePrivateKeyPath,
+      final EnclaveEncryptorType enclaveEncryptorType) {
     return new PrivacyAccount(
-        privateKeyPath, new URL[] {enclavePublicKeyPath}, new URL[] {enclavePrivateKeyPath});
+        privateKeyPath,
+        new URL[] {enclavePublicKeyPath},
+        new URL[] {enclavePrivateKeyPath},
+        Optional.of(enclaveEncryptorType));
   }
 
   public static PrivacyAccount create(
       final URL privateKeyPath,
       final URL[] enclavePublicKeyPath,
       final URL[] enclavePrivateKeyPath) {
-    return new PrivacyAccount(privateKeyPath, enclavePublicKeyPath, enclavePrivateKeyPath);
+    return new PrivacyAccount(
+        privateKeyPath, enclavePublicKeyPath, enclavePrivateKeyPath, Optional.empty());
   }
 
   public String getPrivateKeyPath() {
@@ -60,6 +74,10 @@ public class PrivacyAccount {
     return Arrays.stream(enclavePrivateKeyPaths)
         .map(path -> toStringResource(path))
         .toArray(String[]::new);
+  }
+
+  public EnclaveEncryptorType getEnclaveEncryptorType() {
+    return enclaveEncryptorType;
   }
 
   private String toStringResource(final URL path) {

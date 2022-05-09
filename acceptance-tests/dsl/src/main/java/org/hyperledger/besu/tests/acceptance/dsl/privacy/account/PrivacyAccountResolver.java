@@ -49,7 +49,8 @@ public class PrivacyAccountResolver {
                 : resolveResource("enclave_key_0.pub"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_0.key")
-                : resolveResource("enclave_key_0.key"));
+                : resolveResource("enclave_key_0.key"),
+            enclaveEncryptorType);
       case 1:
         // BOB
         return PrivacyAccount.create(
@@ -59,7 +60,8 @@ public class PrivacyAccountResolver {
                 : resolveResource("enclave_key_1.pub"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_1.key")
-                : resolveResource("enclave_key_1.key"));
+                : resolveResource("enclave_key_1.key"),
+            enclaveEncryptorType);
       case 2:
         // CHARLIE
         return PrivacyAccount.create(
@@ -69,7 +71,8 @@ public class PrivacyAccountResolver {
                 : resolveResource("enclave_key_2.pub"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_2.key")
-                : resolveResource("enclave_key_2.key"));
+                : resolveResource("enclave_key_2.key"),
+            enclaveEncryptorType);
       default:
         throw new RuntimeException("Unknown privacy account");
     }

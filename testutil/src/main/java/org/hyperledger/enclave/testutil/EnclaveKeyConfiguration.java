@@ -17,15 +17,20 @@ package org.hyperledger.enclave.testutil;
 public class EnclaveKeyConfiguration {
   private final String[] pubKeyPaths;
   private final String[] privKeyPaths;
+  private EnclaveEncryptorType enclaveEncryptorType;
 
   public EnclaveKeyConfiguration(final String pubKeyPath, final String privKeyPath) {
     this.pubKeyPaths = new String[] {pubKeyPath};
     this.privKeyPaths = new String[] {privKeyPath};
   }
 
-  public EnclaveKeyConfiguration(final String[] pubKeyPaths, final String[] privKeyPaths) {
+  public EnclaveKeyConfiguration(
+      final String[] pubKeyPaths,
+      final String[] privKeyPaths,
+      final EnclaveEncryptorType enclaveEncryptorType) {
     this.pubKeyPaths = pubKeyPaths;
     this.privKeyPaths = privKeyPaths;
+    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
   public String[] getPubKeyPaths() {
@@ -34,5 +39,9 @@ public class EnclaveKeyConfiguration {
 
   public String[] getPrivKeyPaths() {
     return privKeyPaths;
+  }
+
+  public EnclaveEncryptorType getEnclaveEncryptorType() {
+    return enclaveEncryptorType;
   }
 }

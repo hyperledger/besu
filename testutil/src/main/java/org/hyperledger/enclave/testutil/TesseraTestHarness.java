@@ -163,11 +163,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
     String confString =
         "{\n"
             + "    \"mode\" : \"orion\",\n"
-            + "    \"encryptor\":{\n"
-            + "        \"type\":\"NACL\",\n"
-            + "        \"properties\":{\n"
-            + "        }\n"
-            + "    },\n"
+            + enclaveConfiguration.getEnclaveEncryptorType()
             + "    \"useWhiteList\": false,\n"
             + "    \"jdbc\": {\n"
             + "        \"username\": \"sa\",\n"
