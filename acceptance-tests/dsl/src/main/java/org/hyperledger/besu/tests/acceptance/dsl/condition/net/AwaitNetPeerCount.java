@@ -36,6 +36,6 @@ public class AwaitNetPeerCount implements Condition {
 
   @Override
   public void verify(final Node node) {
-    WaitUtils.waitFor(() -> assertThat(node.execute(transaction)).isEqualTo(expectedPeerCount));
+    WaitUtils.waitFor(60, () -> assertThat(node.execute(transaction)).isEqualTo(expectedPeerCount));
   }
 }
