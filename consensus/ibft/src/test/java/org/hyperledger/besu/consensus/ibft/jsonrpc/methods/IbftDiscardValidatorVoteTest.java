@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,9 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class IbftDiscardValidatorVoteTest {
   private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
@@ -41,8 +40,6 @@ public class IbftDiscardValidatorVoteTest {
   private final String IBFT_METHOD = "ibft_discardValidatorVote";
   private final String JSON_RPC_VERSION = "2.0";
   private IbftDiscardValidatorVote method;
-
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -57,22 +54,16 @@ public class IbftDiscardValidatorVoteTest {
 
   @Test
   public void exceptionWhenNoParamsSupplied() {
-    final JsonRpcRequestContext request = requestWithParams();
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Missing required json rpc parameter at index 0");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams()))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Missing required json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenInvalidAddressParameterSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("InvalidAddress");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 0");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams("InvalidAddress")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 0");
   }
 
   @Test
