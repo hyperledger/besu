@@ -15,11 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
@@ -37,13 +34,9 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class SubscriptionManagerTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private SubscriptionManager subscriptionManager;
   private final String CONNECTION_ID = "test-connection-id";
@@ -87,12 +80,9 @@ public class SubscriptionManagerTest {
   @Test
   public void unsubscribeAbsentSubscriptionShouldThrowSubscriptionNotFoundException() {
     final UnsubscribeRequest unsubscribeRequest = new UnsubscribeRequest(1L, CONNECTION_ID);
-
-    thrown.expect(
-        both(hasMessage(equalTo("Subscription not found (id=1)")))
-            .and(instanceOf(SubscriptionNotFoundException.class)));
-
-    subscriptionManager.unsubscribe(unsubscribeRequest);
+    assertThatThrownBy(() -> subscriptionManager.unsubscribe(unsubscribeRequest))
+        .isInstanceOf(SubscriptionNotFoundException.class)
+        .hasMessage("Subscription not found (id=1)");
   }
 
   @Test

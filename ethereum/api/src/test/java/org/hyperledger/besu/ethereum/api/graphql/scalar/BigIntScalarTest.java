@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql.scalar;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
@@ -25,9 +26,7 @@ import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -35,7 +34,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BigIntScalarTest {
 
   private GraphQLScalarType scalar;
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private final String str = "0x10";
   private final UInt256 value = UInt256.fromHexString(str);
@@ -43,15 +41,15 @@ public class BigIntScalarTest {
   private final StringValue invalidStrValue = StringValue.newStringValue("0xgh").build();
 
   @Test
-  public void pareValueTest() {
+  public void parseValueTest() {
     final String result = (String) scalar.getCoercing().parseValue(value);
     assertThat(result).isEqualTo(str);
   }
 
   @Test
-  public void pareValueErrorTest() {
-    thrown.expect(CoercingParseValueException.class);
-    scalar.getCoercing().parseValue(str);
+  public void parseValueErrorTest() {
+    assertThatThrownBy(() -> scalar.getCoercing().parseValue(str))
+        .isInstanceOf(CoercingParseValueException.class);
   }
 
   @Test
@@ -62,26 +60,26 @@ public class BigIntScalarTest {
 
   @Test
   public void serializeErrorTest() {
-    thrown.expect(CoercingSerializeException.class);
-    scalar.getCoercing().serialize(str);
+    assertThatThrownBy(() -> scalar.getCoercing().serialize(str))
+        .isInstanceOf(CoercingSerializeException.class);
   }
 
   @Test
-  public void pareLiteralTest() {
+  public void parseLiteralTest() {
     final UInt256 result = (UInt256) scalar.getCoercing().parseLiteral(strValue);
     assertThat(result).isEqualTo(value);
   }
 
   @Test
-  public void pareLiteralErrorTest() {
-    thrown.expect(CoercingParseLiteralException.class);
-    scalar.getCoercing().parseLiteral(str);
+  public void parseLiteralErrorTest() {
+    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(str))
+        .isInstanceOf(CoercingParseLiteralException.class);
   }
 
   @Test
-  public void pareLiteralErrorTest2() {
-    thrown.expect(CoercingParseLiteralException.class);
-    scalar.getCoercing().parseLiteral(invalidStrValue);
+  public void parseLiteralErrorTest2() {
+    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(invalidStrValue))
+        .isInstanceOf(CoercingParseLiteralException.class);
   }
 
   @Before
