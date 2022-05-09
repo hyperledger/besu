@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
   private static final Logger LOG =
       LoggerFactory.getLogger(AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest.class);
 
+  private String ENODE_ONE_DNS;
   private String ENODE_TWO_IP;
 
   private Node node;
@@ -42,6 +44,10 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
 
   @Before
   public void setUp() throws Exception {
+    ENODE_ONE_DNS =
+        "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@"
+            + InetAddress.getLocalHost().getHostName()
+            + ":4567";
     ENODE_TWO_IP =
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:4567";
 
@@ -64,11 +70,17 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
   @Test
   public void singleNodeAllowlistWithIpShouldWorkWhenDnsEnabled() {
 
-    node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
-    LOG.info("enode two " + ENODE_TWO_IP);
     LOG.info("temp file " + tempFile.toAbsolutePath());
+    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS));
+    LOG.info("enode one " + ENODE_ONE_DNS);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
+
+    node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
+    LOG.info("enode two " + ENODE_TWO_IP);
+    node.verify(
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP));
   }
 }
