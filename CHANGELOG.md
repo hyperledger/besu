@@ -1,10 +1,16 @@
 # Changelog
 
+## 22.4.1
+
+### Additions and Improvements
+- GraphQL - allow null log topics in queries which match any topic [#3662](https://github.com/hyperledger/besu/pull/3662)
+
 ## 22.4.0
 
 ### Breaking Changes
 - Version 22.4.x will be the last series to support Java 11. Version 22.7.0 will require Java 17 to build and run.
 - In the Besu EVM Library all references to SHA3 have been renamed to the more accurate name Keccak256, including class names and comment. [#3749](https://github.com/hyperledger/besu/pull/3749)
+- Removed the Gas object and replaced it with a primitive long [#3674](https://github.com/hyperledger/besu/pull/3674)
 
 ### Bug Fixes
 - Fix nullpointer on snapsync [#3773](https://github.com/hyperledger/besu/pull/3773)
