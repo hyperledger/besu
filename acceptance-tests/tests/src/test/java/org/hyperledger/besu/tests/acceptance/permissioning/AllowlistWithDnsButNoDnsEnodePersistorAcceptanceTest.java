@@ -71,14 +71,14 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
   public void singleNodeAllowlistWithIpShouldWorkWhenDnsEnabled() {
 
     LOG.info("temp file " + tempFile.toAbsolutePath());
-    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS));
-    LOG.info("enode one " + ENODE_ONE_DNS);
+    node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
+    LOG.info("enode 2 " + ENODE_TWO_IP);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
 
-    node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
-    LOG.info("enode two " + ENODE_TWO_IP);
+    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS));
+    LOG.info("enode 1 " + ENODE_ONE_DNS);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP));

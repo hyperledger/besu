@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +38,6 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   private String ENODE_ONE_DNS;
   private String ENODE_TWO_IP;
   private String ENODE_THREE_IP;
-  private String ENODE_FOUR_DNS;
 
   private Node node;
   private Account senderA;
@@ -55,10 +53,6 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1234";
     ENODE_THREE_IP =
         "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.11:3456";
-    ENODE_FOUR_DNS =
-        "enode://fcbe9f83218487b3c0b50878193880e6c25cfd86708c0a0bf0ca91f0ce633746a892fe240afa5b9a880b8bca48e8a22704ef937fdda2d7cc63e4d41ed1b417ae@"
-            + "test.domain.xyz"
-            + ":6789";
 
     senderA = accounts.getPrimaryBenefactor();
     tempFile = Files.createTempFile("test", "perm-dns-test0");
@@ -76,7 +70,6 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     cluster.start(this.node);
   }
 
-  @Ignore("test is failing in CI")
   @Test
   public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
 
@@ -97,25 +90,10 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP, ENODE_ONE_DNS, ENODE_THREE_IP));
-  }
 
-  @Test
-  public void singleNodeAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
-
-    LOG.info("temp file " + tempFile.toAbsolutePath());
-
-    // add one DNS node
-    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS));
-    LOG.info("enode one " + ENODE_ONE_DNS);
+    node.verify(perm.removeNodesFromAllowlist(ENODE_TWO_IP));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS));
-
-    // add another DNS node
-    node.verify(perm.addNodesToAllowlist(ENODE_FOUR_DNS));
-    LOG.info("enode 4 " + ENODE_FOUR_DNS);
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_FOUR_DNS));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_THREE_IP));
   }
 }
