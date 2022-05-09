@@ -4499,7 +4499,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("needs to be 44 characters long");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Last unit does not have enough valid bits");
   }
 
   @Test

@@ -1992,10 +1992,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-public-key-file must be set if isQuorum is set in the genesis file.",
           e);
     }
-    if (key.length() != 44) {
-      throw new IllegalArgumentException(
-          "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
-    }
     // throws exception if invalid base 64
     Base64.getDecoder().decode(key);
 
