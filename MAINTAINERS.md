@@ -39,8 +39,10 @@
 <!-- besu-triage group has Write access to besu repo -->
 
 | Name             | Github           | LFID             |
-| ---------------- | ---------------- | ---------------- |
+|------------------|------------------|------------------|
+| Helen George     | iamhsk           | hsk.geo          |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Matt Nelson      | Matt-nelson-csi  | mattnelson.eth   |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
 
 ## Emeritus Maintainers
