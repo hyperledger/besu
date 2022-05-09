@@ -75,7 +75,7 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
     LOG.info("enode one " + ENODE_ONE_DNS);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS));
 
     node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
     LOG.info("enode two " + ENODE_TWO_IP);
