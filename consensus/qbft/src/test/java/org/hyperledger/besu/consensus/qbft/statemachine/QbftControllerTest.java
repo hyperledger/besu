@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.qbft.statemachine;
 
-import static org.assertj.core.util.Lists.emptyList;
 import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -54,6 +53,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -181,7 +181,7 @@ public class QbftControllerTest {
     when(futureMessageBuffer.retrieveMessagesForHeight(5L))
         .thenReturn(
             ImmutableList.of(prepareMessage, proposalMessage, commitMessage, roundChangeMessage))
-        .thenReturn(emptyList());
+        .thenReturn(Collections.emptyList());
     when(blockHeightManager.getChainHeight()).thenReturn(5L);
 
     constructQbftController();
