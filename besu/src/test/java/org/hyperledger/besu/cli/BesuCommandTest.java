@@ -4767,18 +4767,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
-    final int port = 8551;
+    final int port = 8545;
     parseCommand(
         "--Xmerge-support",
         "true",
         "--rpc-http-enabled",
-        "--engine-rpc-http-port",
+        "--engine-rpc-port",
         String.valueOf(port),
         "--rpc-ws-enabled");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Port number '8551' has been specified multiple times. Please review the supplied configuration.");
+            "Port number '8545' has been specified multiple times. Please review the supplied configuration.");
   }
 
   @Test

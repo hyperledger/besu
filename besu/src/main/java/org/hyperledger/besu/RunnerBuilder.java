@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService;
@@ -174,7 +175,6 @@ public class RunnerBuilder {
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
-  private Optional<WebSocketConfiguration> engineWebSocketConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
@@ -316,12 +316,6 @@ public class RunnerBuilder {
 
   public RunnerBuilder webSocketConfiguration(final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
-    return this;
-  }
-
-  public RunnerBuilder engineWebSocketConfiguration(
-      final WebSocketConfiguration engineWebSocketConfig) {
-    this.engineWebSocketConfiguration = Optional.of(engineWebSocketConfig);
     return this;
   }
 
@@ -591,7 +585,7 @@ public class RunnerBuilder {
                 AccountPermissioningController::getAccountLocalConfigPermissioningController);
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
-    Optional<JsonRpcHttpService> engineJsonRpcHttpService = Optional.empty();
+
     if (jsonRpcConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> nonEngineMethods =
           jsonRpcMethods(
@@ -631,55 +625,63 @@ public class RunnerBuilder {
                   nonEngineMethods,
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+    }
 
-      if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
-        final Map<String, JsonRpcMethod> engineMethods =
-            jsonRpcMethods(
-                protocolSchedule,
-                context,
-                besuController,
-                peerNetwork,
-                blockchainQueries,
-                synchronizer,
-                transactionPool,
-                miningCoordinator,
-                metricsSystem,
-                supportedCapabilities,
-                engineJsonRpcConfiguration.get().getRpcApis(),
-                filterManager,
-                accountLocalConfigPermissioningController,
-                nodeLocalConfigPermissioningController,
-                privacyParameters,
-                engineJsonRpcConfiguration.get(),
-                webSocketConfiguration,
-                metricsConfiguration,
-                natService,
-                besuPluginContext.getNamedPlugins(),
-                dataDir,
-                rpcEndpointServiceImpl);
+    Optional<JsonRpcService> engineJsonRpcService = Optional.empty();
+    if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
+      final Map<String, JsonRpcMethod> engineMethods =
+          jsonRpcMethods(
+              protocolSchedule,
+              context,
+              besuController,
+              peerNetwork,
+              blockchainQueries,
+              synchronizer,
+              transactionPool,
+              miningCoordinator,
+              metricsSystem,
+              supportedCapabilities,
+              engineJsonRpcConfiguration.get().getRpcApis(),
+              filterManager,
+              accountLocalConfigPermissioningController,
+              nodeLocalConfigPermissioningController,
+              privacyParameters,
+              engineJsonRpcConfiguration.get(),
+              webSocketConfiguration,
+              metricsConfiguration,
+              natService,
+              besuPluginContext.getNamedPlugins(),
+              dataDir,
+              rpcEndpointServiceImpl);
 
-        Optional<AuthenticationService> authToUse =
-            engineJsonRpcConfiguration.get().isAuthenticationEnabled()
-                ? Optional.of(
-                    new EngineAuthService(
-                        vertx,
-                        Optional.ofNullable(
-                            engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
-                        dataDir))
-                : Optional.empty();
-        engineJsonRpcHttpService =
-            Optional.of(
-                new JsonRpcHttpService(
-                    vertx,
-                    dataDir,
-                    engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
-                    metricsSystem,
-                    natService,
-                    engineMethods,
-                    authToUse,
-                    new HealthService(new LivenessCheck()),
-                    new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+      Optional<AuthenticationService> authToUse =
+          engineJsonRpcConfiguration.get().isAuthenticationEnabled()
+              ? Optional.of(
+                  new EngineAuthService(
+                      vertx,
+                      Optional.ofNullable(
+                          engineJsonRpcConfiguration.get().getAuthenticationPublicKeyFile()),
+                      dataDir))
+              : Optional.empty();
+
+      Optional<WebSocketConfiguration> maybeWsConfig = Optional.empty();
+      if (webSocketConfiguration.isEnabled()) {
+        maybeWsConfig = Optional.of(webSocketConfiguration);
       }
+      engineJsonRpcService =
+          Optional.of(
+              new JsonRpcService(
+                  vertx,
+                  dataDir,
+                  engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
+                  metricsSystem,
+                  natService,
+                  engineMethods,
+                  maybeWsConfig,
+                  besuController.getProtocolManager().ethContext().getScheduler(),
+                  authToUse,
+                  new HealthService(new LivenessCheck()),
+                  new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
     }
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
@@ -712,7 +714,6 @@ public class RunnerBuilder {
     }
 
     Optional<WebSocketService> webSocketService = Optional.empty();
-    Optional<WebSocketService> engineWebSocketService = Optional.empty();
     if (webSocketConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> nonEngineMethods =
           jsonRpcMethods(
@@ -768,56 +769,6 @@ public class RunnerBuilder {
                   DefaultAuthenticationService.create(vertx, webSocketConfiguration)));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
-
-      if (engineWebSocketConfiguration.isPresent()
-          && engineWebSocketConfiguration.get().isEnabled()) {
-        final Map<String, JsonRpcMethod> engineMethods =
-            jsonRpcMethods(
-                protocolSchedule,
-                context,
-                besuController,
-                peerNetwork,
-                blockchainQueries,
-                synchronizer,
-                transactionPool,
-                miningCoordinator,
-                metricsSystem,
-                supportedCapabilities,
-                engineWebSocketConfiguration.get().getRpcApis(),
-                filterManager,
-                accountLocalConfigPermissioningController,
-                nodeLocalConfigPermissioningController,
-                privacyParameters,
-                jsonRpcConfiguration,
-                engineWebSocketConfiguration.get(),
-                metricsConfiguration,
-                natService,
-                besuPluginContext.getNamedPlugins(),
-                dataDir,
-                rpcEndpointServiceImpl);
-
-        Optional<AuthenticationService> authToUse =
-            engineWebSocketConfiguration.get().isAuthenticationEnabled()
-                ? Optional.of(
-                    new EngineAuthService(
-                        vertx,
-                        Optional.ofNullable(
-                            engineWebSocketConfiguration.get().getAuthenticationPublicKeyFile()),
-                        dataDir))
-                : Optional.empty();
-
-        engineWebSocketService =
-            Optional.of(
-                createWebsocketService(
-                    vertx,
-                    engineWebSocketConfiguration.get(),
-                    subscriptionManager,
-                    engineMethods,
-                    privacyParameters,
-                    protocolSchedule,
-                    blockchainQueries,
-                    authToUse));
-      }
     }
 
     Optional<MetricsService> metricsService = createMetricsService(vertx, metricsConfiguration);
@@ -885,10 +836,9 @@ public class RunnerBuilder {
         networkRunner,
         natService,
         jsonRpcHttpService,
-        engineJsonRpcHttpService,
+        engineJsonRpcService,
         graphQLHttpService,
         webSocketService,
-        engineWebSocketService,
         jsonRpcIpcService,
         stratumServer,
         metricsService,

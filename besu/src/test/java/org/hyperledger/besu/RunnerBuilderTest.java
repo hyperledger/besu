@@ -265,7 +265,7 @@ public final class RunnerBuilderTest {
   }
 
   @Test
-  public void whenEngineApiAddedWebSocketReadyOnDefaultPort() {
+  public void whenEngineApiAddedWebSocketReadyOnSamePort() {
     WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
     WebSocketConfiguration engineWsRpc = WebSocketConfiguration.createEngineDefault();
@@ -288,9 +288,9 @@ public final class RunnerBuilderTest {
             .metricsSystem(mock(ObservableMetricsSystem.class))
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(JsonRpcConfiguration.createDefault())
+            .engineJsonRpcConfiguration(JsonRpcConfiguration.createEngineDefault())
             .webSocketConfiguration(wsRpc)
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
-            .engineWebSocketConfiguration(engineWsRpc)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
@@ -302,7 +302,7 @@ public final class RunnerBuilderTest {
             .build();
 
     assertThat(runner.getWebSocketPort()).isPresent();
-    assertThat(runner.getEngineWebsocketPort()).isPresent();
+    assertThat(runner.getEngineJsonRpcPort()).isPresent();
   }
 
   @Test
@@ -343,7 +343,6 @@ public final class RunnerBuilderTest {
 
     assertThat(runner.getJsonRpcPort()).isPresent();
     assertThat(runner.getEngineJsonRpcPort()).isEmpty();
-    assertThat(runner.getEngineWebsocketPort()).isEmpty();
   }
 
   @Test
