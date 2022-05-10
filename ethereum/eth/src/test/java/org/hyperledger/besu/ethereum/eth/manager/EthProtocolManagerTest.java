@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -247,7 +248,7 @@ public final class EthProtocolManagerTest {
     }
   }
 
-  @Test(expected = ConditionTimeoutException.class)
+  @Test
   public void doNotDisconnectOnValidMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
@@ -260,10 +261,13 @@ public final class EthProtocolManagerTest {
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
-      Awaitility.await()
-          .catchUncaughtExceptions()
-          .atMost(200, TimeUnit.MILLISECONDS)
-          .until(peer::isDisconnected);
+      assertThatThrownBy(
+              () ->
+                  Awaitility.await()
+                      .catchUncaughtExceptions()
+                      .atMost(200, TimeUnit.MILLISECONDS)
+                      .until(peer::isDisconnected))
+          .isInstanceOf(ConditionTimeoutException.class);
     }
   }
 

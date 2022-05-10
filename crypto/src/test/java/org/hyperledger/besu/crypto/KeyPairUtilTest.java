@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
 
@@ -30,9 +31,12 @@ public class KeyPairUtilTest {
         .isNotNull();
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void shouldNotLoadInvalidKeyPair() throws Exception {
-    KeyPairUtil.loadKeyPair(
-        new File(this.getClass().getResource("/invalidPrivateKey.txt").toURI()));
+    assertThatThrownBy(
+            () ->
+                KeyPairUtil.loadKeyPair(
+                    new File(this.getClass().getResource("/invalidPrivateKey.txt").toURI())))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }

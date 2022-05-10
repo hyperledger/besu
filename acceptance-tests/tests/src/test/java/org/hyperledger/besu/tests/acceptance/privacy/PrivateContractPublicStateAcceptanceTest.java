@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
@@ -93,7 +94,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     assertThat(result).isEqualTo(BigInteger.valueOf(12));
   }
 
-  @Test(expected = ContractCallException.class)
+  @Test
   public void mustNotAllowAccessToPrivateStateFromPublicTx() throws Exception {
     final EventEmitter privateEventEmitter =
         transactionNode.execute(
@@ -108,8 +109,8 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     final CrossContractReader publicReader =
         transactionNode.execute(
             contractTransactions.createSmartContract(CrossContractReader.class));
-
-    publicReader.read(privateEventEmitter.getContractAddress()).send();
+    assertThatThrownBy(() -> publicReader.read(privateEventEmitter.getContractAddress()).send())
+        .isInstanceOf(ContractCallException.class);
   }
 
   @Test

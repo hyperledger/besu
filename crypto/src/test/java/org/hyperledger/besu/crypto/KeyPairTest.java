@@ -16,6 +16,7 @@ package org.hyperledger.besu.crypto;
 
 import static org.apache.tuweni.bytes.Bytes.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigInteger;
 import java.security.KeyPairGenerator;
@@ -52,14 +53,18 @@ public class KeyPairTest {
     curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createKeyPair_PublicKeyNull() {
-    new KeyPair(null, SECPPublicKey.create(Bytes.wrap(new byte[64]), ALGORITHM));
+    assertThatThrownBy(
+            () -> new KeyPair(null, SECPPublicKey.create(Bytes.wrap(new byte[64]), ALGORITHM)))
+        .isInstanceOf(NullPointerException.class);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createKeyPair_PrivateKeyNull() {
-    new KeyPair(SECPPrivateKey.create(Bytes32.wrap(new byte[32]), ALGORITHM), null);
+    assertThatThrownBy(
+            () -> new KeyPair(SECPPrivateKey.create(Bytes32.wrap(new byte[32]), ALGORITHM), null))
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

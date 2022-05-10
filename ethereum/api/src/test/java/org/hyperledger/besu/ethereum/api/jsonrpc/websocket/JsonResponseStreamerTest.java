@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -87,12 +88,12 @@ public class JsonResponseStreamerTest {
     verify(response).writeFrame(argThat(frameContains("\n", true)));
   }
 
-  @Test(expected = IOException.class)
+  @Test
   public void stopOnError() throws IOException {
     try (JsonResponseStreamer streamer = new JsonResponseStreamer(failedResponse)) {
       streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
       streamer.write('\n');
-      streamer.write('\n');
+      assertThatThrownBy(() -> streamer.write('\n')).isInstanceOf(IOException.class);
     }
 
     verify(failedResponse).writeFrame(argThat(frameContains("xyz", false)));

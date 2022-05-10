@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
@@ -65,9 +66,10 @@ public class PacketTest {
     assertThat(Hex.toHexString(packet.encode().getBytes())).isEqualTo(VALID_PONG_PACKET);
   }
 
-  @Test(expected = PeerDiscoveryPacketDecodingException.class)
+  @Test
   public void invalidSignatureShouldThrowPeerDiscoveryPacketDecodingException() {
-    decode(INVALID_SIGNATURE_PACKET);
+    assertThatThrownBy(() -> decode(INVALID_SIGNATURE_PACKET))
+        .isInstanceOf(PeerDiscoveryPacketDecodingException.class);
   }
 
   private Packet decode(final String hexData) {

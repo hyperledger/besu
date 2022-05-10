@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.pki.keystore;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+
 import org.hyperledger.besu.pki.PkiException;
 
 import java.nio.file.Path;
@@ -78,11 +80,12 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
         CryptoTestUtil.isNSSLibInstalled());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void getPkcs11Provider() throws Exception {
     final HardwareKeyStoreWrapper sut =
         (HardwareKeyStoreWrapper) getHardwareKeyStoreWrapper(configName);
-    sut.getPkcs11ProviderForConfig("no-library");
+    assertThatThrownBy(() -> sut.getPkcs11ProviderForConfig("no-library"))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -90,20 +93,24 @@ public class HardwareKeyStoreFileWrapperTest extends BaseKeyStoreFileWrapperTest
     new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl));
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void init_keystorePassword_config_invalid() throws Exception {
     final String config = "invalid";
-    new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl));
+    assertThatThrownBy(
+            () -> new HardwareKeyStoreWrapper(validKeystorePassword, toPath(config), toPath(crl)))
+        .isInstanceOf(NullPointerException.class);
   }
 
-  @Test(expected = PkiException.class)
+  @Test
   public void init_keystorePassword_config_missing_pw() throws Exception {
-    new HardwareKeyStoreWrapper(null, toPath(config), toPath(crl));
+    assertThatThrownBy(() -> new HardwareKeyStoreWrapper(null, toPath(config), toPath(crl)))
+        .isInstanceOf(PkiException.class);
   }
 
-  @Test(expected = PkiException.class)
+  @Test
   public void init_keystorePassword_provider_missing_pw() throws Exception {
     final Provider p = null;
-    new HardwareKeyStoreWrapper(validKeystorePassword, p, toPath(crl));
+    assertThatThrownBy(() -> new HardwareKeyStoreWrapper(validKeystorePassword, p, toPath(crl)))
+        .isInstanceOf(PkiException.class);
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.plugin.data.Restriction.RESTRICTED;
 import static org.hyperledger.besu.plugin.data.Restriction.UNRESTRICTED;
 
@@ -309,9 +310,13 @@ public class PrivateTransactionTest {
     assertThat(p).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION);
   }
 
-  @Test(expected = RLPException.class)
+  @Test
   public void testReadFromInvalid() {
-    PrivateTransaction.readFrom(new BytesValueRLPInput(Bytes.fromHexString(INVALID_RLP), false));
+    assertThatThrownBy(
+            () ->
+                PrivateTransaction.readFrom(
+                    new BytesValueRLPInput(Bytes.fromHexString(INVALID_RLP), false)))
+        .isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -324,25 +329,30 @@ public class PrivateTransactionTest {
     assertThat(p).isEqualTo(VALID_SIGNED_PRIVATE_TRANSACTION_LARGE_CHAINID);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testBuildInvalidPrivateTransactionThrowsException() {
-    PrivateTransaction.builder()
-        .nonce(0)
-        .gasPrice(Wei.of(1000))
-        .gasLimit(3000000)
-        .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
-        .value(Wei.ZERO)
-        .payload(Bytes.fromHexString("0x"))
-        .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-        .chainId(BigInteger.valueOf(1337))
-        .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
-        .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
-        .privateFor(
-            Lists.newArrayList(
-                Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
-                Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
-        .restriction(RESTRICTED)
-        .build();
+    assertThatThrownBy(
+            () ->
+                PrivateTransaction.builder()
+                    .nonce(0)
+                    .gasPrice(Wei.of(1000))
+                    .gasLimit(3000000)
+                    .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
+                    .value(Wei.ZERO)
+                    .payload(Bytes.fromHexString("0x"))
+                    .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
+                    .chainId(BigInteger.valueOf(1337))
+                    .privacyGroupId(
+                        Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
+                    .privateFrom(
+                        Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+                    .privateFor(
+                        Lists.newArrayList(
+                            Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+                            Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+                    .restriction(RESTRICTED)
+                    .build())
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

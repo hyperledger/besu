@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
@@ -49,8 +50,8 @@ public class InvalidRLPRefTest {
   }
 
   /** Test RLP decoding. */
-  @Test(expected = RLPException.class)
+  @Test
   public void decode() throws Exception {
-    RLPTestUtil.decode(spec.getRLP());
+    assertThatThrownBy(() -> RLPTestUtil.decode(spec.getRLP())).isInstanceOf(RLPException.class);
   }
 }

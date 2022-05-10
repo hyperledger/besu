@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
@@ -76,22 +77,24 @@ public class EngineAuthServiceTest {
     auth.authenticate(token, authHandler);
   }
 
-  @Test(expected = UnsecurableEngineApiException.class)
+  @Test
   public void throwsOnShortKey() throws IOException, URISyntaxException {
     Vertx vertx = mock(Vertx.class);
     final Path userKey =
         Paths.get(
             ClassLoader.getSystemResource("authentication/ee-jwt-secret-too-short.hex").toURI());
     Path dataDir = Files.createTempDirectory("besuUnitTest");
-    new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
+    assertThatThrownBy(() -> new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir))
+        .isInstanceOf(UnsecurableEngineApiException.class);
   }
 
-  @Test(expected = UnsecurableEngineApiException.class)
+  @Test
   public void throwsKeyFileMissing() throws IOException, URISyntaxException {
     Vertx vertx = mock(Vertx.class);
     final Path userKey = Paths.get("no-such-file.hex");
     Path dataDir = Files.createTempDirectory("besuUnitTest");
-    new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
+    assertThatThrownBy(() -> new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir))
+        .isInstanceOf(UnsecurableEngineApiException.class);
   }
 
   @Test

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -71,7 +72,7 @@ public class MultiTenancyPrivacyControllerOnchainTest {
     assertThat(result.get().getValidationResult().isValid()).isTrue();
   }
 
-  @Test(expected = MultiTenancyValidationException.class)
+  @Test
   public void simulatePrivateTransactionFailsForAbsentEnclaveKey() {
     doThrow(
             new MultiTenancyValidationException(
@@ -79,10 +80,14 @@ public class MultiTenancyPrivacyControllerOnchainTest {
         .when(privacyController)
         .verifyPrivacyGroupContainsPrivacyUserId(
             PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2, Optional.of(1L));
-    multiTenancyPrivacyController.simulatePrivateTransaction(
-        PRIVACY_GROUP_ID,
-        ENCLAVE_PUBLIC_KEY2,
-        new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
-        1);
+    assertThatThrownBy(
+            () ->
+                multiTenancyPrivacyController.simulatePrivateTransaction(
+                    PRIVACY_GROUP_ID,
+                    ENCLAVE_PUBLIC_KEY2,
+                    new CallParameter(
+                        Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
+                    1))
+        .isInstanceOf(MultiTenancyValidationException.class);
   }
 }

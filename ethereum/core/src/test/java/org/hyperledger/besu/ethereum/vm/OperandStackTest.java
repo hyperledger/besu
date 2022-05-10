@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
@@ -32,22 +33,23 @@ public class OperandStackTest {
     assertThat(stack.size()).isEqualTo(0);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void construction_NegativeMaximumSize() {
-    new OperandStack(-1);
+    assertThatThrownBy(() -> new OperandStack(-1)).isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = OverflowException.class)
+  @Test
   public void push_StackOverflow() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
-    stack.push(UInt256.fromHexString("0x02"));
+    assertThatThrownBy(() -> stack.push(UInt256.fromHexString("0x02")))
+        .isInstanceOf(OverflowException.class);
   }
 
-  @Test(expected = UnderflowException.class)
+  @Test
   public void pop_StackUnderflow() {
     final OperandStack stack = new OperandStack(1);
-    stack.pop();
+    assertThatThrownBy(() -> stack.pop()).isInstanceOf(UnderflowException.class);
   }
 
   @Test
@@ -58,17 +60,17 @@ public class OperandStackTest {
     assertThat(stack.pop()).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = UnderflowException.class)
+  @Test
   public void get_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
-    stack.get(-1);
+    assertThatThrownBy(() -> stack.get(-1)).isInstanceOf(UnderflowException.class);
   }
 
-  @Test(expected = UnderflowException.class)
+  @Test
   public void get_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
-    stack.get(2);
+    assertThatThrownBy(() -> stack.get(2)).isInstanceOf(UnderflowException.class);
   }
 
   @Test
@@ -83,19 +85,19 @@ public class OperandStackTest {
     assertThat(stack.get(2)).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void set_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
     final Bytes32 operand = Bytes32.fromHexString("0x01");
-    stack.set(-1, operand);
+    assertThatThrownBy(() -> stack.set(-1, operand)).isInstanceOf(IndexOutOfBoundsException.class);
   }
 
-  @Test(expected = IndexOutOfBoundsException.class)
+  @Test
   public void set_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
     final Bytes32 operand = Bytes32.fromHexString("0x01");
-    stack.set(2, operand);
+    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(IndexOutOfBoundsException.class);
   }
 
   @Test

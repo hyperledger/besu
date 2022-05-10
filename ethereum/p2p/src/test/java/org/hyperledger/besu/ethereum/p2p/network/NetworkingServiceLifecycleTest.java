@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.network;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 
 import org.hyperledger.besu.crypto.NodeKey;
@@ -65,41 +66,57 @@ public class NetworkingServiceLifecycleTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createP2PNetwork_NullHost() throws IOException {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
-    try (final P2PNetwork broken = builder().config(config).build()) {
-      Assertions.fail("Expected Exception");
-    }
+    assertThatThrownBy(
+            () -> {
+              try (final P2PNetwork broken = builder().config(config).build()) {
+                Assertions.fail("Expected Exception");
+              }
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createP2PNetwork_InvalidHost() throws IOException {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
-    try (final P2PNetwork broken = builder().config(config).build()) {
-      Assertions.fail("Expected Exception");
-    }
+    assertThatThrownBy(
+            () -> {
+              try (final P2PNetwork broken = builder().config(config).build()) {
+                Assertions.fail("Expected Exception");
+              }
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createP2PNetwork_InvalidPort() throws IOException {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
-    try (final P2PNetwork broken = builder().config(config).build()) {
-      Assertions.fail("Expected Exception");
-    }
+    assertThatThrownBy(
+            () -> {
+              try (final P2PNetwork broken = builder().config(config).build()) {
+                Assertions.fail("Expected Exception");
+              }
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createP2PNetwork_NullKeyPair() throws IOException {
-    try (final P2PNetwork broken = builder().config(config).nodeKey(null).build()) {
-      Assertions.fail("Expected Exception");
-    }
+    assertThatThrownBy(
+            () -> {
+              try (final P2PNetwork broken = builder().config(config).nodeKey(null).build()) {
+                Assertions.fail("Expected Exception");
+              }
+            })
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

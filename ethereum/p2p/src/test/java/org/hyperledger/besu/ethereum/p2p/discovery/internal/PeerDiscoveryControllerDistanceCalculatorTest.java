@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDistanceCalculator.distance;
 
 import java.util.Random;
@@ -66,11 +67,11 @@ public class PeerDiscoveryControllerDistanceCalculatorTest {
     assertThat(distance(id1, id2)).isEqualTo(40);
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void distance40_differentLengths() {
     final Bytes id1 = Bytes.fromHexString("0x8f19400000");
     final Bytes id2 = Bytes.fromHexString("0x0f1940000099");
-    distance(id1, id2);
+    assertThatThrownBy(() -> distance(id1, id2)).isInstanceOf(AssertionError.class);
   }
 
   @Test
