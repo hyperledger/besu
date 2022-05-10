@@ -309,14 +309,14 @@ public abstract class PeerDiscoveryAgent {
         .whenComplete(
             (res, err) -> {
               if (err != null) {
-                handleOutgoingPacketErrors(err, peer, packet);
+                handleOutgoingPacketError(err, peer, packet);
                 return;
               }
               peer.setLastContacted(System.currentTimeMillis());
             });
   }
 
-  protected abstract void handleOutgoingPacketErrors(
+  protected abstract void handleOutgoingPacketError(
       final Throwable err, final DiscoveryPeer peer, final Packet packet);
 
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {

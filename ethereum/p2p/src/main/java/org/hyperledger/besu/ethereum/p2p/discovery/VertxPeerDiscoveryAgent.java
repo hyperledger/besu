@@ -201,7 +201,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   }
 
   @Override
-  protected void handleOutgoingPacketErrors(
+  protected void handleOutgoingPacketError(
       final Throwable err, final DiscoveryPeer peer, final Packet packet) {
     if (err instanceof NativeIoException) {
       final var nativeErr = (NativeIoException) err;

@@ -145,7 +145,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   }
 
   @Override
-  protected void handleOutgoingPacketErrors(
+  protected void handleOutgoingPacketError(
       final Throwable err, final DiscoveryPeer peer, final Packet packet) {
     LOG.warn(
         "Sending to peer {} failed, packet: {}, stacktrace: {}",
