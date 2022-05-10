@@ -19,8 +19,7 @@ public enum EnclaveEncryptorType {
   EC,
   NOOP;
 
-  @Override
-  public String toString() {
+  public String toTesseraEncryptorConfigJSON() {
     switch (this) {
       case NACL:
         return "    \"encryptor\":{\n"

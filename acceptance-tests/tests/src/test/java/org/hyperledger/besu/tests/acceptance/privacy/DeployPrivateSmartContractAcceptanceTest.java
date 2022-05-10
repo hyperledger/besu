@@ -54,7 +54,10 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
 
   @Test
   public void deployingMustGiveValidReceiptAndCode() throws Exception {
-    final String contractAddress = "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
+    final String contractAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0xfeeb2367e77e28f75fc3bcc55b70a535752db058"
+            : "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
 
     final EventEmitter eventEmitter =
         minerNode.execute(

@@ -43,5 +43,8 @@ dependencies {
   implementation 'org.web3j:besu'
   implementation 'org.web3j:crypto'
 
+  // FIXME: Delete this dependency for the PR once the web3j change is released
+  implementation files('/Users/miguelfernandez/IdeaProjects/web3j-miguel/eea/build/libs/eea-4.9.1-SNAPSHOT.jar')
+
   implementation 'org.testcontainers:testcontainers'
 }
