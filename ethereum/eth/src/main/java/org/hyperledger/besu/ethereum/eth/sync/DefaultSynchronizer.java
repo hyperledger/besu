@@ -51,10 +51,12 @@ public class DefaultSynchronizer implements Synchronizer {
   private final Optional<Pruner> maybePruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
-  private final BlockPropagationManager blockPropagationManager;
+  private final Optional<BlockPropagationManager> blockPropagationManager;
   private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
-  private final FullSyncDownloader fullSyncDownloader;
+  private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final ProtocolContext protocolContext;
+  private final PivotBlockSelector pivotBlockSelector;
+  private final SyncTerminationCondition terminationCondition;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -68,11 +70,14 @@ public class DefaultSynchronizer implements Synchronizer {
       final Path dataDirectory,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final SyncTerminationCondition terminationCondition) {
+      final SyncTerminationCondition terminationCondition,
+      final PivotBlockSelector pivotBlockSelector) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
-
+    this.pivotBlockSelector = pivotBlockSelector;
     this.protocolContext = protocolContext;
+    this.terminationCondition = terminationCondition;
+
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
         protocolSchedule,
@@ -81,29 +86,36 @@ public class DefaultSynchronizer implements Synchronizer {
         metricsSystem);
 
     this.blockPropagationManager =
-        new BlockPropagationManager(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            syncState,
-            new PendingBlocksManager(syncConfig),
-            metricsSystem,
-            blockBroadcaster);
+        terminationCondition.shouldStopDownload()
+            ? Optional.empty()
+            : Optional.of(
+                new BlockPropagationManager(
+                    syncConfig,
+                    protocolSchedule,
+                    protocolContext,
+                    ethContext,
+                    syncState,
+                    new PendingBlocksManager(syncConfig),
+                    metricsSystem,
+                    blockBroadcaster));
 
     this.fullSyncDownloader =
-        new FullSyncDownloader(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            syncState,
-            metricsSystem,
-            terminationCondition);
+        terminationCondition.shouldStopDownload()
+            ? Optional.empty()
+            : Optional.of(
+                new FullSyncDownloader(
+                    syncConfig,
+                    protocolSchedule,
+                    protocolContext,
+                    ethContext,
+                    syncState,
+                    metricsSystem,
+                    terminationCondition));
 
     if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
           SnapDownloaderFactory.createSnapDownloader(
+              pivotBlockSelector,
               syncConfig,
               dataDirectory,
               protocolSchedule,
@@ -116,6 +128,7 @@ public class DefaultSynchronizer implements Synchronizer {
     } else {
       this.fastSyncDownloader =
           FastDownloaderFactory.create(
+              pivotBlockSelector,
               syncConfig,
               dataDirectory,
               protocolSchedule,
@@ -142,23 +155,26 @@ public class DefaultSynchronizer implements Synchronizer {
   private TrailingPeerRequirements calculateTrailingPeerRequirements() {
     return fastSyncDownloader
         .flatMap(FastSyncDownloader::calculateTrailingPeerRequirements)
-        .orElseGet(fullSyncDownloader::calculateTrailingPeerRequirements);
+        .orElse(
+            fullSyncDownloader
+                .map(FullSyncDownloader::calculateTrailingPeerRequirements)
+                .orElse(TrailingPeerRequirements.UNRESTRICTED));
   }
 
   @Override
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
-      blockPropagationManager.start();
+      blockPropagationManager.ifPresent(BlockPropagationManager::start);
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
         future = fastSyncDownloader.get().start().thenCompose(this::handleFastSyncResult);
 
       } else {
+        syncState.markInitialSyncPhaseAsDone();
         future = startFullSync();
       }
-      future = future.thenApply(this::finalizeSync);
-      return future;
+      return future.thenApply(this::finalizeSync);
     } else {
       throw new IllegalStateException("Attempt to start an already started synchronizer.");
     }
@@ -169,9 +185,9 @@ public class DefaultSynchronizer implements Synchronizer {
     if (running.compareAndSet(true, false)) {
       LOG.info("Stopping synchronizer");
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
-      fullSyncDownloader.stop();
+      fullSyncDownloader.ifPresent(FullSyncDownloader::stop);
       maybePruner.ifPresent(Pruner::stop);
-      blockPropagationManager.stop();
+      blockPropagationManager.ifPresent(BlockPropagationManager::stop);
     }
   }
 
@@ -196,12 +212,24 @@ public class DefaultSynchronizer implements Synchronizer {
     LOG.info(
         "Fast sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());
-    return startFullSync();
+    pivotBlockSelector.close();
+    syncState.markInitialSyncPhaseAsDone();
+    return terminationCondition.shouldContinueDownload()
+        ? startFullSync()
+        : CompletableFuture.completedFuture(null);
   }
 
   private CompletableFuture<Void> startFullSync() {
     maybePruner.ifPresent(Pruner::start);
-    return fullSyncDownloader.start();
+    return fullSyncDownloader
+        .map(FullSyncDownloader::start)
+        .orElse(CompletableFuture.completedFuture(null))
+        .thenRun(
+            () -> {
+              if (terminationCondition.shouldStopDownload()) {
+                syncState.setReachedTerminalDifficulty(true);
+              }
+            });
   }
 
   @Override
@@ -240,7 +268,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
   private Void finalizeSync(final Void unused) {
     LOG.info("Stopping block propagation.");
-    blockPropagationManager.stop();
+    blockPropagationManager.ifPresent(BlockPropagationManager::stop);
     LOG.info("Stopping the pruner.");
     maybePruner.ifPresent(Pruner::stop);
     running.set(false);

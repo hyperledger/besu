@@ -28,8 +28,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataR
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.metrics.RunnableCounter;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -50,9 +48,7 @@ public class PersistDataStepTest {
 
   @Before
   public void setUp() {
-    final RunnableCounter runnableCounter =
-        new RunnableCounter(NoOpMetricsSystem.NO_OP_COUNTER, () -> {}, 100);
-    when(downloadState.getGeneratedNodes()).thenReturn(runnableCounter);
+    when(downloadState.getMetricsManager()).thenReturn(mock(SnapsyncMetricsManager.class));
   }
 
   @Test

@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_N
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -55,7 +54,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   public int persist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
     if (isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.

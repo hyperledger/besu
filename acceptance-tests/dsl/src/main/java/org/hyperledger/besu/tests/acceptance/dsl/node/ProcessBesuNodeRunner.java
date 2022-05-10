@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -228,6 +229,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       // TODO: properly handle engine rpc, set port to 0 to make tests pass
       params.add("--engine-rpc-ws-port");
       params.add("0");
+    }
+
+    if (node.isJsonRpcIpcEnabled()) {
+      final JsonRpcIpcConfiguration ipcConfiguration = node.jsonRpcIpcConfiguration();
+      params.add("--Xrpc-ipc-enabled");
+      params.add("--Xrpc-ipc-path");
+      params.add(ipcConfiguration.getPath().toString());
+      params.add("--Xrpc-ipc-apis");
+      params.add(String.join(",", ipcConfiguration.getEnabledApis()));
     }
 
     if (node.isMetricsEnabled()) {
@@ -514,7 +524,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
   private void killBesuProcess(final String name) {
     final Process process = besuProcesses.remove(name);
     if (process == null) {
-      LOG.error("Process {} wasn't in our list, pid {}", name, process.pid());
+      LOG.error("Process {} wasn't in our list", name);
       return;
     }
     if (!process.isAlive()) {

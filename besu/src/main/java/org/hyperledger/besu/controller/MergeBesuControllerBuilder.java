@@ -41,12 +41,12 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
-  private static final Logger LOG = LogManager.getLogger(MergeBesuControllerBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
 
   @Override
   protected MiningCoordinator createMiningCoordinator(

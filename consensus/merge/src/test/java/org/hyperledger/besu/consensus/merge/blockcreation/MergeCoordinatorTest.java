@@ -266,7 +266,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     coordinator.executeBlock(headBlock);
-
+    when(blockchain.getBlockHeader(lastFinalizedBlock.getHash()))
+        .thenReturn(Optional.of(lastFinalizedHeader));
+    when(blockchain.getBlockHeader(headBlockHeader.getHash()))
+        .thenReturn(Optional.of(headBlockHeader));
     var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isFailed()).isTrue();
 
@@ -293,7 +296,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader headBlockHeader = disjointBlockHeader(lastFinalizedHeader);
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     coordinator.executeBlock(headBlock);
-
+    when(blockchain.getBlockHeader(lastFinalizedBlock.getHash()))
+        .thenReturn(Optional.of(lastFinalizedHeader));
+    when(blockchain.getBlockHeader(headBlockHeader.getHash()))
+        .thenReturn(Optional.of(headBlockHeader));
     var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isSuccessful()).isFalse();
     assertThat(res.isFailed()).isTrue();
@@ -320,7 +326,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     // note this block is not executed, so not known by us
-
     var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isFailed()).isTrue();
 
@@ -346,7 +351,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     coordinator.executeBlock(headBlock);
-
+    when(blockchain.getBlockHeader(lastFinalizedBlock.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(headBlockHeader.getHash()))
+        .thenReturn(Optional.of(headBlockHeader))
+        .thenReturn(Optional.of(headBlockHeader));
     var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isSuccessful()).isFalse();
     assertThat(res.isFailed()).isTrue();

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
+import static org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyGroupContract.decodeList;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_PARTICIPANTS_METHOD_SIGNATURE;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.GET_VERSION_METHOD_SIGNATURE;
 
@@ -48,7 +49,6 @@ import java.util.Optional;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,11 +130,7 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
       if (rlpInput.nextSize() > 0) {
         return Optional.of(
             new PrivacyGroup(
-                privacyGroupId,
-                PrivacyGroup.Type.FLEXIBLE,
-                "",
-                "",
-                decodeParticipantList(rlpInput.raw())));
+                privacyGroupId, PrivacyGroup.Type.FLEXIBLE, "", "", decodeList(rlpInput.raw())));
       }
     }
     return Optional.empty();
@@ -199,17 +195,6 @@ public class FlexiblePrivacyController extends AbstractRestrictedPrivacyControll
                 "Privacy group must contain the enclave public key");
           }
         });
-  }
-
-  private List<String> decodeParticipantList(final Bytes rlpEncodedList) {
-    final ArrayList<String> decodedElements = new ArrayList<>();
-    // first 32 bytes is dynamic list offset
-    final UInt256 lengthOfList = UInt256.fromBytes(rlpEncodedList.slice(32, 32)); // length of list
-    for (int i = 0; i < lengthOfList.toLong(); ++i) {
-      decodedElements.add(
-          Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
-    }
-    return decodedElements;
   }
 
   private List<PrivateTransactionMetadata> buildTransactionMetadataList(

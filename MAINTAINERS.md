@@ -1,12 +1,13 @@
 # Maintainers
 
-## Active Maintainers
+<!-- Please keep all lists sorted alphabetically by github -->
 
-<!-- Please keep this sorted alphabetically by github -->
+## Active Code Maintainers
+
+<!-- besu-maintainers group has maintainer access to besu repo -->
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
-| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
@@ -22,29 +23,38 @@
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
-| Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |
-| Rai Sur          | RatanRSur        | ratanraisur      |
-| Sajida Zouarhi   | sajz             | SajidaZ          |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
+
+## Active Non-code Maintainers
+
+<!-- besu-triage group has Write access to besu repo -->
+
+| Name             | Github           | LFID             |
+| ---------------- | ---------------- | ---------------- |
+| Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Sajida Zouarhi   | sajz             | SajidaZ          |
+
 ## Emeritus Maintainers
 
 | Name             | Github           | LFID             |
 |------------------|------------------|------------------|
+| Abdel Bakhta     | abdelhamidbakhta | abdelhamidbakhta |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Trent Mohay      | rain-on          | trent.mohay      |
+| Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |

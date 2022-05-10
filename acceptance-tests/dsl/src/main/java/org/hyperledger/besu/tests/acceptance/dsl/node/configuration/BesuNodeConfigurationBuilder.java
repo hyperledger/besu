@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -59,6 +60,7 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
+  private JsonRpcIpcConfiguration jsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
   private WebSocketConfiguration engineWebSocketConfiguration =
       WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
@@ -237,6 +239,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder webSocketConfiguration(
       final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder jsonRpcIpcConfiguration(
+      final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
+    this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     return this;
   }
 
@@ -487,6 +495,7 @@ public class BesuNodeConfigurationBuilder {
         jsonRpcConfiguration,
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
+        jsonRpcIpcConfiguration,
         Optional.of(engineWebSocketConfiguration),
         metricsConfiguration,
         permissioningConfiguration,

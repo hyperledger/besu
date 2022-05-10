@@ -46,7 +46,9 @@ class CodeNodeDataRequest extends NodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getCode(getHash(), accountHash.orElse(Hash.EMPTY));
+    return worldStateStorage
+        .getCode(getHash(), accountHash.orElse(Hash.EMPTY))
+        .filter(codeBytes -> Hash.hash(codeBytes).equals(getHash()));
   }
 
   public Optional<Hash> getAccountHash() {

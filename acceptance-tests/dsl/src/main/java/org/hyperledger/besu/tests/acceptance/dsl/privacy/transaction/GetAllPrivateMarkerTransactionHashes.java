@@ -35,7 +35,7 @@ public class GetAllPrivateMarkerTransactionHashes implements Transaction<List<St
     final List<String> toReturn = new ArrayList<>();
     try {
       final long blockchainHeight = besu.ethBlockNumber().send().getBlockNumber().longValueExact();
-      for (int i = 0; i <= blockchainHeight; i++) {
+      for (long i = 0; i <= blockchainHeight; i++) {
         besu.ethGetBlockByNumber(DefaultBlockParameter.valueOf(BigInteger.valueOf(i)), true)
             .send()
             .getBlock()

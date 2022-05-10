@@ -97,6 +97,14 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'tech.pegasys.discovery:discovery'
+  constraints {
+    implementation('com.github.jnr:jnr-posix') {
+      version {
+        require '3.1.15'
+      }
+      because '3.0.47 from web3j has issues'
+    }
+  }
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

@@ -15,7 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProce
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.testutil.TestClock;
@@ -40,6 +43,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -48,6 +52,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+@SuppressWarnings("unchecked")
 @RunWith(Parameterized.class)
 public class SnapWorldDownloadStateTest {
 
@@ -64,7 +69,7 @@ public class SnapWorldDownloadStateTest {
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
-  private final MetricsSystem metricsSystem = mock(MetricsSystem.class);
+  private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
@@ -84,6 +89,9 @@ public class SnapWorldDownloadStateTest {
 
   @Before
   public void setUp() {
+
+    when(metricsManager.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
+
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =
           new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
@@ -97,8 +105,18 @@ public class SnapWorldDownloadStateTest {
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
-            metricsSystem,
+            metricsManager,
             clock);
+    final DynamicPivotBlockManager dynamicPivotBlockManager = mock(DynamicPivotBlockManager.class);
+    doAnswer(
+            invocation -> {
+              BiConsumer<BlockHeader, Boolean> callback = invocation.getArgument(0);
+              callback.accept(header, false);
+              return null;
+            })
+        .when(dynamicPivotBlockManager)
+        .switchToNewPivotBlock(any());
+    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();
     assertThat(downloadState.isDownloading()).isTrue();
@@ -221,5 +239,22 @@ public class SnapWorldDownloadStateTest {
     assertThat(downloadState.pendingStorageRequests.isEmpty()).isTrue();
     verify(worldStateDownloadProcess).abort();
     assertThat(downloadState.isDownloading()).isFalse();
+  }
+
+  @Test
+  public void shouldRestartHealWhenNewPivotBlock() {
+    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(snapSyncState.isHealInProgress()).thenReturn(false);
+    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isTrue();
+    // start heal
+    downloadState.checkCompletion(header);
+    verify(snapSyncState).setHealStatus(true);
+    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
+    // reload the heal
+    downloadState.reloadHeal();
+    verify(snapSyncState).setHealStatus(false);
+    spy(downloadState.pendingTrieNodeRequests).clearInternalQueues();
+    spy(downloadState).checkCompletion(header);
+    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
   }
 }

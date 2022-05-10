@@ -18,10 +18,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -37,13 +34,9 @@ import java.util.stream.Stream;
 
 import io.vertx.core.json.Json;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class SubscriptionRequestMapperTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private SubscriptionRequestMapper mapper;
   // These tests aren't passing through WebSocketRequestHandler, so connectionId is null.
@@ -86,12 +79,11 @@ public class SubscriptionRequestMapperTest {
     final JsonRpcRequest jsonRpcRequest =
         parseWebSocketRpcRequest("{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": []}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Missing required json rpc parameter at index 0")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Missing required json rpc parameter at index 0");
   }
 
   @Test
@@ -142,12 +134,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\", {\"foo\": \"bar\"}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -295,12 +286,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x0\", \"topics\": [\"0x1\"]}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -309,12 +299,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"foo\": \"bar\"}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -379,12 +368,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"foo\"]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 0")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Invalid json rpc parameter at index 0");
   }
 
   @Test
@@ -424,11 +412,12 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"syncing\", {\"includeTransactions\": true}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectMessage("Invalid subscribe request. Invalid private subscription type.");
-
-    mapper.mapPrivateSubscribeRequest(
-        new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
+    assertThatThrownBy(
+            () ->
+                mapper.mapPrivateSubscribeRequest(
+                    new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .hasMessage("Invalid subscribe request. Invalid private subscription type.");
   }
 
   @Test

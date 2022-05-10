@@ -21,6 +21,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
@@ -31,13 +32,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.rocksdb.ColumnFamilyHandle;
 
 public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
@@ -48,31 +47,31 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     final byte[] key = bytesFromHexString("0001");
     final byte[] val1 = bytesFromHexString("0FFF");
     final byte[] val2 = bytesFromHexString("1337");
-    final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-    AtomicReference<ColumnFamilyHandle> segment = store.getSegmentIdentifierByName(TestSegment.FOO);
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+    RocksDbSegmentIdentifier segment = store.getSegmentIdentifierByName(TestSegment.FOO);
     KeyValueStorage duplicateSegmentRef =
         new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
 
     final Consumer<byte[]> insert =
         value -> {
-          final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
-          tx.put(segment.get(), key, value);
+          final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
+          tx.put(segment, key, value);
           tx.commit();
         };
 
     // insert val:
     insert.accept(val1);
-    assertThat(store.get(segment.get(), key).orElse(null)).isEqualTo(val1);
+    assertThat(store.get(segment, key).orElse(null)).isEqualTo(val1);
     assertThat(duplicateSegmentRef.get(key).orElse(null)).isEqualTo(val1);
 
     // clear and assert empty:
-    store.clear(segment.get());
-    assertThat(store.get(segment.get(), key)).isEmpty();
+    store.clear(segment);
+    assertThat(store.get(segment, key)).isEmpty();
     assertThat(duplicateSegmentRef.get(key)).isEmpty();
 
     // insert into empty:
     insert.accept(val2);
-    assertThat(store.get(segment.get(), key).orElse(null)).isEqualTo(val2);
+    assertThat(store.get(segment, key).orElse(null)).isEqualTo(val2);
     assertThat(duplicateSegmentRef.get(key).orElse(null)).isEqualTo(val2);
 
     store.close();
@@ -80,18 +79,17 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
 
   @Test
   public void twoSegmentsAreIndependent() throws Exception {
-    final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
 
-    final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
+    final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
     tx.put(
-        store.getSegmentIdentifierByName(TestSegment.BAR).get(),
+        store.getSegmentIdentifierByName(TestSegment.BAR),
         bytesFromHexString("0001"),
         bytesFromHexString("0FFF"));
     tx.commit();
 
     final Optional<byte[]> result =
-        store.get(
-            store.getSegmentIdentifierByName(TestSegment.FOO).get(), bytesFromHexString("0001"));
+        store.get(store.getSegmentIdentifierByName(TestSegment.FOO), bytesFromHexString("0001"));
 
     assertThat(result).isEmpty();
 
@@ -103,11 +101,11 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     // we're looping this in order to catch intermittent failures when rocksdb objects are not close
     // properly
     for (int i = 0; i < 50; i++) {
-      final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-      final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO).get();
-      final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR).get();
+      final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+      final RocksDbSegmentIdentifier fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
+      final RocksDbSegmentIdentifier barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
 
-      final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
+      final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
       tx.put(fooSegment, bytesOf(1), bytesOf(1));
       tx.put(fooSegment, bytesOf(2), bytesOf(2));
       tx.put(fooSegment, bytesOf(3), bytesOf(3));
@@ -129,7 +127,7 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
                 if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(barSegment, key);
               });
 
-      for (final ColumnFamilyHandle segment : Set.of(fooSegment, barSegment)) {
+      for (final RocksDbSegmentIdentifier segment : Set.of(fooSegment, barSegment)) {
         assertThat(store.streamKeys(segment).count()).isEqualTo(1);
       }
 
@@ -147,11 +145,11 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
 
   @Test
   public void canGetThroughSegmentIteration() throws Exception {
-    final SegmentedKeyValueStorage<ColumnFamilyHandle> store = createSegmentedStore();
-    final ColumnFamilyHandle fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO).get();
-    final ColumnFamilyHandle barSegment = store.getSegmentIdentifierByName(TestSegment.BAR).get();
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+    final RocksDbSegmentIdentifier fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
+    final RocksDbSegmentIdentifier barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
 
-    final Transaction<ColumnFamilyHandle> tx = store.startTransaction();
+    final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
     tx.put(fooSegment, bytesOf(1), bytesOf(1));
     tx.put(fooSegment, bytesOf(2), bytesOf(2));
     tx.put(fooSegment, bytesOf(3), bytesOf(3));
@@ -201,7 +199,8 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     }
   }
 
-  private SegmentedKeyValueStorage<ColumnFamilyHandle> createSegmentedStore() throws Exception {
+  private SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
+      throws Exception {
     return new RocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),

@@ -69,6 +69,7 @@ dependencyManagement {
     dependency 'io.netty:netty-all:4.1.74.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.50.Final'
     dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.74.Final', classifier: 'linux-x86_64'
+    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.74.Final', classifier: 'osx-x86_64'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.6.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.6.0-alpha'
@@ -97,6 +98,7 @@ dependencyManagement {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
+      entry 'vertx-junit5'
       entry 'vertx-unit'
       entry 'vertx-web'
       entry 'vertx-web-client'
@@ -176,9 +178,7 @@ dependencyManagement {
 
     dependency 'org.web3j:abi:4.8.9'
     dependency 'org.web3j:besu:4.8.9'
-    dependency('org.web3j:core:4.8.9') {
-      exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
-    }
+    dependency 'org.web3j:core:4.8.9'
     dependency 'org.web3j:crypto:4.8.9'
     dependency 'org.web3j:quorum:4.8.4'
 

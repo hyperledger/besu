@@ -294,7 +294,7 @@ public class RlpxAgentTest {
 
     assertThatThrownBy(connection::get)
         .hasCauseInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Max peer peer connections established (1). Cannot connect to peer");
+        .hasMessageContaining("Max peer connections established (1). Cannot connect to peer");
     assertPeerConnectionNotTracked(peer);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
   }
