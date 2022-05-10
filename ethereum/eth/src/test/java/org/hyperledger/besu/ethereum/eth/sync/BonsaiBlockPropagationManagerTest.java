@@ -14,15 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static org.mockito.Mockito.mock;
-
-import org.hyperledger.besu.ethereum.ConsensusContext;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
 import org.junit.Before;
@@ -39,34 +32,7 @@ public class BonsaiBlockPropagationManagerTest extends AbstractBlockPropagationM
 
   @Before
   public void setup() {
-    blockchainUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI);
-    blockchain = blockchainUtil.getBlockchain();
-    protocolSchedule = blockchainUtil.getProtocolSchedule();
-    final ProtocolContext tempProtocolContext = blockchainUtil.getProtocolContext();
-    protocolContext =
-        new ProtocolContext(
-            blockchain,
-            tempProtocolContext.getWorldStateArchive(),
-            tempProtocolContext.getConsensusContext(ConsensusContext.class));
-    ethProtocolManager =
-        EthProtocolManagerTestUtil.create(
-            blockchain,
-            blockchainUtil.getWorldArchive(),
-            blockchainUtil.getTransactionPool(),
-            EthProtocolConfiguration.defaultConfig());
-    syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
-    syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
-    blockBroadcaster = mock(BlockBroadcaster.class);
-    blockPropagationManager =
-        new BlockPropagationManager(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            ethProtocolManager.ethContext(),
-            syncState,
-            pendingBlocksManager,
-            metricsSystem,
-            blockBroadcaster);
+    setup(DataStorageFormat.BONSAI);
   }
 
   @Override
