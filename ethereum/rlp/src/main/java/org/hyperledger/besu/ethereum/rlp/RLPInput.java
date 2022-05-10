@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -146,7 +146,7 @@ public interface RLPInput {
   long readLongScalar();
 
   /**
-   * Reads a non-negative scalar from the input and return is as a long value which is interpreted
+   * Reads a non-negative scalar from the input and return it as a long value which is interpreted
    * as an unsigned long.
    *
    * @return The next scalar item of this input as a long value.
