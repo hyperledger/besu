@@ -83,8 +83,7 @@ public class EngineAuthServiceTest {
         Paths.get(
             ClassLoader.getSystemResource("authentication/ee-jwt-secret-too-short.hex").toURI());
     Path dataDir = Files.createTempDirectory("besuUnitTest");
-    EngineAuthService auth = new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
-    assertThat(auth).isNotNull();
+    new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
   }
 
   @Test(expected = UnsecurableEngineApiException.class)
@@ -92,8 +91,7 @@ public class EngineAuthServiceTest {
     Vertx vertx = mock(Vertx.class);
     final Path userKey = Paths.get("no-such-file.hex");
     Path dataDir = Files.createTempDirectory("besuUnitTest");
-    EngineAuthService auth = new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
-    assertThat(auth).isNotNull();
+    new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir);
   }
 
   @Test

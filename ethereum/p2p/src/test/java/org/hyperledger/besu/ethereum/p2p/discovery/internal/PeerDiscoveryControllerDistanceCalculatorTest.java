@@ -70,7 +70,7 @@ public class PeerDiscoveryControllerDistanceCalculatorTest {
   public void distance40_differentLengths() {
     final Bytes id1 = Bytes.fromHexString("0x8f19400000");
     final Bytes id2 = Bytes.fromHexString("0x0f1940000099");
-    assertThat(distance(id1, id2)).isEqualTo(40);
+    distance(id1, id2);
   }
 
   @Test
