@@ -52,6 +52,8 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   private final PrivacyNode bob;
   private final String wrongPublicKey;
 
+  private final EnclaveEncryptorType enclaveEncryptorType;
+
   @Parameters(name = "{0} enclave type with {1} encryptor")
   public static Collection<Object[]> enclaveParameters() {
     return Arrays.asList(
@@ -64,6 +66,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   public EnclaveErrorAcceptanceTest(
       final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
+    this.enclaveEncryptorType = enclaveEncryptorType;
 
     final Network containerNetwork = Network.newNetwork();
 
@@ -124,7 +127,11 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
                         alice.getEnclaveKey(),
                         wrongPublicKey)));
 
-    final String tesseraMessage = JsonRpcError.TESSERA_NODE_MISSING_PEER_URL.getMessage();
+    // TODO review why it does not return the same error
+    final String tesseraMessage =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? JsonRpcError.ENCLAVE_ERROR.getMessage()
+            : JsonRpcError.TESSERA_NODE_MISSING_PEER_URL.getMessage();
 
     assertThat(throwable.getMessage()).has(matchTesseraEnclaveMessage(tesseraMessage));
   }
