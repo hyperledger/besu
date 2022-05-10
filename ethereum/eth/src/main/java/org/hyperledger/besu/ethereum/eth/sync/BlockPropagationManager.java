@@ -103,6 +103,7 @@ public class BlockPropagationManager {
     this.blockBroadcaster = blockBroadcaster;
     this.syncState = syncState;
     this.pendingBlocksManager = pendingBlocksManager;
+    this.syncState.subscribeTTDReached(this::reactToTTDReachedEvent);
   }
 
   public void start() {
@@ -121,6 +122,10 @@ public class BlockPropagationManager {
     } else {
       LOG.warn("Attempted to stop when we are not even running...");
     }
+  }
+
+  public boolean isRunning() {
+    return started.get();
   }
 
   private void setupListeners() {
@@ -503,6 +508,14 @@ public class BlockPropagationManager {
     return newBlockHashs.stream()
         .map(NewBlockHash::toString)
         .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  private void reactToTTDReachedEvent(final boolean ttdReached) {
+    if (ttdReached) {
+      stop();
+    } else if (!started.get()) {
+      start();
+    }
   }
 
   @Override
