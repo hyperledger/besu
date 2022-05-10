@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
 import java.util.Random;
@@ -101,8 +102,8 @@ public class PeerDiscoveryPacketSedesTest {
     final Bytes serialized = RLP.encode(packet::writeTo);
     assertThat(serialized).isNotNull();
 
-    assertThatThrownBy(() -> NeighborsPacketData.readFrom(RLP.input(serialized)))
-        .isInstanceOf(RLPException.class);
+    final RLPInput input = RLP.input(serialized);
+    assertThatThrownBy(() -> NeighborsPacketData.readFrom(input)).isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -122,7 +123,8 @@ public class PeerDiscoveryPacketSedesTest {
     // Change one bit in the last byte, which belongs to the payload, hence the hash will not match
     // any longer.
     garbled.set(i, (byte) (garbled.get(i) + 0x01));
-    assertThatThrownBy(() -> Packet.decode(Buffer.buffer(garbled.toArray())))
+    final Buffer input = Buffer.buffer(garbled.toArray());
+    assertThatThrownBy(() -> Packet.decode(input))
         .isInstanceOf(PeerDiscoveryPacketDecodingException.class);
   }
 }

@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -84,7 +85,8 @@ public class EngineAuthServiceTest {
         Paths.get(
             ClassLoader.getSystemResource("authentication/ee-jwt-secret-too-short.hex").toURI());
     Path dataDir = Files.createTempDirectory("besuUnitTest");
-    assertThatThrownBy(() -> new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir))
+    final Optional<File> signingKey = Optional.of(userKey.toFile());
+    assertThatThrownBy(() -> new EngineAuthService(vertx, signingKey, dataDir))
         .isInstanceOf(UnsecurableEngineApiException.class);
   }
 
@@ -93,7 +95,8 @@ public class EngineAuthServiceTest {
     Vertx vertx = mock(Vertx.class);
     final Path userKey = Paths.get("no-such-file.hex");
     Path dataDir = Files.createTempDirectory("besuUnitTest");
-    assertThatThrownBy(() -> new EngineAuthService(vertx, Optional.of(userKey.toFile()), dataDir))
+    final Optional<File> signingKey = Optional.of(userKey.toFile());
+    assertThatThrownBy(() -> new EngineAuthService(vertx, signingKey, dataDir))
         .isInstanceOf(UnsecurableEngineApiException.class);
   }
 

@@ -109,8 +109,9 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     final CrossContractReader publicReader =
         transactionNode.execute(
             contractTransactions.createSmartContract(CrossContractReader.class));
-    assertThatThrownBy(() -> publicReader.read(privateEventEmitter.getContractAddress()).send())
-        .isInstanceOf(ContractCallException.class);
+    final RemoteFunctionCall<BigInteger> functionCall =
+        publicReader.read(privateEventEmitter.getContractAddress());
+    assertThatThrownBy(functionCall::send).isInstanceOf(ContractCallException.class);
   }
 
   @Test

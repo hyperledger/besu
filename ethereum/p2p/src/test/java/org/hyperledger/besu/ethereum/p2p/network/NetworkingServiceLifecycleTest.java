@@ -71,9 +71,10 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
     assertThatThrownBy(
             () -> {
-              try (final P2PNetwork broken = builder().config(config).build()) {
+              try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
                 Assertions.fail("Expected Exception");
               }
             })
@@ -85,9 +86,10 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
     assertThatThrownBy(
             () -> {
-              try (final P2PNetwork broken = builder().config(config).build()) {
+              try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
                 Assertions.fail("Expected Exception");
               }
             })
@@ -99,9 +101,10 @@ public class NetworkingServiceLifecycleTest {
     final NetworkingConfiguration config =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
     assertThatThrownBy(
             () -> {
-              try (final P2PNetwork broken = builder().config(config).build()) {
+              try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
                 Assertions.fail("Expected Exception");
               }
             })
@@ -110,12 +113,8 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void createP2PNetwork_NullKeyPair() throws IOException {
-    assertThatThrownBy(
-            () -> {
-              try (final P2PNetwork broken = builder().config(config).nodeKey(null).build()) {
-                Assertions.fail("Expected Exception");
-              }
-            })
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
+    assertThatThrownBy(() -> p2pNetworkBuilder.nodeKey(null))
         .isInstanceOf(NullPointerException.class);
   }
 

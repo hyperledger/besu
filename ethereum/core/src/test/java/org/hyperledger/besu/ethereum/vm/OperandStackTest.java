@@ -42,14 +42,14 @@ public class OperandStackTest {
   public void push_StackOverflow() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
-    assertThatThrownBy(() -> stack.push(UInt256.fromHexString("0x02")))
-        .isInstanceOf(OverflowException.class);
+    final UInt256 operand = UInt256.fromHexString("0x02");
+    assertThatThrownBy(() -> stack.push(operand)).isInstanceOf(OverflowException.class);
   }
 
   @Test
   public void pop_StackUnderflow() {
     final OperandStack stack = new OperandStack(1);
-    assertThatThrownBy(() -> stack.pop()).isInstanceOf(UnderflowException.class);
+    assertThatThrownBy(stack::pop).isInstanceOf(UnderflowException.class);
   }
 
   @Test

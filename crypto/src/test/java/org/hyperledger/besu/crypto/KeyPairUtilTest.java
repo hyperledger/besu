@@ -33,10 +33,8 @@ public class KeyPairUtilTest {
 
   @Test
   public void shouldNotLoadInvalidKeyPair() throws Exception {
-    assertThatThrownBy(
-            () ->
-                KeyPairUtil.loadKeyPair(
-                    new File(this.getClass().getResource("/invalidPrivateKey.txt").toURI())))
+    final File keyFile = new File(this.getClass().getResource("/invalidPrivateKey.txt").toURI());
+    assertThatThrownBy(() -> KeyPairUtil.loadKeyPair(keyFile))
         .isInstanceOf(IllegalArgumentException.class);
   }
 }

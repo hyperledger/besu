@@ -55,15 +55,14 @@ public class KeyPairTest {
 
   @Test
   public void createKeyPair_PublicKeyNull() {
-    assertThatThrownBy(
-            () -> new KeyPair(null, SECPPublicKey.create(Bytes.wrap(new byte[64]), ALGORITHM)))
-        .isInstanceOf(NullPointerException.class);
+    final SECPPublicKey publicKey = SECPPublicKey.create(Bytes.wrap(new byte[64]), ALGORITHM);
+    assertThatThrownBy(() -> new KeyPair(null, publicKey)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
   public void createKeyPair_PrivateKeyNull() {
-    assertThatThrownBy(
-            () -> new KeyPair(SECPPrivateKey.create(Bytes32.wrap(new byte[32]), ALGORITHM), null))
+    final SECPPrivateKey privateKey = SECPPrivateKey.create(Bytes32.wrap(new byte[32]), ALGORITHM);
+    assertThatThrownBy(() -> new KeyPair(privateKey, null))
         .isInstanceOf(NullPointerException.class);
   }
 

@@ -22,6 +22,7 @@ import org.hyperledger.besu.testutil.JsonTestParameters;
 
 import java.util.Collection;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,6 +53,7 @@ public class InvalidRLPRefTest {
   /** Test RLP decoding. */
   @Test
   public void decode() throws Exception {
-    assertThatThrownBy(() -> RLPTestUtil.decode(spec.getRLP())).isInstanceOf(RLPException.class);
+    final Bytes rlp = spec.getRLP();
+    assertThatThrownBy(() -> RLPTestUtil.decode(rlp)).isInstanceOf(RLPException.class);
   }
 }

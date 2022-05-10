@@ -87,14 +87,10 @@ public class Blake2bfMessageDigestTest {
 
   @Test
   public void throwsIfBufferUpdatedWithLessThat213Bytes() {
-    assertThatThrownBy(
-            () -> {
-              for (int i = 0; i < 212; i++) {
-                messageDigest.update((byte) 0);
-              }
-              messageDigest.digest();
-            })
-        .isInstanceOf(IllegalStateException.class);
+    for (int i = 0; i < 212; i++) {
+      messageDigest.update((byte) 0);
+    }
+    assertThatThrownBy(() -> messageDigest.digest()).isInstanceOf(IllegalStateException.class);
   }
 
   @Test
@@ -110,12 +106,9 @@ public class Blake2bfMessageDigestTest {
 
   @Test
   public void throwsIfBufferUpdatedLargeByteArray() {
-    assertThatThrownBy(
-            () -> {
-              final byte[] update = new byte[213];
-              messageDigest.update((byte) 0);
-              messageDigest.update(update, 0, 213);
-            })
+    final byte[] update = new byte[213];
+    messageDigest.update((byte) 0);
+    assertThatThrownBy(() -> messageDigest.update(update, 0, 213))
         .isInstanceOf(IllegalArgumentException.class);
   }
 

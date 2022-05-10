@@ -312,11 +312,9 @@ public class PrivateTransactionTest {
 
   @Test
   public void testReadFromInvalid() {
-    assertThatThrownBy(
-            () ->
-                PrivateTransaction.readFrom(
-                    new BytesValueRLPInput(Bytes.fromHexString(INVALID_RLP), false)))
-        .isInstanceOf(RLPException.class);
+    final BytesValueRLPInput input =
+        new BytesValueRLPInput(Bytes.fromHexString(INVALID_RLP), false);
+    assertThatThrownBy(() -> PrivateTransaction.readFrom(input)).isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -331,27 +329,24 @@ public class PrivateTransactionTest {
 
   @Test
   public void testBuildInvalidPrivateTransactionThrowsException() {
-    assertThatThrownBy(
-            () ->
-                PrivateTransaction.builder()
-                    .nonce(0)
-                    .gasPrice(Wei.of(1000))
-                    .gasLimit(3000000)
-                    .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
-                    .value(Wei.ZERO)
-                    .payload(Bytes.fromHexString("0x"))
-                    .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
-                    .chainId(BigInteger.valueOf(1337))
-                    .privacyGroupId(
-                        Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
-                    .privateFrom(
-                        Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
-                    .privateFor(
-                        Lists.newArrayList(
-                            Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
-                            Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
-                    .restriction(RESTRICTED)
-                    .build())
+    final PrivateTransaction.Builder privateTransactionBuilder =
+        PrivateTransaction.builder()
+            .nonce(0)
+            .gasPrice(Wei.of(1000))
+            .gasLimit(3000000)
+            .to(Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57"))
+            .value(Wei.ZERO)
+            .payload(Bytes.fromHexString("0x"))
+            .sender(Address.fromHexString("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73"))
+            .chainId(BigInteger.valueOf(1337))
+            .privacyGroupId(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="))
+            .privateFrom(Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="))
+            .privateFor(
+                Lists.newArrayList(
+                    Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo="),
+                    Bytes.fromBase64String("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")))
+            .restriction(RESTRICTED);
+    assertThatThrownBy(privateTransactionBuilder::build)
         .isInstanceOf(IllegalArgumentException.class);
   }
 

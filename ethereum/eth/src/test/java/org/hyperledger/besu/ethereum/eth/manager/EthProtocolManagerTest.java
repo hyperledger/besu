@@ -89,6 +89,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -261,12 +262,9 @@ public final class EthProtocolManagerTest {
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
-      assertThatThrownBy(
-              () ->
-                  Awaitility.await()
-                      .catchUncaughtExceptions()
-                      .atMost(200, TimeUnit.MILLISECONDS)
-                      .until(peer::isDisconnected))
+      final ConditionFactory waitDisconnect =
+          Awaitility.await().catchUncaughtExceptions().atMost(200, TimeUnit.MILLISECONDS);
+      assertThatThrownBy(() -> waitDisconnect.until(peer::isDisconnected))
           .isInstanceOf(ConditionTimeoutException.class);
     }
   }

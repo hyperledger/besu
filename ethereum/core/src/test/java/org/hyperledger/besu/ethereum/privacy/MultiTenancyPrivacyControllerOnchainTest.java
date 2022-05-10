@@ -80,14 +80,12 @@ public class MultiTenancyPrivacyControllerOnchainTest {
         .when(privacyController)
         .verifyPrivacyGroupContainsPrivacyUserId(
             PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2, Optional.of(1L));
+    final CallParameter callParams =
+        new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY);
     assertThatThrownBy(
             () ->
                 multiTenancyPrivacyController.simulatePrivateTransaction(
-                    PRIVACY_GROUP_ID,
-                    ENCLAVE_PUBLIC_KEY2,
-                    new CallParameter(
-                        Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
-                    1))
+                    PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2, callParams, 1))
         .isInstanceOf(MultiTenancyValidationException.class);
   }
 }

@@ -118,25 +118,19 @@ public class SECP256K1Test {
 
   @Test
   public void invalidFileThrowsInvalidKeyPairException() throws Exception {
-    assertThatThrownBy(
-            () -> {
-              final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
-              tempFile.deleteOnExit();
-              Files.write(tempFile.toPath(), "not valid".getBytes(UTF_8));
-              KeyPairUtil.load(tempFile);
-            })
+    final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
+    tempFile.deleteOnExit();
+    Files.write(tempFile.toPath(), "not valid".getBytes(UTF_8));
+    assertThatThrownBy(() -> KeyPairUtil.load(tempFile))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void invalidMultiLineFileThrowsInvalidIdException() throws Exception {
-    assertThatThrownBy(
-            () -> {
-              final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
-              tempFile.deleteOnExit();
-              Files.write(tempFile.toPath(), "not\n\nvalid".getBytes(UTF_8));
-              KeyPairUtil.load(tempFile);
-            })
+    final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
+    tempFile.deleteOnExit();
+    Files.write(tempFile.toPath(), "not\n\nvalid".getBytes(UTF_8));
+    assertThatThrownBy(() -> KeyPairUtil.load(tempFile))
         .isInstanceOf(IllegalArgumentException.class);
   }
 }

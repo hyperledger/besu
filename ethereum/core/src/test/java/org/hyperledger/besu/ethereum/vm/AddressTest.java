@@ -53,8 +53,8 @@ public class AddressTest {
 
   @Test
   public void invalidAccountAddress() {
-    assertThatThrownBy(() -> Address.wrap(Bytes.fromHexString("0x00101010")))
-        .isInstanceOf(IllegalArgumentException.class);
+    final Bytes bytes = Bytes.fromHexString("0x00101010");
+    assertThatThrownBy(() -> Address.wrap(bytes)).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test

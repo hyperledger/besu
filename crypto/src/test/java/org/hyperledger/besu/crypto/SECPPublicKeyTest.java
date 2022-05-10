@@ -47,13 +47,15 @@ public class SECPPublicKeyTest {
 
   @Test
   public void createPublicKey_EncodingTooShort() {
-    assertThatThrownBy(() -> SECPPublicKey.create(Bytes.wrap(new byte[63]), ALGORITHM))
+    final Bytes publicKey = Bytes.wrap(new byte[63]);
+    assertThatThrownBy(() -> SECPPublicKey.create(publicKey, ALGORITHM))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void createPublicKey_EncodingTooLong() {
-    assertThatThrownBy(() -> SECPPublicKey.create(Bytes.wrap(new byte[65]), ALGORITHM))
+    final Bytes publicKey = Bytes.wrap(new byte[65]);
+    assertThatThrownBy(() -> SECPPublicKey.create(publicKey, ALGORITHM))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
