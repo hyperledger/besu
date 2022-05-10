@@ -61,6 +61,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   private final PrivacyNode alice;
   private final PrivacyNode bob;
   private final PrivacyNode charlie;
+  private final EnclaveEncryptorType enclaveEncryptorType;
   private final Vertx vertx = Vertx.vertx();
   private final EnclaveFactory enclaveFactory = new EnclaveFactory(vertx);
 
@@ -76,6 +77,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   public PrivacyClusterAcceptanceTest(
       final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
+    this.enclaveEncryptorType = enclaveEncryptorType;
     final Network containerNetwork = Network.newNetwork();
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
@@ -115,7 +117,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void onlyAliceAndBobCanExecuteContract() {
     // Contract address is generated from sender address and transaction nonce
-    final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String contractAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     final EventEmitter eventEmitter =
         alice.execute(
@@ -173,7 +178,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void aliceCanUsePrivDistributeTransaction() {
     // Contract address is generated from sender address and transaction nonce
-    final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String contractAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     final RawPrivateTransaction rawPrivateTransaction =
         RawPrivateTransaction.createContractTransaction(
@@ -219,6 +227,22 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
     final String transactionHash = alice.execute(ethTransactions.sendRawTransaction(signedPmt));
 
+    final String receiptPrivateFrom =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAES8nC4qT/KdoAoTSF3qs/47DUsDihyVbWiRjZAiyvqp9eSDkqV1RzlM+58oOwnpFRwvWNZM+AxMVxT+MvxdsqMA=="
+            : "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+    final ArrayList<String> receiptPrivateFor =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? new ArrayList<>(
+                Collections.singletonList(
+                    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXIgZqRA25V+3nN+Do6b5r0jiUunub6ubjPhqwHpPxP44uUYh9RKCQNRnsqCJ9PjeTnC8R3ieJk7HWAlycU1bug=="))
+            : new ArrayList<>(
+                Collections.singletonList("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="));
+    final String receiptPrivacyGroupId =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "MjuFB4b9Hz+f8zvkWWasxZWRjHWXU4t7B2nOHo4mekA="
+            : "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
+
     final PrivateTransactionReceipt expectedReceipt =
         new PrivateTransactionReceipt(
             contractAddress,
@@ -228,10 +252,9 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             Collections.emptyList(),
             "0x023955c49d6265c579561940287449242704d5fd239ff07ea36a3fc7aface61c",
             "0x82e521ee16ff13104c5f81e8354ecaaafd5450b710b07f620204032bfe76041a",
-            "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=",
-            new ArrayList<>(
-                Collections.singletonList("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=")),
-            "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=",
+            receiptPrivateFrom,
+            receiptPrivateFor,
+            receiptPrivacyGroupId,
             "0x1",
             null);
 
@@ -255,7 +278,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Test
   public void aliceCanDeployMultipleTimesInSingleGroup() {
-    final String firstDeployedAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String firstDeployedAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     final EventEmitter firstEventEmitter =
         alice.execute(
@@ -269,7 +295,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         .validPrivateContractDeployed(firstDeployedAddress, alice.getAddress().toString())
         .verify(firstEventEmitter);
 
-    final String secondDeployedAddress = "0x10f807f8a905da5bd319196da7523c6bd768690f";
+    final String secondDeployedAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0x5194e214fae257530710d18c868df7a295d9d53b"
+            : "0x10f807f8a905da5bd319196da7523c6bd768690f";
 
     final EventEmitter secondEventEmitter =
         alice.execute(
@@ -287,7 +316,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void canInteractWithMultiplePrivacyGroups() {
     // alice deploys contract
-    final String firstDeployedAddress = "0xff206d21150a8da5b83629d8a722f3135ed532b1";
+    final String firstDeployedAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0x760359bc605b3848f5199829bde6b382d90fb8eb"
+            : "0xff206d21150a8da5b83629d8a722f3135ed532b1";
 
     final EventEmitter firstEventEmitter =
         alice.execute(
@@ -327,7 +359,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             firstTransactionHash, firstExpectedReceipt));
 
     // alice deploys second contract
-    final String secondDeployedAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String secondDeployedAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     final EventEmitter secondEventEmitter =
         alice.execute(
