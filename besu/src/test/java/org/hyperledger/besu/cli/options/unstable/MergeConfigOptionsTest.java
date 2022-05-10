@@ -51,4 +51,12 @@ public class MergeConfigOptionsTest {
     MergeConfigOptions.doIfMergeEnabled((() -> check.set(true)));
     assertThat(check.get()).isTrue();
   }
+
+  @Test
+  public void shouldRefuseToDisableMergeOnceSet() {
+    MergeConfigOptions.setMergeEnabled(true);
+    assertThat(MergeConfigOptions.isMergeEnabled()).isTrue();
+    MergeConfigOptions.setMergeEnabled(false);
+    assertThat(MergeConfigOptions.isMergeEnabled()).isTrue();
+  }
 }
