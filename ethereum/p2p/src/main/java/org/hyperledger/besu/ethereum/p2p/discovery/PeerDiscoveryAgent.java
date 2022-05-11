@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -45,8 +44,6 @@ import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -312,37 +309,15 @@ public abstract class PeerDiscoveryAgent {
         .whenComplete(
             (res, err) -> {
               if (err != null) {
-                if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
-                  LOG.debug(
-                      "Peer {} is unreachable, packet: {}", peer, wrapBuffer(packet.encode()), err);
-                } else if (err instanceof SocketException
-                    && err.getMessage().contentEquals("Operation not permitted")) {
-                  LOG.debug(
-                      "Operation not permitted sending to peer {}, this might be caused by firewall rules blocking traffic to a specific route.",
-                      peer,
-                      err);
-                } else if (err instanceof UnsupportedAddressTypeException) {
-                  LOG.warn(
-                      "Unsupported address type exception when connecting to peer {}, this is likely due to ipv6 not being enabled at runtime. "
-                          + "Set logging level to TRACE to see full stacktrace",
-                      peer);
-                  LOG.trace(
-                      "Sending to peer {} failed, packet: {}, stacktrace: {}",
-                      peer,
-                      wrapBuffer(packet.encode()),
-                      err);
-                } else {
-                  LOG.warn(
-                      "Sending to peer {} failed, packet: {}",
-                      peer,
-                      wrapBuffer(packet.encode()),
-                      err);
-                }
+                handleOutgoingPacketError(err, peer, packet);
                 return;
               }
               peer.setLastContacted(System.currentTimeMillis());
             });
   }
+
+  protected abstract void handleOutgoingPacketError(
+      final Throwable err, final DiscoveryPeer peer, final Packet packet);
 
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
     return controller.map(PeerDiscoveryController::streamDiscoveredPeers).orElse(Stream.empty());
