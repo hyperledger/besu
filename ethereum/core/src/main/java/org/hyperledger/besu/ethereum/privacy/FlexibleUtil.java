@@ -42,8 +42,12 @@ public class FlexibleUtil {
   public static List<String> getParticipantsFromParameter(final Bytes input) {
     final List<String> participants = new ArrayList<>();
     final Bytes mungedParticipants = input.slice(4 + 32 + 32);
-    for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
-      participants.add(mungedParticipants.slice(i, 32).toBase64String());
+    final int numberOfParticipants = input.slice(32 + 32, 4).toInt();
+
+    final int participantSize = mungedParticipants.size() / numberOfParticipants;
+
+    for (int i = 0; i <= mungedParticipants.size() - participantSize; i += participantSize) {
+      participants.add(mungedParticipants.slice(i, participantSize).toBase64String());
     }
     return participants;
   }
