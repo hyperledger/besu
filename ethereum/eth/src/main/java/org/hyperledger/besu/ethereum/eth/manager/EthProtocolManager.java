@@ -273,7 +273,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         // wait for a second before continuing to process this message to give that status message a
         // chance
         try {
-          Thread.sleep(500);
+          Thread.sleep(1000);
         } catch (InterruptedException e) {
           // do nothing
         }
