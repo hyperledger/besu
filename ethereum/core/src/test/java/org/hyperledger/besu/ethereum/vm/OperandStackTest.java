@@ -83,17 +83,19 @@ public class OperandStackTest {
     assertThat(stack.get(2)).isEqualTo(Bytes32.fromHexString("0x01"));
   }
 
-  @Test(expected = UnderflowException.class)
+  @Test(expected = IndexOutOfBoundsException.class)
   public void set_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
-    stack.get(-1);
+    final Bytes32 operand = Bytes32.fromHexString("0x01");
+    stack.set(-1, operand);
   }
 
-  @Test(expected = UnderflowException.class)
+  @Test(expected = IndexOutOfBoundsException.class)
   public void set_IndexGreaterThanSize() {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
-    stack.get(2);
+    final Bytes32 operand = Bytes32.fromHexString("0x01");
+    stack.set(2, operand);
   }
 
   @Test
