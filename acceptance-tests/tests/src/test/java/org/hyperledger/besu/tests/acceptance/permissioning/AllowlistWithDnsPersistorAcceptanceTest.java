@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import java.net.InetAddress;
@@ -55,7 +56,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1234";
 
     senderA = accounts.getPrimaryBenefactor();
-    tempFile = Files.createTempFile("test", "perm-dns-test0");
+    tempFile = Files.createTempFile("test", "perm-dns-test");
 
     this.node =
         permissionedNodeBuilder
@@ -78,9 +79,9 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
 
-    // expect an exception since this node is already added
-    assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS)))
-        .isInstanceOf(RuntimeException.class);
+    // expect an exception whe adding using hostname, since this node is already added with IP
+    final Condition condition = perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS);
+    assertThatThrownBy(() -> node.verify(condition)).isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -99,8 +100,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
 
     node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS, ENODE_TWO_IP));
-    // use DNS config to resolve the Enode with IP. It will either resolve to a DNS name or remain
-    // unchanged
+    // use DNS config to resolve the Enode with IP. It either resolves to a hostname or remain as is
     final EnodeURL enodeURL0 =
         EnodeURLImpl.fromString(
             ENODE_TWO_IP,
