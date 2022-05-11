@@ -176,7 +176,7 @@ public class FastSyncActions {
   }
 
   private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
-    return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
+    return peer.chainState().hasEstimatedHeight(peer) && peer.isFullyValidated();
   }
 
   private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {

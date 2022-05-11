@@ -107,7 +107,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
 
   @Override
   public Duration nextValidationCheckTimeout(final EthPeer ethPeer) {
-    if (!ethPeer.chainState().hasEstimatedHeight()) {
+    if (!ethPeer.chainState().hasEstimatedHeight(ethPeer)) {
       return Duration.ofSeconds(30);
     }
     final long distanceToBlock = blockNumber - ethPeer.chainState().getEstimatedHeight();

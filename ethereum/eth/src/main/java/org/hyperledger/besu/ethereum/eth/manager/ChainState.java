@@ -14,14 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.util.Subscribers;
 
 import com.google.common.base.MoreObjects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ChainState implements ChainHeadEstimate {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ChainState.class);
+
   // The best block by total difficulty that we know about
   private final BestBlock bestBlock = new BestBlock();
   // The highest block that we've seen
@@ -43,7 +49,8 @@ public class ChainState implements ChainHeadEstimate {
     return new ChainStateSnapshot(getEstimatedTotalDifficulty(), getEstimatedHeight());
   }
 
-  public boolean hasEstimatedHeight() {
+  public boolean hasEstimatedHeight(final EthPeer peer) {
+    if (!estimatedHeightKnown) LOG.debug("Peer {} has no estimated height yet", peer.getPeerId());
     return estimatedHeightKnown;
   }
 

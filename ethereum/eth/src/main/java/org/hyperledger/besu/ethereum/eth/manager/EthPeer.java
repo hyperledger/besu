@@ -87,6 +87,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
+  private final Bytes peerId;
   private PeerConnection connection;
 
   private volatile long lastRequestTimestamp = 0;
@@ -126,6 +127,7 @@ public class EthPeer implements Comparable<EthPeer> {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.onStatusesExchanged.set(onStatusesExchanged);
+    this.peerId = connection.getPeer().getId();
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
@@ -182,6 +184,7 @@ public class EthPeer implements Comparable<EthPeer> {
    * @return {@code true} if all peer validation logic has run and successfully validated this peer
    */
   public boolean isFullyValidated() {
+    if (!fullyValidated.get()) LOG.debug("Peer {} not fully validated yet.");
     return fullyValidated.get();
   }
 
@@ -238,6 +241,8 @@ public class EthPeer implements Comparable<EthPeer> {
       }
       return null;
     }
+
+    LOG.debug("Sending message with code {} using connection {}", messageData.getCode(), System.identityHashCode(connection));
 
     if (requestManagers.containsKey(protocolName)) {
       final Map<Integer, RequestManager> managers = this.requestManagers.get(protocolName);
@@ -445,7 +450,7 @@ public class EthPeer implements Comparable<EthPeer> {
         "status has been sent {}, status has been received {} from peer {}, is connected {}",
         statusHasBeenSentToPeer.get(),
         statusHasBeenReceivedFromPeer.get(),
-        this.getConnection().getPeer().getId(),
+        peerId,
         !this.getConnection().isDisconnected());
     return statusHasBeenSentToPeer.get() && statusHasBeenReceivedFromPeer.get();
   }
@@ -515,6 +520,10 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public boolean hasAvailableRequestCapacity() {
     return outstandingRequests() < MAX_OUTSTANDING_REQUESTS;
+  }
+
+  public Bytes getPeerId() {
+    return peerId;
   }
 
   public Set<Capability> getAgreedCapabilities() {

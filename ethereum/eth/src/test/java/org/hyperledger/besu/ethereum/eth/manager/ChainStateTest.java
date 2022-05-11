@@ -18,7 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -33,6 +35,8 @@ public class ChainStateTest {
   private static final Difficulty INITIAL_TOTAL_DIFFICULTY = Difficulty.of(256);
   private final ChainState chainState = new ChainState();
 
+  final EthPeer ethPeer = mock(EthPeer.class);
+
   @Test
   public void statusReceivedUpdatesBestBlock() {
     final BlockHeader bestBlockHeader = new BlockHeaderTestFixture().number(12).buildHeader();
@@ -45,15 +49,16 @@ public class ChainStateTest {
 
   @Test
   public void updateHeightEstimate_toZero() {
+    when(ethPeer.getPeerId()).thenReturn(Bytes.random(32));
     chainState.updateHeightEstimate(0L);
-    assertThat(chainState.hasEstimatedHeight()).isFalse();
+    assertThat(chainState.hasEstimatedHeight(ethPeer)).isFalse();
     assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
   }
 
   @Test
   public void updateHeightEstimate_toNonZeroValue() {
     chainState.updateHeightEstimate(1L);
-    assertThat(chainState.hasEstimatedHeight()).isTrue();
+    assertThat(chainState.hasEstimatedHeight(ethPeer)).isTrue();
     assertThat(chainState.getEstimatedHeight()).isEqualTo(1L);
   }
 
@@ -242,11 +247,13 @@ public class ChainStateTest {
   @Test
   public void shouldOnlyHaveHeightEstimateWhenHeightHasBeenSet() {
     chainState.statusReceived(Hash.EMPTY_LIST_HASH, Difficulty.ONE);
-    assertThat(chainState.hasEstimatedHeight()).isFalse();
+
+    when(ethPeer.getPeerId()).thenReturn(Bytes.random(32));
+    assertThat(chainState.hasEstimatedHeight(ethPeer)).isFalse();
 
     chainState.update(new BlockHeaderTestFixture().number(12).buildHeader());
 
-    assertThat(chainState.hasEstimatedHeight()).isTrue();
+    assertThat(chainState.hasEstimatedHeight(ethPeer)).isTrue();
   }
 
   @Test

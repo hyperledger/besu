@@ -228,6 +228,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void processMessage(final Capability cap, final Message message) {
+    processMessage(cap, message, false);
+  }
+
+  public void processMessage(final Capability cap, final Message message, final boolean delayedToWaitForStatus) {
     checkArgument(
         getSupportedCapabilities().contains(cap),
         "Unsupported capability passed to processMessage(): " + cap);
@@ -253,13 +257,25 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
-      LOG.debug(
-          "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
-          this.getClass().getSimpleName(),
-          EthPV62.STATUS,
-          code,
-          ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      if (delayedToWaitForStatus) {
+        LOG.debug(
+                "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}. Connection {}",
+                this.getClass().getSimpleName(),
+                EthPV62.STATUS,
+                code,
+                ethPeer,
+                System.identityHashCode(message.getConnection()));
+        ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      } else {
+        // due to threading there is a chance that the status message has already been received, but not processed
+        // wait for a second before continuing to process this message to give that status message a chance
+        try {
+          Thread.sleep(500);
+        } catch (InterruptedException e) {
+          // do nothing
+        }
+        processMessage(cap, message, true);
+      }
       return;
     }
 
@@ -325,7 +341,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {}.", peer);
+      LOG.debug("Sending status message to {}, connection {}.", peer, System.identityHashCode(peer.getConnection()));
       peer.send(status, getSupportedProtocol());
       peer.registerStatusSent();
     } catch (final PeerNotConnected peerNotConnected) {
@@ -370,7 +386,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else {
-        LOG.debug("Received status message from {}: {}", peer, status);
+        LOG.debug("Received status message from {}: {}, Connection {}", peer, status, System.identityHashCode(peer.getConnection()));
         peer.registerStatusReceived(
             status.bestHash(), status.totalDifficulty(), status.protocolVersion());
       }
@@ -396,7 +412,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   public List<Bytes> getForkIdAsBytesList() {
-    ForkId chainHeadForkId = forkIdManager.getForkIdForChainHead();
+    final ForkId chainHeadForkId = forkIdManager.getForkIdForChainHead();
     return chainHeadForkId == null
         ? Collections.emptyList()
         : chainHeadForkId.getForkIdAsBytesList();

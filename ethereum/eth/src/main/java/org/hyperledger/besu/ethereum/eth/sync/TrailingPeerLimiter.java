@@ -57,7 +57,7 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
     final List<EthPeer> trailingPeers =
         ethPeers
             .streamAvailablePeers()
-            .filter(peer -> peer.chainState().hasEstimatedHeight())
+            .filter(peer -> peer.chainState().hasEstimatedHeight(peer))
             .filter(peer -> peer.chainState().getEstimatedHeight() < minimumHeightToBeUpToDate)
             .sorted(BY_CHAIN_HEIGHT)
             .collect(Collectors.toList());
