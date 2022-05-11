@@ -780,19 +780,19 @@ task manifestDocker {
   def image = "${dockerImage}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
   def tags = ["${image}"]
+
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
-    tags.add("${dockerImage}-develop")
+    tags.add("${dockerImage}:develop")
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    tags.add('${dockerImage}-latest')
-    tags.add('${dockerImage}-' + dockerBuildVersion.split(/\./)[0..1].join('.'))
+    tags.add('${dockerImage}:latest')
+    tags.add('${dockerImage}:' + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   doLast {
     for (baseTag in tags) {
       for (def variant in dockerVariants) {
-        // Just do variant images for now, later add tags and such
         def variantImage = "${baseTag}-${variant}"
         def targets = ""
         archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
