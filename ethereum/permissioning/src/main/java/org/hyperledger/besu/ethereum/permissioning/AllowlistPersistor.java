@@ -31,8 +31,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AllowlistPersistor {
+  private static final Logger LOG = LoggerFactory.getLogger(AllowlistPersistor.class);
 
   private final File configurationFile;
 
@@ -70,6 +73,8 @@ public class AllowlistPersistor {
 
     boolean listsMatch = existingValues.containsAll(checkLists);
     if (!listsMatch) {
+      LOG.info("LISTS DID NOT MATCH existing::" + existingValues);
+      LOG.info("LISTS DID NOT MATCH checkLists::" + checkLists);
       throw new AllowlistFileSyncException();
     }
     return listsMatch;
