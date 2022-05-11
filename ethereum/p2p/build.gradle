@@ -40,8 +40,10 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'dnsjava:dnsjava'
+  implementation 'io.netty:netty-transport-native-unix-common'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
+
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-crypto'
   implementation('org.apache.tuweni:tuweni-devp2p') {
