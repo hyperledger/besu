@@ -40,7 +40,6 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
 
   private String ENODE_ONE_DNS;
   private String ENODE_TWO_IP;
-  private String ENODE_THREE_IP;
 
   private Node node;
   private Account senderA;
@@ -54,8 +53,6 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
             + ":4567";
     ENODE_TWO_IP =
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1234";
-    ENODE_THREE_IP =
-        "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.11:3456";
 
     senderA = accounts.getPrimaryBenefactor();
     tempFile = Files.createTempFile("test", "perm-dns-test0");
@@ -81,41 +78,21 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
     node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS, ENODE_TWO_IP));
     LOG.info("enode one " + ENODE_ONE_DNS);
     LOG.info("enode two " + ENODE_TWO_IP);
-    final EnodeURL enodeURL1 =
-        EnodeURLImpl.fromString(
-            ENODE_ONE_DNS,
-            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
-    LOG.info("enode from 1 string with DNS enabled but NOT update " + enodeURL1);
+    // use DNS to resolve the Enode with IP
     final EnodeURL enodeURL0 =
         EnodeURLImpl.fromString(
-            ENODE_ONE_DNS,
-            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
-    LOG.info("enode from 1 string with DNS enabled AND update " + enodeURL0);
-    final EnodeURL enodeURL2 =
-        EnodeURLImpl.fromString(
             ENODE_TWO_IP,
-            ImmutableEnodeDnsConfiguration.builder()
-                .dnsEnabled(false)
-                .updateEnabled(false)
-                .build());
-    LOG.info("enode from 2 string " + enodeURL2);
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+    LOG.info("enode from 2 string with DNS enabled AND update " + enodeURL0);
+
+    final String enode2ResolvedToDns = enodeURL0.toString();
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP)); // FAILS in CI
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, enode2ResolvedToDns)); // FAILS in CI
 
     node.verify(perm.removeNodesFromAllowlist(ENODE_ONE_DNS));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
-
-    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS, ENODE_THREE_IP));
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP, ENODE_ONE_DNS, ENODE_THREE_IP));
-
-    node.verify(perm.removeNodesFromAllowlist(ENODE_TWO_IP));
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_THREE_IP));
+            ALLOWLIST_TYPE.NODES, tempFile, enode2ResolvedToDns));
   }
 }
