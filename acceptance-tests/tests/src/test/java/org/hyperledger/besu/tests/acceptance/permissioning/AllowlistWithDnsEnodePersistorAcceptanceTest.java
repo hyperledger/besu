@@ -107,6 +107,6 @@ public class AllowlistWithDnsEnodePersistorAcceptanceTest extends AcceptanceTest
     LOG.info("enode 1 " + ENODE_TWO_IP);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP)); // FAILS in CI
   }
 }
