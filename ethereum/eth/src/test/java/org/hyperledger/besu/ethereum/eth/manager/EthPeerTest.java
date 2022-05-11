@@ -455,7 +455,7 @@ public class EthPeerTest {
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
-    PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
+    final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return new EthPeer(
         peerConnection,

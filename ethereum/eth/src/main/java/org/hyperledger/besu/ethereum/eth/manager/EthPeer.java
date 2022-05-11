@@ -127,7 +127,7 @@ public class EthPeer implements Comparable<EthPeer> {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.onStatusesExchanged.set(onStatusesExchanged);
-    this.peerId = connection.getPeer().getId();
+    this.peerId = connection.getPeerInfo().getNodeId();
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
