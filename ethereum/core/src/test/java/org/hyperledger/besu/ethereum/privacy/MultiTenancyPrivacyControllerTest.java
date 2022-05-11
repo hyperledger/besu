@@ -323,12 +323,15 @@ public class MultiTenancyPrivacyControllerTest {
         PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY1);
   }
 
-  @Test(expected = MultiTenancyValidationException.class)
+  @Test
   public void verifyPrivacyGroupDoesNotMatchEnclaveKeyThrowsException() {
     doThrow(MultiTenancyValidationException.class)
         .when(privacyController)
         .verifyPrivacyGroupContainsPrivacyUserId(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2);
-    multiTenancyPrivacyController.verifyPrivacyGroupContainsPrivacyUserId(
-        PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2);
+    assertThatThrownBy(
+            () ->
+                multiTenancyPrivacyController.verifyPrivacyGroupContainsPrivacyUserId(
+                    PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2))
+        .isInstanceOf(MultiTenancyValidationException.class);
   }
 }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.datatypes.Address;
 
@@ -50,18 +51,21 @@ public class AddressTest {
     assertThat(addr2.hashCode()).isEqualTo(addr.hashCode());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void invalidAccountAddress() {
-    Address.wrap(Bytes.fromHexString("0x00101010"));
+    final Bytes bytes = Bytes.fromHexString("0x00101010");
+    assertThatThrownBy(() -> Address.wrap(bytes)).isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void tooShortAccountAddress() {
-    Address.fromHexStringStrict("0x00101010");
+    assertThatThrownBy(() -> Address.fromHexStringStrict("0x00101010"))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void nullAccountAddress() {
-    Address.fromHexStringStrict(null);
+    assertThatThrownBy(() -> Address.fromHexStringStrict(null))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }
