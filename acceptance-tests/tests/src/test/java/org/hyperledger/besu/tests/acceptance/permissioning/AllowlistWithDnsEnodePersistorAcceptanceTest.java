@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -34,13 +34,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
+public class AllowlistWithDnsEnodePersistorAcceptanceTest extends AcceptanceTestBase {
   private static final Logger LOG =
-      LoggerFactory.getLogger(AllowlistWithDnsPersistorAcceptanceTest.class);
+      LoggerFactory.getLogger(AllowlistWithDnsEnodePersistorAcceptanceTest.class);
 
   private String ENODE_ONE_DNS;
   private String ENODE_TWO_IP;
-  private String ENODE_THREE_IP;
 
   private Node node;
   private Account senderA;
@@ -54,11 +53,9 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
             + ":4567";
     ENODE_TWO_IP =
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1234";
-    ENODE_THREE_IP =
-        "enode://4f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.11:3456";
 
     senderA = accounts.getPrimaryBenefactor();
-    tempFile = Files.createTempFile("test", "perm-dns-test0");
+    tempFile = Files.createTempFile("test", "perm-dns-test1");
 
     this.node =
         permissionedNodeBuilder
@@ -74,11 +71,10 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   }
 
   @Test
-  public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
+  public void singleNodeAllowlistWithIpShouldWorkWhenDnsEnabled() {
 
     LOG.info("temp file " + tempFile.toAbsolutePath());
-
-    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS, ENODE_TWO_IP));
+    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS));
     LOG.info("enode one " + ENODE_ONE_DNS);
     LOG.info("enode two " + ENODE_TWO_IP);
     final EnodeURL enodeURL1 =
@@ -91,31 +87,26 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
             ENODE_ONE_DNS,
             ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
     LOG.info("enode from 1 string with DNS enabled AND update " + enodeURL0);
+
     final EnodeURL enodeURL2 =
         EnodeURLImpl.fromString(
             ENODE_TWO_IP,
-            ImmutableEnodeDnsConfiguration.builder()
-                .dnsEnabled(false)
-                .updateEnabled(false)
-                .build());
-    LOG.info("enode from 2 string " + enodeURL2);
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP)); // FAILS in CI
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
+    LOG.info("enode from 2 string with DNS enabled but NOT update " + enodeURL2);
+    final EnodeURL enodeURL3 =
+        EnodeURLImpl.fromString(
+            ENODE_TWO_IP,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+    LOG.info("enode from 2 string with DNS enabled AND update " + enodeURL3);
 
-    node.verify(perm.removeNodesFromAllowlist(ENODE_ONE_DNS));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS));
 
-    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS, ENODE_THREE_IP));
+    node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
+    LOG.info("enode 1 " + ENODE_TWO_IP);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP, ENODE_ONE_DNS, ENODE_THREE_IP));
-
-    node.verify(perm.removeNodesFromAllowlist(ENODE_TWO_IP));
-    node.verify(
-        perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_THREE_IP));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, ENODE_TWO_IP));
   }
 }

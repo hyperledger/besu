@@ -47,6 +47,7 @@ public class AllowListContainsKeyAndValue implements Condition {
               allowlistType, allowlistValues, configFilePath);
     } catch (final Exception e) {
       result = false;
+      e.printStackTrace();
     }
     assertThat(result).isTrue();
   }

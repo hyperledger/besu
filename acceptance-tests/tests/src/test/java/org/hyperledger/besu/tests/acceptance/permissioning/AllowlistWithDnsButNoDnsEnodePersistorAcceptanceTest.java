@@ -89,7 +89,7 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
     LOG.info("enode from 1 string with DNS enabled AND update " + enodeURL0);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP)); // FAILS in CI
 
     node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS));
     LOG.info("enode 1 " + ENODE_ONE_DNS);
