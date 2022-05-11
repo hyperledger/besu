@@ -471,6 +471,8 @@ public class EthPeerTest {
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     return new EthPeer(
