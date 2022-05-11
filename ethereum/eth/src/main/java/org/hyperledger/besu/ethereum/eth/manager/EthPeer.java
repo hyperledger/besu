@@ -242,7 +242,10 @@ public class EthPeer implements Comparable<EthPeer> {
       return null;
     }
 
-    LOG.debug("Sending message with code {} using connection {}", messageData.getCode(), System.identityHashCode(connection));
+    LOG.debug(
+        "Sending message with code {} using connection {}",
+        messageData.getCode(),
+        System.identityHashCode(connection));
 
     if (requestManagers.containsKey(protocolName)) {
       final Map<Integer, RequestManager> managers = this.requestManagers.get(protocolName);

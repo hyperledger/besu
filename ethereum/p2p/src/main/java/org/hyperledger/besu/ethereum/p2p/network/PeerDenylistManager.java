@@ -46,7 +46,11 @@ public class PeerDenylistManager implements DisconnectCallback {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (shouldBlock(reason, initiatedByPeer)) {
-      LOG.debug("Added peer {} to peer denylist for reason {}, connection {}", connection, reason.name(), System.identityHashCode(connection));
+      LOG.debug(
+          "Added peer {} to peer denylist for reason {}, connection {}",
+          connection,
+          reason.name(),
+          System.identityHashCode(connection));
       denylist.add(connection.getPeer());
     }
   }

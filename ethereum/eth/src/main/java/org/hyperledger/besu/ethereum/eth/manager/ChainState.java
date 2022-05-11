@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
