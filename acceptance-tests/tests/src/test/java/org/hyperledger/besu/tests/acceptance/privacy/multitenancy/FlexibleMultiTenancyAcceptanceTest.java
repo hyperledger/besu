@@ -23,7 +23,6 @@ import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.contract.CallPrivateSmartContractFunction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateFlexiblePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningT
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.acceptance.privacy.FlexiblePrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
@@ -56,9 +56,12 @@ import org.web3j.utils.Restriction;
 public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
+  private final EnclaveEncryptorType enclaveEncryptorType;
 
-  public FlexibleMultiTenancyAcceptanceTest(final EnclaveType enclaveType) {
+  public FlexibleMultiTenancyAcceptanceTest(
+      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType) {
     this.enclaveType = enclaveType;
+    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
   @Parameterized.Parameters(name = "{0} enclave type with {1} encryptor")
@@ -81,7 +84,11 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
   public void setUp() throws Exception {
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
-            "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty());
+            "node1",
+            privacyAccountResolver.resolve(3, enclaveEncryptorType),
+            true,
+            enclaveType,
+            Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =

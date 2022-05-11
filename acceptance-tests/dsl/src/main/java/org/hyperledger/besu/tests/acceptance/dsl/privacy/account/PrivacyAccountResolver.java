@@ -21,20 +21,6 @@ import java.net.URL;
 /** Supplier of known funded accounts defined in dev.json */
 public class PrivacyAccountResolver {
 
-  public static final PrivacyAccount MULTI_TENANCY =
-      PrivacyAccount.create(
-          resolveResource("key"),
-          new URL[] {
-            resolveResource("enclave_key_0.pub"),
-            resolveResource("enclave_key_1.pub"),
-            resolveResource("enclave_key_2.pub")
-          },
-          new URL[] {
-            resolveResource("enclave_key_0.key"),
-            resolveResource("enclave_key_1.key"),
-            resolveResource("enclave_key_2.key")
-          });
-
   public PrivacyAccountResolver() {}
 
   public PrivacyAccount resolve(
@@ -72,6 +58,33 @@ public class PrivacyAccountResolver {
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_2.key")
                 : resolveResource("enclave_key_2.key"),
+            enclaveEncryptorType);
+      case 3:
+        // MULTI_TENANCY
+        return PrivacyAccount.create(
+            resolveResource("key"),
+            new URL[] {
+              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                  ? resolveResource("enclave_ec_key_0.pub")
+                  : resolveResource("enclave_key_0.pub"),
+              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                  ? resolveResource("enclave_ec_key_1.pub")
+                  : resolveResource("enclave_key_1.pub"),
+              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                  ? resolveResource("enclave_ec_key_2.pub")
+                  : resolveResource("enclave_key_2.pub")
+            },
+            new URL[] {
+              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                  ? resolveResource("enclave_ec_key_0.key")
+                  : resolveResource("enclave_key_0.key"),
+              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                  ? resolveResource("enclave_ec_key_1.key")
+                  : resolveResource("enclave_key_1.key"),
+              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                  ? resolveResource("enclave_ec_key_2.key")
+                  : resolveResource("enclave_key_2.key")
+            },
             enclaveEncryptorType);
       default:
         throw new RuntimeException("Unknown privacy account");

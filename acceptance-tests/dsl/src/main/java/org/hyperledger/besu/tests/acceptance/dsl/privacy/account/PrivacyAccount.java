@@ -19,25 +19,23 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Optional;
 
 public class PrivacyAccount {
 
   private final URL privateKeyPath;
   private final URL[] enclaveKeyPaths;
   private final URL[] enclavePrivateKeyPaths;
-  private EnclaveEncryptorType enclaveEncryptorType;
+  private final EnclaveEncryptorType enclaveEncryptorType;
 
   private PrivacyAccount(
       final URL privateKeyPath,
       final URL[] enclavePublicKeyPaths,
       final URL[] enclavePrivateKeyPaths,
-      final Optional<EnclaveEncryptorType> optionalEnclaveEncryptorType) {
+      final EnclaveEncryptorType enclaveEncryptorType) {
     this.privateKeyPath = privateKeyPath;
     this.enclaveKeyPaths = enclavePublicKeyPaths;
     this.enclavePrivateKeyPaths = enclavePrivateKeyPaths;
-    optionalEnclaveEncryptorType.ifPresent(
-        enclaveEncryptorType -> this.enclaveEncryptorType = enclaveEncryptorType);
+    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
   public static PrivacyAccount create(
@@ -49,15 +47,16 @@ public class PrivacyAccount {
         privateKeyPath,
         new URL[] {enclavePublicKeyPath},
         new URL[] {enclavePrivateKeyPath},
-        Optional.of(enclaveEncryptorType));
+        enclaveEncryptorType);
   }
 
   public static PrivacyAccount create(
       final URL privateKeyPath,
       final URL[] enclavePublicKeyPath,
-      final URL[] enclavePrivateKeyPath) {
+      final URL[] enclavePrivateKeyPath,
+      final EnclaveEncryptorType enclaveEncryptorType) {
     return new PrivacyAccount(
-        privateKeyPath, enclavePublicKeyPath, enclavePrivateKeyPath, Optional.empty());
+        privateKeyPath, enclavePublicKeyPath, enclavePrivateKeyPath, enclaveEncryptorType);
   }
 
   public String getPrivateKeyPath() {
