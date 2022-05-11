@@ -16,6 +16,9 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import static org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
@@ -72,7 +75,18 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
 
     LOG.info("temp file " + tempFile.toAbsolutePath());
     node.verify(perm.addNodesToAllowlist(ENODE_TWO_IP));
-    LOG.info("enode 2 " + ENODE_TWO_IP);
+    LOG.info("enode one " + ENODE_ONE_DNS);
+    LOG.info("enode two " + ENODE_TWO_IP);
+    final EnodeURL enodeURL1 =
+        EnodeURLImpl.fromString(
+            ENODE_ONE_DNS,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
+    LOG.info("enode from 1 string with DNS enabled but NOT update " + enodeURL1);
+    final EnodeURL enodeURL0 =
+        EnodeURLImpl.fromString(
+            ENODE_ONE_DNS,
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+    LOG.info("enode from 1 string with DNS enabled AND update " + enodeURL0);
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_TWO_IP));
