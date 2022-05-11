@@ -24,11 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import java.nio.file.Path;
 import java.util.Collection;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class AllowListContainsKeyAndValue implements Condition {
-  private static final Logger LOG = LoggerFactory.getLogger(AllowListContainsKeyAndValue.class);
   private final ALLOWLIST_TYPE allowlistType;
   private final Collection<String> allowlistValues;
   private final Path configFilePath;
@@ -51,7 +47,6 @@ public class AllowListContainsKeyAndValue implements Condition {
               allowlistType, allowlistValues, configFilePath);
     } catch (final Exception e) {
       result = false;
-      LOG.info("contents did not match expected ", e);
     }
     assertThat(result).isTrue();
   }

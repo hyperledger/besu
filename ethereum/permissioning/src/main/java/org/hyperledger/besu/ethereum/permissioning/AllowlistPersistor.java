@@ -73,7 +73,7 @@ public class AllowlistPersistor {
 
     boolean listsMatch = existingValues.containsAll(checkLists);
     if (!listsMatch) {
-      LOG.info("LISTS DID NOT MATCH existing::" + existingValues);
+      LOG.info("LISTS DID NOT MATCH configFile::" + existingValues);
       LOG.info("LISTS DID NOT MATCH checkLists::" + checkLists);
       throw new AllowlistFileSyncException();
     }
