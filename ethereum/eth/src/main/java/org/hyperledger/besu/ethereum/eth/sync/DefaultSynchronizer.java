@@ -174,8 +174,7 @@ public class DefaultSynchronizer implements Synchronizer {
         syncState.markInitialSyncPhaseAsDone();
         future = startFullSync();
       }
-      future = future.thenApply(this::finalizeSync);
-      return future;
+      return future.thenApply(this::finalizeSync);
     } else {
       throw new IllegalStateException("Attempt to start an already started synchronizer.");
     }
