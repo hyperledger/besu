@@ -125,15 +125,9 @@ public class JsonRpcMethodsFactory {
               new Web3JsonRpcMethods(clientVersion),
               new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, privacyParameters),
               new TxPoolJsonRpcMethods(transactionPool),
-              new PluginsJsonRpcMethods(namedPlugins));
-
-      // TODO: Implement engine-specific json-rpc endpoint rather than including consensus here
-      // https://github.com/hyperledger/besu/issues/2914
-      MergeConfigOptions.doIfMergeEnabled(
-          () ->
-              enabled.putAll(
-                  new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext)
-                      .create(rpcApis)));
+              new PluginsJsonRpcMethods(namedPlugins),
+              new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext)
+              );
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

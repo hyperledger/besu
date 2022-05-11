@@ -136,7 +136,7 @@ public class JsonRpcService {
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
-  private final Optional<WebSocketConfiguration> socketConfiguration;
+  private final WebSocketConfiguration socketConfiguration;
   private final Optional<WebSocketRequestHandler> websocketRequestHandler;
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
@@ -187,34 +187,38 @@ public class JsonRpcService {
       final MetricsSystem metricsSystem,
       final NatService natService,
       final Map<String, JsonRpcMethod> methods,
-      final Optional<WebSocketConfiguration> socketConfiguration,
+      final Optional<WebSocketConfiguration> maybeSockets,
       final EthScheduler scheduler,
       final Optional<AuthenticationService> authenticationService,
       final HealthService livenessService,
       final HealthService readinessService) {
     this.dataDir = dataDir;
-    requestTimer =
+    this.requestTimer =
         metricsSystem.createLabelledTimer(
             BesuMetricCategory.RPC,
             "request_time",
             "Time taken to process a JSON-RPC request",
             "methodName");
-    this.socketConfiguration = socketConfiguration;
-    final JsonRpcProcessor jsonRpcProcessor;
-    if (authenticationService.isPresent() && this.socketConfiguration.isPresent()) {
+    JsonRpcProcessor jsonRpcProcessor = new BaseJsonRpcProcessor();
+
+    this.socketConfiguration = maybeSockets.isPresent() ?
+        maybeSockets.get() :
+        WebSocketConfiguration.createDefault();
+
+    if (authenticationService.isPresent()) {
       jsonRpcProcessor =
           new AuthenticatedJsonRpcProcessor(
-              new BaseJsonRpcProcessor(),
+              jsonRpcProcessor,
               authenticationService.get(),
-              socketConfiguration.get().getRpcApisNoAuth());
-      final JsonRpcExecutor jsonRpcExecutor = new JsonRpcExecutor(jsonRpcProcessor, methods);
-      this.websocketRequestHandler =
+              this.socketConfiguration.getRpcApisNoAuth());
+    }
+
+    final JsonRpcExecutor jsonRpcExecutor = new JsonRpcExecutor(jsonRpcProcessor, methods);
+    this.websocketRequestHandler =
           Optional.of(
               new WebSocketRequestHandler(
-                  vertx, jsonRpcExecutor, scheduler, socketConfiguration.get().getTimeoutSec()));
-    } else {
-      this.websocketRequestHandler = Optional.empty();
-    }
+                  vertx, jsonRpcExecutor, scheduler, this.socketConfiguration.getTimeoutSec()));
+
 
     validateConfig(config);
     this.config = config;
@@ -383,7 +387,7 @@ public class JsonRpcService {
     router.route().handler(this::createSpan);
 
     // Verify Host header to avoid rebind attack.
-    router.route().handler(checkAllowlistHostHeader());
+    router.route().handler(denyRouteToBlockedHost());
 
     router
         .route()
@@ -484,6 +488,10 @@ public class JsonRpcService {
             .setHandle100ContinueAutomatically(true)
             .setCompressionSupported(true);
 
+      httpServerOptions.setMaxWebSocketFrameSize(socketConfiguration.getMaxFrameSize());
+      httpServerOptions.setMaxWebSocketMessageSize(socketConfiguration.getMaxFrameSize() * 4);
+
+
     applyTlsConfig(httpServerOptions);
     return httpServerOptions;
   }
@@ -558,7 +566,7 @@ public class JsonRpcService {
     return servFail;
   }
 
-  private Handler<RoutingContext> checkAllowlistHostHeader() {
+  private Handler<RoutingContext> denyRouteToBlockedHost() {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
       if (config.getHostsAllowlist().contains("*")
@@ -593,7 +601,7 @@ public class JsonRpcService {
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {
-    if (config.getHostsAllowlist().stream()
+    if (config.getHostsAllowlist().contains("*") || config.getHostsAllowlist().stream()
         .anyMatch(
             allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
       return true;

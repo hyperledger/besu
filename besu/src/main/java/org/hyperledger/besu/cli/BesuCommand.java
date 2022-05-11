@@ -568,6 +568,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   static class EngineRPCOptionGroup {
     @Option(
+        names = {"--engine-rpc-enabled"},
+        description = "Set to start the Engine JSON-RPC service (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineRpcEnabled = true;
+
+    @Option(
         names = {"--engine-rpc-port"},
         paramLabel = MANDATORY_PORT_FORMAT_HELP,
         description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
@@ -2103,7 +2108,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    engineConfig.setEnabled(isMergeEnabled());
+    engineConfig.setEnabled(engineRPCOptionGroup.isEngineRpcEnabled);
     if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);

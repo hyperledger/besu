@@ -664,10 +664,10 @@ public class RunnerBuilder {
                       dataDir))
               : Optional.empty();
 
-      Optional<WebSocketConfiguration> maybeWsConfig = Optional.empty();
-      if (webSocketConfiguration.isEnabled()) {
-        maybeWsConfig = Optional.of(webSocketConfiguration);
-      }
+      WebSocketConfiguration engineSocketConfig = webSocketConfiguration.isEnabled() ?
+          webSocketConfiguration :
+          WebSocketConfiguration.createEngineDefault();
+
       engineJsonRpcService =
           Optional.of(
               new JsonRpcService(
@@ -677,7 +677,7 @@ public class RunnerBuilder {
                   metricsSystem,
                   natService,
                   engineMethods,
-                  maybeWsConfig,
+                  Optional.ofNullable(engineSocketConfig),
                   besuController.getProtocolManager().ethContext().getScheduler(),
                   authToUse,
                   new HealthService(new LivenessCheck()),
