@@ -72,6 +72,8 @@ public class AllowlistWithDnsButNoDnsEnodePersistorAcceptanceTest extends Accept
 
   @Test
   public void singleNodeAllowlistWithIpShouldWorkWhenDnsEnabled() {
+    // TODO this test class can be removed since it's copied into the original
+    // AllowlistWithDnsPersistorAcceptanceTest
 
     LOG.info("temp file " + tempFile.toAbsolutePath());
     node.verify(perm.addNodesToAllowlist(ENODE_ONE_IP));

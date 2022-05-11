@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -73,8 +75,12 @@ public class AllowlistPersistor {
 
     boolean listsMatch = existingValues.containsAll(checkLists);
     if (!listsMatch) {
-      LOG.info("LISTS DID NOT MATCH configFile::" + existingValues);
-      LOG.info("LISTS DID NOT MATCH checkLists::" + checkLists);
+      debugLambda(
+          LOG,
+          "\n LISTS DO NOT MATCH configFile::",
+          existingValues::toString,
+          configurationFilePath::toString);
+      debugLambda(LOG, "\nLISTS DO NOT MATCH in-memory ::", checkLists::toString);
       throw new AllowlistFileSyncException();
     }
     return listsMatch;

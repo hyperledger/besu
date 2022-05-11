@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.permissioning;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -29,8 +30,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +39,22 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   private static final Logger LOG =
       LoggerFactory.getLogger(AllowlistWithDnsPersistorAcceptanceTest.class);
 
-  private String ENODE_ONE_DNS;
+  public static final String ENODE_PREFIX =
+      "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@";
+  public static final String PORT_SUFFIX = ":4567";
+
+  private String ENODE_LOCALHOST_DNS;
+  private String ENODE_LOCALHOST_IP;
   private String ENODE_TWO_IP;
 
   private Node node;
   private Account senderA;
   private Path tempFile;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
-    ENODE_ONE_DNS =
-        "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@"
-            + InetAddress.getLocalHost().getHostName()
-            + ":4567";
+    ENODE_LOCALHOST_DNS = ENODE_PREFIX + InetAddress.getLocalHost().getHostName() + PORT_SUFFIX;
+    ENODE_LOCALHOST_IP = ENODE_PREFIX + "127.0.0.1" + PORT_SUFFIX;
     ENODE_TWO_IP =
         "enode://5f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.10:1234";
 
@@ -71,26 +75,46 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   }
 
   @Test
+  public void addingEnodeWithIp_andThenAddingSameEnodeWithHostname_shouldThrow() {
+
+    node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_IP));
+    node.verify(
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
+
+    // expect an exception since this node is already added
+    assertThatThrownBy(() -> node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS)))
+        .isInstanceOf(RuntimeException.class);
+  }
+
+  @Test
+  public void addingEnodeWithHostNameShouldWorkWhenDnsEnabled() {
+
+    node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS));
+
+    // This should just work since there is no IP address to resolve to a host name.
+    // With DNS enabled, the ENODE with the DNS hostname in it should remain as is.
+    node.verify(
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
+  }
+
+  @Test
   public void manipulatedNodesAllowlistWithHostnameShouldWorkWhenDnsEnabled() {
 
-    LOG.info("temp file " + tempFile.toAbsolutePath());
-
-    node.verify(perm.addNodesToAllowlist(ENODE_ONE_DNS, ENODE_TWO_IP));
-    LOG.info("enode one " + ENODE_ONE_DNS);
-    LOG.info("enode two " + ENODE_TWO_IP);
-    // use DNS to resolve the Enode with IP
+    node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS, ENODE_TWO_IP));
+    // use DNS config to resolve the Enode with IP. It will either resolve to a DNS name or remain
+    // unchanged
     final EnodeURL enodeURL0 =
         EnodeURLImpl.fromString(
             ENODE_TWO_IP,
             ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
-    LOG.info("enode from 2 string with DNS enabled AND update " + enodeURL0);
-
     final String enode2ResolvedToDns = enodeURL0.toString();
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
-            ALLOWLIST_TYPE.NODES, tempFile, ENODE_ONE_DNS, enode2ResolvedToDns)); // FAILS in CI
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS, enode2ResolvedToDns));
 
-    node.verify(perm.removeNodesFromAllowlist(ENODE_ONE_DNS));
+    node.verify(perm.removeNodesFromAllowlist(ENODE_LOCALHOST_DNS));
     node.verify(
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, enode2ResolvedToDns));
