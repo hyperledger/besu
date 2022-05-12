@@ -36,13 +36,10 @@ import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(MockitoJUnitRunner.class)
 public class EthGetBlockByNumberIntegrationTest {
 
   private static final String ETH_METHOD = "eth_getBlockByNumber";
@@ -52,7 +49,7 @@ public class EthGetBlockByNumberIntegrationTest {
   private final JsonRpcResponseUtils responseUtils = new JsonRpcResponseUtils();
   private Map<String, JsonRpcMethod> methods;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
@@ -62,7 +59,7 @@ public class EthGetBlockByNumberIntegrationTest {
             new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     methods = BLOCKCHAIN.methods();
   }

@@ -40,8 +40,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GossipTest {
 
@@ -65,7 +65,7 @@ public class GossipTest {
   private ValidatorPeer sender;
   private MessageFactory msgFactory;
 
-  @Before
+  @BeforeEach
   public void setup() {
     block = context.createBlockForProposalFromChainHead(roundId.getRoundNumber(), 30);
     sender = peers.getProposer();
