@@ -15,7 +15,7 @@
 package org.hyperledger.besu.services.pipeline;
 
 interface Processor<I, O> {
-  void processNextInput(final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe);
+  void processNextInput(final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe, final String name);
 
   default boolean attemptFinalization(final WritePipe<O> outputPipe) {
     return true;

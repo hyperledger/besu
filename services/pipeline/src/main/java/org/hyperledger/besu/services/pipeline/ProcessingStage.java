@@ -35,7 +35,7 @@ class ProcessingStage<I, O> implements Stage {
   @Override
   public void run() {
     while (inputPipe.hasMore()) {
-      processor.processNextInput(inputPipe, outputPipe);
+      processor.processNextInput(inputPipe, outputPipe, name);
     }
     if (inputPipe.isAborted()) {
       processor.abort();
