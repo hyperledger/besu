@@ -2,13 +2,12 @@
 
 ## 22.4.1
 
-### Breaking Changes
-- To use clique consensus, require --Xclique-enabled option [] (https://github.com/hyperledger/besu/pull/)
-
-- ### Additions and Improvements
+### Additions and Improvements
 - GraphQL - allow null log topics in queries which match any topic [#3662](https://github.com/hyperledger/besu/pull/3662)
 - multi-arch docker builds for amd64 and arm64 [#2954](https://github.com/hyperledger/besu/pull/2954)
 - Filter Netty native lib errors likewise the pure Java implementation [#3807](https://github.com/hyperledger/besu/pull/3807)
+- Clique consensus not recommended for production, require --Xclique-enabled option to be set [#3823](https://github.com/hyperledger/besu/pull/3823)
+  - This will be made a breaking change in the future (current default is true)
 
 ### Bug Fixes
 - Stop the BlockPropagationManager when it receives the TTD reached event [#3809](https://github.com/hyperledger/besu/pull/3809)

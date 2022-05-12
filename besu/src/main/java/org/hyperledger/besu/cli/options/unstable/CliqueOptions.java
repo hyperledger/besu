@@ -24,7 +24,7 @@ public class CliqueOptions {
       description =
           "Enable use of Clique consensus. Recommended for dev/test networks only. (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Boolean cliqueEnabled = Boolean.FALSE;
+  private final Boolean cliqueEnabled = Boolean.TRUE;
 
   public static CliqueOptions create() {
     return new CliqueOptions();
