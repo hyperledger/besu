@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcesso
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketMessageHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
@@ -137,7 +137,7 @@ public class JsonRpcService {
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   private final WebSocketConfiguration socketConfiguration;
-  private final Optional<WebSocketRequestHandler> websocketRequestHandler;
+  private final Optional<WebSocketMessageHandler> webSocketMessageHandler;
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
@@ -214,9 +214,9 @@ public class JsonRpcService {
     }
 
     final JsonRpcExecutor jsonRpcExecutor = new JsonRpcExecutor(jsonRpcProcessor, methods);
-    this.websocketRequestHandler =
+    this.webSocketMessageHandler =
           Optional.of(
-              new WebSocketRequestHandler(
+              new WebSocketMessageHandler(
                   vertx, jsonRpcExecutor, scheduler, this.socketConfiguration.getTimeoutSec()));
 
 
@@ -336,6 +336,17 @@ public class JsonRpcService {
         websocket.reject(403);
       }
 
+      if (authenticationService.isPresent()) {
+        authenticationService
+            .get()
+            .authenticate(
+                token,
+                user -> {
+                  if(user.isEmpty()) {
+                    websocket.reject(403);
+                  }
+                });
+      }
       LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
 
       final Handler<Buffer> socketHandler =
@@ -345,16 +356,8 @@ public class JsonRpcService {
                 buffer.toString(),
                 socketAddressAsString(socketAddress));
 
-            if (websocketRequestHandler.isPresent()) {
-              if (authenticationService.isPresent()) {
-                authenticationService
-                    .get()
-                    .authenticate(
-                        token,
-                        user -> websocketRequestHandler.get().handle(websocket, buffer, user));
-              } else {
-                websocketRequestHandler.get().handle(websocket, buffer, Optional.empty());
-              }
+            if (webSocketMessageHandler.isPresent()) {
+                webSocketMessageHandler.get().handle(websocket, buffer, Optional.empty());
             } else {
               LOG.error("No socket request handler configured");
             }

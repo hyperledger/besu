@@ -53,7 +53,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketMessageHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.PrivateWebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
@@ -1134,15 +1134,15 @@ public class RunnerBuilder {
     }
     final JsonRpcExecutor jsonRpcExecutor =
         new JsonRpcExecutor(jsonRpcProcessor, websocketMethodsFactory.methods());
-    final WebSocketRequestHandler websocketRequestHandler =
-        new WebSocketRequestHandler(
+    final WebSocketMessageHandler websocketMessageHandler =
+        new WebSocketMessageHandler(
             vertx,
             jsonRpcExecutor,
             besuController.getProtocolManager().ethContext().getScheduler(),
             webSocketConfiguration.getTimeoutSec());
 
     return new WebSocketService(
-        vertx, configuration, websocketRequestHandler, authenticationService);
+        vertx, configuration, websocketMessageHandler, authenticationService);
   }
 
   private Optional<MetricsService> createMetricsService(
