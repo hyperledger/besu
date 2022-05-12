@@ -95,7 +95,7 @@ public class WebSocketService {
         BesuMetricCategory.RPC,
         "active_ws_connection_count",
         "Total of active rpc ws connections",
-        () -> activeConnectionsCount.intValue());
+        activeConnectionsCount::intValue);
   }
 
   public CompletableFuture<?> start() {

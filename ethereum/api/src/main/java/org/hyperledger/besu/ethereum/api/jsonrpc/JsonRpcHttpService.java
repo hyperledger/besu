@@ -189,7 +189,7 @@ public class JsonRpcHttpService {
         BesuMetricCategory.RPC,
         "active_http_connection_count",
         "Total of active rpc http connections",
-        () -> activeConnectionsCount.intValue());
+        activeConnectionsCount::intValue);
 
     validateConfig(config);
     this.config = config;
