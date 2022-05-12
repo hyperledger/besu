@@ -41,7 +41,7 @@ public class FlatMapProcessorTest {
     when(mapper.apply("A")).thenReturn(Stream.of("a", "b", "c"));
     input.put("A");
 
-    stage.processNextInput(input, output, name);
+    stage.processNextInput(input, output, "name");
 
     assertThat(output.poll()).isEqualTo("a");
     assertThat(output.poll()).isEqualTo("b");
@@ -53,7 +53,7 @@ public class FlatMapProcessorTest {
   @Test
   public void shouldSkipProcessingWhenInputIsClosed() {
     input.close();
-    stage.processNextInput(input, output, name);
+    stage.processNextInput(input, output, "name");
     verifyNoInteractions(mapper);
   }
 }

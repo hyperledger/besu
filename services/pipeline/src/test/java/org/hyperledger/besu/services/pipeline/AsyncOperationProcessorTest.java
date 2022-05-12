@@ -43,7 +43,7 @@ public class AsyncOperationProcessorTest {
     when(writePipe.hasRemainingCapacity()).thenReturn(false);
     when(readPipe.get()).thenReturn(completedFuture("a"));
 
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(writePipe).put("a");
   }
 
@@ -58,23 +58,23 @@ public class AsyncOperationProcessorTest {
     when(readPipe.get()).thenReturn(task1).thenReturn(task2).thenReturn(task3).thenReturn(task4);
 
     // 3 tasks started
-    processor.processNextInput(readPipe, writePipe, name);
-    processor.processNextInput(readPipe, writePipe, name);
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
+    processor.processNextInput(readPipe, writePipe, "name");
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(3)).get();
 
     // Reached limit of concurrent tasks so this round does nothing.
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(3)).get();
 
     task1.complete("a");
 
     // Next round will output the completed task
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(writePipe).put("a");
 
     // And so now we are able to start another one.
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(4)).get();
   }
 
@@ -87,8 +87,8 @@ public class AsyncOperationProcessorTest {
     when(readPipe.get()).thenReturn(task1).thenReturn(task2);
 
     // Start the two tasks
-    processor.processNextInput(readPipe, writePipe, name);
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(2)).get();
     verifyNoInteractions(writePipe);
 
@@ -109,8 +109,8 @@ public class AsyncOperationProcessorTest {
     final CompletableFuture<String> task2 = new CompletableFuture<>();
     when(readPipe.get()).thenReturn(task1).thenReturn(task2);
 
-    processor.processNextInput(readPipe, writePipe, name);
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
+    processor.processNextInput(readPipe, writePipe, "name");
 
     processor.abort();
 
@@ -128,7 +128,7 @@ public class AsyncOperationProcessorTest {
     when(readPipe.get()).thenReturn(task1);
 
     // Start the two tasks
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
 
     task1.complete("a");
 
@@ -146,31 +146,31 @@ public class AsyncOperationProcessorTest {
     when(readPipe.get()).thenReturn(task1).thenReturn(task2).thenReturn(task3).thenReturn(task4);
 
     // 3 tasks started
-    processor.processNextInput(readPipe, writePipe, name);
-    processor.processNextInput(readPipe, writePipe, name);
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
+    processor.processNextInput(readPipe, writePipe, "name");
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(3)).get();
 
     // Reached limit of concurrent tasks so this round does nothing.
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(3)).get();
 
     // Second task completes but shouldn't be output because task1 is not complete yet
     task2.complete("b");
 
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(3)).get();
     verifyNoInteractions(writePipe);
 
     task1.complete("a");
 
     // Next round will output the two completed tasks in order
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(writePipe).put("a");
     verify(writePipe).put("b");
 
     // And so now we are able to start another one.
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
     verify(readPipe, times(4)).get();
 
     // And should finalize in order
@@ -188,12 +188,12 @@ public class AsyncOperationProcessorTest {
     final CompletableFuture<String> task1 = new CompletableFuture<>();
     when(readPipe.get()).thenReturn(task1);
 
-    processor.processNextInput(readPipe, writePipe, name);
+    processor.processNextInput(readPipe, writePipe, "name");
 
     final Exception exception = new IndexOutOfBoundsException("Oh dear");
     task1.completeExceptionally(exception);
 
-    assertThatThrownBy(() -> processor.processNextInput(readPipe, writePipe, name))
+    assertThatThrownBy(() -> processor.processNextInput(readPipe, writePipe, "name"))
         .hasRootCause(exception);
   }
 

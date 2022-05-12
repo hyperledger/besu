@@ -40,7 +40,7 @@ public class MapProcessorTest {
     when(processor.apply("A")).thenReturn("a");
     input.put("A");
 
-    stage.processNextInput(input, output, name);
+    stage.processNextInput(input, output, "name");
 
     assertThat(output.hasMore()).isTrue();
     assertThat(output.get()).isEqualTo("a");
@@ -50,7 +50,7 @@ public class MapProcessorTest {
   @Test
   public void shouldSkipProcessingWhenInputIsClosed() {
     input.close();
-    stage.processNextInput(input, output, name);
+    stage.processNextInput(input, output, "name");
     verifyNoInteractions(processor);
   }
 }

@@ -49,7 +49,7 @@ public class ProcessingStageTest {
               return 1;
             })
         .when(singleStep)
-        .processNextInput(inputPipe, outputPipe, name);
+        .processNextInput(inputPipe, outputPipe, "name");
   }
 
   @Test
@@ -67,7 +67,7 @@ public class ProcessingStageTest {
     assertThat(outputPipe.poll()).isEqualTo("c");
     assertThat(outputPipe.poll()).isNull();
 
-    verify(singleStep, times(3)).processNextInput(inputPipe, outputPipe, name);
+    verify(singleStep, times(3)).processNextInput(inputPipe, outputPipe, "name");
   }
 
   @Test
