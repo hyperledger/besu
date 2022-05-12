@@ -15,6 +15,9 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +46,8 @@ import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.unix.Errors;
+import io.netty.channel.unix.Errors.NativeIoException;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
@@ -196,6 +202,60 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     return completion;
   }
 
+  @Override
+  protected void handleOutgoingPacketError(
+      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+    if (err instanceof NativeIoException) {
+      final var nativeErr = (NativeIoException) err;
+      if (nativeErr.expectedErr() == Errors.ERROR_ENETUNREACH_NEGATIVE) {
+        debugLambda(
+            LOG,
+            "Peer {} is unreachable, native error code {}, packet: {}, stacktrace: {}",
+            peer::toString,
+            nativeErr::expectedErr,
+            () -> wrapBuffer(packet.encode()),
+            err::toString);
+      } else {
+        LOG.warn(
+            "Sending to peer {} failed, native error code {}, packet: {}, stacktrace: {}",
+            peer,
+            nativeErr.expectedErr(),
+            wrapBuffer(packet.encode()),
+            err);
+      }
+    } else if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
+      debugLambda(
+          LOG,
+          "Peer {} is unreachable, packet: {}",
+          peer::toString,
+          () -> wrapBuffer(packet.encode()),
+          err::toString);
+    } else if (err instanceof SocketException
+        && err.getMessage().contentEquals("Operation not permitted")) {
+      LOG.debug(
+          "Operation not permitted sending to peer {}, this might be caused by firewall rules blocking traffic to a specific route.",
+          peer,
+          err);
+    } else if (err instanceof UnsupportedAddressTypeException) {
+      LOG.warn(
+          "Unsupported address type exception when connecting to peer {}, this is likely due to ipv6 not being enabled at runtime. "
+              + "Set logging level to TRACE to see full stacktrace",
+          peer);
+      traceLambda(
+          LOG,
+          "Sending to peer {} failed, packet: {}, stacktrace: {}",
+          peer::toString,
+          () -> wrapBuffer(packet.encode()),
+          err::toString);
+    } else {
+      LOG.warn(
+          "Sending to peer {} failed, packet: {}, stacktrace: {}",
+          peer,
+          wrapBuffer(packet.encode()),
+          err);
+    }
+  }
+
   /**
    * For uncontrolled exceptions occurring in the packet handlers.
    *
@@ -217,7 +277,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   private void handlePacket(final DatagramPacket datagram) {
     final int length = datagram.data().length();
     if (!validatePacketSize(length)) {
-      LOG.debug("Discarding over-sized packet. Actual size (bytes): " + length);
+      LOG.debug("Discarding over-sized packet. Actual size (bytes): {}", length);
       return;
     }
     vertx.<Packet>executeBlocking(

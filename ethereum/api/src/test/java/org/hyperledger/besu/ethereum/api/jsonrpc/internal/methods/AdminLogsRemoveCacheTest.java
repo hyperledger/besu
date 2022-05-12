@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -155,7 +156,7 @@ public class AdminLogsRemoveCacheTest {
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void requestBlockNumberNotFoundTest() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -164,7 +165,8 @@ public class AdminLogsRemoveCacheTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.empty());
 
-    adminLogsRemoveCache.response(request);
+    assertThatThrownBy(() -> adminLogsRemoveCache.response(request))
+        .isInstanceOf(IllegalStateException.class);
   }
 
   @Test

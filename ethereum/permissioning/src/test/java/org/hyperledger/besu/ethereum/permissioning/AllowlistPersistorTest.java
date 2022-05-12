@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.permissioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.verifyConfigFileMatchesState;
 
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 
@@ -108,6 +110,30 @@ public class AllowlistPersistorTest {
 
     assertThat(hasKey(key)).isTrue();
     assertThat(hasKeyAndExactLineContent(key, expectedValue)).isTrue();
+  }
+
+  @Test
+  public void compareContentsWhenEqual_shouldMatch() throws Exception {
+    final ALLOWLIST_TYPE key = ALLOWLIST_TYPE.ACCOUNTS;
+    final List<String> newValue = Lists.newArrayList("account5", "account6", "account4");
+
+    allowlistPersistor.updateConfig(key, newValue);
+
+    assertThat(verifyConfigFileMatchesState(key, newValue, tempFile.toPath())).isTrue();
+  }
+
+  @Test
+  public void compareContentsWhenDifferent_shouldThrow() throws Exception {
+    final ALLOWLIST_TYPE key = ALLOWLIST_TYPE.ACCOUNTS;
+    final List<String> newValue = Lists.newArrayList("account5", "account6", "account4");
+
+    allowlistPersistor.updateConfig(key, newValue);
+
+    assertThatThrownBy(
+            () ->
+                verifyConfigFileMatchesState(
+                    key, Lists.newArrayList("not-the-same"), tempFile.toPath()))
+        .isInstanceOf(AllowlistFileSyncException.class);
   }
 
   @After

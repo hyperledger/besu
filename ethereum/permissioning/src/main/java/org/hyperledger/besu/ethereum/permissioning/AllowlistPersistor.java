@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,8 +33,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AllowlistPersistor {
+  private static final Logger LOG = LoggerFactory.getLogger(AllowlistPersistor.class);
 
   private final File configurationFile;
 
@@ -70,6 +75,12 @@ public class AllowlistPersistor {
 
     boolean listsMatch = existingValues.containsAll(checkLists);
     if (!listsMatch) {
+      debugLambda(
+          LOG,
+          "\n LISTS DO NOT MATCH configFile::",
+          existingValues::toString,
+          configurationFilePath::toString);
+      debugLambda(LOG, "\nLISTS DO NOT MATCH in-memory ::", checkLists::toString);
       throw new AllowlistFileSyncException();
     }
     return listsMatch;

@@ -485,7 +485,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
             - publishDocker

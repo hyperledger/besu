@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.privacy.contracts;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.privacy.contracts.generated.DefaultFlexiblePrivacyGroupManagementContract;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
@@ -126,15 +127,18 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
     assertThat(firstParticipant.raw()).isEqualTo(participantsAfterRemove.get(0));
   }
 
-  @Test(expected = TransactionException.class)
+  @Test
   public void cannotAddToContractWhenNotLocked() throws Exception {
     defaultPrivacyGroupManagementContract
         .addParticipants(Collections.singletonList(thirdParticipant.raw()))
         .send();
 
-    defaultPrivacyGroupManagementContract
-        .addParticipants(Collections.singletonList(secondParticipant.raw()))
-        .send();
+    assertThatThrownBy(
+            () ->
+                defaultPrivacyGroupManagementContract
+                    .addParticipants(Collections.singletonList(secondParticipant.raw()))
+                    .send())
+        .isInstanceOf(TransactionException.class);
   }
 
   @Test
@@ -179,12 +183,13 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
     assertThat(secondParticipant.raw()).isEqualTo(participants.get(2));
   }
 
-  @Test(expected = TransactionException.class)
+  @Test
   public void cannotLockTwice() throws Exception {
     defaultPrivacyGroupManagementContract
         .addParticipants(Collections.singletonList(thirdParticipant.raw()))
         .send();
     defaultPrivacyGroupManagementContract.lock().send();
-    defaultPrivacyGroupManagementContract.lock().send();
+    assertThatThrownBy(() -> defaultPrivacyGroupManagementContract.lock().send())
+        .isInstanceOf(TransactionException.class);
   }
 }

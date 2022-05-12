@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -88,6 +89,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -247,7 +249,7 @@ public final class EthProtocolManagerTest {
     }
   }
 
-  @Test(expected = ConditionTimeoutException.class)
+  @Test
   public void doNotDisconnectOnValidMessage() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
@@ -260,10 +262,10 @@ public final class EthProtocolManagerTest {
           GetBlockBodiesMessage.create(Collections.singletonList(gen.hash()));
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
-      Awaitility.await()
-          .catchUncaughtExceptions()
-          .atMost(200, TimeUnit.MILLISECONDS)
-          .until(peer::isDisconnected);
+      final ConditionFactory waitDisconnect =
+          Awaitility.await().catchUncaughtExceptions().atMost(200, TimeUnit.MILLISECONDS);
+      assertThatThrownBy(() -> waitDisconnect.until(peer::isDisconnected))
+          .isInstanceOf(ConditionTimeoutException.class);
     }
   }
 
