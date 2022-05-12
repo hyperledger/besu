@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationSe
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -67,24 +69,33 @@ public class WebSocketService {
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler) {
+      final WebSocketRequestHandler websocketRequestHandler,
+      final MetricsSystem metricsSystem) {
     this(
         vertx,
         configuration,
         websocketRequestHandler,
-        DefaultAuthenticationService.create(vertx, configuration));
+        DefaultAuthenticationService.create(vertx, configuration),
+        metricsSystem);
   }
 
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
       final WebSocketRequestHandler websocketRequestHandler,
-      final Optional<AuthenticationService> authenticationService) {
+      final Optional<AuthenticationService> authenticationService,
+      final MetricsSystem metricsSystem) {
     this.vertx = vertx;
     this.configuration = configuration;
     this.websocketRequestHandler = websocketRequestHandler;
     this.authenticationService = authenticationService;
     this.maxActiveConnections = configuration.getMaxActiveConnections();
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.RPC,
+        "active_ws_connection_count",
+        "Total of active rpc ws connections",
+        () -> activeConnectionsCount.intValue());
   }
 
   public CompletableFuture<?> start() {

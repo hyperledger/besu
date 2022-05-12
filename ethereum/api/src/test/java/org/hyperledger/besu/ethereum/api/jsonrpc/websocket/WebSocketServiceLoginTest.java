@@ -201,7 +201,8 @@ public class WebSocketServiceLoginTest {
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(vertx, websocketConfiguration, webSocketRequestHandlerSpy);
+        new WebSocketService(
+            vertx, websocketConfiguration, webSocketRequestHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
     jwtAuth = websocketService.authenticationService.get().getJwtAuthProvider();
 

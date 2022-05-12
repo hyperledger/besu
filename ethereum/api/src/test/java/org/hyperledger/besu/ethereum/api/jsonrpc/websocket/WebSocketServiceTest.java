@@ -88,7 +88,8 @@ public class WebSocketServiceTest {
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(vertx, websocketConfiguration, webSocketRequestHandlerSpy);
+        new WebSocketService(
+            vertx, websocketConfiguration, webSocketRequestHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
 
     websocketConfiguration.setPort(websocketService.socketAddress().getPort());
