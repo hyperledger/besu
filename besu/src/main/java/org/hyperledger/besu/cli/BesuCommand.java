@@ -57,6 +57,7 @@ import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
+import org.hyperledger.besu.cli.options.unstable.CliqueOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
@@ -288,6 +289,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
+  private final CliqueOptions unstableCliqueOptions = CliqueOptions.create();
 
   // stable CLI options
   private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -1378,11 +1380,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       configureLogging(true);
 
-      // Set the goquorum compatibility mode based on the genesis file
       if (genesisFile != null) {
         genesisConfigOptions = readGenesisConfigOptions();
         if (genesisConfigOptions.isQuorum()) {
           enableGoQuorumCompatibilityMode();
+        }
+        if (genesisConfigOptions.isClique()) {
+          if (!unstableCliqueOptions.isCliqueEnabled()) {
+            throw new ParameterException(
+                commandLine,
+                "Clique consensus recommended for dev/test networks only. To force, use --Xclique-enabled");
+          }
         }
       }
 
@@ -1492,6 +1500,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
+            .put("Clique Options", unstableCliqueOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);

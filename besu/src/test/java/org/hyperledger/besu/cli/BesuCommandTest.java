@@ -4943,4 +4943,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(pkiKeyStoreConfig.getTrustStorePassword()).isEqualTo("foo");
     assertThat(pkiKeyStoreConfig.getCrlFilePath()).hasValue(Path.of("/tmp/crl"));
   }
+
+  @Test
+  public void cliqueGenesisWithCliqueEnabledTrue_succeeds() {
+    final String cliqueGenesisFile = this.getClass().getResource("/clique.json").getFile();
+    parseCommand("--Xclique-enabled", "true", "--genesis-file", cliqueGenesisFile);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void cliqueGenesisWithCliqueEnabledExplicitlyFalse_error() {
+    final String cliqueGenesisFile = this.getClass().getResource("/clique.json").getFile();
+    parseCommand("--genesis-file", cliqueGenesisFile, "--Xclique-enabled", "false");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Clique consensus recommended for dev/test networks only. To force, use --Xclique-enabled");
+  }
 }

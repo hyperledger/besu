@@ -208,6 +208,10 @@ public class BesuController implements java.io.Closeable {
         builder = new QbftBesuControllerBuilder();
       } else if (configOptions.isClique()) {
         builder = new CliqueBesuControllerBuilder();
+        LOG.warn(
+            "\n***************"
+                + "\nWe recommend Clique for use in development and test networks (Goerli and Rinkeby) only. For production, please use QBFT."
+                + "\n***************");
       } else {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
