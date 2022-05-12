@@ -364,9 +364,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // Completely disables P2P within Besu.
     @Option(
-            names = {"--p2p-enabled"},
-            description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
-            arity = "1")
+        names = {"--p2p-enabled"},
+        description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
+        arity = "1")
     private final Boolean p2pEnabled = true;
 
     // Boolean option to indicate if peers should NOT be discovered, default to
@@ -383,112 +383,112 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // defaults
     // meaning that it's probably the right way to handle disabling options.
     @Option(
-            names = {"--discovery-enabled"},
-            description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
-            arity = "1")
+        names = {"--discovery-enabled"},
+        description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
+        arity = "1")
     private final Boolean peerDiscoveryEnabled = true;
 
     // A list of bootstrap nodes can be passed
     // and a hardcoded list will be used otherwise by the Runner.
     // NOTE: we have no control over default value here.
     @Option(
-            names = {"--bootnodes"},
-            paramLabel = "<enode://id@host:port>",
-            description =
-                    "Comma separated enode URLs for P2P discovery bootstrap. "
-                            + "Default is a predefined list.",
-            split = ",",
-            arity = "0..*")
+        names = {"--bootnodes"},
+        paramLabel = "<enode://id@host:port>",
+        description =
+            "Comma separated enode URLs for P2P discovery bootstrap. "
+                + "Default is a predefined list.",
+        split = ",",
+        arity = "0..*")
     private final List<String> bootNodes = null;
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @Option(
-            names = {"--p2p-host"},
-            paramLabel = MANDATORY_HOST_FORMAT_HELP,
-            description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
-            arity = "1")
+        names = {"--p2p-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
+        arity = "1")
     private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @Option(
-            names = {"--p2p-interface"},
-            paramLabel = MANDATORY_HOST_FORMAT_HELP,
-            description =
-                    "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
-            arity = "1")
+        names = {"--p2p-interface"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description =
+            "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
+        arity = "1")
     private String p2pInterface = NetworkUtility.INADDR_ANY;
 
     @Option(
-            names = {"--p2p-port"},
-            paramLabel = MANDATORY_PORT_FORMAT_HELP,
-            description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
-            arity = "1")
+        names = {"--p2p-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
+        arity = "1")
     private final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
 
     @Option(
-            names = {"--max-peers"},
-            paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-            description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
+        names = {"--max-peers"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
     private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
     @Option(
-            names = {"--remote-connections-limit-enabled"},
-            description =
-                    "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
+        names = {"--remote-connections-limit-enabled"},
+        description =
+            "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
     private final Boolean isLimitRemoteWireConnectionsEnabled = true;
 
     @Option(
-            names = {"--remote-connections-max-percentage"},
-            paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
-            description =
-                    "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
-            arity = "1",
-            converter = PercentageConverter.class)
+        names = {"--remote-connections-max-percentage"},
+        paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
+        description =
+            "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
+        arity = "1",
+        converter = PercentageConverter.class)
     private final Integer maxRemoteConnectionsPercentage =
-            Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
-                    .toPercentage()
-                    .getValue();
+        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
+            .toPercentage()
+            .getValue();
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @CommandLine.Option(
-            names = {"--discovery-dns-url"},
-            description = "Specifies the URL to use for DNS discovery")
+        names = {"--discovery-dns-url"},
+        description = "Specifies the URL to use for DNS discovery")
     private String discoveryDnsUrl = null;
 
     @Option(
-            names = {"--random-peer-priority-enabled"},
-            description =
-                    "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+        names = {"--random-peer-priority-enabled"},
+        description =
+            "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
     private final Boolean randomPeerPriority = false;
 
     @Option(
-            names = {"--banned-node-ids", "--banned-node-id"},
-            paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
-            description = "A list of node IDs to ban from the P2P network.",
-            split = ",",
-            arity = "1..*")
+        names = {"--banned-node-ids", "--banned-node-id"},
+        paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
+        description = "A list of node IDs to ban from the P2P network.",
+        split = ",",
+        arity = "1..*")
     void setBannedNodeIds(final List<String> values) {
       try {
         bannedNodeIds =
-                values.stream()
-                        .filter(value -> !value.isEmpty())
-                        .map(EnodeURLImpl::parseNodeId)
-                        .collect(Collectors.toList());
+            values.stream()
+                .filter(value -> !value.isEmpty())
+                .map(EnodeURLImpl::parseNodeId)
+                .collect(Collectors.toList());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(
-                new CommandLine(this), "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
+            new CommandLine(this),
+            "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
       }
     }
 
     private Collection<Bytes> bannedNodeIds = new ArrayList<>();
-
 
     // Used to discover the default IP of the client.
     // Loopback IP is used by default as this is how smokeTests require it to be
     // and it's probably a good security behaviour to default only on the localhost.
     private InetAddress autoDiscoverDefaultIP() {
       autoDiscoveredDefaultIP =
-              Optional.ofNullable(autoDiscoveredDefaultIP).orElseGet(InetAddress::getLoopbackAddress);
+          Optional.ofNullable(autoDiscoveredDefaultIP).orElseGet(InetAddress::getLoopbackAddress);
 
       return autoDiscoveredDefaultIP;
     }
@@ -1589,11 +1589,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner buildRunner() {
     return synchronize(
         besuController,
-            p2PDiscoveryOptionGroup.p2pEnabled,
+        p2PDiscoveryOptionGroup.p2pEnabled,
         p2pTLSConfiguration,
-            p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
+        p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
-            p2PDiscoveryOptionGroup.maxPeers,
+        p2PDiscoveryOptionGroup.maxPeers,
         p2PDiscoveryOptionGroup.p2pHost,
         p2PDiscoveryOptionGroup.p2pInterface,
         p2PDiscoveryOptionGroup.p2pPort,
@@ -2813,9 +2813,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
-            .limitRemoteWireConnectionsEnabled(p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
+            .limitRemoteWireConnectionsEnabled(
+                p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
-                Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage).getValue())
+                Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
+                    .getValue())
             .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
@@ -3076,7 +3078,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   private List<Integer> getEffectivePorts() {
     final List<Integer> effectivePorts = new ArrayList<>();
-    addPortIfEnabled(effectivePorts, p2PDiscoveryOptionGroup.p2pPort, p2PDiscoveryOptionGroup.p2pEnabled);
+    addPortIfEnabled(
+        effectivePorts, p2PDiscoveryOptionGroup.p2pPort, p2PDiscoveryOptionGroup.p2pEnabled);
     addPortIfEnabled(
         effectivePorts,
         graphQlOptionGroup.graphQLHttpPort,
