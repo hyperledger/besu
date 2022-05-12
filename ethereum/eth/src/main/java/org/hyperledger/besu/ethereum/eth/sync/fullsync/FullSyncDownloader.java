@@ -23,18 +23,20 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FullSyncDownloader {
+public class FullSyncDownloader implements SyncDownloader {
 
   private static final Logger LOG = LoggerFactory.getLogger(FullSyncDownloader.class);
   private final ChainDownloader chainDownloader;
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolContext protocolContext;
   private final SyncState syncState;
+  private final SyncTerminationCondition terminationCondition;
 
   public FullSyncDownloader(
       final SynchronizerConfiguration syncConfig,
@@ -47,6 +49,7 @@ public class FullSyncDownloader {
     this.syncConfig = syncConfig;
     this.protocolContext = protocolContext;
     this.syncState = syncState;
+    this.terminationCondition = terminationCondition;
 
     this.chainDownloader =
         FullSyncChainDownloader.create(
@@ -59,20 +62,34 @@ public class FullSyncDownloader {
             terminationCondition);
   }
 
+  @Override
   public CompletableFuture<Void> start() {
     LOG.info("Starting full sync.");
-    return chainDownloader.start();
+    if (terminationCondition.shouldContinueDownload()) {
+      syncState.markInitialSyncPhaseAsDone();
+      return chainDownloader
+          .start()
+          .thenRun(
+              () -> {
+                if (terminationCondition.shouldStopDownload()) {
+                  syncState.setReachedTerminalDifficulty(true);
+                }
+              });
+    }
+    return CompletableFuture.completedFuture(null);
   }
 
+  @Override
   public void stop() {
     chainDownloader.cancel();
   }
 
-  public TrailingPeerRequirements calculateTrailingPeerRequirements() {
-    return syncState.isInSync()
-        ? TrailingPeerRequirements.UNRESTRICTED
-        : new TrailingPeerRequirements(
+  @Override
+  public Optional<TrailingPeerRequirements> calculateTrailingPeerRequirements() {
+    if (syncState.isInSync()) return Optional.empty();
+    return Optional.of(
+        new TrailingPeerRequirements(
             protocolContext.getBlockchain().getChainHeadBlockNumber(),
-            syncConfig.getMaxTrailingPeers());
+            syncConfig.getMaxTrailingPeers()));
   }
 }

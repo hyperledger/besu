@@ -267,4 +267,8 @@ public class FastSyncActions {
               return new FastSyncState(blockHeader);
             });
   }
+
+  public void close() {
+    pivotBlockSelector.close();
+  }
 }

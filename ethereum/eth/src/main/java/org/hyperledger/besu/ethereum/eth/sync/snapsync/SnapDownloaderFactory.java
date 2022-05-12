@@ -117,7 +117,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             fastSyncStateStorage,
             snapTaskCollection,
             fastSyncDataDirectory,
-            snapSyncState);
+            snapSyncState,
+            protocolContext);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }

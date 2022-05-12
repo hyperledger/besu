@@ -79,14 +79,17 @@ public class BackwardSyncContext {
 
   public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
     final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (backwardChain.isTrusted(newBlockHash)) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          newBlockHash::toHexString);
-      return future;
+
+    synchronized (backwardChain) {
+      if (backwardChain.isTrusted(newBlockHash)) {
+        debugLambda(
+            LOG,
+            "not fetching or appending hash {} to backwards sync since it is present in successors",
+            newBlockHash::toHexString);
+        return future;
+      }
+      backwardChain.addNewHash(newBlockHash);
     }
-    backwardChain.addNewHash(newBlockHash);
     if (future != null) {
       return future;
     }
@@ -97,14 +100,16 @@ public class BackwardSyncContext {
 
   public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
     final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (backwardChain.isTrusted(newPivot.getHash())) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          () -> newPivot.getHash().toHexString());
-      return future;
+    synchronized (backwardChain) {
+      if (backwardChain.isTrusted(newPivot.getHash())) {
+        debugLambda(
+            LOG,
+            "not fetching or appending hash {} to backwards sync since it is present in successors",
+            () -> newPivot.getHash().toHexString());
+        return future;
+      }
+      backwardChain.appendTrustedBlock(newPivot);
     }
-    backwardChain.appendTrustedBlock(newPivot);
     if (future != null) {
       return future;
     }

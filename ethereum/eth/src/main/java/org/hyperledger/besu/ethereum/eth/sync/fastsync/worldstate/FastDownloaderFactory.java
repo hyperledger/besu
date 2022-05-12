@@ -127,7 +127,8 @@ public class FastDownloaderFactory {
             fastSyncStateStorage,
             taskCollection,
             fastSyncDataDirectory,
-            fastSyncState);
+            fastSyncState,
+            protocolContext);
     syncState.setWorldStateDownloadStatus(worldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }

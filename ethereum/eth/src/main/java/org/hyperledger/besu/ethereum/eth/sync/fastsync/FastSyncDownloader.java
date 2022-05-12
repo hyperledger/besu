@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -39,7 +41,7 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastSyncDownloader<REQUEST> {
+public class FastSyncDownloader<REQUEST> implements SyncDownloader {
 
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
@@ -54,6 +56,7 @@ public class FastSyncDownloader<REQUEST> {
   protected final FastSyncActions fastSyncActions;
   protected final FastSyncStateStorage fastSyncStateStorage;
   protected FastSyncState initialFastSyncState;
+  private final ProtocolContext protocolContext;
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,
@@ -62,7 +65,8 @@ public class FastSyncDownloader<REQUEST> {
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState) {
+      final FastSyncState initialFastSyncState,
+      final ProtocolContext protocolContext) {
     this.fastSyncActions = fastSyncActions;
     this.worldStateStorage = worldStateStorage;
     this.worldStateDownloader = worldStateDownloader;
@@ -70,13 +74,31 @@ public class FastSyncDownloader<REQUEST> {
     this.taskCollection = taskCollection;
     this.fastSyncDataDirectory = fastSyncDataDirectory;
     this.initialFastSyncState = initialFastSyncState;
+    this.protocolContext = protocolContext;
   }
 
-  public CompletableFuture<FastSyncState> start() {
+  @Override
+  public CompletableFuture<Void> start() {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("FastSyncDownloader already running");
     }
-    return start(initialFastSyncState);
+    return start(initialFastSyncState)
+        .thenApply(
+            fastSyncState -> {
+              deleteFastSyncState();
+              fastSyncState
+                  .getPivotBlockHeader()
+                  .ifPresent(
+                      blockHeader ->
+                          protocolContext
+                              .getWorldStateArchive()
+                              .setArchiveStateUnSafe(blockHeader));
+              fastSyncActions.close();
+              LOG.info(
+                  "Fast sync completed successfully with pivot block {}",
+                  fastSyncState.getPivotBlockNumber().getAsLong());
+              return null;
+            });
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
@@ -123,6 +145,7 @@ public class FastSyncDownloader<REQUEST> {
     }
   }
 
+  @Override
   public void stop() {
     synchronized (this) {
       if (running.compareAndSet(true, false)) {
@@ -198,6 +221,7 @@ public class FastSyncDownloader<REQUEST> {
     }
   }
 
+  @Override
   public Optional<TrailingPeerRequirements> calculateTrailingPeerRequirements() {
     return trailingPeerRequirements;
   }

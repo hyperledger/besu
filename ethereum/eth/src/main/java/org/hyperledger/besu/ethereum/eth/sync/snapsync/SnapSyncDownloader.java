@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -40,7 +41,8 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<SnapDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState) {
+      final FastSyncState initialFastSyncState,
+      final ProtocolContext protocolContext) {
     super(
         fastSyncActions,
         worldStateStorage,
@@ -48,7 +50,8 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
         fastSyncStateStorage,
         taskCollection,
         fastSyncDataDirectory,
-        initialFastSyncState);
+        initialFastSyncState,
+        protocolContext);
   }
 
   @Override
