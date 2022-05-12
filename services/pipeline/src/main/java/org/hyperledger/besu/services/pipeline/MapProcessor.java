@@ -25,7 +25,8 @@ class MapProcessor<I, O> implements Processor<I, O> {
   }
 
   @Override
-  public void processNextInput(final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe, final String name) {
+  public void processNextInput(
+      final ReadPipe<I> inputPipe, final WritePipe<O> outputPipe, final String name) {
     final I value = inputPipe.get();
     if (value != null) {
       outputPipe.put(processor.apply(value));
