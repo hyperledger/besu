@@ -32,9 +32,9 @@ import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthGetUncleByBlockNumberAndIndexIntegrationTest {
 
@@ -43,7 +43,7 @@ public class EthGetUncleByBlockNumberAndIndexIntegrationTest {
   private final JsonRpcResponseUtils responseUtils = new JsonRpcResponseUtils();
   private JsonRpcMethod method;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
@@ -53,7 +53,7 @@ public class EthGetUncleByBlockNumberAndIndexIntegrationTest {
             new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = BLOCKCHAIN.methods().get("eth_getUncleByBlockNumberAndIndex");
   }
