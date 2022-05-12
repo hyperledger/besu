@@ -1,5 +1,11 @@
 # Changelog
 
+## 22.7.0
+
+### Upcoming Breaking Changes
+- Version 22.7.0 requires Java 17 to build and run.
+- Clique consensus requires --Xclique-enabled option to be set [#3824](https://github.com/hyperledger/besu/pull/3824)
+
 ## 22.4.1
 
 ### Additions and Improvements
@@ -7,7 +13,7 @@
 - multi-arch docker builds for amd64 and arm64 [#2954](https://github.com/hyperledger/besu/pull/2954)
 - Filter Netty native lib errors likewise the pure Java implementation [#3807](https://github.com/hyperledger/besu/pull/3807)
 - Clique consensus not recommended for production, require --Xclique-enabled option to be set [#3823](https://github.com/hyperledger/besu/pull/3823)
-  - This will be made a breaking change in the future (current default is true)
+  - This will be made a breaking change in the future (current default allows clique)
 
 ### Bug Fixes
 - Stop the BlockPropagationManager when it receives the TTD reached event [#3809](https://github.com/hyperledger/besu/pull/3809)
@@ -2905,7 +2911,7 @@ Public key address export subcommand was missing in 1.0 release.
 
 ## 0.9.1
 
-Built and compatible with with JDK8.
+Built and compatible with JDK8.
 
 ## 0.9
 
