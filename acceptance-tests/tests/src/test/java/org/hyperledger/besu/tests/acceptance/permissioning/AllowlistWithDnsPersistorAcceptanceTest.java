@@ -79,8 +79,21 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
         perm.expectPermissioningAllowlistFileKeyValue(
             ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
 
-    // expect an exception whe adding using hostname, since this node is already added with IP
+    // expect an exception when adding using hostname, since this node is already added with IP
     final Condition condition = perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS);
+    assertThatThrownBy(() -> node.verify(condition)).isInstanceOf(RuntimeException.class);
+  }
+
+  @Test
+  public void addingEnodeWithHostname_andThenAddingSameEnodeWithIp_shouldThrow() {
+
+    node.verify(perm.addNodesToAllowlist(ENODE_LOCALHOST_DNS));
+    node.verify(
+        perm.expectPermissioningAllowlistFileKeyValue(
+            ALLOWLIST_TYPE.NODES, tempFile, ENODE_LOCALHOST_DNS));
+
+    // expect an exception when adding using IP, since this node is already added with hostname
+    final Condition condition = perm.addNodesToAllowlist(ENODE_LOCALHOST_IP);
     assertThatThrownBy(() -> node.verify(condition)).isInstanceOf(RuntimeException.class);
   }
 
