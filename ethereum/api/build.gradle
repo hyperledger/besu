@@ -110,10 +110,13 @@ dependencies {
   integrationTestImplementation project(':services:kvstore')
   integrationTestImplementation project(':testutil')
 
-  integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.testcontainers:testcontainers'
+
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
 
 artifacts {
