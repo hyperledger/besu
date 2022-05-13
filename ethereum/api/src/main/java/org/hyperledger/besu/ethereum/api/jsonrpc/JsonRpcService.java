@@ -154,31 +154,12 @@ public class JsonRpcService {
    * @param metricsSystem The metrics service that activities should be reported to
    * @param natService The NAT environment manager.
    * @param methods The json rpc methods that should be enabled
+   * @param maybeSockets websocket configuration to use
+   * @param scheduler for managing ETH tasks
+   * @param authenticationService used to grant or deny access to methods served
    * @param livenessService A service responsible for reporting whether this node is live
    * @param readinessService A service responsible for reporting whether this node has fully started
    */
-  public JsonRpcService(
-      final Vertx vertx,
-      final Path dataDir,
-      final JsonRpcConfiguration config,
-      final MetricsSystem metricsSystem,
-      final NatService natService,
-      final Map<String, JsonRpcMethod> methods,
-      final HealthService livenessService,
-      final HealthService readinessService) {
-    this(
-        vertx,
-        dataDir,
-        config,
-        metricsSystem,
-        natService,
-        methods,
-        Optional.empty(),
-        null,
-        DefaultAuthenticationService.create(vertx, config),
-        livenessService,
-        readinessService);
-  }
 
   public JsonRpcService(
       final Vertx vertx,
@@ -227,15 +208,6 @@ public class JsonRpcService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.maxActiveConnections = config.getMaxActiveConnections();
-  }
-
-  private void validateConfig(final JsonRpcConfiguration config) {
-    checkArgument(
-        config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
-        "Invalid port configuration.");
-    checkArgument(config.getHost() != null, "Required host is not configured.");
-    checkArgument(
-        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   public CompletableFuture<?> start() {
@@ -288,6 +260,24 @@ public class JsonRpcService {
                   ExceptionUtils.rootCause(listenException).getMessage())));
     }
 
+    return resultFuture;
+  }
+
+  public CompletableFuture<?> stop() {
+    if (httpServer == null) {
+      return CompletableFuture.completedFuture(null);
+    }
+
+    final CompletableFuture<?> resultFuture = new CompletableFuture<>();
+    httpServer.close(
+        res -> {
+          if (res.failed()) {
+            resultFuture.completeExceptionally(res.cause());
+          } else {
+            httpServer = null;
+            resultFuture.complete(null);
+          }
+        });
     return resultFuture;
   }
 
@@ -380,6 +370,14 @@ public class JsonRpcService {
             websocket.close();
           });
     };
+  }
+  private void validateConfig(final JsonRpcConfiguration config) {
+    checkArgument(
+        config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
+        "Invalid port configuration.");
+    checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   private Router buildRouter() {
@@ -612,23 +610,7 @@ public class JsonRpcService {
     }
   }
 
-  public CompletableFuture<?> stop() {
-    if (httpServer == null) {
-      return CompletableFuture.completedFuture(null);
-    }
 
-    final CompletableFuture<?> resultFuture = new CompletableFuture<>();
-    httpServer.close(
-        res -> {
-          if (res.failed()) {
-            resultFuture.completeExceptionally(res.cause());
-          } else {
-            httpServer = null;
-            resultFuture.complete(null);
-          }
-        });
-    return resultFuture;
-  }
 
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
