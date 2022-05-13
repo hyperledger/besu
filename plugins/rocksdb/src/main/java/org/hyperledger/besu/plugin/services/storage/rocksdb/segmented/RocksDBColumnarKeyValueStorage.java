@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
@@ -92,7 +93,10 @@ public class RocksDBColumnarKeyValueStorage
               .map(
                   segment ->
                       new ColumnFamilyDescriptor(
-                          segment.getId(), new ColumnFamilyOptions().setTtl(0)))
+                          segment.getId(),
+                          new ColumnFamilyOptions()
+                              .setTtl(0)
+                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
@@ -145,7 +149,9 @@ public class RocksDBColumnarKeyValueStorage
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
+    return new BlockBasedTableConfig()
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false));
   }
 
   @Override
