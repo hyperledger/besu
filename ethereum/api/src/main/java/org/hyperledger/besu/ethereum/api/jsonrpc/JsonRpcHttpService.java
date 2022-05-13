@@ -184,6 +184,13 @@ public class JsonRpcHttpService {
             "request_time",
             "Time taken to process a JSON-RPC request",
             "methodName");
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.RPC,
+        "active_http_connection_count",
+        "Total no of active rpc http connections",
+        activeConnectionsCount::intValue);
+
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
