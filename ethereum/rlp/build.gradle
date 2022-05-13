@@ -35,9 +35,8 @@ dependencies {
 
   jmh project(':util')
 
-  testImplementation project(':testutil')
-  testImplementation project(':ethereum:referencetests')
   testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
+  testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
