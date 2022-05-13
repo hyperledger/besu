@@ -160,7 +160,6 @@ public class JsonRpcService {
    * @param livenessService A service responsible for reporting whether this node is live
    * @param readinessService A service responsible for reporting whether this node has fully started
    */
-
   public JsonRpcService(
       final Vertx vertx,
       final Path dataDir,
@@ -371,6 +370,7 @@ public class JsonRpcService {
           });
     };
   }
+
   private void validateConfig(final JsonRpcConfiguration config) {
     checkArgument(
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
@@ -495,43 +495,41 @@ public class JsonRpcService {
   }
 
   private void applyTlsConfig(final HttpServerOptions httpServerOptions) {
-    if (config.getTlsConfiguration().isEmpty()) {
-      return;
-    }
+    if (config.getTlsConfiguration().isPresent()) {
+      final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
+      try {
+        httpServerOptions
+            .setSsl(true)
+            .setPfxKeyCertOptions(
+                new PfxOptions()
+                    .setPath(tlsConfiguration.getKeyStorePath().toString())
+                    .setPassword(tlsConfiguration.getKeyStorePassword()))
+            .setUseAlpn(true);
 
-    final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
-    try {
-      httpServerOptions
-          .setSsl(true)
-          .setPfxKeyCertOptions(
-              new PfxOptions()
-                  .setPath(tlsConfiguration.getKeyStorePath().toString())
-                  .setPassword(tlsConfiguration.getKeyStorePassword()))
-          .setUseAlpn(true);
+        tlsConfiguration
+            .getSecureTransportProtocols()
+            .ifPresent(httpServerOptions::setEnabledSecureTransportProtocols);
 
-      tlsConfiguration
-          .getSecureTransportProtocols()
-          .ifPresent(httpServerOptions::setEnabledSecureTransportProtocols);
+        tlsConfiguration
+            .getCipherSuites()
+            .ifPresent(
+                cipherSuites -> {
+                  for (String cs : cipherSuites) {
+                    httpServerOptions.addEnabledCipherSuite(cs);
+                  }
+                });
 
-      tlsConfiguration
-          .getCipherSuites()
-          .ifPresent(
-              cipherSuites -> {
-                for (String cs : cipherSuites) {
-                  httpServerOptions.addEnabledCipherSuite(cs);
-                }
-              });
-
-      tlsConfiguration
-          .getClientAuthConfiguration()
-          .ifPresent(
-              clientAuthConfiguration ->
-                  applyTlsClientAuth(clientAuthConfiguration, httpServerOptions));
-    } catch (final RuntimeException re) {
-      throw new JsonRpcServiceException(
-          String.format(
-              "TLS options failed to initialize for Ethereum JSON-RPC listener: %s",
-              re.getMessage()));
+        tlsConfiguration
+            .getClientAuthConfiguration()
+            .ifPresent(
+                clientAuthConfiguration ->
+                    applyTlsClientAuth(clientAuthConfiguration, httpServerOptions));
+      } catch (final RuntimeException re) {
+        throw new JsonRpcServiceException(
+            String.format(
+                "TLS options failed to initialize for Ethereum JSON-RPC listener: %s",
+                re.getMessage()));
+      }
     }
   }
 
@@ -609,8 +607,6 @@ public class JsonRpcService {
       return false;
     }
   }
-
-
 
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
