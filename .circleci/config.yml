@@ -429,6 +429,9 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
+      - acceptanceTestsQuorum:
+          requires:
+            - assemble
       - buildDocker:
           requires:
             - assemble
