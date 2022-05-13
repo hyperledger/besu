@@ -664,9 +664,10 @@ public class RunnerBuilder {
                       dataDir))
               : Optional.empty();
 
-      WebSocketConfiguration engineSocketConfig = webSocketConfiguration.isEnabled() ?
-          webSocketConfiguration :
-          WebSocketConfiguration.createEngineDefault();
+      WebSocketConfiguration engineSocketConfig =
+          webSocketConfiguration.isEnabled()
+              ? webSocketConfiguration
+              : WebSocketConfiguration.createEngineDefault();
 
       engineJsonRpcService =
           Optional.of(

@@ -201,9 +201,8 @@ public class JsonRpcService {
             "methodName");
     JsonRpcProcessor jsonRpcProcessor = new BaseJsonRpcProcessor();
 
-    this.socketConfiguration = maybeSockets.isPresent() ?
-        maybeSockets.get() :
-        WebSocketConfiguration.createDefault();
+    this.socketConfiguration =
+        maybeSockets.isPresent() ? maybeSockets.get() : WebSocketConfiguration.createDefault();
 
     if (authenticationService.isPresent()) {
       jsonRpcProcessor =
@@ -215,10 +214,9 @@ public class JsonRpcService {
 
     final JsonRpcExecutor jsonRpcExecutor = new JsonRpcExecutor(jsonRpcProcessor, methods);
     this.webSocketMessageHandler =
-          Optional.of(
-              new WebSocketMessageHandler(
-                  vertx, jsonRpcExecutor, scheduler, this.socketConfiguration.getTimeoutSec()));
-
+        Optional.of(
+            new WebSocketMessageHandler(
+                vertx, jsonRpcExecutor, scheduler, this.socketConfiguration.getTimeoutSec()));
 
     validateConfig(config);
     this.config = config;
@@ -342,7 +340,7 @@ public class JsonRpcService {
             .authenticate(
                 token,
                 user -> {
-                  if(user.isEmpty()) {
+                  if (user.isEmpty()) {
                     websocket.reject(403);
                   }
                 });
@@ -357,7 +355,7 @@ public class JsonRpcService {
                 socketAddressAsString(socketAddress));
 
             if (webSocketMessageHandler.isPresent()) {
-                webSocketMessageHandler.get().handle(websocket, buffer, Optional.empty());
+              webSocketMessageHandler.get().handle(websocket, buffer, Optional.empty());
             } else {
               LOG.error("No socket request handler configured");
             }
@@ -491,9 +489,8 @@ public class JsonRpcService {
             .setHandle100ContinueAutomatically(true)
             .setCompressionSupported(true);
 
-      httpServerOptions.setMaxWebSocketFrameSize(socketConfiguration.getMaxFrameSize());
-      httpServerOptions.setMaxWebSocketMessageSize(socketConfiguration.getMaxFrameSize() * 4);
-
+    httpServerOptions.setMaxWebSocketFrameSize(socketConfiguration.getMaxFrameSize());
+    httpServerOptions.setMaxWebSocketMessageSize(socketConfiguration.getMaxFrameSize() * 4);
 
     applyTlsConfig(httpServerOptions);
     return httpServerOptions;
@@ -604,9 +601,10 @@ public class JsonRpcService {
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {
-    if (config.getHostsAllowlist().contains("*") || config.getHostsAllowlist().stream()
-        .anyMatch(
-            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+    if (config.getHostsAllowlist().contains("*")
+        || config.getHostsAllowlist().stream()
+            .anyMatch(
+                allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
       return true;
     } else {
       LOG.trace("Host not in allowlist: '{}'", hostHeader);
