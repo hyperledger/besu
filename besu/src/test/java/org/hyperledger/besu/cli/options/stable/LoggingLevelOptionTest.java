@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 
 import java.util.Arrays;
@@ -52,9 +53,10 @@ public class LoggingLevelOptionTest {
             });
   }
 
-  @Test(expected = ParameterException.class)
+  @Test
   public void failsOnUnknownLevel() {
     levelOption.spec = Mockito.mock(CommandSpec.class, RETURNS_DEEP_STUBS);
-    levelOption.setLogLevel("unknown");
+    assertThatThrownBy(() -> levelOption.setLogLevel("unknown"))
+        .isInstanceOf(ParameterException.class);
   }
 }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.crypto;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import java.io.File;
@@ -115,19 +116,21 @@ public class SECP256K1Test {
     assertThat(secp256K1.verify(data, signature, keyPair.getPublicKey(), Hash::keccak256)).isTrue();
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void invalidFileThrowsInvalidKeyPairException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), "not valid".getBytes(UTF_8));
-    KeyPairUtil.load(tempFile);
+    assertThatThrownBy(() -> KeyPairUtil.load(tempFile))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void invalidMultiLineFileThrowsInvalidIdException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
     Files.write(tempFile.toPath(), "not\n\nvalid".getBytes(UTF_8));
-    KeyPairUtil.load(tempFile);
+    assertThatThrownBy(() -> KeyPairUtil.load(tempFile))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }

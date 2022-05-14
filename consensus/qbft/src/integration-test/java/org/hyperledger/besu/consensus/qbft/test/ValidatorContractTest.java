@@ -46,8 +46,8 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ValidatorContractTest {
 
@@ -68,7 +68,7 @@ public class ValidatorContractTest {
 
   private final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
 
-  @Before
+  @BeforeEach
   public void setup() {
     clock = new TestClock(Instant.EPOCH.plus(TestContextBuilder.BLOCK_TIMER_SEC, SECONDS));
   }

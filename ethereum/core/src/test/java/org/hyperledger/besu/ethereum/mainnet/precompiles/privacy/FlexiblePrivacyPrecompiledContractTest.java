@@ -257,14 +257,15 @@ public class FlexiblePrivacyPrecompiledContractTest {
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testEnclaveDown() {
     final Enclave enclave = mock(Enclave.class);
     final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
 
     when(enclave.receive(any(String.class))).thenThrow(new RuntimeException());
 
-    contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    assertThatThrownBy(() -> contract.computePrecompile(privateTransactionLookupId, messageFrame))
+        .isInstanceOf(RuntimeException.class);
   }
 
   @Test

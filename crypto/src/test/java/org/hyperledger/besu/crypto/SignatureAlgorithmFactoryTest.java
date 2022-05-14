@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,11 +43,13 @@ public class SignatureAlgorithmFactoryTest {
         .isEqualTo(SECP256K1.class.getSimpleName());
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void shouldThrowExceptionWhenSetMoreThanOnce() {
     SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create("secp256k1"));
     assertThat(SignatureAlgorithmFactory.isInstanceSet()).isTrue();
 
-    SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create("secp256k1"));
+    assertThatThrownBy(
+            () -> SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create("secp256k1")))
+        .isInstanceOf(RuntimeException.class);
   }
 }
