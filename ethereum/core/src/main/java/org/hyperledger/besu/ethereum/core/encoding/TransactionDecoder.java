@@ -50,13 +50,12 @@ public class TransactionDecoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, Decoder>
-      TYPED_TRANSACTION_DECODERS =
-          ImmutableMap.of(
-              TransactionType.ACCESS_LIST,
-              TransactionDecoder::decodeAccessList,
-              TransactionType.EIP1559,
-              TransactionDecoder::decodeEIP1559);
+  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
+      ImmutableMap.of(
+          TransactionType.ACCESS_LIST,
+          TransactionDecoder::decodeAccessList,
+          TransactionType.EIP1559,
+          TransactionDecoder::decodeEIP1559);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);

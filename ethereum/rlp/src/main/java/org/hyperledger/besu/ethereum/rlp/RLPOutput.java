@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.function.BiConsumer;
