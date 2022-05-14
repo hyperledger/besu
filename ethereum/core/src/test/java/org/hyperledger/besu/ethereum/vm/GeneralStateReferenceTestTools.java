@@ -114,6 +114,16 @@ public class GeneralStateReferenceTestTools {
     final WorldState initialWorldState = spec.getInitialWorldState();
     final Transaction transaction = spec.getTransaction();
 
+    // Sometimes the tests ask us assemble an invalid transaction.  If we have
+    // no valid transaction then there is no test.  GeneralBlockChain tests
+    // will handle the case where we receive the TXs in a serilized form.
+    if (transaction == null) {
+      assertThat(spec.getExpectException())
+          .withFailMessage("Transaction was not assembled, but no exception was expected")
+          .isNotNull();
+      return;
+    }
+
     final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
     // Several of the GeneralStateTests check if the transaction could potentially
     // consume more gas than is left for the block it's attempted to be included in.

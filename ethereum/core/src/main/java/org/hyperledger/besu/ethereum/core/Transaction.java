@@ -178,6 +178,15 @@ public class Transaction
           "Must not specify access list for transaction not supporting it");
     }
 
+    if (gasPrice
+            .orElseGet(maxFeePerGas::get)
+            .getAsBigInteger()
+            .multiply(BigInteger.valueOf(gasLimit))
+            .bitLength()
+        > 256) {
+      throw new IllegalArgumentException("Upfront gas cost exceeds UInt256");
+    }
+
     if (Objects.equals(transactionType, TransactionType.ACCESS_LIST)) {
       checkArgument(
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
@@ -639,7 +648,12 @@ public class Transaction
     if (gasPrice == null || gasPrice.isZero()) {
       return Wei.ZERO;
     }
-    return Wei.of(getGasLimit()).multiply(gasPrice);
+    var cost = BigInteger.valueOf(getGasLimit()).multiply(gasPrice.getAsBigInteger());
+    if (cost.bitLength() > 256) {
+      return Wei.MAX_WEI;
+    } else {
+      return Wei.of(cost);
+    }
   }
 
   /**
@@ -652,7 +666,7 @@ public class Transaction
    * @return the up-front gas cost for the transaction
    */
   public Wei getUpfrontCost() {
-    return getUpfrontGasCost().add(getValue());
+    return getUpfrontGasCost().addExact(getValue());
   }
 
   @Override
@@ -761,7 +775,7 @@ public class Transaction
           rlpOutput.startList();
           rlpOutput.writeUnsignedLongScalar(nonce);
           rlpOutput.writeUInt256Scalar(gasPrice);
-          rlpOutput.writeLongScalar(gasLimit);
+          rlpOutput.writeUnsignedLongScalar(gasLimit);
           rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
           rlpOutput.writeUInt256Scalar(value);
           rlpOutput.writeBytes(payload);
@@ -792,7 +806,7 @@ public class Transaction
               rlpOutput.writeUnsignedLongScalar(nonce);
               rlpOutput.writeUInt256Scalar(maxPriorityFeePerGas);
               rlpOutput.writeUInt256Scalar(maxFeePerGas);
-              rlpOutput.writeLongScalar(gasLimit);
+              rlpOutput.writeUnsignedLongScalar(gasLimit);
               rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
               rlpOutput.writeUInt256Scalar(value);
               rlpOutput.writeBytes(payload);
@@ -1068,6 +1082,6 @@ public class Transaction
    * @return the effective gas price.
    */
   public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
-    return getEffectivePriorityFeePerGas(baseFeePerGas).add(baseFeePerGas.orElse(Wei.ZERO));
+    return getEffectivePriorityFeePerGas(baseFeePerGas).addExact(baseFeePerGas.orElse(Wei.ZERO));
   }
 }

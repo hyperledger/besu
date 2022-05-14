@@ -78,7 +78,7 @@ public class TransactionEncoder {
     out.startList();
     out.writeUnsignedLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
+    out.writeUnsignedLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
@@ -118,10 +118,10 @@ public class TransactionEncoder {
       final Bytes payload,
       final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
-    rlpOutput.writeLongScalar(chainId.orElseThrow().longValue());
+    rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
     rlpOutput.writeUnsignedLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
-    rlpOutput.writeLongScalar(gasLimit);
+    rlpOutput.writeUnsignedLongScalar(gasLimit);
     rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
     rlpOutput.writeUInt256Scalar(value);
     rlpOutput.writeBytes(payload);
@@ -146,11 +146,11 @@ public class TransactionEncoder {
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeLongScalar(transaction.getChainId().orElseThrow().longValue());
+    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
     out.writeUnsignedLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
     out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
+    out.writeUnsignedLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());

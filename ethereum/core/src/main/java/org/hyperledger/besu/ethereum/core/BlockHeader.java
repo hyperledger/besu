@@ -216,8 +216,8 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(logsBloom);
     out.writeUInt256Scalar(difficulty);
     out.writeLongScalar(number);
-    out.writeLongScalar(gasLimit);
-    out.writeLongScalar(gasUsed);
+    out.writeUnsignedLongScalar(gasLimit);
+    out.writeUnsignedLongScalar(gasUsed);
     out.writeLongScalar(timestamp);
     out.writeBytes(extraData);
     out.writeBytes(mixHashOrPrevRandao);

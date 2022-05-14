@@ -186,7 +186,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
       if (blockHash.isPresent()) {
         out.writeBytes(blockHash.get());
       } else {
-        out.writeLongScalar(blockNumber.getAsLong());
+        out.writeUnsignedLongScalar(blockNumber.getAsLong());
       }
       out.writeIntScalar(maxHeaders);
       out.writeIntScalar(skip);

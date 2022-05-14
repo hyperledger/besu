@@ -201,7 +201,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     } else {
       rlpOutput.writeLongScalar(status);
     }
-    rlpOutput.writeLongScalar(cumulativeGasUsed);
+    rlpOutput.writeUnsignedLongScalar(cumulativeGasUsed);
     rlpOutput.writeBytes(bloomFilter);
     rlpOutput.writeList(logs, Log::writeTo);
     if (withRevertReason && revertReason.isPresent()) {

@@ -106,7 +106,7 @@ public class TransactionDecoder {
             .type(TransactionType.FRONTIER)
             .nonce(input.readUnsignedLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
+            .gasLimit(input.readUnsignedLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes());

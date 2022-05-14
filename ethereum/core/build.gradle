@@ -173,19 +173,6 @@ task blockchainReferenceTestsSetup {
     )
 }
 
-task legacyBlockchainReferenceTestsSetup {
-  inputs.files fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests')
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain"
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
-    "LegacyTests",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain",
-    "LegacyBlockchainReferenceTest",
-    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-    )
-}
-
 task generalstateReferenceTestsSetup {
   inputs.files fileTree("../referencetests/src/test/resources/GeneralStateTests")
   outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
@@ -195,18 +182,6 @@ task generalstateReferenceTestsSetup {
     "GeneralStateTests",
     "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
     "GeneralStateReferenceTest"
-    )
-}
-
-task legacyGeneralstateReferenceTestsSetup {
-  inputs.files fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests')
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "LegacyTests",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
-    "LegacyGeneralStateReferenceTest"
     )
 }
 
@@ -241,16 +216,12 @@ clean.dependsOn(cleanupReferenceTests)
 task referenceTests(type: Test, dependsOn: [
   "blockchainReferenceTestsSetup",
   "generalstateReferenceTestsSetup",
-  "legacyBlockchainReferenceTestsSetup",
-  "legacyGeneralstateReferenceTestsSetup",
   "generalstateRegressionReferenceTestsSetup",
   "compileTestJava"
 ]) {
   compileTestJava.mustRunAfter blockchainReferenceTestsSetup
   compileTestJava.mustRunAfter generalstateReferenceTestsSetup
   compileTestJava.mustRunAfter generalstateRegressionReferenceTestsSetup
-  compileTestJava.mustRunAfter legacyBlockchainReferenceTestsSetup
-  compileTestJava.mustRunAfter legacyGeneralstateReferenceTestsSetup
   doFirst {
     if (!file("../referencetests/src/test/resources/README.md").exists()) {
       throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")

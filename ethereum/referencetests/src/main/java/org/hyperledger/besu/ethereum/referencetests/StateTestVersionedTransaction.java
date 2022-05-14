@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * Represents the "transaction" part of the JSON of a general state tests.
@@ -111,7 +112,7 @@ public class StateTestVersionedTransaction {
         signatureAlgorithm.createKeyPair(
             signatureAlgorithm.createPrivateKey(Bytes32.fromHexString(secretKey)));
 
-    this.gasLimits = parseArray(gasLimit, Long::decode);
+    this.gasLimits = parseArray(gasLimit, s -> UInt256.fromHexString(s).toLong());
     this.values = parseArray(value, Wei::fromHexString);
     this.payloads = parseArray(data, Bytes::fromHexString);
     this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
@@ -120,20 +121,32 @@ public class StateTestVersionedTransaction {
   private static <T> List<T> parseArray(final String[] array, final Function<String, T> parseFct) {
     final List<T> res = new ArrayList<>(array.length);
     for (final String str : array) {
-      res.add(parseFct.apply(str));
+      try {
+        res.add(parseFct.apply(str));
+      } catch (RuntimeException re) {
+        // the reference tests may be testing a boundary violation
+        res.add(null);
+      }
     }
     return res;
   }
 
   public Transaction get(final GeneralStateTestCaseSpec.Indexes indexes) {
+    Long gasLimit = gasLimits.get(indexes.gas);
+    Wei value = values.get(indexes.value);
+    Bytes data = payloads.get(indexes.data);
+    if (value == null || gasLimit == null) {
+      // this means one of the params is an out-of-bounds value. Don't generate the transaction.
+      return null;
+    }
 
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .nonce(nonce)
-            .gasLimit(gasLimits.get(indexes.gas))
+            .gasLimit(gasLimit)
             .to(to)
-            .value(values.get(indexes.value))
-            .payload(payloads.get(indexes.data));
+            .value(value)
+            .payload(data);
 
     Optional.ofNullable(gasPrice).ifPresent(transactionBuilder::gasPrice);
     Optional.ofNullable(maxFeePerGas).ifPresent(transactionBuilder::maxFeePerGas);

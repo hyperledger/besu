@@ -462,9 +462,9 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeLongScalar(t.getNonce());
+    out.writeUnsignedLongScalar(t.getNonce());
     out.writeUInt256Scalar((Wei) t.getGasPrice());
-    out.writeLongScalar(t.getGasLimit());
+    out.writeUnsignedLongScalar(t.getGasLimit());
     out.writeBytes(t.getTo().isPresent() ? t.getTo().get() : Bytes.EMPTY);
     out.writeUInt256Scalar((Wei) t.getValue());
     out.writeBytes(t.getPayload());
@@ -567,7 +567,7 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
               out.startList();
               out.writeUnsignedLongScalar(nonce);
               out.writeUInt256Scalar(gasPrice);
-              out.writeLongScalar(gasLimit);
+              out.writeUnsignedLongScalar(gasLimit);
               out.writeBytes(to == null ? Bytes.EMPTY : to);
               out.writeUInt256Scalar(value);
               out.writeBytes(payload);

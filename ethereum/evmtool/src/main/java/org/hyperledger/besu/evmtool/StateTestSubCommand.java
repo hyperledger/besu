@@ -169,73 +169,91 @@ public class StateTestSubCommand implements Runnable {
       final WorldState initialWorldState = spec.getInitialWorldState();
       final Transaction transaction = spec.getTransaction();
 
-      final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
-      // Several of the GeneralStateTests check if the transaction could potentially
-      // consume more gas than is left for the block it's attempted to be included in.
-      // This check is performed within the `BlockImporter` rather than inside the
-      // `TransactionProcessor`, so these tests are skipped.
-      if (transaction.getGasLimit() > blockHeader.getGasLimit() - blockHeader.getGasUsed()) {
-        return;
-      }
-
-      final String forkName = fork == null ? spec.getFork() : fork;
-      final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(forkName);
-      if (protocolSchedule == null) {
-        throw new UnsupportedForkException(forkName);
-      }
-
-      final MainnetTransactionProcessor processor =
-          protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
-      final WorldUpdater worldStateUpdater = worldState.updater();
-      final ReferenceTestBlockchain blockchain =
-          new ReferenceTestBlockchain(blockHeader.getNumber());
-      final Stopwatch timer = Stopwatch.createStarted();
-      final TransactionProcessingResult result =
-          processor.processTransaction(
-              blockchain,
-              worldStateUpdater,
-              blockHeader,
-              transaction,
-              blockHeader.getCoinbase(),
-              new BlockHashLookup(blockHeader, blockchain),
-              false,
-              TransactionValidationParams.processingBlock(),
-              tracer);
-      timer.stop();
-      if (shouldClearEmptyAccounts(spec.getFork())) {
-        final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-        if (coinbase != null && coinbase.isEmpty()) {
-          worldStateUpdater.deleteAccount(coinbase.getAddress());
-        }
-        final Account sender = worldStateUpdater.getAccount(transaction.getSender());
-        if (sender != null && sender.isEmpty()) {
-          worldStateUpdater.deleteAccount(sender.getAddress());
-        }
-      }
-      worldStateUpdater.commit();
-
       final ObjectNode summaryLine = objectMapper.createObjectNode();
-      summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-      UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
-      summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
-      summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
+      if (transaction == null) {
+        // Check the world state root hash.
+        summaryLine.put("test", test);
+        summaryLine.put("fork", spec.getFork());
+        summaryLine.put("d", spec.getDataIndex());
+        summaryLine.put("g", spec.getGasIndex());
+        summaryLine.put("v", spec.getValueIndex());
+        summaryLine.put("pass", spec.getExpectException() != null);
+        summaryLine.put("validationError", "Transaction had out-of-bounds parameters");
+      } else {
+        final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
+        // Several of the GeneralStateTests check if the transaction could potentially
+        // consume more gas than is left for the block it's attempted to be included in.
+        // This check is performed within the `BlockImporter` rather than inside the
+        // `TransactionProcessor`, so these tests are skipped.
+        if (transaction.getGasLimit() > blockHeader.getGasLimit() - blockHeader.getGasUsed()) {
+          return;
+        }
 
-      // Check the world state root hash.
-      summaryLine.put("test", test);
-      summaryLine.put("fork", spec.getFork());
-      summaryLine.put("d", spec.getDataIndex());
-      summaryLine.put("g", spec.getGasIndex());
-      summaryLine.put("v", spec.getValueIndex());
-      summaryLine.put("postHash", worldState.rootHash().toHexString());
-      final List<Log> logs = result.getLogs();
-      final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
-      summaryLine.put("postLogsHash", actualLogsHash.toHexString());
-      summaryLine.put(
-          "pass",
-          worldState.rootHash().equals(spec.getExpectedRootHash())
-              && actualLogsHash.equals(spec.getExpectedLogsHash()));
-      if (result.isInvalid()) {
-        summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
+        final String forkName = fork == null ? spec.getFork() : fork;
+        final ProtocolSchedule protocolSchedule =
+            referenceTestProtocolSchedules.getByName(forkName);
+        if (protocolSchedule == null) {
+          throw new UnsupportedForkException(forkName);
+        }
+
+        final MainnetTransactionProcessor processor =
+            protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+        final WorldUpdater worldStateUpdater = worldState.updater();
+        final ReferenceTestBlockchain blockchain =
+            new ReferenceTestBlockchain(blockHeader.getNumber());
+        final Stopwatch timer = Stopwatch.createStarted();
+        final TransactionProcessingResult result =
+            processor.processTransaction(
+                blockchain,
+                worldStateUpdater,
+                blockHeader,
+                transaction,
+                blockHeader.getCoinbase(),
+                new BlockHashLookup(blockHeader, blockchain),
+                false,
+                TransactionValidationParams.processingBlock(),
+                tracer);
+        timer.stop();
+        if (shouldClearEmptyAccounts(spec.getFork())) {
+          final Account coinbase =
+              worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+          if (coinbase != null && coinbase.isEmpty()) {
+            worldStateUpdater.deleteAccount(coinbase.getAddress());
+          }
+          final Account sender = worldStateUpdater.getAccount(transaction.getSender());
+          if (sender != null && sender.isEmpty()) {
+            worldStateUpdater.deleteAccount(sender.getAddress());
+          }
+        }
+        worldStateUpdater.commit();
+
+        summaryLine.put("output", result.getOutput().toUnprefixedHexString());
+        UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
+        summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
+        summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
+
+        // Check the world state root hash.
+        summaryLine.put("test", test);
+        summaryLine.put("fork", spec.getFork());
+        summaryLine.put("d", spec.getDataIndex());
+        summaryLine.put("g", spec.getGasIndex());
+        summaryLine.put("v", spec.getValueIndex());
+        summaryLine.put("postHash", worldState.rootHash().toHexString());
+        final List<Log> logs = result.getLogs();
+        final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
+        summaryLine.put("postLogsHash", actualLogsHash.toHexString());
+        summaryLine.put(
+            "pass",
+            spec.getExpectException() == null
+                && worldState.rootHash().equals(spec.getExpectedRootHash())
+                && actualLogsHash.equals(spec.getExpectedLogsHash()));
+        if (result.isInvalid()) {
+          summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
+        } else if (spec.getExpectException() != null) {
+          summaryLine.put(
+              "validationError",
+              "Exception '" + spec.getExpectException() + "' was expected but did not occur");
+        }
       }
 
       System.out.println(summaryLine);

@@ -47,5 +47,6 @@ public enum TransactionInvalidReason {
   INTERNAL_ERROR,
   // Quroum Compatibility Invalid Reasons
   GAS_PRICE_MUST_BE_ZERO,
-  ETHER_VALUE_NOT_SUPPORTED
+  ETHER_VALUE_NOT_SUPPORTED,
+  NONCE_TOO_HIGH
 }

@@ -86,8 +86,8 @@ public class CliqueBlockHashing {
     out.writeBytes(header.getLogsBloom());
     out.writeBytes(header.getDifficulty().toMinimalBytes());
     out.writeLongScalar(header.getNumber());
-    out.writeLongScalar(header.getGasLimit());
-    out.writeLongScalar(header.getGasUsed());
+    out.writeUnsignedLongScalar(header.getGasLimit());
+    out.writeUnsignedLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(extraDataSerializer.get());
     out.writeBytes(header.getMixHash());

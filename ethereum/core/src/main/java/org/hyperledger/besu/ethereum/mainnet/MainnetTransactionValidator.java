@@ -150,19 +150,17 @@ public class MainnetTransactionValidator {
       }
     }
 
-    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
-    if (!feeMarket.satisfiesFloorTxCost(transaction)
-        && !transactionValidationParams.isAllowExceedingBalance()) {
+    if (transaction.getNonce() == -1) {
       return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "effective gas price is too low to execute");
+          TransactionInvalidReason.NONCE_TOO_HIGH,
+          String.format("Nonces must be less than 2^64-1"));
     }
 
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
             + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
-    if (intrinsicGasCost > transaction.getGasLimit()) {
+    if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(
