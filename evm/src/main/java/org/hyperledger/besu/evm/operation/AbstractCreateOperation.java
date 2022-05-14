@@ -70,7 +70,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    if (value.compareTo(account.getBalance()) > 0 || frame.getMessageStackDepth() >= 1024 || account.getNonce() == -1) {
+    if (value.compareTo(account.getBalance()) > 0
+        || frame.getMessageStackDepth() >= 1024
+        || account.getNonce() == -1) {
       fail(frame);
     } else {
       spawnChildMessage(frame, evm);

@@ -168,7 +168,10 @@ public class DifficultyCalculatorTests {
               .blockHeaderFunctions(blockHeaderFunctions)
               .timestamp(extractLong(value, "parentTimestamp"))
               .difficulty(Difficulty.fromHexString(value.get("parentDifficulty").asText()))
-              .ommersHash(parentUncles.equals("0x00") ? Hash.EMPTY_LIST_HASH : Hash.fromHexStringLenient(parentUncles))
+              .ommersHash(
+                  parentUncles.equals("0x00")
+                      ? Hash.EMPTY_LIST_HASH
+                      : Hash.fromHexStringLenient(parentUncles))
               .number(currentBlockNumber)
               .buildBlockHeader();
       final long currentTime = extractLong(value, "currentTimestamp");

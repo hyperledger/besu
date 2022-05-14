@@ -141,12 +141,7 @@ public class StateTestVersionedTransaction {
     }
 
     final Transaction.Builder transactionBuilder =
-        Transaction.builder()
-            .nonce(nonce)
-            .gasLimit(gasLimit)
-            .to(to)
-            .value(value)
-            .payload(data);
+        Transaction.builder().nonce(nonce).gasLimit(gasLimit).to(to).value(value).payload(data);
 
     Optional.ofNullable(gasPrice).ifPresent(transactionBuilder::gasPrice);
     Optional.ofNullable(maxFeePerGas).ifPresent(transactionBuilder::maxFeePerGas);
