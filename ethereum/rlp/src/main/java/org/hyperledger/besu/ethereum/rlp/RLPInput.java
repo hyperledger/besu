@@ -136,16 +136,6 @@ public interface RLPInput {
   void leaveListLenient();
 
   /**
-   * Reads a non-negative scalar from the input and return is as a long value.
-   *
-   * @return The next scalar item of this input as a long value.
-   * @throws RLPException if the next item to read is a list, the input is at the end of its current
-   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
-   *     fit a long or has leading zeros.
-   */
-  long readLongScalar();
-
-  /**
    * Reads a non-negative scalar from the input and return it as a long value which is interpreted
    * as an unsigned long.
    *
@@ -154,7 +144,7 @@ public interface RLPInput {
    *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
    *     fit a long or has leading zeros.
    */
-  long readUnsignedLongScalar();
+  long readLongScalar();
 
   /**
    * Reads a scalar from the input and return is as an int value.

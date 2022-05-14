@@ -179,7 +179,8 @@ public class Transaction
     }
 
     if (gasPrice
-            .orElseGet(maxFeePerGas::get)
+            .or(() -> maxFeePerGas)
+            .orElse(Wei.ZERO)
             .getAsBigInteger()
             .multiply(BigInteger.valueOf(gasLimit))
             .bitLength()
@@ -773,9 +774,9 @@ public class Transaction
     return RLP.encode(
         rlpOutput -> {
           rlpOutput.startList();
-          rlpOutput.writeUnsignedLongScalar(nonce);
+          rlpOutput.writeLongScalar(nonce);
           rlpOutput.writeUInt256Scalar(gasPrice);
-          rlpOutput.writeUnsignedLongScalar(gasLimit);
+          rlpOutput.writeLongScalar(gasLimit);
           rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
           rlpOutput.writeUInt256Scalar(value);
           rlpOutput.writeBytes(payload);
@@ -803,10 +804,10 @@ public class Transaction
             rlpOutput -> {
               rlpOutput.startList();
               rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
-              rlpOutput.writeUnsignedLongScalar(nonce);
+              rlpOutput.writeLongScalar(nonce);
               rlpOutput.writeUInt256Scalar(maxPriorityFeePerGas);
               rlpOutput.writeUInt256Scalar(maxFeePerGas);
-              rlpOutput.writeUnsignedLongScalar(gasLimit);
+              rlpOutput.writeLongScalar(gasLimit);
               rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
               rlpOutput.writeUInt256Scalar(value);
               rlpOutput.writeBytes(payload);

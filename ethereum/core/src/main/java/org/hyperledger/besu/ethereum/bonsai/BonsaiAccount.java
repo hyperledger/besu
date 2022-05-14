@@ -130,7 +130,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
 
-    final long nonce = in.readUnsignedLongScalar();
+    final long nonce = in.readLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
     final Hash storageRoot = Hash.wrap(in.readBytes32());
     final Hash codeHash = Hash.wrap(in.readBytes32());
@@ -223,7 +223,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
 
-    out.writeUnsignedLongScalar(nonce);
+    out.writeLongScalar(nonce);
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);

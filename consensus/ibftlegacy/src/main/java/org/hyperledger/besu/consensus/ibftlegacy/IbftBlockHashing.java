@@ -151,8 +151,8 @@ public class IbftBlockHashing {
     out.writeBytes(header.getLogsBloom());
     out.writeBytes(header.getDifficulty().toMinimalBytes());
     out.writeLongScalar(header.getNumber());
-    out.writeUnsignedLongScalar(header.getGasLimit());
-    out.writeUnsignedLongScalar(header.getGasUsed());
+    out.writeLongScalar(header.getGasLimit());
+    out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     // Cannot decode an IbftExtraData on block 0 due to missing/illegal signatures
     if (header.getNumber() == 0) {

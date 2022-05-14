@@ -37,8 +37,8 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -50,7 +50,7 @@ public class TransactionDecoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, TransactionDecoder.Decoder>
+  private static final ImmutableMap<TransactionType, Decoder>
       TYPED_TRANSACTION_DECODERS =
           ImmutableMap.of(
               TransactionType.ACCESS_LIST,
@@ -104,9 +104,9 @@ public class TransactionDecoder {
     final Transaction.Builder builder =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
-            .nonce(input.readUnsignedLongScalar())
+            .nonce(input.readLongScalar())
             .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readUnsignedLongScalar())
+            .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes());
@@ -143,9 +143,9 @@ public class TransactionDecoder {
         Transaction.builder()
             .type(TransactionType.ACCESS_LIST)
             .chainId(BigInteger.valueOf(rlpInput.readLongScalar()))
-            .nonce(rlpInput.readUnsignedLongScalar())
+            .nonce(rlpInput.readLongScalar())
             .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
-            .gasLimit(rlpInput.readUnsignedLongScalar())
+            .gasLimit(rlpInput.readLongScalar())
             .to(
                 rlpInput.readBytes(
                     addressBytes -> addressBytes.size() == 0 ? null : Address.wrap(addressBytes)))
@@ -184,10 +184,10 @@ public class TransactionDecoder {
         Transaction.builder()
             .type(TransactionType.EIP1559)
             .chainId(chainId)
-            .nonce(input.readUnsignedLongScalar())
+            .nonce(input.readLongScalar())
             .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
             .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readUnsignedLongScalar())
+            .gasLimit(input.readLongScalar())
             .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
             .value(Wei.of(input.readUInt256Scalar()))
             .payload(input.readBytes())

@@ -183,8 +183,8 @@ public final class EthHash {
     out.writeBytes(header.getLogsBloom());
     out.writeUInt256Scalar(header.getDifficulty());
     out.writeLongScalar(header.getNumber());
-    out.writeUnsignedLongScalar(header.getGasLimit());
-    out.writeUnsignedLongScalar(header.getGasUsed());
+    out.writeLongScalar(header.getGasLimit());
+    out.writeLongScalar(header.getGasUsed());
     out.writeLongScalar(header.getTimestamp());
     out.writeBytes(header.getExtraData());
     if (header.getBaseFee().isPresent()) {

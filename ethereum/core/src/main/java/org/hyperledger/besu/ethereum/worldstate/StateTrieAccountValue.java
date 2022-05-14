@@ -99,7 +99,7 @@ public class StateTrieAccountValue {
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeUnsignedLongScalar(nonce);
+    out.writeLongScalar(nonce);
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
@@ -110,7 +110,7 @@ public class StateTrieAccountValue {
   public static StateTrieAccountValue readFrom(final RLPInput in) {
     in.enterList();
 
-    final long nonce = in.readUnsignedLongScalar();
+    final long nonce = in.readLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
     Bytes32 storageRoot;
     Bytes32 codeHash;

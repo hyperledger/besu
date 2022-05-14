@@ -289,17 +289,6 @@ abstract class AbstractRLPInput implements RLPInput {
   public long readLongScalar() {
     checkScalar("long scalar", 8);
     long res = readGenericLongScalar();
-    if (res < 0) {
-      error("long scalar %s is not non-negative", res);
-    }
-    setTo(nextItem());
-    return res;
-  }
-
-  @Override
-  public long readUnsignedLongScalar() {
-    checkScalar("unsigned long scalar", 8);
-    long res = readGenericLongScalar();
     setTo(nextItem());
     return res;
   }

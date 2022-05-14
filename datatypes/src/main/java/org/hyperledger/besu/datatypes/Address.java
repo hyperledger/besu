@@ -161,7 +161,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
                 out -> {
                   out.startList();
                   out.writeBytes(senderAddress);
-                  out.writeUnsignedLongScalar(nonce);
+                  out.writeLongScalar(nonce);
                   out.endList();
                 })));
   }
@@ -182,7 +182,7 @@ public class Address extends DelegatingBytes implements org.hyperledger.besu.plu
                 out -> {
                   out.startList();
                   out.writeBytes(senderAddress);
-                  out.writeUnsignedLongScalar(nonce);
+                  out.writeLongScalar(nonce);
                   out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
