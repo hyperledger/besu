@@ -152,8 +152,7 @@ public class MainnetTransactionValidator {
 
     if (transaction.getNonce() == -1) {
       return ValidationResult.invalid(
-          TransactionInvalidReason.NONCE_TOO_HIGH,
-          String.format("Nonces must be less than 2^64-1"));
+          TransactionInvalidReason.NONCE_TOO_HIGH, "Nonces must be less than 2^64-1");
     }
 
     final long intrinsicGasCost =
