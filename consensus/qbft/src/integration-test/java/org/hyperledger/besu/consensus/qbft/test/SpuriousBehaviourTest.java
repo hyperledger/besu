@@ -41,8 +41,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SpuriousBehaviourTest {
 
@@ -68,7 +68,7 @@ public class SpuriousBehaviourTest {
   private Prepare expectedPrepare;
   private Commit expectedCommit;
 
-  @Before
+  @BeforeEach
   public void setup() {
 
     expectedPrepare =
