@@ -328,7 +328,12 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createNodeWithNoDiscovery(final String name) throws IOException {
-    return create(new BesuNodeConfigurationBuilder().name(name).discoveryEnabled(false).build());
+    return create(
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .discoveryEnabled(false)
+            .engineRpcEnabled(false)
+            .build());
   }
 
   public BesuNode createCliqueNode(final String name) throws IOException {
@@ -515,7 +520,7 @@ public class BesuNodeFactory {
             .bootnodeEligible(false)
             .miningEnabled()
             .jsonRpcEnabled()
-            .engineRpcEnabled()
+            .engineRpcEnabled(true)
             .build());
   }
 

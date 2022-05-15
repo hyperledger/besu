@@ -570,7 +570,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Option(
         names = {"--engine-rpc-enabled"},
         description = "Set to start the Engine JSON-RPC service (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineRpcEnabled = true;
+    private final Boolean isEngineRpcEnabled = false;
 
     @Option(
         names = {"--engine-rpc-port"},

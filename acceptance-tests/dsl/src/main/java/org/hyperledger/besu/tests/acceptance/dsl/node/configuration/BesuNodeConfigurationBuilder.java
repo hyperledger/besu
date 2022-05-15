@@ -92,7 +92,7 @@ public class BesuNodeConfigurationBuilder {
     // Check connections more frequently during acceptance tests to cut down on
     // intermittent failures due to the fact that we're running over a real network
     networkingConfiguration.setInitiateConnectionsFrequency(5);
-    engineRpcConfiguration.setPort(JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT);
+    engineRpcConfiguration.setPort(0);
     engineWebSocketConfiguration.setPort(WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT);
   }
 
@@ -153,8 +153,8 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder engineRpcEnabled() {
-    this.engineRpcConfiguration.setEnabled(true);
+  public BesuNodeConfigurationBuilder engineRpcEnabled(final boolean enabled) {
+    this.engineRpcConfiguration.setEnabled(enabled);
     this.engineRpcConfiguration.setPort(0);
     this.engineRpcConfiguration.setHostsAllowlist(singletonList("*"));
 
