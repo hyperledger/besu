@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
@@ -60,101 +62,108 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    final Object requestId = requestContext.getRequest().getId();
 
     final EngineForkchoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
     final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
-    Optional<Hash> maybeFinalizedHash =
-        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
-            .filter(finalized -> !Hash.ZERO.equals(finalized));
-
-    mergeContext.fireNewForkchoiceMessageEvent(
-        forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
-
     if (mergeContext.isSyncing()) {
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+      return syncingResponse(requestId);
     }
-
-    LOG.info(
-        "Consensus fork-choice-update: head: {}, finalized: {}",
-        forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash());
 
     Optional<BlockHeader> newHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
-    Optional<BlockHeader> finalizedHead =
-        maybeFinalizedHash.flatMap(protocolContext.getBlockchain()::getBlockHeader);
+    if (newHead.isEmpty()) {
+      Optional.ofNullable(forkChoice.getHeadBlockHash())
+          .filter(hash -> !hash.equals(Hash.ZERO))
+          .ifPresent(mergeCoordinator::getOrSyncHeaderByHash);
 
-    if (newHead.isPresent() && (maybeFinalizedHash.isEmpty() || finalizedHead.isPresent())) {
-
-      // TODO: post-merge cleanup, this should be unnecessary after merge
-      if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(
-                INVALID_TERMINAL_BLOCK,
-                null,
-                null,
-                Optional.of(newHead.get() + " did not descend from terminal block")));
-      }
-
-      // update fork choice
-      ForkchoiceResult result =
-          mergeCoordinator.updateForkChoice(
-              forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
-
-      // only build a block if forkchoice was successful
-      if (result.isSuccessful()) {
-        // begin preparing a block if we have a non-empty payload attributes param
-        Optional<PayloadIdentifier> payloadId =
-            optionalPayloadAttributes.map(
-                payloadAttributes ->
-                    mergeCoordinator.preparePayload(
-                        newHead.get(),
-                        payloadAttributes.getTimestamp(),
-                        payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient()));
-
-        payloadId.ifPresent(
-            pid ->
-                debugLambda(
-                    LOG,
-                    "returning identifier {} for requested payload {}",
-                    pid::toHexString,
-                    () ->
-                        optionalPayloadAttributes.map(
-                            EnginePayloadAttributesParameter::serialize)));
-
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(
-                VALID,
-                result.getNewHead().map(BlockHeader::getHash).orElse(null),
-                payloadId.orElse(null),
-                Optional.empty()));
-      } else if (result.isFailed()) {
-        final Optional<Hash> latestValid = result.getLatestValid();
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(
-                INVALID,
-                latestValid.isPresent() ? latestValid.get() : null,
-                null,
-                result.getErrorMessage()));
-      }
+      return syncingResponse(requestId);
     }
 
-    Optional.ofNullable(forkChoice.getHeadBlockHash())
-        .filter(hash -> !hash.equals(Hash.ZERO))
-        .ifPresent(mergeCoordinator::getOrSyncHeaderByHash);
+    LOG.info(
+        "Consensus fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
+        forkChoice.getHeadBlockHash(),
+        forkChoice.getFinalizedBlockHash(),
+        forkChoice.getSafeBlockHash());
+
+    Optional<Hash> maybeFinalizedHash =
+        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
+            .filter(finalized -> !Hash.ZERO.equals(finalized));
+
+    if (!isPartOfCanonicalChain(forkChoice.getSafeBlockHash())
+        || (maybeFinalizedHash.isPresent() && !isPartOfCanonicalChain(maybeFinalizedHash.get()))) {
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
+    }
+
+    mergeContext.fireNewForkchoiceMessageEvent(
+        forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
+
+    // TODO: post-merge cleanup, this should be unnecessary after merge
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID_TERMINAL_BLOCK,
+              null,
+              null,
+              Optional.of(newHead.get() + " did not descend from terminal block")));
+    }
+
+    ForkchoiceResult result =
+        mergeCoordinator.updateForkChoice(
+            forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
+
+    if (result.isFailed()) {
+      final Optional<Hash> latestValid = result.getLatestValid();
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID,
+              latestValid.isPresent() ? latestValid.get() : null,
+              null,
+              result.getErrorMessage()));
+    }
+
+    // begin preparing a block if we have a non-empty payload attributes param
+    Optional<PayloadIdentifier> payloadId =
+        optionalPayloadAttributes.map(
+            payloadAttributes ->
+                mergeCoordinator.preparePayload(
+                    newHead.get(),
+                    payloadAttributes.getTimestamp(),
+                    payloadAttributes.getPrevRandao(),
+                    payloadAttributes.getSuggestedFeeRecipient()));
+
+    payloadId.ifPresent(
+        pid ->
+            debugLambda(
+                LOG,
+                "returning identifier {} for requested payload {}",
+                pid::toHexString,
+                () -> optionalPayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
 
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+        requestId,
+        new EngineUpdateForkchoiceResult(
+            VALID,
+            result.getNewHead().map(BlockHeader::getHash).orElse(null),
+            payloadId.orElse(null),
+            Optional.empty()));
+  }
+
+  private boolean isPartOfCanonicalChain(final Hash blockHash) {
+    final Optional<BlockHeader> maybeBlockHeader =
+        protocolContext.getBlockchain().getBlockHeader(blockHash);
+
+    return maybeBlockHeader.isPresent();
+  }
+
+  private JsonRpcResponse syncingResponse(final Object requestId) {
+    return new JsonRpcSuccessResponse(
+        requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
   }
 }
