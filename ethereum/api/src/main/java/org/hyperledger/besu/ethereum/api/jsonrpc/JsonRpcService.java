@@ -495,8 +495,9 @@ public class JsonRpcService {
   }
 
   private void applyTlsConfig(final HttpServerOptions httpServerOptions) {
-    if (config.getTlsConfiguration().isPresent()) {
-      final TlsConfiguration tlsConfiguration = config.getTlsConfiguration().get();
+    final Optional<TlsConfiguration> maybeTlsConfig = config.getTlsConfiguration();
+    if (maybeTlsConfig.isPresent()) {
+      final TlsConfiguration tlsConfiguration = maybeTlsConfig.get();
       try {
         httpServerOptions
             .setSsl(true)

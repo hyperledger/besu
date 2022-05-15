@@ -231,7 +231,6 @@ public class Runner implements AutoCloseable {
         Thread.currentThread().interrupt();
         throw new IllegalStateException("Interrupted while waiting for service to start", e);
       } catch (final ExecutionException e) {
-        LOG.error("Exception starting", e);
         throw new IllegalStateException("Service " + serviceName + " failed to start", e);
       } catch (final TimeoutException e) {
         LOG.warn("Service {} is taking an unusually long time to start", serviceName);
