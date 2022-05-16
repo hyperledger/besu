@@ -33,8 +33,14 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   public EthGetTransactionCount(
       final BlockchainQueries blockchain,
       final AbstractPendingTransactionsSorter pendingTransactions) {
-    super(Suppliers.ofInstance(blockchain));
-    this.pendingTransactions = Suppliers.ofInstance(pendingTransactions);
+    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions));
+  }
+
+  public EthGetTransactionCount(
+      final Supplier<BlockchainQueries> blockchain,
+      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions) {
+    super(blockchain);
+    this.pendingTransactions = pendingTransactions;
   }
 
   @Override
