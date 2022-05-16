@@ -35,7 +35,6 @@ dependencies {
 
   jmh project(':util')
 
-  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -44,21 +43,6 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-}
-
-test {
-  exclude 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
-  exclude 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
-}
-
-task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
-  doFirst {
-    if (!file("../referencetests/src/test/resources/README.md").exists()) {
-      throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
-    }
-  }
-  include 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
-  include 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
 }
 
 artifacts {

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.rlp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
+import org.assertj.core.api.Assertions;
 import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -47,11 +48,11 @@ public class RLPRefTest {
 
   @Test
   public void encode() {
-    assertThat(RLPTestUtil.encode(spec.getIn())).isEqualTo(spec.getOut());
+    Assertions.assertThat(RLPTestUtil.encode(spec.getIn())).isEqualTo(spec.getOut());
   }
 
   @Test
   public void decode() {
-    assertThat(RLPTestUtil.decode(spec.getOut())).isEqualTo(spec.getIn());
+    Assertions.assertThat(RLPTestUtil.decode(spec.getOut())).isEqualTo(spec.getIn());
   }
 }

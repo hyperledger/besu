@@ -13,15 +13,69 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
+  final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "BlockchainTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain",
+    "BlockchainReferenceTest",
+    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
+    )
+}
+
+def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
+  final referenceTestsPath = "src/reference-test/external-resources/GeneralStateTests"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "GeneralStateTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
+    "GeneralStateReferenceTest"
+    )
+}
+
+def generalstateRegressionReferenceTests = tasks.register("generalstateRegressionReferenceTests") {
+  final referenceTestsPath = "src/reference-test/resources/regressions/generalstate"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "regressions",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
+    "GeneralStateRegressionReferenceTest"
+    )
+}
+
 sourceSets {
-  test {
+  referenceTest {
+    java {
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+      srcDirs "src/reference-test/java",
+        blockchainReferenceTests,
+        generalstateReferenceTests,
+        generalstateRegressionReferenceTests
+    }
     resources {
-      include '*Tests/**/*.json'
+      srcDirs 'src/reference-test/resources',
+        'src/reference-test/external-resources',
+        'src/reference-test/templates'
     }
   }
 }
-
-configurations { testOutput }
 
 dependencies {
   implementation project(':config')
@@ -36,7 +90,35 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
 
-  testOutput sourceSets.test.output
+  referenceTestImplementation project(path: ':config')
+  referenceTestImplementation project(path: ':datatypes')
+  referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  referenceTestImplementation project(path: ':ethereum:rlp')
+  referenceTestImplementation project(path: ':ethereum:rlp', configuration: 'testSupportArtifacts')
+  referenceTestImplementation project(path: ':ethereum:trie')
+  referenceTestImplementation project(path: ':evm')
+  referenceTestImplementation project(path: ':testutil')
+  referenceTestImplementation project(path: ':util')
+  referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  referenceTestImplementation 'com.google.guava:guava'
+  referenceTestImplementation 'junit:junit'
+  referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
+  referenceTestImplementation 'org.assertj:assertj-core'
+  referenceTestImplementation 'org.junit.jupiter:junit-jupiter'
+
+  referenceTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+}
+
+task referenceTests(type: Test) {
+  doFirst {
+    if (!file("src/reference-test/external-resources/README.md").exists()) {
+      throw new GradleException("ethereum/referencetest/src/reference-test/external-resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
+    }
+  }
+  description = 'Runs ETH reference tests.'
+  testClassesDirs = sourceSets.referenceTest.output.classesDirs
+  classpath = sourceSets.referenceTest.runtimeClasspath
 }
 
 task ('validateReferenceTestSubmodule') {
@@ -77,3 +159,33 @@ following commands:
   }
 }
 processResources.dependsOn('validateReferenceTestSubmodule')
+
+def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
+  def pep = mkdir(destination)
+  def referenceTestTemplate = templateFile.text
+
+  // This is how many json files to include in each test file
+  def fileSets = jsonPath.getFiles().collate(5)
+
+  fileSets.eachWithIndex { fileSet, idx ->
+    def paths = []
+    fileSet.each { testJsonFile ->
+      def parentFile = testJsonFile.getParentFile()
+      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+        def pathFile = testJsonFile.getPath()
+        paths << pathFile.substring(pathFile.indexOf(pathstrip))
+      }
+    }
+
+    def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
+
+
+    def allPaths = '"' + paths.join('", "') + '"'
+
+    def testFileContents = referenceTestTemplate
+      .replaceAll("%%TESTS_FILE%%", allPaths)
+      .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
+    testFile.newWriter().withWriter { w -> w << testFileContents }
+  }
+}
