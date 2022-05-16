@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 import picocli.CommandLine;
@@ -87,8 +86,7 @@ public class StateTestSubCommandTest {
   @Test
   public void failStreamBadFile() throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    final ByteArrayInputStream bais =
-        new ByteArrayInputStream("./bogus-test.json".getBytes(UTF_8));
+    final ByteArrayInputStream bais = new ByteArrayInputStream("./bogus-test.json".getBytes(UTF_8));
     final StateTestSubCommand stateTestSubCommand =
         new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
     stateTestSubCommand.run();

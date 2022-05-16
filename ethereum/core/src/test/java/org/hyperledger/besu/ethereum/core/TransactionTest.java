@@ -65,11 +65,6 @@ public class TransactionTest {
   @Parameters(name = "Name: {0}")
   public static Collection<Object[]> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
-        // ignore tests that expect transactions with large gasLimits to properly decode
-        //.ignore("TransactionWithGasLimitOverflow(2|63)", "TransactionWithGasLimitxPriceOverflow$")
-        // The test contains a nonce with 256 bits, which is longer than the spec allows,
-        // but incorrectly is specified as a successful test
-//        .ignore("TransactionWithHighNonce256")
         .generator((name, spec, collector) -> collector.add(name, spec, true))
         .generate(TEST_CONFIG_FILE_DIR_PATH);
   }

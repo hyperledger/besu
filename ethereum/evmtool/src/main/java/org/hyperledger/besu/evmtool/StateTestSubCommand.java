@@ -100,7 +100,8 @@ public class StateTestSubCommand implements Runnable {
     this(parentCommand, System.in, System.out);
   }
 
-  StateTestSubCommand(final EvmToolCommand parentCommand, final InputStream input, final PrintStream out) {
+  StateTestSubCommand(
+      final EvmToolCommand parentCommand, final InputStream input, final PrintStream out) {
     this.parentCommand = parentCommand;
     this.input = input;
     this.out = out;
@@ -236,7 +237,8 @@ public class StateTestSubCommand implements Runnable {
         worldStateUpdater.commit();
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        final UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
+        final UInt256 gasUsed =
+            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
         summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
