@@ -4772,6 +4772,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xmerge-support",
         "true",
         "--rpc-http-enabled",
+        "--engine-rpc-enabled",
         "--engine-rpc-port",
         String.valueOf(port),
         "--rpc-ws-enabled");
