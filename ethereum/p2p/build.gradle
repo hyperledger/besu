@@ -37,6 +37,7 @@ dependencies {
   implementation project(':pki')
   implementation project(':metrics:core')
   implementation project(':nat')
+  implementation project(':util')
 
   implementation 'com.google.guava:guava'
   implementation 'dnsjava:dnsjava'

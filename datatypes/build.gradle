@@ -35,9 +35,6 @@ dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
-
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
