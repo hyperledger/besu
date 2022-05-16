@@ -102,15 +102,16 @@ dependencies {
   referenceTestImplementation project(path: ':util')
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
-  referenceTestImplementation 'junit:junit'
   referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
   referenceTestImplementation 'org.assertj:assertj-core'
-  referenceTestImplementation 'org.junit.jupiter:junit-jupiter'
+  referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
 
-  referenceTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
 
 task referenceTests(type: Test) {
+  useJUnitPlatform()
   doFirst {
     if (!file("src/reference-test/external-resources/README.md").exists()) {
       throw new GradleException("ethereum/referencetest/src/reference-test/external-resources/README.md missing: please clone submodules (git submodule update --init --recursive)")

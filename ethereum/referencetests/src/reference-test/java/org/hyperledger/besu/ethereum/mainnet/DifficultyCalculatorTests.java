@@ -31,40 +31,28 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class DifficultyCalculatorTests {
 
-  private final String testFile;
-  private final ProtocolSchedule protocolSchedule;
-
-  public DifficultyCalculatorTests(final String testFile, final ProtocolSchedule protocolSchedule) {
-    this.testFile = testFile;
-    this.protocolSchedule = protocolSchedule;
-  }
-
-  @Parameters(name = "TestFile: {0}")
-  public static Collection<Object[]> getTestParametersForConfig() throws IOException {
-    return List.of(
-        new Object[] {
+  public static Stream<Arguments> getTestParametersForConfig() throws IOException {
+    return Stream.of(
+        Arguments.of(
           "/BasicTests/difficultyMainNetwork.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/BasicTests/difficultyRopsten.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig(
@@ -73,54 +61,55 @@ public class DifficultyCalculatorTests {
                           StandardCharsets.UTF_8))
                   .getConfigOptions(),
               EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff1.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff2.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfByzantium/difficultyByzantium.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().byzantiumBlock(0))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfConstantinople/difficultyConstantinople.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfEIP2384/difficultyEIP2384.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfEIP2384/difficultyEIP2384_random.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfEIP2384/difficultyEIP2384_random_to20M.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfFrontier/difficultyFrontier.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions())
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/DifficultyTests/dfHomestead/difficultyHomestead.json",
           MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().homesteadBlock(0))
-        });
+        ));
   }
 
-  @Test
-  public void testDifficultyCalculation() throws IOException {
+  @ParameterizedTest(name = "TestFile: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void testDifficultyCalculation(final String testFile, final ProtocolSchedule protocolSchedule) throws IOException {
     final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     final ObjectNode testObject =
         JsonUtil.objectNodeFromString(
@@ -135,17 +124,17 @@ public class DifficultyCalculatorTests {
         while (testHolderIter.hasNext()) {
           final var testList = testHolderIter.next();
           if (!testList.getKey().equals("_info")) {
-            testDifficulty(blockHeaderFunctions, (ObjectNode) testList.getValue());
+            testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, (ObjectNode) testList.getValue());
           }
         }
       }
     } else {
-      testDifficulty(blockHeaderFunctions, testObject);
+      testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, testObject);
     }
   }
 
   private void testDifficulty(
-      final MainnetBlockHeaderFunctions blockHeaderFunctions, final ObjectNode testObject) {
+      final String testFile, final ProtocolSchedule protocolSchedule, final MainnetBlockHeaderFunctions blockHeaderFunctions, final ObjectNode testObject) {
     final var fields = testObject.fields();
     while (fields.hasNext()) {
       final var entry = fields.next();
