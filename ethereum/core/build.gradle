@@ -199,22 +199,6 @@ task generalstateRegressionReferenceTestsSetup {
     )
 }
 
-//TODO delete in Jan 2022.  This is left as a migration aid for reference tests moving to the build directory
-task cleanupReferenceTests(type: Delete) {
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate/") {
-    include("**/GeneralStateReferenceTest*.java")
-    include("**/GeneralStateRegressionReferenceTest*.java")
-    include("**/LegacyGeneralStateReferenceTest*.java")
-    include("**/LegacyGeneralStateRegressionReferenceTest*.java")
-  }
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain/") {
-    include("**/BlockchainReferenceTest*.java")
-    include("**/LegacyBlockchainReferenceTest*.java")
-  }
-}
-
-clean.dependsOn(cleanupReferenceTests)
-
 task referenceTests(type: Test, dependsOn: [
   "blockchainReferenceTestsSetup",
   "generalstateReferenceTestsSetup",
