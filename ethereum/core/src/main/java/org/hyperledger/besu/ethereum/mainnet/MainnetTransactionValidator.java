@@ -30,6 +30,8 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.primitives.Longs;
+
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
  *
@@ -153,6 +155,19 @@ public class MainnetTransactionValidator {
     if (transaction.getNonce() == -1) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_HIGH, "Nonces must be less than 2^64-1");
+    }
+
+    if (transaction
+            .getGasPrice()
+            .or(transaction::getMaxFeePerGas)
+            .orElse(Wei.ZERO)
+            .getAsBigInteger()
+            .multiply(new BigInteger(1, Longs.toByteArray(transaction.getGasLimit())))
+            .bitLength()
+        > 256) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.UPFRONT_FEE_TOO_HIGH,
+          "gasLimit x price must be less than 2^256");
     }
 
     final long intrinsicGasCost =

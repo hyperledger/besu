@@ -29,21 +29,12 @@ import com.google.common.base.Suppliers;
 
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<AbstractPendingTransactionsSorter> pendingTransactions;
-  private final boolean resultAsDecimal;
 
   public EthGetTransactionCount(
       final BlockchainQueries blockchain,
       final AbstractPendingTransactionsSorter pendingTransactions) {
-    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions), false);
-  }
-
-  public EthGetTransactionCount(
-      final Supplier<BlockchainQueries> blockchain,
-      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions,
-      final boolean resultAsDecimal) {
-    super(blockchain);
-    this.pendingTransactions = pendingTransactions;
-    this.resultAsDecimal = resultAsDecimal;
+    super(Suppliers.ofInstance(blockchain));
+    this.pendingTransactions = Suppliers.ofInstance(pendingTransactions);
   }
 
   @Override
@@ -78,8 +69,6 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
     final Address address = request.getRequiredParameter(0, Address.class);
     final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockHash);
 
-    return resultAsDecimal
-        ? Long.toUnsignedString(transactionCount)
-        : Quantity.create(transactionCount);
+    return Quantity.create(transactionCount);
   }
 }

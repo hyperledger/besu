@@ -46,7 +46,9 @@ import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +79,8 @@ public class StateTestSubCommand implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(StateTestSubCommand.class);
 
   public static final String COMMAND_NAME = "state-test";
+  private final InputStream input;
+  private final PrintStream out;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -84,7 +88,7 @@ public class StateTestSubCommand implements Runnable {
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
 
-  @ParentCommand private EvmToolCommand parentCommand;
+  @ParentCommand private final EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
   @Parameters
@@ -92,10 +96,14 @@ public class StateTestSubCommand implements Runnable {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  public StateTestSubCommand() {}
-
   public StateTestSubCommand(final EvmToolCommand parentCommand) {
+    this(parentCommand, System.in, System.out);
+  }
+
+  StateTestSubCommand(final EvmToolCommand parentCommand, final InputStream input, final PrintStream out) {
     this.parentCommand = parentCommand;
+    this.input = input;
+    this.out = out;
   }
 
   @Override
@@ -110,7 +118,7 @@ public class StateTestSubCommand implements Runnable {
       if (stateTestFiles.isEmpty()) {
         // if no state tests were specified use standard input to get filenames
         final BufferedReader in =
-            new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+            new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
         while (true) {
           final String fileName = in.readLine();
           if (fileName == null) {
@@ -124,10 +132,10 @@ public class StateTestSubCommand implements Runnable {
                   objectMapper.readValue(file, javaType);
               executeStateTest(generalStateTests);
             } catch (final JsonProcessingException jpe) {
-              System.out.println("File content error :" + jpe);
+              out.println("File content error :" + jpe);
             }
           } else {
-            System.out.println("File not found:" + fileName);
+            out.println("File not found:" + fileName);
           }
         }
       } else {
@@ -160,7 +168,7 @@ public class StateTestSubCommand implements Runnable {
 
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new StandardJsonTracer(System.out, !parentCommand.noMemory)
+            ? new StandardJsonTracer(out, !parentCommand.noMemory)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
@@ -228,7 +236,7 @@ public class StateTestSubCommand implements Runnable {
         worldStateUpdater.commit();
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
+        final UInt256 gasUsed = UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
         summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
 
@@ -256,7 +264,7 @@ public class StateTestSubCommand implements Runnable {
         }
       }
 
-      System.out.println(summaryLine);
+      out.println(summaryLine);
     }
   }
 }
