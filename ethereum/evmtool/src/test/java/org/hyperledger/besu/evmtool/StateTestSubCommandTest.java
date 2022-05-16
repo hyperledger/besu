@@ -80,16 +80,18 @@ public class StateTestSubCommandTest {
     final StateTestSubCommand stateTestSubCommand =
         new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
     stateTestSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("File not found:./bogus-test.json");
+    assertThat(baos.toString(UTF_8)).contains("File not found: ./file-dose-not-exist.json");
   }
 
   @Test
   public void failStreamBadFile() throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    final ByteArrayInputStream bais = new ByteArrayInputStream("./bogus-test.json".getBytes(UTF_8));
+    final ByteArrayInputStream bais =
+        new ByteArrayInputStream(
+            StateTestSubCommandTest.class.getResource("bogus-test.json").getPath().getBytes(UTF_8));
     final StateTestSubCommand stateTestSubCommand =
         new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
     stateTestSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("File not found:./file-dose-not-exist.json");
+    assertThat(baos.toString(UTF_8)).contains("File content error: ");
   }
 }

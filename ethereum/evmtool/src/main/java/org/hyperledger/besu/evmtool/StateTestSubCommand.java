@@ -133,10 +133,10 @@ public class StateTestSubCommand implements Runnable {
                   objectMapper.readValue(file, javaType);
               executeStateTest(generalStateTests);
             } catch (final JsonProcessingException jpe) {
-              out.println("File content error :" + jpe);
+              out.println("File content error: " + jpe);
             }
           } else {
-            out.println("File not found:" + fileName);
+            out.println("File not found: " + fileName);
           }
         }
       } else {
