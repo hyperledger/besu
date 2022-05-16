@@ -80,7 +80,7 @@ public class StateTestSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "state-test";
   private final InputStream input;
-  private final PrintStream out;
+  private final PrintStream output;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -88,7 +88,7 @@ public class StateTestSubCommand implements Runnable {
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
 
-  @ParentCommand private final EvmToolCommand parentCommand;
+  @ParentCommand private EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
   @Parameters
@@ -96,15 +96,20 @@ public class StateTestSubCommand implements Runnable {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  public StateTestSubCommand() {
+    input = System.in;
+    output = System.out;
+  }
+
   public StateTestSubCommand(final EvmToolCommand parentCommand) {
     this(parentCommand, System.in, System.out);
   }
 
   StateTestSubCommand(
-      final EvmToolCommand parentCommand, final InputStream input, final PrintStream out) {
+      final EvmToolCommand parentCommand, final InputStream input, final PrintStream output) {
     this.parentCommand = parentCommand;
     this.input = input;
-    this.out = out;
+    this.output = output;
   }
 
   @Override
@@ -133,10 +138,10 @@ public class StateTestSubCommand implements Runnable {
                   objectMapper.readValue(file, javaType);
               executeStateTest(generalStateTests);
             } catch (final JsonProcessingException jpe) {
-              out.println("File content error: " + jpe);
+              output.println("File content error: " + jpe);
             }
           } else {
-            out.println("File not found: " + fileName);
+            output.println("File not found: " + fileName);
           }
         }
       } else {
@@ -169,7 +174,7 @@ public class StateTestSubCommand implements Runnable {
 
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
-            ? new StandardJsonTracer(out, !parentCommand.noMemory)
+            ? new StandardJsonTracer(output, !parentCommand.noMemory)
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
@@ -266,7 +271,7 @@ public class StateTestSubCommand implements Runnable {
         }
       }
 
-      out.println(summaryLine);
+      output.println(summaryLine);
     }
   }
 }

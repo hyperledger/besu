@@ -58,6 +58,35 @@ public class StateTestSubCommandTest {
   }
 
   @Test
+  public void noJsonTracer() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    var parentCommand = new EvmToolCommand();
+    CommandLine parentCmd = new CommandLine(parentCommand);
+    parentCmd.parseArgs("--json=false");
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(parentCommand, System.in, new PrintStream(baos));
+    final CommandLine cmd = new CommandLine(stateTestSubCommand);
+    cmd.parseArgs(StateTestSubCommandTest.class.getResource("access-list.json").getPath());
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).doesNotContain("\"pc\"");
+  }
+
+  @Test
+  public void testsInvalidTransactions() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final ByteArrayInputStream bais =
+        new ByteArrayInputStream(
+            StateTestSubCommandTest.class
+                .getResource("HighGasPrice.json")
+                .getPath()
+                .getBytes(UTF_8));
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(new EvmToolCommand(), bais, new PrintStream(baos));
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("Transaction had out-of-bounds parameters");
+  }
+
+  @Test
   public void shouldStreamTests() throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
