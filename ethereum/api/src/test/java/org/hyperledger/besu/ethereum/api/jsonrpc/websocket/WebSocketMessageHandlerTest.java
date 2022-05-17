@@ -60,12 +60,12 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 @RunWith(VertxUnitRunner.class)
-public class WebSocketRequestHandlerTest {
+public class WebSocketMessageHandlerTest {
 
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
 
   private Vertx vertx;
-  private WebSocketRequestHandler handler;
+  private WebSocketMessageHandler handler;
   private JsonRpcMethod jsonRpcMethodMock;
   private ServerWebSocket websocketMock;
   private final Map<String, JsonRpcMethod> methods = new HashMap<>();
@@ -81,7 +81,7 @@ public class WebSocketRequestHandlerTest {
 
     methods.put("eth_x", jsonRpcMethodMock);
     handler =
-        new WebSocketRequestHandler(
+        new WebSocketMessageHandler(
             vertx,
             new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
             mock(EthScheduler.class),
@@ -112,7 +112,7 @@ public class WebSocketRequestHandlerTest {
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -140,7 +140,7 @@ public class WebSocketRequestHandlerTest {
 
     handler.handle(websocketMock, arrayJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
@@ -154,8 +154,8 @@ public class WebSocketRequestHandlerTest {
 
     when(websocketMock.textHandlerID()).thenReturn(UUID.randomUUID().toString());
 
-    WebSocketRequestHandler handleBadCalls =
-        new WebSocketRequestHandler(
+    WebSocketMessageHandler handleBadCalls =
+        new WebSocketMessageHandler(
             vertx,
             new JsonRpcExecutor(new BaseJsonRpcProcessor(), methods),
             mock(EthScheduler.class),
@@ -177,7 +177,7 @@ public class WebSocketRequestHandlerTest {
 
     handleBadCalls.handle(websocketMock, arrayJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
@@ -236,7 +236,7 @@ public class WebSocketRequestHandlerTest {
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
@@ -260,7 +260,7 @@ public class WebSocketRequestHandlerTest {
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -282,7 +282,7 @@ public class WebSocketRequestHandlerTest {
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketRequestHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
