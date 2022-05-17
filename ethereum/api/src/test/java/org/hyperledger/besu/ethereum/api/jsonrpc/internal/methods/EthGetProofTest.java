@@ -183,7 +183,7 @@ class EthGetProofTest {
     final Wei balance = Wei.of(1);
     final Hash codeHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    final long nonce = MAX_NONCE;
+    final long nonce = MAX_NONCE - 1;
     final Hash rootHash =
         Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b431");
     final Hash storageRoot =

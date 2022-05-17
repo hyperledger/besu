@@ -172,7 +172,7 @@ class DebugAccountAtTest {
     final String codeString =
         "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
     final Bytes code = Bytes.fromHexString(codeString);
-    final long nonce = MAX_NONCE;
+    final long nonce = MAX_NONCE - 1;
     final String balanceString = "0xffff";
     final Wei balance = Wei.fromHexString(balanceString);
     final Hash codeHash = Hash.hash(code);

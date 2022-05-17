@@ -131,6 +131,6 @@ class PrivGetEeaTransactionCountTest {
   }
 
   private static Stream<Arguments> provideNonces() {
-    return Stream.of(Arguments.of(8, "low nonce"), Arguments.of(MAX_NONCE, "high nonce"));
+    return Stream.of(Arguments.of(8, "low nonce"), Arguments.of(MAX_NONCE - 1, "high nonce"));
   }
 }

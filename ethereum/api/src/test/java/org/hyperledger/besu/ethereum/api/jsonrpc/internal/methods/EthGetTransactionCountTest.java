@@ -114,7 +114,7 @@ class EthGetTransactionCountTest {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE));
+    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE - 1));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -132,8 +132,8 @@ class EthGetTransactionCountTest {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(Long.parseUnsignedLong("18446744073709551613")));
-    mockGetTransactionCount(address, MAX_NONCE);
+        .thenReturn(OptionalLong.of(MAX_NONCE-2));
+    mockGetTransactionCount(address, MAX_NONCE - 1);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));

@@ -91,6 +91,6 @@ class TransactionDecoderTest {
         TransactionDecoder.decodeForWire(
             RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE);
+    assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE - 1);
   }
 }
