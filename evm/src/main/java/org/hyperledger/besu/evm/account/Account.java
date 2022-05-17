@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.Wei;
 public interface Account extends AccountState {
 
   long DEFAULT_NONCE = 0L;
+  long MAX_NONCE = Long.parseUnsignedLong("18446744073709551614");
   Wei DEFAULT_BALANCE = Wei.ZERO;
 
   /**

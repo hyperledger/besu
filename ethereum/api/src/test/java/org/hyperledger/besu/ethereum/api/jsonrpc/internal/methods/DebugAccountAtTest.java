@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.mockito.ArgumentMatchers.any;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -171,7 +172,7 @@ class DebugAccountAtTest {
     final String codeString =
         "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
     final Bytes code = Bytes.fromHexString(codeString);
-    final long nonce = Long.parseUnsignedLong("18446744073709551614");
+    final long nonce = MAX_NONCE;
     final String balanceString = "0xffff";
     final Wei balance = Wei.fromHexString(balanceString);
     final Hash codeHash = Hash.hash(code);

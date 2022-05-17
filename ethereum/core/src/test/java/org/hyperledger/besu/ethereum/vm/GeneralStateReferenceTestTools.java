@@ -116,7 +116,7 @@ public class GeneralStateReferenceTestTools {
 
     // Sometimes the tests ask us assemble an invalid transaction.  If we have
     // no valid transaction then there is no test.  GeneralBlockChain tests
-    // will handle the case where we receive the TXs in a serilized form.
+    // will handle the case where we receive the TXs in a serialized form.
     if (transaction == null) {
       assertThat(spec.getExpectException())
           .withFailMessage("Transaction was not assembled, but no exception was expected")

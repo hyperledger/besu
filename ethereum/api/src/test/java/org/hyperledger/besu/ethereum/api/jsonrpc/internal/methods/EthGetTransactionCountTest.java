@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -113,8 +114,7 @@ class EthGetTransactionCountTest {
     setup(pendingTransactions);
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(Long.parseUnsignedLong("18446744073709551614")));
+    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -133,7 +133,7 @@ class EthGetTransactionCountTest {
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address))
         .thenReturn(OptionalLong.of(Long.parseUnsignedLong("18446744073709551613")));
-    mockGetTransactionCount(address, Long.parseUnsignedLong("18446744073709551614"));
+    mockGetTransactionCount(address, MAX_NONCE);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));

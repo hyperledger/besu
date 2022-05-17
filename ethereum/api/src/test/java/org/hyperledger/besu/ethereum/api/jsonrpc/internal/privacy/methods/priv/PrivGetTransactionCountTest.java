@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -124,8 +125,6 @@ class PrivGetTransactionCountTest {
   }
 
   private static Stream<Arguments> provideNonces() {
-    return Stream.of(
-        Arguments.of(5, "low nonce"),
-        Arguments.of(Long.parseUnsignedLong("18446744073709551614"), "high nonce"));
+    return Stream.of(Arguments.of(5, "low nonce"), Arguments.of(MAX_NONCE, "high nonce"));
   }
 }

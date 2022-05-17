@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -90,6 +91,6 @@ class TransactionDecoderTest {
         TransactionDecoder.decodeForWire(
             RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(Long.toUnsignedString(transaction.getNonce())).isEqualTo("18446744073709551614");
+    assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE);
   }
 }
