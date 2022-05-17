@@ -450,11 +450,12 @@ public class EthPeer implements Comparable<EthPeer> {
    */
   public boolean readyForRequests() {
     LOG.debug(
-        "status has been sent {}, status has been received {} from peer {}, is connected {}",
+        "status has been sent {}, status has been received {} from peer {}, is connected {}, connection {}",
         statusHasBeenSentToPeer.get(),
         statusHasBeenReceivedFromPeer.get(),
         peerId,
-        !this.getConnection().isDisconnected());
+        !this.getConnection().isDisconnected(),
+        System.identityHashCode(this.getConnection()));
     return statusHasBeenSentToPeer.get() && statusHasBeenReceivedFromPeer.get();
   }
 

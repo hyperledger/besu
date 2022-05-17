@@ -324,6 +324,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
+    LOG.debug("Connecting to peer {}, connection {}", connection.getPeer().getId(), System.identityHashCode(connection));
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     if (peer.statusHasBeenSentToPeer()) {
@@ -363,10 +364,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final boolean initiatedByPeer) {
     ethPeers.registerDisconnect(connection);
     LOG.debug(
-        "Disconnect - {} - {} - {} - {} peers left",
+        "Disconnect - {} - {} - {} - {} - {} peers left",
         initiatedByPeer ? "Inbound" : "Outbound",
         reason,
         connection.getPeerInfo(),
+        System.identityHashCode(connection),
         ethPeers.peerCount());
     LOG.trace("{}", ethPeers);
   }

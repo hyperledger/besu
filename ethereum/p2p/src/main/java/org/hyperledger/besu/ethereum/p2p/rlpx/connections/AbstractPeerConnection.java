@@ -70,6 +70,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.connectionId = connectionId;
     this.multiplexer = multiplexer;
 
+    LOG.debug("Creating Connection with peer {}, connection {}", peer.getId(), System.identityHashCode(this));
     this.agreedCapabilities = multiplexer.getAgreedCapabilities();
     for (final Capability cap : agreedCapabilities) {
       protocolToCapability.put(cap.getName(), cap);
@@ -155,6 +156,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void disconnect(final DisconnectReason reason) {
+    LOG.debug("Disconnecting peer {}, connection {}", peer.getId(), System.identityHashCode(this));
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
