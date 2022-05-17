@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
@@ -152,7 +154,7 @@ public class MainnetTransactionValidator {
       }
     }
 
-    if (transaction.getNonce() == -1) {
+    if (transaction.getNonce() == MAX_NONCE) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_HIGH, "Nonces must be less than 2^64-1");
     }
