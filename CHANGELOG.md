@@ -9,6 +9,7 @@
 
 ### Bug Fixes
 - Stop the BlockPropagationManager when it receives the TTD reached event [#3809](https://github.com/hyperledger/besu/pull/3809)
+- Correct getMixHashOrPrevRandao to return the value present in the block header [#3839](https://github.com/hyperledger/besu/pull/3839)
 
 ## 22.4.0
 
