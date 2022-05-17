@@ -209,12 +209,12 @@ public class JsonRpcService {
     this.maxActiveConnections = config.getMaxActiveConnections();
   }
 
-  public CompletableFuture<?> start() {
+  public CompletableFuture<Void> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
     this.tracer = GlobalOpenTelemetry.getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
 
-    final CompletableFuture<?> resultFuture = new CompletableFuture<>();
+    final CompletableFuture<Void> resultFuture = new CompletableFuture<>();
     try {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
@@ -262,12 +262,12 @@ public class JsonRpcService {
     return resultFuture;
   }
 
-  public CompletableFuture<?> stop() {
+  public CompletableFuture<Void> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
     }
 
-    final CompletableFuture<?> resultFuture = new CompletableFuture<>();
+    final CompletableFuture<Void> resultFuture = new CompletableFuture<>();
     httpServer.close(
         res -> {
           if (res.failed()) {
