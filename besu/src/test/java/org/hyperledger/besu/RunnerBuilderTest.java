@@ -268,12 +268,12 @@ public final class RunnerBuilderTest {
   public void whenEngineApiAddedWebSocketReadyOnSamePort() {
     WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
-    WebSocketConfiguration engineWsRpc = WebSocketConfiguration.createEngineDefault();
-    engineWsRpc.setEnabled(true);
     EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
+    engineConf.setEnabled(true);
 
     final Runner runner =
         new RunnerBuilder()
@@ -288,7 +288,7 @@ public final class RunnerBuilderTest {
             .metricsSystem(mock(ObservableMetricsSystem.class))
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(JsonRpcConfiguration.createDefault())
-            .engineJsonRpcConfiguration(JsonRpcConfiguration.createEngineDefault())
+            .engineJsonRpcConfiguration(engineConf)
             .webSocketConfiguration(wsRpc)
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
@@ -301,7 +301,6 @@ public final class RunnerBuilderTest {
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
 
-    assertThat(runner.getWebSocketPort()).isPresent();
     assertThat(runner.getEngineJsonRpcPort()).isPresent();
   }
 
