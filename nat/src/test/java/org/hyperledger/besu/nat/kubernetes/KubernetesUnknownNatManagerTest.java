@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.nat.kubernetes;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.mockito.Mockito.when;
 
@@ -47,8 +48,9 @@ public final class KubernetesUnknownNatManagerTest {
     }
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void assertThatNatExceptionIsThrownWithUnknownServiceType() {
-    natManager.updateUsingBesuService(v1Service);
+    assertThatThrownBy(() -> natManager.updateUsingBesuService(v1Service))
+        .isInstanceOf(RuntimeException.class);
   }
 }

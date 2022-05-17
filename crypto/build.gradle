@@ -29,12 +29,10 @@ jar {
 
 dependencies {
   api project(':plugin-api')
-  api project(':util')
 
   api 'org.bouncycastle:bcprov-jdk15on'
   api 'org.slf4j:slf4j-api'
 
-  implementation 'com.google.guava:guava'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
@@ -44,7 +42,6 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.mockito:mockito-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

@@ -730,12 +730,13 @@ task acceptanceTestsQuorum {
   }
 }
 
+def dockerImage = "hyperledger/besu"
+
 task dockerUpload {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "hyperledger/besu"
-  def azureImageName = "hyperledger.azurecr.io/besu"
-  def image = "${imageName}:${dockerBuildVersion}"
+  def architecture = System.getenv('architecture')
+  def image = "${dockerImage}:${dockerBuildVersion}"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
@@ -751,9 +752,10 @@ task dockerUpload {
     for (def variant in dockerVariants) {
       def variantImage = "${image}-${variant}"
       exec {
-        def cmd = "docker push '${variantImage}'"
+        def archVariantImage = "${variantImage}-${architecture}"
+        def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
         additionalTags.each { tag ->
-          cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}' && docker push '${imageName}:${tag.trim()}-${variant}'"
+          cmd += " && docker tag '${variantImage}' '${dockerImage}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${variant}-${architecture}'"
         }
         executable "sh"
         args "-c", cmd
@@ -761,14 +763,54 @@ task dockerUpload {
     }
 
     exec {
-      def cmd = "docker push '${image}'"
+      def archImage = "${image}-${architecture}"
+      def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
       additionalTags.each { tag ->
-        cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
-        // temporarily commented out because AWS credentials are broken
-        // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
+        cmd += " && docker tag '${image}' '${dockerImage}:${tag.trim()}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${architecture}'"
       }
       executable "sh"
       args "-c", cmd
+    }
+  }
+}
+
+task manifestDocker {
+
+  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+  def image = "${dockerImage}:${dockerBuildVersion}"
+  def archs = ["arm64", "amd64"]
+  def tags = ["${image}"]
+
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
+    tags.add("${dockerImage}:develop")
+  }
+
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+    tags.add('${dockerImage}:latest')
+    tags.add('${dockerImage}:' + dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  doLast {
+    for (baseTag in tags) {
+      for (def variant in dockerVariants) {
+        def variantImage = "${baseTag}-${variant}"
+        def targets = ""
+        archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+        exec {
+          def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+          executable "sh"
+          args "-c", cmd
+        }
+      }
+
+      exec {
+        def targets = ""
+        archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+        def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+        executable "sh"
+        args "-c", cmd
+      }
     }
   }
 }

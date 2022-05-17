@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibftlegacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -98,7 +99,7 @@ public class BftExtraDataCodecTest {
     assertThat(extraData.getValidators()).isEqualTo(validators);
   }
 
-  @Test(expected = RLPException.class)
+  @Test
   public void incorrectlyStructuredRlpThrowsException() {
     final SECPSignature proposerSeal =
         SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
@@ -115,10 +116,11 @@ public class BftExtraDataCodecTest {
 
     final Bytes bufferToInject = Bytes.wrap(Bytes.wrap(new byte[32]), encoder.encoded());
 
-    IbftExtraData.decodeRaw(bufferToInject);
+    assertThatThrownBy(() -> IbftExtraData.decodeRaw(bufferToInject))
+        .isInstanceOf(RLPException.class);
   }
 
-  @Test(expected = RLPException.class)
+  @Test
   public void incorrectlySizedVanityDataThrowsException() {
     final List<Address> validators = Arrays.asList(Address.ECREC, Address.SHA256);
     final SECPSignature proposerSeal =
@@ -137,7 +139,8 @@ public class BftExtraDataCodecTest {
 
     final Bytes bufferToInject = Bytes.wrap(Bytes.wrap(new byte[31]), encoder.encoded());
 
-    IbftExtraData.decodeRaw(bufferToInject);
+    assertThatThrownBy(() -> IbftExtraData.decodeRaw(bufferToInject))
+        .isInstanceOf(RLPException.class);
   }
 
   @Test

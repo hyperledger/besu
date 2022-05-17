@@ -16,6 +16,7 @@ package org.hyperledger.besu.crypto;
 
 import static org.apache.tuweni.bytes.Bytes.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigInteger;
 
@@ -38,19 +39,24 @@ public class SECPPublicKeyTest {
     curve = new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createPublicKey_NullEncoding() {
-    SECPPublicKey.create((Bytes) null, ALGORITHM);
+    assertThatThrownBy(() -> SECPPublicKey.create((Bytes) null, ALGORITHM))
+        .isInstanceOf(NullPointerException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createPublicKey_EncodingTooShort() {
-    SECPPublicKey.create(Bytes.wrap(new byte[63]), ALGORITHM);
+    final Bytes publicKey = Bytes.wrap(new byte[63]);
+    assertThatThrownBy(() -> SECPPublicKey.create(publicKey, ALGORITHM))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createPublicKey_EncodingTooLong() {
-    SECPPublicKey.create(Bytes.wrap(new byte[65]), ALGORITHM);
+    final Bytes publicKey = Bytes.wrap(new byte[65]);
+    assertThatThrownBy(() -> SECPPublicKey.create(publicKey, ALGORITHM))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
