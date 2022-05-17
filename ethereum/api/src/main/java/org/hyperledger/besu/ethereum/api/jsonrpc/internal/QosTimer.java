@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;

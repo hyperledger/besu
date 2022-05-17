@@ -34,7 +34,7 @@ import com.google.common.base.MoreObjects;
 public class JsonRpcConfiguration {
   private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
   public static final int DEFAULT_JSON_RPC_PORT = 8545;
-  public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8550;
+  public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8551;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
@@ -65,8 +65,9 @@ public class JsonRpcConfiguration {
 
   public static JsonRpcConfiguration createEngineDefault() {
     final JsonRpcConfiguration config = createDefault();
+    config.setEnabled(false);
     config.setPort(DEFAULT_ENGINE_JSON_RPC_PORT);
-    List<String> engineMethodGroup = new ArrayList<>();
+    List<String> engineMethodGroup = new ArrayList<>(2);
     engineMethodGroup.add(RpcApis.ENGINE.name());
     engineMethodGroup.add(RpcApis.ETH.name());
     config.setRpcApis(engineMethodGroup);
