@@ -67,3 +67,7 @@ tasks.withType(JavaCompile) {
     'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
   ]
 }
+
+javadoc {
+  enabled = false
+}
