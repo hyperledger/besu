@@ -60,3 +60,7 @@ task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
   include 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
   include 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
 }
+
+artifacts {
+  testSupportArtifacts testSupportJar
+}
