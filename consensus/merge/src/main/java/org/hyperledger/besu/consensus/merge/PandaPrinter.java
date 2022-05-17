@@ -31,6 +31,7 @@ public class PandaPrinter implements TTDReachedListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
   private static final String pandaBanner = PandaPrinter.loadBanner();
+  private boolean beenDisplayed = false;
 
   private static String loadBanner() {
     Class<PandaPrinter> c = PandaPrinter.class;
@@ -50,8 +51,9 @@ public class PandaPrinter implements TTDReachedListener {
 
   @Override
   public void onTTDReached(final boolean reached) {
-    if (reached) {
+    if (reached && !beenDisplayed) {
       LOG.info("\n" + pandaBanner);
+      this.beenDisplayed = true;
     }
   }
 }
