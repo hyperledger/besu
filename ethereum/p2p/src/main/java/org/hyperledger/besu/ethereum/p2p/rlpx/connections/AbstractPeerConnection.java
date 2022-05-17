@@ -70,7 +70,10 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     this.connectionId = connectionId;
     this.multiplexer = multiplexer;
 
-    LOG.debug("Creating Connection with peer {}, connection {}", peer.getId(), System.identityHashCode(this));
+    LOG.debug(
+        "Creating Connection with peer {}, connection {}",
+        peer.getId(),
+        System.identityHashCode(this));
     this.agreedCapabilities = multiplexer.getAgreedCapabilities();
     for (final Capability cap : agreedCapabilities) {
       protocolToCapability.put(cap.getName(), cap);

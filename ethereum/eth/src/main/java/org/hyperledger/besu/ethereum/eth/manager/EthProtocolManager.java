@@ -324,7 +324,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    LOG.debug("Connecting to peer {}, connection {}", connection.getPeer().getId(), System.identityHashCode(connection));
+    LOG.debug(
+        "Connecting to peer {}, connection {}",
+        connection.getPeer().getId(),
+        System.identityHashCode(connection));
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
     if (peer.statusHasBeenSentToPeer()) {
