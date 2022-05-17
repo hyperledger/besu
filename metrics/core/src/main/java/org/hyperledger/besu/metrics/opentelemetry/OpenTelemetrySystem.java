@@ -277,7 +277,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
             resultLongObserver -> {
               for (int i = 0; i < garbageCollectors.size(); i++) {
                 resultLongObserver.observe(
-                    garbageCollectors.get(i).getCollectionTime(), labelSets.get(i));
+                    (double) garbageCollectors.get(i).getCollectionTime(), labelSets.get(i));
               }
             });
     final AttributeKey<String> typeKey = AttributeKey.stringKey(TYPE_LABEL_KEY);

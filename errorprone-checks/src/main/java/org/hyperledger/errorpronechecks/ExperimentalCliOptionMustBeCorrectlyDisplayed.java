@@ -34,7 +34,6 @@ import com.sun.tools.javac.tree.JCTree;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "ExperimentalCliOptionMustBeCorrectlyDisplayed",
     summary = "Experimental options must be hidden and not present in the BesuCommand class.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)
