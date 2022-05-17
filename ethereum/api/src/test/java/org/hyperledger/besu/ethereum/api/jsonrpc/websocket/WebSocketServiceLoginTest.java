@@ -123,7 +123,7 @@ public class WebSocketServiceLoginTest {
   protected static JWTAuth jwtAuth;
   protected static final NatService natService = new NatService(Optional.empty());
   private WebSocketConfiguration websocketConfiguration;
-  private WebSocketRequestHandler webSocketRequestHandlerSpy;
+  private WebSocketMessageHandler webSocketMessageHandlerSpy;
   private WebSocketService websocketService;
   private HttpClient httpClient;
 
@@ -187,9 +187,9 @@ public class WebSocketServiceLoginTest {
                     mock(EthPeers.class)));
 
     websocketMethods.putAll(rpcMethods);
-    webSocketRequestHandlerSpy =
+    webSocketMessageHandlerSpy =
         spy(
-            new WebSocketRequestHandler(
+            new WebSocketMessageHandler(
                 vertx,
                 new JsonRpcExecutor(
                     new AuthenticatedJsonRpcProcessor(
@@ -201,8 +201,7 @@ public class WebSocketServiceLoginTest {
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(
-            vertx, websocketConfiguration, webSocketRequestHandlerSpy, new NoOpMetricsSystem());
+        new WebSocketService(vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
     jwtAuth = websocketService.authenticationService.get().getJwtAuthProvider();
 
@@ -218,7 +217,7 @@ public class WebSocketServiceLoginTest {
 
   @After
   public void after() {
-    reset(webSocketRequestHandlerSpy);
+    reset(webSocketMessageHandlerSpy);
     websocketService.stop();
   }
 

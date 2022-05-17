@@ -17,6 +17,7 @@ package org.hyperledger.besu;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketService;
 import org.hyperledger.besu.ethereum.api.query.cache.AutoTransactionLogBloomCachingService;
@@ -63,12 +64,11 @@ public class Runner implements AutoCloseable {
   private final Optional<EthStatsService> ethStatsService;
   private final Optional<GraphQLHttpService> graphQLHttp;
   private final Optional<JsonRpcHttpService> jsonRpc;
-  private final Optional<JsonRpcHttpService> engineJsonRpc;
+  private final Optional<JsonRpcService> engineJsonRpc;
   private final Optional<MetricsService> metrics;
   private final Optional<JsonRpcIpcService> ipcJsonRpc;
   private final Optional<Path> pidPath;
   private final Optional<WebSocketService> webSocketRpc;
-  private final Optional<WebSocketService> engineWebSocketRpc;
   private final TransactionPoolEvictionService transactionPoolEvictionService;
 
   private final BesuController besuController;
@@ -82,10 +82,9 @@ public class Runner implements AutoCloseable {
       final NetworkRunner networkRunner,
       final NatService natService,
       final Optional<JsonRpcHttpService> jsonRpc,
-      final Optional<JsonRpcHttpService> engineJsonRpc,
+      final Optional<JsonRpcService> engineJsonRpc,
       final Optional<GraphQLHttpService> graphQLHttp,
       final Optional<WebSocketService> webSocketRpc,
-      final Optional<WebSocketService> engineWebSocketRpc,
       final Optional<JsonRpcIpcService> ipcJsonRpc,
       final Optional<StratumServer> stratumServer,
       final Optional<MetricsService> metrics,
@@ -103,7 +102,6 @@ public class Runner implements AutoCloseable {
     this.jsonRpc = jsonRpc;
     this.engineJsonRpc = engineJsonRpc;
     this.webSocketRpc = webSocketRpc;
-    this.engineWebSocketRpc = engineWebSocketRpc;
     this.ipcJsonRpc = ipcJsonRpc;
     this.metrics = metrics;
     this.ethStatsService = ethStatsService;
@@ -125,8 +123,6 @@ public class Runner implements AutoCloseable {
     engineJsonRpc.ifPresent(service -> waitForServiceToStart("engineJsonRpc", service.start()));
     graphQLHttp.ifPresent(service -> waitForServiceToStart("graphQLHttp", service.start()));
     webSocketRpc.ifPresent(service -> waitForServiceToStart("websocketRpc", service.start()));
-    engineWebSocketRpc.ifPresent(
-        service -> waitForServiceToStart("engineWebsocketRpc", service.start()));
     ipcJsonRpc.ifPresent(
         service ->
             waitForServiceToStart(
@@ -164,8 +160,6 @@ public class Runner implements AutoCloseable {
     engineJsonRpc.ifPresent(service -> waitForServiceToStop("engineJsonRpc", service.stop()));
     graphQLHttp.ifPresent(service -> waitForServiceToStop("graphQLHttp", service.stop()));
     webSocketRpc.ifPresent(service -> waitForServiceToStop("websocketRpc", service.stop()));
-    engineWebSocketRpc.ifPresent(
-        service -> waitForServiceToStop("engineWebsocketRpc", service.stop()));
     ipcJsonRpc.ifPresent(
         service ->
             waitForServiceToStop(
@@ -348,10 +342,6 @@ public class Runner implements AutoCloseable {
 
   public Optional<Integer> getWebSocketPort() {
     return webSocketRpc.map(service -> service.socketAddress().getPort());
-  }
-
-  public Optional<Integer> getEngineWebsocketPort() {
-    return engineWebSocketRpc.map(service -> service.socketAddress().getPort());
   }
 
   public Optional<Integer> getMetricsPort() {

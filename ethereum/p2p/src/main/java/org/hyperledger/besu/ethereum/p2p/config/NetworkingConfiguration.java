@@ -28,7 +28,7 @@ public class NetworkingConfiguration {
   private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
   private int checkMaintainedConnectionsFrequencySec =
       DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
-  private String dnsDiscoveryServerOverride = null;
+  private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
 
   public static NetworkingConfiguration create() {
     return new NetworkingConfiguration();
@@ -68,13 +68,13 @@ public class NetworkingConfiguration {
   }
 
   public NetworkingConfiguration setDnsDiscoveryServerOverride(
-      final String dnsDiscoveryServerOverride) {
+      final Optional<String> dnsDiscoveryServerOverride) {
     this.dnsDiscoveryServerOverride = dnsDiscoveryServerOverride;
     return this;
   }
 
   public Optional<String> getDnsDiscoveryServerOverride() {
-    return Optional.ofNullable(dnsDiscoveryServerOverride);
+    return dnsDiscoveryServerOverride;
   }
 
   public NetworkingConfiguration setCheckMaintainedConnectionsFrequency(

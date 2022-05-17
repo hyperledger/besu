@@ -41,7 +41,6 @@ public class BesuNodeConfiguration {
   private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
   private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
-  private final Optional<WebSocketConfiguration> engineWebSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private final Optional<PermissioningConfiguration> permissioningConfiguration;
   private final Optional<String> keyFilePath;
@@ -75,7 +74,6 @@ public class BesuNodeConfiguration {
       final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
-      final Optional<WebSocketConfiguration> engineWebSocketConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyFilePath,
@@ -106,7 +104,6 @@ public class BesuNodeConfiguration {
     this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
-    this.engineWebSocketConfiguration = engineWebSocketConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.keyFilePath = keyFilePath;
@@ -156,10 +153,6 @@ public class BesuNodeConfiguration {
 
   public JsonRpcIpcConfiguration getJsonRpcIpcConfiguration() {
     return jsonRpcIpcConfiguration;
-  }
-
-  public Optional<WebSocketConfiguration> getEngineWebSocketConfiguration() {
-    return engineWebSocketConfiguration;
   }
 
   public MetricsConfiguration getMetricsConfiguration() {

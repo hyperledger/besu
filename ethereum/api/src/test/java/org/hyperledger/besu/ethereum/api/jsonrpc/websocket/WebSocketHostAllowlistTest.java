@@ -61,7 +61,7 @@ public class WebSocketHostAllowlistTest {
 
   private final WebSocketConfiguration webSocketConfiguration =
       WebSocketConfiguration.createDefault();
-  private static WebSocketRequestHandler webSocketRequestHandlerSpy;
+  private static WebSocketMessageHandler webSocketMessageHandlerSpy;
   private WebSocketService websocketService;
   private HttpClient httpClient;
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
@@ -76,17 +76,16 @@ public class WebSocketHostAllowlistTest {
         new WebSocketMethodsFactory(
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
-    webSocketRequestHandlerSpy =
+    webSocketMessageHandlerSpy =
         spy(
-            new WebSocketRequestHandler(
+            new WebSocketMessageHandler(
                 vertx,
                 new JsonRpcExecutor(new BaseJsonRpcProcessor(), websocketMethods),
                 mock(EthScheduler.class),
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(
-            vertx, webSocketConfiguration, webSocketRequestHandlerSpy, new NoOpMetricsSystem());
+        new WebSocketService(vertx, webSocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
     final InetSocketAddress inetSocketAddress = websocketService.socketAddress();
 
@@ -101,7 +100,7 @@ public class WebSocketHostAllowlistTest {
 
   @After
   public void after() {
-    reset(webSocketRequestHandlerSpy);
+    reset(webSocketMessageHandlerSpy);
     websocketService.stop();
   }
 
