@@ -65,9 +65,9 @@ public class JsonRpcConfiguration {
 
   public static JsonRpcConfiguration createEngineDefault() {
     final JsonRpcConfiguration config = createDefault();
-    config.setEnabled(true);
+    config.setEnabled(false);
     config.setPort(DEFAULT_ENGINE_JSON_RPC_PORT);
-    List<String> engineMethodGroup = new ArrayList<>();
+    List<String> engineMethodGroup = new ArrayList<>(2);
     engineMethodGroup.add(RpcApis.ENGINE.name());
     engineMethodGroup.add(RpcApis.ETH.name());
     config.setRpcApis(engineMethodGroup);
