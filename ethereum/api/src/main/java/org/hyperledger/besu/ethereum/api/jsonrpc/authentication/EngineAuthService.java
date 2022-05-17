@@ -155,7 +155,7 @@ public class EngineAuthService implements AuthenticationService {
       final Optional<User> optionalUser,
       final JsonRpcMethod jsonRpcMethod,
       final Collection<String> noAuthMethods) {
-    return true; // no AuthZ for engine APIs
+    return noAuthMethods.contains(jsonRpcMethod.getName()) || optionalUser.isPresent();
   }
 
   private boolean issuedRecently(final long iat) {

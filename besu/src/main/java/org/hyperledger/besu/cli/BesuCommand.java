@@ -29,7 +29,6 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -569,19 +568,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   static class EngineRPCOptionGroup {
     @Option(
-        names = {"--engine-rpc-http-port"},
+        names = {"--engine-rpc-enabled"},
+        description = "Set to start the Engine JSON-RPC service (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineRpcEnabled = false;
+
+    @Option(
+        names = {"--engine-rpc-port"},
         paramLabel = MANDATORY_PORT_FORMAT_HELP,
         description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
-
-    @Option(
-        names = {"--engine-rpc-ws-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description =
-            "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
+    private final Integer engineRpcPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
     @Option(
         names = {"--engine-jwt-secret"},
@@ -1295,7 +1291,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
-  private WebSocketConfiguration engineWebSocketConfiguration;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
@@ -1601,7 +1596,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcConfiguration,
         engineJsonRpcConfiguration,
         webSocketConfiguration,
-        engineWebSocketConfiguration,
         jsonRpcIpcConfiguration,
         apiConfiguration,
         metricsConfiguration,
@@ -1920,7 +1914,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
     engineJsonRpcConfiguration =
         createEngineJsonRpcConfiguration(
-            engineRPCOptionGroup.engineRpcHttpPort, engineRPCOptionGroup.engineHostsAllowlist);
+            engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration =
@@ -1928,9 +1922,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonRPCWebsocketOptionGroup.rpcWsPort,
             jsonRPCWebsocketOptionGroup.rpcWsApis,
             hostsAllowlist);
-    engineWebSocketConfiguration =
-        engineWebSocketConfiguration(
-            engineRPCOptionGroup.engineRpcWsPort, engineRPCOptionGroup.engineHostsAllowlist);
     jsonRpcIpcConfiguration =
         jsonRpcIpcConfiguration(
             unstableIpcOptions.isEnabled(),
@@ -2117,7 +2108,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    engineConfig.setEnabled(isMergeEnabled());
+    engineConfig.setEnabled(engineRPCOptionGroup.isEngineRpcEnabled);
     if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
@@ -2130,24 +2121,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     return engineConfig;
-  }
-
-  private WebSocketConfiguration engineWebSocketConfiguration(
-      final Integer listenPort, final List<String> allowCallsFrom) {
-
-    final WebSocketConfiguration webSocketConfiguration =
-        webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    webSocketConfiguration.setEnabled(isMergeEnabled());
-    if (Boolean.TRUE.equals(engineRPCOptionGroup.isEngineAuthEnabled)) {
-      webSocketConfiguration.setAuthenticationEnabled(true);
-      webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (engineRPCOptionGroup.engineJwtKeyFile != null
-          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
-        webSocketConfiguration.setAuthenticationPublicKeyFile(
-            engineRPCOptionGroup.engineJwtKeyFile.toFile());
-      }
-    }
-    return webSocketConfiguration;
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration(
@@ -2785,7 +2758,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final WebSocketConfiguration engineWebSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -2824,7 +2796,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
-            .engineWebSocketConfiguration(engineWebSocketConfiguration)
             .jsonRpcIpcConfiguration(jsonRpcIpcConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
@@ -3092,8 +3063,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         jsonRPCWebsocketOptionGroup.rpcWsPort,
         jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
-    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcHttpPort, isMergeEnabled());
-    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcWsPort, isMergeEnabled());
+    addPortIfEnabled(
+        effectivePorts,
+        engineRPCOptionGroup.engineRpcPort,
+        engineRPCOptionGroup.isEngineRpcEnabled);
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(

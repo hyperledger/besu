@@ -401,7 +401,7 @@ jobs:
           name: Create and publish docker manifest
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon --parallel manifestDocker
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" --parallel manifestDocker
 
 workflows:
   version: 2

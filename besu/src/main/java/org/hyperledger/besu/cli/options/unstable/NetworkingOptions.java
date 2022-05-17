@@ -54,10 +54,9 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
       hidden = true,
-      defaultValue = "",
       description =
           "DNS server host to use for doing DNS Discovery of peers, rather than the machine's configured DNS server")
-  private String dnsDiscoveryServerOverride = null;
+  private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
 
   private NetworkingOptions() {}
 
@@ -71,8 +70,8 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
         networkingConfig.getCheckMaintainedConnectionsFrequencySec();
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
-    cliOptions.dnsDiscoveryServerOverride =
-        networkingConfig.getDnsDiscoveryServerOverride().orElse("");
+    cliOptions.dnsDiscoveryServerOverride = networkingConfig.getDnsDiscoveryServerOverride();
+
     return cliOptions;
   }
 
@@ -81,19 +80,24 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
-    config.setDnsDiscoveryServerOverride(
-        Optional.of(dnsDiscoveryServerOverride).filter(z -> !z.isBlank()).orElse(null));
+    config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
+
     return config;
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(
-        CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(checkMaintainedConnectionsFrequencySec),
-        INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(initiateConnectionsFrequencySec),
-        DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
-        dnsDiscoveryServerOverride);
+    List<String> retval =
+        Arrays.asList(
+            CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
+            OptionParser.format(checkMaintainedConnectionsFrequencySec),
+            INITIATE_CONNECTIONS_FREQUENCY_FLAG,
+            OptionParser.format(initiateConnectionsFrequencySec));
+
+    if (dnsDiscoveryServerOverride.isPresent()) {
+      retval.add(DNS_DISCOVERY_SERVER_OVERRIDE_FLAG);
+      retval.add(dnsDiscoveryServerOverride.get());
+    }
+    return retval;
   }
 }
