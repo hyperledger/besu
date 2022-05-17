@@ -194,6 +194,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.add("--Xmerge-support");
       params.add("true");
 
+      params.add("--engine-rpc-enabled");
       params.add("--engine-rpc-port");
       params.add(node.jsonEngineListenPort().get().toString());
     }

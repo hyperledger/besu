@@ -80,7 +80,7 @@ public class ExecutionEngineAcceptanceTest {
     final Call preparePayloadRequest =
         consensusClient.newCall(
             new Request.Builder()
-                .url(executionEngine.engineHttpUrl().get())
+                .url(executionEngine.engineRpcUrl().get())
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
                 .build());
     final Response response = preparePayloadRequest.execute();
