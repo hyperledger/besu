@@ -146,11 +146,13 @@ public class GeneralStateReferenceTestTools {
             new BlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock());
-    final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-    if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
-      worldStateUpdater.deleteAccount(coinbase.getAddress());
+    if (!result.isInvalid()) {
+      final Account coinbase = worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+      if (coinbase != null && coinbase.isEmpty() && shouldClearEmptyAccounts(spec.getFork())) {
+        worldStateUpdater.deleteAccount(coinbase.getAddress());
+      }
+      worldStateUpdater.commit();
     }
-    worldStateUpdater.commit();
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();

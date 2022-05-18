@@ -17,10 +17,12 @@ package org.hyperledger.besu.ethereum.core;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
@@ -58,6 +60,7 @@ public class TransactionTest {
         .getTransactionValidator();
   }
 
+  private final String name;
   private final TransactionTestCaseSpec spec;
 
   private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
@@ -71,73 +74,81 @@ public class TransactionTest {
 
   public TransactionTest(
       final String name, final TransactionTestCaseSpec spec, final boolean runTest) {
+    this.name = name;
     this.spec = spec;
     assumeTrue("Test " + name + " was ignored", runTest);
   }
 
   @Test
   public void frontier() {
-    milestone("Frontier", new FrontierGasCalculator());
+    milestone("Frontier", new FrontierGasCalculator(), Optional.empty());
   }
 
   @Test
   public void homestead() {
-    milestone("Homestead", new HomesteadGasCalculator());
+    milestone("Homestead", new HomesteadGasCalculator(), Optional.empty());
   }
 
   @Test
   public void eIP150() {
-    milestone("EIP150", new TangerineWhistleGasCalculator());
+    milestone("EIP150", new TangerineWhistleGasCalculator(), Optional.empty());
   }
 
   @Test
   public void eIP158() {
-    milestone("EIP158", new SpuriousDragonGasCalculator());
+    milestone("EIP158", new SpuriousDragonGasCalculator(), Optional.empty());
   }
 
   @Test
   public void byzantium() {
-    milestone("Byzantium", new ByzantiumGasCalculator());
+    milestone("Byzantium", new ByzantiumGasCalculator(), Optional.empty());
   }
 
   @Test
   public void constantinople() {
-    milestone("Constantinople", new ConstantinopleGasCalculator());
+    milestone("Constantinople", new ConstantinopleGasCalculator(), Optional.empty());
   }
 
   @Test
   public void petersburg() {
-    milestone("ConstantinopleFix", new PetersburgGasCalculator());
+    milestone("ConstantinopleFix", new PetersburgGasCalculator(), Optional.empty());
   }
 
   @Test
   public void istanbul() {
-    milestone("Istanbul", new IstanbulGasCalculator());
+    milestone("Istanbul", new IstanbulGasCalculator(), Optional.empty());
   }
 
   @Test
   public void berlin() {
-    milestone("Berlin", new BerlinGasCalculator());
+    milestone("Berlin", new BerlinGasCalculator(), Optional.empty());
   }
 
   @Test
   public void london() {
-    milestone("London", new LondonGasCalculator());
+    milestone("London", new LondonGasCalculator(), Optional.of(Wei.of(0)));
   }
 
-  public void milestone(final String milestone, final GasCalculator gasCalculator) {
+  public void milestone(
+      final String milestone, final GasCalculator gasCalculator, final Optional<Wei> baseFee) {
 
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
 
     try {
-      final Bytes rlp = spec.getRlp();
+      Bytes rlp = spec.getRlp();
+
+      // non-frontier transactions need to be opaque for parsing to work
+      if (rlp.get(0) > 0) {
+        final BytesValueRLPOutput output = new BytesValueRLPOutput();
+        output.writeBytes(rlp);
+        rlp = output.encoded();
+      }
 
       // Test transaction deserialization (will throw an exception if it fails).
       final Transaction transaction = Transaction.readFrom(RLP.input(rlp));
-      ValidationResult<TransactionInvalidReason> validation =
+      final ValidationResult<TransactionInvalidReason> validation =
           transactionValidator(milestone)
-              .validate(
-                  transaction, Optional.empty(), TransactionValidationParams.processingBlock());
+              .validate(transaction, baseFee, TransactionValidationParams.processingBlock());
       if (!validation.isValid()) {
         throw new RuntimeException(
             String.format(
@@ -146,16 +157,19 @@ public class TransactionTest {
 
       // Test rlp encoding
       final Bytes actualRlp = RLP.encode(transaction::writeTo);
-      assertThat(expected.isSucceeds()).isTrue();
+      assertThat(expected.isSucceeds())
+          .withFailMessage("Transaction " + name + "/" + milestone + " was supposed to be invalid")
+          .isTrue();
 
       assertThat(actualRlp).isEqualTo(rlp);
 
       assertThat(transaction.getSender()).isEqualTo(expected.getSender());
       assertThat(transaction.getHash()).isEqualTo(expected.getHash());
-      assertThat(
-              gasCalculator.transactionIntrinsicGasCost(
-                  transaction.getPayload(), transaction.getTo().isEmpty()))
-          .isEqualTo(expected.getIntrinsicGas());
+      final long intrinsicGasCost =
+          gasCalculator.transactionIntrinsicGasCost(
+                  transaction.getPayload(), transaction.isContractCreation())
+              + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+      assertThat(intrinsicGasCost).isEqualTo(expected.getIntrinsicGas());
     } catch (final Exception e) {
       if (expected.isSucceeds()) {
         throw e;
