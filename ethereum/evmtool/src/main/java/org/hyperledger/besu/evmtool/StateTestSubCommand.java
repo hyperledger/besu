@@ -97,8 +97,7 @@ public class StateTestSubCommand implements Runnable {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public StateTestSubCommand() {
-    this(null, System.in, System.out)
-    output = System.out;
+    this(null, System.in, System.out);
   }
 
   public StateTestSubCommand(final EvmToolCommand parentCommand) {
