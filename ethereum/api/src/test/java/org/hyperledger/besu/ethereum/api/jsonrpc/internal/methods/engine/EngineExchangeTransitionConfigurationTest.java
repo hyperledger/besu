@@ -194,7 +194,8 @@ public class EngineExchangeTransitionConfigurationTest {
     final Async async = ctx.async();
     final AtomicInteger logCounter = new AtomicInteger(0);
     final var spyMethod = spy(method);
-    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    final var spyTimer =
+        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
     when(spyMethod.getQosTimer()).thenReturn(spyTimer);
     spyTimer.resetTimer();
 
@@ -219,7 +220,8 @@ public class EngineExchangeTransitionConfigurationTest {
     final Async async = ctx.async();
     final AtomicInteger logCounter = new AtomicInteger(0);
     final var spyMethod = spy(method);
-    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    final var spyTimer =
+        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
     when(spyMethod.getQosTimer()).thenReturn(spyTimer);
     spyTimer.resetTimer();
 
@@ -244,7 +246,8 @@ public class EngineExchangeTransitionConfigurationTest {
     final Async async = ctx.async();
     final AtomicInteger logCounter = new AtomicInteger(0);
     final var spyMethod = spy(method);
-    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    final var spyTimer =
+        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
     when(spyMethod.getQosTimer()).thenReturn(spyTimer);
