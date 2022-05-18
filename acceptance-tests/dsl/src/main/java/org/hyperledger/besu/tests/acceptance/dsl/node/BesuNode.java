@@ -298,7 +298,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
-  public Optional<String> engineHttpUrl() {
+  public Optional<String> engineRpcUrl() {
     if (isEngineRpcEnabled()) {
       final Optional<Integer> maybeEngineRpcPort = getEngineJsonRpcPort();
       if (maybeEngineRpcPort.isEmpty()) {
@@ -364,15 +364,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public Optional<Integer> getEngineJsonRpcPort() {
     if (isEngineRpcEnabled()) {
       return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-json-rpc")));
-    } else {
-      return Optional.empty();
-    }
-  }
-
-  @Override
-  public Optional<Integer> getEngineJsonRpcWebSocketPort() {
-    if (isWebSocketsRpcEnabled()) {
-      return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-ws-rpc")));
     } else {
       return Optional.empty();
     }

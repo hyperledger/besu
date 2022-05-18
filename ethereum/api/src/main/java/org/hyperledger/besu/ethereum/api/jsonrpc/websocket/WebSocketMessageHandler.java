@@ -44,9 +44,9 @@ import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebSocketRequestHandler {
+public class WebSocketMessageHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WebSocketRequestHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WebSocketMessageHandler.class);
   private static final ObjectWriter JSON_OBJECT_WRITER =
       new ObjectMapper()
           .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
@@ -59,7 +59,7 @@ public class WebSocketRequestHandler {
   final EthScheduler ethScheduler;
   private final long timeoutSec;
 
-  public WebSocketRequestHandler(
+  public WebSocketMessageHandler(
       final Vertx vertx,
       final JsonRpcExecutor jsonRpcExecutor,
       final EthScheduler ethScheduler,

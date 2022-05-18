@@ -34,7 +34,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 100L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
         250L,
@@ -49,7 +49,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 75L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
         100L,
@@ -64,7 +64,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 200L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
         50L,
@@ -79,7 +79,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 50L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    final var timer = new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    final var timer = new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     // reset QoS timer every 25 millis
     vertx.setPeriodic(25L, z -> timer.resetTimer());
