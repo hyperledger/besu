@@ -274,7 +274,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         // chance
         try {
           Thread.sleep(1000);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           // do nothing
         }
         processMessage(cap, message, true);
@@ -330,9 +330,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         System.identityHashCode(connection));
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
-      return;
-    }
+    //    if (peer.statusHasBeenSentToPeer()) {
+    //      return;
+    //    }
 
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
