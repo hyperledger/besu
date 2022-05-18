@@ -157,13 +157,12 @@ public class PipelineChainDownloader implements ChainDownloader {
       return CompletableFuture.completedFuture(null);
     }
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
-    currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
     debugLambda(
         LOG,
         "Starting download pipeline for sync target {}, common ancestor {} ({})",
         () -> target,
         () -> target.commonAncestor().getNumber(),
         () -> target.commonAncestor().getBlockHash());
-    return scheduler.startPipeline(currentDownloadPipeline);
+    return downloadPipelineFactory.startPipeline(scheduler, syncState, target);
   }
 }

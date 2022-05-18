@@ -199,14 +199,14 @@ public class TransactionLogBloomCacher {
       throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
 
-      final long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
+      // final long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
 
       // detect missing block
-      if (blockIndex > nbCachedBlocks) {
+      /*if (blockIndex > nbCachedBlocks) {
         throw new InvalidCacheException();
-      }
+      }*/
       writer.seek(offset);
       writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom(true).toArray()));
 

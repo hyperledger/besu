@@ -314,6 +314,28 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockAddedEvent;
   }
 
+  @Override
+  public synchronized void unsafeImportBlock(
+      final Block block,
+      final Optional<List<TransactionReceipt>> maybeReceipts,
+      final Difficulty totalDifficulty,
+      final boolean isChainHead) {
+
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    final Hash hash = block.getHash();
+    updater.putBlockHeader(hash, block.getHeader());
+    updater.putTotalDifficulty(hash, totalDifficulty);
+    updater.putBlockHash(block.getHeader().getNumber(), hash);
+    updater.putBlockBody(hash, block.getBody());
+    maybeReceipts.ifPresent(receipts -> updater.putTransactionReceipts(hash, receipts));
+
+    if (isChainHead) {
+      updater.setChainHead(hash);
+    }
+
+    updater.commit();
+  }
+
   private Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       return blockHeader.getDifficulty();

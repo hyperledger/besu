@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderValidationStep;
 import org.hyperledger.besu.ethereum.eth.sync.CheckpointRange;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -43,16 +45,18 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.util.concurrent.CompletionStage;
+
 public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
-  private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
-  private final EthContext ethContext;
-  private final FastSyncState fastSyncState;
-  private final MetricsSystem metricsSystem;
-  private final FastSyncValidationPolicy attachedValidationPolicy;
-  private final FastSyncValidationPolicy detachedValidationPolicy;
-  private final FastSyncValidationPolicy ommerValidationPolicy;
+  protected final SynchronizerConfiguration syncConfig;
+  protected final ProtocolSchedule protocolSchedule;
+  protected final ProtocolContext protocolContext;
+  protected final EthContext ethContext;
+  protected final FastSyncState fastSyncState;
+  protected final MetricsSystem metricsSystem;
+  protected final FastSyncValidationPolicy attachedValidationPolicy;
+  protected final FastSyncValidationPolicy detachedValidationPolicy;
+  protected final FastSyncValidationPolicy ommerValidationPolicy;
 
   public FastSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -94,7 +98,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   }
 
   @Override
+  public CompletionStage<Void> startPipeline(
+      final EthScheduler scheduler, final SyncState syncState, final SyncTarget target) {
+    return scheduler.startPipeline(createDownloadPipelineForSyncTarget(target));
+  }
+
+  @Override
   public Pipeline<CheckpointRange> createDownloadPipelineForSyncTarget(final SyncTarget target) {
+
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
@@ -105,7 +116,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
-            target.commonAncestor(),
+            getCommonAncestor(target),
             syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
             SyncTerminationCondition.never());
     final DownloadHeadersStep downloadHeadersStep =
@@ -149,6 +160,10 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
         .andFinishWith("importBlock", importBlockStep);
+  }
+
+  protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {
+    return syncTarget.commonAncestor();
   }
 
   private boolean shouldContinueDownloadingFromPeer(

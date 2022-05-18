@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
@@ -81,6 +82,9 @@ public class EthPeer implements Comparable<EthPeer> {
                   return size() > maxTrackedSeenBlocks;
                 }
               }));
+
+  private Optional<BlockHeader> checkPointHeader = Optional.empty();
+
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
@@ -553,6 +557,14 @@ public class EthPeer implements Comparable<EthPeer> {
     if (headStateCompare != 0) return headStateCompare;
 
     return getConnection().getPeerInfo().compareTo(ethPeer.getConnection().getPeerInfo());
+  }
+
+  public void setCheckPointHeader(final BlockHeader header) {
+    checkPointHeader = Optional.of(header);
+  }
+
+  public Optional<BlockHeader> getCheckPointHeader() {
+    return checkPointHeader;
   }
 
   @FunctionalInterface
