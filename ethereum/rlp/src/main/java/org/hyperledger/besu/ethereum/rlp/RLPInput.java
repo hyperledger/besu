@@ -146,7 +146,7 @@ public interface RLPInput {
   long readLongScalar();
 
   /**
-   * Reads a non-negative scalar from the input and return it as a long value which is interpreted
+   * Reads a non-negative scalar from the input and returns it as a long value which is interpreted
    * as an unsigned long.
    *
    * @return The next scalar item of this input as a long value.
