@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigInteger;
 
@@ -46,13 +47,15 @@ public class SECPSignatureTest {
     assertThat(signature.getRecId()).isEqualTo((byte) 0);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createSignature_NoR() {
-    SECPSignature.create(null, BigInteger.ZERO, (byte) 27, curveOrder);
+    assertThatThrownBy(() -> SECPSignature.create(null, BigInteger.ZERO, (byte) 27, curveOrder))
+        .isInstanceOf(NullPointerException.class);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createSignature_NoS() {
-    SECPSignature.create(BigInteger.ZERO, null, (byte) 27, curveOrder);
+    assertThatThrownBy(() -> SECPSignature.create(BigInteger.ZERO, null, (byte) 27, curveOrder))
+        .isInstanceOf(NullPointerException.class);
   }
 }

@@ -58,7 +58,7 @@ public class WebSocketService {
 
   private final Vertx vertx;
   private final WebSocketConfiguration configuration;
-  private final WebSocketRequestHandler websocketRequestHandler;
+  private final WebSocketMessageHandler websocketMessageHandler;
 
   private HttpServer httpServer;
 
@@ -67,22 +67,22 @@ public class WebSocketService {
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler) {
+      final WebSocketMessageHandler websocketMessageHandler) {
     this(
         vertx,
         configuration,
-        websocketRequestHandler,
+        websocketMessageHandler,
         DefaultAuthenticationService.create(vertx, configuration));
   }
 
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler,
+      final WebSocketMessageHandler websocketMessageHandler,
       final Optional<AuthenticationService> authenticationService) {
     this.vertx = vertx;
     this.configuration = configuration;
-    this.websocketRequestHandler = websocketRequestHandler;
+    this.websocketMessageHandler = websocketMessageHandler;
     this.authenticationService = authenticationService;
     this.maxActiveConnections = configuration.getMaxActiveConnections();
   }
@@ -138,9 +138,9 @@ public class WebSocketService {
               authenticationService
                   .get()
                   .authenticate(
-                      token, user -> websocketRequestHandler.handle(websocket, buffer, user));
+                      token, user -> websocketMessageHandler.handle(websocket, buffer, user));
             } else {
-              websocketRequestHandler.handle(websocket, buffer, Optional.empty());
+              websocketMessageHandler.handle(websocket, buffer, Optional.empty());
             }
           };
       websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));

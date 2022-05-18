@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -54,9 +55,10 @@ public class SECPPrivateKeyTest {
     suiteName = clazz.getSimpleName() + "-" + suiteStartTime;
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void createPrivateKey_NullEncoding() {
-    SECPPrivateKey.create((Bytes32) null, ALGORITHM);
+    assertThatThrownBy(() -> SECPPrivateKey.create((Bytes32) null, ALGORITHM))
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

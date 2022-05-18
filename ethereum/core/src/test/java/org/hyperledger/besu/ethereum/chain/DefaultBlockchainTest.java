@@ -213,7 +213,7 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getForks()).isEmpty();
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void appendUnconnectedBlock() {
     final BlockDataGenerator gen = new BlockDataGenerator();
 
@@ -225,10 +225,11 @@ public class DefaultBlockchainTest {
         new BlockDataGenerator.BlockOptions().setBlockNumber(1L).setParentHash(Hash.ZERO);
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
-    blockchain.appendBlock(newBlock, receipts);
+    assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void appendBlockWithMismatchedReceipts() {
     final BlockDataGenerator gen = new BlockDataGenerator();
 
@@ -243,7 +244,8 @@ public class DefaultBlockchainTest {
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
     receipts.add(gen.receipt());
-    blockchain.appendBlock(newBlock, receipts);
+    assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -801,7 +803,7 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.observerCount()).isEqualTo(0);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void blockAddedObserver_nullObserver() {
     final BlockDataGenerator gen = new BlockDataGenerator();
 
@@ -809,7 +811,8 @@ public class DefaultBlockchainTest {
     final Block genesisBlock = gen.genesisBlock();
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
-    blockchain.observeBlockAdded(null);
+    assertThatThrownBy(() -> blockchain.observeBlockAdded(null))
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

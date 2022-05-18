@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -600,10 +601,10 @@ public class PeerDiscoveryControllerTest {
         .send(eq(peers.get(2)), matchPacketOfType(PacketType.PING));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void startTwice() {
     startPeerDiscoveryController();
-    controller.start();
+    assertThatThrownBy(() -> controller.start()).isInstanceOf(IllegalStateException.class);
   }
 
   @Test

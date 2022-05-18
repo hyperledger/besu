@@ -238,15 +238,18 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         .isInstanceOf(CommandLine.ExecutionException.class);
   }
 
-  @Test(expected = CommandLine.ExecutionException.class)
+  @Test
   public void shouldFailIfOutputDirectoryNonEmpty() throws IOException {
-    runCmdAndCheckOutput(
-        cmd(),
-        "/operator/config_generate_keys.json",
-        FileSystems.getDefault().getPath("."),
-        "genesis.json",
-        true,
-        asList("key.pub", "key.priv"));
+    assertThatThrownBy(
+            () ->
+                runCmdAndCheckOutput(
+                    cmd(),
+                    "/operator/config_generate_keys.json",
+                    FileSystems.getDefault().getPath("."),
+                    "genesis.json",
+                    true,
+                    asList("key.pub", "key.priv")))
+        .isInstanceOf(CommandLine.ExecutionException.class);
   }
 
   @Test
