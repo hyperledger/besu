@@ -141,6 +141,16 @@ public class ProcessableBlockHeader implements BlockValues {
   }
 
   /**
+   * Returns the mixHash before merge, and the prevRandao value after
+   *
+   * @return the mixHash before merge, and the prevRandao value after
+   */
+  @Override
+  public Bytes32 getMixHashOrPrevRandao() {
+    return mixHashOrPrevRandao;
+  }
+
+  /**
    * Returns the prevRandao of the block.
    *
    * @return the raw bytes of the prevRandao field

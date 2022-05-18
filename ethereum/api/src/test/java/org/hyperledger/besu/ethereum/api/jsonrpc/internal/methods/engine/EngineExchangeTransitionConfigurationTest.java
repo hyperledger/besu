@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.QosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.util.QosTimer;
 
 import java.util.Map;
 import java.util.Optional;
@@ -194,7 +194,8 @@ public class EngineExchangeTransitionConfigurationTest {
     final Async async = ctx.async();
     final AtomicInteger logCounter = new AtomicInteger(0);
     final var spyMethod = spy(method);
-    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    final var spyTimer =
+        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
     when(spyMethod.getQosTimer()).thenReturn(spyTimer);
     spyTimer.resetTimer();
 
@@ -219,7 +220,8 @@ public class EngineExchangeTransitionConfigurationTest {
     final Async async = ctx.async();
     final AtomicInteger logCounter = new AtomicInteger(0);
     final var spyMethod = spy(method);
-    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    final var spyTimer =
+        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
     when(spyMethod.getQosTimer()).thenReturn(spyTimer);
     spyTimer.resetTimer();
 
@@ -244,7 +246,8 @@ public class EngineExchangeTransitionConfigurationTest {
     final Async async = ctx.async();
     final AtomicInteger logCounter = new AtomicInteger(0);
     final var spyMethod = spy(method);
-    final var spyTimer = spy(new QosTimer(TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
+    final var spyTimer =
+        spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> logCounter.incrementAndGet()));
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
     when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
     when(spyMethod.getQosTimer()).thenReturn(spyTimer);
