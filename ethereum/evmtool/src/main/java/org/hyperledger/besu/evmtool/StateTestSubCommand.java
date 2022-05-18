@@ -97,7 +97,7 @@ public class StateTestSubCommand implements Runnable {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public StateTestSubCommand() {
-    input = System.in;
+    this(null, System.in, System.out)
     output = System.out;
   }
 
