@@ -69,6 +69,13 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
+    Optional<Hash> maybeFinalizedHash =
+        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
+            .filter(finalized -> !finalized.isZero());
+
+    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
+        forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
+
     if (mergeContext.isSyncing()) {
       return syncingResponse(requestId);
     }
@@ -90,17 +97,10 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getFinalizedBlockHash(),
         forkChoice.getSafeBlockHash());
 
-    Optional<Hash> maybeFinalizedHash =
-        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
-            .filter(finalized -> !Hash.ZERO.equals(finalized));
-
-    if (!isPartOfCanonicalChain(forkChoice.getSafeBlockHash())
-        || (maybeFinalizedHash.isPresent() && !isPartOfCanonicalChain(maybeFinalizedHash.get()))) {
+    if (!isValidForkchoiceState(
+        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
     }
-
-    mergeContext.fireNewForkchoiceMessageEvent(
-        forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
@@ -115,7 +115,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
+            newHead.get(), forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (result.isFailed()) {
       final Optional<Hash> latestValid = result.getLatestValid();
@@ -155,11 +155,50 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
-  private boolean isPartOfCanonicalChain(final Hash blockHash) {
-    final Optional<BlockHeader> maybeBlockHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockHash);
+  private boolean isValidForkchoiceState(
+      final Hash safeBlockHash, final Hash finalizedBlockHash, final BlockHeader newBlock) {
+    Optional<BlockHeader> maybeFinalizedBlock = Optional.empty();
 
-    return maybeBlockHeader.isPresent();
+    if (!finalizedBlockHash.isZero()) {
+      maybeFinalizedBlock = protocolContext.getBlockchain().getBlockHeader(finalizedBlockHash);
+
+      // if the finalized block hash is not zero, we always need to have its block, because we
+      // only do this check once we have finished syncing
+      if (maybeFinalizedBlock.isEmpty()) {
+        return false;
+      }
+
+      // a valid finalized block must be an ancestor of the new head
+      if (!mergeCoordinator.isDescendantOf(maybeFinalizedBlock.get(), newBlock)) {
+        return false;
+      }
+    }
+
+    // A zero value is only allowed, if the transition block is not yet finalized.
+    // Once we have at least one finalized block, the transition block has either been finalized
+    // directly
+    // or through one of its descendants.
+    if (safeBlockHash.isZero()) {
+      return finalizedBlockHash.isZero();
+    }
+
+    final Optional<BlockHeader> maybeSafeBlock =
+        protocolContext.getBlockchain().getBlockHeader(safeBlockHash);
+
+    // if the safe block hash is not zero, we always need to have its block, because we
+    // only do this check once we have finished syncing
+    if (maybeSafeBlock.isEmpty()) {
+      return false;
+    }
+
+    // a valid safe block must be a descendant of the finalized block
+    if (maybeFinalizedBlock.isPresent()
+        && !mergeCoordinator.isDescendantOf(maybeFinalizedBlock.get(), maybeSafeBlock.get())) {
+      return false;
+    }
+
+    // a valid safe block must be an ancestor of the new block
+    return mergeCoordinator.isDescendantOf(maybeSafeBlock.get(), newBlock);
   }
 
   private JsonRpcResponse syncingResponse(final Object requestId) {

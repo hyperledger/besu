@@ -44,6 +44,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       Bytes.wrap("forkHeads".getBytes(StandardCharsets.UTF_8));
   private static final Bytes FINALIZED_BLOCK_HASH_KEY =
       Bytes.wrap("finalizedBlockHash".getBytes(StandardCharsets.UTF_8));
+  private static final Bytes SAFE_BLOCK_HASH_KEY =
+      Bytes.wrap("safeBlockHash".getBytes(StandardCharsets.UTF_8));
 
   private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
   static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
@@ -77,6 +79,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<Hash> getFinalized() {
     return get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH_KEY).map(this::bytesToHash);
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    return get(VARIABLES_PREFIX, SAFE_BLOCK_HASH_KEY).map(this::bytesToHash);
   }
 
   @Override
@@ -184,6 +191,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     @Override
     public void setFinalized(final Hash blockHash) {
       set(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH_KEY, blockHash);
+    }
+
+    @Override
+    public void setSafeBlock(final Hash blockHash) {
+      set(VARIABLES_PREFIX, SAFE_BLOCK_HASH_KEY, blockHash);
     }
 
     @Override
