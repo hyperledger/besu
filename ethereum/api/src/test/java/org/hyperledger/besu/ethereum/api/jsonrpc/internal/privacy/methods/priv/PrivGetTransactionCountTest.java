@@ -56,6 +56,8 @@ class PrivGetTransactionCountTest {
   private final User user =
       new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY)) {};
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private static final long MAX_UNSIGNED_LONG_VALUE =
+      Long.parseUnsignedLong("18446744073709551615");
 
   @BeforeEach
   public void setup() {
@@ -125,7 +127,6 @@ class PrivGetTransactionCountTest {
 
   private static Stream<Arguments> provideNonces() {
     return Stream.of(
-        Arguments.of(5, "low nonce"),
-        Arguments.of(Long.parseUnsignedLong("18446744073709551614"), "high nonce"));
+        Arguments.of(5, "low nonce"), Arguments.of(MAX_UNSIGNED_LONG_VALUE, "high nonce"));
   }
 }

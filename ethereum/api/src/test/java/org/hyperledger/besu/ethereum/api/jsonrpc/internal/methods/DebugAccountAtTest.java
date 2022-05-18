@@ -171,7 +171,7 @@ class DebugAccountAtTest {
     final String codeString =
         "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063b27b880414610030575b";
     final Bytes code = Bytes.fromHexString(codeString);
-    final long nonce = Long.parseUnsignedLong("18446744073709551614");
+    final long MAX_UNSIGNED_LONG_VALUE = Long.parseUnsignedLong("18446744073709551615");
     final String balanceString = "0xffff";
     final Wei balance = Wei.fromHexString(balanceString);
     final Hash codeHash = Hash.hash(code);
@@ -180,7 +180,7 @@ class DebugAccountAtTest {
     setupMockAccount();
 
     Mockito.when(account.getCode()).thenReturn(code);
-    Mockito.when(account.getNonce()).thenReturn(nonce);
+    Mockito.when(account.getNonce()).thenReturn(MAX_UNSIGNED_LONG_VALUE);
     Mockito.when(account.getBalance()).thenReturn(balance);
     Mockito.when(account.getCodeHash()).thenReturn(codeHash);
 
@@ -192,7 +192,8 @@ class DebugAccountAtTest {
 
     final DebugAccountAtResult result = (DebugAccountAtResult) response.getResult();
     Assertions.assertThat(result.getCode()).isEqualTo(codeString);
-    Assertions.assertThat(result.getNonce()).isEqualTo("0x" + Long.toHexString(nonce));
+    Assertions.assertThat(result.getNonce())
+        .isEqualTo("0x" + Long.toHexString(MAX_UNSIGNED_LONG_VALUE));
     Assertions.assertThat(result.getBalance()).isEqualTo(balanceString);
     Assertions.assertThat(result.getCodehash()).isEqualTo(codeHash.toHexString());
   }

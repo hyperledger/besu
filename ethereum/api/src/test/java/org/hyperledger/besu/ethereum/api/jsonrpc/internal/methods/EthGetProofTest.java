@@ -170,7 +170,7 @@ class EthGetProofTest {
     final GetProofResult result = (GetProofResult) response.getResult();
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
-    assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
+    assertThat(result.getNonce()).isEqualTo("0xffffffffffffffff");
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
@@ -182,7 +182,7 @@ class EthGetProofTest {
     final Wei balance = Wei.of(1);
     final Hash codeHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    final long nonce = Long.parseUnsignedLong("18446744073709551614");
+    final long MAX_UNSIGNED_LONG_VALUE = Long.parseUnsignedLong("18446744073709551615");
     final Hash rootHash =
         Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b431");
     final Hash storageRoot =
@@ -195,7 +195,7 @@ class EthGetProofTest {
     final StateTrieAccountValue stateTrieAccountValue = mock(StateTrieAccountValue.class);
     when(stateTrieAccountValue.getBalance()).thenReturn(balance);
     when(stateTrieAccountValue.getCodeHash()).thenReturn(codeHash);
-    when(stateTrieAccountValue.getNonce()).thenReturn(nonce);
+    when(stateTrieAccountValue.getNonce()).thenReturn(MAX_UNSIGNED_LONG_VALUE);
     when(stateTrieAccountValue.getStorageRoot()).thenReturn(storageRoot);
 
     final WorldStateProof worldStateProof = mock(WorldStateProof.class);

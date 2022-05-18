@@ -45,6 +45,7 @@ class EthGetTransactionCountTest {
   private EthGetTransactionCount ethGetTransactionCount;
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
+  private final long MAX_UNSIGNED_LONG_VALUE = Long.parseUnsignedLong("18446744073709551615");
 
   public static Collection<Object[]> data() {
     return Arrays.asList(
@@ -114,14 +115,14 @@ class EthGetTransactionCountTest {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(Long.parseUnsignedLong("18446744073709551614")));
+        .thenReturn(OptionalLong.of(MAX_UNSIGNED_LONG_VALUE));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
-    assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
+    assertThat(response.getResult()).isEqualTo("0xffffffffffffffff");
   }
 
   @ParameterizedTest
@@ -132,14 +133,14 @@ class EthGetTransactionCountTest {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(Long.parseUnsignedLong("18446744073709551613")));
-    mockGetTransactionCount(address, Long.parseUnsignedLong("18446744073709551614"));
+        .thenReturn(OptionalLong.of(MAX_UNSIGNED_LONG_VALUE - 1));
+    mockGetTransactionCount(address, MAX_UNSIGNED_LONG_VALUE);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("1", "eth_getTransactionCount", pendingParams));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) ethGetTransactionCount.response(request);
-    assertThat(response.getResult()).isEqualTo("0xfffffffffffffffe");
+    assertThat(response.getResult()).isEqualTo("0xffffffffffffffff");
   }
 
   private void setup(final AbstractPendingTransactionsSorter pendingTransactions) {

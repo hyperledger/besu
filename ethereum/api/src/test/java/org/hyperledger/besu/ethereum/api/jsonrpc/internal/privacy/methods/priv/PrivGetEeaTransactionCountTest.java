@@ -48,6 +48,8 @@ class PrivGetEeaTransactionCountTest {
     "R1kW75NQC9XX3kwNpyPjCBFflM29+XvnKKS9VLrUkzo=",
     "QzHuACXpfhoGAgrQriWJcDJ6MrUwcCvutKMoAn9KplQ="
   };
+  private static final long MAX_UNSIGNED_LONG_VALUE =
+      Long.parseUnsignedLong("18446744073709551615");
 
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
@@ -131,7 +133,6 @@ class PrivGetEeaTransactionCountTest {
 
   private static Stream<Arguments> provideNonces() {
     return Stream.of(
-        Arguments.of(8, "low nonce"),
-        Arguments.of(Long.parseUnsignedLong("18446744073709551614"), "high nonce"));
+        Arguments.of(8, "low nonce"), Arguments.of(MAX_UNSIGNED_LONG_VALUE, "high nonce"));
   }
 }

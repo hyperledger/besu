@@ -38,7 +38,9 @@ class TransactionDecoderTest {
   private static final String GOQUORUM_PRIVATE_TX_RLP =
       "0xf88d0b808347b7608080b840290a80a37d198ff06abe189b638ff53ac8a8dc51a0aff07609d2aa75342783ae493b3e3c6b564c0eebe49284b05a0726fb33087b9e0231d349ea0c7b5661c8c526a07144db7045a395e608cda6ab051c86cc4fb42e319960b82087f3b26f0cbc3c2da00223ac129b22aec7a6c2ace3c3ef39c5eaaa54070fd82d8ee2140b0e70b1dca9";
   private static final String NONCE_64_BIT_MAX_MINUS_2_TX_RLP =
-      "0xf86788fffffffffffffffe0182520894095e7baea6a6c7c4c2dfeb977efac326af552d8780801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804";
+      "0xf86788ffffffffffffffff0182520894095e7baea6a6c7c4c2dfeb977efac326af552d8780801ba048b55bfa915ac795c431978d8a6a992b628d557da5ff759b307d495a36649353a01fffd310ac743f371de3b9f7f9cb56c0b28ad43601b4ab949f53faa07bd2c804";
+  private static final long MAX_UNSIGNED_LONG_VALUE =
+      Long.parseUnsignedLong("18446744073709551615");
 
   @Test
   void decodeGoQuorumPrivateTransactionRlp() {
@@ -90,6 +92,6 @@ class TransactionDecoderTest {
         TransactionDecoder.decodeForWire(
             RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
-    assertThat(Long.toUnsignedString(transaction.getNonce())).isEqualTo("18446744073709551614");
+    assertThat(transaction.getNonce()).isEqualTo(MAX_UNSIGNED_LONG_VALUE);
   }
 }
