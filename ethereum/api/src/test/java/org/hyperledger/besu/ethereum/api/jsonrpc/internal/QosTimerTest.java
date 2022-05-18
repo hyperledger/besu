@@ -20,7 +20,6 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -28,13 +27,12 @@ import org.junit.runner.RunWith;
 public class QosTimerTest {
   static Vertx vertx = Vertx.vertx();
 
-  @Ignore("fails on CI with short timeouts and don't want to slow test suite down with longer ones")
   @Test
   public void shouldExecuteConsecutivelyAtTimeout(final TestContext ctx) {
     final long TEST_QOS_TIMEOUT = 100L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
         250L,
@@ -49,7 +47,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 75L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
         100L,
@@ -64,7 +62,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 200L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     vertx.setTimer(
         50L,
@@ -79,7 +77,7 @@ public class QosTimerTest {
     final long TEST_QOS_TIMEOUT = 50L;
     final Async async = ctx.async();
     final AtomicInteger execCount = new AtomicInteger(0);
-    final var timer = new QosTimer(TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
+    final var timer = new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> execCount.incrementAndGet());
 
     // reset QoS timer every 25 millis
     vertx.setPeriodic(25L, z -> timer.resetTimer());
