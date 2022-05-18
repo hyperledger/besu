@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.netty.channel.ChannelDuplexHandler;
@@ -58,7 +59,7 @@ final class WireKeepAlive extends ChannelDuplexHandler {
 
     try {
       LOG.debug("Idle connection detected, sending Wire PING to peer.");
-      connection.send(null, PingMessage.get());
+      connection.send(null, PingMessage.get(), Optional.empty());
       waitingForPong.set(true);
     } catch (final PeerConnection.PeerNotConnected ignored) {
       LOG.trace("PING not sent because peer is already disconnected");

@@ -90,7 +90,7 @@ public final class MockNetworkTest {
       ThreadLocalRandom.current().nextBytes(data);
       final int code = 0x74;
       final PeerConnection connection = optionalConnection.get();
-      connection.send(cap, new RawMessage(code, Bytes.wrap(data)));
+      connection.send(cap, new RawMessage(code, Bytes.wrap(data)), Optional.empty());
       final Message receivedMessage = messageFuture.get();
       final MessageData receivedMessageData = receivedMessage.getData();
       Assertions.assertThat(receivedMessageData.getData()).isEqualTo(Bytes.wrap(data));

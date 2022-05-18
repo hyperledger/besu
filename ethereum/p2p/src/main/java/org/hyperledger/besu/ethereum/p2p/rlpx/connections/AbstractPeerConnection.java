@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -83,14 +84,17 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   }
 
   @Override
-  public void send(final Capability capability, final MessageData message) throws PeerNotConnected {
+  public void send(
+      final Capability capability, final MessageData message, final Optional<Runnable> onSuccess)
+      throws PeerNotConnected {
     if (isDisconnected()) {
       throw new PeerNotConnected("Attempt to send message to a closed peer connection");
     }
-    doSend(capability, message);
+    doSend(capability, message, onSuccess);
   }
 
-  private void doSend(final Capability capability, final MessageData message) {
+  private void doSend(
+      final Capability capability, final MessageData message, final Optional<Runnable> onSuccess) {
     if (capability != null) {
       // Validate message is valid for this capability
       final SubProtocol subProtocol = multiplexer.subProtocol(capability);
@@ -118,10 +122,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     }
 
     LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
-    doSendMessage(capability, message);
+    doSendMessage(capability, message, onSuccess);
   }
 
-  protected abstract void doSendMessage(final Capability capability, final MessageData message);
+  protected abstract void doSendMessage(
+      final Capability capability, final MessageData message, final Optional<Runnable> onSuccess);
 
   @Override
   public PeerInfo getPeerInfo() {
@@ -162,7 +167,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     LOG.debug("Disconnecting peer {}, connection {}", peer.getId(), System.identityHashCode(this));
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
-      doSend(null, DisconnectMessage.create(reason));
+      doSend(null, DisconnectMessage.create(reason), Optional.empty());
       closeConnection();
     }
   }

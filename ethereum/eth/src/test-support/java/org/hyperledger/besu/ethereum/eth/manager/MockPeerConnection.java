@@ -60,7 +60,9 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
-  public void send(final Capability capability, final MessageData message) throws PeerNotConnected {
+  public void send(
+      final Capability capability, final MessageData message, final Optional<Runnable> onSuccess)
+      throws PeerNotConnected {
     if (disconnected) {
       throw new PeerNotConnected("MockPeerConnection disconnected");
     }

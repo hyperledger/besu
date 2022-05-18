@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -89,10 +90,11 @@ public class ValidatorPeersTest {
     final MessageData messageToSend = new RawMessage(1, Bytes.EMPTY);
     peers.send(messageToSend);
 
-    verify(peerConnections.get(0), times(1)).sendForProtocol(PROTOCOL_NAME, messageToSend);
-    verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(0), times(1))
+        .sendForProtocol(PROTOCOL_NAME, messageToSend, Optional.empty());
+    verify(peerConnections.get(1), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(2), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(3), never()).sendForProtocol(any(), any(), Optional.empty());
   }
 
   @Test
@@ -110,11 +112,12 @@ public class ValidatorPeersTest {
     final MessageData messageToSend = new RawMessage(1, Bytes.EMPTY);
     peers.send(messageToSend);
 
-    verify(peerConnections.get(0), times(1)).sendForProtocol(PROTOCOL_NAME, messageToSend);
-    verify(duplicatePeer, times(1)).sendForProtocol(PROTOCOL_NAME, messageToSend);
-    verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(0), times(1))
+        .sendForProtocol(PROTOCOL_NAME, messageToSend, Optional.empty());
+    verify(duplicatePeer, times(1)).sendForProtocol(PROTOCOL_NAME, messageToSend, Optional.empty());
+    verify(peerConnections.get(1), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(2), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(3), never()).sendForProtocol(any(), any(), Optional.empty());
   }
 
   @Test
@@ -133,11 +136,12 @@ public class ValidatorPeersTest {
     final MessageData messageToSend = new RawMessage(1, Bytes.EMPTY);
     peers.send(messageToSend);
 
-    verify(peerConnections.get(0), times(1)).sendForProtocol(PROTOCOL_NAME, messageToSend);
-    verify(duplicatePeer, never()).sendForProtocol("IBF", messageToSend);
-    verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(0), times(1))
+        .sendForProtocol(PROTOCOL_NAME, messageToSend, Optional.empty());
+    verify(duplicatePeer, never()).sendForProtocol("IBF", messageToSend, Optional.empty());
+    verify(peerConnections.get(1), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(2), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(3), never()).sendForProtocol(any(), any(), Optional.empty());
   }
 
   @Test
@@ -152,10 +156,10 @@ public class ValidatorPeersTest {
     final MessageData messageToSend = new RawMessage(1, Bytes.EMPTY);
     peers.send(messageToSend);
 
-    verify(peerConnections.get(0), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(1), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(0), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(1), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(2), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(3), never()).sendForProtocol(any(), any(), Optional.empty());
   }
 
   @Test
@@ -173,9 +177,9 @@ public class ValidatorPeersTest {
     final MessageData messageToSend = new RawMessage(1, Bytes.EMPTY);
     peers.send(messageToSend, newArrayList(validatorAddress));
 
-    verify(peerConnections.get(0), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(1), times(1)).sendForProtocol(any(), any());
-    verify(peerConnections.get(2), never()).sendForProtocol(any(), any());
-    verify(peerConnections.get(3), never()).sendForProtocol(any(), any());
+    verify(peerConnections.get(0), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(1), times(1)).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(2), never()).sendForProtocol(any(), any(), Optional.empty());
+    verify(peerConnections.get(3), never()).sendForProtocol(any(), any(), Optional.empty());
   }
 }

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PongMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.WireMessageCodes;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -65,7 +66,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
         case WireMessageCodes.PING:
           LOG.debug("Received Wire PING");
           try {
-            connection.send(null, PongMessage.get());
+            connection.send(null, PongMessage.get(), Optional.empty());
           } catch (final PeerConnection.PeerNotConnected peerNotConnected) {
             // Nothing to do
           }

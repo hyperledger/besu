@@ -37,6 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -79,7 +80,7 @@ public class AbstractPeerConnectionTest {
           assertThat(fromPeer).isFalse();
           // Check the state of the connection as seen by disconnect handlers
           assertThat(conn.isDisconnected()).isTrue();
-          assertThatThrownBy(() -> connection.send(null, PingMessage.get()));
+          assertThatThrownBy(() -> connection.send(null, PingMessage.get(), Optional.empty()));
         });
     connection.disconnect(disconnectReason);
 
@@ -114,7 +115,7 @@ public class AbstractPeerConnectionTest {
 
   @Test
   public void send_successful() throws PeerNotConnected {
-    connection.send(null, PingMessage.get());
+    connection.send(null, PingMessage.get(), Optional.empty());
     assertThat(connection.sentMessages.size()).isEqualTo(1);
     assertThat(connection.sentMessages).contains(new SentMessage(null, PingMessage.get()));
   }
@@ -122,7 +123,7 @@ public class AbstractPeerConnectionTest {
   @Test
   public void send_afterDisconnect() {
     connection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-    assertThatThrownBy(() -> connection.send(null, PingMessage.get()))
+    assertThatThrownBy(() -> connection.send(null, PingMessage.get(), Optional.empty()))
         .isInstanceOfAny(PeerNotConnected.class);
     assertThat(connection.sentMessages.size()).isEqualTo(1);
     assertThat(connection.sentMessages).doesNotContain(new SentMessage(null, PingMessage.get()));
@@ -185,7 +186,10 @@ public class AbstractPeerConnectionTest {
     }
 
     @Override
-    protected void doSendMessage(final Capability capability, final MessageData message) {
+    protected void doSendMessage(
+        final Capability capability,
+        final MessageData message,
+        final Optional<Runnable> onSuccess) {
       sentMessages.add(new SentMessage(capability, message));
     }
 

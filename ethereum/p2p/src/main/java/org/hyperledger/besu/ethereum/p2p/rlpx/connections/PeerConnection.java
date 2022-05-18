@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.Set;
 
 /** A P2P connection to another node. */
@@ -31,11 +32,13 @@ public interface PeerConnection {
   /**
    * Send given data to the connected node.
    *
-   * @param message Data to send
    * @param capability Sub-protocol to use
+   * @param message Data to send
+   * @param onSuccess run when the send finishes successfully
    * @throws PeerNotConnected On attempt to send to a disconnected peer
    */
-  void send(Capability capability, MessageData message) throws PeerNotConnected;
+  void send(Capability capability, MessageData message, final Optional<Runnable> onSuccess)
+      throws PeerNotConnected;
 
   /**
    * Agreed capabilities between us and the peer.
@@ -65,11 +68,13 @@ public interface PeerConnection {
    *
    * @param protocol the subprotocol name
    * @param message the message to send
+   * @param onSuccess run if send finishes successfully
    * @throws PeerNotConnected if the peer has disconnected
    */
-  default void sendForProtocol(final String protocol, final MessageData message)
+  default void sendForProtocol(
+      final String protocol, final MessageData message, final Optional<Runnable> onSuccess)
       throws PeerNotConnected {
-    send(capability(protocol), message);
+    send(capability(protocol), message, onSuccess);
   }
 
   /**

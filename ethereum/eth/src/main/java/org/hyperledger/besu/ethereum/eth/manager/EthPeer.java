@@ -215,11 +215,12 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public RequestManager.ResponseStream send(final MessageData messageData) throws PeerNotConnected {
-    return send(messageData, this.protocolName);
+    return send(messageData, this.protocolName, Optional.empty());
   }
 
   public RequestManager.ResponseStream send(
-      final MessageData messageData, final String protocolName) throws PeerNotConnected {
+      final MessageData messageData, final String protocolName, final Optional<Runnable> onSuccess)
+      throws PeerNotConnected {
     if (connection.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.debug("Protocol {} unavailable for this peer ", protocolName);
@@ -250,11 +251,11 @@ public class EthPeer implements Comparable<EthPeer> {
     if (requestManagers.containsKey(protocolName)) {
       final Map<Integer, RequestManager> managers = this.requestManagers.get(protocolName);
       if (managers.containsKey(messageData.getCode())) {
-        return sendRequest(managers.get(messageData.getCode()), messageData);
+        return sendRequest(managers.get(messageData.getCode()), messageData, onSuccess);
       }
     }
 
-    connection.sendForProtocol(protocolName, messageData);
+    connection.sendForProtocol(protocolName, messageData, onSuccess);
     return null;
   }
 
@@ -265,7 +266,7 @@ public class EthPeer implements Comparable<EthPeer> {
         GetBlockHeadersMessage.create(hash, maxHeaders, skip, reverse);
     final RequestManager requestManager =
         requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS);
-    return sendRequest(requestManager, message);
+    return sendRequest(requestManager, message, Optional.empty());
   }
 
   public RequestManager.ResponseStream getHeadersByNumber(
@@ -273,32 +274,40 @@ public class EthPeer implements Comparable<EthPeer> {
       throws PeerNotConnected {
     final GetBlockHeadersMessage message =
         GetBlockHeadersMessage.create(blockNumber, maxHeaders, skip, reverse);
-    return sendRequest(requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS), message);
+    return sendRequest(
+        requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_HEADERS),
+        message,
+        Optional.empty());
   }
 
   public RequestManager.ResponseStream getBodies(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
-    return sendRequest(requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_BODIES), message);
+    return sendRequest(
+        requestManagers.get(protocolName).get(EthPV62.GET_BLOCK_BODIES), message, Optional.empty());
   }
 
   public RequestManager.ResponseStream getReceipts(final List<Hash> blockHashes)
       throws PeerNotConnected {
     final GetReceiptsMessage message = GetReceiptsMessage.create(blockHashes);
-    return sendRequest(requestManagers.get(protocolName).get(EthPV63.GET_RECEIPTS), message);
+    return sendRequest(
+        requestManagers.get(protocolName).get(EthPV63.GET_RECEIPTS), message, Optional.empty());
   }
 
   public RequestManager.ResponseStream getNodeData(final Iterable<Hash> nodeHashes)
       throws PeerNotConnected {
     final GetNodeDataMessage message = GetNodeDataMessage.create(nodeHashes);
-    return sendRequest(requestManagers.get(protocolName).get(EthPV63.GET_NODE_DATA), message);
+    return sendRequest(
+        requestManagers.get(protocolName).get(EthPV63.GET_NODE_DATA), message, Optional.empty());
   }
 
   public RequestManager.ResponseStream getPooledTransactions(final List<Hash> hashes)
       throws PeerNotConnected {
     final GetPooledTransactionsMessage message = GetPooledTransactionsMessage.create(hashes);
     return sendRequest(
-        requestManagers.get(protocolName).get(EthPV65.GET_POOLED_TRANSACTIONS), message);
+        requestManagers.get(protocolName).get(EthPV65.GET_POOLED_TRANSACTIONS),
+        message,
+        Optional.empty());
   }
 
   public RequestManager.ResponseStream getSnapAccountRange(
@@ -309,7 +318,8 @@ public class EthPeer implements Comparable<EthPeer> {
     getAccountRangeMessage.setRootHash(Optional.of(stateRoot));
     return sendRequest(
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_ACCOUNT_RANGE),
-        getAccountRangeMessage);
+        getAccountRangeMessage,
+        Optional.empty());
   }
 
   public RequestManager.ResponseStream getSnapStorageRange(
@@ -323,7 +333,8 @@ public class EthPeer implements Comparable<EthPeer> {
     getStorageRangeMessage.setRootHash(Optional.of(stateRoot));
     return sendRequest(
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_STORAGE_RANGE),
-        getStorageRangeMessage);
+        getStorageRangeMessage,
+        Optional.empty());
   }
 
   public RequestManager.ResponseStream getSnapBytecode(
@@ -331,7 +342,9 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetByteCodesMessage getByteCodes = GetByteCodesMessage.create(codeHashes);
     getByteCodes.setRootHash(Optional.of(stateRoot));
     return sendRequest(
-        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_BYTECODES), getByteCodes);
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_BYTECODES),
+        getByteCodes,
+        Optional.empty());
   }
 
   public RequestManager.ResponseStream getSnapTrieNode(
@@ -339,14 +352,19 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetTrieNodesMessage getTrieNodes = GetTrieNodesMessage.create(stateRoot, paths);
     getTrieNodes.setRootHash(Optional.of(stateRoot));
     return sendRequest(
-        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES), getTrieNodes);
+        requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES),
+        getTrieNodes,
+        Optional.empty());
   }
 
   private RequestManager.ResponseStream sendRequest(
-      final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
+      final RequestManager requestManager,
+      final MessageData messageData,
+      final Optional<Runnable> onSuccess)
+      throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
     return requestManager.dispatchRequest(
-        msgData -> connection.sendForProtocol(requestManager.getProtocolName(), msgData),
+        msgData -> connection.sendForProtocol(requestManager.getProtocolName(), msgData, onSuccess),
         messageData);
   }
 
@@ -561,10 +579,10 @@ public class EthPeer implements Comparable<EthPeer> {
 
   @Override
   public int compareTo(final @Nonnull EthPeer ethPeer) {
-    int repCompare = this.reputation.compareTo(ethPeer.reputation);
+    final int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 
-    int headStateCompare =
+    final int headStateCompare =
         Long.compare(
             this.chainHeadState.getBestBlock().getNumber(),
             ethPeer.chainHeadState.getBestBlock().getNumber());

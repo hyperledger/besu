@@ -28,10 +28,13 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.VoidChannelPromise;
 
 final class NettyPeerConnection extends AbstractPeerConnection {
 
@@ -63,8 +66,22 @@ final class NettyPeerConnection extends AbstractPeerConnection {
   }
 
   @Override
-  protected void doSendMessage(final Capability capability, final MessageData message) {
-    ctx.channel().writeAndFlush(new OutboundMessage(capability, message));
+  protected void doSendMessage(
+      final Capability capability, final MessageData message, final Optional<Runnable> onSuccess) {
+    final Channel channel = ctx.channel();
+    if (onSuccess.isPresent()) {
+      final Runnable runnable = onSuccess.get();
+      final VoidChannelPromise promise = new VoidChannelPromise(channel, false);
+      promise.addListener(
+          (future) -> {
+            if (future.isSuccess()) {
+              runnable.run();
+            }
+          });
+      channel.writeAndFlush(new OutboundMessage(capability, message), promise);
+    } else {
+      channel.writeAndFlush(new OutboundMessage(capability, message));
+    }
   }
 
   @Override

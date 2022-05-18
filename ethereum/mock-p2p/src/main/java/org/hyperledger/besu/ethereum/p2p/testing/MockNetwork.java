@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 /**
  * Mock network implementation that allows passing {@link MessageData} between arbitrary peers. This
  * completely bypasses the TCP layer by directly passing {@link MessageData} from {@link
- * MockNetwork.MockPeerConnection#send(Capability, MessageData)} to callbacks registered on {@link
+ * PeerConnection#send(Capability, MessageData, Optional)} to callbacks registered on {@link
  * MockNetwork.MockP2PNetwork}s.
  */
 public final class MockNetwork {
@@ -232,7 +232,7 @@ public final class MockNetwork {
 
     /**
      * Peer that this connection targets and that will receive {@link Message}s sent via {@link
-     * #send(Capability, MessageData)}.
+     * PeerConnection#send(Capability, MessageData, Optional)}.
      */
     private final Peer to;
 
@@ -245,7 +245,8 @@ public final class MockNetwork {
     }
 
     @Override
-    public void send(final Capability capability, final MessageData message)
+    public void send(
+        final Capability capability, final MessageData message, final Optional<Runnable> onSuccess)
         throws PeerNotConnected {
       synchronized (network) {
         final MockNetwork.MockP2PNetwork target = network.nodes.get(to);

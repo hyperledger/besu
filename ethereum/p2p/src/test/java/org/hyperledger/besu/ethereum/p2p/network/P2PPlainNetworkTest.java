@@ -352,7 +352,7 @@ public class P2PPlainNetworkTest {
           connector.connect(createPeer(listenId, listenPort)).get(30000L, TimeUnit.SECONDS);
 
       // When
-      peerConnection.sendForProtocol("eth", largeMessageData);
+      peerConnection.sendForProtocol("eth", largeMessageData, Optional.empty());
 
       // Then
       CompletableFuture.anyOf(disconnectReasonFuture, successfulMessageFuture)
