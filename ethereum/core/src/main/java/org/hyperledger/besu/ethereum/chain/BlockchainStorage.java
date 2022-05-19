@@ -32,6 +32,8 @@ public interface BlockchainStorage {
 
   Optional<Hash> getFinalized();
 
+  Optional<Hash> getSafeBlock();
+
   Optional<BlockHeader> getBlockHeader(Hash blockHash);
 
   Optional<BlockBody> getBlockBody(Hash blockHash);
@@ -65,6 +67,8 @@ public interface BlockchainStorage {
     void setForkHeads(Collection<Hash> forkHeadHashes);
 
     void setFinalized(Hash blockHash);
+
+    void setSafeBlock(Hash blockHash);
 
     void removeBlockHash(long blockNumber);
 

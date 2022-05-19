@@ -60,6 +60,8 @@ public class ReferenceTestBlockchain implements Blockchain {
       "Chain head is inherently non-deterministic. The block currently being processed should be treated as the chain head.";
   private static final String FINALIZED_ERROR =
       "Finalized block is inherently non-deterministic. The block currently being processed should be treated as the finalized block.";
+  private static final String SAFE_BLOCK_ERROR =
+      "Safe block is inherently non-deterministic. The block currently being processed should be treated as the safe block.";
   private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
 
   public ReferenceTestBlockchain() {
@@ -98,6 +100,11 @@ public class ReferenceTestBlockchain implements Blockchain {
   @Override
   public Optional<Hash> getFinalized() {
     throw new NonDeterministicOperationException(FINALIZED_ERROR);
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    throw new NonDeterministicOperationException(SAFE_BLOCK_ERROR);
   }
 
   @Override
