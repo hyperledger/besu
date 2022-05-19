@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.function.BiConsumer;
@@ -104,10 +102,8 @@ public interface RLPOutput {
    * Writes a scalar (encoded with no leading zeroes).
    *
    * @param v The scalar to write.
-   * @throws IllegalArgumentException if {@code v < 0}.
    */
   default void writeLongScalar(final long v) {
-    checkArgument(v >= 0, "Invalid negative value %s for scalar encoding", v);
     writeBytes(Bytes.minimalBytes(v));
   }
 
@@ -115,17 +111,15 @@ public interface RLPOutput {
    * Writes a scalar (encoded with no leading zeroes).
    *
    * @param v The scalar to write.
-   * @throws IllegalArgumentException if {@code v} is a negative integer ({@code v.signum() < 0}).
    */
   default void writeBigIntegerScalar(final BigInteger v) {
-    checkArgument(v.signum() >= 0, "Invalid negative integer %s for scalar encoding", v);
     if (v.equals(BigInteger.ZERO)) {
       writeBytes(Bytes.EMPTY);
       return;
     }
 
     final byte[] bytes = v.toByteArray();
-    // BigInteger will not include leading zeros by contract, but it always include at least one
+    // BigInteger will not include leading zeros by contract, but it always includes at least one
     // bit of sign (a zero here since it's positive). What that mean is that if the first 1 of the
     // resulting number is exactly on a byte boundary, then the sign bit constraint will make the
     // value include one extra byte, which will be zero. In other words, they can be one zero bytes

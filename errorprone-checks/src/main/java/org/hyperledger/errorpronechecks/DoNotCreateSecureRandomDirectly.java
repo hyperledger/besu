@@ -30,7 +30,6 @@ import com.sun.tools.javac.code.Symbol;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "DoNotCreateSecureRandomDirectly",
     summary = "Do not create SecureRandom directly.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)

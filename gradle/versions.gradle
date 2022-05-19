@@ -32,7 +32,7 @@ dependencyManagement {
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.13.1') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
@@ -159,6 +159,10 @@ dependencyManagement {
 
     dependency 'org.junit.jupiter:junit-jupiter:5.8.2'
     dependency 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    dependency 'org.junit.jupiter:junit-jupiter-params:5.8.2'
+
+    dependency 'org.junit.platform:junit-platform-runner:1.8.2'
+
     dependency 'org.junit.vintage:junit-vintage-engine:5.8.2'
 
     dependency 'org.mockito:mockito-core:4.4.0'

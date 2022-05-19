@@ -29,6 +29,8 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   public static final Wei ONE = of(1);
 
+  public static final Wei MAX_WEI = of(UInt256.MAX_VALUE);
+
   Wei(final UInt256 value) {
     super(value, Wei::new);
   }

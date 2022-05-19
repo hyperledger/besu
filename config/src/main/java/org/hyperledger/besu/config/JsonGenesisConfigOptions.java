@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,11 +77,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
 
     return new TransitionsConfigOptions(transitionsNode.get());
-  }
-
-  private JsonGenesisConfigOptions(
-      final ObjectNode maybeConfig, final TransitionsConfigOptions transitionsConfig) {
-    this(maybeConfig, Collections.emptyMap(), transitionsConfig);
   }
 
   JsonGenesisConfigOptions(

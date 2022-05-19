@@ -183,7 +183,7 @@ public class IbftRound {
         commitSeal = createCommitSeal(block);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to construct commit seal; {}", e.getMessage());
-        return blockAccepted;
+        return true;
       }
 
       // There are times handling a proposed block is enough to enter prepared.
@@ -202,7 +202,7 @@ public class IbftRound {
         roundState.addCommitMessage(localCommitMessage);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to create signed Commit message; {}", e.getMessage());
-        return blockAccepted;
+        return true;
       }
 
       // It is possible sufficient commit seals are now available and the block should be imported

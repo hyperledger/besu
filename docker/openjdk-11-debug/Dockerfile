@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 ARG VERSION="dev"
 RUN apt-get update  && \
- apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.6* net-tools=1.60* openjdk-11-jre-headless=11* && \
+ apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.6* net-tools=1.60* openjdk-11-jdk-headless=11* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  adduser --disabled-password --gecos "" --home /opt/besu besu && \
@@ -36,11 +36,10 @@ ENV BESU_PID_PATH "/tmp/pid"
 ENV BESU_HOST_ALLOWLIST "*"
 
 #debug options for maximum observability
-ENV BESU_LOGGING "DEBUG"
+ENV BESU_LOGGING "INFO"
 ENV BESU_RPC_HTTP_API  "ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL"
 ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
-ENV NATIVE_MEMORY_OPTS "-XX:NativeMemoryTracking=detail -XX:+UnlockDiagnosticVMOptions -XX:+PrintNMTStatistics"
-ENV JAVA_OPTS "${JDWP_OPTS} ${NATIVE_MEMORY_OPTS} "
+ENV JAVA_OPTS "${JDWP_OPTS} "
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 

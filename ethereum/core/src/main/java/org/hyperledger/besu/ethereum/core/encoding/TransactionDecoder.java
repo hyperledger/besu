@@ -37,8 +37,8 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -50,13 +50,12 @@ public class TransactionDecoder {
     Transaction decode(RLPInput input);
   }
 
-  private static final ImmutableMap<TransactionType, TransactionDecoder.Decoder>
-      TYPED_TRANSACTION_DECODERS =
-          ImmutableMap.of(
-              TransactionType.ACCESS_LIST,
-              TransactionDecoder::decodeAccessList,
-              TransactionType.EIP1559,
-              TransactionDecoder::decodeEIP1559);
+  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
+      ImmutableMap.of(
+          TransactionType.ACCESS_LIST,
+          TransactionDecoder::decodeAccessList,
+          TransactionType.EIP1559,
+          TransactionDecoder::decodeEIP1559);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
