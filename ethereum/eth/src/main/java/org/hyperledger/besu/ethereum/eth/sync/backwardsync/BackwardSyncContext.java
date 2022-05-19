@@ -195,24 +195,34 @@ public class BackwardSyncContext {
     if (!isReady()) {
       return waitForTTD().thenCompose(this::executeNextStep);
     }
-    final Optional<BlockHeader> firstAncestorHeader = backwardChain.getFirstAncestorHeader();
-    if (firstAncestorHeader.isEmpty()) {
+
+    final Optional<BlockHeader> maybeFirstAncestorHeader = backwardChain.getFirstAncestorHeader();
+    if (maybeFirstAncestorHeader.isEmpty()) {
       LOG.info("The Backward sync is done...");
       return CompletableFuture.completedFuture(null);
     }
+
+    final BlockHeader firstAncestorHeader = maybeFirstAncestorHeader.get();
+
     if (getProtocolContext().getBlockchain().getChainHead().getHeight()
-        > firstAncestorHeader.get().getNumber() - 1) {
+        > firstAncestorHeader.getNumber() - 1) {
       LOG.info(
-          "Backward reached bellow previous head {}({}) : {} ({})",
+          "Backward reached below previous head {}({}) : {} ({})",
           getProtocolContext().getBlockchain().getChainHead().getHeight(),
           getProtocolContext().getBlockchain().getChainHead().getHash().toHexString(),
-          firstAncestorHeader.get().getNumber(),
-          firstAncestorHeader.get().getHash());
+          firstAncestorHeader.getNumber(),
+          firstAncestorHeader.getHash());
     }
-    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.get().getParentHash())) {
-      return executeForwardAsync(firstAncestorHeader.get());
+
+    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.getParentHash())
+        || getProtocolContext()
+            .getBlockchain()
+            .getBlockByHash(firstAncestorHeader.getHash())
+            .filter(block -> block.getHeader().getNumber() == 0)
+            .isPresent()) {
+      return executeForwardAsync(firstAncestorHeader);
     }
-    return executeBackwardAsync(firstAncestorHeader.get());
+    return executeBackwardAsync(firstAncestorHeader);
   }
 
   private CompletableFuture<Void> executeSyncStep(final Hash hash) {
