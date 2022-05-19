@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -105,6 +106,7 @@ public class EngineForkchoiceUpdatedTest {
 
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     assertSuccessWithPayloadForForkchoiceResult(
         Optional.empty(), mock(ForkchoiceResult.class), INVALID_TERMINAL_BLOCK);
   }
@@ -120,6 +122,7 @@ public class EngineForkchoiceUpdatedTest {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     assertSuccessWithPayloadForForkchoiceResult(
         Optional.empty(),
@@ -140,8 +143,9 @@ public class EngineForkchoiceUpdatedTest {
     when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
     //    when(blockchain.getChainHeadHeader()).thenReturn(parent);
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.updateForkChoice(mockHeader.getHash(), parent.getHash()))
+    when(mergeCoordinator.updateForkChoice(mockHeader, parent.getHash(), parent.getHash()))
         .thenReturn(
             ForkchoiceResult.withFailure(
                 "new head timestamp not greater than parent", Optional.of(parent.getHash())));
@@ -166,6 +170,7 @@ public class EngineForkchoiceUpdatedTest {
     BlockHeader mockHeader = builder.number(10L).parentHash(mockParent.getHash()).buildHeader();
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     assertSuccessWithPayloadForForkchoiceResult(
         Optional.empty(),
@@ -178,6 +183,7 @@ public class EngineForkchoiceUpdatedTest {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
@@ -200,13 +206,145 @@ public class EngineForkchoiceUpdatedTest {
     assertThat(res.getPayloadId()).isEqualTo(mockPayloadId.toHexString());
   }
 
+  @Test
+  public void shouldReturnInvalidForkchoiceStateIfFinalizedBlockIsUnknown() {
+    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    Hash finalizedBlockHash = Hash.hash(Bytes32.fromHexStringLenient("0x424abcdef"));
+
+    when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
+    when(blockchain.getBlockHeader(finalizedBlockHash)).thenReturn(Optional.empty());
+    when(mergeContext.isSyncing()).thenReturn(false);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                newHead.getBlockHash(), finalizedBlockHash, finalizedBlockHash),
+            Optional.empty());
+
+    assertInvalidForkchoiceState(resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidForkchoiceStateIfFinalizedBlockIsNotAnAncestorOfNewHead() {
+    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
+    when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(false);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                newHead.getBlockHash(), finalized.getBlockHash(), finalized.getBlockHash()),
+            Optional.empty());
+
+    assertInvalidForkchoiceState(resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidForkchoiceStateIfSafeHeadZeroWithFinalizedBlock() {
+    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(parent.getHash())
+            .timestamp(parent.getTimestamp())
+            .buildHeader();
+
+    when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
+    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
+    when(mergeContext.isSyncing()).thenReturn(false);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                newHead.getBlockHash(), parent.getBlockHash(), Hash.ZERO),
+            Optional.empty());
+
+    assertInvalidForkchoiceState(resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsUnknown() {
+    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(finalized.getHash())
+            .timestamp(finalized.getTimestamp())
+            .buildHeader();
+    Hash safeBlockBlockHash = Hash.hash(Bytes32.fromHexStringLenient("0x424abcdef"));
+
+    when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
+    when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
+    when(blockchain.getBlockHeader(safeBlockBlockHash)).thenReturn(Optional.empty());
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(true);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                newHead.getBlockHash(), finalized.getBlockHash(), safeBlockBlockHash),
+            Optional.empty());
+
+    assertInvalidForkchoiceState(resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsNotADescendantOfFinalized() {
+    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader safeBlock = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
+    when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
+    when(blockchain.getBlockHeader(safeBlock.getHash())).thenReturn(Optional.of(safeBlock));
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(finalized, safeBlock)).thenReturn(false);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                newHead.getBlockHash(), finalized.getBlockHash(), safeBlock.getBlockHash()),
+            Optional.empty());
+
+    assertInvalidForkchoiceState(resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidForkchoiceStateIfSafeBlockIsNotAnAncestorOfNewHead() {
+    BlockHeader finalized = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader newHead = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader safeBlock = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockHeader(newHead.getHash())).thenReturn(Optional.of(newHead));
+    when(blockchain.getBlockHeader(finalized.getHash())).thenReturn(Optional.of(finalized));
+    when(blockchain.getBlockHeader(safeBlock.getHash())).thenReturn(Optional.of(safeBlock));
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(mergeCoordinator.isDescendantOf(finalized, newHead)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(finalized, safeBlock)).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(safeBlock, newHead)).thenReturn(false);
+
+    var resp =
+        resp(
+            new EngineForkchoiceUpdatedParameter(
+                newHead.getBlockHash(), finalized.getBlockHash(), safeBlock.getBlockHash()),
+            Optional.empty());
+
+    assertInvalidForkchoiceState(resp);
+  }
+
   private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
       final Optional<EnginePayloadAttributesParameter> payloadParam,
       final ForkchoiceResult forkchoiceResult,
       final EngineStatus expectedStatus) {
 
     // result from mergeCoordinator has no new finalized, new head:
-    when(mergeCoordinator.updateForkChoice(any(Hash.class), any(Hash.class)))
+    when(mergeCoordinator.updateForkChoice(
+            any(BlockHeader.class), any(Hash.class), any(Hash.class)))
         .thenReturn(forkchoiceResult);
     var resp =
         resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), payloadParam);
@@ -231,7 +369,8 @@ public class EngineForkchoiceUpdatedTest {
     }
 
     // assert that listeners are always notified
-    verify(mergeContext).fireNewForkchoiceMessageEvent(mockHash, Optional.of(mockHash), mockHash);
+    verify(mergeContext)
+        .fireNewUnverifiedForkchoiceMessageEvent(mockHash, Optional.of(mockHash), mockHash);
 
     return res;
   }
@@ -254,5 +393,13 @@ public class EngineForkchoiceUpdatedTest {
         .map(JsonRpcSuccessResponse::getResult)
         .map(EngineUpdateForkchoiceResult.class::cast)
         .get();
+  }
+
+  private void assertInvalidForkchoiceState(final JsonRpcResponse resp) {
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+
+    var errorResp = (JsonRpcErrorResponse) resp;
+    assertThat(errorResp.getError().getCode()).isEqualTo(-38002);
+    assertThat(errorResp.getError().getMessage()).isEqualTo("Invalid forkchoice state");
   }
 }
