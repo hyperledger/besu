@@ -3078,7 +3078,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts,
         engineRPCOptionGroup.engineRpcPort,
-        engineRPCOptionGroup.isEngineRpcEnabled);
+        /*engineRPCOptionGroup.isEngineRpcEnabled*/
+        isMergeEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(

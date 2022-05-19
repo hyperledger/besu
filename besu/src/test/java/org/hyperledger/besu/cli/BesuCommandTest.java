@@ -3398,7 +3398,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
+    //TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
+        "--override-genesis-config",
+        "terminalTotalDifficulty=1337",
         "--miner-coinbase",
         requestedCoinbase.toString(),
         "--min-gas-price",
@@ -4761,7 +4765,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
+    //TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
+        "--override-genesis-config",
+        "terminalTotalDifficulty=1337",
         "--rpc-http-enabled",
         "--rpc-http-port",
         String.valueOf(port),
