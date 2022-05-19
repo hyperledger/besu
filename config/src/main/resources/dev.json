@@ -12,7 +12,7 @@
     "berlinBlock": 0,
     "londonBlock": 0,
     "arrowGlacierBlock": 0,
-    "contractSizeLimit": 0,
+    "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100
     }
