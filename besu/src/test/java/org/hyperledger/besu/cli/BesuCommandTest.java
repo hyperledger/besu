@@ -55,7 +55,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -1993,12 +1993,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void engineApiAuthOptions() {
     parseCommand(
-        "--rpc-http-enabled",
-        "--Xmerge-support",
-        "true",
-        "--engine-jwt-enabled",
-        "--engine-jwt-secret",
-        "/tmp/fakeKey.hex");
+        "--rpc-http-enabled", "--engine-jwt-enabled", "--engine-jwt-secret", "/tmp/fakeKey.hex");
     verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -3404,8 +3399,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     parseCommand(
-        "--Xmerge-support",
-        "true",
         "--miner-coinbase",
         requestedCoinbase.toString(),
         "--min-gas-price",
@@ -4769,13 +4762,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     // use WS port for HTTP
     final int port = 8545;
     parseCommand(
-        "--Xmerge-support",
-        "true",
         "--rpc-http-enabled",
-        "--engine-rpc-enabled",
-        "--engine-rpc-port",
+        "--rpc-http-port",
         String.valueOf(port),
-        "--rpc-ws-enabled");
+        "--engine-rpc-port",
+        String.valueOf(port));
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(

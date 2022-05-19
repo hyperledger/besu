@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,11 +29,11 @@ import org.junit.runners.MethodSorters;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class MergeConfigOptionsTest {
 
-  @Test
-  public void shouldBeDisabledByDefault() {
-    // disabledByDefault
-    assertThat(MergeOptions.isMergeEnabled()).isFalse();
-  }
+  //  @Test
+  //  public void shouldBeDisabledByDefault() {
+  //    // disabledByDefault
+  //    assertThat(MergeConfigOptions.isMergeEnabled()).isFalse();
+  //  }
 
   @Test
   public void shouldBeEnabledFromCliConsumer() {
