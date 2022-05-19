@@ -88,7 +88,7 @@ public class StateTestSubCommand implements Runnable {
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
 
-  @ParentCommand private EvmToolCommand parentCommand;
+  @ParentCommand private final EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
   @Parameters
