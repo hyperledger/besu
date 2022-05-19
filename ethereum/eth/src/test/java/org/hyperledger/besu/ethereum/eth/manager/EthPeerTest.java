@@ -43,7 +43,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -335,16 +334,17 @@ public class EthPeerTest {
   @Test
   public void message_permissioning_any_false_permission_preventsMessageFromSendingToPeer()
       throws PeerNotConnected {
-    final NodeMessagePermissioningProvider trueProvider = mock(NodeMessagePermissioningProvider.class);
-    final NodeMessagePermissioningProvider falseProvider = mock(NodeMessagePermissioningProvider.class);
+    final NodeMessagePermissioningProvider trueProvider =
+        mock(NodeMessagePermissioningProvider.class);
+    final NodeMessagePermissioningProvider falseProvider =
+        mock(NodeMessagePermissioningProvider.class);
     when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
     when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
 
     final EthPeer peer = createPeer(Collections.emptyList(), List.of(falseProvider, trueProvider));
     peer.send(PingMessage.get());
 
-    verify(peer.getConnection(), times(0))
-        .sendForProtocol(any(), eq(PingMessage.get()), any());
+    verify(peer.getConnection(), times(0)).sendForProtocol(any(), eq(PingMessage.get()), any());
   }
 
   @Test
