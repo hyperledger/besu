@@ -41,7 +41,6 @@ import com.sun.tools.javac.code.Type;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "PrivateStaticFinalLoggers",
     summary = "Logger classes should be private, static, and final.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)
