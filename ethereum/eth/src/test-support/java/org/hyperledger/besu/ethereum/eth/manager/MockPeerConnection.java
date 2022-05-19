@@ -67,6 +67,9 @@ public class MockPeerConnection implements PeerConnection {
       throw new PeerNotConnected("MockPeerConnection disconnected");
     }
     onSend.exec(capability, message, this);
+    if (onSuccess.isPresent()) {
+      onSuccess.get().run();
+    }
   }
 
   @Override

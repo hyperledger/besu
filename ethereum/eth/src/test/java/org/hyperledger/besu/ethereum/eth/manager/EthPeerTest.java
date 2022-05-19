@@ -335,8 +335,8 @@ public class EthPeerTest {
   @Test
   public void message_permissioning_any_false_permission_preventsMessageFromSendingToPeer()
       throws PeerNotConnected {
-    NodeMessagePermissioningProvider trueProvider = mock(NodeMessagePermissioningProvider.class);
-    NodeMessagePermissioningProvider falseProvider = mock(NodeMessagePermissioningProvider.class);
+    final NodeMessagePermissioningProvider trueProvider = mock(NodeMessagePermissioningProvider.class);
+    final NodeMessagePermissioningProvider falseProvider = mock(NodeMessagePermissioningProvider.class);
     when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
     when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
 
@@ -344,7 +344,7 @@ public class EthPeerTest {
     peer.send(PingMessage.get());
 
     verify(peer.getConnection(), times(0))
-        .sendForProtocol(any(), eq(PingMessage.get()), Optional.empty());
+        .sendForProtocol(any(), eq(PingMessage.get()), any());
   }
 
   @Test

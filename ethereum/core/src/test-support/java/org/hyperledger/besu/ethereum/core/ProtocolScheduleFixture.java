@@ -48,7 +48,7 @@ public class ProtocolScheduleFixture {
               normalizeKeys(new ObjectMapper().readTree(jsonParser)));
         }
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Failed open or parse mainnet genesis json", e);
     }
     throw new IllegalArgumentException("mainnet json file had no config section");
