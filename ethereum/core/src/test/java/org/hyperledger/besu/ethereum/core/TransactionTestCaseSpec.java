@@ -35,14 +35,20 @@ public class TransactionTestCaseSpec {
 
     private final Address sender;
 
+    private long intrinsicGas;
+
     private final boolean succeeds;
 
     Expectation(
-        @JsonProperty("hash") final String hash, @JsonProperty("sender") final String sender) {
-      this.succeeds = hash != null && sender != null;
+        @JsonProperty("exception") final String exception,
+        @JsonProperty("hash") final String hash,
+        @JsonProperty("intrinsicGas") final String intrinsicGas,
+        @JsonProperty("sender") final String sender) {
+      this.succeeds = exception == null;
       if (succeeds) {
         this.hash = Hash.fromHexString(hash);
         this.sender = Address.fromHexString(sender);
+        this.intrinsicGas = Long.decode(intrinsicGas);
       } else {
         this.hash = null;
         this.sender = null;
@@ -60,6 +66,10 @@ public class TransactionTestCaseSpec {
     public Address getSender() {
       return this.sender;
     }
+
+    public long getIntrinsicGas() {
+      return intrinsicGas;
+    }
   }
 
   private final HashMap<String, Expectation> expectations;
@@ -70,18 +80,21 @@ public class TransactionTestCaseSpec {
   @JsonCreator
   public TransactionTestCaseSpec(final Map<String, Object> props) {
     expectations = new HashMap<>();
-    for (final Map.Entry<String, Object> entry : props.entrySet()) {
-      if ("rlp".equals(entry.getKey())) continue;
-
+    var result = (Map<String, Object>) props.get("result");
+    for (final Map.Entry<String, Object> entry : result.entrySet()) {
       final Map<String, Object> expectation = (Map<String, Object>) entry.getValue();
       expectations.put(
           entry.getKey(),
-          new Expectation((String) expectation.get("hash"), (String) expectation.get("sender")));
+          new Expectation(
+              (String) expectation.get("exception"),
+              (String) expectation.get("hash"),
+              (String) expectation.get("intrinsicGas"),
+              (String) expectation.get("sender")));
     }
 
     Bytes parsedRlp = null;
     try {
-      parsedRlp = Bytes.fromHexString(props.get("rlp").toString());
+      parsedRlp = Bytes.fromHexString(props.get("txbytes").toString());
     } catch (final IllegalArgumentException e) {
       // Some test cases include rlp "hex strings" with invalid characters
       // In this case, just set rlp to null
