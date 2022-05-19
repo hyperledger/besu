@@ -33,7 +33,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
       new ConcurrentHashMap<>();
 
   private static final int DEFAULT_SCORE = 20;
-  private static final int LARGE_ADJUSTMENT = 5;
+  private static final int LARGE_ADJUSTMENT = 10;
 
   private int score = DEFAULT_SCORE;
 

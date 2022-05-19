@@ -18,41 +18,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.TIMEOUT;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
 
-import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
-
+import org.junit.Before;
 import org.junit.Test;
 
 public class PeerReputationTest {
 
-  private final PeerReputation reputation = new PeerReputation();
+  private PeerReputation reputation;
+
+  @Before
+  public void setUp() {
+    reputation = new PeerReputation();
+  }
 
   @Test
   public void shouldOnlyDisconnectWhenTimeoutLimitReached() {
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
-  }
-
-  @Test
-  public void shouldTrackTimeoutsSeparatelyForDifferentRequestTypes() {
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-
-    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
-    assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
-  }
-
-  @Test
-  public void shouldResetTimeoutCountForRequestType() {
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-    assertThat(reputation.recordRequestTimeout()).isEmpty();
-
-    reputation.resetTimeoutCount(EthPV62.GET_BLOCK_HEADERS);
     assertThat(reputation.recordRequestTimeout()).isEmpty();
     assertThat(reputation.recordRequestTimeout()).contains(TIMEOUT);
   }
@@ -60,21 +39,6 @@ public class PeerReputationTest {
   @Test
   public void shouldOnlyDisconnectWhenEmptyResponseThresholdReached() {
     assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).isEmpty();
     assertThat(reputation.recordUselessResponse()).contains(USELESS_PEER);
-  }
-
-  @Test
-  public void shouldDiscardEmptyResponseRecordsAfterTimeWindowElapses() {
-    // Bring it to the brink of disconnection.
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-
-    // But then the next empty response doesn't come in until after the window expires on the first
-    assertThat(reputation.recordUselessResponse()).isEmpty();
   }
 }
