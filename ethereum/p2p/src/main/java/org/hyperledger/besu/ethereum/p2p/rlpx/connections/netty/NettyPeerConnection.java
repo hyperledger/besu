@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import io.netty.channel.DefaultChannelPromise;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.AbstractPeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
@@ -34,7 +35,6 @@ import java.util.concurrent.Callable;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.VoidChannelPromise;
 
 final class NettyPeerConnection extends AbstractPeerConnection {
 
@@ -71,7 +71,7 @@ final class NettyPeerConnection extends AbstractPeerConnection {
     final Channel channel = ctx.channel();
     if (onSuccess.isPresent()) {
       final Runnable runnable = onSuccess.get();
-      final VoidChannelPromise promise = new VoidChannelPromise(channel, false);
+      final DefaultChannelPromise promise = new DefaultChannelPromise(channel);
       promise.addListener(
           (future) -> {
             if (future.isSuccess()) {
