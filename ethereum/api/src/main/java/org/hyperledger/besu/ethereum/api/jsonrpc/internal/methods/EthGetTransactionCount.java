@@ -23,28 +23,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<AbstractPendingTransactionsSorter> pendingTransactions;
-  private final boolean resultAsDecimal;
 
   public EthGetTransactionCount(
       final BlockchainQueries blockchain,
       final AbstractPendingTransactionsSorter pendingTransactions) {
-    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions), false);
+    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions));
   }
 
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
-      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions,
-      final boolean resultAsDecimal) {
+      final Supplier<AbstractPendingTransactionsSorter> pendingTransactions) {
     super(blockchain);
     this.pendingTransactions = pendingTransactions;
-    this.resultAsDecimal = resultAsDecimal;
   }
 
   @Override
@@ -61,12 +57,17 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   @Override
   protected Object pendingResult(final JsonRpcRequestContext request) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    final OptionalLong pendingNonce = pendingTransactions.get().getNextNonceForSender(address);
+    final long pendingNonce = pendingTransactions.get().getNextNonceForSender(address).orElse(0);
     final long latestNonce =
         getBlockchainQueries()
             .getTransactionCount(
                 address, getBlockchainQueries().getBlockchain().getChainHead().getHash());
-    return Quantity.create(Math.max(pendingNonce.orElse(0), latestNonce));
+
+    if (Long.compareUnsigned(pendingNonce, latestNonce) > 0) {
+      return Quantity.create(pendingNonce);
+    }
+
+    return Quantity.create(latestNonce);
   }
 
   @Override
@@ -74,6 +75,6 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
     final Address address = request.getRequiredParameter(0, Address.class);
     final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockHash);
 
-    return resultAsDecimal ? Long.toString(transactionCount) : Quantity.create(transactionCount);
+    return Quantity.create(transactionCount);
   }
 }

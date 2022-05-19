@@ -164,7 +164,7 @@ public class DetermineCommonAncestorTaskTest {
     final long range = maximumPossibleCommonAncestorNumber - minimumPossibleCommonAncestorNumber;
     final int skipInterval =
         DetermineCommonAncestorTask.calculateSkipInterval(range, headerRequestSize);
-    final int count = DetermineCommonAncestorTask.calculateCount(range, skipInterval);
+    final int count = DetermineCommonAncestorTask.calculateCount((double) range, skipInterval);
 
     assertThat(count).isEqualTo(11);
     assertThat(skipInterval).isEqualTo(9);

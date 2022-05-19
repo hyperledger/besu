@@ -126,11 +126,6 @@ public class TrieNodeDecoder {
           .ifPresent(currentNodes::add);
     }
 
-    public static BreadthFirstIterator create(
-        final NodeLoader nodeLoader, final Bytes32 rootHash, final int maxDepth) {
-      return new BreadthFirstIterator(nodeLoader, rootHash, maxDepth);
-    }
-
     @Override
     public boolean hasNext() {
       return !currentNodes.isEmpty() && currentDepth <= maxDepth;

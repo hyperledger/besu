@@ -44,7 +44,7 @@ class PrometheusCounter implements LabelledMetric<Counter> {
 
     @Override
     public void inc(final long amount) {
-      counter.inc(amount);
+      counter.inc((double) amount);
     }
   }
 }
