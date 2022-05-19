@@ -51,6 +51,7 @@ public class PostMergeContext implements MergeContext {
 
   // latest finalized block
   private final AtomicReference<BlockHeader> lastFinalized = new AtomicReference<>();
+  private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
 
@@ -138,7 +139,7 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void fireNewForkchoiceMessageEvent(
+  public void fireNewUnverifiedForkchoiceMessageEvent(
       final Hash headBlockHash,
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash) {
@@ -159,6 +160,16 @@ public class PostMergeContext implements MergeContext {
   @Override
   public Optional<BlockHeader> getFinalized() {
     return Optional.ofNullable(lastFinalized.get());
+  }
+
+  @Override
+  public void setSafeBlock(final BlockHeader blockHeader) {
+    lastSafeBlock.set(blockHeader);
+  }
+
+  @Override
+  public Optional<BlockHeader> getSafeBlock() {
+    return Optional.ofNullable(lastSafeBlock.get());
   }
 
   @Override
