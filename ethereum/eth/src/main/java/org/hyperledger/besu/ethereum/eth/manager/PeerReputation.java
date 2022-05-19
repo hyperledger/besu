@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 
@@ -29,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 public class PeerReputation implements Comparable<PeerReputation> {
   private static final Logger LOG = LoggerFactory.getLogger(PeerReputation.class);
-  static final long USELESS_RESPONSE_WINDOW_IN_MILLIS =
-      TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 
   private final ConcurrentMap<Integer, AtomicInteger> timeoutCountByRequestType =
       new ConcurrentHashMap<>();
@@ -44,7 +41,6 @@ public class PeerReputation implements Comparable<PeerReputation> {
     score -= LARGE_ADJUSTMENT;
     if (score <= 0) {
       LOG.debug("Disconnection triggered by timeout");
-      score -= LARGE_ADJUSTMENT;
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
       return Optional.empty();

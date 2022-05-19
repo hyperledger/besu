@@ -66,7 +66,7 @@ class FullSyncTargetManager extends SyncTargetManager {
           syncTarget.peer(),
           commonAncestor.getNumber(),
           commonAncestor.getHash());
-      syncTarget.peer().recordUselessAndDisconnect();
+      syncTarget.peer().recordUselessPeerAndDisconnect();
       return Optional.empty();
     }
   }

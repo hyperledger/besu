@@ -208,7 +208,7 @@ public class EthPeer implements Comparable<EthPeer> {
     reputation.recordUselessResponse().ifPresent(this::disconnect);
   }
 
-  public void recordUselessAndDisconnect() {
+  public void recordUselessPeerAndDisconnect() {
     reputation.recordUselessPeer();
     disconnect(DisconnectReason.USELESS_PEER);
   }

@@ -106,7 +106,7 @@ class FastSyncTargetManager extends SyncTargetManager {
                     pivotBlockHeader.getHash(),
                     result.size() == 1 ? result.get(0).getHash() : "invalid response",
                     bestPeer);
-                bestPeer.recordUselessAndDisconnect();
+                bestPeer.recordUselessPeerAndDisconnect();
                 return Optional.<EthPeer>empty();
               } else {
                 return Optional.of(bestPeer);
