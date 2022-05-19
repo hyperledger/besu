@@ -190,10 +190,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URI;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.security.KeyManagementException;
@@ -2941,13 +2939,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private static String genesisConfig(final NetworkName networkName) {
     try (final InputStream genesisFileInputStream =
-             EthNetworkConfig.class.getResourceAsStream(networkName.getGenesisFile())) {
+        EthNetworkConfig.class.getResourceAsStream(networkName.getGenesisFile())) {
       return new String(genesisFileInputStream.readAllBytes(), UTF_8);
     } catch (IOException | NullPointerException e) {
       throw new IllegalStateException(e);
     }
   }
-
 
   // dataDir() is public because it is accessed by subcommands
   public Path dataDir() {
@@ -3193,9 +3190,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .orElseGet(
                 () ->
                     GenesisConfigFile.fromConfig(
-                                genesisConfig(
-                                        Optional.ofNullable(network)
-                                            .orElse(MAINNET)))
+                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
                         .getConfigOptions(genesisConfigOverrides))
             .getTerminalTotalDifficulty()
             .isPresent());

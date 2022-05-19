@@ -3398,7 +3398,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
-    //TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
     // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
         "--override-genesis-config",
@@ -4765,7 +4765,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
     final int port = 8545;
-    //TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
     // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
         "--override-genesis-config",

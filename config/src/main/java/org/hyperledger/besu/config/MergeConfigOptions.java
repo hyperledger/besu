@@ -16,7 +16,6 @@ package org.hyperledger.besu.config;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** For now there is a static config that is driven by a command line option. */
 public class MergeConfigOptions {
   private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
 
@@ -26,11 +25,5 @@ public class MergeConfigOptions {
 
   public static boolean isMergeEnabled() {
     return mergeEnabled.get();
-  }
-
-  public static void doIfMergeEnabled(final Runnable mergeDo) {
-    if (isMergeEnabled()) {
-      mergeDo.run();
-    }
   }
 }

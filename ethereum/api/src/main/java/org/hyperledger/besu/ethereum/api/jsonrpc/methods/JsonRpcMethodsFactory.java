@@ -127,11 +127,10 @@ public class JsonRpcMethodsFactory {
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 
-      MergeConfigOptions.doIfMergeEnabled(
-          () ->
-              enabled.putAll(
-                  new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext)
-                      .create(rpcApis)));
+      if (MergeConfigOptions.isMergeEnabled()) {
+        enabled.putAll(
+            new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext).create(rpcApis));
+      }
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {
         enabled.putAll(apiGroup.create(rpcApis));

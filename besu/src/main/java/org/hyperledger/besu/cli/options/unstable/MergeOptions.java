@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static org.hyperledger.besu.config.MergeConfigOptions.setMergeEnabled;
-
 import java.util.Stack;
 
 import net.consensys.quorum.mainnet.launcher.options.Options;
@@ -34,7 +32,7 @@ public class MergeOptions implements Options {
       description = "Deprecated config parameter, do not use",
       arity = "1",
       parameterConsumer = MergeConfigConsumer.class)
-  @SuppressWarnings({"FieldCanBeFinal"})
+  @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
   private static boolean mergeEnabled = false;
 
   @SuppressWarnings({"JdkObsolete"})
@@ -44,11 +42,9 @@ public class MergeOptions implements Options {
         final Stack<String> args,
         final CommandLine.Model.ArgSpec argSpec,
         final CommandLine.Model.CommandSpec commandSpec) {
-      setMergeEnabled(Boolean.parseBoolean(args.pop()));
       LOG.warn(
           "--Xmerge-support={} parameter has been deprecated and will be removed in a future release.  "
-              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config",
-          mergeEnabled);
+              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
     }
   }
 }
