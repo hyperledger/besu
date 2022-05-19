@@ -36,7 +36,7 @@ ENV BESU_PID_PATH "/tmp/pid"
 ENV BESU_HOST_ALLOWLIST "*"
 
 #debug options for maximum observability
-ENV BESU_LOGGING "DEBUG"
+ENV BESU_LOGGING "INFO"
 ENV BESU_RPC_HTTP_API  "ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL"
 ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 ENV JAVA_OPTS "${JDWP_OPTS} "
