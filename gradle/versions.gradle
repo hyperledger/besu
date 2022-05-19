@@ -32,7 +32,7 @@ dependencyManagement {
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.13.1') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'

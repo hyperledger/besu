@@ -89,41 +89,13 @@ public class BaseFeeMarketBaseFeeTest {
         .isEqualTo(expectedBaseFee);
   }
 
+  @SuppressWarnings("unused")
   private static class BaseFeeMarketBaseFeeTestCase {
 
     private Wei parentBaseFee;
     private long parentGasUsed;
     private long parentTargetGasUsed;
     private Wei expectedBaseFee;
-
-    public BaseFeeMarketBaseFeeTestCase() {}
-
-    public BaseFeeMarketBaseFeeTestCase(
-        final Wei parentBaseFee,
-        final long parentGasUsed,
-        final long parentTargetGasUsed,
-        final Wei expectedBaseFee) {
-      this.parentBaseFee = parentBaseFee;
-      this.parentGasUsed = parentGasUsed;
-      this.parentTargetGasUsed = parentTargetGasUsed;
-      this.expectedBaseFee = expectedBaseFee;
-    }
-
-    public Wei getParentBaseFee() {
-      return parentBaseFee;
-    }
-
-    public long getParentGasUsed() {
-      return parentGasUsed;
-    }
-
-    public long getParentTargetGasUsed() {
-      return parentTargetGasUsed;
-    }
-
-    public Wei getExpectedBaseFee() {
-      return expectedBaseFee;
-    }
 
     public void setParentBaseFee(final Wei parentBaseFee) {
       this.parentBaseFee = parentBaseFee;
