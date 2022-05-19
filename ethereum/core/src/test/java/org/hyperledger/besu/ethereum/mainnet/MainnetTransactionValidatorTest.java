@@ -283,39 +283,6 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectTransactionWhenEffectiveGasPriceIsTooLow() {
-    final MainnetTransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            FeeMarket.london(0L),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.values()),
-            defaultGoQuorumCompatibilityMode);
-    validator.setTransactionFilter(transactionFilter(true));
-
-    final Transaction transaction =
-        Transaction.builder()
-            .type(TransactionType.EIP1559)
-            .nonce(0)
-            .maxPriorityFeePerGas(Wei.ZERO)
-            .maxFeePerGas(Wei.of(4))
-            .gasLimit(15)
-            .to(Address.ZERO)
-            .value(Wei.of(0))
-            .payload(Bytes.EMPTY)
-            .chainId(BigInteger.ONE)
-            .signAndBuild(new SECP256K1().generateKeyPair());
-
-    final ValidationResult<TransactionInvalidReason> validationResult =
-        validator.validate(transaction, Optional.of(Wei.ONE), transactionValidationParams);
-
-    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INVALID_TRANSACTION_FORMAT));
-    assertThat(validationResult.getErrorMessage())
-        .isEqualTo("effective gas price is too low to execute");
-  }
-
-  @Test
   public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
     final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
         ArgumentCaptor.forClass(Boolean.class);

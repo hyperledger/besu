@@ -43,7 +43,7 @@ public class Quantity {
   }
 
   public static String create(final long value) {
-    return uint256ToHex(UInt256.valueOf(value));
+    return uint256ToHex(UInt256.fromHexString(Long.toHexString(value)));
   }
 
   public static String create(final Bytes value) {

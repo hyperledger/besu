@@ -89,7 +89,8 @@ public class GeneralStateTestCaseSpec {
                 safeHeader,
                 p.indexes.data,
                 p.indexes.gas,
-                p.indexes.value));
+                p.indexes.value,
+                p.expectException));
       }
       res.put(eip, specs);
     }
@@ -142,16 +143,19 @@ public class GeneralStateTestCaseSpec {
     private final Hash rootHash;
     @Nullable private final Hash logsHash;
     private final Indexes indexes;
+    private final String expectException;
 
     @JsonCreator
     public PostSection(
+        @JsonProperty("expectException") final String expectException,
         @JsonProperty("hash") final String hash,
-        @JsonProperty("logs") final String logs,
         @JsonProperty("indexes") final Indexes indexes,
+        @JsonProperty("logs") final String logs,
         @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
       this.logsHash = Optional.ofNullable(logs).map(Hash::fromHexString).orElse(null);
       this.indexes = indexes;
+      this.expectException = expectException;
     }
   }
 }
