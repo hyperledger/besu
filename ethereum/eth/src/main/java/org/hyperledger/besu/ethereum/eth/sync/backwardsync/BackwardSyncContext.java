@@ -214,12 +214,27 @@ public class BackwardSyncContext {
           firstAncestorHeader.getHash());
     }
 
-    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.getParentHash())
-        || getProtocolContext()
-            .getBlockchain()
-            .getBlockByHash(firstAncestorHeader.getHash())
-            .filter(block -> block.getHeader().getNumber() == 0)
-            .isPresent()) {
+    if (firstAncestorHeader.getNumber() == 0) {
+      final BlockHeader genesisBlockHeader =
+          getProtocolContext()
+              .getBlockchain()
+              .getBlockHeader(0)
+              .orElseThrow(
+                  () -> new IllegalStateException("Really we do not have the genesis block?"));
+
+      if (genesisBlockHeader.getHash().equals(firstAncestorHeader.getHash())) {
+        LOG.info("Backward sync reached genesis, starting Forward sync");
+        return executeForwardAsync(genesisBlockHeader);
+      } else {
+        return CompletableFuture.failedFuture(
+            new BackwardSyncException(
+                String.format(
+                    "Backward sync reached genesis, but ancestor header hash %s does not match our genesis header hash %s",
+                    firstAncestorHeader.getHash(), genesisBlockHeader.getHash())));
+      }
+    }
+
+    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.getParentHash())) {
       return executeForwardAsync(firstAncestorHeader);
     }
     return executeBackwardAsync(firstAncestorHeader);
