@@ -1,0 +1,11 @@
+name : CodeQL Configuration
+
+paths:
+  - src
+paths-ignore:
+  - aceptance-tests
+  - container-tests
+  - docs
+  - scripts
+  - testutil
+  - **/test/*
