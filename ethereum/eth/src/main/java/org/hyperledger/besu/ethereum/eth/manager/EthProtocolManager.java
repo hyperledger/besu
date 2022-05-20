@@ -228,11 +228,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    processMessage(cap, message, false);
-  }
-
-  public void processMessage(
-      final Capability cap, final Message message, final boolean delayedToWaitForStatus) {
+    //    processMessage(cap, message, false);
+    //  }
+    //
+    //  public void processMessage(
+    //      final Capability cap, final Message message, final boolean delayedToWaitForStatus) {
     checkArgument(
         getSupportedCapabilities().contains(cap),
         "Unsupported capability passed to processMessage(): " + cap);
@@ -256,31 +256,35 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (code == EthPV62.STATUS) {
       handleStatusMessage(ethPeer, messageData);
       return;
-    } else if (!ethPeer.statusHasBeenReceived()) {
-      // Peers are required to send status messages before any other message type
-      if (delayedToWaitForStatus) {
-        LOG.debug(
-            "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}. Connection {}",
-            this.getClass().getSimpleName(),
-            EthPV62.STATUS,
-            code,
-            ethPeer,
-            System.identityHashCode(message.getConnection()));
-        ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-      } else {
-        // due to threading there is a chance that the status message has already been received, but
-        // not processed
-        // wait for a second before continuing to process this message to give that status message a
-        // chance
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          // do nothing
-        }
-        processMessage(cap, message, true);
-      }
-      return;
     }
+    //    else if (!ethPeer.statusHasBeenReceived()) {
+    //      // Peers are required to send status messages before any other message type
+    //      if (delayedToWaitForStatus) {
+    //        LOG.debug(
+    //            "{} requires a Status ({}) message to be sent first.  Instead, received message
+    // {}.  Disconnecting from {}. Connection {}",
+    //            this.getClass().getSimpleName(),
+    //            EthPV62.STATUS,
+    //            code,
+    //            ethPeer,
+    //            System.identityHashCode(message.getConnection()));
+    //        ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    //      } else {
+    //        // due to threading there is a chance that the status message has already been
+    // received, but
+    //        // not processed
+    //        // wait for a second before continuing to process this message to give that status
+    // message a
+    //        // chance
+    //        try {
+    //          Thread.sleep(1000);
+    //        } catch (final InterruptedException e) {
+    //          // do nothing
+    //        }
+    //        processMessage(cap, message, true);
+    //      }
+    //      return;
+    //    }
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 

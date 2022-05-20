@@ -184,7 +184,7 @@ public class EthPeer implements Comparable<EthPeer> {
    * @return {@code true} if all peer validation logic has run and successfully validated this peer
    */
   public boolean isFullyValidated() {
-    if (!fullyValidated.get()) LOG.debug("Peer {} not fully validated yet.");
+    if (!fullyValidated.get()) LOG.debug("Peer {} not fully validated yet.", this.peerId);
     return fullyValidated.get();
   }
 
