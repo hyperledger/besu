@@ -786,8 +786,8 @@ task manifestDocker {
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    tags.add('${dockerImage}:latest')
-    tags.add('${dockerImage}:' + dockerBuildVersion.split(/\./)[0..1].join('.'))
+    tags.add("${dockerImage}:latest")
+    tags.add("${dockerImage}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   doLast {
