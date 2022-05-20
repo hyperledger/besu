@@ -567,7 +567,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   static class EngineRPCOptionGroup {
     @Option(
         names = {"--engine-rpc-enabled"},
-        description = "deprected parameter, do not use.",
+        description = "deprectaed parameter, do not use.",
         hidden = true)
     private final Boolean deprecatedIsEngineRpcEnabled = false;
 
