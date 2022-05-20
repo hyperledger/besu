@@ -34,15 +34,6 @@
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
 
-## Active Non-code Maintainers
-
-<!-- besu-triage group has Write access to besu repo -->
-
-| Name             | Github           | LFID             |
-| ---------------- | ---------------- | ---------------- |
-| Madeline Murray  | MadelineMurray   | madelinemurray   |
-| Sajida Zouarhi   | sajz             | SajidaZ          |
-
 ## Emeritus Maintainers
 
 | Name             | Github           | LFID             |
@@ -53,9 +44,11 @@
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
+| Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
+| Sajida Zouarhi   | sajz             | SajidaZ          |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
 
@@ -74,15 +67,6 @@ There are two ways to become a maintainer:
 The requirement to be able to be proposed as a code maintainer is:
 
 - 5 significant changes on code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
-  
-### Other maintainers contribution requirement
-
-The requirements to be able to be proposed as a non-code maintainer are:
-
-- 5 significant changes on documentation have been authored in this repos by the proposed maintainer and accepted (merged pull-requests (PR), excluding hyperledger/besu-doc repos contribution).
-- or 5 significant support answers on official public channels that solved the user issue.
-- or being recognised as a fully involved and significant help for issue triage and assignment or roadmap planning effort and code review by other maintainers.
-  There is no number defined for these criteria as the vote will decide if the criteria are valid.
   
 ### Maintainers approval process
 
@@ -153,11 +137,6 @@ I propose to add [maintainer github handle] as a Besu project maintainer.
 - [list significant achievements]
 
 Here are [their past contributions on Besu project](https://github.com/hyperledger/besu/commits?author=[user github handle]).
-
-<!-- for non-code contributors -->
-[maintainer github handle] contributed with many high quality actions:
-
-- [list significant actions]
 
 Voting ends two weeks from today.
 
