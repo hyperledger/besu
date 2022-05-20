@@ -1,5 +1,10 @@
 # Changelog
 
+## 22.4.2
+
+### Bug Fixes
+- Stop backward sync if genesis block has been reached [#3869](https://github.com/hyperledger/besu/pull/3869)
+
 ## 22.4.1
 
 ### Additions and Improvements
