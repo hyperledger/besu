@@ -567,8 +567,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   static class EngineRPCOptionGroup {
     @Option(
         names = {"--engine-rpc-enabled"},
-        description = "Set to start the Engine JSON-RPC service (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineRpcEnabled = false;
+        description = "deprected parameter, do not use.",
+        hidden = true)
+    private final Boolean deprecatedIsEngineRpcEnabled = false;
 
     @Option(
         names = {"--engine-rpc-port"},
@@ -2108,7 +2109,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    engineConfig.setEnabled(engineRPCOptionGroup.isEngineRpcEnabled);
+    if (engineRPCOptionGroup.deprecatedIsEngineRpcEnabled) {
+      logger.warn(
+          "--engine-api-enabled parameter has been deprecated and will be removed in a future release.  "
+              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
+    }
+    engineConfig.setEnabled(isMergeEnabled());
     if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);

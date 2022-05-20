@@ -33,7 +33,7 @@ public class MergeOptions implements Options {
       arity = "1",
       parameterConsumer = MergeConfigConsumer.class)
   @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
-  private static boolean mergeEnabled = false;
+  private static boolean deprecatedMergeEnabled = false;
 
   @SuppressWarnings({"JdkObsolete"})
   static class MergeConfigConsumer implements CommandLine.IParameterConsumer {
@@ -43,7 +43,7 @@ public class MergeOptions implements Options {
         final CommandLine.Model.ArgSpec argSpec,
         final CommandLine.Model.CommandSpec commandSpec) {
       LOG.warn(
-          "--Xmerge-support={} parameter has been deprecated and will be removed in a future release.  "
+          "--Xmerge-support parameter has been deprecated and will be removed in a future release.  "
               + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
     }
   }
