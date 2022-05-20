@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-/** DEPRECATED in favor of genesis config. Unstable config for eth1/2 merge */
+/** DEPRECATED in favor of genesis config. */
 public class MergeOptions implements Options {
   // To make it easier for tests to reset the value to default
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MergeOptions.class);
