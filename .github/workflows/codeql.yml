@@ -52,10 +52,10 @@ jobs:
         config-file: ./.github/codeql/codeql-config.yml
         queries: security-and-quality,security-extended
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+    # Autobuild failed (OOM)
+    # Hence, supply memory args for gradle build
+    - run: |
+        JAVA_OPTS="-Xmx1000M" ./gradlew -Dorg.gradle.java.home=/usr/lib/jvm/java-11-openjdk-amd64 --no-scan compileJava
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
