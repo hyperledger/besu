@@ -8,4 +8,4 @@ paths-ignore:
   - docs
   - scripts
   - testutil
-  - **/src/test
+  - '**/src/test'
