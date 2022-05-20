@@ -55,7 +55,7 @@ jobs:
     # Autobuild failed (OOM)
     # Hence, supply memory args for gradle build
     - run: |
-        JAVA_OPTS="-Xmx1000M" ./gradlew -Dorg.gradle.java.home=/usr/lib/jvm/java-11-openjdk-amd64 --no-scan compileJava
+        JAVA_OPTS="-Xmx1000M" ./gradlew --no-scan compileJava
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
