@@ -270,23 +270,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final Hash headBlockHash, final Hash finalizedBlockHash) {
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
-    BlockHeader newHead = blockchain.getBlockHeader(headBlockHash).orElse(null);
-    if (newHead == null) {
-      return ForkchoiceResult.withFailure(
-          String.format("not able to find new head block %s", headBlockHash), Optional.empty());
-    }
+
     final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
-    if (newFinalized.isEmpty() && !finalizedBlockHash.equals(Hash.ZERO)) {
-      // we should only fail to find when it's the special value 0x000..000
-      return ForkchoiceResult.withFailure(
-          String.format(
-              "should've been able to find block hash %s but couldn't", finalizedBlockHash),
-          latestValid);
-    }
 
     if (currentFinalized.isPresent()
         && newFinalized.isPresent()
@@ -297,8 +286,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               finalizedBlockHash, currentFinalized.get().getBlockHash()),
           latestValid);
     }
-
-    // ensure we have headBlock:
 
     // ensure new head is descendant of finalized
     Optional<String> descendantError =
@@ -331,6 +318,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           blockchain.setFinalized(blockHeader.getHash());
           mergeContext.setFinalized(blockHeader);
         });
+
+    blockchain
+        .getBlockHeader(safeBlockHash)
+        .ifPresent(
+            newSafeBlock -> {
+              blockchain.setSafeBlock(safeBlockHash);
+              mergeContext.setSafeBlock(newSafeBlock);
+            });
 
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
@@ -474,9 +469,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                     .orElse(Optional.empty()));
   }
 
-  private boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
+  @Override
+  public boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
     LOG.debug(
-        "checking if finalized block {}:{} is ancestor of {}:{}",
+        "checking if block {}:{} is ancestor of {}:{}",
         ancestorBlock.getNumber(),
         ancestorBlock.getBlockHash(),
         newBlock.getNumber(),

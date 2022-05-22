@@ -34,12 +34,14 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,10 +70,13 @@ public class BackwardSyncAlgSpec {
   @InjectMocks BackwardsSyncAlgorithm algorithm;
   @Mock private Hash hash;
 
+  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
+  private Block genesisBlock;
+
   @Before
   public void setUp() throws Exception {
     BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
-    Block genesisBlock = blockDataGenerator.genesisBlock();
+    genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);
 
@@ -356,6 +361,53 @@ public class BackwardSyncAlgSpec {
     finalized = localBlockchain.getFinalized();
     assertThat(finalized).isPresent();
     assertThat(finalized).contains(fin2);
+  }
+
+  @Test
+  public void shouldStartForwardSyncIfGenesisIsReached() {
+    doReturn(true).when(context).isReady();
+    final MutableBlockchain otherLocalBlockchain = createForkedBlockchain(genesisBlock);
+    when(context.getProtocolContext().getBlockchain()).thenReturn(otherLocalBlockchain);
+
+    final BackwardChain backwardChain = createBackwardChain(0, 1);
+    doReturn(backwardChain).when(context).getBackwardChain();
+    doReturn(CompletableFuture.completedFuture(null))
+        .when(algorithm)
+        .executeProcessKnownAncestors();
+
+    algorithm.pickNextStep();
+    verify(algorithm).executeProcessKnownAncestors();
+  }
+
+  @Test
+  public void shouldFailIfADifferentGenesisIsReached() {
+    doReturn(true).when(context).isReady();
+    final BlockDataGenerator.BlockOptions otherGenesisOptions =
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(0)
+            .setExtraData(Bytes.of("Other genesis".getBytes(StandardCharsets.UTF_8)));
+    final Block otherGenesis = blockDataGenerator.genesisBlock(otherGenesisOptions);
+    final MutableBlockchain otherLocalBlockchain = createForkedBlockchain(otherGenesis);
+    when(context.getProtocolContext().getBlockchain()).thenReturn(otherLocalBlockchain);
+
+    final BackwardChain backwardChain = createBackwardChain(0, 1);
+    doReturn(backwardChain).when(context).getBackwardChain();
+    CompletableFuture<Void> res = algorithm.pickNextStep();
+    assertThat(res.isCompletedExceptionally()).isTrue();
+  }
+
+  private MutableBlockchain createForkedBlockchain(final Block genesisBlock) {
+    final MutableBlockchain otherLocalBlockchain = createInMemoryBlockchain(genesisBlock);
+    final BlockDataGenerator.BlockOptions options =
+        new BlockDataGenerator.BlockOptions()
+            .setBlockNumber(1)
+            .setParentHash(genesisBlock.getHash())
+            .setExtraData(Bytes.of("Fork of block 1".getBytes(StandardCharsets.UTF_8)));
+    final Block block = blockDataGenerator.block(options);
+    final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
+
+    otherLocalBlockchain.appendBlock(block, receipts);
+    return otherLocalBlockchain;
   }
 
   private BackwardChain createBackwardChain(final int from, final int until) {

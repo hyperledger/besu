@@ -58,4 +58,11 @@ public interface MutableBlockchain extends Blockchain {
    * @param blockHash The hash of the last finalized block.
    */
   void setFinalized(final Hash blockHash);
+
+  /**
+   * Set the hash of the last safe block.
+   *
+   * @param blockHash The hash of the last safe block.
+   */
+  void setSafeBlock(final Hash blockHash);
 }

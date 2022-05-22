@@ -32,16 +32,16 @@ import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DebugTraceTransactionIntegrationTest {
   private static final String DEBUG_TRACE_TRANSACTION = "debug_traceTransaction";
   private static JsonRpcTestMethodsFactory blockchain;
   private JsonRpcMethod method;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
@@ -51,7 +51,7 @@ public class DebugTraceTransactionIntegrationTest {
             new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final Map<String, JsonRpcMethod> methods = blockchain.methods();
     method = methods.get(DEBUG_TRACE_TRANSACTION);

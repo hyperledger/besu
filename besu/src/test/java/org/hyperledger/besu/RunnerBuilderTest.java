@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftEventQueue;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.consensus.common.bft.protocol.BftProtocolManager;
@@ -265,15 +265,15 @@ public final class RunnerBuilderTest {
   }
 
   @Test
-  public void whenEngineApiAddedWebSocketReadyOnDefaultPort() {
+  public void whenEngineApiAddedWebSocketReadyOnSamePort() {
     WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
-    WebSocketConfiguration engineWsRpc = WebSocketConfiguration.createEngineDefault();
-    engineWsRpc.setEnabled(true);
     EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
+    engineConf.setEnabled(true);
 
     final Runner runner =
         new RunnerBuilder()
@@ -288,9 +288,9 @@ public final class RunnerBuilderTest {
             .metricsSystem(mock(ObservableMetricsSystem.class))
             .permissioningService(mock(PermissioningServiceImpl.class))
             .jsonRpcConfiguration(JsonRpcConfiguration.createDefault())
+            .engineJsonRpcConfiguration(engineConf)
             .webSocketConfiguration(wsRpc)
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
-            .engineWebSocketConfiguration(engineWsRpc)
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
@@ -301,8 +301,7 @@ public final class RunnerBuilderTest {
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
 
-    assertThat(runner.getWebSocketPort()).isPresent();
-    assertThat(runner.getEngineWebsocketPort()).isPresent();
+    assertThat(runner.getEngineJsonRpcPort()).isPresent();
   }
 
   @Test
@@ -343,7 +342,6 @@ public final class RunnerBuilderTest {
 
     assertThat(runner.getJsonRpcPort()).isPresent();
     assertThat(runner.getEngineJsonRpcPort()).isEmpty();
-    assertThat(runner.getEngineWebsocketPort()).isEmpty();
   }
 
   @Test

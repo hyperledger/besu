@@ -35,8 +35,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * These tests assume the basic function of the Qbft Round State Machine has been proven via the
@@ -67,7 +67,7 @@ public class LocalNodeIsProposerTest {
   private Commit expectedTxCommit;
   private Prepare expectedTxPrepare;
 
-  @Before
+  @BeforeEach
   public void setup() {
     expectedProposedBlock = context.createBlockForProposalFromChainHead(blockTimeStamp);
     expectedTxProposal =

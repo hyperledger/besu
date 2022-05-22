@@ -1,9 +1,22 @@
 # Changelog
 
+## 22.4.2
+
+### Bug Fixes
+- Stop backward sync if genesis block has been reached [#3869](https://github.com/hyperledger/besu/pull/3869)
+- Deprecate experimental merge flag and engine-rpc-enabled flag [#3875](https://github.com/hyperledger/besu/pull/3875)
+
 ## 22.4.1
 
 ### Additions and Improvements
 - GraphQL - allow null log topics in queries which match any topic [#3662](https://github.com/hyperledger/besu/pull/3662)
+- multi-arch docker builds for amd64 and arm64 [#2954](https://github.com/hyperledger/besu/pull/2954)
+- Filter Netty native lib errors likewise the pure Java implementation [#3807](https://github.com/hyperledger/besu/pull/3807)
+- Add ropsten terminal total difficulty config [#3871](https://github.com/hyperledger/besu/pull/3871)
+
+### Bug Fixes
+- Stop the BlockPropagationManager when it receives the TTD reached event [#3809](https://github.com/hyperledger/besu/pull/3809)
+- Correct getMixHashOrPrevRandao to return the value present in the block header [#3839](https://github.com/hyperledger/besu/pull/3839)
 
 ## 22.4.0
 
@@ -26,7 +39,7 @@
 - In the Besu EVM Library all references to SHA3 have been renamed to the more accurate name Kecack256, including class names and comment. [#3749](https://github.com/hyperledger/besu/pull/3749)
 
 ### Additions and Improvements
-- Onchain node permissioning 
+- Onchain node permissioning
   - Log the enodeURL that was previously only throwing an IllegalStateException during the isPermitted check [#3697](https://github.com/hyperledger/besu/pull/3697),
   - Fail startup if node permissioning smart contract version does not match [#3765](https://github.com/hyperledger/besu/pull/3765)
 - \[EXPERIMENTAL\] Add snapsync `--sync-mode="X_SNAP"` (only as client) [#3710](https://github.com/hyperledger/besu/pull/3710)

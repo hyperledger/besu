@@ -49,6 +49,7 @@ public class GeneralStateTestCaseEipSpec {
   private final int dataIndex;
   private final int gasIndex;
   private final int valueIndex;
+  private final String expectException;
 
   GeneralStateTestCaseEipSpec(
       final String fork,
@@ -59,7 +60,8 @@ public class GeneralStateTestCaseEipSpec {
       final BlockHeader blockHeader,
       final int dataIndex,
       final int gasIndex,
-      final int valueIndex) {
+      final int valueIndex,
+      final String expectException) {
     this.fork = fork;
     this.transactionSupplier = transactionSupplier;
     this.initialWorldState = initialWorldState;
@@ -69,6 +71,7 @@ public class GeneralStateTestCaseEipSpec {
     this.dataIndex = dataIndex;
     this.gasIndex = gasIndex;
     this.valueIndex = valueIndex;
+    this.expectException = expectException;
   }
 
   public String getFork() {
@@ -88,7 +91,15 @@ public class GeneralStateTestCaseEipSpec {
   }
 
   public Transaction getTransaction() {
-    return transactionSupplier.get();
+    try {
+      return transactionSupplier.get();
+    } catch (RuntimeException re) {
+      // some tests specify invalid transactions.  We throw exceptions in
+      // GeneralStateTests but they are encoded in BlockchainTests, so we
+      // can skip them as invalid (since the point of the tests is to reject
+      // invalid transactions).
+      return null;
+    }
   }
 
   public BlockHeader getBlockHeader() {
@@ -105,5 +116,9 @@ public class GeneralStateTestCaseEipSpec {
 
   public int getValueIndex() {
     return valueIndex;
+  }
+
+  public String getExpectException() {
+    return expectException;
   }
 }

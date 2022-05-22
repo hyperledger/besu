@@ -68,7 +68,6 @@ public class BackwardSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
   public static final int UNCLE_HEIGHT = 25 - 3;
-  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   private BackwardSyncContext context;
 
@@ -92,12 +91,14 @@ public class BackwardSyncContextTest {
   @Mock private SyncState syncState;
   private BackwardChain backwardChain;
   private Block uncle;
+  private Block genesisBlock;
+  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Before
   public void setup() {
     when(mockProtocolSpec.getBlockValidator()).thenReturn(blockValidator);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
-    Block genesisBlock = blockDataGenerator.genesisBlock();
+    genesisBlock = blockDataGenerator.genesisBlock();
     remoteBlockchain = createInMemoryBlockchain(genesisBlock);
     localBlockchain = createInMemoryBlockchain(genesisBlock);
 

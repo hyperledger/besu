@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.util;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -22,14 +22,16 @@ import io.vertx.core.Vertx;
 
 public class QosTimer {
 
-  private final Vertx timerVertx = Vertx.vertx();
+  private final Vertx timerVertx;
   private final AtomicLong timerId = new AtomicLong(Long.MAX_VALUE);
   private final AtomicLong lastReset = new AtomicLong(System.currentTimeMillis());
 
   private final long periodMillis;
   private final Consumer<Long> consumerTask;
 
-  public QosTimer(final long periodMillis, final Consumer<Long> consumerTask) {
+  public QosTimer(
+      final Vertx timerVertx, final long periodMillis, final Consumer<Long> consumerTask) {
+    this.timerVertx = timerVertx;
     this.periodMillis = periodMillis;
     this.consumerTask = consumerTask;
     resetTimer();

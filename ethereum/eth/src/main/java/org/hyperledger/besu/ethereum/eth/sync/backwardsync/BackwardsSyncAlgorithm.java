@@ -82,6 +82,25 @@ public class BackwardsSyncAlgorithm {
           () -> firstAncestorHeader.get().getNumber(),
           () -> firstAncestorHeader.get().getHash());
     }
+
+    if (firstAncestorHeader.get().getNumber() == 0) {
+      final BlockHeader genesisBlockHeader =
+          blockchain
+              .getBlockHeader(0)
+              .orElseThrow(
+                  () -> new IllegalStateException("Really we do not have the genesis block?"));
+
+      if (genesisBlockHeader.getHash().equals(firstAncestorHeader.get().getHash())) {
+        LOG.info("Backward sync reached genesis, starting Forward sync");
+        return executeForwardAsync();
+      } else {
+        return CompletableFuture.failedFuture(
+            new BackwardSyncException(
+                String.format(
+                    "Backward sync reached genesis, but ancestor header hash %s does not match our genesis header hash %s",
+                    firstAncestorHeader.get().getHash(), genesisBlockHeader.getHash())));
+      }
+    }
     final Optional<Block> finalized = blockchain.getFinalized().flatMap(blockchain::getBlockByHash);
     if (finalized.isPresent()
         && (finalized.get().getHeader().getNumber() >= firstAncestorHeader.get().getNumber())) {

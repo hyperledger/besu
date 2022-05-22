@@ -32,7 +32,6 @@ import com.sun.source.tree.VariableTree;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "MethodInputParametersMustBeFinal",
     summary = "Method input parameters must be final.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)

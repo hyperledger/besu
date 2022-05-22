@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
@@ -60,6 +62,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    final Object requestId = requestContext.getRequest().getId();
 
     final EngineForkchoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
@@ -68,96 +71,141 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     Optional<Hash> maybeFinalizedHash =
         Optional.ofNullable(forkChoice.getFinalizedBlockHash())
-            .filter(finalized -> !Hash.ZERO.equals(finalized));
+            .filter(finalized -> !finalized.isZero());
 
-    mergeContext.fireNewForkchoiceMessageEvent(
+    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
         forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
 
     if (mergeContext.isSyncing()) {
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+      return syncingResponse(requestId);
     }
-
-    LOG.info(
-        "Consensus fork-choice-update: head: {}, finalized: {}",
-        forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash());
 
     Optional<BlockHeader> newHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 
-    Optional<BlockHeader> finalizedHead =
-        maybeFinalizedHash.flatMap(protocolContext.getBlockchain()::getBlockHeader);
+    if (newHead.isEmpty()) {
+      Optional.ofNullable(forkChoice.getHeadBlockHash())
+          .filter(hash -> !hash.equals(Hash.ZERO))
+          .ifPresent(
+              blockhash ->
+                  mergeCoordinator.getOrSyncHeaderByHash(
+                      blockhash, forkChoice.getFinalizedBlockHash()));
 
-    if (newHead.isPresent() && (maybeFinalizedHash.isEmpty() || finalizedHead.isPresent())) {
+      return syncingResponse(requestId);
+    }
 
-      // TODO: post-merge cleanup, this should be unnecessary after merge
-      if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(
-                INVALID_TERMINAL_BLOCK,
-                null,
-                null,
-                Optional.of(newHead.get() + " did not descend from terminal block")));
+    LOG.info(
+        "Consensus fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
+        forkChoice.getHeadBlockHash(),
+        forkChoice.getFinalizedBlockHash(),
+        forkChoice.getSafeBlockHash());
+
+    if (!isValidForkchoiceState(
+        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
+    }
+
+    // TODO: post-merge cleanup, this should be unnecessary after merge
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID_TERMINAL_BLOCK,
+              null,
+              null,
+              Optional.of(newHead.get() + " did not descend from terminal block")));
+    }
+
+    ForkchoiceResult result =
+        mergeCoordinator.updateForkChoice(
+            newHead.get(), forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+
+    if (result.isFailed()) {
+      final Optional<Hash> latestValid = result.getLatestValid();
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID,
+              latestValid.isPresent() ? latestValid.get() : null,
+              null,
+              result.getErrorMessage()));
+    }
+
+    // begin preparing a block if we have a non-empty payload attributes param
+    Optional<PayloadIdentifier> payloadId =
+        optionalPayloadAttributes.map(
+            payloadAttributes ->
+                mergeCoordinator.preparePayload(
+                    newHead.get(),
+                    payloadAttributes.getTimestamp(),
+                    payloadAttributes.getPrevRandao(),
+                    payloadAttributes.getSuggestedFeeRecipient()));
+
+    payloadId.ifPresent(
+        pid ->
+            debugLambda(
+                LOG,
+                "returning identifier {} for requested payload {}",
+                pid::toHexString,
+                () -> optionalPayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
+
+    return new JsonRpcSuccessResponse(
+        requestId,
+        new EngineUpdateForkchoiceResult(
+            VALID,
+            result.getNewHead().map(BlockHeader::getHash).orElse(null),
+            payloadId.orElse(null),
+            Optional.empty()));
+  }
+
+  private boolean isValidForkchoiceState(
+      final Hash safeBlockHash, final Hash finalizedBlockHash, final BlockHeader newBlock) {
+    Optional<BlockHeader> maybeFinalizedBlock = Optional.empty();
+
+    if (!finalizedBlockHash.isZero()) {
+      maybeFinalizedBlock = protocolContext.getBlockchain().getBlockHeader(finalizedBlockHash);
+
+      // if the finalized block hash is not zero, we always need to have its block, because we
+      // only do this check once we have finished syncing
+      if (maybeFinalizedBlock.isEmpty()) {
+        return false;
       }
 
-      // update fork choice
-      ForkchoiceResult result =
-          mergeCoordinator.updateForkChoice(
-              forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
-
-      // only build a block if forkchoice was successful
-      if (result.isSuccessful()) {
-        // begin preparing a block if we have a non-empty payload attributes param
-        Optional<PayloadIdentifier> payloadId =
-            optionalPayloadAttributes.map(
-                payloadAttributes ->
-                    mergeCoordinator.preparePayload(
-                        newHead.get(),
-                        payloadAttributes.getTimestamp(),
-                        payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient()));
-
-        payloadId.ifPresent(
-            pid ->
-                debugLambda(
-                    LOG,
-                    "returning identifier {} for requested payload {}",
-                    pid::toHexString,
-                    () ->
-                        optionalPayloadAttributes.map(
-                            EnginePayloadAttributesParameter::serialize)));
-
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(
-                VALID,
-                result.getNewHead().map(BlockHeader::getHash).orElse(null),
-                payloadId.orElse(null),
-                Optional.empty()));
-      } else if (result.isFailed()) {
-        final Optional<Hash> latestValid = result.getLatestValid();
-        return new JsonRpcSuccessResponse(
-            requestContext.getRequest().getId(),
-            new EngineUpdateForkchoiceResult(
-                INVALID,
-                latestValid.isPresent() ? latestValid.get() : null,
-                null,
-                result.getErrorMessage()));
+      // a valid finalized block must be an ancestor of the new head
+      if (!mergeCoordinator.isDescendantOf(maybeFinalizedBlock.get(), newBlock)) {
+        return false;
       }
     }
 
-    Optional.ofNullable(forkChoice.getHeadBlockHash())
-        .filter(hash -> !hash.equals(Hash.ZERO))
-        .ifPresent(
-            blockhash ->
-                mergeCoordinator.getOrSyncHeaderByHash(
-                    blockhash, forkChoice.getFinalizedBlockHash()));
+    // A zero value is only allowed, if the transition block is not yet finalized.
+    // Once we have at least one finalized block, the transition block has either been finalized
+    // directly
+    // or through one of its descendants.
+    if (safeBlockHash.isZero()) {
+      return finalizedBlockHash.isZero();
+    }
 
+    final Optional<BlockHeader> maybeSafeBlock =
+        protocolContext.getBlockchain().getBlockHeader(safeBlockHash);
+
+    // if the safe block hash is not zero, we always need to have its block, because we
+    // only do this check once we have finished syncing
+    if (maybeSafeBlock.isEmpty()) {
+      return false;
+    }
+
+    // a valid safe block must be a descendant of the finalized block
+    if (maybeFinalizedBlock.isPresent()
+        && !mergeCoordinator.isDescendantOf(maybeFinalizedBlock.get(), maybeSafeBlock.get())) {
+      return false;
+    }
+
+    // a valid safe block must be an ancestor of the new block
+    return mergeCoordinator.isDescendantOf(maybeSafeBlock.get(), newBlock);
+  }
+
+  private JsonRpcResponse syncingResponse(final Object requestId) {
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(),
-        new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+        requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
   }
 }

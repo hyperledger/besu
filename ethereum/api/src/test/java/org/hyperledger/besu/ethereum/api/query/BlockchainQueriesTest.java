@@ -569,7 +569,6 @@ public class BlockchainQueriesTest {
     final List<BlockData> blockData;
     final WorldStateArchive worldStateArchive;
     final BlockchainQueries blockchainQueries;
-    final EthScheduler scheduler;
 
     private BlockchainWithData(
         final MutableBlockchain blockchain,
@@ -579,7 +578,6 @@ public class BlockchainQueriesTest {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
-      this.scheduler = scheduler;
       this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, scheduler);
     }
   }

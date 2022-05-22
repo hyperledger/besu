@@ -23,13 +23,11 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
-import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -62,7 +60,6 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
-import org.hyperledger.besu.cli.options.unstable.MergeOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -89,6 +86,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -203,6 +201,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -282,7 +281,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
-  private final MergeOptions mergeOptions = MergeOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
@@ -308,9 +306,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final MetricCategoryRegistryImpl metricCategoryRegistry =
       new MetricCategoryRegistryImpl();
   private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
-
-  // Public IP stored to prevent having to research it each time we need it.
-  private InetAddress autoDiscoveredDefaultIP = null;
 
   private final PreSynchronizationTaskRunner preSynchronizationTaskRunner =
       new PreSynchronizationTaskRunner();
@@ -355,96 +350,146 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description = "Identification for this node in the Client ID",
       arity = "1")
   private final Optional<String> identityString = Optional.empty();
+  // P2P Discovery Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
+  P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
 
-  // Completely disables P2P within Besu.
-  @Option(
-      names = {"--p2p-enabled"},
-      description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Boolean p2pEnabled = true;
+  static class P2PDiscoveryOptionGroup {
 
-  // Boolean option to indicate if peers should NOT be discovered, default to
-  // false indicates that
-  // the peers should be discovered by default.
-  //
-  // This negative option is required because of the nature of the option that is
-  // true when
-  // added on the command line. You can't do --option=false, so false is set as
-  // default
-  // and you have not to set the option at all if you want it false.
-  // This seems to be the only way it works with Picocli.
-  // Also many other software use the same negative option scheme for false
-  // defaults
-  // meaning that it's probably the right way to handle disabling options.
-  @Option(
-      names = {"--discovery-enabled"},
-      description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Boolean peerDiscoveryEnabled = true;
+    // Public IP stored to prevent having to research it each time we need it.
+    private InetAddress autoDiscoveredDefaultIP = null;
 
-  // A list of bootstrap nodes can be passed
-  // and a hardcoded list will be used otherwise by the Runner.
-  // NOTE: we have no control over default value here.
-  @Option(
-      names = {"--bootnodes"},
-      paramLabel = "<enode://id@host:port>",
-      description =
-          "Comma separated enode URLs for P2P discovery bootstrap. "
-              + "Default is a predefined list.",
-      split = ",",
-      arity = "0..*")
-  private final List<String> bootNodes = null;
+    // Completely disables P2P within Besu.
+    @Option(
+        names = {"--p2p-enabled"},
+        description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Boolean p2pEnabled = true;
 
-  @Option(
-      names = {"--max-peers"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
-  private final Integer maxPeers = DEFAULT_MAX_PEERS;
+    // Boolean option to indicate if peers should NOT be discovered, default to
+    // false indicates that
+    // the peers should be discovered by default.
+    //
+    // This negative option is required because of the nature of the option that is
+    // true when
+    // added on the command line. You can't do --option=false, so false is set as
+    // default
+    // and you have not to set the option at all if you want it false.
+    // This seems to be the only way it works with Picocli.
+    // Also many other software use the same negative option scheme for false
+    // defaults
+    // meaning that it's probably the right way to handle disabling options.
+    @Option(
+        names = {"--discovery-enabled"},
+        description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Boolean peerDiscoveryEnabled = true;
 
-  @Option(
-      names = {"--remote-connections-limit-enabled"},
-      description =
-          "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
-  private final Boolean isLimitRemoteWireConnectionsEnabled = true;
+    // A list of bootstrap nodes can be passed
+    // and a hardcoded list will be used otherwise by the Runner.
+    // NOTE: we have no control over default value here.
+    @Option(
+        names = {"--bootnodes"},
+        paramLabel = "<enode://id@host:port>",
+        description =
+            "Comma separated enode URLs for P2P discovery bootstrap. "
+                + "Default is a predefined list.",
+        split = ",",
+        arity = "0..*")
+    private final List<String> bootNodes = null;
 
-  @Option(
-      names = {"--remote-connections-max-percentage"},
-      paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
-      description =
-          "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
-      arity = "1",
-      converter = PercentageConverter.class)
-  private final Integer maxRemoteConnectionsPercentage =
-      Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
-          .toPercentage()
-          .getValue();
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--p2p-host"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
 
-  @Option(
-      names = {"--random-peer-priority-enabled"},
-      description =
-          "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
-  private final Boolean randomPeerPriority = false;
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @Option(
+        names = {"--p2p-interface"},
+        paramLabel = MANDATORY_HOST_FORMAT_HELP,
+        description =
+            "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private String p2pInterface = NetworkUtility.INADDR_ANY;
 
-  @Option(
-      names = {"--banned-node-ids", "--banned-node-id"},
-      paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
-      description = "A list of node IDs to ban from the P2P network.",
-      split = ",",
-      arity = "1..*")
-  void setBannedNodeIds(final List<String> values) {
-    try {
-      bannedNodeIds =
-          values.stream()
-              .filter(value -> !value.isEmpty())
-              .map(EnodeURLImpl::parseNodeId)
-              .collect(Collectors.toList());
-    } catch (final IllegalArgumentException e) {
-      throw new ParameterException(
-          commandLine, "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
+    @Option(
+        names = {"--p2p-port"},
+        paramLabel = MANDATORY_PORT_FORMAT_HELP,
+        description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
+
+    @Option(
+        names = {"--max-peers"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
+    private final Integer maxPeers = DEFAULT_MAX_PEERS;
+
+    @Option(
+        names = {"--remote-connections-limit-enabled"},
+        description =
+            "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
+    private final Boolean isLimitRemoteWireConnectionsEnabled = true;
+
+    @Option(
+        names = {"--remote-connections-max-percentage"},
+        paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
+        description =
+            "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
+        arity = "1",
+        converter = PercentageConverter.class)
+    private final Integer maxRemoteConnectionsPercentage =
+        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
+            .toPercentage()
+            .getValue();
+
+    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+    @CommandLine.Option(
+        names = {"--discovery-dns-url"},
+        description = "Specifies the URL to use for DNS discovery")
+    private String discoveryDnsUrl = null;
+
+    @Option(
+        names = {"--random-peer-priority-enabled"},
+        description =
+            "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
+    private final Boolean randomPeerPriority = false;
+
+    @Option(
+        names = {"--banned-node-ids", "--banned-node-id"},
+        paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
+        description = "A list of node IDs to ban from the P2P network.",
+        split = ",",
+        arity = "1..*")
+    void setBannedNodeIds(final List<String> values) {
+      try {
+        bannedNodeIds =
+            values.stream()
+                .filter(value -> !value.isEmpty())
+                .map(EnodeURLImpl::parseNodeId)
+                .collect(Collectors.toList());
+      } catch (final IllegalArgumentException e) {
+        throw new ParameterException(
+            new CommandLine(this),
+            "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
+      }
+    }
+
+    private Collection<Bytes> bannedNodeIds = new ArrayList<>();
+
+    // Used to discover the default IP of the client.
+    // Loopback IP is used by default as this is how smokeTests require it to be
+    // and it's probably a good security behaviour to default only on the localhost.
+    private InetAddress autoDiscoverDefaultIP() {
+      autoDiscoveredDefaultIP =
+          Optional.ofNullable(autoDiscoveredDefaultIP).orElseGet(InetAddress::getLoopbackAddress);
+
+      return autoDiscoveredDefaultIP;
     }
   }
-
-  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
 
   @Option(
       names = {"--sync-mode"},
@@ -468,30 +513,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronize against the indicated network, possible values are ${COMPLETION-CANDIDATES}."
               + " (default: ${DEFAULT-VALUE})")
   private final NetworkName network = null;
-
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--p2p-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
-
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @Option(
-      names = {"--p2p-interface"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
-      description =
-          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private String p2pInterface = NetworkUtility.INADDR_ANY;
-
-  @Option(
-      names = {"--p2p-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
-      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
 
   @Option(
       names = {"--nat-method"},
@@ -545,19 +566,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   static class EngineRPCOptionGroup {
     @Option(
-        names = {"--engine-rpc-http-port"},
+        names = {"--engine-rpc-enabled"},
+        description = "deprectaed parameter, do not use.",
+        hidden = true)
+    private final Boolean deprecatedIsEngineRpcEnabled = false;
+
+    @Option(
+        names = {"--engine-rpc-port"},
         paramLabel = MANDATORY_PORT_FORMAT_HELP,
         description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private final Integer engineRpcHttpPort = DEFAULT_ENGINE_JSON_RPC_PORT;
-
-    @Option(
-        names = {"--engine-rpc-ws-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description =
-            "Port for Execution Engine JSON-RPC WebSocket service to listen on (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer engineRpcWsPort = DEFAULT_WEBSOCKET_ENGINE_PORT;
+    private final Integer engineRpcPort = DEFAULT_ENGINE_JSON_RPC_PORT;
 
     @Option(
         names = {"--engine-jwt-secret"},
@@ -1140,7 +1159,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--target-gas-limit"},
       description =
-          "Sets target gas limit per block. If set each block's gas limit will approach this setting over time if the current gas limit is different.")
+          "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
 
   // Tx Pool Option Group
@@ -1262,12 +1281,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the static node file containing the static nodes for this node to connect to")
   private final Path staticNodesFile = null;
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      names = {"--discovery-dns-url"},
-      description = "Specifies the URL to use for DNS discovery")
-  private String discoveryDnsUrl = null;
-
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -1277,7 +1290,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
-  private WebSocketConfiguration engineWebSocketConfiguration;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
@@ -1376,14 +1388,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
-
       // Set the goquorum compatibility mode based on the genesis file
       if (genesisFile != null) {
         genesisConfigOptions = readGenesisConfigOptions();
+
         if (genesisConfigOptions.isQuorum()) {
           enableGoQuorumCompatibilityMode();
         }
       }
+
+      // set merge config on the basis of genesis config
+      setMergeConfigOptions();
 
       instantiateSignatureAlgorithmFactory();
       configureNativeLibs();
@@ -1488,7 +1503,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Launcher", unstableLauncherOptions)
-            .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .build();
@@ -1571,19 +1585,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner buildRunner() {
     return synchronize(
         besuController,
-        p2pEnabled,
+        p2PDiscoveryOptionGroup.p2pEnabled,
         p2pTLSConfiguration,
-        peerDiscoveryEnabled,
+        p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
-        maxPeers,
-        p2pHost,
-        p2pInterface,
-        p2pPort,
+        p2PDiscoveryOptionGroup.maxPeers,
+        p2PDiscoveryOptionGroup.p2pHost,
+        p2PDiscoveryOptionGroup.p2pInterface,
+        p2PDiscoveryOptionGroup.p2pPort,
         graphQLConfiguration,
         jsonRpcConfiguration,
         engineJsonRpcConfiguration,
         webSocketConfiguration,
-        engineWebSocketConfiguration,
         jsonRpcIpcConfiguration,
         apiConfiguration,
         metricsConfiguration,
@@ -1686,7 +1699,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateOptions() {
     issueOptionWarnings();
-    validateP2PInterface(p2pInterface);
+    validateP2PInterface(p2PDiscoveryOptionGroup.p2pInterface);
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
@@ -1800,7 +1813,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
-    final GenesisConfigOptions genesisConfigOptions;
+
     try {
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
@@ -1818,7 +1831,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--p2p-enabled",
-        !p2pEnabled,
+        !p2PDiscoveryOptionGroup.p2pEnabled,
         asList(
             "--bootnodes",
             "--discovery-enabled",
@@ -1858,7 +1871,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--sync-mode",
-        !SyncMode.FAST.equals(syncMode),
+        !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncMode),
         singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -1902,7 +1915,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
     engineJsonRpcConfiguration =
         createEngineJsonRpcConfiguration(
-            engineRPCOptionGroup.engineRpcHttpPort, engineRPCOptionGroup.engineHostsAllowlist);
+            engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration =
@@ -1910,9 +1923,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             jsonRPCWebsocketOptionGroup.rpcWsPort,
             jsonRPCWebsocketOptionGroup.rpcWsApis,
             hostsAllowlist);
-    engineWebSocketConfiguration =
-        engineWebSocketConfiguration(
-            engineRPCOptionGroup.engineRpcWsPort, engineRPCOptionGroup.engineHostsAllowlist);
     jsonRpcIpcConfiguration =
         jsonRpcIpcConfiguration(
             unstableIpcOptions.isEnabled(),
@@ -2070,7 +2080,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
-        .maxPeers(maxPeers);
+        .maxPeers(p2PDiscoveryOptionGroup.maxPeers);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2085,7 +2095,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration.setEnabled(graphQlOptionGroup.isGraphQLHttpEnabled);
     graphQLConfiguration.setHost(
         Strings.isNullOrEmpty(graphQlOptionGroup.graphQLHttpHost)
-            ? autoDiscoverDefaultIP().getHostAddress()
+            ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
             : graphQlOptionGroup.graphQLHttpHost);
     graphQLConfiguration.setPort(graphQlOptionGroup.graphQLHttpPort);
     graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
@@ -2099,6 +2109,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+    if (engineRPCOptionGroup.deprecatedIsEngineRpcEnabled) {
+      logger.warn(
+          "--engine-api-enabled parameter has been deprecated and will be removed in a future release.  "
+              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
+    }
     engineConfig.setEnabled(isMergeEnabled());
     if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
@@ -2112,24 +2127,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     return engineConfig;
-  }
-
-  private WebSocketConfiguration engineWebSocketConfiguration(
-      final Integer listenPort, final List<String> allowCallsFrom) {
-
-    final WebSocketConfiguration webSocketConfiguration =
-        webSocketConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    webSocketConfiguration.setEnabled(isMergeEnabled());
-    if (Boolean.TRUE.equals(engineRPCOptionGroup.isEngineAuthEnabled)) {
-      webSocketConfiguration.setAuthenticationEnabled(true);
-      webSocketConfiguration.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
-      if (engineRPCOptionGroup.engineJwtKeyFile != null
-          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
-        webSocketConfiguration.setAuthenticationPublicKeyFile(
-            engineRPCOptionGroup.engineJwtKeyFile.toFile());
-      }
-    }
-    return webSocketConfiguration;
   }
 
   private JsonRpcConfiguration jsonRpcConfiguration(
@@ -2159,7 +2156,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setEnabled(jsonRPCHttpOptionGroup.isRpcHttpEnabled);
     jsonRpcConfiguration.setHost(
         Strings.isNullOrEmpty(jsonRPCHttpOptionGroup.rpcHttpHost)
-            ? autoDiscoverDefaultIP().getHostAddress()
+            ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
             : jsonRPCHttpOptionGroup.rpcHttpHost);
     jsonRpcConfiguration.setPort(listenPort);
     jsonRpcConfiguration.setMaxActiveConnections(jsonRPCHttpOptionGroup.rpcHttpMaxConnections);
@@ -2362,7 +2359,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     webSocketConfiguration.setEnabled(jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
     webSocketConfiguration.setHost(
         Strings.isNullOrEmpty(jsonRPCWebsocketOptionGroup.rpcWsHost)
-            ? autoDiscoverDefaultIP().getHostAddress()
+            ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
             : jsonRPCWebsocketOptionGroup.rpcWsHost);
     webSocketConfiguration.setPort(listenPort);
     webSocketConfiguration.setMaxFrameSize(jsonRPCWebsocketOptionGroup.rpcWsMaxFrameSize);
@@ -2424,7 +2421,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .enabled(metricsOptionGroup.isMetricsEnabled)
         .host(
             Strings.isNullOrEmpty(metricsOptionGroup.metricsHost)
-                ? autoDiscoverDefaultIP().getHostAddress()
+                ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
                 : metricsOptionGroup.metricsHost)
         .port(metricsOptionGroup.metricsPort)
         .protocol(metricsOptionGroup.metricsProtocol)
@@ -2432,7 +2429,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pushEnabled(metricsOptionGroup.isMetricsPushEnabled)
         .pushHost(
             Strings.isNullOrEmpty(metricsOptionGroup.metricsPushHost)
-                ? autoDiscoverDefaultIP().getHostAddress()
+                ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
                 : metricsOptionGroup.metricsPushHost)
         .pushPort(metricsOptionGroup.metricsPushPort)
         .pushInterval(metricsOptionGroup.metricsPushInterval)
@@ -2767,7 +2764,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration jsonRpcConfiguration,
       final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
-      final WebSocketConfiguration engineWebSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
@@ -2795,21 +2791,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
-            .limitRemoteWireConnectionsEnabled(isLimitRemoteWireConnectionsEnabled)
+            .limitRemoteWireConnectionsEnabled(
+                p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
-                Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue())
-            .randomPeerPriority(randomPeerPriority)
+                Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
+                    .getValue())
+            .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
-            .engineWebSocketConfiguration(engineWebSocketConfiguration)
             .jsonRpcIpcConfiguration(jsonRpcIpcConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
-            .bannedNodeIds(bannedNodeIds)
+            .bannedNodeIds(p2PDiscoveryOptionGroup.bannedNodeIds)
             .metricsSystem(metricsSystem)
             .permissioningService(permissioningService)
             .metricsConfiguration(metricsConfiguration)
@@ -2858,16 +2855,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 "BesuCommand-Shutdown-Hook"));
   }
 
-  // Used to discover the default IP of the client.
-  // Loopback IP is used by default as this is how smokeTests require it to be
-  // and it's probably a good security behaviour to default only on the localhost.
-  private InetAddress autoDiscoverDefaultIP() {
-    autoDiscoveredDefaultIP =
-        Optional.ofNullable(autoDiscoveredDefaultIP).orElseGet(InetAddress::getLoopbackAddress);
-
-    return autoDiscoveredDefaultIP;
-  }
-
   private EthNetworkConfig updateNetworkConfig(final NetworkName network) {
     final EthNetworkConfig.Builder builder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
@@ -2901,14 +2888,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         }
       }
 
-      if (bootNodes == null) {
+      if (p2PDiscoveryOptionGroup.bootNodes == null) {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
     }
 
-    if (discoveryDnsUrl != null) {
-      builder.setDnsDiscoveryUrl(discoveryDnsUrl);
+    if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
+      builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);
     } else if (genesisConfigOptions != null) {
       final Optional<String> discoveryDnsUrlFromGenesis =
           genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
@@ -2920,9 +2907,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     List<EnodeURL> listBootNodes = null;
-    if (bootNodes != null) {
+    if (p2PDiscoveryOptionGroup.bootNodes != null) {
       try {
-        listBootNodes = buildEnodes(bootNodes, getEnodeDnsConfiguration());
+        listBootNodes = buildEnodes(p2PDiscoveryOptionGroup.bootNodes, getEnodeDnsConfiguration());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
@@ -2934,7 +2921,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     if (listBootNodes != null) {
-      if (!peerDiscoveryEnabled) {
+      if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
@@ -2952,7 +2939,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
     } catch (final IOException e) {
       throw new ParameterException(
-          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile), e);
+          this.commandLine, String.format("Unable to load genesis URL %s.", genesisFile), e);
+    }
+  }
+
+  private static String genesisConfig(final NetworkName networkName) {
+    try (final InputStream genesisFileInputStream =
+        EthNetworkConfig.class.getResourceAsStream(networkName.getGenesisFile())) {
+      return new String(genesisFileInputStream.readAllBytes(), UTF_8);
+    } catch (IOException | NullPointerException e) {
+      throw new IllegalStateException(e);
     }
   }
 
@@ -3068,7 +3064,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   private List<Integer> getEffectivePorts() {
     final List<Integer> effectivePorts = new ArrayList<>();
-    addPortIfEnabled(effectivePorts, p2pPort, p2pEnabled);
+    addPortIfEnabled(
+        effectivePorts, p2PDiscoveryOptionGroup.p2pPort, p2PDiscoveryOptionGroup.p2pEnabled);
     addPortIfEnabled(
         effectivePorts,
         graphQlOptionGroup.graphQLHttpPort,
@@ -3081,8 +3078,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         jsonRPCWebsocketOptionGroup.rpcWsPort,
         jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
-    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcHttpPort, isMergeEnabled());
-    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcWsPort, isMergeEnabled());
+    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isMergeEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
@@ -3188,6 +3184,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // this static flag is read by the RLP decoder
     GoQuorumOptions.setGoQuorumCompatibilityMode(true);
     isGoQuorumCompatibilityMode = true;
+  }
+
+  private void setMergeConfigOptions() {
+    MergeConfigOptions.setMergeEnabled(
+        Optional.ofNullable(genesisConfigOptions)
+            .orElseGet(
+                () ->
+                    GenesisConfigFile.fromConfig(
+                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                        .getConfigOptions(genesisConfigOverrides))
+            .getTerminalTotalDifficulty()
+            .isPresent());
+  }
+
+  private boolean isMergeEnabled() {
+    return MergeConfigOptions.isMergeEnabled();
   }
 
   public static List<String> getJDKEnabledCypherSuites() {

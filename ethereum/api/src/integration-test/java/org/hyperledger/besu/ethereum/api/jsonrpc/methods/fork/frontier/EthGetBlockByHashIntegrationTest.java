@@ -36,9 +36,9 @@ import java.util.Map;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthGetBlockByHashIntegrationTest {
 
@@ -49,7 +49,7 @@ public class EthGetBlockByHashIntegrationTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ZERO_HASH = String.valueOf(Hash.ZERO);
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
@@ -59,7 +59,7 @@ public class EthGetBlockByHashIntegrationTest {
             new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     methods = BLOCKCHAIN.methods();
   }

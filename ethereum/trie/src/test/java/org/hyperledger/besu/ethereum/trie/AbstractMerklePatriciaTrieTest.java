@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.trie;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -50,9 +51,10 @@ public abstract class AbstractMerklePatriciaTrieTest {
         .isEqualTo("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void throwsOnUpdateWithNull() {
-    trie.put(Bytes.EMPTY, (String) null);
+    assertThatThrownBy(() -> trie.put(Bytes.EMPTY, (String) null))
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
