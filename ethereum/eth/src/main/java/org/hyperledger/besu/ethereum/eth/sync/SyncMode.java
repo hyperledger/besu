@@ -84,7 +84,7 @@ public enum SyncMode {
                   syncState,
                   clock)
               .orElseThrow(),
-          FAST.create(
+          FULL.create(
               pivotBlockSelector,
               syncConfig,
               dataDirectory,

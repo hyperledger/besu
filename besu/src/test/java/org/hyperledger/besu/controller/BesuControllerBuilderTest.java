@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -112,6 +113,7 @@ public class BesuControllerBuilderTest {
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
 
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
+    when(synchronizerConfiguration.getSyncMode()).thenReturn(SyncMode.FULL);
 
     when(observableMetricsSystem.createLabelledCounter(
             any(), anyString(), anyString(), anyString()))
