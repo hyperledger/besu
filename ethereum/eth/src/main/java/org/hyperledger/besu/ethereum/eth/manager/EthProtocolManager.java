@@ -263,7 +263,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       // of non status
       // messages before we disconnect with BREACH_OF_PROTOCOL
       final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
-      LOG.debug("Have recieved a status mes ");
       if (disconnect) {
         LOG.debug(
             "Received non-status message before status message. Diconnecting peer {}, connection {}",

@@ -67,7 +67,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
-  private static final int MAX_NON_STATUS_MESSAGES = 5;
+  private static final int MAX_NON_STATUS_MESSAGES = 10;
 
   private final int maxTrackedSeenBlocks = 300;
 
