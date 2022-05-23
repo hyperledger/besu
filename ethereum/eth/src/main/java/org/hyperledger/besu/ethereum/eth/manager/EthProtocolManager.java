@@ -256,35 +256,23 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (code == EthPV62.STATUS) {
       handleStatusMessage(ethPeer, messageData);
       return;
+    } else if (!ethPeer.statusHasBeenReceived()) {
+      // first message received should be the status message. Currently we can not guarantee that a
+      // message that
+      // has been sent first reaches this method first, so we are lenient and allow a limited number
+      // of non status
+      // messages before we disconnect with BREACH_OF_PROTOCOL
+      final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
+      LOG.debug("Have recieved a status mes ");
+      if (disconnect) {
+        LOG.debug(
+            "Received non-status message before status message. Diconnecting peer {}, connection {}",
+            ethPeer.getPeerId(),
+            System.identityHashCode(message.getConnection()));
+        ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+        return;
+      }
     }
-    //    else if (!ethPeer.statusHasBeenReceived()) {
-    //      // Peers are required to send status messages before any other message type
-    //      if (delayedToWaitForStatus) {
-    //        LOG.debug(
-    //            "{} requires a Status ({}) message to be sent first.  Instead, received message
-    // {}.  Disconnecting from {}. Connection {}",
-    //            this.getClass().getSimpleName(),
-    //            EthPV62.STATUS,
-    //            code,
-    //            ethPeer,
-    //            System.identityHashCode(message.getConnection()));
-    //        ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    //      } else {
-    //        // due to threading there is a chance that the status message has already been
-    // received, but
-    //        // not processed
-    //        // wait for a second before continuing to process this message to give that status
-    // message a
-    //        // chance
-    //        try {
-    //          Thread.sleep(1000);
-    //        } catch (final InterruptedException e) {
-    //          // do nothing
-    //        }
-    //        processMessage(cap, message, true);
-    //      }
-    //      return;
-    //    }
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 

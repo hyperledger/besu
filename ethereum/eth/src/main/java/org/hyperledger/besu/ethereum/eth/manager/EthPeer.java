@@ -67,6 +67,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
+  private static final int MAX_NON_STATUS_MESSAGES = 5;
 
   private final int maxTrackedSeenBlocks = 300;
 
@@ -88,6 +89,8 @@ public class EthPeer implements Comparable<EthPeer> {
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
   private final Bytes peerId;
+  private int nonStatusCount = 0;
+
   private PeerConnection connection;
 
   private volatile long lastRequestTimestamp = 0;
@@ -593,6 +596,19 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void setConnection(final PeerConnection peerConnection) {
     this.connection = peerConnection;
+  }
+
+  public boolean incrNonStatusCountAndCheck() {
+    LOG.debug(
+        "Have received {} messages before receiving the status message from peer {} with connection {}. BREACH? {}",
+        nonStatusCount + 1,
+        peerId,
+        System.identityHashCode(connection),
+        (nonStatusCount + 1) >= MAX_NON_STATUS_MESSAGES);
+    if (++nonStatusCount >= MAX_NON_STATUS_MESSAGES) {
+      return true;
+    }
+    return false;
   }
 
   @FunctionalInterface
