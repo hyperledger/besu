@@ -183,7 +183,13 @@ public class BackwardSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture() {
-    return new BackwardsSyncAlgorithm(this).executeBackwardsSync(null);
+    final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
+    return new BackwardsSyncAlgorithm(
+            this,
+            FinalBlockConfirmation.confirmationChain(
+                FinalBlockConfirmation.genesisConfirmation(blockchain),
+                FinalBlockConfirmation.finalizedConfirmation(blockchain)))
+        .executeBackwardsSync(null);
   }
 
   public ProtocolSchedule getProtocolSchedule() {

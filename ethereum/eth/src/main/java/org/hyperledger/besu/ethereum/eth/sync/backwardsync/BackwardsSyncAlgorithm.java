@@ -17,12 +17,11 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -37,10 +36,13 @@ public class BackwardsSyncAlgorithm {
   private static final Logger LOG = getLogger(BackwardsSyncAlgorithm.class);
 
   private final BackwardSyncContext context;
+  private final FinalBlockConfirmation finalBlockConfirmation;
   private volatile boolean finished = false;
 
-  public BackwardsSyncAlgorithm(final BackwardSyncContext context) {
+  public BackwardsSyncAlgorithm(
+      final BackwardSyncContext context, final FinalBlockConfirmation finalBlockConfirmation) {
     this.context = context;
+    this.finalBlockConfirmation = finalBlockConfirmation;
   }
 
   public CompletableFuture<Void> executeBackwardsSync(final Void unused) {
@@ -73,8 +75,8 @@ public class BackwardsSyncAlgorithm {
     if (blockchain.contains(firstAncestorHeader.get().getHash())) {
       return executeProcessKnownAncestors();
     }
-    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.get().getNumber() - 1) {
-      infoLambda(
+    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.get().getNumber()) {
+      debugLambda(
           LOG,
           "Backward reached bellow previous head {}({}) : {} ({})",
           () -> blockchain.getChainHead().getHeight(),
@@ -83,32 +85,11 @@ public class BackwardsSyncAlgorithm {
           () -> firstAncestorHeader.get().getHash());
     }
 
-    if (firstAncestorHeader.get().getNumber() == 0) {
-      final BlockHeader genesisBlockHeader =
-          blockchain
-              .getBlockHeader(0)
-              .orElseThrow(
-                  () -> new IllegalStateException("Really we do not have the genesis block?"));
-
-      if (genesisBlockHeader.getHash().equals(firstAncestorHeader.get().getHash())) {
-        LOG.info("Backward sync reached genesis, starting Forward sync");
-        return executeForwardAsync();
-      } else {
-        return CompletableFuture.failedFuture(
-            new BackwardSyncException(
-                String.format(
-                    "Backward sync reached genesis, but ancestor header hash %s does not match our genesis header hash %s",
-                    firstAncestorHeader.get().getHash(), genesisBlockHeader.getHash())));
-      }
-    }
-    final Optional<Block> finalized = blockchain.getFinalized().flatMap(blockchain::getBlockByHash);
-    if (finalized.isPresent()
-        && (finalized.get().getHeader().getNumber() >= firstAncestorHeader.get().getNumber())) {
-      throw new BackwardSyncException("Cannot continue bellow finalized...");
-    }
-    if (blockchain.contains(firstAncestorHeader.get().getParentHash())) {
+    if (finalBlockConfirmation.finalHeaderReached(firstAncestorHeader.get())) {
+      LOG.info("Backward sync reached final header, starting Forward sync");
       return executeForwardAsync();
     }
+
     return executeBackwardAsync(firstAncestorHeader.get());
   }
 

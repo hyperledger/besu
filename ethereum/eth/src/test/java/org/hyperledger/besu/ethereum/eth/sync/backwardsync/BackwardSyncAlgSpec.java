@@ -94,7 +94,13 @@ public class BackwardSyncAlgSpec {
       }
     }
 
-    algorithm = Mockito.spy(new BackwardsSyncAlgorithm(context));
+    algorithm =
+        Mockito.spy(
+            new BackwardsSyncAlgorithm(
+                context,
+                FinalBlockConfirmation.confirmationChain(
+                    FinalBlockConfirmation.genesisConfirmation(localBlockchain),
+                    FinalBlockConfirmation.finalizedConfirmation(localBlockchain))));
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
   }
 
@@ -256,7 +262,8 @@ public class BackwardSyncAlgSpec {
 
   @Test
   public void successionShouldIgnoreEmptyFinalized() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm = new BackwardsSyncAlgorithm(context);
+    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
+        new BackwardsSyncAlgorithm(context, firstHeader -> false);
 
     Optional<Hash> finalized = localBlockchain.getFinalized();
     assertThat(finalized).isEmpty();
@@ -269,7 +276,8 @@ public class BackwardSyncAlgSpec {
 
   @Test
   public void successionShouldSetFinalizedFromEmpty() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm = new BackwardsSyncAlgorithm(context);
+    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
+        new BackwardsSyncAlgorithm(context, firstHeader -> false);
 
     Optional<Hash> finalized = localBlockchain.getFinalized();
     assertThat(finalized).isEmpty();
@@ -284,7 +292,8 @@ public class BackwardSyncAlgSpec {
 
   @Test
   public void successionShouldIgnoreFinalisedWhenNotImportedYet() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm = new BackwardsSyncAlgorithm(context);
+    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
+        new BackwardsSyncAlgorithm(context, firstHeader -> false);
 
     Optional<Hash> finalized = localBlockchain.getFinalized();
     assertThat(finalized).isEmpty();
@@ -298,7 +307,8 @@ public class BackwardSyncAlgSpec {
 
   @Test
   public void successionShouldKeepFinalizedWhenNotChanged() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm = new BackwardsSyncAlgorithm(context);
+    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
+        new BackwardsSyncAlgorithm(context, firstHeader -> false);
 
     Optional<Hash> finalized = localBlockchain.getFinalized();
     assertThat(finalized).isEmpty();
@@ -315,7 +325,8 @@ public class BackwardSyncAlgSpec {
 
   @Test
   public void successionShouldThrowWhenFinalizingBellowPreviousFinalized() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm = new BackwardsSyncAlgorithm(context);
+    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
+        new BackwardsSyncAlgorithm(context, firstHeader -> false);
 
     Optional<Hash> finalized = localBlockchain.getFinalized();
     assertThat(finalized).isEmpty();
@@ -342,7 +353,8 @@ public class BackwardSyncAlgSpec {
 
   @Test
   public void successionShouldUpdateOldFinalizedToNewFinalized() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm = new BackwardsSyncAlgorithm(context);
+    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
+        new BackwardsSyncAlgorithm(context, firstHeader -> false);
 
     Optional<Hash> finalized = localBlockchain.getFinalized();
     assertThat(finalized).isEmpty();
@@ -392,8 +404,13 @@ public class BackwardSyncAlgSpec {
 
     final BackwardChain backwardChain = createBackwardChain(0, 1);
     doReturn(backwardChain).when(context).getBackwardChain();
-    CompletableFuture<Void> res = algorithm.pickNextStep();
-    assertThat(res.isCompletedExceptionally()).isTrue();
+    algorithm =
+        Mockito.spy(
+            new BackwardsSyncAlgorithm(
+                context, FinalBlockConfirmation.genesisConfirmation(otherLocalBlockchain)));
+    assertThatThrownBy(() -> algorithm.pickNextStep())
+        .isInstanceOf(BackwardSyncException.class)
+        .hasMessageContaining("Should have reached header");
   }
 
   private MutableBlockchain createForkedBlockchain(final Block genesisBlock) {
