@@ -51,6 +51,7 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
+import org.rocksdb.RateLimiter;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
@@ -96,6 +97,11 @@ public class RocksDBColumnarKeyValueStorage
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setCompressionType(CompressionType.LZ4_COMPRESSION)
+                              .setWriteBufferSize(1_073_741_824L)
+                              .setMaxBytesForLevelBase(67_108_864L)
+                              .setLevel0SlowdownWritesTrigger(10_485_760)
+                              .setHardPendingCompactionBytesLimit(549_755_813_888L)
+                              .setSoftPendingCompactionBytesLimit(274_877_906_944L)
                               .setTtl(0)))
               .collect(Collectors.toList());
       columnDescriptors.add(
@@ -103,6 +109,11 @@ public class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
+                  .setWriteBufferSize(1_073_741_824L)
+                  .setMaxBytesForLevelBase(67_108_864L)
+                  .setLevel0SlowdownWritesTrigger(10_485_760)
+                  .setHardPendingCompactionBytesLimit(549_755_813_888L)
+                  .setSoftPendingCompactionBytesLimit(274_877_906_944L)
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
@@ -114,6 +125,9 @@ public class RocksDBColumnarKeyValueStorage
               .setMaxSubcompactions(Runtime.getRuntime().availableProcessors())
               .setStatistics(stats)
               .setCreateMissingColumnFamilies(true)
+              .setWalBytesPerSync(1_048_576L)
+              .setBytesPerSync(1_048_576L)
+              .setRateLimiter(new RateLimiter(1_024_000L))
               .setEnv(
                   Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
 
