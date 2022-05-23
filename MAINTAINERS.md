@@ -2,7 +2,7 @@
 
 <!-- Please keep all lists sorted alphabetically by github -->
 
-## Active Code Maintainers
+## Active Maintainers
 
 <!-- besu-maintainers group has maintainer access to besu repo -->
 
@@ -57,14 +57,13 @@
 Besu welcomes community contribution.
 Each community member may progress to become a maintainer.
 
-There are two ways to become a maintainer:
+How to become a maintainer:
 
 - Contribute significantly to the code in this repository.
-- Contribute significantly to the doc or being recognized as great help by other contributors.
   
-### Code maintainers contribution requirement
+### Maintainers contribution requirement
 
-The requirement to be able to be proposed as a code maintainer is:
+The requirement to be able to be proposed as a maintainer is:
 
 - 5 significant changes on code have been authored in this repos by the proposed maintainer and accepted (merged PRs).
   
@@ -72,7 +71,6 @@ The requirement to be able to be proposed as a code maintainer is:
 
 The following steps must occur for a contributor to be "upgraded" as a maintainer:
 
-- The proposed maintainer meets the expectations for the targeted maintainership type (see [code](#code-maintainers-contribution-requirement) and [non code](#other-maintainers-contribution-requirement) types.)
 - The proposed maintainer has the sponsorship of at least one other maintainer.
   - This sponsoring maintainer will create a proposal PR modifying the list of
     maintainers. (see [proposal PR template](#proposal-pr-template).)
@@ -131,7 +129,6 @@ There is no contribution prescription delay.
 ```markdown
 I propose to add [maintainer github handle] as a Besu project maintainer.
 
-<!-- for code contributors -->
 [maintainer github handle] contributed with many high quality commits:
 
 - [list significant achievements]
