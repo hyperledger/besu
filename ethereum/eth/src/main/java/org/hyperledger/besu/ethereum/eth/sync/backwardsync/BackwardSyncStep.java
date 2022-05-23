@@ -68,7 +68,7 @@ public class BackwardSyncStep {
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
-                context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
+                0,
                 context.getBatchSize(),
                 context.getMetricsSystem());
     return context
