@@ -205,12 +205,23 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordUselessResponse(final String requestType) {
     LOG.debug("Received useless response for {} from peer {}", requestType, this);
-    reputation.recordUselessResponse().ifPresent(this::disconnect);
+    reputation
+        .recordUseless()
+        .ifPresent(
+            disconnectReason -> {
+              LOG.debug("Disconnecting {}", this);
+              disconnect(disconnectReason);
+            });
   }
 
   public void recordUselessPeerAndDisconnect() {
-    reputation.recordUselessPeer();
-    disconnect(DisconnectReason.USELESS_PEER);
+    reputation
+        .recordUseless()
+        .ifPresent(
+            disconnectReason -> {
+              LOG.debug("Disconnecting {}", this);
+              disconnect(disconnectReason);
+            });
   }
 
   public void disconnect(final DisconnectReason reason) {

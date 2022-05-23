@@ -38,7 +38,7 @@ public class PeerReputationTest {
 
   @Test
   public void shouldOnlyDisconnectWhenEmptyResponseThresholdReached() {
-    assertThat(reputation.recordUselessResponse()).isEmpty();
-    assertThat(reputation.recordUselessResponse()).contains(USELESS_PEER);
+    assertThat(reputation.recordUseless()).isEmpty();
+    assertThat(reputation.recordUseless()).contains(USELESS_PEER);
   }
 }

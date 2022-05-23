@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,13 +36,24 @@ public class PeerReputation implements Comparable<PeerReputation> {
 
   private static final int DEFAULT_SCORE = 20;
   private static final int LARGE_ADJUSTMENT = 10;
+  private static final int BAN_DURATION = 600;
 
   private int score = DEFAULT_SCORE;
+
+  private final Timer banTimer = new Timer("BanTimer");
+  private final TimerTask banTimerTask =
+      new TimerTask() {
+        @Override
+        public void run() {
+          score = DEFAULT_SCORE;
+        }
+      };
 
   public Optional<DisconnectReason> recordRequestTimeout() {
     score -= LARGE_ADJUSTMENT;
     if (score <= 0) {
       LOG.debug("Disconnection triggered by timeout");
+      startBanTimer();
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
       return Optional.empty();
@@ -51,18 +64,19 @@ public class PeerReputation implements Comparable<PeerReputation> {
     return timeoutCountByRequestType;
   }
 
-  public Optional<DisconnectReason> recordUselessResponse() {
+  public Optional<DisconnectReason> recordUseless() {
     score -= LARGE_ADJUSTMENT;
     if (score <= 0) {
       LOG.debug("Disconnection triggered by by useless response");
+      startBanTimer();
       return Optional.of(DisconnectReason.USELESS_PEER);
     } else {
       return Optional.empty();
     }
   }
 
-  public void recordUselessPeer() {
-    score -= LARGE_ADJUSTMENT;
+  private void startBanTimer() {
+    banTimer.schedule(banTimerTask, BAN_DURATION);
   }
 
   @Override
