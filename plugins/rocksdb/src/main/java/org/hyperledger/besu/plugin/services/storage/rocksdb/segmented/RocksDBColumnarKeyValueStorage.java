@@ -97,6 +97,11 @@ public class RocksDBColumnarKeyValueStorage
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setCompressionType(CompressionType.LZ4_COMPRESSION)
+                              .setWriteBufferSize(1_073_741_824L)
+                              .setMaxBytesForLevelBase(67_108_864L)
+                              .setLevel0SlowdownWritesTrigger(10_485_760)
+                              .setHardPendingCompactionBytesLimit(549_755_813_888L)
+                              .setSoftPendingCompactionBytesLimit(274_877_906_944L)
                               .setTtl(0)))
               .collect(Collectors.toList());
       columnDescriptors.add(
@@ -104,6 +109,11 @@ public class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
+                  .setWriteBufferSize(1_073_741_824L)
+                  .setMaxBytesForLevelBase(67_108_864L)
+                  .setLevel0SlowdownWritesTrigger(10_485_760)
+                  .setHardPendingCompactionBytesLimit(549_755_813_888L)
+                  .setSoftPendingCompactionBytesLimit(274_877_906_944L)
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
