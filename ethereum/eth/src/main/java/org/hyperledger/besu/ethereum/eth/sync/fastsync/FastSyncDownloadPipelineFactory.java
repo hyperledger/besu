@@ -48,7 +48,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
-  private final FastSyncState fastSyncState;
+  private final PivotProvider pivotProvider;
   private final MetricsSystem metricsSystem;
   private final FastSyncValidationPolicy attachedValidationPolicy;
   private final FastSyncValidationPolicy detachedValidationPolicy;
@@ -59,13 +59,13 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final FastSyncState fastSyncState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final PivotProvider pivotProvider) {
     this.syncConfig = syncConfig;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.fastSyncState = fastSyncState;
+    this.pivotProvider = pivotProvider;
     this.metricsSystem = metricsSystem;
     final LabelledMetric<Counter> fastSyncValidationCounter =
         metricsSystem.createLabelledCounter(
@@ -101,7 +101,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
             new CheckpointHeaderFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+                syncConfig, protocolSchedule, ethContext, metricsSystem, pivotProvider),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -153,7 +153,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
   private boolean shouldContinueDownloadingFromPeer(
       final EthPeer peer, final BlockHeader lastCheckpointHeader) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = pivotProvider.providePivot();
     return !peer.isDisconnected()
         && lastCheckpointHeader.getNumber() < pivotBlockHeader.getNumber();
   }

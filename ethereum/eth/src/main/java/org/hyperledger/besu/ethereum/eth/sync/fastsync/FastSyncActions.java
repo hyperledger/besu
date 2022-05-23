@@ -239,7 +239,7 @@ public class FastSyncActions {
     return fastSyncState;
   }
 
-  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+  public ChainDownloader createChainDownloader(final PivotProvider pivotProvider) {
     return FastSyncChainDownloader.create(
         syncConfig,
         worldStateStorage,
@@ -248,7 +248,7 @@ public class FastSyncActions {
         ethContext,
         syncState,
         metricsSystem,
-        currentState);
+        pivotProvider);
   }
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {

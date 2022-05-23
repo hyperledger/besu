@@ -197,7 +197,8 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
       }
       final CompletableFuture<Void> worldStateFuture =
           worldStateDownloader.run(fastSyncActions, currentState);
-      final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(currentState);
+      final ChainDownloader chainDownloader =
+          fastSyncActions.createChainDownloader(() -> currentState.getPivotBlockHeader());
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.

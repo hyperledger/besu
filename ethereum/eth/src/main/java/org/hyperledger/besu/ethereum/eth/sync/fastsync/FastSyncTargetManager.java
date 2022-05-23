@@ -44,7 +44,7 @@ class FastSyncTargetManager extends SyncTargetManager {
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final FastSyncState fastSyncState;
+  private final PivotProvider pivotProvider;
 
   public FastSyncTargetManager(
       final SynchronizerConfiguration config,
@@ -53,19 +53,18 @@ class FastSyncTargetManager extends SyncTargetManager {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState) {
+      final PivotProvider pivotProvider) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.worldStateStorage = worldStateStorage;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.fastSyncState = fastSyncState;
+    this.pivotProvider = pivotProvider;
   }
 
   @Override
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
       LOG.info(
@@ -74,7 +73,7 @@ class FastSyncTargetManager extends SyncTargetManager {
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
-      if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
+      if (bestPeer.chainState().getEstimatedHeight() < pivotProvider.providePivot().getNumber()) {
         LOG.info(
             "No sync target with sufficient chain height, waiting for peers: {}",
             ethContext.getEthPeers().peerCount());
@@ -86,7 +85,7 @@ class FastSyncTargetManager extends SyncTargetManager {
   }
 
   private CompletableFuture<Optional<EthPeer>> confirmPivotBlockHeader(final EthPeer bestPeer) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = pivotProvider.providePivot();
     final RetryingGetHeaderFromPeerByNumberTask task =
         RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
             protocolSchedule,
@@ -121,13 +120,13 @@ class FastSyncTargetManager extends SyncTargetManager {
   }
 
   private boolean peerHasDifferentPivotBlock(final List<BlockHeader> result) {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = pivotProvider.providePivot();
     return result.size() != 1 || !result.get(0).equals(pivotBlockHeader);
   }
 
   @Override
   public boolean shouldContinueDownloading() {
-    final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader pivotBlockHeader = pivotProvider.providePivot();
     return !protocolContext.getBlockchain().getChainHeadHash().equals(pivotBlockHeader.getHash())
         || !worldStateStorage.isWorldStateAvailable(
             pivotBlockHeader.getStateRoot(), pivotBlockHeader.getBlockHash());

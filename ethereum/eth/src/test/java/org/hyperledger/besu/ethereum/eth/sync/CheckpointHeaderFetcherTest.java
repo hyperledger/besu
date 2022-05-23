@@ -213,6 +213,7 @@ public class CheckpointHeaderFetcherTest {
 
   private CheckpointHeaderFetcher createCheckpointHeaderFetcher(final BlockHeader targetHeader) {
     final EthContext ethContext = ethProtocolManager.ethContext();
+    final FastSyncState fastSyncState = new FastSyncState(targetHeader);
     return new CheckpointHeaderFetcher(
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(SEGMENT_SIZE)
@@ -220,8 +221,8 @@ public class CheckpointHeaderFetcherTest {
             .build(),
         protocolSchedule,
         ethContext,
-        new FastSyncState(targetHeader),
-        metricsSystem);
+        metricsSystem,
+        () -> fastSyncState.getPivotBlockHeader());
   }
 
   private BlockHeader header(final long blockNumber) {

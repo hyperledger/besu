@@ -36,7 +36,7 @@ public class FastSyncChainDownloader {
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState) {
+      final PivotProvider pivotProvider) {
 
     final FastSyncTargetManager syncTargetManager =
         new FastSyncTargetManager(
@@ -46,13 +46,13 @@ public class FastSyncChainDownloader {
             protocolContext,
             ethContext,
             metricsSystem,
-            fastSyncState);
+            pivotProvider);
 
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
         new FastSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+            config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotProvider),
         ethContext.getScheduler(),
         metricsSystem);
   }
