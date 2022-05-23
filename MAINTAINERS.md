@@ -70,7 +70,7 @@ The requirement to be able to be proposed as a code maintainer is:
   
 ### Maintainers approval process
 
-For both types of maintainers, the following steps must occur for a contributor to be "upgraded" as a maintainer:
+The following steps must occur for a contributor to be "upgraded" as a maintainer:
 
 - The proposed maintainer meets the expectations for the targeted maintainership type (see [code](#code-maintainers-contribution-requirement) and [non code](#other-maintainers-contribution-requirement) types.)
 - The proposed maintainer has the sponsorship of at least one other maintainer.
