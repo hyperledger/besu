@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
