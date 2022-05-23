@@ -95,7 +95,7 @@ public class RocksDBColumnarKeyValueStorage
                       new ColumnFamilyDescriptor(
                           segment.getId(),
                           new ColumnFamilyOptions()
-                              .setCompressionType(CompressionType.ZSTD_COMPRESSION)
+                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
                               .setTtl(0)))
               .collect(Collectors.toList());
       columnDescriptors.add(
@@ -103,7 +103,7 @@ public class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
-                  .setCompressionType(CompressionType.ZSTD_COMPRESSION)
+                  .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
@@ -111,7 +111,7 @@ public class RocksDBColumnarKeyValueStorage
           new DBOptions()
               .setCreateIfMissing(true)
               .setMaxOpenFiles(configuration.getMaxOpenFiles())
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
+              .setMaxSubcompactions(Runtime.getRuntime().availableProcessors())
               .setStatistics(stats)
               .setCreateMissingColumnFamilies(true)
               .setEnv(
