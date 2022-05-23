@@ -84,11 +84,11 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public void fireNewForkchoiceMessageEvent(
+  public void fireNewUnverifiedForkchoiceMessageEvent(
       final Hash headBlockHash,
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash) {
-    postMergeContext.fireNewForkchoiceMessageEvent(
+    postMergeContext.fireNewUnverifiedForkchoiceMessageEvent(
         headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
   }
 
@@ -105,6 +105,16 @@ public class TransitionContext implements MergeContext {
   @Override
   public Optional<BlockHeader> getFinalized() {
     return postMergeContext.getFinalized();
+  }
+
+  @Override
+  public void setSafeBlock(final BlockHeader blockHeader) {
+    postMergeContext.setSafeBlock(blockHeader);
+  }
+
+  @Override
+  public Optional<BlockHeader> getSafeBlock() {
+    return postMergeContext.getSafeBlock();
   }
 
   @Override

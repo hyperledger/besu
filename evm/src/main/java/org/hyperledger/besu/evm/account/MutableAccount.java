@@ -50,7 +50,7 @@ public interface MutableAccount extends Account {
    */
   default Wei incrementBalance(final Wei value) {
     final Wei current = getBalance();
-    setBalance(current.add(value));
+    setBalance(current.addExact(value));
     return current;
   }
 

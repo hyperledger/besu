@@ -73,8 +73,7 @@ public class AllowlistPersistor {
             ? configItems.get(allowlistType)
             : Collections.emptyList();
 
-    boolean listsMatch = existingValues.containsAll(checkLists);
-    if (!listsMatch) {
+    if (!existingValues.containsAll(checkLists)) {
       debugLambda(
           LOG,
           "\n LISTS DO NOT MATCH configFile::",
@@ -83,7 +82,7 @@ public class AllowlistPersistor {
       debugLambda(LOG, "\nLISTS DO NOT MATCH in-memory ::", checkLists::toString);
       throw new AllowlistFileSyncException();
     }
-    return listsMatch;
+    return true;
   }
 
   public boolean verifyConfigFileMatchesState(

@@ -45,6 +45,13 @@ public interface Blockchain {
   Optional<Hash> getFinalized();
 
   /**
+   * Return the last safe block hash if present.
+   *
+   * @return The hash of the last safe block
+   */
+  Optional<Hash> getSafeBlock();
+
+  /**
    * Return the block number of the head of the canonical chain.
    *
    * @return The block number of the head of the chain.

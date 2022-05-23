@@ -19,7 +19,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.config.QbftConfigOptions;
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -212,8 +211,8 @@ public class BesuController implements java.io.Closeable {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
 
-      // use merge config if experimental merge flag is enabled:
-      if (MergeConfigOptions.isMergeEnabled()) {
+      // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
+      if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
         // series of classes removed after we successfully transition to PoS
         // https://github.com/hyperledger/besu/issues/2897
