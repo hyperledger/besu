@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -101,7 +101,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   @Override
   public CompletableFuture<Void> run(
-      final FastSyncActions fastSyncActions, final FastSyncState fastSyncState) {
+      final FastSyncActions fastSyncActions, final PivotHolder pivotHolder) {
     synchronized (this) {
       final SnapWorldDownloadState oldDownloadState = this.downloadState.get();
       if (oldDownloadState != null && oldDownloadState.isDownloading()) {
@@ -112,8 +112,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         return failed;
       }
 
-      final SnapSyncState snapSyncState = (SnapSyncState) fastSyncState;
-      final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
+      final SnapSyncState snapSyncState = new SnapSyncState(pivotHolder);
+      final BlockHeader header = pivotHolder.getPivotBlockHeader();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(
           "Downloading world state from peers for block {} ({}). State root {} pending request "
@@ -147,7 +147,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final DynamicPivotBlockManager dynamicPivotBlockManager =
           new DynamicPivotBlockManager(
               fastSyncActions,
-              snapSyncState,
+              snapSyncState.getFastSyncState(),
               snapSyncConfiguration.getPivotBlockWindowValidity(),
               snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());
 
@@ -163,7 +163,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                   new RequestDataStep(
                       ethContext,
                       worldStateStorage,
-                      snapSyncState,
+                      snapSyncState.getFastSyncState(),
                       newDownloadState,
                       metricsSystem))
               .persistDataStep(

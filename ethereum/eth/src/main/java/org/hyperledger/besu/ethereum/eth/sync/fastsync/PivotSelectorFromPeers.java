@@ -35,11 +35,11 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
+  public Optional<PivotBlockProposal> selectNewPivotBlock(final EthPeer peer) {
     return fromBestPeer(peer);
   }
 
-  private Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
+  private Optional<PivotBlockProposal> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
         peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
@@ -48,6 +48,6 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
       return Optional.empty();
     }
     LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-    return Optional.of(new FastSyncState(pivotBlockNumber));
+    return Optional.of(new PivotBlockProposal(pivotBlockNumber));
   }
 }

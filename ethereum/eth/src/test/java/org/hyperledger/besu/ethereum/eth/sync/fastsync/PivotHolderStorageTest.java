@@ -27,12 +27,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class FastSyncStateStorageTest {
+public class PivotHolderStorageTest {
   @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
 
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
-  private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
+  private final PivotHolder syncStateWithHeader = new PivotHolder(pivotBlockHeader);
   private File tempDir;
 
   @Before
@@ -58,26 +58,28 @@ public class FastSyncStateStorageTest {
   @Test
   public void shouldRoundTripHeader() {
     storage.storeState(syncStateWithHeader);
-    assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
+        .isEqualTo(syncStateWithHeader.toProposal());
 
     final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
     assertThat(newStorage.loadState(new MainnetBlockHeaderFunctions()))
-        .isEqualTo(syncStateWithHeader);
+        .isEqualTo(syncStateWithHeader.toProposal());
   }
 
   @Test
   public void shouldReturnEmptyWhenLoadingHeaderAndFileDoesNotExist() {
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
-        .isEqualTo(FastSyncState.EMPTY_SYNC_STATE);
+        .isEqualTo(PivotBlockProposal.EMPTY_SYNC_STATE);
   }
 
   @Test
   public void shouldRemoveStateFileWhenStoringFastSyncWithoutBlockHeader() {
     storage.storeState(syncStateWithHeader);
-    assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
-
-    storage.storeState(FastSyncState.EMPTY_SYNC_STATE);
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
-        .isEqualTo(FastSyncState.EMPTY_SYNC_STATE);
+        .isEqualTo(syncStateWithHeader.toProposal());
+
+    storage.clearStoreState();
+    assertThat(storage.loadState(new MainnetBlockHeaderFunctions()))
+        .isEqualTo(PivotBlockProposal.EMPTY_SYNC_STATE);
   }
 }

@@ -43,6 +43,8 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.util.Optional;
+
 public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule protocolSchedule;
@@ -101,7 +103,11 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final CheckpointRangeSource checkpointRangeSource =
         new CheckpointRangeSource(
             new CheckpointHeaderFetcher(
-                syncConfig, protocolSchedule, ethContext, metricsSystem, pivotProvider),
+                syncConfig,
+                protocolSchedule,
+                ethContext,
+                metricsSystem,
+                Optional.of(pivotProvider)),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),

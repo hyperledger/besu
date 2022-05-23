@@ -31,17 +31,17 @@ import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 
 public class CompleteTaskStepTest {
 
   private static final Hash HASH = Hash.hash(Bytes.of(1, 2, 3));
 
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncState snapSyncState = mock(SnapSyncState.class, Answers.RETURNS_DEEP_STUBS);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
   private final BlockHeader blockHeader =
@@ -52,7 +52,7 @@ public class CompleteTaskStepTest {
 
   @Before
   public void setup() {
-    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(blockHeader));
+    when(snapSyncState.getFastSyncState().getPivotBlockHeader()).thenReturn(blockHeader);
   }
 
   @Test

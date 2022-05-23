@@ -47,7 +47,7 @@ public class CompleteTaskStep {
             && task.getData().isExpired(snapSyncState))) {
       completedRequestsCounter.inc();
       task.markCompleted();
-      downloadState.checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
+      downloadState.checkCompletion(snapSyncState.getFastSyncState().getPivotBlockHeader());
     } else {
       retriedRequestsCounter.inc();
       task.markFailed();

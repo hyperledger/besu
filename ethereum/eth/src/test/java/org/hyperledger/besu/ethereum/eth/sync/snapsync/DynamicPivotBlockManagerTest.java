@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -25,25 +24,26 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockProposal;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 
 public class DynamicPivotBlockManagerTest {
 
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncState snapSyncState = mock(SnapSyncState.class, Answers.RETURNS_DEEP_STUBS);
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
   private final SyncState syncState = mock(SyncState.class);
 
   private final DynamicPivotBlockManager dynamicPivotBlockManager =
       new DynamicPivotBlockManager(
           fastSyncActions,
-          snapSyncState,
+          snapSyncState.getFastSyncState(),
           SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY,
           SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING);
 
@@ -57,51 +57,51 @@ public class DynamicPivotBlockManagerTest {
 
     when(syncState.bestChainHeight()).thenReturn(1000L);
 
-    when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(999));
+    when(snapSyncState.getFastSyncState().getPivotBlockNumber()).thenReturn(999L);
     dynamicPivotBlockManager.check(
         (blockHeader, newBlockFound) -> assertThat(newBlockFound).isFalse());
-    verify(fastSyncActions, never()).waitForSuitablePeers(any());
+    verify(fastSyncActions, never()).waitForSuitablePeers();
   }
 
   @Test
   public void shouldSearchNewPivotBlockWhenNotCloseToTheHead() {
 
-    final CompletableFuture<FastSyncState> COMPLETE =
-        completedFuture(FastSyncState.EMPTY_SYNC_STATE);
-    final FastSyncState selectPivotBlockState = new FastSyncState(1090);
+    final CompletableFuture<PivotBlockProposal> COMPLETE =
+        completedFuture(PivotBlockProposal.EMPTY_SYNC_STATE);
+    final PivotBlockProposal selectPivotBlockState = new PivotBlockProposal(1090);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1090).buildHeader();
-    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
-    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
+    final PivotHolder downloadPivotBlockHeaderState = new PivotHolder(pivotBlockHeader);
+    when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(PivotBlockProposal.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
 
     when(syncState.bestChainHeight()).thenReturn(1000L);
 
-    when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(939));
+    when(snapSyncState.getFastSyncState().getPivotBlockNumber()).thenReturn(939L);
     dynamicPivotBlockManager.check(
         (blockHeader, newBlockFound) -> assertThat(newBlockFound).isFalse());
-    verify(fastSyncActions).waitForSuitablePeers(any());
+    verify(fastSyncActions).waitForSuitablePeers();
   }
 
   @Test
   public void shouldSwitchToNewPivotBlockWhenNeeded() {
 
-    final CompletableFuture<FastSyncState> COMPLETE =
-        completedFuture(FastSyncState.EMPTY_SYNC_STATE);
-    final FastSyncState selectPivotBlockState = new FastSyncState(1060);
+    final CompletableFuture<PivotBlockProposal> COMPLETE =
+        completedFuture(PivotBlockProposal.EMPTY_SYNC_STATE);
+    final PivotBlockProposal selectPivotBlockState = new PivotBlockProposal(1060);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1060).buildHeader();
-    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
-    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
-    when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
+    final PivotHolder downloadPivotBlockHeaderState = new PivotHolder(pivotBlockHeader);
+    when(fastSyncActions.waitForSuitablePeers()).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(PivotBlockProposal.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
 
     when(syncState.bestChainHeight()).thenReturn(1000L);
 
-    when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(939));
+    when(snapSyncState.getFastSyncState().getPivotBlockNumber()).thenReturn(939L);
     dynamicPivotBlockManager.check(
         (blockHeader, newBlockFound) -> {
           assertThat(blockHeader.getNumber()).isEqualTo(939);
@@ -116,7 +116,7 @@ public class DynamicPivotBlockManagerTest {
           assertThat(newBlockFound).isTrue();
         });
 
-    verify(snapSyncState).setCurrentHeader(pivotBlockHeader);
-    verify(fastSyncActions).waitForSuitablePeers(any());
+    verify(snapSyncState.getFastSyncState()).setCurrentHeader(pivotBlockHeader);
+    verify(fastSyncActions).waitForSuitablePeers();
   }
 }

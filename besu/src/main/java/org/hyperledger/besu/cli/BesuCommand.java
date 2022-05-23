@@ -498,7 +498,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
           "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: FAST if a --network is supplied and privacy isn't enabled. FULL otherwise.)")
-  private SyncMode syncMode = null;
+  private SyncMode syncMode;
 
   @Option(
       names = {"--fast-sync-min-peers"},

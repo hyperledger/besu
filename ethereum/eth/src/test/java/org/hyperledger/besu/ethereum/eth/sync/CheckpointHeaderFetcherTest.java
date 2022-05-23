@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -37,6 +37,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
@@ -213,7 +214,7 @@ public class CheckpointHeaderFetcherTest {
 
   private CheckpointHeaderFetcher createCheckpointHeaderFetcher(final BlockHeader targetHeader) {
     final EthContext ethContext = ethProtocolManager.ethContext();
-    final FastSyncState fastSyncState = new FastSyncState(targetHeader);
+    final PivotHolder pivotHolder = new PivotHolder(targetHeader);
     return new CheckpointHeaderFetcher(
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(SEGMENT_SIZE)
@@ -222,7 +223,7 @@ public class CheckpointHeaderFetcherTest {
         protocolSchedule,
         ethContext,
         metricsSystem,
-        () -> fastSyncState.getPivotBlockHeader());
+        Optional.of(pivotHolder));
   }
 
   private BlockHeader header(final long blockNumber) {

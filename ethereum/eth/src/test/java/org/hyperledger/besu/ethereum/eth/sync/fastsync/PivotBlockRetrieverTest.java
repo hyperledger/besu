@@ -123,14 +123,13 @@ public class PivotBlockRetrieverTest {
     final RespondingEthPeer respondingPeerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     respondingPeerA.respond(responder);
     respondingPeerB.respond(responder);
     respondingPeerC.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -146,7 +145,7 @@ public class PivotBlockRetrieverTest {
     final RespondingEthPeer badPeerA = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
     final RespondingEthPeer badPeerB = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
 
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     respondingPeerA.respond(responder);
 
     // With only one peer with sufficient height, we should not be done yet
@@ -174,8 +173,7 @@ public class PivotBlockRetrieverTest {
     assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -194,7 +192,7 @@ public class PivotBlockRetrieverTest {
     // Mark peerA valid
     respondingPeerA.getEthPeer().markValidated(peerValidator);
 
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     respondingPeerA.respond(responder);
 
     // With only one peer with sufficient height, we should not be done yet
@@ -232,8 +230,7 @@ public class PivotBlockRetrieverTest {
     assertThat(badPeerB.hasOutstandingRequests()).isFalse();
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -252,7 +249,7 @@ public class PivotBlockRetrieverTest {
     final RespondingEthPeer peerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(1000), 1000);
 
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
 
     peerA.respond(responder);
     peerC.respond(responder);
@@ -260,8 +257,7 @@ public class PivotBlockRetrieverTest {
     // Peers A and C should be queried because they have better chain stats
     assertThat(peerB.hasOutstandingRequests()).isFalse();
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -281,7 +277,7 @@ public class PivotBlockRetrieverTest {
     final RespondingEthPeer peerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(500), 500);
 
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     peerA.respond(responder);
     peerB.respondTimes(emptyResponder, 2);
 
@@ -295,8 +291,7 @@ public class PivotBlockRetrieverTest {
     peerC.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -316,7 +311,7 @@ public class PivotBlockRetrieverTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     respondingPeerA.respond(responderA);
     respondingPeerB.respond(responderB);
 
@@ -330,7 +325,7 @@ public class PivotBlockRetrieverTest {
     respondingPeerB.respond(responderB);
 
     assertThat(future)
-        .isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(newPivotBlock).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(newPivotBlock).get()));
   }
 
   @Test
@@ -350,7 +345,7 @@ public class PivotBlockRetrieverTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     respondingPeerA.respond(responderA);
     respondingPeerB.respond(responderB);
 
@@ -386,7 +381,7 @@ public class PivotBlockRetrieverTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
+    final CompletableFuture<PivotHolder> future = pivotBlockRetriever.downloadPivotBlockHeader();
     respondingPeerA.respond(responderA);
     respondingPeerB.respond(responderB);
 

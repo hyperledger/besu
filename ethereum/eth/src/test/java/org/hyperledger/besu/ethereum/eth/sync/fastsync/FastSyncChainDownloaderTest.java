@@ -105,8 +105,8 @@ public class FastSyncChainDownloaderTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
-    final FastSyncState fastSyncState =
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+    final PivotHolder pivotHolder =
+        new PivotHolder(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
     return FastSyncChainDownloader.create(
         syncConfig,
         worldStateStorage,
@@ -115,7 +115,7 @@ public class FastSyncChainDownloaderTest {
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        () -> fastSyncState.getPivotBlockHeader());
+        () -> pivotHolder.getPivotBlockHeader());
   }
 
   @Test

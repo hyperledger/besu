@@ -54,19 +54,17 @@ public class LoadLocalDataStep {
       final Task<SnapDataRequest> task, final Pipe<Task<SnapDataRequest>> completedTasks) {
     final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
     // check if node is already stored in the worldstate
-    if (snapSyncState.hasPivotBlockHeader()) {
-      Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
-      if (existingData.isPresent()) {
-        existingNodeCounter.inc();
-        request.setData(existingData.get());
-        request.setRequiresPersisting(false);
-        final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        request.persist(worldStateStorage, updater, downloadState, snapSyncState);
-        updater.commit();
-        downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
-        completedTasks.put(task);
-        return Stream.empty();
-      }
+    Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
+    if (existingData.isPresent()) {
+      existingNodeCounter.inc();
+      request.setData(existingData.get());
+      request.setRequiresPersisting(false);
+      final WorldStateStorage.Updater updater = worldStateStorage.updater();
+      request.persist(worldStateStorage, updater, downloadState, snapSyncState);
+      updater.commit();
+      downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
+      completedTasks.put(task);
+      return Stream.empty();
     }
     return Stream.of(task);
   }

@@ -60,7 +60,7 @@ class PivotBlockConfirmer {
   // The number of times to retry if a peer fails to return an answer to our query
   private final int numberOfRetriesPerPeer;
 
-  private final CompletableFuture<FastSyncState> result = new CompletableFuture<>();
+  private final CompletableFuture<PivotHolder> result = new CompletableFuture<>();
   private final Collection<CompletableFuture<?>> runningQueries = new ConcurrentLinkedQueue<>();
   private final Map<Bytes, RetryingGetHeaderFromPeerByNumberTask> pivotBlockQueriesByPeerId =
       new ConcurrentHashMap<>();
@@ -84,7 +84,7 @@ class PivotBlockConfirmer {
     this.numberOfRetriesPerPeer = numberOfRetriesPerPeer;
   }
 
-  public CompletableFuture<FastSyncState> confirmPivotBlock() {
+  public CompletableFuture<PivotHolder> confirmPivotBlock() {
     if (isStarted.compareAndSet(false, true)) {
       LOG.info(
           "Confirm pivot block {} with at least {} peers.", pivotBlockNumber, numberOfPeersToQuery);
@@ -128,7 +128,7 @@ class PivotBlockConfirmer {
     } else if (votes >= numberOfPeersToQuery) {
       // We've received the required number of votes and have selected our pivot block
       LOG.info("Confirmed pivot block at {}: {}", pivotBlockNumber, blockHeader.getHash());
-      result.complete(new FastSyncState(blockHeader));
+      result.complete(new PivotHolder(blockHeader));
     } else {
       LOG.info(
           "Received {} confirmation(s) for pivot block header {}: {}",

@@ -28,6 +28,7 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
@@ -55,7 +56,7 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
 
   protected final FastSyncActions fastSyncActions;
   protected final FastSyncStateStorage fastSyncStateStorage;
-  protected FastSyncState initialFastSyncState;
+  protected PivotBlockProposal initialProposal;
   private final ProtocolContext protocolContext;
 
   public FastSyncDownloader(
@@ -65,7 +66,7 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState,
+      final PivotBlockProposal initialProposal,
       final ProtocolContext protocolContext) {
     this.fastSyncActions = fastSyncActions;
     this.worldStateStorage = worldStateStorage;
@@ -73,7 +74,7 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
     this.fastSyncStateStorage = fastSyncStateStorage;
     this.taskCollection = taskCollection;
     this.fastSyncDataDirectory = fastSyncDataDirectory;
-    this.initialFastSyncState = initialFastSyncState;
+    this.initialProposal = initialProposal;
     this.protocolContext = protocolContext;
   }
 
@@ -82,40 +83,36 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("FastSyncDownloader already running");
     }
-    return start(initialFastSyncState)
+    return start(initialProposal)
         .thenApply(
             fastSyncState -> {
               deleteFastSyncState();
-              fastSyncState
-                  .getPivotBlockHeader()
-                  .ifPresent(
-                      blockHeader ->
-                          protocolContext
-                              .getWorldStateArchive()
-                              .setArchiveStateUnSafe(blockHeader));
+              protocolContext
+                  .getWorldStateArchive()
+                  .setArchiveStateUnSafe(fastSyncState.getPivotBlockHeader());
               fastSyncActions.close();
               LOG.info(
                   "Fast sync completed successfully with pivot block {}",
-                  fastSyncState.getPivotBlockNumber().getAsLong());
+                  fastSyncState.getPivotBlockNumber());
               return null;
             });
   }
 
-  protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
+  protected CompletableFuture<PivotHolder> start(final PivotBlockProposal proposal) {
     LOG.info("Starting fast sync.");
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       LOG.info("Clearing bonsai flat account db");
       worldStateStorage.clearFlatDatabase();
     }
-    return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
+    return findPivotBlock(proposal, pbp -> downloadChainAndWorldState(fastSyncActions, pbp));
   }
 
-  public CompletableFuture<FastSyncState> findPivotBlock(
-      final FastSyncState fastSyncState,
-      final Function<FastSyncState, CompletableFuture<FastSyncState>> onNewPivotBlock) {
+  public CompletableFuture<PivotHolder> findPivotBlock(
+      final PivotBlockProposal proposal,
+      final Function<PivotBlockProposal, CompletableFuture<PivotHolder>> onNewPivotBlock) {
     return exceptionallyCompose(
         fastSyncActions
-            .waitForSuitablePeers(fastSyncState)
+            .waitForSuitablePeers(proposal)
             .thenCompose(fastSyncActions::selectPivotBlock)
             .thenCompose(fastSyncActions::downloadPivotBlockHeader)
             .thenApply(this::updateMaxTrailingPeers)
@@ -124,14 +121,14 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
         this::handleFailure);
   }
 
-  protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
+  protected CompletableFuture<PivotHolder> handleFailure(final Throwable error) {
     trailingPeerRequirements = Optional.empty();
     Throwable rootCause = ExceptionUtils.rootCause(error);
     if (rootCause instanceof FastSyncException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof StalledDownloadException) {
       LOG.info("Re-pivoting to newer block.");
-      return start(FastSyncState.EMPTY_SYNC_STATE);
+      return start(PivotBlockProposal.EMPTY_SYNC_STATE);
     } else if (rootCause instanceof CancellationException) {
       return CompletableFuture.failedFuture(error);
     } else {
@@ -141,7 +138,7 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
               + " seconds.",
           error);
       return fastSyncActions.scheduleFutureTask(
-          () -> start(FastSyncState.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
+          () -> start(PivotBlockProposal.EMPTY_SYNC_STATE), FAST_SYNC_RETRY_DELAY);
     }
   }
 
@@ -161,7 +158,8 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
     worldStateDownloader.cancel();
     try {
       taskCollection.close();
-      if (fastSyncDataDirectory.toFile().exists()) {
+      if (fastSyncDataDirectory != null && Files.exists(fastSyncDataDirectory)) {
+
         // Clean up this data for now (until fast sync resume functionality is in place)
         MoreFiles.deleteRecursively(fastSyncDataDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
       }
@@ -170,23 +168,19 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
     }
   }
 
-  protected FastSyncState updateMaxTrailingPeers(final FastSyncState state) {
-    if (state.getPivotBlockNumber().isPresent()) {
-      trailingPeerRequirements =
-          Optional.of(new TrailingPeerRequirements(state.getPivotBlockNumber().getAsLong(), 0));
-    } else {
-      trailingPeerRequirements = Optional.empty();
-    }
+  protected PivotHolder updateMaxTrailingPeers(final PivotHolder state) {
+    trailingPeerRequirements =
+        Optional.of(new TrailingPeerRequirements(state.getPivotBlockNumber(), 0));
     return state;
   }
 
-  protected FastSyncState storeState(final FastSyncState state) {
+  protected PivotBlockProposal storeState(final PivotHolder state) {
     fastSyncStateStorage.storeState(state);
-    return state;
+    return state.toProposal();
   }
 
-  protected CompletableFuture<FastSyncState> downloadChainAndWorldState(
-      final FastSyncActions fastSyncActions, final FastSyncState currentState) {
+  protected CompletableFuture<PivotHolder> downloadChainAndWorldState(
+      final FastSyncActions fastSyncActions, final PivotBlockProposal proposal) {
     // Synchronized ensures that stop isn't called while we're in the process of starting a
     // world state and chain download. If it did we might wind up starting a new download
     // after the stop method had called cancel.
@@ -195,10 +189,10 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
         return CompletableFuture.failedFuture(
             new CancellationException("FastSyncDownloader stopped"));
       }
+      PivotHolder state = new PivotHolder(proposal.getHeader());
       final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(fastSyncActions, currentState);
-      final ChainDownloader chainDownloader =
-          fastSyncActions.createChainDownloader(() -> currentState.getPivotBlockHeader());
+          worldStateDownloader.run(fastSyncActions, state);
+      final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(state);
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.
@@ -217,7 +211,7 @@ public class FastSyncDownloader<REQUEST> implements SyncDownloader {
           .thenApply(
               complete -> {
                 trailingPeerRequirements = Optional.empty();
-                return currentState;
+                return state;
               });
     }
   }

@@ -14,19 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 
-public class SnapSyncState extends FastSyncState {
+public class SnapSyncState {
+
+  final PivotHolder pivotHolder;
 
   private boolean isHealInProgress;
 
-  public SnapSyncState(final FastSyncState fastSyncState) {
-    super(
-        fastSyncState.getPivotBlockNumber(),
-        fastSyncState.getPivotBlockHash(),
-        fastSyncState.getPivotBlockHeader());
+  public SnapSyncState(final PivotHolder pivotHolder) {
+    this.pivotHolder = pivotHolder;
   }
 
   public boolean isHealInProgress() {
@@ -38,9 +36,10 @@ public class SnapSyncState extends FastSyncState {
   }
 
   public boolean isExpired(final SnapDataRequest request) {
-    return getPivotBlockHeader()
-        .map(SealableBlockHeader::getStateRoot)
-        .filter(hash -> hash.equals(request.getRootHash()))
-        .isEmpty();
+    return pivotHolder.getPivotBlockHeader().getStateRoot().equals(request.getRootHash());
+  }
+
+  public PivotHolder getFastSyncState() {
+    return pivotHolder;
   }
 }

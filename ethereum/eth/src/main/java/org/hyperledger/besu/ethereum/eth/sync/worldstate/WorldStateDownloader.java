@@ -15,14 +15,13 @@
 package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 
 import java.util.concurrent.CompletableFuture;
 
 public interface WorldStateDownloader extends WorldStateDownloadStatus {
 
-  CompletableFuture<Void> run(
-      final FastSyncActions fastSyncActions, final FastSyncState fastSyncState);
+  CompletableFuture<Void> run(final FastSyncActions fastSyncActions, final PivotHolder pivotHolder);
 
   void cancel();
 }

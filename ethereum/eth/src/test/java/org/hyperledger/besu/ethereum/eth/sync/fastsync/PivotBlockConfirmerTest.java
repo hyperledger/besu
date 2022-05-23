@@ -120,7 +120,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<PivotHolder> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer responds
     respondingPeerA.respond(responder);
@@ -131,8 +131,7 @@ public class PivotBlockConfirmerTest {
     respondingPeerB.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -149,7 +148,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<PivotHolder> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -164,8 +163,7 @@ public class PivotBlockConfirmerTest {
     respondingPeerB.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -183,7 +181,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<PivotHolder> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -204,8 +202,7 @@ public class PivotBlockConfirmerTest {
     extraPeer.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -223,7 +220,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<PivotHolder> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -244,8 +241,7 @@ public class PivotBlockConfirmerTest {
     extraPeer.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -263,7 +259,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<PivotHolder> future = pivotBlockConfirmer.confirmPivotBlock();
 
     // First peer is responsive
     respondingPeerA.respond(responder);
@@ -286,8 +282,7 @@ public class PivotBlockConfirmerTest {
     extraPeer.respond(responder);
 
     assertThat(future)
-        .isCompletedWithValue(
-            new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
+        .isCompletedWithValue(new PivotHolder(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
   @Test
@@ -305,7 +300,7 @@ public class PivotBlockConfirmerTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
     // Execute task and wait for response
-    final CompletableFuture<FastSyncState> future = pivotBlockConfirmer.confirmPivotBlock();
+    final CompletableFuture<PivotHolder> future = pivotBlockConfirmer.confirmPivotBlock();
     respondingPeerA.respond(responderA);
     assertThat(future).isNotDone();
     respondingPeerB.respond(responderB);

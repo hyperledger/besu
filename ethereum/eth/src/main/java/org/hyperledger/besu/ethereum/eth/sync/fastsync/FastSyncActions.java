@@ -94,14 +94,18 @@ public class FastSyncActions {
     return syncState;
   }
 
-  public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
-    if (fastSyncState.hasPivotBlockHeader()) {
-      return waitForAnyPeer().thenApply(ignore -> fastSyncState);
-    }
-
+  public CompletableFuture<PivotBlockProposal> waitForSuitablePeers() {
     LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-        .thenApply(successfulWaitResult -> fastSyncState);
+        .thenApply(ignore -> PivotBlockProposal.EMPTY_SYNC_STATE);
+  }
+
+  public CompletableFuture<PivotBlockProposal> waitForSuitablePeers(
+      final PivotBlockProposal proposal) {
+    if (proposal.hasHeader()) {
+      return waitForAnyPeer().thenApply(ignore -> proposal);
+    }
+    return waitForSuitablePeers();
   }
 
   public <T> CompletableFuture<T> scheduleFutureTask(
@@ -128,13 +132,11 @@ public class FastSyncActions {
     return waitForPeersTask.run();
   }
 
-  public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
-    return fastSyncState.hasPivotBlockHeader()
-        ? completedFuture(fastSyncState)
-        : selectNewPivotBlock();
+  public CompletableFuture<PivotBlockProposal> selectPivotBlock(final PivotBlockProposal proposal) {
+    return proposal.hasHeader() ? completedFuture(proposal) : selectNewPivotBlock();
   }
 
-  private CompletableFuture<FastSyncState> selectNewPivotBlock() {
+  private CompletableFuture<PivotBlockProposal> selectNewPivotBlock() {
 
     return selectBestPeer()
         .map(
@@ -179,7 +181,7 @@ public class FastSyncActions {
     return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
   }
 
-  private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {
+  private CompletableFuture<PivotBlockProposal> retrySelectPivotBlockAfterDelay() {
     return ethContext
         .getScheduler()
         .scheduleFutureTask(
@@ -192,7 +194,7 @@ public class FastSyncActions {
     return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
   }
 
-  private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock() {
+  private CompletableFuture<PivotBlockProposal> limitTrailingPeersAndRetrySelectPivotBlock() {
     final TrailingPeerLimiter trailingPeerLimiter =
         new TrailingPeerLimiter(
             ethContext.getEthPeers(),
@@ -205,38 +207,38 @@ public class FastSyncActions {
         .thenCompose(ignore -> selectNewPivotBlock());
   }
 
-  public CompletableFuture<FastSyncState> downloadPivotBlockHeader(
-      final FastSyncState currentState) {
-    return internalDownloadPivotBlockHeader(currentState).thenApply(this::updateStats);
+  public CompletableFuture<PivotHolder> downloadPivotBlockHeader(
+      final PivotBlockProposal proposal) {
+    return internalDownloadPivotBlockHeader(proposal).thenApply(this::updateStats);
   }
 
-  private CompletableFuture<FastSyncState> internalDownloadPivotBlockHeader(
-      final FastSyncState currentState) {
-    if (currentState.hasPivotBlockHeader()) {
-      return completedFuture(currentState);
+  private CompletableFuture<PivotHolder> internalDownloadPivotBlockHeader(
+      final PivotBlockProposal proposal) {
+
+    switch (proposal.getOption()) {
+      case Hash:
+        return downloadPivotBlockHeader(proposal.getHash());
+      case Header:
+        return completedFuture(new PivotHolder(proposal.getHeader()));
+      case Number:
+        return new PivotBlockRetriever(
+                protocolSchedule,
+                ethContext,
+                metricsSystem,
+                proposal.getNumber(),
+                syncConfig.getFastSyncMinimumPeerCount(),
+                syncConfig.getFastSyncPivotDistance())
+            .downloadPivotBlockHeader();
+      default:
+        return CompletableFuture.failedFuture(
+            new FastSyncException(FastSyncError.UNEXPECTED_ERROR));
     }
-
-    return currentState
-        .getPivotBlockHash()
-        .map(this::downloadPivotBlockHeader)
-        .orElseGet(
-            () ->
-                new PivotBlockRetriever(
-                        protocolSchedule,
-                        ethContext,
-                        metricsSystem,
-                        currentState.getPivotBlockNumber().getAsLong(),
-                        syncConfig.getFastSyncMinimumPeerCount(),
-                        syncConfig.getFastSyncPivotDistance())
-                    .downloadPivotBlockHeader());
   }
 
-  private FastSyncState updateStats(final FastSyncState fastSyncState) {
+  private PivotHolder updateStats(final PivotHolder pivotHolder) {
     pivotBlockSelectionCounter.inc();
-    fastSyncState
-        .getPivotBlockHeader()
-        .ifPresent(blockHeader -> pivotBlockGauge.set(blockHeader.getNumber()));
-    return fastSyncState;
+    pivotBlockGauge.set(pivotHolder.getPivotBlockNumber());
+    return pivotHolder;
   }
 
   public ChainDownloader createChainDownloader(final PivotProvider pivotProvider) {
@@ -251,7 +253,7 @@ public class FastSyncActions {
         pivotProvider);
   }
 
-  private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
+  private CompletableFuture<PivotHolder> downloadPivotBlockHeader(final Hash hash) {
     return RetryingGetHeaderFromPeerByHashTask.byHash(
             protocolSchedule,
             ethContext,
@@ -264,7 +266,7 @@ public class FastSyncActions {
               LOG.info(
                   "Successfully downloaded pivot block header by hash: {}",
                   blockHeader.toLogString());
-              return new FastSyncState(blockHeader);
+              return new PivotHolder(blockHeader);
             });
   }
 

@@ -276,7 +276,7 @@ public class SynchronizerConfiguration {
     }
 
     public Builder syncMode(final SyncMode mode) {
-      this.syncMode = mode;
+      this.syncMode = mode != null ? mode : SyncMode.FULL;
       return this;
     }
 

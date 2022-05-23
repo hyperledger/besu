@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockProposal;
 
 import java.util.Optional;
 
 public interface PivotBlockSelector {
 
-  Optional<FastSyncState> selectNewPivotBlock(EthPeer peer);
+  Optional<PivotBlockProposal> selectNewPivotBlock(EthPeer peer);
 
   default void close() {
     // do nothing by default

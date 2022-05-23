@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -96,7 +96,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
 
   @Override
   public CompletableFuture<Void> run(
-      final FastSyncActions fastSyncActions, final FastSyncState fastSyncState) {
+      final FastSyncActions fastSyncActions, final PivotHolder pivotHolder) {
     synchronized (this) {
       final FastWorldDownloadState oldDownloadState = this.downloadState.get();
       if (oldDownloadState != null && oldDownloadState.isDownloading()) {
@@ -107,16 +107,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
         return failed;
       }
 
-      Optional<BlockHeader> checkNull =
-          Optional.ofNullable(fastSyncState.getPivotBlockHeader().get());
-      if (checkNull.isEmpty()) {
-        LOG.error("Pivot Block not present");
-        final CompletableFuture<Void> failed = new CompletableFuture<>();
-        failed.completeExceptionally(new NullPointerException("Pivot Block not present"));
-        return failed;
-      }
-
-      final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
+      final BlockHeader header = pivotHolder.getPivotBlockHeader();
       final Hash stateRoot = header.getStateRoot();
       if (worldStateStorage.isWorldStateAvailable(stateRoot, header.getHash())) {
         LOG.info(

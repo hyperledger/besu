@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 import org.mockito.Mockito;
 
 public class LoadLocalDataStepTest {
@@ -56,7 +57,7 @@ public class LoadLocalDataStepTest {
   private final Pipe<Task<SnapDataRequest>> completedTasks =
       new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
 
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncState snapSyncState = mock(SnapSyncState.class, Answers.RETURNS_DEEP_STUBS);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
   private final WorldStateStorage.Updater updater = mock(WorldStateStorage.Updater.class);
@@ -67,8 +68,7 @@ public class LoadLocalDataStepTest {
 
   @Before
   public void setup() {
-    when(snapSyncState.hasPivotBlockHeader()).thenReturn(true);
-    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(blockHeader));
+    when(snapSyncState.getFastSyncState().getPivotBlockHeader()).thenReturn(blockHeader);
   }
 
   @Test
@@ -91,7 +91,7 @@ public class LoadLocalDataStepTest {
 
     final BlockHeader newBlockHeader =
         new BlockHeaderTestFixture().stateRoot(Hash.EMPTY).buildHeader();
-    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(newBlockHeader));
+    when(snapSyncState.getFastSyncState().getPivotBlockHeader()).thenReturn(newBlockHeader);
 
     loadLocalDataStep.loadLocalDataTrieNode(task, completedTasks);
 

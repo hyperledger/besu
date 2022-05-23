@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPee
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -47,7 +48,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class RequestDataStep {
 
-  private final SnapSyncState fastSyncState;
+  private final PivotHolder pivotHolder;
   private final WorldDownloadState<SnapDataRequest> downloadState;
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
@@ -56,10 +57,10 @@ public class RequestDataStep {
   public RequestDataStep(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState fastSyncState,
+      final PivotHolder pivotHolder,
       final WorldDownloadState<SnapDataRequest> downloadState,
       final MetricsSystem metricsSystem) {
-    this.fastSyncState = fastSyncState;
+    this.pivotHolder = pivotHolder;
     this.downloadState = downloadState;
     this.metricsSystem = metricsSystem;
     this.ethContext = ethContext;
@@ -69,7 +70,7 @@ public class RequestDataStep {
   public CompletableFuture<Task<SnapDataRequest>> requestAccount(
       final Task<SnapDataRequest> requestTask) {
 
-    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader blockHeader = pivotHolder.getPivotBlockHeader();
     final AccountRangeDataRequest accountDataRequest =
         (AccountRangeDataRequest) requestTask.getData();
     final EthTask<AccountRangeMessage.AccountRangeData> getAccountTask =
@@ -102,7 +103,7 @@ public class RequestDataStep {
             .map(StorageRangeDataRequest.class::cast)
             .map(StorageRangeDataRequest::getAccountHash)
             .collect(Collectors.toList());
-    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader blockHeader = pivotHolder.getPivotBlockHeader();
     final Bytes32 minRange =
         requestTasks.size() == 1
             ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getStartKeyHash()
@@ -145,7 +146,7 @@ public class RequestDataStep {
             .map(BytecodeRequest::getCodeHash)
             .distinct()
             .collect(Collectors.toList());
-    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader blockHeader = pivotHolder.getPivotBlockHeader();
     final EthTask<Map<Bytes32, Bytes>> getByteCodeTask =
         RetryingGetBytecodeFromPeerTask.forByteCode(
             ethContext, codeHashes, blockHeader, metricsSystem);
@@ -171,7 +172,7 @@ public class RequestDataStep {
   public CompletableFuture<List<Task<SnapDataRequest>>> requestTrieNodeByPath(
       final List<Task<SnapDataRequest>> requestTasks) {
 
-    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+    final BlockHeader blockHeader = pivotHolder.getPivotBlockHeader();
     final Map<Bytes, List<Bytes>> message = new HashMap<>();
     requestTasks.stream()
         .map(Task::getData)

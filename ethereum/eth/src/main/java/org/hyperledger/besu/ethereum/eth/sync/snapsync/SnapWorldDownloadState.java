@@ -176,7 +176,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     pendingTrieNodeRequests.clearInternalQueues();
     pendingCodeRequests.clearInternalQueue();
     snapSyncState.setHealStatus(false);
-    checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
+    checkCompletion(snapSyncState.getFastSyncState().getPivotBlockHeader());
   }
 
   @Override

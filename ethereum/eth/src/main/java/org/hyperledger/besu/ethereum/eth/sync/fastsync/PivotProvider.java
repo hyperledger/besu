@@ -19,12 +19,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.Optional;
-
 public interface PivotProvider {
-  default BlockHeader providePivot() {
-    return maybeProvidePivot().orElseThrow();
-  }
-
-  Optional<BlockHeader> maybeProvidePivot();
+  BlockHeader providePivot();
 }

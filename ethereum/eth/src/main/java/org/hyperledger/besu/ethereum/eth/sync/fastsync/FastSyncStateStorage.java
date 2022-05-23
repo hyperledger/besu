@@ -31,10 +31,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Supports persisting fast sync state to disk to enable resuming after a restart.
  *
- * <p>Note that a {@link FastSyncState} with a block number selected but no pivot block header is
- * not stored. If we haven't yet retrieved and confirmed the actual block header we can't have
- * started downloading data so should pick a new pivot block when resuming. Once we have the pivot
- * block header we want to continue with that pivot block so the world state downloaded matches up.
+ * <p>Note that a {@link PivotHolder} with a block number selected but no pivot block header is not
+ * stored. If we haven't yet retrieved and confirmed the actual block header we can't have started
+ * downloading data so should pick a new pivot block when resuming. Once we have the pivot block
+ * header we want to continue with that pivot block so the world state downloaded matches up.
  */
 public class FastSyncStateStorage {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncStateStorage.class);
@@ -49,13 +49,13 @@ public class FastSyncStateStorage {
     return pivotBlockHeaderFile.isFile();
   }
 
-  public FastSyncState loadState(final BlockHeaderFunctions blockHeaderFunctions) {
+  public PivotBlockProposal loadState(final BlockHeaderFunctions blockHeaderFunctions) {
     try {
       if (!isFastSyncInProgress()) {
-        return FastSyncState.EMPTY_SYNC_STATE;
+        return PivotBlockProposal.EMPTY_SYNC_STATE;
       }
       final Bytes rlp = Bytes.wrap(Files.toByteArray(pivotBlockHeaderFile));
-      return new FastSyncState(
+      return new PivotBlockProposal(
           BlockHeader.readFrom(new BytesValueRLPInput(rlp, false), blockHeaderFunctions));
     } catch (final IOException e) {
       throw new IllegalStateException(
@@ -63,21 +63,21 @@ public class FastSyncStateStorage {
     }
   }
 
-  public void storeState(final FastSyncState state) {
-    if (!state.hasPivotBlockHeader()) {
-      if (!pivotBlockHeaderFile.delete() && pivotBlockHeaderFile.exists()) {
-        LOG.error(
-            "Unable to delete fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
-      }
-      return;
-    }
+  public void storeState(final PivotHolder state) {
     try {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
-      state.getPivotBlockHeader().get().writeTo(output);
+      state.getPivotBlockHeader().writeTo(output);
       Files.write(output.encoded().toArrayUnsafe(), pivotBlockHeaderFile);
     } catch (final IOException e) {
       throw new IllegalStateException(
           "Unable to store fast sync status file: " + pivotBlockHeaderFile.getAbsolutePath());
+    }
+  }
+
+  public void clearStoreState() {
+    if (!pivotBlockHeaderFile.delete() && pivotBlockHeaderFile.exists()) {
+      LOG.error(
+          "Unable to delete fast sync status file: {}", pivotBlockHeaderFile.getAbsolutePath());
     }
   }
 }

@@ -43,7 +43,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
+  public Optional<PivotBlockProposal> selectNewPivotBlock(final EthPeer peer) {
     final Optional<Hash> maybeHash = finalizedBlockHashSupplier.get();
     if (maybeHash.isPresent()) {
       return Optional.of(selectLastFinalizedBlockAsPivot(maybeHash.get()));
@@ -52,9 +52,9 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     return Optional.empty();
   }
 
-  private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
+  private PivotBlockProposal selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
     LOG.info("Returning finalized block hash as pivot: {}", finalizedHash);
-    return new FastSyncState(finalizedHash);
+    return new PivotBlockProposal(finalizedHash);
   }
 
   @Override

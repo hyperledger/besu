@@ -17,8 +17,9 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotBlockProposal;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -41,7 +42,7 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<SnapDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
-      final FastSyncState initialFastSyncState,
+      final PivotBlockProposal initialProposal,
       final ProtocolContext protocolContext) {
     super(
         fastSyncActions,
@@ -50,20 +51,21 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
         fastSyncStateStorage,
         taskCollection,
         fastSyncDataDirectory,
-        initialFastSyncState,
+        initialProposal,
         protocolContext);
   }
 
   @Override
-  protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
+  protected CompletableFuture<PivotHolder> start(final PivotBlockProposal pivotBlockProposal) {
     LOG.info("Starting snap sync.");
-    return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
+    return findPivotBlock(
+        pivotBlockProposal, pbp -> downloadChainAndWorldState(fastSyncActions, pbp));
   }
 
   @Override
-  protected FastSyncState storeState(final FastSyncState fastSyncState) {
-    initialFastSyncState = fastSyncState;
-    fastSyncStateStorage.storeState(fastSyncState);
-    return new SnapSyncState(fastSyncState);
+  protected PivotBlockProposal storeState(final PivotHolder pivotHolder) {
+    initialProposal = pivotHolder.toProposal();
+    fastSyncStateStorage.storeState(pivotHolder);
+    return initialProposal;
   }
 }

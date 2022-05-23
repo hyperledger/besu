@@ -41,7 +41,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -51,6 +50,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Answers;
 
 @SuppressWarnings("unchecked")
 @RunWith(Parameterized.class)
@@ -68,7 +68,7 @@ public class SnapWorldDownloadStateTest {
       new InMemoryTasksPriorityQueues<>();
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncState snapSyncState = mock(SnapSyncState.class, Answers.RETURNS_DEEP_STUBS);
   private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
 
   private final TestClock clock = new TestClock();
@@ -134,7 +134,8 @@ public class SnapWorldDownloadStateTest {
   @Test
   public void shouldStartHealWhenNoSnapsyncPendingTasksRemain() {
     when(snapSyncState.isHealInProgress()).thenReturn(false);
-    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(snapSyncState.getFastSyncState().getPivotBlockHeader())
+        .thenReturn(mock(BlockHeader.class));
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isTrue();
 
     downloadState.checkCompletion(header);
@@ -243,7 +244,8 @@ public class SnapWorldDownloadStateTest {
 
   @Test
   public void shouldRestartHealWhenNewPivotBlock() {
-    when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(snapSyncState.getFastSyncState().getPivotBlockHeader())
+        .thenReturn(mock(BlockHeader.class));
     when(snapSyncState.isHealInProgress()).thenReturn(false);
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isTrue();
     // start heal

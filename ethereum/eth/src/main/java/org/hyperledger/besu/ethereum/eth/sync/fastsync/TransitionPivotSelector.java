@@ -54,11 +54,11 @@ public class TransitionPivotSelector implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
+  public Optional<PivotBlockProposal> selectNewPivotBlock(final EthPeer peer) {
     return routeDependingOnTotalTerminalDifficulty(peer);
   }
 
-  private Optional<FastSyncState> routeDependingOnTotalTerminalDifficulty(final EthPeer peer) {
+  private Optional<PivotBlockProposal> routeDependingOnTotalTerminalDifficulty(final EthPeer peer) {
 
     Difficulty bestPeerEstDifficulty = peer.chainState().getEstimatedTotalDifficulty();
 

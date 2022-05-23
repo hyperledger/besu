@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -163,6 +164,7 @@ public class MergeBesuControllerBuilderTest {
   public void assertTerminalTotalDifficultyInMergeContext() {
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn(Optional.of(UInt256.valueOf(1500L)));
+    when(synchronizerConfiguration.getSyncMode()).thenReturn(SyncMode.FULL);
 
     Difficulty terminalTotalDifficulty =
         visitWithMockConfigs(new MergeBesuControllerBuilder())

@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotHolder;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -144,7 +144,7 @@ public class WorldStateDownloaderBenchmark {
   @Benchmark
   public Optional<Bytes> downloadWorldState() {
     final CompletableFuture<Void> result =
-        worldStateDownloader.run(null, new FastSyncState(blockHeader));
+        worldStateDownloader.run(null, new PivotHolder(blockHeader));
     if (result.isDone()) {
       throw new IllegalStateException("World state download was already complete");
     }
