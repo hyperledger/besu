@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.failBecauseExceptionWasNotThrown;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -28,10 +29,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -39,6 +42,9 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
@@ -61,6 +67,8 @@ public class BackwardSyncStepTest {
 
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
+
+  private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
@@ -102,13 +110,18 @@ public class BackwardSyncStepTest {
         localBlockchain.appendBlock(block, receipts);
       }
     }
+
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(5);
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(ethScheduler);
 
-    peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    peer =
+        RespondingEthPeer.builder()
+            .ethProtocolManager(ethProtocolManager)
+            .estimatedHeight(REMOTE_HEIGHT)
+            .build();
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
   }
@@ -152,6 +165,59 @@ public class BackwardSyncStepTest {
 
     final BlockHeader blockHeader = future.get().get(0);
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
+  }
+
+  @Test
+  public void shouldRequestHeaderBeforeCurrentHeight() throws Exception {
+    extendBlockchain(REMOTE_HEIGHT + 1, context.getProtocolContext().getBlockchain());
+
+    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
+
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
+
+    final CompletableFuture<List<BlockHeader>> future =
+        step.requestHeaders(lookingForBlock.getHeader().getHash());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
+
+    final BlockHeader blockHeader = future.get().get(0);
+    assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
+  }
+
+  @Test
+  public void shouldNotRequestHeaderBeforeLastFinalizedBlock() throws Exception {
+    final MutableBlockchain localBlockchain = context.getProtocolContext().getBlockchain();
+    extendBlockchain(REMOTE_HEIGHT + 2, localBlockchain);
+    localBlockchain.setFinalized(
+        localBlockchain.getBlockHashByNumber(REMOTE_HEIGHT + 1).orElseThrow());
+
+    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
+
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
+
+    final CompletableFuture<List<BlockHeader>> future =
+        step.requestHeaders(lookingForBlock.getHeader().getHash());
+
+    ScheduledExecutorService schedExecutor = Executors.newScheduledThreadPool(2);
+    schedExecutor.submit(
+        () -> peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone()));
+
+    schedExecutor.scheduleWithFixedDelay(
+        ethScheduler::expirePendingTimeouts, 0, 100, TimeUnit.MILLISECONDS);
+
+    future
+        .handle(
+            (r, t) -> {
+              if (t == null || !(t.getCause() instanceof MaxRetriesReachedException)) {
+                failBecauseExceptionWasNotThrown(MaxRetriesReachedException.class);
+              }
+              return r;
+            })
+        .thenRun(schedExecutor::shutdownNow)
+        .join();
   }
 
   @Test
@@ -202,5 +268,22 @@ public class BackwardSyncStepTest {
   @Nonnull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
+  }
+
+  private void extendBlockchain(final int newHeight, final MutableBlockchain blockchain) {
+    final long currentHeight = blockchain.getChainHeadBlockNumber();
+
+    final long blocksToBuild = newHeight - currentHeight;
+
+    for (long i = currentHeight + 1; i <= currentHeight + blocksToBuild; i++) {
+      final BlockDataGenerator.BlockOptions options =
+          new BlockDataGenerator.BlockOptions()
+              .setBlockNumber(i)
+              .setParentHash(blockchain.getBlockHashByNumber(i - 1).orElseThrow());
+      final Block block = blockDataGenerator.block(options);
+      final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
+
+      blockchain.appendBlock(block, receipts);
+    }
   }
 }
