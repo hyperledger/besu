@@ -8,6 +8,7 @@
 ### Bug Fixes
 - Stop backward sync if genesis block has been reached [#3869](https://github.com/hyperledger/besu/pull/3869)
 - Deprecate experimental merge flag and engine-rpc-enabled flag [#3875](https://github.com/hyperledger/besu/pull/3875)
+- Allow to backward sync to request headers back to last finalized block if present or genesis [#3888](https://github.com/hyperledger/besu/pull/3888)
 
 ## 22.4.1
 
