@@ -195,24 +195,49 @@ public class BackwardSyncContext {
     if (!isReady()) {
       return waitForTTD().thenCompose(this::executeNextStep);
     }
-    final Optional<BlockHeader> firstAncestorHeader = backwardChain.getFirstAncestorHeader();
-    if (firstAncestorHeader.isEmpty()) {
+
+    final Optional<BlockHeader> maybeFirstAncestorHeader = backwardChain.getFirstAncestorHeader();
+    if (maybeFirstAncestorHeader.isEmpty()) {
       LOG.info("The Backward sync is done...");
       return CompletableFuture.completedFuture(null);
     }
+
+    final BlockHeader firstAncestorHeader = maybeFirstAncestorHeader.get();
+
     if (getProtocolContext().getBlockchain().getChainHead().getHeight()
-        > firstAncestorHeader.get().getNumber() - 1) {
+        > firstAncestorHeader.getNumber() - 1) {
       LOG.info(
-          "Backward reached bellow previous head {}({}) : {} ({})",
+          "Backward reached below previous head {}({}) : {} ({})",
           getProtocolContext().getBlockchain().getChainHead().getHeight(),
           getProtocolContext().getBlockchain().getChainHead().getHash().toHexString(),
-          firstAncestorHeader.get().getNumber(),
-          firstAncestorHeader.get().getHash());
+          firstAncestorHeader.getNumber(),
+          firstAncestorHeader.getHash());
     }
-    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.get().getParentHash())) {
-      return executeForwardAsync(firstAncestorHeader.get());
+
+    if (firstAncestorHeader.getNumber() == 0) {
+      final BlockHeader genesisBlockHeader =
+          getProtocolContext()
+              .getBlockchain()
+              .getBlockHeader(0)
+              .orElseThrow(
+                  () -> new IllegalStateException("Really we do not have the genesis block?"));
+
+      if (genesisBlockHeader.getHash().equals(firstAncestorHeader.getHash())) {
+        LOG.info("Backward sync reached genesis, starting Forward sync");
+        return executeForwardAsync(genesisBlockHeader);
+      } else {
+        return CompletableFuture.failedFuture(
+            new BackwardSyncException(
+                String.format(
+                    "Backward sync reached genesis, but ancestor header hash %s does not match our genesis header hash %s",
+                    firstAncestorHeader.getHash(), genesisBlockHeader.getHash())));
+      }
     }
-    return executeBackwardAsync(firstAncestorHeader.get());
+
+    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.getParentHash())) {
+      return executeForwardAsync(firstAncestorHeader);
+    }
+    return executeBackwardAsync(firstAncestorHeader);
   }
 
   private CompletableFuture<Void> executeSyncStep(final Hash hash) {

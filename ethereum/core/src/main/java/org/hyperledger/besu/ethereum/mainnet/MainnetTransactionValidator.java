@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
@@ -29,6 +31,8 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
+
+import com.google.common.primitives.Longs;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -150,19 +154,29 @@ public class MainnetTransactionValidator {
       }
     }
 
-    // transactionValidationParams.isAllowExceedingBalance() is used on eth_call
-    if (!feeMarket.satisfiesFloorTxCost(transaction)
-        && !transactionValidationParams.isAllowExceedingBalance()) {
+    if (transaction.getNonce() == MAX_NONCE) {
       return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "effective gas price is too low to execute");
+          TransactionInvalidReason.NONCE_TOO_HIGH, "Nonces must be less than 2^64-1");
+    }
+
+    if (transaction
+            .getGasPrice()
+            .or(transaction::getMaxFeePerGas)
+            .orElse(Wei.ZERO)
+            .getAsBigInteger()
+            .multiply(new BigInteger(1, Longs.toByteArray(transaction.getGasLimit())))
+            .bitLength()
+        > 256) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.UPFRONT_FEE_TOO_HIGH,
+          "gasLimit x price must be less than 2^256");
     }
 
     final long intrinsicGasCost =
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
             + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
-    if (intrinsicGasCost > transaction.getGasLimit()) {
+    if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(

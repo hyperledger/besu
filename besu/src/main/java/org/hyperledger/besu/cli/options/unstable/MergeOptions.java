@@ -14,34 +14,29 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static org.hyperledger.besu.config.experimental.MergeConfigOptions.setMergeEnabled;
-
 import java.util.Stack;
 
 import net.consensys.quorum.mainnet.launcher.options.Options;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-/** Unstable support for eth1/2 merge */
+/** DEPRECATED in favor of genesis config. */
 public class MergeOptions implements Options {
   // To make it easier for tests to reset the value to default
-  public static final boolean MERGE_ENABLED_DEFAULT_VALUE = false;
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MergeOptions.class);
 
   @Option(
       hidden = true,
       names = {"--Xmerge-support"},
-      description = "Enable experimental support for eth1/eth2 merge (default: ${DEFAULT-VALUE})",
+      description = "Deprecated config parameter, do not use",
       arity = "1",
       parameterConsumer = MergeConfigConsumer.class)
-  @SuppressWarnings({"FieldCanBeFinal"})
-  private static boolean mergeEnabled = MERGE_ENABLED_DEFAULT_VALUE;
+  @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
+  private static boolean deprecatedMergeEnabled = false;
 
   public static MergeOptions create() {
     return new MergeOptions();
-  }
-
-  static Boolean isMergeEnabled() {
-    return mergeEnabled;
   }
 
   @SuppressWarnings({"JdkObsolete"})
@@ -51,7 +46,9 @@ public class MergeOptions implements Options {
         final Stack<String> args,
         final CommandLine.Model.ArgSpec argSpec,
         final CommandLine.Model.CommandSpec commandSpec) {
-      setMergeEnabled(Boolean.parseBoolean(args.pop()));
+      LOG.warn(
+          "--Xmerge-support parameter has been deprecated and will be removed in a future release.  "
+              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
     }
   }
 }

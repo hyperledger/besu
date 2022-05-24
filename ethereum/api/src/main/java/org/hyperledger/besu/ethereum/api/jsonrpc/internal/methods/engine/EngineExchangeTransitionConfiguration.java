@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchange
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -42,18 +41,19 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   static final long QOS_TIMEOUT_MILLIS = 120000L;
 
-  private static final AtomicReference<QosTimer> qosTimerRef =
-      new AtomicReference<>(
-          new QosTimer(
-              QOS_TIMEOUT_MILLIS,
-              lastCall ->
-                  LOG.warn(
-                      "not called in {} seconds, consensus client may not be connected",
-                      QOS_TIMEOUT_MILLIS / 1000L)));
+  private final QosTimer qosTimer;
 
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx, final ProtocolContext protocolContext) {
     super(vertx, protocolContext);
+    qosTimer =
+        new QosTimer(
+            vertx,
+            QOS_TIMEOUT_MILLIS,
+            lastCall ->
+                LOG.warn(
+                    "not called in {} seconds, consensus client may not be connected",
+                    QOS_TIMEOUT_MILLIS / 1000L));
   }
 
   @Override
@@ -121,6 +121,6 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   // QosTimer accessor for testing considerations
   QosTimer getQosTimer() {
-    return qosTimerRef.get();
+    return qosTimer;
   }
 }

@@ -34,8 +34,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     INVALID,
     SYNCING,
     ACCEPTED,
-    INVALID_BLOCK_HASH,
-    INVALID_TERMINAL_BLOCK;
+    INVALID_BLOCK_HASH;
   }
 
   private final Vertx syncVertx;

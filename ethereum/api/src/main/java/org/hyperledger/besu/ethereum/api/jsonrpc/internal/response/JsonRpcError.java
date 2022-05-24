@@ -72,6 +72,7 @@ public enum JsonRpcError {
   // Execution engine failures
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
   INVALID_TERMINAL_BLOCK(-32002, "Terminal block doesn't satisfy terminal block conditions"),
+  INVALID_FORKCHOICE_STATE(-38002, "Invalid forkchoice state"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
