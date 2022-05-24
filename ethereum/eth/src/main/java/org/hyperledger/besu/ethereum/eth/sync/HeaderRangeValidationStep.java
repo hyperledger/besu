@@ -24,14 +24,13 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class CheckpointHeaderValidationStep
-    implements Function<CheckpointRangeHeaders, Stream<BlockHeader>> {
+public class HeaderRangeValidationStep implements Function<RoundRangeHeaders, Stream<BlockHeader>> {
 
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final ValidationPolicy validationPolicy;
 
-  public CheckpointHeaderValidationStep(
+  public HeaderRangeValidationStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final ValidationPolicy validationPolicy) {
@@ -41,7 +40,7 @@ public class CheckpointHeaderValidationStep
   }
 
   @Override
-  public Stream<BlockHeader> apply(final CheckpointRangeHeaders checkpointRangeHeaders) {
+  public Stream<BlockHeader> apply(final RoundRangeHeaders checkpointRangeHeaders) {
     final BlockHeader rangeStart = checkpointRangeHeaders.getCheckpointRange().getStart();
     final BlockHeader firstHeaderToImport = checkpointRangeHeaders.getFirstHeaderToImport();
 

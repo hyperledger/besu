@@ -92,7 +92,6 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -361,8 +360,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled =
-        EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncConfig.getSyncMode());
+    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
     syncState.subscribeTTDReached(new PandaPrinter());
 
@@ -622,7 +620,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
-    if (checkpointConfigOptions.isValid()) {
+    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
+        && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckPointBlocksPeerValidator(
               protocolSchedule,

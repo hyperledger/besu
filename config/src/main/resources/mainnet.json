@@ -36,7 +36,7 @@
     "checkpoint": {
       "hash": "0xfeed3e175e482268db83d4fd87a43c708f40983343f4b039e582c6f6a95e0e78",
       "number": 14500000,
-      "totalDifficulty": "0x994AF3A04B379BB8B42hy"
+      "totalDifficulty": "0x994AF3A04B379BB8B42"
     }
   },
   "nonce": "0x42",

@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckPointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
@@ -112,9 +113,22 @@ public class DefaultSynchronizer implements Synchronizer {
                     metricsSystem,
                     terminationCondition));
 
-    if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
+    if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
-          SnapDownloaderFactory.createSnapDownloader(
+          FastDownloaderFactory.create(
+              pivotBlockSelector,
+              syncConfig,
+              dataDirectory,
+              protocolSchedule,
+              protocolContext,
+              metricsSystem,
+              ethContext,
+              worldStateStorage,
+              syncState,
+              clock);
+    } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
+      this.fastSyncDownloader =
+          CheckPointDownloaderFactory.createCheckPointDownloader(
               pivotBlockSelector,
               syncConfig,
               dataDirectory,
@@ -127,7 +141,7 @@ public class DefaultSynchronizer implements Synchronizer {
               clock);
     } else {
       this.fastSyncDownloader =
-          FastDownloaderFactory.create(
+          SnapDownloaderFactory.createSnapDownloader(
               pivotBlockSelector,
               syncConfig,
               dataDirectory,

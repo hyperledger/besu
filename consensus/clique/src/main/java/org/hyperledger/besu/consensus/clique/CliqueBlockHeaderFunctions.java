@@ -30,4 +30,9 @@ public class CliqueBlockHeaderFunctions implements BlockHeaderFunctions {
   public CliqueExtraData parseExtraData(final BlockHeader header) {
     return CliqueExtraData.decodeRaw(header);
   }
+
+  @Override
+  public int getCheckPointWindowSize(final BlockHeader blockHeader) {
+    return CliqueExtraData.decode(blockHeader).getValidators().size();
+  }
 }

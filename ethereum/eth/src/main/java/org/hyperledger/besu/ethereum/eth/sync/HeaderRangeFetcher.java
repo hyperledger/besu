@@ -34,8 +34,8 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CheckpointHeaderFetcher {
-  private static final Logger LOG = LoggerFactory.getLogger(CheckpointHeaderFetcher.class);
+public class HeaderRangeFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(HeaderRangeFetcher.class);
 
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule protocolSchedule;
@@ -44,7 +44,7 @@ public class CheckpointHeaderFetcher {
   private final FastSyncState fastSyncState;
   private final MetricsSystem metricsSystem;
 
-  public CheckpointHeaderFetcher(
+  public HeaderRangeFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
@@ -52,7 +52,7 @@ public class CheckpointHeaderFetcher {
     this(syncConfig, protocolSchedule, ethContext, new FastSyncState(), metricsSystem);
   }
 
-  public CheckpointHeaderFetcher(
+  public HeaderRangeFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,

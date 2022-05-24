@@ -25,7 +25,8 @@
     "checkpoint": {
       "hash": "0x2ae30061bdfc7f6dad5b07361dce436502eb0fde68645de12bae4929be619188",
       "number": 6720000,
-      "totalDifficulty": "0x967F81"
+      "totalDifficulty": "0x967F81",
+      "_comment": "must be the beginning of an epoch"
     }
   },
   "coinbase":"0x0000000000000000000000000000000000000000",

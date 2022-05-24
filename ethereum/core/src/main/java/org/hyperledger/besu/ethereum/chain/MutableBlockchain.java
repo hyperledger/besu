@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
@@ -37,10 +38,9 @@ public interface MutableBlockchain extends Blockchain {
   void appendBlock(Block block, List<TransactionReceipt> receipts);
 
   void unsafeImportBlock(
-      final Block block,
-      final Optional<List<TransactionReceipt>> maybeReceipts,
-      final Difficulty totalDifficulty,
-      final boolean isChainHead);
+      final BlockHeader blockHeader, final Optional<Difficulty> maybeTtalDifficulty);
+
+  void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
   /**
    * Rolls back the canonical chainhead to the specified block number.

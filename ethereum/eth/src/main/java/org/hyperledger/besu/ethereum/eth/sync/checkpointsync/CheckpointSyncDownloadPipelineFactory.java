@@ -12,8 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.checkpoint;
+package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -25,14 +26,20 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.services.pipeline.Pipeline;
+import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipelineFactory {
 
-  private final CheckPointImporter checkPointImporter;
+  private static final Logger LOG =
+      LoggerFactory.getLogger(CheckpointSyncDownloadPipelineFactory.class);
 
   public CheckpointSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -42,27 +49,55 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
       final FastSyncState fastSyncState,
       final MetricsSystem metricsSystem) {
     super(syncConfig, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
-    checkPointImporter =
-        new CheckPointImporter(protocolContext, protocolSchedule, ethContext, metricsSystem);
   }
 
   @Override
   public CompletionStage<Void> startPipeline(
       final EthScheduler scheduler, final SyncState syncState, final SyncTarget target) {
-    return downloadCheckPoint(syncState, target)
-        .thenCompose(
-            syncTarget -> scheduler.startPipeline(createDownloadPipelineForSyncTarget(target)));
+    return scheduler
+        .startPipeline(createDownloadCheckPointPipeline(syncState, target))
+        .thenAccept(
+            unused -> {
+              final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
+              LOG.info(
+                  "Checkpoint block {} with hash {} downloaded",
+                  checkpoint.blockNumber(),
+                  checkpoint.blockHash());
+            })
+        .thenAccept(unused -> scheduler.startPipeline(createDownloadPipelineForSyncTarget(target)));
   }
 
-  private CompletableFuture<Void> downloadCheckPoint(
-      final SyncState syncState, final SyncTarget syncTarget) {
-    Checkpoint checkpoint =
-        syncState.getCheckpoint().orElseThrow(() -> new RuntimeException("missing checkpoint"));
-    if (syncState.getLocalChainHeight() < checkpoint.blockNumber()) {
-      return checkPointImporter.importCheckPointBlock(syncTarget, checkpoint);
-    } else {
-      return CompletableFuture.completedFuture(null);
-    }
+  protected Pipeline<Hash> createDownloadCheckPointPipeline(
+      final SyncState syncState, final SyncTarget target) {
+
+    final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
+    final CheckPointSource checkPointSource =
+        new CheckPointSource(
+            syncState,
+            target.peer(),
+            protocolSchedule.getByBlockNumber(checkpoint.blockNumber()).getBlockHeaderFunctions());
+
+    final CheckPointHeaderImportStep checkPointHeaderImportStep =
+        new CheckPointHeaderImportStep(
+            checkPointSource, checkpoint, protocolContext.getBlockchain());
+
+    final CheckPointDownloadHeaderStep checkPointDownloadHeaderStep =
+        new CheckPointDownloadHeaderStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
+
+    return PipelineBuilder.createPipelineFrom(
+            "fetchCheckpoints",
+            checkPointSource,
+            1,
+            metricsSystem.createLabelledCounter(
+                BesuMetricCategory.SYNCHRONIZER,
+                "chain_download_pipeline_processed_total",
+                "Number of header process by each chain download pipeline stage",
+                "step",
+                "action"),
+            true,
+            "checkpointSync")
+        .thenProcessAsyncOrdered("downloadHeader", checkPointDownloadHeaderStep::downloadHeader, 1)
+        .andFinishWith("importHeader", checkPointHeaderImportStep);
   }
 
   @Override

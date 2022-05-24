@@ -41,7 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CheckpointHeaderValidationStepTest {
+public class SyncHeaderRangeValidationStepTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private ProtocolContext protocolContext;
@@ -49,14 +49,14 @@ public class CheckpointHeaderValidationStepTest {
   @Mock private ValidationPolicy validationPolicy;
   @Mock private EthPeer syncTarget;
   private final BlockDataGenerator gen = new BlockDataGenerator();
-  private CheckpointHeaderValidationStep validationStep;
+  private HeaderRangeValidationStep validationStep;
 
   private final BlockHeader checkpointStart = gen.header(10);
   private final BlockHeader checkpointEnd = gen.header(13);
   private final BlockHeader firstHeader = gen.header(11);
-  private final CheckpointRangeHeaders rangeHeaders =
-      new CheckpointRangeHeaders(
-          new CheckpointRange(syncTarget, checkpointStart, checkpointEnd),
+  private final RoundRangeHeaders rangeHeaders =
+      new RoundRangeHeaders(
+          new HeaderRange(syncTarget, checkpointStart, checkpointEnd),
           asList(firstHeader, gen.header(12), checkpointEnd));
 
   @Before
@@ -66,7 +66,7 @@ public class CheckpointHeaderValidationStepTest {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
 
     validationStep =
-        new CheckpointHeaderValidationStep(protocolSchedule, protocolContext, validationPolicy);
+        new HeaderRangeValidationStep(protocolSchedule, protocolContext, validationPolicy);
   }
 
   @Test

@@ -25,14 +25,14 @@ import com.google.common.base.MoreObjects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CheckpointRangeHeaders {
-  private static final Logger LOG = LoggerFactory.getLogger(CheckpointRangeHeaders.class);
+public class RoundRangeHeaders {
+  private static final Logger LOG = LoggerFactory.getLogger(RoundRangeHeaders.class);
 
-  private final CheckpointRange checkpointRange;
+  private final HeaderRange checkpointRange;
   private final List<BlockHeader> headersToImport;
 
-  public CheckpointRangeHeaders(
-      final CheckpointRange checkpointRange, final List<BlockHeader> headersToImport) {
+  public RoundRangeHeaders(
+      final HeaderRange checkpointRange, final List<BlockHeader> headersToImport) {
     if (headersToImport.isEmpty()) {
       LOG.debug(
           String.format("Headers list empty. CheckpointRange: %s", checkpointRange.toString()));
@@ -42,7 +42,7 @@ public class CheckpointRangeHeaders {
     this.headersToImport = headersToImport;
   }
 
-  public CheckpointRange getCheckpointRange() {
+  public HeaderRange getCheckpointRange() {
     return checkpointRange;
   }
 
@@ -62,7 +62,7 @@ public class CheckpointRangeHeaders {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final CheckpointRangeHeaders that = (CheckpointRangeHeaders) o;
+    final RoundRangeHeaders that = (RoundRangeHeaders) o;
     return Objects.equals(checkpointRange, that.checkpointRange)
         && Objects.equals(headersToImport, that.headersToImport);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,47 +12,51 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.fastsync;
+package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public class FastSyncChainDownloader {
-
-  protected FastSyncChainDownloader() {}
-
-  public static ChainDownloader create(
-      final SynchronizerConfiguration config,
+public class CheckPointSyncActions extends FastSyncActions {
+  public CheckPointSyncActions(
+      final SynchronizerConfiguration syncConfig,
       final WorldStateStorage worldStateStorage,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState) {
-
-    final FastSyncTargetManager syncTargetManager =
-        new FastSyncTargetManager(
-            config,
-            worldStateStorage,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            metricsSystem,
-            fastSyncState);
-    return new PipelineChainDownloader(
+      final PivotBlockSelector pivotBlockSelector,
+      final MetricsSystem metricsSystem) {
+    super(
+        syncConfig,
+        worldStateStorage,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
         syncState,
-        syncTargetManager,
-        new FastSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
-        ethContext.getScheduler(),
+        pivotBlockSelector,
         metricsSystem);
+  }
+
+  @Override
+  public ChainDownloader createChainDownloader(final FastSyncState currentState) {
+    return CheckPointSyncChainDownloader.create(
+        syncConfig,
+        worldStateStorage,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        metricsSystem,
+        currentState);
   }
 }

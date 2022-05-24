@@ -36,11 +36,11 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CheckpointRangeSource implements Iterator<CheckpointRange> {
-  private static final Logger LOG = LoggerFactory.getLogger(CheckpointRangeSource.class);
+public class SyncHeaderRangeSource implements Iterator<HeaderRange> {
+  private static final Logger LOG = LoggerFactory.getLogger(SyncHeaderRangeSource.class);
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
 
-  private final CheckpointHeaderFetcher checkpointFetcher;
+  private final HeaderRangeFetcher checkpointFetcher;
   private final SyncTargetChecker syncTargetChecker;
   private final EthPeer peer;
   private final EthScheduler ethScheduler;
@@ -48,15 +48,15 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
   private final Duration newHeaderWaitDuration;
   private final SyncTerminationCondition terminationCondition;
 
-  private final Queue<CheckpointRange> retrievedRanges = new ArrayDeque<>();
+  private final Queue<HeaderRange> retrievedRanges = new ArrayDeque<>();
   private BlockHeader lastRangeEnd;
   private boolean reachedEndOfCheckpoints = false;
   private Optional<CompletableFuture<List<BlockHeader>>> pendingCheckpointsRequest =
       Optional.empty();
   private int requestFailureCount = 0;
 
-  public CheckpointRangeSource(
-      final CheckpointHeaderFetcher checkpointFetcher,
+  public SyncHeaderRangeSource(
+      final HeaderRangeFetcher checkpointFetcher,
       final SyncTargetChecker syncTargetChecker,
       final EthScheduler ethScheduler,
       final EthPeer peer,
@@ -74,8 +74,8 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
         terminationCondition);
   }
 
-  CheckpointRangeSource(
-      final CheckpointHeaderFetcher checkpointFetcher,
+  SyncHeaderRangeSource(
+      final HeaderRangeFetcher checkpointFetcher,
       final SyncTargetChecker syncTargetChecker,
       final EthScheduler ethScheduler,
       final EthPeer peer,
@@ -103,7 +103,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
   }
 
   @Override
-  public CheckpointRange next() {
+  public HeaderRange next() {
     if (!retrievedRanges.isEmpty()) {
       return retrievedRanges.poll();
     }
@@ -115,7 +115,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
     }
     if (checkpointFetcher.nextCheckpointEndsAtChainHead(peer, lastRangeEnd)) {
       reachedEndOfCheckpoints = true;
-      return new CheckpointRange(peer, lastRangeEnd);
+      return new HeaderRange(peer, lastRangeEnd);
     }
     pendingCheckpointsRequest = Optional.of(getNextCheckpointHeaders());
     return getCheckpointRangeFromPendingRequest();
@@ -144,7 +144,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
         () -> completedFuture(emptyList()), RETRY_DELAY_DURATION);
   }
 
-  private CheckpointRange getCheckpointRangeFromPendingRequest() {
+  private HeaderRange getCheckpointRangeFromPendingRequest() {
     final CompletableFuture<List<BlockHeader>> pendingRequest = pendingCheckpointsRequest.get();
     try {
       final List<BlockHeader> newCheckpointHeaders =
@@ -156,7 +156,7 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
         requestFailureCount = 0;
       }
       for (final BlockHeader checkpointHeader : newCheckpointHeaders) {
-        retrievedRanges.add(new CheckpointRange(peer, lastRangeEnd, checkpointHeader));
+        retrievedRanges.add(new HeaderRange(peer, lastRangeEnd, checkpointHeader));
         lastRangeEnd = checkpointHeader;
       }
       return retrievedRanges.poll();

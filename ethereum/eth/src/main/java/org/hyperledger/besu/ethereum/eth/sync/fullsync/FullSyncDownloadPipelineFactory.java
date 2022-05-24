@@ -19,12 +19,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderFetcher;
-import org.hyperledger.besu.ethereum.eth.sync.CheckpointHeaderValidationStep;
-import org.hyperledger.besu.ethereum.eth.sync.CheckpointRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.HeaderRangeFetcher;
+import org.hyperledger.besu.ethereum.eth.sync.HeaderRangeValidationStep;
+import org.hyperledger.besu.ethereum.eth.sync.SyncHeaderRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -81,9 +81,9 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
-    final CheckpointRangeSource checkpointRangeSource =
-        new CheckpointRangeSource(
-            new CheckpointHeaderFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
+    final SyncHeaderRangeSource checkpointRangeSource =
+        new SyncHeaderRangeSource(
+            new HeaderRangeFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -98,9 +98,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             detachedValidationPolicy,
             headerRequestSize,
             metricsSystem);
-    final CheckpointHeaderValidationStep validateHeadersJoinUpStep =
-        new CheckpointHeaderValidationStep(
-            protocolSchedule, protocolContext, detachedValidationPolicy);
+    final HeaderRangeValidationStep validateHeadersJoinUpStep =
+        new HeaderRangeValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final ExtractTxSignaturesStep extractTxSignaturesStep = new ExtractTxSignaturesStep();

@@ -36,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DownloadHeadersStep
-    implements Function<CheckpointRange, CompletableFuture<CheckpointRangeHeaders>> {
+    implements Function<HeaderRange, CompletableFuture<RoundRangeHeaders>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadHeadersStep.class);
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -61,22 +61,21 @@ public class DownloadHeadersStep
   }
 
   @Override
-  public CompletableFuture<CheckpointRangeHeaders> apply(final CheckpointRange checkpointRange) {
+  public CompletableFuture<RoundRangeHeaders> apply(final HeaderRange checkpointRange) {
     final CompletableFuture<List<BlockHeader>> taskFuture = downloadHeaders(checkpointRange);
-    final CompletableFuture<CheckpointRangeHeaders> processedFuture =
+    final CompletableFuture<RoundRangeHeaders> processedFuture =
         taskFuture.thenApply(headers -> processHeaders(checkpointRange, headers));
     FutureUtils.propagateCancellation(processedFuture, taskFuture);
     return processedFuture;
   }
 
-  private CompletableFuture<List<BlockHeader>> downloadHeaders(
-      final CheckpointRange checkpointRange) {
-    if (checkpointRange.hasEnd()) {
+  private CompletableFuture<List<BlockHeader>> downloadHeaders(final HeaderRange range) {
+    if (range.hasEnd()) {
       LOG.debug(
           "Downloading headers for range {} to {}",
-          checkpointRange.getStart().getNumber(),
-          checkpointRange.getEnd().getNumber());
-      if (checkpointRange.getSegmentLengthExclusive() == 0) {
+          range.getStart().getNumber(),
+          range.getEnd().getNumber());
+      if (range.getSegmentLengthExclusive() == 0) {
         // There are no extra headers to download.
         return completedFuture(emptyList());
       }
@@ -84,38 +83,38 @@ public class DownloadHeadersStep
               protocolSchedule,
               protocolContext,
               ethContext,
-              checkpointRange.getEnd(),
-              checkpointRange.getSegmentLengthExclusive(),
+              range.getEnd(),
+              range.getSegmentLengthExclusive(),
               validationPolicy,
               metricsSystem)
           .run();
     } else {
-      LOG.debug("Downloading headers starting from {}", checkpointRange.getStart().getNumber());
+      LOG.debug("Downloading headers starting from {}", range.getStart().getNumber());
       return GetHeadersFromPeerByHashTask.startingAtHash(
               protocolSchedule,
               ethContext,
-              checkpointRange.getStart().getHash(),
-              checkpointRange.getStart().getNumber(),
+              range.getStart().getHash(),
+              range.getStart().getNumber(),
               headerRequestSize,
               metricsSystem)
-          .assignPeer(checkpointRange.getSyncTarget())
+          .assignPeer(range.getSyncTarget())
           .run()
           .thenApply(PeerTaskResult::getResult);
     }
   }
 
-  private CheckpointRangeHeaders processHeaders(
-      final CheckpointRange checkpointRange, final List<BlockHeader> headers) {
+  private RoundRangeHeaders processHeaders(
+      final HeaderRange checkpointRange, final List<BlockHeader> headers) {
     if (checkpointRange.hasEnd()) {
       final List<BlockHeader> headersToImport = new ArrayList<>(headers);
       headersToImport.add(checkpointRange.getEnd());
-      return new CheckpointRangeHeaders(checkpointRange, headersToImport);
+      return new RoundRangeHeaders(checkpointRange, headersToImport);
     } else {
       List<BlockHeader> headersToImport = headers;
       if (!headers.isEmpty() && headers.get(0).equals(checkpointRange.getStart())) {
         headersToImport = headers.subList(1, headers.size());
       }
-      return new CheckpointRangeHeaders(checkpointRange, headersToImport);
+      return new RoundRangeHeaders(checkpointRange, headersToImport);
     }
   }
 }

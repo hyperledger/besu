@@ -42,19 +42,19 @@ import java.util.function.Supplier;
 
 import org.junit.Test;
 
-public class CheckpointRangeSourceTest {
+public class SyncHeaderRangeSourceTest {
 
   private static final int CHECKPOINT_TIMEOUTS_PERMITTED = 3;
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
   private final EthPeer peer = mock(EthPeer.class);
-  private final CheckpointHeaderFetcher checkpointFetcher = mock(CheckpointHeaderFetcher.class);
-  private final CheckpointRangeSource.SyncTargetChecker syncTargetChecker =
-      mock(CheckpointRangeSource.SyncTargetChecker.class);
+  private final HeaderRangeFetcher checkpointFetcher = mock(HeaderRangeFetcher.class);
+  private final SyncHeaderRangeSource.SyncTargetChecker syncTargetChecker =
+      mock(SyncHeaderRangeSource.SyncTargetChecker.class);
   private final EthScheduler ethScheduler = mock(EthScheduler.class);
 
   private final BlockHeader commonAncestor = header(10);
-  private final CheckpointRangeSource source =
-      new CheckpointRangeSource(
+  private final SyncHeaderRangeSource source =
+      new SyncHeaderRangeSource(
           checkpointFetcher,
           syncTargetChecker,
           ethScheduler,
@@ -175,18 +175,18 @@ public class CheckpointRangeSourceTest {
     when(checkpointFetcher.getNextCheckpointHeaders(peer, header(20)))
         .thenReturn(completedFuture(asList(header(25), header(30))));
 
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, commonAncestor, header(15)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, commonAncestor, header(15)));
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, commonAncestor);
     verify(checkpointFetcher).nextCheckpointEndsAtChainHead(peer, commonAncestor);
 
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, header(15), header(20)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, header(15), header(20)));
     verifyNoMoreInteractions(checkpointFetcher);
 
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, header(20), header(25)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, header(20), header(25)));
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, header(20));
     verify(checkpointFetcher).nextCheckpointEndsAtChainHead(peer, header(20));
 
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, header(25), header(30)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, header(25), header(30)));
     verifyNoMoreInteractions(checkpointFetcher);
   }
 
@@ -195,8 +195,8 @@ public class CheckpointRangeSourceTest {
     when(checkpointFetcher.getNextCheckpointHeaders(peer, commonAncestor))
         .thenReturn(completedFuture(asList(header(15), header(20))));
 
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, commonAncestor, header(15)));
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, header(15), header(20)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, commonAncestor, header(15)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, header(15), header(20)));
   }
 
   @Test
@@ -229,7 +229,7 @@ public class CheckpointRangeSourceTest {
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, commonAncestor);
 
     future.complete(asList(header(15), header(20)));
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, commonAncestor, header(15)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, commonAncestor, header(15)));
   }
 
   @Test
@@ -243,7 +243,7 @@ public class CheckpointRangeSourceTest {
     verify(checkpointFetcher).getNextCheckpointHeaders(peer, commonAncestor);
 
     // Then retries
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, commonAncestor, header(15)));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, commonAncestor, header(15)));
     verify(checkpointFetcher, times(2)).getNextCheckpointHeaders(peer, commonAncestor);
   }
 
@@ -254,7 +254,7 @@ public class CheckpointRangeSourceTest {
     when(checkpointFetcher.nextCheckpointEndsAtChainHead(peer, commonAncestor)).thenReturn(true);
 
     assertThat(source).hasNext();
-    assertThat(source.next()).isEqualTo(new CheckpointRange(peer, commonAncestor));
+    assertThat(source.next()).isEqualTo(new HeaderRange(peer, commonAncestor));
 
     // Once we've sent an open-ended range we shouldn't have any more ranges.
     assertThat(source).isExhausted();
