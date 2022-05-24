@@ -35,6 +35,10 @@ public class MergeOptions implements Options {
   @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
   private static boolean deprecatedMergeEnabled = false;
 
+  public static MergeOptions create() {
+    return new MergeOptions();
+  }
+
   @SuppressWarnings({"JdkObsolete"})
   static class MergeConfigConsumer implements CommandLine.IParameterConsumer {
     @Override
