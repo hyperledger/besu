@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
@@ -110,8 +109,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       return new JsonRpcSuccessResponse(
           requestId,
           new EngineUpdateForkchoiceResult(
-              INVALID_TERMINAL_BLOCK,
-              null,
+              INVALID,
+              Hash.ZERO,
               null,
               Optional.of(newHead.get() + " did not descend from terminal block")));
     }

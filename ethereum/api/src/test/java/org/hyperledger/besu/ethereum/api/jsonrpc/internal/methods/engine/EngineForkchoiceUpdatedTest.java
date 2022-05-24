@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
@@ -101,14 +100,14 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
-  public void shouldReturnInvalidTerminalBlock() {
+  public void shouldReturnInvalidOnBadTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     assertSuccessWithPayloadForForkchoiceResult(
-        Optional.empty(), mock(ForkchoiceResult.class), INVALID_TERMINAL_BLOCK);
+        Optional.empty(), mock(ForkchoiceResult.class), INVALID, Optional.of(Hash.ZERO));
   }
 
   @Test
@@ -341,6 +340,15 @@ public class EngineForkchoiceUpdatedTest {
       final Optional<EnginePayloadAttributesParameter> payloadParam,
       final ForkchoiceResult forkchoiceResult,
       final EngineStatus expectedStatus) {
+    return assertSuccessWithPayloadForForkchoiceResult(
+        payloadParam, forkchoiceResult, expectedStatus, Optional.empty());
+  }
+
+  private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
+      final Optional<EnginePayloadAttributesParameter> payloadParam,
+      final ForkchoiceResult forkchoiceResult,
+      final EngineStatus expectedStatus,
+      final Optional<Hash> maybeLatestValidHash) {
 
     // result from mergeCoordinator has no new finalized, new head:
     when(mergeCoordinator.updateForkChoice(
@@ -364,7 +372,7 @@ public class EngineForkchoiceUpdatedTest {
       }
     } else {
       // assert null latest valid and payload identifier:
-      assertThat(res.getPayloadStatus().getLatestValidHash()).isEmpty();
+      assertThat(res.getPayloadStatus().getLatestValidHash()).isEqualTo(maybeLatestValidHash);
       assertThat(res.getPayloadId()).isNull();
     }
 
