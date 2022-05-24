@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -83,6 +84,7 @@ public class MergeBesuControllerBuilderTest {
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
+  @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock MiningParameters miningParameters;
   @Mock ObservableMetricsSystem observableMetricsSystem;
   @Mock PrivacyParameters privacyParameters;
@@ -109,6 +111,7 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
