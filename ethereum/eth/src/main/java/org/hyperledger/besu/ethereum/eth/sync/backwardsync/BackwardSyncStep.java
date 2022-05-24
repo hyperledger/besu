@@ -62,7 +62,7 @@ public class BackwardSyncStep {
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
     debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
-    Optional<BlockHeader> maybeFinalizedHeader =
+    final Optional<BlockHeader> maybeFinalizedHeader =
         context
             .getProtocolContext()
             .getBlockchain()
