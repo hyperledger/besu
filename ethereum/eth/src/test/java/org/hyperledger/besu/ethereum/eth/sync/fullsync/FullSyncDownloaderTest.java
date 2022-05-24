@@ -114,7 +114,7 @@ public class FullSyncDownloaderTest {
 
     final TrailingPeerRequirements expected =
         new TrailingPeerRequirements(localBlockchain.getChainHeadBlockNumber(), maxTailingPeers);
-    assertThat(synchronizer.calculateTrailingPeerRequirements()).isEqualTo(expected);
+    assertThat(synchronizer.calculateTrailingPeerRequirements()).contains(expected);
   }
 
   @Test
@@ -128,6 +128,6 @@ public class FullSyncDownloaderTest {
     syncState.setSyncTarget(bestPeer.getEthPeer(), localBlockchain.getChainHeadHeader());
 
     assertThat(synchronizer.calculateTrailingPeerRequirements())
-        .isEqualTo(TrailingPeerRequirements.UNRESTRICTED);
+        .contains(TrailingPeerRequirements.UNRESTRICTED);
   }
 }

@@ -86,7 +86,7 @@ public class FullSyncDownloader implements SyncDownloader {
 
   @Override
   public Optional<TrailingPeerRequirements> calculateTrailingPeerRequirements() {
-    if (syncState.isInSync()) return Optional.empty();
+    if (syncState.isInSync()) return Optional.of(TrailingPeerRequirements.UNRESTRICTED);
     return Optional.of(
         new TrailingPeerRequirements(
             protocolContext.getBlockchain().getChainHeadBlockNumber(),
