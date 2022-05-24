@@ -12,10 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
+package org.hyperledger.besu.ethereum.eth.sync.range;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -24,13 +25,13 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class HeaderRangeValidationStep implements Function<RoundRangeHeaders, Stream<BlockHeader>> {
+public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream<BlockHeader>> {
 
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final ValidationPolicy validationPolicy;
 
-  public HeaderRangeValidationStep(
+  public RangeHeadersValidationStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final ValidationPolicy validationPolicy) {
@@ -40,16 +41,16 @@ public class HeaderRangeValidationStep implements Function<RoundRangeHeaders, St
   }
 
   @Override
-  public Stream<BlockHeader> apply(final RoundRangeHeaders checkpointRangeHeaders) {
-    final BlockHeader rangeStart = checkpointRangeHeaders.getCheckpointRange().getStart();
-    final BlockHeader firstHeaderToImport = checkpointRangeHeaders.getFirstHeaderToImport();
+  public Stream<BlockHeader> apply(final RangeHeaders rangeHeaders) {
+    final BlockHeader rangeStart = rangeHeaders.getRange().getStart();
+    final BlockHeader firstHeaderToImport = rangeHeaders.getFirstHeaderToImport();
 
     if (isValid(rangeStart, firstHeaderToImport)) {
-      return checkpointRangeHeaders.getHeadersToImport().stream();
+      return rangeHeaders.getHeadersToImport().stream();
     } else {
       final String rangeEndDescription;
-      if (checkpointRangeHeaders.getCheckpointRange().hasEnd()) {
-        final BlockHeader rangeEnd = checkpointRangeHeaders.getCheckpointRange().getEnd();
+      if (rangeHeaders.getRange().hasEnd()) {
+        final BlockHeader rangeEnd = rangeHeaders.getRange().getEnd();
         rangeEndDescription =
             String.format("#%d (%s)", rangeEnd.getNumber(), rangeEnd.getBlockHash());
       } else {
@@ -57,7 +58,7 @@ public class HeaderRangeValidationStep implements Function<RoundRangeHeaders, St
       }
       final String errorMessage =
           String.format(
-              "Invalid checkpoint headers.  Headers downloaded between #%d (%s) and %s do not connect at #%d (%s)",
+              "Invalid range headers.  Headers downloaded between #%d (%s) and %s do not connect at #%d (%s)",
               rangeStart.getNumber(),
               rangeStart.getHash(),
               rangeEndDescription,

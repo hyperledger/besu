@@ -27,6 +27,9 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
+import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -49,14 +52,14 @@ public class SyncHeaderRangeValidationStepTest {
   @Mock private ValidationPolicy validationPolicy;
   @Mock private EthPeer syncTarget;
   private final BlockDataGenerator gen = new BlockDataGenerator();
-  private HeaderRangeValidationStep validationStep;
+  private RangeHeadersValidationStep validationStep;
 
   private final BlockHeader checkpointStart = gen.header(10);
   private final BlockHeader checkpointEnd = gen.header(13);
   private final BlockHeader firstHeader = gen.header(11);
-  private final RoundRangeHeaders rangeHeaders =
-      new RoundRangeHeaders(
-          new HeaderRange(syncTarget, checkpointStart, checkpointEnd),
+  private final RangeHeaders rangeHeaders =
+      new RangeHeaders(
+          new SyncTargetRange(syncTarget, checkpointStart, checkpointEnd),
           asList(firstHeader, gen.header(12), checkpointEnd));
 
   @Before
@@ -66,7 +69,7 @@ public class SyncHeaderRangeValidationStepTest {
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
 
     validationStep =
-        new HeaderRangeValidationStep(protocolSchedule, protocolContext, validationPolicy);
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
   }
 
   @Test

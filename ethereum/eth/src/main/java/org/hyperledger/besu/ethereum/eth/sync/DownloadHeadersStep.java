@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
+import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.DownloadHeaderSequenceTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -36,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DownloadHeadersStep
-    implements Function<HeaderRange, CompletableFuture<RoundRangeHeaders>> {
+    implements Function<SyncTargetRange, CompletableFuture<RangeHeaders>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadHeadersStep.class);
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -61,15 +63,15 @@ public class DownloadHeadersStep
   }
 
   @Override
-  public CompletableFuture<RoundRangeHeaders> apply(final HeaderRange checkpointRange) {
+  public CompletableFuture<RangeHeaders> apply(final SyncTargetRange checkpointRange) {
     final CompletableFuture<List<BlockHeader>> taskFuture = downloadHeaders(checkpointRange);
-    final CompletableFuture<RoundRangeHeaders> processedFuture =
+    final CompletableFuture<RangeHeaders> processedFuture =
         taskFuture.thenApply(headers -> processHeaders(checkpointRange, headers));
     FutureUtils.propagateCancellation(processedFuture, taskFuture);
     return processedFuture;
   }
 
-  private CompletableFuture<List<BlockHeader>> downloadHeaders(final HeaderRange range) {
+  private CompletableFuture<List<BlockHeader>> downloadHeaders(final SyncTargetRange range) {
     if (range.hasEnd()) {
       LOG.debug(
           "Downloading headers for range {} to {}",
@@ -103,18 +105,18 @@ public class DownloadHeadersStep
     }
   }
 
-  private RoundRangeHeaders processHeaders(
-      final HeaderRange checkpointRange, final List<BlockHeader> headers) {
+  private RangeHeaders processHeaders(
+      final SyncTargetRange checkpointRange, final List<BlockHeader> headers) {
     if (checkpointRange.hasEnd()) {
       final List<BlockHeader> headersToImport = new ArrayList<>(headers);
       headersToImport.add(checkpointRange.getEnd());
-      return new RoundRangeHeaders(checkpointRange, headersToImport);
+      return new RangeHeaders(checkpointRange, headersToImport);
     } else {
       List<BlockHeader> headersToImport = headers;
       if (!headers.isEmpty() && headers.get(0).equals(checkpointRange.getStart())) {
         headersToImport = headers.subList(1, headers.size());
       }
-      return new RoundRangeHeaders(checkpointRange, headersToImport);
+      return new RangeHeaders(checkpointRange, headersToImport);
     }
   }
 }

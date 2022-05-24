@@ -29,12 +29,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
-import org.hyperledger.besu.ethereum.eth.sync.HeaderRange;
-import org.hyperledger.besu.ethereum.eth.sync.HeaderRangeFetcher;
-import org.hyperledger.besu.ethereum.eth.sync.HeaderRangeValidationStep;
-import org.hyperledger.besu.ethereum.eth.sync.SyncHeaderRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
+import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
+import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRangeSource;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -104,14 +104,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
   }
 
   @Override
-  public Pipeline<HeaderRange> createDownloadPipelineForSyncTarget(final SyncTarget target) {
+  public Pipeline<SyncTargetRange> createDownloadPipelineForSyncTarget(final SyncTarget target) {
 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
-    final SyncHeaderRangeSource checkpointRangeSource =
-        new SyncHeaderRangeSource(
-            new HeaderRangeFetcher(
+    final SyncTargetRangeSource checkpointRangeSource =
+        new SyncTargetRangeSource(
+            new RangeHeadersFetcher(
                 syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
@@ -127,8 +127,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             detachedValidationPolicy,
             headerRequestSize,
             metricsSystem);
-    final HeaderRangeValidationStep validateHeadersJoinUpStep =
-        new HeaderRangeValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
+    final RangeHeadersValidationStep validateHeadersJoinUpStep =
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, detachedValidationPolicy);
     final DownloadBodiesStep downloadBodiesStep =
         new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =

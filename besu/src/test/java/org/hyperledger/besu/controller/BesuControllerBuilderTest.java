@@ -70,8 +70,7 @@ public class BesuControllerBuilderTest {
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock EthashConfigOptions ethashConfigOptions;
-  @Mock
-  CheckpointConfigOptions checkpointConfigOptions;
+  @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock Keccak256ConfigOptions keccak256ConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;

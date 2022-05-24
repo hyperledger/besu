@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
+package org.hyperledger.besu.ethereum.eth.sync.range;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -25,25 +25,24 @@ import com.google.common.base.MoreObjects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RoundRangeHeaders {
-  private static final Logger LOG = LoggerFactory.getLogger(RoundRangeHeaders.class);
+public class RangeHeaders {
+  private static final Logger LOG = LoggerFactory.getLogger(RangeHeaders.class);
 
-  private final HeaderRange checkpointRange;
+  private final SyncTargetRange range;
   private final List<BlockHeader> headersToImport;
 
-  public RoundRangeHeaders(
-      final HeaderRange checkpointRange, final List<BlockHeader> headersToImport) {
+  public RangeHeaders(
+      final SyncTargetRange checkpointRange, final List<BlockHeader> headersToImport) {
     if (headersToImport.isEmpty()) {
-      LOG.debug(
-          String.format("Headers list empty. CheckpointRange: %s", checkpointRange.toString()));
+      LOG.debug(String.format("Headers list empty. Range: %s", checkpointRange.toString()));
     }
     checkArgument(!headersToImport.isEmpty(), "Must have at least one header to import");
-    this.checkpointRange = checkpointRange;
+    this.range = checkpointRange;
     this.headersToImport = headersToImport;
   }
 
-  public HeaderRange getCheckpointRange() {
-    return checkpointRange;
+  public SyncTargetRange getRange() {
+    return range;
   }
 
   public List<BlockHeader> getHeadersToImport() {
@@ -62,20 +61,20 @@ public class RoundRangeHeaders {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final RoundRangeHeaders that = (RoundRangeHeaders) o;
-    return Objects.equals(checkpointRange, that.checkpointRange)
+    final RangeHeaders that = (RangeHeaders) o;
+    return Objects.equals(range, that.range)
         && Objects.equals(headersToImport, that.headersToImport);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(checkpointRange, headersToImport);
+    return Objects.hash(range, headersToImport);
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("checkpointRange", checkpointRange)
+        .add("range", range)
         .add("headersToImport", headersToImport)
         .toString();
   }

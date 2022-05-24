@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
+package org.hyperledger.besu.ethereum.eth.sync.range;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -34,17 +35,17 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HeaderRangeFetcher {
-  private static final Logger LOG = LoggerFactory.getLogger(HeaderRangeFetcher.class);
+public class RangeHeadersFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(RangeHeadersFetcher.class);
 
   private final SynchronizerConfiguration syncConfig;
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
-  // The checkpoint we're aiming to reach at the end of this sync.
+  // The range we're aiming to reach at the end of this sync.
   private final FastSyncState fastSyncState;
   private final MetricsSystem metricsSystem;
 
-  public HeaderRangeFetcher(
+  public RangeHeadersFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
@@ -52,7 +53,7 @@ public class HeaderRangeFetcher {
     this(syncConfig, protocolSchedule, ethContext, new FastSyncState(), metricsSystem);
   }
 
-  public HeaderRangeFetcher(
+  public RangeHeadersFetcher(
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
@@ -65,17 +66,17 @@ public class HeaderRangeFetcher {
     this.metricsSystem = metricsSystem;
   }
 
-  public CompletableFuture<List<BlockHeader>> getNextCheckpointHeaders(
-      final EthPeer peer, final BlockHeader previousCheckpointHeader) {
+  public CompletableFuture<List<BlockHeader>> getNextRangeHeaders(
+      final EthPeer peer, final BlockHeader previousRangeHeader) {
     final int skip = syncConfig.getDownloaderChainSegmentSize() - 1;
     final int maximumHeaderRequestSize = syncConfig.getDownloaderHeaderRequestSize();
-    final long previousCheckpointNumber = previousCheckpointHeader.getNumber();
+    final long previousRangeNumber = previousRangeHeader.getNumber();
 
     final int additionalHeaderCount;
-    final Optional<BlockHeader> finalCheckpointHeader = fastSyncState.getPivotBlockHeader();
-    if (finalCheckpointHeader.isPresent()) {
-      final BlockHeader targetHeader = finalCheckpointHeader.get();
-      final long blocksUntilTarget = targetHeader.getNumber() - previousCheckpointNumber;
+    final Optional<BlockHeader> finalRangeHeader = fastSyncState.getPivotBlockHeader();
+    if (finalRangeHeader.isPresent()) {
+      final BlockHeader targetHeader = finalRangeHeader.get();
+      final long blocksUntilTarget = targetHeader.getNumber() - previousRangeNumber;
       if (blocksUntilTarget <= 0) {
         return completedFuture(emptyList());
       }
@@ -88,7 +89,7 @@ public class HeaderRangeFetcher {
       additionalHeaderCount = maximumHeaderRequestSize;
     }
 
-    return requestHeaders(peer, previousCheckpointHeader, additionalHeaderCount, skip);
+    return requestHeaders(peer, previousRangeHeader, additionalHeaderCount, skip);
   }
 
   private CompletableFuture<List<BlockHeader>> requestHeaders(
@@ -97,7 +98,7 @@ public class HeaderRangeFetcher {
       final int headerCount,
       final int skip) {
     LOG.debug(
-        "Requesting {} checkpoint headers, starting from {}, {} blocks apart",
+        "Requesting {} range headers, starting from {}, {} blocks apart",
         headerCount,
         referenceHeader.getNumber(),
         skip);
@@ -113,10 +114,10 @@ public class HeaderRangeFetcher {
         .assignPeer(peer)
         .run()
         .thenApply(PeerTaskResult::getResult)
-        .thenApply(headers -> stripExistingCheckpointHeader(referenceHeader, headers));
+        .thenApply(headers -> stripExistingRangeHeaders(referenceHeader, headers));
   }
 
-  private List<BlockHeader> stripExistingCheckpointHeader(
+  private List<BlockHeader> stripExistingRangeHeaders(
       final BlockHeader lastHeader, final List<BlockHeader> headers) {
     if (!headers.isEmpty() && headers.get(0).equals(lastHeader)) {
       return headers.subList(1, headers.size());
@@ -124,15 +125,15 @@ public class HeaderRangeFetcher {
     return headers;
   }
 
-  public boolean nextCheckpointEndsAtChainHead(
-      final EthPeer peer, final BlockHeader previousCheckpointHeader) {
-    final Optional<BlockHeader> finalCheckpointHeader = fastSyncState.getPivotBlockHeader();
-    if (finalCheckpointHeader.isPresent()) {
+  public boolean nextRangeEndsAtChainHead(
+      final EthPeer peer, final BlockHeader previousRangeHeader) {
+    final Optional<BlockHeader> finalRangeHeader = fastSyncState.getPivotBlockHeader();
+    if (finalRangeHeader.isPresent()) {
       return false;
     }
     final int skip = syncConfig.getDownloaderChainSegmentSize() - 1;
     final long peerEstimatedHeight = peer.chainState().getEstimatedHeight();
-    final long previousCheckpointNumber = previousCheckpointHeader.getNumber();
-    return previousCheckpointNumber + skip >= peerEstimatedHeight;
+    final long previousRangeNumber = previousRangeHeader.getNumber();
+    return previousRangeNumber + skip >= peerEstimatedHeight;
   }
 }
