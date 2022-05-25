@@ -57,10 +57,6 @@ executors:
     resource_class: small
     working_directory: ~/project
 
-notify:
-  webhooks:
-    - url: $HUBOT_URL
-
 commands:
   prepare:
     description: "Prepare"
