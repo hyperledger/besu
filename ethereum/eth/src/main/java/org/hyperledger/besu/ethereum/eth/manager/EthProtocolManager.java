@@ -239,10 +239,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final MessageData messageData = message.getData();
     final int code = messageData.getCode();
     LOG.trace("Process message {}, {}", cap, code);
-    final EthPeer ethPeer = ethPeers.peer(message.getConnection());
+    PeerConnection connection = message.getConnection();
+    final EthPeer ethPeer = ethPeers.peer(connection);
     if (ethPeer == null) {
       LOG.debug(
-          "Ignoring message received from unknown peer connection: " + message.getConnection());
+          "Ignoring message received from unknown peer connection: " + connection);
       return;
     }
 
@@ -267,7 +268,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         LOG.debug(
             "Received non-status message before status message. Diconnecting peer {}, connection {}",
             ethPeer.getPeerId(),
-            System.identityHashCode(message.getConnection()));
+            System.identityHashCode(connection));
         ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
         return;
       }
@@ -341,7 +342,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     try {
       LOG.debug(
           "Sending status message to {}, connection {}.",
-          peer,
+          peer.getPeerId(),
           System.identityHashCode(peer.getConnection()));
       peer.send(status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent()));
     } catch (final PeerNotConnected peerNotConnected) {
