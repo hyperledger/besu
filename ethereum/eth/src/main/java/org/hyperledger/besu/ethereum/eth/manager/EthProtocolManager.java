@@ -323,7 +323,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         System.identityHashCode(connection));
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
+    if (peer.statusHasBeenSentToPeer(connection)) {
       return;
     }
 
@@ -345,7 +345,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           "Sending status message to {}, connection {}.",
           peer.getPeerId(),
           System.identityHashCode(peer.getConnection()));
-      peer.send(status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent()));
+      peer.send(
+          status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent(connection)));
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
