@@ -118,9 +118,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    qbftConfig = genesisConfig.getConfigOptions(genesisConfigOverrides).getQbftConfigOptions();
+    qbftConfig = configOptionsSupplier.get().getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
-    qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfig.getConfigOptions());
+    qbftForksSchedule = QbftForksSchedulesFactory.create(configOptionsSupplier.get());
   }
 
   @Override
@@ -286,7 +286,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return QbftProtocolSchedule.create(
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        configOptionsSupplier.get(),
         qbftForksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
@@ -319,7 +319,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   }
 
   private boolean isValidatorContractMode(final GenesisConfigFile genesisConfig) {
-    return genesisConfig.getConfigOptions().getQbftConfigOptions().isValidatorContractMode();
+    return configOptionsSupplier.get().getQbftConfigOptions().isValidatorContractMode();
   }
 
   private boolean signersExistIn(final BlockHeader genesisBlockHeader) {
@@ -334,7 +334,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     final EpochManager epochManager = new EpochManager(qbftConfig.getEpochLength());
 
     final BftValidatorOverrides validatorOverrides =
-        convertBftForks(genesisConfig.getConfigOptions().getTransitions().getQbftForks());
+        convertBftForks(configOptionsSupplier.get().getTransitions().getQbftForks());
     final BlockValidatorProvider blockValidatorProvider =
         BlockValidatorProvider.forkingValidatorProvider(
             blockchain, epochManager, bftBlockInterface().get(), validatorOverrides);
