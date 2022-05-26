@@ -257,20 +257,20 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       handleStatusMessage(ethPeer, messageData);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
-      // first message received should be the status message. Currently we can not guarantee that a
-      // message that
-      // has been sent first reaches this method first, so we are lenient and allow a limited number
-      // of non status
-      // messages before we disconnect with BREACH_OF_PROTOCOL
-      final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
-      if (disconnect) {
+//      // first message received should be the status message. Currently we can not guarantee that a
+//      // message that
+//      // has been sent first reaches this method first, so we are lenient and allow a limited number
+//      // of non status
+//      // messages before we disconnect with BREACH_OF_PROTOCOL
+//      final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
+//      if (disconnect) {
         LOG.debug(
             "Received non-status message before status message. Diconnecting peer {}, connection {}",
             ethPeer.getPeerId(),
             System.identityHashCode(connection));
         ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
         return;
-      }
+//      }
     }
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
