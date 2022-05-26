@@ -96,7 +96,7 @@ public class SyncHeaderRangeValidationStepTest {
     assertThatThrownBy(() -> validationStep.apply(rangeHeaders))
         .isInstanceOf(InvalidBlockException.class)
         .hasMessageContaining(
-            "Invalid checkpoint headers.  Headers downloaded between #"
+            "Invalid range headers.  Headers downloaded between #"
                 + checkpointStart.getNumber()
                 + " ("
                 + checkpointStart.getHash()

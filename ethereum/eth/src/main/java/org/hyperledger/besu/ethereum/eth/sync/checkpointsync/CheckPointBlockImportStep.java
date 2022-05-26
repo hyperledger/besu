@@ -15,19 +15,26 @@
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class CheckPointHeaderImportStep implements Consumer<Optional<BlockHeader>> {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class CheckPointBlockImportStep implements Consumer<Optional<BlockWithReceipts>> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CheckPointBlockImportStep.class);
 
   private final CheckPointSource checkPointSource;
   private final Checkpoint checkpoint;
   private final MutableBlockchain blockchain;
 
-  public CheckPointHeaderImportStep(
+  public CheckPointBlockImportStep(
       final CheckPointSource checkPointSource,
       final Checkpoint checkpoint,
       final MutableBlockchain blockchain) {
@@ -37,18 +44,23 @@ public class CheckPointHeaderImportStep implements Consumer<Optional<BlockHeader
   }
 
   @Override
-  public void accept(final Optional<BlockHeader> maybeBlockHeader) {
-    maybeBlockHeader.ifPresent(
-        blockHeader -> {
+  public void accept(final Optional<BlockWithReceipts> maybeBlock) {
+    maybeBlock.ifPresent(
+        block -> {
           blockchain.unsafeImportBlock(
-              blockHeader,
-              blockHeader.getHash().equals(checkpoint.blockHash())
+                  block.getBlock(),
+                  block.getReceipts(),
+                  block.getHash().equals(checkpoint.blockHash())
                   ? Optional.of(checkpoint.totalDifficulty())
                   : Optional.empty());
-          checkPointSource.setLastHeaderDownloaded(Optional.of(blockHeader));
+            checkPointSource.setLastHeaderDownloaded(Optional.of(block.getHeader()));
           if (!checkPointSource.hasNext()) {
             blockchain.unsafeSetChainHead(
                 checkPointSource.getCheckpoint(), checkpoint.totalDifficulty());
+            LOG.info(
+                "Checkpoint block {} with hash {} downloaded",
+                    checkPointSource.getCheckpoint().getNumber(),
+                    checkPointSource.getCheckpoint().getBlockHash());
           }
         });
     checkPointSource.notifyTaskAvailable();

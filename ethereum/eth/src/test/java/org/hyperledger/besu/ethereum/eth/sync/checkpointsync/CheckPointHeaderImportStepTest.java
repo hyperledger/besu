@@ -40,7 +40,7 @@ public class CheckPointHeaderImportStepTest {
   private final CheckPointSource checkPointSource = mock(CheckPointSource.class);
   private final Checkpoint checkpoint = mock(Checkpoint.class);
   private MutableBlockchain blockchain;
-  private CheckPointHeaderImportStep checkPointHeaderImportStep;
+  private CheckPointBlockImportStep checkPointHeaderImportStep;
   private KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage;
 
   @Before
@@ -52,7 +52,7 @@ public class CheckPointHeaderImportStepTest {
         DefaultBlockchain.createMutable(
             generateBlock(0), blockchainStorage, mock(MetricsSystem.class), 0);
     checkPointHeaderImportStep =
-        new CheckPointHeaderImportStep(checkPointSource, checkpoint, blockchain);
+        new CheckPointBlockImportStep(checkPointSource, checkpoint, blockchain);
   }
 
   @Test

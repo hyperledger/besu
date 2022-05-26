@@ -33,13 +33,7 @@ import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
 import java.util.concurrent.CompletionStage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipelineFactory {
-
-  private static final Logger LOG =
-      LoggerFactory.getLogger(CheckpointSyncDownloadPipelineFactory.class);
 
   public CheckpointSyncDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -54,35 +48,28 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
   @Override
   public CompletionStage<Void> startPipeline(
       final EthScheduler scheduler, final SyncState syncState, final SyncTarget target) {
-    return scheduler
-        .startPipeline(createDownloadCheckPointPipeline(syncState, target))
-        .thenAccept(
-            unused -> {
-              final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
-              LOG.info(
-                  "Checkpoint block {} with hash {} downloaded",
-                  checkpoint.blockNumber(),
-                  checkpoint.blockHash());
-            })
-        .thenAccept(unused -> scheduler.startPipeline(createDownloadPipelineForSyncTarget(target)));
+    return scheduler.startPipeline(createDownloadCheckPointPipeline(syncState, target)).thenCompose(unused ->
+              scheduler.startPipeline(createDownloadPipelineForSyncTarget(target))
+            );
   }
 
   protected Pipeline<Hash> createDownloadCheckPointPipeline(
       final SyncState syncState, final SyncTarget target) {
 
     final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
+
     final CheckPointSource checkPointSource =
         new CheckPointSource(
             syncState,
             target.peer(),
             protocolSchedule.getByBlockNumber(checkpoint.blockNumber()).getBlockHeaderFunctions());
 
-    final CheckPointHeaderImportStep checkPointHeaderImportStep =
-        new CheckPointHeaderImportStep(
+    final CheckPointBlockImportStep checkPointBlockImportStep =
+        new CheckPointBlockImportStep(
             checkPointSource, checkpoint, protocolContext.getBlockchain());
 
-    final CheckPointDownloadHeaderStep checkPointDownloadHeaderStep =
-        new CheckPointDownloadHeaderStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
+    final CheckPointDownloadBlockStep checkPointDownloadBlockStep =
+        new CheckPointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
@@ -96,16 +83,16 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
                 "action"),
             true,
             "checkpointSync")
-        .thenProcessAsyncOrdered("downloadHeader", checkPointDownloadHeaderStep::downloadHeader, 1)
-        .andFinishWith("importHeader", checkPointHeaderImportStep);
+        .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep::downloadBlock, 1)
+        .andFinishWith("importBlock", checkPointBlockImportStep);
   }
 
   @Override
   protected BlockHeader getCommonAncestor(final SyncTarget target) {
     return target
-        .peer()
-        .getCheckPointHeader()
-        .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
-        .orElse(target.commonAncestor());
+            .peer()
+            .getCheckPointHeader()
+            .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
+            .orElse(target.commonAncestor());
   }
 }

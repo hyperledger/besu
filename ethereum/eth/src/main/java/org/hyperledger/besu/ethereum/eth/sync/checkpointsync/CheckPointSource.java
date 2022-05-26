@@ -54,13 +54,6 @@ public class CheckPointSource implements Iterator<Hash> {
 
   @Override
   public synchronized Hash next() {
-    while (hasNext() && isDownloading.get()) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
     isDownloading.getAndSet(true);
     return lastHeaderDownloaded
         .map(ProcessableBlockHeader::getParentHash)
