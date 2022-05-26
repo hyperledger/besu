@@ -33,8 +33,12 @@ import java.util.function.Predicate;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
@@ -74,22 +78,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    return codeStorage
+        .get(accountHash.toArrayUnsafe())
+        .map(Bytes::wrap)
+        .filter(bytes -> Hash.hash(bytes).equals(codeHash));
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (worldStateRootHash.isPresent()) {
-        response =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
-                    Bytes32.wrap(worldStateRootHash.get()))
-                .get(accountHash);
-      }
+    Optional<Bytes> response = Optional.empty();
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    LOG.info("read worldtstate from root " + worldStateRootHash);
+    if (worldStateRootHash.isPresent()) {
+      response =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                  Bytes32.wrap(worldStateRootHash.get()))
+              .get(accountHash);
     }
     return response;
   }
@@ -105,7 +110,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      return trieBranchStorage
+          .get(location.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(bytes -> Hash.hash(bytes).equals(nodeHash));
     }
   }
 
@@ -117,7 +125,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     } else {
       return trieBranchStorage
           .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap);
+          .map(Bytes::wrap)
+          .filter(bytes -> Hash.hash(bytes).equals(nodeHash));
     }
   }
 
@@ -138,28 +147,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    Optional<Bytes> response =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-            .map(Bytes::wrap);
-    if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> account = getAccount(accountHash);
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (account.isPresent() && worldStateRootHash.isPresent()) {
-        final StateTrieAccountValue accountValue =
-            StateTrieAccountValue.readFrom(
-                org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
-        response =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-                        Function.identity(),
-                        Function.identity()),
-                    accountValue.getStorageRoot())
-                .get(slotHash)
-                .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-      }
+    // after a snapsync/fastsync we only have the trie branches.
+    Optional<Bytes> response = Optional.empty();
+    final Optional<Bytes> account = getAccount(accountHash);
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    if (account.isPresent() && worldStateRootHash.isPresent()) {
+      final StateTrieAccountValue accountValue =
+          StateTrieAccountValue.readFrom(
+              org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+      response =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                      Function.identity(),
+                      Function.identity()),
+                  accountValue.getStorageRoot())
+              .get(slotHash)
+              .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
     }
     return response;
   }
