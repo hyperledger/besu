@@ -242,8 +242,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     PeerConnection connection = message.getConnection();
     final EthPeer ethPeer = ethPeers.peer(connection);
     if (ethPeer == null) {
-      LOG.debug(
-          "Ignoring message received from unknown peer connection: " + connection);
+      LOG.debug("Ignoring message received from unknown peer connection: " + connection);
       return;
     }
 
