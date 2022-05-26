@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -24,31 +27,27 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.plugin.data.Transaction;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetTransactionByHashTest {
 
-  @Mock
-  private BlockchainQueries blockchainQueries;
+  @Mock private BlockchainQueries blockchainQueries;
   private EthGetTransactionByHash method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getTransactionByHash";
 
-  @Mock
-  private GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock private GasPricePendingTransactionsSorter pendingTransactions;
 
   @Before
   public void setUp() {
@@ -63,17 +62,17 @@ public class EthGetTransactionByHashTest {
   @Test
   public void validateResultSpec() {
 
-    AbstractPendingTransactionsSorter.TransactionInfo tInfo = getPendingTransactions().stream().findFirst().get();
+    AbstractPendingTransactionsSorter.TransactionInfo tInfo =
+        getPendingTransactions().stream().findFirst().get();
     Hash hash = tInfo.getHash();
-    when(this.pendingTransactions.getTransactionByHash(hash)).thenReturn(Optional.of(tInfo.getTransaction()));
+    when(this.pendingTransactions.getTransactionByHash(hash))
+        .thenReturn(Optional.of(tInfo.getTransaction()));
     final JsonRpcRequestContext request =
-      new JsonRpcRequestContext(
-        new JsonRpcRequest(
-          JSON_RPC_VERSION, ETH_METHOD, new Object[]{hash}));
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {hash}));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
-    TransactionPendingResult result =
-      (TransactionPendingResult) actualResponse.getResult();
+    TransactionPendingResult result = (TransactionPendingResult) actualResponse.getResult();
 
     assertThat(result.getBlockHash()).isNull();
     assertThat(result.getBlockNumber()).isNull();
@@ -92,7 +91,6 @@ public class EthGetTransactionByHashTest {
     assertThat(result.getV()).isNotNull();
     assertThat(result.getR()).isNotNull();
     assertThat(result.getS()).isNotNull();
-
   }
 
   private Set<AbstractPendingTransactionsSorter.TransactionInfo> getPendingTransactions() {
@@ -101,11 +99,10 @@ public class EthGetTransactionByHashTest {
     Transaction pendingTransaction = gen.transaction();
     System.out.println(pendingTransaction.getHash());
     return gen.transactionsWithAllTypes(4).stream()
-      .map(
-        transaction ->
-          new AbstractPendingTransactionsSorter.TransactionInfo(
-            transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
-      .collect(Collectors.toUnmodifiableSet());
+        .map(
+            transaction ->
+                new AbstractPendingTransactionsSorter.TransactionInfo(
+                    transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
+        .collect(Collectors.toUnmodifiableSet());
   }
-
 }
