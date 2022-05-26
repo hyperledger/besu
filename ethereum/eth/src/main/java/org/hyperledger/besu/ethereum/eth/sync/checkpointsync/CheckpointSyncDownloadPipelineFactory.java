@@ -48,9 +48,10 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
   @Override
   public CompletionStage<Void> startPipeline(
       final EthScheduler scheduler, final SyncState syncState, final SyncTarget target) {
-    return scheduler.startPipeline(createDownloadCheckPointPipeline(syncState, target)).thenCompose(unused ->
-              scheduler.startPipeline(createDownloadPipelineForSyncTarget(target))
-            );
+    return scheduler
+        .startPipeline(createDownloadCheckPointPipeline(syncState, target))
+        .thenCompose(
+            unused -> scheduler.startPipeline(createDownloadPipelineForSyncTarget(target)));
   }
 
   protected Pipeline<Hash> createDownloadCheckPointPipeline(
@@ -90,9 +91,9 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
   @Override
   protected BlockHeader getCommonAncestor(final SyncTarget target) {
     return target
-            .peer()
-            .getCheckPointHeader()
-            .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
-            .orElse(target.commonAncestor());
+        .peer()
+        .getCheckPointHeader()
+        .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
+        .orElse(target.commonAncestor());
   }
 }

@@ -15,8 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 
@@ -48,19 +46,19 @@ public class CheckPointBlockImportStep implements Consumer<Optional<BlockWithRec
     maybeBlock.ifPresent(
         block -> {
           blockchain.unsafeImportBlock(
-                  block.getBlock(),
-                  block.getReceipts(),
-                  block.getHash().equals(checkpoint.blockHash())
+              block.getBlock(),
+              block.getReceipts(),
+              block.getHash().equals(checkpoint.blockHash())
                   ? Optional.of(checkpoint.totalDifficulty())
                   : Optional.empty());
-            checkPointSource.setLastHeaderDownloaded(Optional.of(block.getHeader()));
+          checkPointSource.setLastHeaderDownloaded(Optional.of(block.getHeader()));
           if (!checkPointSource.hasNext()) {
             blockchain.unsafeSetChainHead(
                 checkPointSource.getCheckpoint(), checkpoint.totalDifficulty());
             LOG.info(
                 "Checkpoint block {} with hash {} downloaded",
-                    checkPointSource.getCheckpoint().getNumber(),
-                    checkPointSource.getCheckpoint().getBlockHash());
+                checkPointSource.getCheckpoint().getNumber(),
+                checkPointSource.getCheckpoint().getBlockHash());
           }
         });
     checkPointSource.notifyTaskAvailable();
