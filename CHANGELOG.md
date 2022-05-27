@@ -28,6 +28,8 @@
 - Version 22.4.x will be the last series to support Java 11. Version 22.7.0 will require Java 17 to build and run.
 - In the Besu EVM Library all references to SHA3 have been renamed to the more accurate name Keccak256, including class names and comment. [#3749](https://github.com/hyperledger/besu/pull/3749)
 - Removed the Gas object and replaced it with a primitive long [#3674](https://github.com/hyperledger/besu/pull/3674)
+- Column family added for backward sync [#3638](https://github.com/hyperledger/besu/pull/3638)
+  - Note that this added column family makes this a one-way upgrade. That is, once you upgrade your db to this version, you cannot roll back to a previous version of Besu.
 
 ### Bug Fixes
 - Fix nullpointer on snapsync [#3773](https://github.com/hyperledger/besu/pull/3773)
@@ -49,6 +51,8 @@
 - \[EXPERIMENTAL\] Add snapsync `--sync-mode="X_SNAP"` (only as client) [#3710](https://github.com/hyperledger/besu/pull/3710)
 - Adapt Fast sync, and Snap sync, to use finalized block, from consensus layer, as pivot after the Merge [#3506](https://github.com/hyperledger/besu/issues/3506)
 - Add IPC JSON-RPC interface (BSD/MacOS and Linux only) [#3695](https://github.com/hyperledger/besu/pull/3695)
+- Column family added for backward sync [#3638](https://github.com/hyperledger/besu/pull/3638)
+  - Note that this added column family makes this a one-way upgrade. That is, once you upgrade your db to this version, you cannot roll back to a previous version of Besu.
 
 ## Download Links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.0-RC2/besu-22.4.0-RC2.zip /  SHA256 5fa7f927c6717ebf503291c058815cd0c5fcfab13245d3b6beb66eb20cf7ac24
@@ -72,6 +76,8 @@
 
 ### Breaking Changes
 - Remove the experimental flag for bonsai tries CLI options `--data-storage-format` and `--bonsai-maximum-back-layers-to-load` [#3578](https://github.com/hyperledger/besu/pull/3578)
+- Column family added for backward sync [#3532](https://github.com/hyperledger/besu/pull/3532)
+  - Note that this added column family makes this a one-way upgrade. That is, once you upgrade your db to this version, you cannot roll back to a previous version of Besu.
 
 ### Deprecations
 - `--tx-pool-hashes-max-size` is now deprecated and has no more effect, and it will be removed in a future release.
