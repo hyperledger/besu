@@ -236,8 +236,7 @@ public class BesuController implements java.io.Closeable {
       }
       besuControllerBuilderSchedule.put(0L, originalControllerBuilder);
 
-      final QbftConfigOptions qbftConfigOptions =
-          genesisConfig.getConfigOptions().getQbftConfigOptions();
+      final QbftConfigOptions qbftConfigOptions = configOptions.getQbftConfigOptions();
       final Long qbftBlock = readQbftStartBlockConfig(qbftConfigOptions);
       besuControllerBuilderSchedule.put(qbftBlock, new QbftBesuControllerBuilder());
 
