@@ -147,6 +147,7 @@ public class BesuNodeConfigurationBuilder {
     this.engineRpcConfiguration.setEnabled(enabled);
     this.engineRpcConfiguration.setPort(0);
     this.engineRpcConfiguration.setHostsAllowlist(singletonList("*"));
+    this.engineRpcConfiguration.setAuthenticationEnabled(false);
 
     return this;
   }

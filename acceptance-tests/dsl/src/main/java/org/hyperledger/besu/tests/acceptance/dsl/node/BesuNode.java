@@ -234,6 +234,12 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return engineRpcConfiguration.isPresent() && engineRpcConfiguration.get().isEnabled();
   }
 
+  public boolean isEngineAuthDisabled() {
+    return engineRpcConfiguration
+        .map(engineConf -> !engineConf.isAuthenticationEnabled())
+        .orElse(false);
+  }
+
   private boolean isWebSocketsRpcEnabled() {
     return webSocketConfiguration().isEnabled();
   }
