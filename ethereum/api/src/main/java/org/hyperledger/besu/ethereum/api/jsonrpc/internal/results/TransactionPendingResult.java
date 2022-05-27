@@ -77,10 +77,6 @@ public class TransactionPendingResult implements TransactionResult {
   private final String r;
   private final String s;
 
-  private final String blockHash;
-  private final String blockNumber;
-  private final String transactionIndex;
-
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
     this.accessList = transaction.getAccessList().orElse(null);
@@ -107,9 +103,6 @@ public class TransactionPendingResult implements TransactionResult {
     this.v = Quantity.create(transaction.getV());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
-    this.blockHash = null;
-    this.blockNumber = null;
-    this.transactionIndex = null;
   }
 
   @JsonGetter(value = "accessList")
@@ -204,16 +197,16 @@ public class TransactionPendingResult implements TransactionResult {
 
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
-    return blockHash;
+    return null;
   }
 
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
-    return blockNumber;
+    return null;
   }
 
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
-    return transactionIndex;
+    return null;
   }
 }
