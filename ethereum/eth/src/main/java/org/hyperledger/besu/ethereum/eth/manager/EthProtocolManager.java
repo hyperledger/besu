@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -39,6 +40,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -48,11 +51,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
@@ -257,22 +256,22 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       handleStatusMessage(ethPeer, messageData);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
-      //      // first message received should be the status message. Currently we can not guarantee
+      // first message received should be the status message. Currently we can not guarantee
       // that a
-      //      // message that
-      //      // has been sent first reaches this method first, so we are lenient and allow a
+      // message that
+      // has been sent first reaches this method first, so we are lenient and allow a
       // limited number
-      //      // of non status
-      //      // messages before we disconnect with BREACH_OF_PROTOCOL
-      //      final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
-      //      if (disconnect) {
-      LOG.debug(
-          "Received non-status message before status message. Diconnecting peer {}, connection {}",
-          ethPeer.getPeerId(),
-          System.identityHashCode(connection));
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-      return;
-      //      }
+      // of non status
+      // messages before we disconnect with BREACH_OF_PROTOCOL
+      final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
+      if (disconnect) {
+        LOG.debug(
+            "Received non-status message before status message. Diconnecting peer {}, connection {}",
+            ethPeer.getPeerId(),
+            System.identityHashCode(connection));
+        ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+        return;
+      }
     }
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
