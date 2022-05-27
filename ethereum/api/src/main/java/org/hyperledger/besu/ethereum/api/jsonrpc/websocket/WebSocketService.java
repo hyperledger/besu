@@ -83,7 +83,7 @@ public class WebSocketService {
       final Vertx vertx,
       final WebSocketConfiguration configuration,
       final WebSocketMessageHandler websocketMessageHandler,
-      final Optional<AuthenticationService> authenticationService;
+      final Optional<AuthenticationService> authenticationService,
       final MetricsSystem metricsSystem) {
     this.vertx = vertx;
     this.configuration = configuration;
