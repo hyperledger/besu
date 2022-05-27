@@ -85,7 +85,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState = new ChainState();
-  private final List<PeerConnection> statusHasBeenSentToPeer = new ArrayList<>();
+  private final List<Integer> statusHasBeenSentToPeer = new ArrayList<Integer>();
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
@@ -260,7 +260,7 @@ public class EthPeer implements Comparable<EthPeer> {
     }
 
     final PeerConnection currentConnection = connection;
-    if (!statusHasBeenSentToPeer.contains(currentConnection)) {
+    if (!statusHasBeenSentToPeer.contains(System.identityHashCode(currentConnection))) {
       // check if the current connection has successfully sent a status message, because there is a
       // potential race condition if the connection is replaced
       return null;
@@ -452,7 +452,7 @@ public class EthPeer implements Comparable<EthPeer> {
   public void registerStatusSent(final PeerConnection connection) {
     LOG.debug(
         "Status has been sent successfully for connection {}", System.identityHashCode(connection));
-    statusHasBeenSentToPeer.add(connection);
+    statusHasBeenSentToPeer.add(System.identityHashCode(connection));
     maybeExecuteStatusesExchangedCallback();
   }
 
@@ -482,12 +482,13 @@ public class EthPeer implements Comparable<EthPeer> {
   public boolean readyForRequests() {
     LOG.debug(
         "status has been sent {}, status has been received {} from peer {}, is connected {}, connection {}",
-        statusHasBeenSentToPeer.contains(connection),
+        statusHasBeenSentToPeer.contains(System.identityHashCode(connection)),
         statusHasBeenReceivedFromPeer.get(),
         peerId,
         !this.getConnection().isDisconnected(),
         System.identityHashCode(this.getConnection()));
-    return statusHasBeenSentToPeer.contains(connection) && statusHasBeenReceivedFromPeer.get();
+    return statusHasBeenSentToPeer.contains(System.identityHashCode(connection))
+        && statusHasBeenReceivedFromPeer.get();
   }
 
   /**
@@ -505,7 +506,7 @@ public class EthPeer implements Comparable<EthPeer> {
    * @return true if we have sent a status message to this peer.
    */
   boolean statusHasBeenSentToPeer(final PeerConnection connection) {
-    return statusHasBeenSentToPeer.contains(connection);
+    return statusHasBeenSentToPeer.contains(System.identityHashCode(connection));
   }
 
   public boolean hasSeenBlock(final Hash hash) {
