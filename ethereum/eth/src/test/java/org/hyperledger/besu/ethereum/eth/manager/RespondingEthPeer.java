@@ -127,7 +127,7 @@ public class RespondingEthPeer {
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
-    peer.registerStatusSent(peerConnection);
+    peer.registerStatusSent();
 
     return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);
   }

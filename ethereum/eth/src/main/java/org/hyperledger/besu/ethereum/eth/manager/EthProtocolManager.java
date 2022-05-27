@@ -257,11 +257,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       handleStatusMessage(ethPeer, messageData);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
-      // first message received should be the status message. Currently we can not guarantee
-      // that a
+      // first message received should be the status message. Currently we can not guarantee that a
       // message that
-      // has been sent first reaches this method first, so we are lenient and allow a
-      // limited number
+      // has been sent first reaches this method first, so we are lenient and allow a limited number
       // of non status
       // messages before we disconnect with BREACH_OF_PROTOCOL
       final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
@@ -323,7 +321,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         System.identityHashCode(connection));
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer(connection)) {
+    if (peer.statusHasBeenSentToPeer()) {
       return;
     }
 
@@ -345,8 +343,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           "Sending status message to {}, connection {}.",
           peer.getPeerId(),
           System.identityHashCode(peer.getConnection()));
-      peer.send(
-          status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent(connection)));
+      peer.send(status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent()));
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
