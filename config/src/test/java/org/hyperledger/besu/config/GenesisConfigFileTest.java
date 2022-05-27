@@ -199,6 +199,27 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void assertRopstenTerminalTotalDifficulty() {
+    GenesisConfigOptions ropstenOptions =
+        GenesisConfigFile.genesisFileFromResources("/ropsten.json").getConfigOptions();
+
+    assertThat(ropstenOptions.getTerminalTotalDifficulty()).isPresent();
+    assertThat(ropstenOptions.getTerminalTotalDifficulty().get())
+        .isEqualTo(UInt256.valueOf(new BigInteger("100000000000000000000000")));
+  }
+
+  @Test
+  public void assertTerminalTotalDifficultyOverride() {
+    GenesisConfigOptions ropstenOverrideOptions =
+        GenesisConfigFile.genesisFileFromResources("/ropsten.json")
+            .getConfigOptions(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)));
+
+    assertThat(ropstenOverrideOptions.getTerminalTotalDifficulty()).isPresent();
+    assertThat(ropstenOverrideOptions.getTerminalTotalDifficulty().get())
+        .isEqualTo(UInt256.valueOf(Long.MAX_VALUE));
+  }
+
+  @Test
   public void shouldFindParisForkAndAlias() {
     GenesisConfigFile parisGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"parisBlock\":10},\"baseFeePerGas\":\"0xa\"}");

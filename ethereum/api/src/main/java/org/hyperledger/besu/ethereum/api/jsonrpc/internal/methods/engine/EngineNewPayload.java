@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
@@ -165,7 +164,10 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      return respondWith(requestContext.getRequest().getId(), null, INVALID_TERMINAL_BLOCK);
+      return respondWithInvalid(
+          requestContext.getRequest().getId(),
+          Hash.ZERO,
+          newBlockHeader.getHash() + " did not descend from terminal block");
     }
 
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);

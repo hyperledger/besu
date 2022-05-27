@@ -49,6 +49,10 @@ public interface MergeContext extends ConsensusContext {
 
   Optional<BlockHeader> getFinalized();
 
+  void setSafeBlock(final BlockHeader blockHeader);
+
+  Optional<BlockHeader> getSafeBlock();
+
   Optional<BlockHeader> getTerminalPoWBlock();
 
   void setTerminalPoWBlock(Optional<BlockHeader> hashAndNumber);
@@ -59,7 +63,7 @@ public interface MergeContext extends ConsensusContext {
 
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
 
-  void fireNewForkchoiceMessageEvent(
+  void fireNewUnverifiedForkchoiceMessageEvent(
       final Hash headBlockHash,
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash);

@@ -23,7 +23,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
-import static org.hyperledger.besu.config.experimental.MergeConfigOptions.isMergeEnabled;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
@@ -88,6 +87,7 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -569,8 +569,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   static class EngineRPCOptionGroup {
     @Option(
         names = {"--engine-rpc-enabled"},
-        description = "Set to start the Engine JSON-RPC service (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineRpcEnabled = false;
+        description = "deprectaed parameter, do not use.",
+        hidden = true)
+    private final Boolean deprecatedIsEngineRpcEnabled = false;
 
     @Option(
         names = {"--engine-rpc-port"},
@@ -1389,14 +1390,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
-
       // Set the goquorum compatibility mode based on the genesis file
       if (genesisFile != null) {
         genesisConfigOptions = readGenesisConfigOptions();
+
         if (genesisConfigOptions.isQuorum()) {
           enableGoQuorumCompatibilityMode();
         }
       }
+
+      // set merge config on the basis of genesis config
+      setMergeConfigOptions();
 
       instantiateSignatureAlgorithmFactory();
       configureNativeLibs();
@@ -1812,7 +1816,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
-    final GenesisConfigOptions genesisConfigOptions;
+
     try {
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
@@ -2108,7 +2112,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    engineConfig.setEnabled(engineRPCOptionGroup.isEngineRpcEnabled);
+    if (engineRPCOptionGroup.deprecatedIsEngineRpcEnabled) {
+      logger.warn(
+          "--engine-api-enabled parameter has been deprecated and will be removed in a future release.  "
+              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
+    }
+    engineConfig.setEnabled(isMergeEnabled());
     if (engineRPCOptionGroup.isEngineAuthEnabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
@@ -2933,7 +2942,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
     } catch (final IOException e) {
       throw new ParameterException(
-          this.commandLine, String.format("Unable to load genesis file %s.", genesisFile), e);
+          this.commandLine, String.format("Unable to load genesis URL %s.", genesisFile), e);
+    }
+  }
+
+  private static String genesisConfig(final NetworkName networkName) {
+    try (final InputStream genesisFileInputStream =
+        EthNetworkConfig.class.getResourceAsStream(networkName.getGenesisFile())) {
+      return new String(genesisFileInputStream.readAllBytes(), UTF_8);
+    } catch (IOException | NullPointerException e) {
+      throw new IllegalStateException(e);
     }
   }
 
@@ -3063,10 +3081,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         jsonRPCWebsocketOptionGroup.rpcWsPort,
         jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
-    addPortIfEnabled(
-        effectivePorts,
-        engineRPCOptionGroup.engineRpcPort,
-        engineRPCOptionGroup.isEngineRpcEnabled);
+    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isMergeEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
@@ -3172,6 +3187,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // this static flag is read by the RLP decoder
     GoQuorumOptions.setGoQuorumCompatibilityMode(true);
     isGoQuorumCompatibilityMode = true;
+  }
+
+  private void setMergeConfigOptions() {
+    MergeConfigOptions.setMergeEnabled(
+        Optional.ofNullable(genesisConfigOptions)
+            .orElseGet(
+                () ->
+                    GenesisConfigFile.fromConfig(
+                            genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
+                        .getConfigOptions(genesisConfigOverrides))
+            .getTerminalTotalDifficulty()
+            .isPresent());
+  }
+
+  private boolean isMergeEnabled() {
+    return MergeConfigOptions.isMergeEnabled();
   }
 
   public static List<String> getJDKEnabledCypherSuites() {

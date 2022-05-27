@@ -200,6 +200,11 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public Optional<Hash> getSafeBlock() {
+    return blockchainStorage.getSafeBlock();
+  }
+
+  @Override
   public Hash getChainHeadHash() {
     return chainHeader.getHash();
   }
@@ -527,6 +532,13 @@ public class DefaultBlockchain implements MutableBlockchain {
   public void setFinalized(final Hash blockHash) {
     final var updater = blockchainStorage.updater();
     updater.setFinalized(blockHash);
+    updater.commit();
+  }
+
+  @Override
+  public void setSafeBlock(final Hash blockHash) {
+    final var updater = blockchainStorage.updater();
+    updater.setSafeBlock(blockHash);
     updater.commit();
   }
 

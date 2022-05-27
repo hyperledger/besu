@@ -139,8 +139,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final Hash headBlockHash, final Hash finalizedBlockHash) {
-    return mergeCoordinator.updateForkChoice(headBlockHash, finalizedBlockHash);
+      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
+    return mergeCoordinator.updateForkChoice(newHead, finalizedBlockHash, safeBlockHash);
   }
 
   @Override
@@ -177,5 +177,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public boolean isMiningBeforeMerge() {
     return mergeCoordinator.isMiningBeforeMerge();
+  }
+
+  @Override
+  public boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
+    return mergeCoordinator.isDescendantOf(ancestorBlock, newBlock);
   }
 }
