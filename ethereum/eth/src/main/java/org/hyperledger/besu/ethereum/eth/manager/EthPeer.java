@@ -450,6 +450,8 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusSent(final PeerConnection connection) {
+    LOG.debug(
+        "Status has been sent successfully for connection {}", System.identityHashCode(connection));
     statusHasBeenSentToPeer.add(connection);
     maybeExecuteStatusesExchangedCallback();
   }
