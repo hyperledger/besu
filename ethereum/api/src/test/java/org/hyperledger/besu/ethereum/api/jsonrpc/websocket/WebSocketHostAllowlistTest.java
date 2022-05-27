@@ -85,8 +85,7 @@ public class WebSocketHostAllowlistTest {
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(
-            vertx, webSocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
+        new WebSocketService(vertx, webSocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
     final InetSocketAddress inetSocketAddress = websocketService.socketAddress();
 
