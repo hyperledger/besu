@@ -17,7 +17,6 @@ package org.hyperledger.besu.controller;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
@@ -310,15 +309,15 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   private boolean usingValidatorContractModeButSignersExistIn(
       final BlockHeader genesisBlockHeader) {
-    return isValidatorContractMode(genesisConfig) && signersExistIn(genesisBlockHeader);
+    return isValidatorContractMode() && signersExistIn(genesisBlockHeader);
   }
 
   private boolean usingValidatorBlockHeaderModeButNoSignersIn(
       final BlockHeader genesisBlockHeader) {
-    return !isValidatorContractMode(genesisConfig) && !signersExistIn(genesisBlockHeader);
+    return !isValidatorContractMode() && !signersExistIn(genesisBlockHeader);
   }
 
-  private boolean isValidatorContractMode(final GenesisConfigFile genesisConfig) {
+  private boolean isValidatorContractMode() {
     return configOptionsSupplier.get().getQbftConfigOptions().isValidatorContractMode();
   }
 

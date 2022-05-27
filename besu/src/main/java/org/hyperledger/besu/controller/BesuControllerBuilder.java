@@ -100,13 +100,14 @@ import org.slf4j.LoggerFactory;
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  protected GenesisConfigFile genesisConfig;
-  private Map<String, String> genesisConfigOverrides;
+  private GenesisConfigFile genesisConfig;
+  private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
+
   protected Supplier<GenesisConfigOptions> configOptionsSupplier =
       () ->
           Optional.ofNullable(genesisConfig)
               .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
-              .orElse(null);
+              .orElseGet(genesisConfig::getConfigOptions);
 
   protected SynchronizerConfiguration syncConfig;
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
@@ -140,7 +141,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    this.genesisConfig = Optional.of(genesisConfig);
+    this.genesisConfig = genesisConfig;
     return this;
   }
 
