@@ -588,8 +588,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Option(
         names = {"--engine-jwt-enabled"},
-        description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineAuthEnabled = false;
+        description = "deprecated option, engine jwt auth is enabled by default",
+        hidden = true)
+    @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
+    private final Boolean deprecatedIsEngineAuthEnabled = true;
+
+    @Option(
+        names = {"--engine-jwt-disabled"},
+        description = "Disable authentication for Engine APIs (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineAuthDisabled = false;
 
     @Option(
         names = {"--engine-host-allowlist"},
@@ -2118,7 +2125,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
     }
     engineConfig.setEnabled(isMergeEnabled());
-    if (engineRPCOptionGroup.isEngineAuthEnabled) {
+    if (!engineRPCOptionGroup.isEngineAuthDisabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
