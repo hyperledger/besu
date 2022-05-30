@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -41,8 +41,12 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -55,13 +59,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
@@ -84,7 +84,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState = new ChainState();
-  private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
+  private final List<Integer> statusHasBeenSentToPeer = new ArrayList<Integer>();
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
@@ -258,7 +258,10 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
 
-    connection.sendForProtocol(protocolName, messageData, onSuccess);
+    final PeerConnection currentConnection = this.connection;
+    if (onSuccess.isPresent() || statusHasBeenSentToPeer.contains(System.identityHashCode(currentConnection))) {
+      currentConnection.sendForProtocol(protocolName, messageData, onSuccess);
+    }
     return null;
   }
 
@@ -441,8 +444,8 @@ public class EthPeer implements Comparable<EthPeer> {
     knownBlocks.add(hash);
   }
 
-  public void registerStatusSent() {
-    statusHasBeenSentToPeer.set(true);
+  public void registerStatusSent(final PeerConnection peerConnection) {
+    statusHasBeenSentToPeer.add(System.identityHashCode(connection));
     maybeExecuteStatusesExchangedCallback();
   }
 
@@ -472,12 +475,12 @@ public class EthPeer implements Comparable<EthPeer> {
   public boolean readyForRequests() {
     LOG.debug(
         "status has been sent {}, status has been received {} from peer {}, is connected {}, connection {}",
-        statusHasBeenSentToPeer.get(),
+        statusHasBeenSentToPeer.size() > 0,
         statusHasBeenReceivedFromPeer.get(),
         peerId,
         !this.getConnection().isDisconnected(),
         System.identityHashCode(this.getConnection()));
-    return statusHasBeenSentToPeer.get() && statusHasBeenReceivedFromPeer.get();
+    return statusHasBeenSentToPeer.size() > 0 && statusHasBeenReceivedFromPeer.get();
   }
 
   /**
@@ -495,7 +498,7 @@ public class EthPeer implements Comparable<EthPeer> {
    * @return true if we have sent a status message to this peer.
    */
   boolean statusHasBeenSentToPeer() {
-    return statusHasBeenSentToPeer.get();
+    return statusHasBeenSentToPeer.size() > 0;
   }
 
   public boolean hasSeenBlock(final Hash hash) {

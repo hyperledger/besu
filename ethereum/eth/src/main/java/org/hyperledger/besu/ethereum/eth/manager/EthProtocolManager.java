@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -39,6 +40,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -48,11 +51,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
@@ -321,9 +320,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         System.identityHashCode(connection));
     ethPeers.registerConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
-      return;
-    }
 
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
@@ -343,7 +339,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           "Sending status message to {}, connection {}.",
           peer.getPeerId(),
           System.identityHashCode(peer.getConnection()));
-      peer.send(status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent()));
+      peer.send(status, getSupportedProtocol(), Optional.of(() -> peer.registerStatusSent(connection)));
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }

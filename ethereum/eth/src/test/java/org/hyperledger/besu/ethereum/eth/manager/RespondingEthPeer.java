@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.mockito.Mockito.mock;
-
+import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -59,8 +56,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
 
 public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
@@ -127,7 +126,7 @@ public class RespondingEthPeer {
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
-    peer.registerStatusSent();
+    peer.registerStatusSent(peerConnection);
 
     return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);
   }
