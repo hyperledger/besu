@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.mockito.Mockito.mock;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -56,10 +59,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.mockito.Mockito.mock;
+import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 
 public class RespondingEthPeer {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
