@@ -20,11 +20,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -40,6 +35,13 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.plugin.data.Transaction;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,7 +107,9 @@ public class EthGetTransactionByHashTest {
 
   @Test
   public void shouldReturnPendingTransactionWhenTransactionExistsAndIsPending() {
-    final org.hyperledger.besu.ethereum.core.Transaction transaction = org.hyperledger.besu.ethereum.core.Transaction.readFrom(Bytes.fromHexString(VALID_TRANSACTION));
+    final org.hyperledger.besu.ethereum.core.Transaction transaction =
+        org.hyperledger.besu.ethereum.core.Transaction.readFrom(
+            Bytes.fromHexString(VALID_TRANSACTION));
 
     when(pendingTransactions.getTransactionByHash(eq(transaction.getHash())))
         .thenReturn(Optional.of(transaction));
@@ -126,7 +130,9 @@ public class EthGetTransactionByHashTest {
 
   @Test
   public void shouldReturnCompleteTransactionWhenTransactionExistsInBlockchain() {
-    final org.hyperledger.besu.ethereum.core.Transaction transaction = org.hyperledger.besu.ethereum.core.Transaction.readFrom(Bytes.fromHexString(VALID_TRANSACTION));
+    final org.hyperledger.besu.ethereum.core.Transaction transaction =
+        org.hyperledger.besu.ethereum.core.Transaction.readFrom(
+            Bytes.fromHexString(VALID_TRANSACTION));
     final TransactionWithMetadata transactionWithMetadata =
         new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
 
