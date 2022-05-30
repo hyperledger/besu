@@ -88,6 +88,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     Optional<Bytes> response = Optional.empty();
     final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
     LOG.info("read worldtstate from root " + worldStateRootHash);
+    LOG.info(
+        "read root node "
+            + trieBranchStorage.get(Bytes.EMPTY.toArrayUnsafe()).map(Bytes::wrap).map(Hash::hash));
     if (worldStateRootHash.isPresent()) {
       response =
           new StoredMerklePatriciaTrie<>(
