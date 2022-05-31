@@ -143,9 +143,9 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    dependency 'org.hyperledger.besu:bls12-381:0.4.3'
-    dependency 'org.hyperledger.besu:secp256k1:0.4.3'
-    dependency 'org.hyperledger.besu:secp256r1:0.4.3'
+    dependency 'org.hyperledger.besu:bls12-381:0.5.0'
+    dependency 'org.hyperledger.besu:secp256k1:0.5.0'
+    dependency 'org.hyperledger.besu:secp256r1:0.5.0'
 
     dependency 'org.immutables:value-annotations:2.9.0'
     dependency 'org.immutables:value:2.9.0'

@@ -193,6 +193,10 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     if (node.isEngineRpcEnabled()) {
       params.add("--engine-rpc-port");
       params.add(node.jsonEngineListenPort().get().toString());
+
+      if (node.isEngineAuthDisabled()) {
+        params.add("--engine-jwt-disabled");
+      }
     }
 
     if (node.wsRpcEnabled()) {

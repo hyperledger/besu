@@ -49,6 +49,7 @@ public class MergeOptions implements Options {
       LOG.warn(
           "--Xmerge-support parameter has been deprecated and will be removed in a future release.  "
               + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
+      Boolean.parseBoolean(args.pop());
     }
   }
 }
