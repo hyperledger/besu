@@ -32,6 +32,7 @@ import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransaction
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,8 +93,9 @@ public class RocksDBColumnarKeyValueStorage
       final List<ColumnFamilyDescriptor> columnDescriptors =
           segments.stream()
               .map(
-                  segment ->
-                      new ColumnFamilyDescriptor(
+                  segment -> {
+                    if ((Arrays.equals(segment.getId(), new byte[] {2}))) {
+                      return new ColumnFamilyDescriptor(
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setCompressionType(CompressionType.LZ4_COMPRESSION)
@@ -102,7 +104,15 @@ public class RocksDBColumnarKeyValueStorage
                               .setLevel0SlowdownWritesTrigger(10_485_760)
                               .setHardPendingCompactionBytesLimit(549_755_813_888L)
                               .setSoftPendingCompactionBytesLimit(274_877_906_944L)
-                              .setTtl(0)))
+                              .setTtl(0));
+                    } else {
+                      return new ColumnFamilyDescriptor(
+                          segment.getId(),
+                          new ColumnFamilyOptions()
+                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
+                              .setTtl(0));
+                    }
+                  })
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
