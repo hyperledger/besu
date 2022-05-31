@@ -43,4 +43,8 @@ public final class ChainHead {
   public long getHeight() {
     return height;
   }
+
+  public String toLogString() {
+    return "" + getHeight() + " (" + getHash().toHexString() + ")";
+  }
 }

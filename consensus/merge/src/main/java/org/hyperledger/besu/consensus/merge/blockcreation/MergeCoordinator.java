@@ -207,31 +207,31 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockhash) {
+  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
     final var chain = protocolContext.getBlockchain();
-    final var optHeader = chain.getBlockHeader(blockhash);
+    final var optHeader = chain.getBlockHeader(blockHash);
 
     if (optHeader.isPresent()) {
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
-      backwardSyncContext.syncBackwardsUntil(blockhash);
+      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
+      backwardSyncContext.syncBackwardsUntil(blockHash);
     }
     return optHeader;
   }
 
   @Override
   public Optional<BlockHeader> getOrSyncHeaderByHash(
-      final Hash blockhash, final Hash finalizedBlockHash) {
+      final Hash blockHash, final Hash finalizedBlockHash) {
     final var chain = protocolContext.getBlockchain();
-    final var optHeader = chain.getBlockHeader(blockhash);
+    final var optHeader = chain.getBlockHeader(blockHash);
 
     if (optHeader.isPresent()) {
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockhash::toHexString);
-      backwardSyncContext.updateHeads(blockhash, finalizedBlockHash);
-      backwardSyncContext.syncBackwardsUntil(blockhash);
+      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
+      backwardSyncContext.updateHeads(blockHash, finalizedBlockHash);
+      backwardSyncContext.syncBackwardsUntil(blockHash);
     }
     return optHeader;
   }

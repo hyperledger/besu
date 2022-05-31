@@ -51,7 +51,7 @@ public interface FinalBlockConfirmation {
           blockchain.getFinalized().flatMap(blockchain::getBlockByHash);
       if (finalized.isPresent()
           && (finalized.get().getHeader().getNumber() >= firstHeader.getNumber())) {
-        throw new BackwardSyncException("Cannot continue bellow finalized...");
+        throw new BackwardSyncException("Cannot continue below finalized...");
       }
       if (blockchain.contains(firstHeader.getParentHash())) {
         return true;

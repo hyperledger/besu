@@ -78,11 +78,9 @@ public class BackwardsSyncAlgorithm {
     if (blockchain.getChainHead().getHeight() > firstAncestorHeader.get().getNumber()) {
       debugLambda(
           LOG,
-          "Backward reached bellow previous head {}({}) : {} ({})",
-          () -> blockchain.getChainHead().getHeight(),
-          () -> blockchain.getChainHead().getHash().toHexString(),
-          () -> firstAncestorHeader.get().getNumber(),
-          () -> firstAncestorHeader.get().getHash());
+          "Backward reached below previous head {} : {}",
+          () -> blockchain.getChainHead().toLogString(),
+          () -> firstAncestorHeader.get().toLogString());
     }
 
     if (finalBlockConfirmation.finalHeaderReached(firstAncestorHeader.get())) {
@@ -170,20 +168,24 @@ public class BackwardsSyncAlgorithm {
       BlockHeader newFinalizedHeader =
           blockchain
               .getBlockHeader(newFinalized)
-              .orElseThrow(() -> new BackwardSyncException("Inconsistent Blockchain database...."));
+              .orElseThrow(
+                  () ->
+                      new BackwardSyncException(
+                          "The header " + newFinalized.toHexString() + "not found"));
       BlockHeader oldFinalizedHeader =
           blockchain
               .getBlockHeader(oldFinalized)
-              .orElseThrow(() -> new BackwardSyncException("Inconsistent Blockchain database...."));
+              .orElseThrow(
+                  () ->
+                      new BackwardSyncException(
+                          "The header " + oldFinalized.toHexString() + "not found"));
       if (newFinalizedHeader.getNumber() < oldFinalizedHeader.getNumber()) {
-        throw new BackwardSyncException("Cannot finalize bellow already finalized...");
+        throw new BackwardSyncException("Cannot finalize below already finalized...");
       }
       LOG.info(
-          "Updating finalized {}({}) block to new finalized block {}({})",
-          oldFinalizedHeader.getNumber(),
-          oldFinalizedHeader.getHash(),
-          newFinalizedHeader.getNumber(),
-          newFinalizedHeader.getHash());
+          "Updating finalized {} block to new finalized block {}",
+          oldFinalizedHeader.toLogString(),
+          newFinalizedHeader.toLogString());
     } else {
       // Todo: should TTD test be here?
       LOG.info("Setting new finalized block to {}", newFinalized);

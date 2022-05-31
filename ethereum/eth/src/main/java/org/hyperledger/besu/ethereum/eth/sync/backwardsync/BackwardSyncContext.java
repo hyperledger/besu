@@ -240,7 +240,7 @@ public class BackwardSyncContext {
   }
 
   protected Void saveBlock(final Block block) {
-    traceLambda(LOG, "Going to validate block {}", () -> block.getHeader().getHash().toHexString());
+    traceLambda(LOG, "Going to validate block {}", block::toLogString);
     checkFinalizedSuccessionRuleBeforeSave(block);
     var optResult =
         this.getBlockValidatorForBlock(block)
@@ -251,10 +251,7 @@ public class BackwardSyncContext {
                 HeaderValidationMode.NONE);
     optResult.blockProcessingOutputs.ifPresent(
         result -> {
-          traceLambda(
-              LOG,
-              "Block {} was validated, going to import it",
-              () -> block.getHeader().getHash().toHexString());
+          traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
           result.worldState.persist(block.getHeader());
           this.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
           possiblyMoveHead(block);
@@ -331,7 +328,7 @@ public class BackwardSyncContext {
       return;
     }
     if (blockchain.contains(maybeHead.get())) {
-      LOG.debug("Changing head to ");
+      LOG.debug("Changing head to {}", maybeHead.get().toHexString());
       blockchain.rewindToBlock(maybeHead.get());
       return;
     }

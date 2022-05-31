@@ -55,14 +55,10 @@ public class ProcessKnownAncestorsStep {
         backwardChain.dropFirstHeader();
       } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())
           && backwardChain.isTrusted(header.getHash())) {
-        debugLambda(
-            LOG,
-            "Importing trusted block {}({})",
-            header::getNumber,
-            () -> header.getHash().toHexString());
+        debugLambda(LOG, "Importing trusted block {}", header::toLogString);
         context.saveBlock(backwardChain.getTrustedBlock(header.getHash()));
       } else {
-        debugLambda(LOG, "First unprocessed header is {}", header::getNumber);
+        debugLambda(LOG, "First unprocessed header is {}", header::toLogString);
         return;
       }
     }

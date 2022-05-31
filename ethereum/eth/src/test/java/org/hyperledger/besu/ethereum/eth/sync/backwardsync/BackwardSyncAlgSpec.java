@@ -348,7 +348,7 @@ public class BackwardSyncAlgSpec {
                             .orElseThrow()
                             .getBlockHash())))
         .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Cannot finalize bellow already finalized");
+        .hasMessageContaining("Cannot finalize below already finalized");
   }
 
   @Test
