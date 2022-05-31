@@ -212,10 +212,11 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
-      - run:
-          name: SonarQube
-          no_output_timeout: 30m
-          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
+# Temporarily disabled
+#      - run:
+#          name: SonarQube
+#          no_output_timeout: 30m
+#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: xl_machine_executor
@@ -410,7 +411,8 @@ workflows:
             - dco
             - spotless
       - unitTests:
-          context: SonarCloud
+# Temporarily disabled
+#          context: SonarCloud
           requires:
             - assemble
       - testWindows:
