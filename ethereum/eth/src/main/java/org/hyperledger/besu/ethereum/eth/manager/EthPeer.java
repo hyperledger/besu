@@ -85,11 +85,14 @@ public class EthPeer implements Comparable<EthPeer> {
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState = new ChainState();
-  private final List<Integer> statusHasBeenSentToPeer = new ArrayList<Integer>();
-  private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
+  private final List<Integer> statusHasBeenSentToPeer = new ArrayList<>();
+  private final List<Integer> statusHasBeenReceivedFromPeer = new ArrayList<>();
+
+  private final AtomicBoolean readyForRequests = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
   private final Bytes peerId;
+  private long timeConnectionEstablished;
   private int nonStatusCount = 0;
 
   private PeerConnection connection;
@@ -136,6 +139,8 @@ public class EthPeer implements Comparable<EthPeer> {
     fullyValidated.set(peerValidators.isEmpty());
 
     this.requestManagers = new HashMap<>();
+
+    this.timeConnectionEstablished = System.currentTimeMillis();
 
     initEthRequestManagers();
     initSnapRequestManagers();
@@ -259,10 +264,8 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
 
-    final PeerConnection currentConnection = this.connection;
-    if (onSuccess.isPresent()
-        || statusHasBeenSentToPeer.contains(System.identityHashCode(currentConnection))) {
-      currentConnection.sendForProtocol(protocolName, messageData, onSuccess);
+    if (readyForRequests.get() || onSuccess.isPresent()) {
+      this.connection.sendForProtocol(protocolName, messageData, onSuccess);
     }
     return null;
   }
@@ -452,10 +455,15 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void registerStatusReceived(
-      final Hash hash, final Difficulty td, final int protocolVersion) {
+      final Hash hash,
+      final Difficulty td,
+      final int protocolVersion,
+      final PeerConnection connection) {
+    statusHasBeenReceivedFromPeer.add(System.identityHashCode(connection));
+    LOG.debug(
+        "Peer {}: status received for connection {}", peerId, System.identityHashCode(connection));
     chainHeadState.statusReceived(hash, td);
     lastProtocolVersion.set(protocolVersion);
-    statusHasBeenReceivedFromPeer.set(true);
     maybeExecuteStatusesExchangedCallback();
   }
 
@@ -475,14 +483,44 @@ public class EthPeer implements Comparable<EthPeer> {
    * @return true if the peer is ready to accept requests for data.
    */
   public boolean readyForRequests() {
-    LOG.debug(
-        "status has been sent {}, status has been received {} from peer {}, is connected {}, connection {}",
-        statusHasBeenSentToPeer.size() > 0,
-        statusHasBeenReceivedFromPeer.get(),
-        peerId,
-        !this.getConnection().isDisconnected(),
-        System.identityHashCode(this.getConnection()));
-    return statusHasBeenSentToPeer.size() > 0 && statusHasBeenReceivedFromPeer.get();
+    if (readyForRequests.get()) {
+      LOG.debug(
+          "Peer {} is ready for requests with connection {}",
+          peerId,
+          System.identityHashCode(connection));
+      return true;
+    } else {
+      PeerConnection currentConnection = this.connection;
+      if (statusHasBeenSentToPeer.contains(System.identityHashCode(currentConnection))
+          && statusHasBeenReceivedFromPeer.contains(System.identityHashCode(currentConnection))) {
+        readyForRequests.set(true);
+        //        statusHasBeenReceivedFromPeer.clear();
+        //        statusHasBeenSentToPeer.clear();
+        LOG.debug(
+            "Peer {} is ready for requests with connection {}",
+            peerId,
+            System.identityHashCode(currentConnection));
+        return true;
+      } else {
+        LOG.debug(
+            "Peer {} is NOT ready for requests with connection {}",
+            peerId,
+            System.identityHashCode(currentConnection));
+        statusHasBeenReceivedFromPeer.stream()
+            .forEach(
+                c -> LOG.debug("      Peer {} has received status for connection {}", peerId, c));
+        statusHasBeenSentToPeer.stream()
+            .forEach(c -> LOG.debug("      Peer {} has sent status for connection {}", peerId, c));
+        if (System.currentTimeMillis() > timeConnectionEstablished + 5000) {
+          LOG.debug(
+              "Peer {} with connection {} is NOT ready for requests within 5s. Disconnect",
+              peerId,
+              System.identityHashCode(currentConnection));
+          currentConnection.disconnect(DisconnectReason.UNKNOWN);
+        }
+        return false;
+      }
+    }
   }
 
   /**
@@ -490,17 +528,8 @@ public class EthPeer implements Comparable<EthPeer> {
    *
    * @return true if the peer has sent its initial status message to us.
    */
-  boolean statusHasBeenReceived() {
-    return statusHasBeenReceivedFromPeer.get();
-  }
-
-  /**
-   * Return true if we have sent a status message to this peer.
-   *
-   * @return true if we have sent a status message to this peer.
-   */
-  boolean statusHasBeenSentToPeer() {
-    return statusHasBeenSentToPeer.size() > 0;
+  boolean statusHasBeenReceived(final PeerConnection connection) {
+    return statusHasBeenReceivedFromPeer.contains(System.identityHashCode(connection));
   }
 
   public boolean hasSeenBlock(final Hash hash) {
@@ -576,8 +605,8 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "Peer %s... %s, validated? %s, disconnected? %s",
-        getShortNodeId(), reputation, isFullyValidated(), isDisconnected());
+        "{PeerId %s, %s, validated? %s, disconnected? %s}",
+        peerId, reputation, isFullyValidated(), isDisconnected());
   }
 
   @Nonnull
@@ -600,7 +629,16 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void setConnection(final PeerConnection peerConnection) {
-    this.connection = peerConnection;
+    if (peerConnection != connection) {
+      LOG.debug(
+          "Peer {}: replacing connection {} with connection {}",
+          peerId,
+          System.identityHashCode(connection),
+          System.identityHashCode(peerConnection));
+      this.readyForRequests.set(false);
+      timeConnectionEstablished = System.currentTimeMillis();
+      this.connection = peerConnection;
+    }
   }
 
   public boolean incrNonStatusCountAndCheck() {

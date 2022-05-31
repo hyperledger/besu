@@ -87,7 +87,7 @@ final class NettyPeerConnection extends AbstractPeerConnection {
               LOG.debug(
                   "NOT SUCCESSFULL sending status message for connection {}. Disconnecting.",
                   System.identityHashCode(this));
-              closeConnectionImmediately();
+              disconnect(DisconnectMessage.DisconnectReason.UNKNOWN);
             }
           });
       channel.writeAndFlush(new OutboundMessage(capability, message), promise);
@@ -105,6 +105,6 @@ final class NettyPeerConnection extends AbstractPeerConnection {
   @Override
   protected void closeConnection() {
     LOG.debug("Connection {}", System.identityHashCode(this));
-    ctx.channel().eventLoop().schedule((Callable<ChannelFuture>) ctx::close, 10L, SECONDS);
+    ctx.channel().eventLoop().schedule((Callable<ChannelFuture>) ctx::close, 2L, SECONDS);
   }
 }

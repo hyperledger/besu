@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class SnapProtocolManager implements ProtocolManager {
   private static final Logger LOG = LoggerFactory.getLogger(SnapProtocolManager.class);
 
-  private final List<PeerValidator> peerValidators;
+  //  private final List<PeerValidator> peerValidators;
   private final List<Capability> supportedCapabilities;
   private final EthPeers ethPeers;
   private final EthMessages snapMessages;
@@ -52,7 +52,7 @@ public class SnapProtocolManager implements ProtocolManager {
       final EthPeers ethPeers,
       final EthMessages snapMessages,
       final WorldStateArchive worldStateArchive) {
-    this.peerValidators = peerValidators;
+    //    this.peerValidators = peerValidators;
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
@@ -137,7 +137,7 @@ public class SnapProtocolManager implements ProtocolManager {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    ethPeers.registerConnection(connection, peerValidators);
+    //    ethPeers.registerConnection(connection, peerValidators);
   }
 
   @Override

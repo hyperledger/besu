@@ -228,11 +228,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    //    processMessage(cap, message, false);
-    //  }
-    //
-    //  public void processMessage(
-    //      final Capability cap, final Message message, final boolean delayedToWaitForStatus) {
     checkArgument(
         getSupportedCapabilities().contains(cap),
         "Unsupported capability passed to processMessage(): " + cap);
@@ -242,7 +237,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     PeerConnection connection = message.getConnection();
     final EthPeer ethPeer = ethPeers.peer(connection);
     if (ethPeer == null) {
-      LOG.debug("Ignoring message received from unknown peer connection: " + connection);
+      LOG.debug(
+          "Ignoring message received from unknown peer connection: "
+              + System.identityHashCode(connection));
       return;
     }
 
@@ -254,9 +251,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     // Handle STATUS processing
     if (code == EthPV62.STATUS) {
-      handleStatusMessage(ethPeer, messageData);
+      handleStatusMessage(ethPeer, messageData, connection);
       return;
-    } else if (!ethPeer.statusHasBeenReceived()) {
+    } else if (!ethPeer.statusHasBeenReceived(connection)) {
       // first message received should be the status message. Currently we can not guarantee that a
       // message that
       // has been sent first reaches this method first, so we are lenient and allow a limited number
@@ -265,7 +262,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final boolean disconnect = ethPeer.incrNonStatusCountAndCheck();
       if (disconnect) {
         LOG.debug(
-            "Received non-status message before status message. Diconnecting peer {}, connection {}",
+            "Received too many non-status messages before status message. Diconnecting peer {}, connection {}",
             ethPeer.getPeerId(),
             System.identityHashCode(connection));
         ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
@@ -364,7 +361,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     LOG.trace("{}", ethPeers);
   }
 
-  private void handleStatusMessage(final EthPeer peer, final MessageData data) {
+  private void handleStatusMessage(
+      final EthPeer peer, final MessageData data, final PeerConnection connection) {
     final StatusMessage status = StatusMessage.readFrom(data);
     try {
       if (!status.networkId().equals(networkId)) {
@@ -389,9 +387,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             "Received status message from {}: {}, Connection {}",
             peer,
             status,
-            System.identityHashCode(peer.getConnection()));
+            System.identityHashCode(connection));
         peer.registerStatusReceived(
-            status.bestHash(), status.totalDifficulty(), status.protocolVersion());
+            status.bestHash(), status.totalDifficulty(), status.protocolVersion(), connection);
       }
     } catch (final RLPException e) {
       LOG.debug("Unable to parse status message.", e);
