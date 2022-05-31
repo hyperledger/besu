@@ -106,9 +106,12 @@ dependencies {
   integrationTestImplementation project(':metrics:core')
   integrationTestImplementation project(':testutil')
 
-  integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
+
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
   referenceTestImplementation 'junit:junit'
   referenceTestImplementation 'com.google.guava:guava'

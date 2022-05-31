@@ -35,9 +35,9 @@ import java.util.Map;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthCallIntegrationTest {
 
@@ -45,7 +45,7 @@ public class EthCallIntegrationTest {
 
   private JsonRpcMethod method;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpOnce() throws Exception {
     final String genesisJson =
         Resources.toString(BlockTestUtil.getTestGenesisUrl(), Charsets.UTF_8);
@@ -55,7 +55,7 @@ public class EthCallIntegrationTest {
             new BlockchainImporter(BlockTestUtil.getTestBlockchainUrl(), genesisJson));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final Map<String, JsonRpcMethod> methods = BLOCKCHAIN.methods();
     method = methods.get("eth_call");

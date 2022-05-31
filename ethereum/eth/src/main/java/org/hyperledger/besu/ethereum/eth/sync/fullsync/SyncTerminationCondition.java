@@ -65,7 +65,8 @@ public interface SyncTerminationCondition extends BooleanSupplier {
    */
   static SyncTerminationCondition difficulty(
       final Difficulty targetDifficulty, final Blockchain blockchain) {
-    return () -> blockchain.getChainHead().getTotalDifficulty().greaterThan(targetDifficulty);
+    return () ->
+        blockchain.getChainHead().getTotalDifficulty().greaterOrEqualThan(targetDifficulty);
   }
 
   /**

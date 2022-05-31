@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationSe
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -58,7 +60,7 @@ public class WebSocketService {
 
   private final Vertx vertx;
   private final WebSocketConfiguration configuration;
-  private final WebSocketRequestHandler websocketRequestHandler;
+  private final WebSocketMessageHandler websocketMessageHandler;
 
   private HttpServer httpServer;
 
@@ -67,24 +69,33 @@ public class WebSocketService {
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler) {
+      final WebSocketMessageHandler websocketMessageHandler,
+      final MetricsSystem metricsSystem) {
     this(
         vertx,
         configuration,
-        websocketRequestHandler,
-        DefaultAuthenticationService.create(vertx, configuration));
+        websocketMessageHandler,
+        DefaultAuthenticationService.create(vertx, configuration),
+        metricsSystem);
   }
 
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler,
-      final Optional<AuthenticationService> authenticationService) {
+      final WebSocketMessageHandler websocketMessageHandler,
+      final Optional<AuthenticationService> authenticationService,
+      final MetricsSystem metricsSystem) {
     this.vertx = vertx;
     this.configuration = configuration;
-    this.websocketRequestHandler = websocketRequestHandler;
+    this.websocketMessageHandler = websocketMessageHandler;
     this.authenticationService = authenticationService;
     this.maxActiveConnections = configuration.getMaxActiveConnections();
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.RPC,
+        "active_ws_connection_count",
+        "Total no of active rpc ws connections",
+        activeConnectionsCount::intValue);
   }
 
   public CompletableFuture<?> start() {
@@ -138,9 +149,9 @@ public class WebSocketService {
               authenticationService
                   .get()
                   .authenticate(
-                      token, user -> websocketRequestHandler.handle(websocket, buffer, user));
+                      token, user -> websocketMessageHandler.handle(websocket, buffer, user));
             } else {
-              websocketRequestHandler.handle(websocket, buffer, Optional.empty());
+              websocketMessageHandler.handle(websocket, buffer, Optional.empty());
             }
           };
       websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));

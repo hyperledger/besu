@@ -154,6 +154,7 @@ public class PublicKeySubCommand implements Runnable {
                 + SignatureAlgorithmType.DEFAULT_EC_CURVE_NAME
                 + ")",
         arity = "0..1")
+    @SuppressWarnings("FieldCanBeFinal")
     protected String ecCurve = null;
 
     @Spec private final CommandSpec spec = null;

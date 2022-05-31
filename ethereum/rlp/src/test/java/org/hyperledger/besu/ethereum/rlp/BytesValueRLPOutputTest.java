@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.rlp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -153,11 +154,11 @@ public class BytesValueRLPOutputTest {
     assertThat(out.encoded()).isEqualTo(h("0xbb01000000" + times("3c", 16777216)));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void multipleElementAddedWithoutList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeByte((byte) 0);
-    out.writeByte((byte) 1);
+    assertThatThrownBy(() -> out.writeByte((byte) 1)).isInstanceOf(IllegalStateException.class);
   }
 
   @Test
@@ -203,17 +204,17 @@ public class BytesValueRLPOutputTest {
     assertThat(out.encoded()).isEqualTo(h("0xc0"));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void unclosedList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.encoded();
+    assertThatThrownBy(out::encoded).isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void closeUnopenedList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.endList();
+    assertThatThrownBy(out::endList).isInstanceOf(IllegalStateException.class);
   }
 
   @Test

@@ -1,8 +1,10 @@
 # Maintainers
 
-## Active Maintainers
+<!-- Please keep all lists sorted alphabetically by github -->
 
-<!-- Please keep this sorted alphabetically by github -->
+## Active Code Maintainers
+
+<!-- besu-maintainers group has maintainer access to besu repo -->
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
@@ -21,17 +23,25 @@
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
-| Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Stefan Pingel    | pinges           | pinges           |
-| Sajida Zouarhi   | sajz             | SajidaZ          |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
+
+
+## Active Non-code Maintainers
+
+<!-- besu-triage group has Write access to besu repo -->
+
+| Name             | Github           | LFID             |
+| ---------------- | ---------------- | ---------------- |
+| Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Sajida Zouarhi   | sajz             | SajidaZ          |
 
 ## Emeritus Maintainers
 

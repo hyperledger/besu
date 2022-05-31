@@ -32,9 +32,9 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TlsEnabledEnclaveTest {
 
@@ -50,13 +50,13 @@ public class TlsEnabledEnclaveTest {
     vertx.close();
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     serverFactory = new TlsEnabledHttpServerFactory();
     this.vertx = Vertx.vertx();
   }
 
-  @After
+  @AfterEach
   public void cleanup() {
     serverFactory.shutdown();
     this.shutdown();

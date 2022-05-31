@@ -60,7 +60,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
   private static final class FakeCollector extends TraceServiceGrpc.TraceServiceImplBase {
     private final List<ResourceSpans> receivedSpans = new ArrayList<>();
-    private Status returnedStatus = Status.OK;
+    private final Status returnedStatus = Status.OK;
 
     @Override
     public void export(
@@ -82,16 +82,12 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
     List<ResourceSpans> getReceivedSpans() {
       return receivedSpans;
     }
-
-    void setReturnedStatus(final Status returnedStatus) {
-      this.returnedStatus = returnedStatus;
-    }
   }
 
   private static final class FakeMetricsCollector
       extends MetricsServiceGrpc.MetricsServiceImplBase {
     private final List<ResourceMetrics> receivedMetrics = new ArrayList<>();
-    private Status returnedStatus = Status.OK;
+    private final Status returnedStatus = Status.OK;
 
     @Override
     public void export(
@@ -113,10 +109,6 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
 
     List<ResourceMetrics> getReceivedMetrics() {
       return receivedMetrics;
-    }
-
-    void setReturnedStatus(final Status returnedStatus) {
-      this.returnedStatus = returnedStatus;
     }
   }
 

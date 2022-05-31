@@ -43,7 +43,7 @@ task ('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '1587f40e7f606140822307d47e88c8d09acc907a'
+    def expectedHash = 'a380655e5ffab1a5ea0f4d860224bdb19013f06a'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/test/resources").toAbsolutePath()
     try {
       exec {

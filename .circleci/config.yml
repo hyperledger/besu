@@ -18,6 +18,16 @@ executors:
     resource_class: medium
     working_directory: ~/project
     environment:
+      architecture: "amd64"
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
+  besu_arm64_executor_med: # 2cpu, 8G ram
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    working_directory: ~/project
+    environment:
+      architecture: "arm64"
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
   besu_executor_xl: # 8cpu, 16G ram
@@ -28,10 +38,10 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       
-  quorum_ats_executor_xl:
+  quorum_ats_executor_med:
     docker:
       - image: cimg/openjdk:11.0
-    resource_class: xlarge
+    resource_class: medium
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false
@@ -46,10 +56,6 @@ executors:
       - image: docker:stable-git
     resource_class: small
     working_directory: ~/project
-
-notify:
-  webhooks:
-    - url: $HUBOT_URL
 
 commands:
   prepare:
@@ -206,10 +212,11 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
-      - run:
-          name: SonarQube
-          no_output_timeout: 30m
-          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
+# Temporarily disabled
+#      - run:
+#          name: SonarQube
+#          no_output_timeout: 30m
+#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: xl_machine_executor
@@ -269,7 +276,7 @@ jobs:
 
   acceptanceTestsQuorum:
     parallelism: 1
-    executor: quorum_ats_executor_xl
+    executor: quorum_ats_executor_med
     steps:
       - attach_workspace:
           at: ~/project
@@ -318,6 +325,35 @@ jobs:
             curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
             ./gradlew --no-daemon testDocker
 
+  buildArm64Docker:
+    executor: besu_arm64_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: hadoLint_openjdk_11
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+      - run:
+          name: hadoLint_openjdk_latest
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - run:
+          name: hadoLint_graalvm
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - run:
+          name: build image
+          command: |
+            ./gradlew --no-daemon distDocker
+      - run:
+          name: test image
+          command: |
+            mkdir -p docker/reports
+            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
+            ./gradlew --no-daemon testDocker
+
   publish:
     executor: besu_executor_med
     steps:
@@ -340,9 +376,29 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            # temporarily commented out because AWS credentials are broken
-            # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+
+  publishArm64Docker:
+    executor: besu_arm64_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Publish Docker
+          command: |
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+  manifestDocker:
+    executor: besu_executor_med
+    steps:
+      - prepare
+      - setup_remote_docker
+      - run:
+          name: Create and publish docker manifest
+          command: |
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" --parallel manifestDocker
 
 workflows:
   version: 2
@@ -355,7 +411,8 @@ workflows:
             - dco
             - spotless
       - unitTests:
-          context: SonarCloud
+# Temporarily disabled
+#          context: SonarCloud
           requires:
             - assemble
       - testWindows:
@@ -371,6 +428,9 @@ workflows:
           requires:
             - assemble
       - buildDocker:
+          requires:
+            - assemble
+      - buildArm64Docker:
           requires:
             - assemble
       - publish:
@@ -403,6 +463,36 @@ workflows:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
             - besu-acr-rw
+      - publishArm64Docker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildArm64Docker
+          context:
+            - besu-dockerhub-ro
+            - besu-dockerhub-rw
+            - besu-acr-rw
+      - manifestDocker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - publishDocker
+            - publishArm64Docker
+          context:
+            - besu-dockerhub-ro
+            - besu-dockerhub-rw
+            - besu-acr-rw
+
   nightly:
     triggers:
       - schedule:

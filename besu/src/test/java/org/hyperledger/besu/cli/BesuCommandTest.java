@@ -55,7 +55,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -1992,15 +1992,33 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void engineApiAuthOptions() {
+    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
+        "--override-genesis-config",
+        "terminalTotalDifficulty=1337",
         "--rpc-http-enabled",
-        "--Xmerge-support",
-        "true",
-        "--engine-jwt-enabled",
         "--engine-jwt-secret",
         "/tmp/fakeKey.hex");
     verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
     assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isTrue();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void engineApiDisableAuthOptions() {
+    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // https://github.com/hyperledger/besu/issues/3874
+    parseCommand(
+        "--override-genesis-config",
+        "terminalTotalDifficulty=1337",
+        "--rpc-http-enabled",
+        "--engine-jwt-disabled",
+        "--engine-jwt-secret",
+        "/tmp/fakeKey.hex");
+    verify(mockRunnerBuilder).engineJsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().isAuthenticationEnabled()).isFalse();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -3403,9 +3421,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
+    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
-        "--Xmerge-support",
-        "true",
+        "--override-genesis-config",
+        "terminalTotalDifficulty=1337",
         "--miner-coinbase",
         requestedCoinbase.toString(),
         "--min-gas-price",
@@ -4768,18 +4788,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void assertThatCheckPortClashRejectsAsExpectedForEngineApi() throws Exception {
     // use WS port for HTTP
-    final int port = 8551;
+    final int port = 8545;
+    // TODO: once we have mainnet TTD, we can remove the TTD override parameter here
+    // https://github.com/hyperledger/besu/issues/3874
     parseCommand(
-        "--Xmerge-support",
-        "true",
+        "--override-genesis-config",
+        "terminalTotalDifficulty=1337",
         "--rpc-http-enabled",
-        "--engine-rpc-http-port",
+        "--rpc-http-port",
         String.valueOf(port),
-        "--rpc-ws-enabled");
+        "--engine-rpc-port",
+        String.valueOf(port));
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Port number '8551' has been specified multiple times. Please review the supplied configuration.");
+            "Port number '8545' has been specified multiple times. Please review the supplied configuration.");
   }
 
   @Test

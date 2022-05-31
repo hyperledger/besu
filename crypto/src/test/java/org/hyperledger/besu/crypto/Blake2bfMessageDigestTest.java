@@ -15,6 +15,7 @@
 package org.hyperledger.besu.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.bouncycastle.util.Pack;
 import org.junit.Before;
@@ -84,31 +85,40 @@ public class Blake2bfMessageDigestTest {
     assertThat(messageDigest.digest()).isEqualTo(BLAKE2F_ALL_ZERO_NEGATIVE_ROUNDS);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void throwsIfBufferUpdatedWithLessThat213Bytes() {
     for (int i = 0; i < 212; i++) {
       messageDigest.update((byte) 0);
     }
-    messageDigest.digest();
+    assertThatThrownBy(() -> messageDigest.digest()).isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void throwsIfBufferUpdatedWithMoreThat213Bytes() {
-    for (int i = 0; i < 214; i++) {
-      messageDigest.update((byte) 0);
-    }
+    assertThatThrownBy(
+            () -> {
+              for (int i = 0; i < 214; i++) {
+                messageDigest.update((byte) 0);
+              }
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void throwsIfBufferUpdatedLargeByteArray() {
     final byte[] update = new byte[213];
     messageDigest.update((byte) 0);
-    messageDigest.update(update, 0, 213);
+    assertThatThrownBy(() -> messageDigest.update(update, 0, 213))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void throwsIfEmptyBufferUpdatedLargeByteArray() {
-    final byte[] update = new byte[214];
-    messageDigest.update(update, 0, 214);
+    assertThatThrownBy(
+            () -> {
+              final byte[] update = new byte[214];
+              messageDigest.update(update, 0, 214);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
   }
 }

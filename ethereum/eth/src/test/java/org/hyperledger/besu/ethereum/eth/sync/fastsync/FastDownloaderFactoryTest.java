@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -62,22 +63,25 @@ public class FastDownloaderFactoryTest {
   @Mock private PivotBlockSelector pivotBlockSelector;
 
   @SuppressWarnings("unchecked")
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void shouldThrowIfSyncModeChangedWhileFastSyncIncomplete() {
     initDataDirectory(true);
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
-    FastDownloaderFactory.create(
-        pivotBlockSelector,
-        syncConfig,
-        dataDirectory,
-        protocolSchedule,
-        protocolContext,
-        metricsSystem,
-        ethContext,
-        worldStateStorage,
-        syncState,
-        clock);
+    assertThatThrownBy(
+            () ->
+                FastDownloaderFactory.create(
+                    pivotBlockSelector,
+                    syncConfig,
+                    dataDirectory,
+                    protocolSchedule,
+                    protocolContext,
+                    metricsSystem,
+                    ethContext,
+                    worldStateStorage,
+                    syncState,
+                    clock))
+        .isInstanceOf(IllegalStateException.class);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
