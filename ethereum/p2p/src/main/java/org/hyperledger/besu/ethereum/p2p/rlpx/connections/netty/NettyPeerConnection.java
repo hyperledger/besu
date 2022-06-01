@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.DefaultChannelPromise;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.AbstractPeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
@@ -28,15 +26,18 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.DefaultChannelPromise;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class NettyPeerConnection extends AbstractPeerConnection {
 
@@ -109,6 +110,7 @@ final class NettyPeerConnection extends AbstractPeerConnection {
   }
 
   final AtomicBoolean alreadyTriedAgain = new AtomicBoolean(false);
+
   public void tryAgain(final Runnable run, final Long delayInSeconds) {
     if (alreadyTriedAgain.get()) {
       return;
