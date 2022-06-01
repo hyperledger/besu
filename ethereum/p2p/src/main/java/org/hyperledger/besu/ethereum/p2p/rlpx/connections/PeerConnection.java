@@ -117,6 +117,9 @@ public interface PeerConnection {
 
   InetSocketAddress getRemoteAddress();
 
+  default public void tryAgain(final Runnable run, final Long delayInSeconds) {
+    return;
+  }
   class PeerNotConnected extends IOException {
 
     public PeerNotConnected(final String message) {

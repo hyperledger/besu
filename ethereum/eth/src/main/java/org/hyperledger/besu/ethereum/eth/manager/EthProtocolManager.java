@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -39,6 +40,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -48,11 +51,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
@@ -240,6 +239,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       LOG.debug(
           "Ignoring message received from unknown peer connection: "
               + System.identityHashCode(connection));
+      if (code == EthPV62.STATUS) {
+        // if this is the status message from a peer that hasn't been added to the EthPeers yet, try again in a second ...
+        connection.tryAgain(() -> processMessage(cap, message), 1L);
+      }
       return;
     }
 
