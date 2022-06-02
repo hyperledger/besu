@@ -462,7 +462,6 @@ workflows:
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
       - publishArm64Docker:
           filters:
             branches:
@@ -478,7 +477,6 @@ workflows:
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
       - manifestDocker:
           filters:
             branches:
@@ -491,7 +489,6 @@ workflows:
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
 
   nightly:
     triggers:
