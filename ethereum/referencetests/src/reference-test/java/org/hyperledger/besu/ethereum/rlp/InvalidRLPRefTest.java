@@ -15,21 +15,19 @@
 package org.hyperledger.besu.ethereum.rlp;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /** The Ethereum reference RLP tests. */
-@RunWith(Parameterized.class)
 public class InvalidRLPRefTest {
 
   private static final String[] TEST_CONFIG_FILES = {
@@ -37,22 +35,15 @@ public class InvalidRLPRefTest {
     "org/hyperledger/besu/ethereum/rlp/invalidRLPTest.json", "RLPTests/invalidRLPTest.json"
   };
 
-  private final InvalidRLPRefTestCaseSpec spec;
-
-  public InvalidRLPRefTest(
-      final String name, final InvalidRLPRefTestCaseSpec spec, final boolean runTest) {
-    this.spec = spec;
-    assumeTrue("Test was blacklisted", runTest);
-  }
-
-  @Parameters(name = "Name: {0}")
-  public static Collection<Object[]> getTestParametersForConfig() {
-    return JsonTestParameters.create(InvalidRLPRefTestCaseSpec.class).generate(TEST_CONFIG_FILES);
+  public static Stream<Arguments> getTestParametersForConfig() {
+    return JsonTestParameters.create(InvalidRLPRefTestCaseSpec.class).generate(TEST_CONFIG_FILES).stream().map(params -> Arguments.of(params[0], params[1], params[2]));
   }
 
   /** Test RLP decoding. */
-  @Test
-  public void decode() throws Exception {
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void decode(final String name, final InvalidRLPRefTestCaseSpec spec, final boolean runTest) {
+    assumeTrue(runTest, "Test was blacklisted");
     final Bytes rlp = spec.getRLP();
     assertThatThrownBy(() -> RLPTestUtil.decode(rlp)).isInstanceOf(RLPException.class);
   }
