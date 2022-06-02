@@ -89,7 +89,6 @@ public class BesuControllerBuilderTest {
 
   @Before
   public void setup() {
-    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());

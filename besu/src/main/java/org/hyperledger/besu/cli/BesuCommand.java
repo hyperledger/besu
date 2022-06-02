@@ -60,6 +60,7 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
+import org.hyperledger.besu.cli.options.unstable.MergeOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -281,6 +282,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
+  private final MergeOptions mergeOptions = MergeOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
@@ -586,8 +588,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Option(
         names = {"--engine-jwt-enabled"},
-        description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineAuthEnabled = false;
+        description = "deprecated option, engine jwt auth is enabled by default",
+        hidden = true)
+    @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
+    private final Boolean deprecatedIsEngineAuthEnabled = true;
+
+    @Option(
+        names = {"--engine-jwt-disabled"},
+        description = "Disable authentication for Engine APIs (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineAuthDisabled = false;
 
     @Option(
         names = {"--engine-host-allowlist"},
@@ -1503,6 +1512,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Launcher", unstableLauncherOptions)
+            .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .build();
@@ -2115,7 +2125,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
     }
     engineConfig.setEnabled(isMergeEnabled());
-    if (engineRPCOptionGroup.isEngineAuthEnabled) {
+    if (!engineRPCOptionGroup.isEngineAuthDisabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
