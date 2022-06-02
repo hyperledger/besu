@@ -199,9 +199,12 @@ public class TransactionLogBloomCacher {
       throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
 
+      final long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
-
+      if (blockIndex > nbCachedBlocks) {
+        throw new InvalidCacheException();
+      }
       writer.seek(offset);
       writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom(true).toArray()));
 
@@ -223,7 +226,10 @@ public class TransactionLogBloomCacher {
       fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, currentFile);
 
       while (blockNumber <= eventBlockNumber && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
-        cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
+        Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockNumber);
+        if (blockHeader.isPresent()) {
+          cacheSingleBlock(blockHeader.get(), currentFile);
+        }
         blockNumber++;
       }
       Files.move(
