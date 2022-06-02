@@ -30,16 +30,11 @@ jar {
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  api project(':plugin-api')
-  api project(':util')
-
-  implementation 'com.google.guava:guava'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
 
   jmh project(':util')
 
-  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -50,17 +45,6 @@ dependencies {
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
-test {
-  exclude 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
-  exclude 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
-}
-
-task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
-  doFirst {
-    if (!file("../referencetests/src/test/resources/README.md").exists()) {
-      throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
-    }
-  }
-  include 'org/hyperledger/besu/ethereum/rlp/InvalidRLPRefTest.class'
-  include 'org/hyperledger/besu/ethereum/rlp/RLPRefTest.class'
+artifacts {
+  testSupportArtifacts testSupportJar
 }

@@ -191,11 +191,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     }
 
     if (node.isEngineRpcEnabled()) {
-      params.add("--Xmerge-support");
-      params.add("true");
-
-      params.add("--engine-rpc-http-port");
+      params.add("--engine-rpc-port");
       params.add(node.jsonEngineListenPort().get().toString());
+
+      if (node.isEngineAuthDisabled()) {
+        params.add("--engine-jwt-disabled");
+      }
     }
 
     if (node.wsRpcEnabled()) {
@@ -226,9 +227,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
         params.add("--rpc-ws-authentication-jwt-algorithm");
         params.add(node.webSocketConfiguration().getAuthenticationAlgorithm().toString());
       }
-      // TODO: properly handle engine rpc, set port to 0 to make tests pass
-      params.add("--engine-rpc-ws-port");
-      params.add("0");
     }
 
     if (node.isJsonRpcIpcEnabled()) {

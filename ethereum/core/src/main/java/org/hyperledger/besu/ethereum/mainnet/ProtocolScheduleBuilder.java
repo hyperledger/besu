@@ -55,10 +55,6 @@ public class ProtocolScheduleBuilder {
     public ProtocolSpecBuilder getBuilder() {
       return builder;
     }
-
-    public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifier() {
-      return modifier;
-    }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);

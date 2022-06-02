@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ public class PandaPrinter implements TTDReachedListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
   private static final String pandaBanner = PandaPrinter.loadBanner();
+  private final AtomicBoolean beenDisplayed = new AtomicBoolean();
 
   private static String loadBanner() {
     Class<PandaPrinter> c = PandaPrinter.class;
@@ -50,7 +52,7 @@ public class PandaPrinter implements TTDReachedListener {
 
   @Override
   public void onTTDReached(final boolean reached) {
-    if (reached) {
+    if (reached && beenDisplayed.compareAndSet(false, true)) {
       LOG.info("\n" + pandaBanner);
     }
   }

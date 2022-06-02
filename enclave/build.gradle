@@ -22,11 +22,12 @@ dependencies {
 
   // integration test dependencies.
   integrationTestImplementation project(':testutil')
+  integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.bouncycastle:bcpkix-jdk15on'
   integrationTestImplementation 'org.awaitility:awaitility'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
 
-  integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }

@@ -27,16 +27,6 @@ jar {
   }
 }
 
-sourceSets {
-  test {
-    java {
-      compileClasspath += main.output
-      runtimeClasspath += main.output
-      srcDirs += file('./build/generated/sources/referencetests/java/test')
-    }
-  }
-}
-
 dependencies {
   api 'org.slf4j:slf4j-api'
 
@@ -72,7 +62,6 @@ dependencies {
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:api')
   testImplementation project(path: ':ethereum:referencetests')
-  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
@@ -82,6 +71,7 @@ dependencies {
   testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
@@ -89,10 +79,12 @@ dependencies {
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':testutil')
 
-  integrationTestImplementation 'junit:junit'
   integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
+
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':ethereum:eth')
@@ -120,148 +112,6 @@ configurations { testArtifacts }
 task testJar(type: Jar) {
   archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
-}
-
-test {
-  exclude 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
-  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
-  exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
-  exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
-  exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-}
-
-def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
-  mkdir(destination)
-  def referenceTestTemplate = templateFile.text
-
-  // This is how many json files to include in each test file
-  def fileSets = jsonPath.getFiles().collate(5)
-
-  fileSets.eachWithIndex { fileSet, idx ->
-    def paths = []
-    fileSet.each { testJsonFile ->
-      def parentFile = testJsonFile.getParentFile()
-      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
-      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
-        def pathFile = testJsonFile.getPath()
-        paths << pathFile.substring(pathFile.indexOf(pathstrip))
-      }
-    }
-
-    def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
-
-    def allPaths = '"' + paths.join('", "') + '"'
-
-    def testFileContents = referenceTestTemplate
-      .replaceAll("%%TESTS_FILE%%", allPaths)
-      .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
-    testFile.newWriter().withWriter { w -> w << testFileContents }
-  }
-}
-
-task blockchainReferenceTestsSetup {
-  inputs.files fileTree('../referencetests/src/test/resources/BlockchainTests')
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain"
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/BlockchainTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
-    "BlockchainTests",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain",
-    "BlockchainReferenceTest",
-    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-    )
-}
-
-task legacyBlockchainReferenceTestsSetup {
-  inputs.files fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests')
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain"
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
-    "LegacyTests",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/blockchain",
-    "LegacyBlockchainReferenceTest",
-    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-    )
-}
-
-task generalstateReferenceTestsSetup {
-  inputs.files fileTree("../referencetests/src/test/resources/GeneralStateTests")
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
-  generateTestFiles(
-    fileTree("../referencetests/src/test/resources/GeneralStateTests"),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "GeneralStateTests",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateReferenceTest"
-    )
-}
-
-task legacyGeneralstateReferenceTestsSetup {
-  inputs.files fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests')
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "LegacyTests",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
-    "LegacyGeneralStateReferenceTest"
-    )
-}
-
-task generalstateRegressionReferenceTestsSetup {
-  inputs.files fileTree("./src/test/resources/regressions/generalstate")
-  outputs.files "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate"
-  generateTestFiles(
-    fileTree("./src/test/resources/regressions/generalstate"),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "regressions",
-    "./build/generated/sources/referencetests/java/test/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateRegressionReferenceTest"
-    )
-}
-
-//TODO delete in Jan 2022.  This is left as a migration aid for reference tests moving to the build directory
-task cleanupReferenceTests(type: Delete) {
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate/") {
-    include("**/GeneralStateReferenceTest*.java")
-    include("**/GeneralStateRegressionReferenceTest*.java")
-    include("**/LegacyGeneralStateReferenceTest*.java")
-    include("**/LegacyGeneralStateRegressionReferenceTest*.java")
-  }
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain/") {
-    include("**/BlockchainReferenceTest*.java")
-    include("**/LegacyBlockchainReferenceTest*.java")
-  }
-}
-
-clean.dependsOn(cleanupReferenceTests)
-
-task referenceTests(type: Test, dependsOn: [
-  "blockchainReferenceTestsSetup",
-  "generalstateReferenceTestsSetup",
-  "legacyBlockchainReferenceTestsSetup",
-  "legacyGeneralstateReferenceTestsSetup",
-  "generalstateRegressionReferenceTestsSetup",
-  "compileTestJava"
-]) {
-  compileTestJava.mustRunAfter blockchainReferenceTestsSetup
-  compileTestJava.mustRunAfter generalstateReferenceTestsSetup
-  compileTestJava.mustRunAfter generalstateRegressionReferenceTestsSetup
-  compileTestJava.mustRunAfter legacyBlockchainReferenceTestsSetup
-  compileTestJava.mustRunAfter legacyGeneralstateReferenceTestsSetup
-  doFirst {
-    if (!file("../referencetests/src/test/resources/README.md").exists()) {
-      throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
-    }
-  }
-  scanForTestClasses = false
-  enableAssertions = true
-  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
-  include 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
-  include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
-  include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
-  include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
 }
 
 artifacts {

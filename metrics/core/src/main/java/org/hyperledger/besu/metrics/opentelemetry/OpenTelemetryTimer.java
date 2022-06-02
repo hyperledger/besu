@@ -51,7 +51,7 @@ public class OpenTelemetryTimer implements LabelledMetric<OperationTimer> {
         meter
             .gaugeBuilder(metricName)
             .setDescription(help)
-            .buildWithCallback((measurement) -> measurement.observe(elapsed, labels));
+            .buildWithCallback((measurement) -> measurement.observe((double) elapsed, labels));
         return elapsed / 1e9;
       };
     };

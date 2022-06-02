@@ -58,7 +58,7 @@ public class WebSocketServiceTest {
 
   private Vertx vertx;
   private WebSocketConfiguration websocketConfiguration;
-  private WebSocketRequestHandler webSocketRequestHandlerSpy;
+  private WebSocketMessageHandler webSocketMessageHandlerSpy;
   private Map<String, JsonRpcMethod> websocketMethods;
   private WebSocketService websocketService;
   private HttpClient httpClient;
@@ -79,16 +79,17 @@ public class WebSocketServiceTest {
         new WebSocketMethodsFactory(
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
-    webSocketRequestHandlerSpy =
+    webSocketMessageHandlerSpy =
         spy(
-            new WebSocketRequestHandler(
+            new WebSocketMessageHandler(
                 vertx,
                 new JsonRpcExecutor(new BaseJsonRpcProcessor(), websocketMethods),
                 mock(EthScheduler.class),
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(vertx, websocketConfiguration, webSocketRequestHandlerSpy);
+        new WebSocketService(
+            vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
 
     websocketConfiguration.setPort(websocketService.socketAddress().getPort());
@@ -103,7 +104,7 @@ public class WebSocketServiceTest {
 
   @After
   public void after() {
-    reset(webSocketRequestHandlerSpy);
+    reset(webSocketMessageHandlerSpy);
     websocketService.stop();
   }
 
@@ -312,7 +313,7 @@ public class WebSocketServiceTest {
 
           websocket.closeHandler(
               h -> {
-                verifyNoInteractions(webSocketRequestHandlerSpy);
+                verifyNoInteractions(webSocketMessageHandlerSpy);
                 async.complete();
               });
 

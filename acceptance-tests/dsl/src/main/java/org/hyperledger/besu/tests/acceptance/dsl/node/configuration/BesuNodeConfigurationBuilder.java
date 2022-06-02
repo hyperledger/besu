@@ -61,8 +61,6 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
-  private WebSocketConfiguration engineWebSocketConfiguration =
-      WebSocketConfiguration.createDefault();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private String keyFilePath = null;
@@ -92,8 +90,6 @@ public class BesuNodeConfigurationBuilder {
     // Check connections more frequently during acceptance tests to cut down on
     // intermittent failures due to the fact that we're running over a real network
     networkingConfiguration.setInitiateConnectionsFrequency(5);
-    engineRpcConfiguration.setPort(JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT);
-    engineWebSocketConfiguration.setPort(WebSocketConfiguration.DEFAULT_WEBSOCKET_ENGINE_PORT);
   }
 
   public BesuNodeConfigurationBuilder name(final String name) {
@@ -139,12 +135,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder engineWebSocketConfiguration(
-      final WebSocketConfiguration engineConfig) {
-    this.engineWebSocketConfiguration = engineConfig;
-    return this;
-  }
-
   public BesuNodeConfigurationBuilder jsonRpcEnabled() {
     this.jsonRpcConfiguration.setEnabled(true);
     this.jsonRpcConfiguration.setPort(0);
@@ -153,10 +143,11 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder engineRpcEnabled() {
-    this.engineRpcConfiguration.setEnabled(true);
+  public BesuNodeConfigurationBuilder engineRpcEnabled(final boolean enabled) {
+    this.engineRpcConfiguration.setEnabled(enabled);
     this.engineRpcConfiguration.setPort(0);
     this.engineRpcConfiguration.setHostsAllowlist(singletonList("*"));
+    this.engineRpcConfiguration.setAuthenticationEnabled(false);
 
     return this;
   }
@@ -496,7 +487,6 @@ public class BesuNodeConfigurationBuilder {
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
-        Optional.of(engineWebSocketConfiguration),
         metricsConfiguration,
         permissioningConfiguration,
         Optional.ofNullable(keyFilePath),

@@ -32,8 +32,8 @@ import java.util.Base64;
 import java.util.List;
 
 import io.vertx.core.Vertx;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
 public class GoQuorumEnclaveTest {
@@ -46,7 +46,7 @@ public class GoQuorumEnclaveTest {
 
   private RequestTransmitter vertxTransmitter;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     enclave = createGoQuorumEnclaveWithMockRequestTransmitter();
   }

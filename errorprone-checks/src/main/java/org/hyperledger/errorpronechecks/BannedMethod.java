@@ -33,7 +33,6 @@ import com.sun.source.tree.MethodInvocationTree;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "BannedMethod",
     summary = "Some methods should not be used, make sure that doesn't happen.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)

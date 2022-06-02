@@ -38,10 +38,10 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       
-  quorum_ats_executor_xl:
+  quorum_ats_executor_med:
     docker:
       - image: cimg/openjdk:11.0
-    resource_class: xlarge
+    resource_class: medium
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false
@@ -56,10 +56,6 @@ executors:
       - image: docker:stable-git
     resource_class: small
     working_directory: ~/project
-
-notify:
-  webhooks:
-    - url: $HUBOT_URL
 
 commands:
   prepare:
@@ -216,10 +212,11 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
-      - run:
-          name: SonarQube
-          no_output_timeout: 30m
-          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
+# Temporarily disabled
+#      - run:
+#          name: SonarQube
+#          no_output_timeout: 30m
+#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: xl_machine_executor
@@ -279,7 +276,7 @@ jobs:
 
   acceptanceTestsQuorum:
     parallelism: 1
-    executor: quorum_ats_executor_xl
+    executor: quorum_ats_executor_med
     steps:
       - attach_workspace:
           at: ~/project
@@ -401,7 +398,7 @@ jobs:
           name: Create and publish docker manifest
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon --parallel manifestDocker
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" --parallel manifestDocker
 
 workflows:
   version: 2
@@ -414,7 +411,8 @@ workflows:
             - dco
             - spotless
       - unitTests:
-          context: SonarCloud
+# Temporarily disabled
+#          context: SonarCloud
           requires:
             - assemble
       - testWindows:
@@ -464,7 +462,6 @@ workflows:
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
       - publishArm64Docker:
           filters:
             branches:
@@ -480,7 +477,6 @@ workflows:
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
       - manifestDocker:
           filters:
             branches:
@@ -493,7 +489,6 @@ workflows:
           context:
             - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
 
   nightly:
     triggers:

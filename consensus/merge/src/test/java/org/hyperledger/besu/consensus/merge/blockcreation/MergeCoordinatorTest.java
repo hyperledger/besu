@@ -27,7 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.datatypes.Address;
@@ -142,7 +142,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     coordinator.executeBlock(child);
 
     ForkchoiceResult result =
-        coordinator.updateForkChoice(childHeader.getHash(), terminalHeader.getHash());
+        coordinator.updateForkChoice(
+            childHeader, terminalHeader.getHash(), terminalHeader.getHash());
 
     assertThat(result.isSuccessful()).isFalse();
     assertThat(result.getErrorMessage()).isPresent();
@@ -151,6 +152,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     verify(blockchain, never()).setFinalized(childHeader.getHash());
     verify(mergeContext, never()).setFinalized(childHeader);
+    verify(blockchain, never()).setSafeBlock(childHeader.getHash());
+    verify(mergeContext, never()).setSafeBlock(childHeader);
 
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();
@@ -216,10 +219,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     coordinator.executeBlock(headBlock);
 
-    coordinator.updateForkChoice(headBlock.getHash(), firstFinalizedBlock.getHash());
+    coordinator.updateForkChoice(
+        headBlockHeader, firstFinalizedBlock.getHash(), firstFinalizedBlock.getHash());
 
     verify(blockchain).setFinalized(firstFinalizedBlock.getHash());
     verify(mergeContext).setFinalized(firstFinalizedHeader);
+    verify(blockchain).setSafeBlock(firstFinalizedBlock.getHash());
+    verify(mergeContext).setSafeBlock(firstFinalizedHeader);
   }
 
   @Test
@@ -241,10 +247,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
     coordinator.executeBlock(headBlock);
 
-    coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+    coordinator.updateForkChoice(
+        headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
 
     verify(blockchain).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext).setFinalized(lastFinalizedHeader);
+    verify(blockchain).setSafeBlock(lastFinalizedBlock.getHash());
+    verify(mergeContext).setSafeBlock(lastFinalizedHeader);
   }
 
   @Test
@@ -270,11 +279,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(Optional.of(lastFinalizedHeader));
     when(blockchain.getBlockHeader(headBlockHeader.getHash()))
         .thenReturn(Optional.of(headBlockHeader));
-    var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+    var res =
+        coordinator.updateForkChoice(
+            headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isFailed()).isTrue();
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+    verify(blockchain, never()).setSafeBlock(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setSafeBlock(lastFinalizedHeader);
   }
 
   @Test
@@ -300,37 +313,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(Optional.of(lastFinalizedHeader));
     when(blockchain.getBlockHeader(headBlockHeader.getHash()))
         .thenReturn(Optional.of(headBlockHeader));
-    var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+    var res =
+        coordinator.updateForkChoice(
+            headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isSuccessful()).isFalse();
     assertThat(res.isFailed()).isTrue();
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
-  }
-
-  @Test
-  public void updateForkChoiceShouldFailIfHeadBlockNotFound() {
-    BlockHeader terminalHeader = terminalPowBlock();
-    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
-
-    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
-    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
-    coordinator.executeBlock(prevFinalizedBlock);
-
-    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
-
-    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
-    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
-    coordinator.executeBlock(lastFinalizedBlock);
-
-    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
-    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
-    // note this block is not executed, so not known by us
-    var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
-    assertThat(res.isFailed()).isTrue();
-
-    verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
-    verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+    verify(blockchain, never()).setSafeBlock(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setSafeBlock(lastFinalizedHeader);
   }
 
   @Test
@@ -355,12 +347,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(blockchain.getBlockHeader(headBlockHeader.getHash()))
         .thenReturn(Optional.of(headBlockHeader))
         .thenReturn(Optional.of(headBlockHeader));
-    var res = coordinator.updateForkChoice(headBlock.getHash(), lastFinalizedBlock.getHash());
+    var res =
+        coordinator.updateForkChoice(
+            headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
     assertThat(res.isSuccessful()).isFalse();
     assertThat(res.isFailed()).isTrue();
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
+    verify(blockchain, never()).setSafeBlock(lastFinalizedBlock.getHash());
+    verify(mergeContext, never()).setSafeBlock(lastFinalizedHeader);
   }
 
   @Test

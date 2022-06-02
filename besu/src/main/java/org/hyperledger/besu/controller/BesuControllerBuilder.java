@@ -96,6 +96,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +104,15 @@ import org.slf4j.LoggerFactory;
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  protected GenesisConfigFile genesisConfig;
+  private GenesisConfigFile genesisConfig;
+  private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
+
+  protected Supplier<GenesisConfigOptions> configOptionsSupplier =
+      () ->
+          Optional.ofNullable(genesisConfig)
+              .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
+              .orElseGet(genesisConfig::getConfigOptions);
+
   protected SynchronizerConfiguration syncConfig;
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
@@ -121,7 +130,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected StorageProvider storageProvider;
   protected boolean isPruningEnabled;
   protected PrunerConfiguration prunerConfiguration;
-  protected Map<String, String> genesisConfigOverrides;
   protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
   protected long reorgLoggingThreshold;
   protected DataStorageConfiguration dataStorageConfiguration =
@@ -439,7 +447,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         protocolSchedule,
         protocolContext,
         ethProtocolManager,
-        configOptions,
+        configOptionsSupplier.get(),
         subProtocolConfiguration,
         synchronizer,
         syncState,
@@ -456,7 +464,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
 
     final PivotSelectorFromPeers pivotSelectorFromPeers = new PivotSelectorFromPeers(syncConfig);
-    final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
+    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
@@ -489,8 +497,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
-    return genesisConfig
-        .getConfigOptions()
+    return configOptionsSupplier
+        .get()
         .getTerminalTotalDifficulty()
         .map(difficulty -> SyncTerminationCondition.difficulty(difficulty, blockchain))
         .orElse(SyncTerminationCondition.never());
@@ -596,16 +604,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
-    final OptionalLong daoBlock =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getDaoForkBlock();
+    final OptionalLong daoBlock = configOptionsSupplier.get().getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
     }
 
-    final OptionalLong classicBlock =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getClassicForkBlock();
+    final OptionalLong classicBlock = configOptionsSupplier.get().getClassicForkBlock();
     // setup classic validator
     if (classicBlock.isPresent()) {
       validators.add(

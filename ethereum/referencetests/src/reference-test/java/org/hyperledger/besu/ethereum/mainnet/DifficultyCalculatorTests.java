@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -30,39 +31,28 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class DifficultyCalculatorTests {
 
-  private final String testFile;
-  private final ProtocolSchedule protocolSchedule;
-
-  public DifficultyCalculatorTests(final String testFile, final ProtocolSchedule protocolSchedule) {
-    this.testFile = testFile;
-    this.protocolSchedule = protocolSchedule;
-  }
-
-  @Parameters(name = "TestFile: {0}")
-  public static Collection<Object[]> getTestParametersForConfig() throws IOException {
-    return List.of(
-        new Object[] {
+  public static Stream<Arguments> getTestParametersForConfig() throws IOException {
+    return Stream.of(
+        Arguments.of(
           "/BasicTests/difficultyMainNetwork.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
+        ),
+        Arguments.of(
           "/BasicTests/difficultyRopsten.json",
           MainnetProtocolSchedule.fromConfig(
               GenesisConfigFile.fromConfig(
@@ -71,70 +61,86 @@ public class DifficultyCalculatorTests {
                           StandardCharsets.UTF_8))
                   .getConfigOptions(),
               EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyFrontier.json",
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"frontierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyHomestead.json",
+              new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff1.json",
           MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"homesteadBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyByzantium.json",
+              new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierTimeDiff2.json",
           MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"byzantiumBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyConstantinople.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\": {\"constantinopleBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyEIP2384.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyEIP2384_random.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        },
-        new Object[] {
-          "/BasicTests/difficultyEIP2384_random_to20M.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.fromConfig("{\"config\":{\"muirGlacierBlock\":0}}")
-                  .getConfigOptions(),
-              EvmConfiguration.DEFAULT)
-        });
+              new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfByzantium/difficultyByzantium.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().byzantiumBlock(0))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfConstantinople/difficultyConstantinople.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().constantinopleBlock(0))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfEIP2384/difficultyEIP2384.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfEIP2384/difficultyEIP2384_random.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfEIP2384/difficultyEIP2384_random_to20M.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().muirGlacierBlock(0))
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfFrontier/difficultyFrontier.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions())
+        ),
+        Arguments.of(
+          "/DifficultyTests/dfHomestead/difficultyHomestead.json",
+          MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions().homesteadBlock(0))
+        ));
   }
 
-  @Test
-  public void testDifficultyCalculation() throws IOException {
-    MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
+  @ParameterizedTest(name = "TestFile: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void testDifficultyCalculation(final String testFile, final ProtocolSchedule protocolSchedule) throws IOException {
+    final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     final ObjectNode testObject =
         JsonUtil.objectNodeFromString(
             Resources.toString(
                 DifficultyCalculatorTests.class.getResource(testFile), StandardCharsets.UTF_8));
+
+    if (testObject.size() == 1) {
+      final var topObjectIterator = testObject.fields();
+      while (topObjectIterator.hasNext()) {
+        final Map.Entry<String, JsonNode> testNameIterator = topObjectIterator.next();
+        final var testHolderIter = testNameIterator.getValue().fields();
+        while (testHolderIter.hasNext()) {
+          final var testList = testHolderIter.next();
+          if (!testList.getKey().equals("_info")) {
+            testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, (ObjectNode) testList.getValue());
+          }
+        }
+      }
+    } else {
+      testDifficulty(testFile, protocolSchedule, blockHeaderFunctions, testObject);
+    }
+  }
+
+  private void testDifficulty(
+      final String testFile, final ProtocolSchedule protocolSchedule, final MainnetBlockHeaderFunctions blockHeaderFunctions, final ObjectNode testObject) {
     final var fields = testObject.fields();
     while (fields.hasNext()) {
       final var entry = fields.next();
       final JsonNode value = entry.getValue();
       final long currentBlockNumber = extractLong(value, "currentBlockNumber");
+      String parentUncles = value.get("parentUncles").asText();
       final BlockHeader testHeader =
           BlockHeaderBuilder.create()
               .parentHash(Hash.EMPTY)
@@ -151,7 +157,10 @@ public class DifficultyCalculatorTests {
               .blockHeaderFunctions(blockHeaderFunctions)
               .timestamp(extractLong(value, "parentTimestamp"))
               .difficulty(Difficulty.fromHexString(value.get("parentDifficulty").asText()))
-              .ommersHash(Hash.fromHexString(value.get("parentUncles").asText()))
+              .ommersHash(
+                  parentUncles.equals("0x00")
+                      ? Hash.EMPTY_LIST_HASH
+                      : Hash.fromHexStringLenient(parentUncles))
               .number(currentBlockNumber)
               .buildBlockHeader();
       final long currentTime = extractLong(value, "currentTimestamp");

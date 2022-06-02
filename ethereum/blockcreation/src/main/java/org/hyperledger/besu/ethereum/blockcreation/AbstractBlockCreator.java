@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.config.experimental.MergeConfigOptions;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -209,7 +209,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException ex) {
-      throw new IllegalStateException("Attempt to create block was interrupted", ex);
+      throw ex;
     } catch (final Exception ex) {
       // TODO(tmm): How are we going to know this has exploded, and thus restart it?
       throw new IllegalStateException(

@@ -26,9 +26,9 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionEncoder {
@@ -38,8 +38,8 @@ public class TransactionEncoder {
     void encode(Transaction transaction, RLPOutput output);
   }
 
-  private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
-      ImmutableMap.of(
+  private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
+      Map.of(
           TransactionType.ACCESS_LIST,
           TransactionEncoder::encodeAccessList,
           TransactionType.EIP1559,
@@ -118,7 +118,7 @@ public class TransactionEncoder {
       final Bytes payload,
       final List<AccessListEntry> accessList,
       final RLPOutput rlpOutput) {
-    rlpOutput.writeLongScalar(chainId.orElseThrow().longValue());
+    rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
     rlpOutput.writeLongScalar(nonce);
     rlpOutput.writeUInt256Scalar(gasPrice);
     rlpOutput.writeLongScalar(gasLimit);
@@ -146,7 +146,7 @@ public class TransactionEncoder {
 
   static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeLongScalar(transaction.getChainId().orElseThrow().longValue());
+    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
     out.writeLongScalar(transaction.getNonce());
     out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
     out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());

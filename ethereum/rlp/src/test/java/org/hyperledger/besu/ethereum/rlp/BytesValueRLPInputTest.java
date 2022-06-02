@@ -161,15 +161,6 @@ public class BytesValueRLPInputTest {
     assertLongScalar(1024L, h("0x820400"));
   }
 
-  @Test
-  public void longScalar_NegativeLong() {
-    Bytes bytes = h("0x88FFFFFFFFFFFFFFFF");
-    final RLPInput in = RLP.input(bytes);
-    assertThatThrownBy(in::readLongScalar)
-        .isInstanceOf(RLPException.class)
-        .hasMessageStartingWith("long scalar -1 is not non-negative");
-  }
-
   private void assertLongScalar(final long expected, final Bytes toTest) {
     final RLPInput in = RLP.input(toTest);
     assertThat(in.isDone()).isFalse();
