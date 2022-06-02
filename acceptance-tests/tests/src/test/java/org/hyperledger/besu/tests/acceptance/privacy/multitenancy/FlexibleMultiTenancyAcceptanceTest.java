@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
-import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.contract.CallPrivateSmartContractFunction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction.CreateFlexiblePrivacyGroupTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
@@ -74,7 +73,11 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
   public void setUp() throws Exception {
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
-            "node1", privacyAccountResolver.resolve(3, EnclaveEncryptorType.NACL), true, enclaveType, Optional.empty());
+            "node1",
+            privacyAccountResolver.resolve(3, EnclaveEncryptorType.NACL),
+            true,
+            enclaveType,
+            Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =
