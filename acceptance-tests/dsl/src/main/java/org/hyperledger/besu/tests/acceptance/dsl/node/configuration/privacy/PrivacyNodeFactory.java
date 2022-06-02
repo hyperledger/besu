@@ -253,8 +253,7 @@ public class PrivacyNodeFactory {
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(),
-                privacyAccount.getEnclavePrivateKeyPaths(),
-                privacyAccount.getEnclaveEncryptorType())),
+                privacyAccount.getEnclavePrivateKeyPaths())),
         enclaveType,
         containerNetwork);
   }
@@ -282,8 +281,7 @@ public class PrivacyNodeFactory {
                 .build(),
             new EnclaveKeyConfiguration(
                 privacyAccount.getEnclaveKeyPaths(),
-                privacyAccount.getEnclavePrivateKeyPaths(),
-                privacyAccount.getEnclaveEncryptorType())),
+                privacyAccount.getEnclavePrivateKeyPaths())),
         enclaveType,
         containerNetwork);
   }

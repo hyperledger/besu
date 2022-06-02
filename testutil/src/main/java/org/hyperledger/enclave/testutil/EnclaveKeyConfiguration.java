@@ -25,11 +25,17 @@ public class EnclaveKeyConfiguration {
   }
 
   public EnclaveKeyConfiguration(
+          final String[] pubKeyPaths,
+          final String[] privKeyPaths) {
+    this.pubKeyPaths = pubKeyPaths;
+    this.privKeyPaths = privKeyPaths;
+  }
+
+  public EnclaveKeyConfiguration(
       final String[] pubKeyPaths,
       final String[] privKeyPaths,
       final EnclaveEncryptorType enclaveEncryptorType) {
-    this.pubKeyPaths = pubKeyPaths;
-    this.privKeyPaths = privKeyPaths;
+    this(pubKeyPaths, privKeyPaths);
     this.enclaveEncryptorType = enclaveEncryptorType;
   }
 

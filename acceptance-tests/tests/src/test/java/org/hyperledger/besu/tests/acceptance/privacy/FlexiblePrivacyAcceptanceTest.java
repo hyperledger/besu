@@ -17,9 +17,6 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
-import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
-import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
-import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import static org.junit.runners.Parameterized.Parameters;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
@@ -55,21 +52,14 @@ import org.web3j.tx.Contract;
 public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
-  private final EnclaveEncryptorType enclaveEncryptorType;
 
-  public FlexiblePrivacyAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType) {
+  public FlexiblePrivacyAcceptanceTest(final EnclaveType enclaveType) {
     this.enclaveType = enclaveType;
-    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
-  @Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  @Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return EnclaveType.valuesForTests();
   }
 
   private PrivacyNode alice;
@@ -91,21 +81,21 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "node1",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            privacyAccountResolver.resolve(0, EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bob =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "node2",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            privacyAccountResolver.resolve(1, EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     charlie =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "node3",
-            privacyAccountResolver.resolve(2, enclaveEncryptorType),
+            privacyAccountResolver.resolve(2, EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));

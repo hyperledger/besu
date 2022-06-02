@@ -15,12 +15,10 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
-import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
-import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
@@ -29,7 +27,6 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -46,21 +43,14 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
     extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
-  private final EnclaveEncryptorType enclaveEncryptorType;
 
-  public PrivDebugGetStateRootFlexibleGroupAcceptanceTest(
-      final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType) {
+  public PrivDebugGetStateRootFlexibleGroupAcceptanceTest(final EnclaveType enclaveType) {
     this.enclaveType = enclaveType;
-    this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
-  @Parameters(name = "{0} enclave type with {1} encryptor")
-  public static Collection<Object[]> enclaveParameters() {
-    return Arrays.asList(
-        new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
-        });
+  @Parameters(name = "{0}")
+  public static Collection<EnclaveType> enclaveTypes() {
+    return EnclaveType.valuesForTests();
   }
 
   private PrivacyNode aliceNode;
@@ -73,14 +63,14 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
     aliceNode =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "alice-node",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            privacyAccountResolver.resolve(0, EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bobNode =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "bob-node",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            privacyAccountResolver.resolve(1, EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
