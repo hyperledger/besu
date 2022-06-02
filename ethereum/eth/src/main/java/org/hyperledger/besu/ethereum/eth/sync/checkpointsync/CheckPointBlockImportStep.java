@@ -21,12 +21,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class CheckPointBlockImportStep implements Consumer<Optional<BlockWithReceipts>> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(CheckPointBlockImportStep.class);
 
   private final CheckPointSource checkPointSource;
   private final Checkpoint checkpoint;
@@ -55,10 +50,6 @@ public class CheckPointBlockImportStep implements Consumer<Optional<BlockWithRec
           if (!checkPointSource.hasNext()) {
             blockchain.unsafeSetChainHead(
                 checkPointSource.getCheckpoint(), checkpoint.totalDifficulty());
-            LOG.info(
-                "Checkpoint block {} with hash {} downloaded",
-                checkPointSource.getCheckpoint().getNumber(),
-                checkPointSource.getCheckpoint().getBlockHash());
           }
         });
     checkPointSource.notifyTaskAvailable();

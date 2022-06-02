@@ -47,11 +47,13 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
 
   @Override
   public CompletionStage<Void> startPipeline(
-      final EthScheduler scheduler, final SyncState syncState, final SyncTarget target) {
+      final EthScheduler scheduler,
+      final SyncState syncState,
+      final SyncTarget syncTarget,
+      final Pipeline<?> pipeline) {
     return scheduler
-        .startPipeline(createDownloadCheckPointPipeline(syncState, target))
-        .thenCompose(
-            unused -> scheduler.startPipeline(createDownloadPipelineForSyncTarget(target)));
+        .startPipeline(createDownloadCheckPointPipeline(syncState, syncTarget))
+        .thenCompose(unused -> scheduler.startPipeline(pipeline));
   }
 
   protected Pipeline<Hash> createDownloadCheckPointPipeline(

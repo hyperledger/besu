@@ -72,8 +72,11 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
   @Override
   public CompletionStage<Void> startPipeline(
-      final EthScheduler scheduler, final SyncState syncState, final SyncTarget target) {
-    return scheduler.startPipeline(createDownloadPipelineForSyncTarget(target));
+      final EthScheduler scheduler,
+      final SyncState syncState,
+      final SyncTarget syncTarget,
+      final Pipeline<?> pipeline) {
+    return scheduler.startPipeline(pipeline);
   }
 
   @Override

@@ -182,7 +182,7 @@ public class DefaultSynchronizer implements Synchronizer {
       blockPropagationManager.ifPresent(BlockPropagationManager::start);
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
-        future = fastSyncDownloader.get().start().thenCompose(this::handleFastSyncResult);
+        future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
 
       } else {
         syncState.markInitialSyncPhaseAsDone();
@@ -212,7 +212,7 @@ public class DefaultSynchronizer implements Synchronizer {
     }
   }
 
-  private CompletableFuture<Void> handleFastSyncResult(final FastSyncState result) {
+  private CompletableFuture<Void> handleSyncResult(final FastSyncState result) {
     if (!running.get()) {
       // We've been shutdown which will have triggered the fast sync future to complete
       return CompletableFuture.completedFuture(null);
@@ -224,7 +224,7 @@ public class DefaultSynchronizer implements Synchronizer {
             blockHeader ->
                 protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
     LOG.info(
-        "Fast sync completed successfully with pivot block {}",
+        "Sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());
     pivotBlockSelector.close();
     syncState.markInitialSyncPhaseAsDone();

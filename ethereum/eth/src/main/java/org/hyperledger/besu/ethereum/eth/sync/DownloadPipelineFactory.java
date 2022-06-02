@@ -33,5 +33,5 @@ public interface DownloadPipelineFactory {
   Pipeline<?> createDownloadPipelineForSyncTarget(SyncTarget target);
 
   CompletionStage<Void> startPipeline(
-      EthScheduler scheduler, SyncState syncState, SyncTarget target);
+      EthScheduler scheduler, SyncState syncState, SyncTarget syncTarget, Pipeline<?> pipeline);
 }

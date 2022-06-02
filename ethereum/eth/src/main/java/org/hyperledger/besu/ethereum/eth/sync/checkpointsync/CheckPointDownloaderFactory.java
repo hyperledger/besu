@@ -99,6 +99,10 @@ public class CheckPointDownloaderFactory extends SnapDownloaderFactory {
               pivotBlockSelector,
               metricsSystem);
     } else {
+      LOG.info(
+          "Checkpoint sync start with block {} and hash {}",
+          syncState.getCheckpoint().get().blockNumber(),
+          syncState.getCheckpoint().get().blockHash());
       fastSyncActions =
           new CheckPointSyncActions(
               syncConfig,

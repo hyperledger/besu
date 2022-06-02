@@ -86,6 +86,7 @@ public class PipelineChainDownloader implements ChainDownloader {
   @Override
   public synchronized void cancel() {
     cancelled.set(true);
+    System.out.println(currentDownloadPipeline);
     if (currentDownloadPipeline != null) {
       currentDownloadPipeline.abort();
     }
@@ -163,6 +164,8 @@ public class PipelineChainDownloader implements ChainDownloader {
         () -> target,
         () -> target.commonAncestor().getNumber(),
         () -> target.commonAncestor().getBlockHash());
-    return downloadPipelineFactory.startPipeline(scheduler, syncState, target);
+    currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
+    return downloadPipelineFactory.startPipeline(
+        scheduler, syncState, target, currentDownloadPipeline);
   }
 }
