@@ -78,6 +78,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+    Optional<Bytes> bytes1 = codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (bytes1.isPresent() && !Hash.hash(bytes1.get()).equals(codeHash)) {
+      System.out.println("invalid code found for account hash " + accountHash);
+    }
     return codeStorage
         .get(accountHash.toArrayUnsafe())
         .map(Bytes::wrap)
