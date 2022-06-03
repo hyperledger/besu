@@ -101,16 +101,32 @@ class FastSyncTargetManager extends SyncTargetManager {
         .thenApply(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
-                LOG.warn(
-                    "Best peer has wrong pivot block (#{}) expecting {} but received {}.  Disconnect: {}",
-                    pivotBlockHeader.getNumber(),
-                    pivotBlockHeader.getHash(),
-                    result.size() == 1 ? result.get(0).getHash() : "invalid response",
-                    bestPeer);
-                bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                if (!hasPivotChanged(pivotBlockHeader)) {
+                  // if the pivot block has not changed, then warn and disconnect this peer
+                  LOG.warn(
+                      "Best peer has wrong pivot block (#{}) expecting {} but received {}.  Disconnect: {}",
+                      pivotBlockHeader.getNumber(),
+                      pivotBlockHeader.getHash(),
+                      result.size() == 1 ? result.get(0).getHash() : "invalid response",
+                      bestPeer);
+                  bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                }
                 return Optional.<EthPeer>empty();
               } else {
                 return Optional.of(bestPeer);
+              }
+            })
+        .thenCompose(
+            res -> {
+              // if the pivot block changed, retry this peer with the new pivot
+              if (res.isEmpty() && hasPivotChanged(pivotBlockHeader)) {
+                LOG.debug(
+                    "Retrying best peer {} with new pivot block {}",
+                    bestPeer.getShortNodeId(),
+                    pivotBlockHeader.toLogString());
+                return confirmPivotBlockHeader(bestPeer);
+              } else {
+                return CompletableFuture.completedFuture(res);
               }
             })
         .exceptionally(
@@ -118,6 +134,10 @@ class FastSyncTargetManager extends SyncTargetManager {
               LOG.debug("Could not confirm best peer had pivot block", error);
               return Optional.empty();
             });
+  }
+
+  private boolean hasPivotChanged(BlockHeader requestedPivot) {
+    return !requestedPivot.getBlockHash().equals(fastSyncState.getPivotBlockHash());
   }
 
   private boolean peerHasDifferentPivotBlock(final List<BlockHeader> result) {
