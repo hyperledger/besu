@@ -128,8 +128,11 @@ class FastSyncTargetManager extends SyncTargetManager {
             });
   }
 
-  private boolean hasPivotChanged(BlockHeader requestedPivot) {
-    return !requestedPivot.getBlockHash().equals(fastSyncState.getPivotBlockHash());
+  private boolean hasPivotChanged(final BlockHeader requestedPivot) {
+    return fastSyncState
+        .getPivotBlockHash()
+        .filter(currentPivotHash -> requestedPivot.getBlockHash().equals(currentPivotHash))
+        .isEmpty();
   }
 
   private boolean peerHasDifferentPivotBlock(final List<BlockHeader> result) {
