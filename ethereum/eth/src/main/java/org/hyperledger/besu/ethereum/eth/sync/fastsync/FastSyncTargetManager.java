@@ -98,7 +98,7 @@ class FastSyncTargetManager extends SyncTargetManager {
     return ethContext
         .getScheduler()
         .timeout(task)
-        .thenApply(
+        .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
                 if (!hasPivotChanged(pivotBlockHeader)) {
@@ -110,23 +110,15 @@ class FastSyncTargetManager extends SyncTargetManager {
                       result.size() == 1 ? result.get(0).getHash() : "invalid response",
                       bestPeer);
                   bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                  return CompletableFuture.completedFuture(Optional.<EthPeer>empty());
                 }
-                return Optional.<EthPeer>empty();
-              } else {
-                return Optional.of(bestPeer);
-              }
-            })
-        .thenCompose(
-            res -> {
-              // if the pivot block changed, retry this peer with the new pivot
-              if (res.isEmpty() && hasPivotChanged(pivotBlockHeader)) {
                 LOG.debug(
                     "Retrying best peer {} with new pivot block {}",
                     bestPeer.getShortNodeId(),
                     pivotBlockHeader.toLogString());
                 return confirmPivotBlockHeader(bestPeer);
               } else {
-                return CompletableFuture.completedFuture(res);
+                return CompletableFuture.completedFuture(Optional.of(bestPeer));
               }
             })
         .exceptionally(
