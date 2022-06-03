@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CheckPointSource implements Iterator<Hash> {
+public class CheckpointSource implements Iterator<Hash> {
 
   private final SyncState syncState;
   private final BlockHeader checkpoint;
@@ -34,12 +34,12 @@ public class CheckPointSource implements Iterator<Hash> {
 
   private final AtomicBoolean isDownloading = new AtomicBoolean(false);
 
-  public CheckPointSource(
+  public CheckpointSource(
       final SyncState syncState,
       final EthPeer ethPeer,
       final BlockHeaderFunctions blockHeaderFunctions) {
     this.syncState = syncState;
-    this.checkpoint = ethPeer.getCheckPointHeader().orElseThrow();
+    this.checkpoint = ethPeer.getCheckpointHeader().orElseThrow();
     this.nbBlocks = blockHeaderFunctions.getCheckPointWindowSize(checkpoint);
     this.lastHeaderDownloaded = Optional.empty();
   }

@@ -61,18 +61,18 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
 
     final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
 
-    final CheckPointSource checkPointSource =
-        new CheckPointSource(
+    final CheckpointSource checkPointSource =
+        new CheckpointSource(
             syncState,
             target.peer(),
             protocolSchedule.getByBlockNumber(checkpoint.blockNumber()).getBlockHeaderFunctions());
 
-    final CheckPointBlockImportStep checkPointBlockImportStep =
-        new CheckPointBlockImportStep(
+    final CheckpointBlockImportStep checkPointBlockImportStep =
+        new CheckpointBlockImportStep(
             checkPointSource, checkpoint, protocolContext.getBlockchain());
 
-    final CheckPointDownloadBlockStep checkPointDownloadBlockStep =
-        new CheckPointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
+    final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
+        new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
 
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
@@ -94,7 +94,7 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
   protected BlockHeader getCommonAncestor(final SyncTarget target) {
     return target
         .peer()
-        .getCheckPointHeader()
+        .getCheckpointHeader()
         .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
         .orElse(target.commonAncestor());
   }

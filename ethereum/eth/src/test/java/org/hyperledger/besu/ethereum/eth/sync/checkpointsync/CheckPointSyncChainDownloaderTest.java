@@ -120,7 +120,7 @@ public class CheckPointSyncChainDownloaderTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
-    return CheckPointSyncChainDownloader.create(
+    return CheckpointSyncChainDownloader.create(
         syncConfig,
         worldStateStorage,
         protocolSchedule,
@@ -151,7 +151,7 @@ public class CheckPointSyncChainDownloaderTest {
         .streamAvailablePeers()
         .forEach(
             ethPeer -> {
-              ethPeer.setCheckPointHeader(
+              ethPeer.setCheckpointHeader(
                   otherBlockchainSetup.getBlocks().get((int) checkpoint.blockNumber()).getHeader());
             });
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
@@ -181,7 +181,7 @@ public class CheckPointSyncChainDownloaderTest {
         .streamAvailablePeers()
         .forEach(
             ethPeer -> {
-              ethPeer.setCheckPointHeader(
+              ethPeer.setCheckpointHeader(
                   otherBlockchainSetup.getBlocks().get((int) checkpoint.blockNumber()).getHeader());
             });
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);

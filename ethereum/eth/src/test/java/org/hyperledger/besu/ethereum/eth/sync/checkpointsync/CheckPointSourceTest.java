@@ -35,13 +35,13 @@ public class CheckPointSourceTest {
   private final SyncState syncState = mock(SyncState.class);
   private final EthPeer peer = mock(EthPeer.class);
   private final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
-  private CheckPointSource checkPointSource;
+  private CheckpointSource checkPointSource;
 
   @Before
   public void setup() {
-    when(peer.getCheckPointHeader()).thenReturn(Optional.of(header(12)));
+    when(peer.getCheckpointHeader()).thenReturn(Optional.of(header(12)));
     when(blockHeaderFunctions.getCheckPointWindowSize(any(BlockHeader.class))).thenReturn(1);
-    checkPointSource = new CheckPointSource(syncState, peer, blockHeaderFunctions);
+    checkPointSource = new CheckpointSource(syncState, peer, blockHeaderFunctions);
   }
 
   @Test

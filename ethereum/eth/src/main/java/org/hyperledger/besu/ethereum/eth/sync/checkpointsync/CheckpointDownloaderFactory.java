@@ -44,11 +44,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CheckPointDownloaderFactory extends SnapDownloaderFactory {
+public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(CheckPointDownloaderFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CheckpointDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader<?>> createCheckPointDownloader(
+  public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -104,7 +104,7 @@ public class CheckPointDownloaderFactory extends SnapDownloaderFactory {
           syncState.getCheckpoint().get().blockNumber(),
           syncState.getCheckpoint().get().blockHash());
       fastSyncActions =
-          new CheckPointSyncActions(
+          new CheckpointSyncActions(
               syncConfig,
               worldStateStorage,
               protocolSchedule,

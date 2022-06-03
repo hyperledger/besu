@@ -44,7 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SyncHeaderRangeValidationStepTest {
+public class RangeHeadersValidationStepTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private ProtocolContext protocolContext;
@@ -54,13 +54,13 @@ public class SyncHeaderRangeValidationStepTest {
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private RangeHeadersValidationStep validationStep;
 
-  private final BlockHeader checkpointStart = gen.header(10);
-  private final BlockHeader checkpointEnd = gen.header(13);
+  private final BlockHeader rangeStart = gen.header(10);
+  private final BlockHeader rangeEnd = gen.header(13);
   private final BlockHeader firstHeader = gen.header(11);
   private final RangeHeaders rangeHeaders =
       new RangeHeaders(
-          new SyncTargetRange(syncTarget, checkpointStart, checkpointEnd),
-          asList(firstHeader, gen.header(12), checkpointEnd));
+          new SyncTargetRange(syncTarget, rangeStart, rangeEnd),
+          asList(firstHeader, gen.header(12), rangeEnd));
 
   @Before
   public void setUp() {
@@ -73,16 +73,14 @@ public class SyncHeaderRangeValidationStepTest {
   }
 
   @Test
-  public void shouldValidateFirstHeaderAgainstCheckpointStartHeader() {
-    when(headerValidator.validateHeader(
-            firstHeader, checkpointStart, protocolContext, DETACHED_ONLY))
+  public void shouldValidateFirstHeaderAgainstRangeStartHeader() {
+    when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
         .thenReturn(true);
     final Stream<BlockHeader> result = validationStep.apply(rangeHeaders);
 
     verify(protocolSchedule).getByBlockNumber(firstHeader.getNumber());
     verify(validationPolicy).getValidationModeForNextBlock();
-    verify(headerValidator)
-        .validateHeader(firstHeader, checkpointStart, protocolContext, DETACHED_ONLY);
+    verify(headerValidator).validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY);
     verifyNoMoreInteractions(headerValidator, validationPolicy);
 
     assertThat(result).containsExactlyElementsOf(rangeHeaders.getHeadersToImport());
@@ -90,20 +88,19 @@ public class SyncHeaderRangeValidationStepTest {
 
   @Test
   public void shouldThrowExceptionWhenValidationFails() {
-    when(headerValidator.validateHeader(
-            firstHeader, checkpointStart, protocolContext, DETACHED_ONLY))
+    when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
         .thenReturn(false);
     assertThatThrownBy(() -> validationStep.apply(rangeHeaders))
         .isInstanceOf(InvalidBlockException.class)
         .hasMessageContaining(
             "Invalid range headers.  Headers downloaded between #"
-                + checkpointStart.getNumber()
+                + rangeStart.getNumber()
                 + " ("
-                + checkpointStart.getHash()
+                + rangeStart.getHash()
                 + ") and #"
-                + checkpointEnd.getNumber()
+                + rangeEnd.getNumber()
                 + " ("
-                + checkpointEnd.getHash()
+                + rangeEnd.getHash()
                 + ") do not connect at #"
                 + firstHeader.getNumber()
                 + " ("

@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckPointDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
@@ -128,7 +128,7 @@ public class DefaultSynchronizer implements Synchronizer {
               clock);
     } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
-          CheckPointDownloaderFactory.createCheckPointDownloader(
+          CheckpointDownloaderFactory.createCheckpointDownloader(
               pivotBlockSelector,
               syncConfig,
               dataDirectory,

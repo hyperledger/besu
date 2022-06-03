@@ -21,17 +21,17 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class CheckPointBlockImportStep implements Consumer<Optional<BlockWithReceipts>> {
+public class CheckpointBlockImportStep implements Consumer<Optional<BlockWithReceipts>> {
 
-  private final CheckPointSource checkPointSource;
+  private final CheckpointSource checkpointSource;
   private final Checkpoint checkpoint;
   private final MutableBlockchain blockchain;
 
-  public CheckPointBlockImportStep(
-      final CheckPointSource checkPointSource,
+  public CheckpointBlockImportStep(
+      final CheckpointSource checkpointSource,
       final Checkpoint checkpoint,
       final MutableBlockchain blockchain) {
-    this.checkPointSource = checkPointSource;
+    this.checkpointSource = checkpointSource;
     this.checkpoint = checkpoint;
     this.blockchain = blockchain;
   }
@@ -46,12 +46,12 @@ public class CheckPointBlockImportStep implements Consumer<Optional<BlockWithRec
               block.getHash().equals(checkpoint.blockHash())
                   ? Optional.of(checkpoint.totalDifficulty())
                   : Optional.empty());
-          checkPointSource.setLastHeaderDownloaded(Optional.of(block.getHeader()));
-          if (!checkPointSource.hasNext()) {
+          checkpointSource.setLastHeaderDownloaded(Optional.of(block.getHeader()));
+          if (!checkpointSource.hasNext()) {
             blockchain.unsafeSetChainHead(
-                checkPointSource.getCheckpoint(), checkpoint.totalDifficulty());
+                checkpointSource.getCheckpoint(), checkpoint.totalDifficulty());
           }
         });
-    checkPointSource.notifyTaskAvailable();
+    checkpointSource.notifyTaskAvailable();
   }
 }

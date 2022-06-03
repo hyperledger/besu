@@ -83,7 +83,7 @@ public class EthPeer implements Comparable<EthPeer> {
                 }
               }));
 
-  private Optional<BlockHeader> checkPointHeader = Optional.empty();
+  private Optional<BlockHeader> checkpointHeader = Optional.empty();
 
   private final String protocolName;
   private final Clock clock;
@@ -559,12 +559,12 @@ public class EthPeer implements Comparable<EthPeer> {
     return getConnection().getPeerInfo().compareTo(ethPeer.getConnection().getPeerInfo());
   }
 
-  public void setCheckPointHeader(final BlockHeader header) {
-    checkPointHeader = Optional.of(header);
+  public void setCheckpointHeader(final BlockHeader header) {
+    checkpointHeader = Optional.of(header);
   }
 
-  public Optional<BlockHeader> getCheckPointHeader() {
-    return checkPointHeader;
+  public Optional<BlockHeader> getCheckpointHeader() {
+    return checkpointHeader;
   }
 
   @FunctionalInterface

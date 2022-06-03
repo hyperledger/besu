@@ -86,7 +86,6 @@ public class PipelineChainDownloader implements ChainDownloader {
   @Override
   public synchronized void cancel() {
     cancelled.set(true);
-    System.out.println(currentDownloadPipeline);
     if (currentDownloadPipeline != null) {
       currentDownloadPipeline.abort();
     }

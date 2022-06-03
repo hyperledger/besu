@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
@@ -29,14 +30,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class CheckPointDownloadBlockStep {
+public class CheckpointDownloadBlockStep {
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final Checkpoint checkpoint;
   private final MetricsSystem metricsSystem;
 
-  public CheckPointDownloadBlockStep(
+  public CheckpointDownloadBlockStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Checkpoint checkpoint,
@@ -48,7 +49,6 @@ public class CheckPointDownloadBlockStep {
   }
 
   public CompletableFuture<Optional<BlockWithReceipts>> downloadBlock(final Hash hash) {
-    final CompletableFuture<Optional<BlockWithReceipts>> future = new CompletableFuture<>();
     final GetBlockFromPeerTask getBlockFromPeerTask =
         GetBlockFromPeerTask.create(
             protocolSchedule,
@@ -56,34 +56,26 @@ public class CheckPointDownloadBlockStep {
             Optional.of(hash),
             checkpoint.blockNumber(),
             metricsSystem);
-    getBlockFromPeerTask
+    return getBlockFromPeerTask
         .run()
-        .whenComplete(
-            (blockTaskResult, throwable) -> {
-              if (throwable != null) {
-                future.complete(Optional.empty());
-              } else {
-                downloadReceipts(future, blockTaskResult.getResult());
-              }
-            });
-    return future;
+        .thenCompose(this::downloadReceipts)
+        .exceptionally(throwable -> Optional.empty());
   }
 
-  private void downloadReceipts(
-      final CompletableFuture<Optional<BlockWithReceipts>> future, final Block block) {
+  private CompletableFuture<Optional<BlockWithReceipts>> downloadReceipts(
+      final PeerTaskResult<Block> peerTaskResult) {
+    final Block block = peerTaskResult.getResult();
     final GetReceiptsFromPeerTask getReceiptsFromPeerTask =
         GetReceiptsFromPeerTask.forHeaders(ethContext, List.of(block.getHeader()), metricsSystem);
-    getReceiptsFromPeerTask
+    return getReceiptsFromPeerTask
         .run()
-        .whenComplete(
-            (receiptTaskResult, throwable1) -> {
+        .thenCompose(
+            receiptTaskResult -> {
               final List<TransactionReceipt> transactionReceipts =
                   receiptTaskResult.getResult().get(block.getHeader());
-              if (throwable1 != null && transactionReceipts != null) {
-                future.complete(Optional.empty());
-              } else {
-                future.complete(Optional.of(new BlockWithReceipts(block, transactionReceipts)));
-              }
-            });
+              return CompletableFuture.completedFuture(
+                  Optional.of(new BlockWithReceipts(block, transactionReceipts)));
+            })
+        .exceptionally(throwable -> Optional.empty());
   }
 }

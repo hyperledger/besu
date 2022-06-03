@@ -20,9 +20,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public class CheckPointBlocksPeerValidator extends RequiredBlocksPeerValidator {
+public class CheckpointBlocksPeerValidator extends RequiredBlocksPeerValidator {
 
-  public CheckPointBlocksPeerValidator(
+  public CheckpointBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long blockNumber,
@@ -31,7 +31,7 @@ public class CheckPointBlocksPeerValidator extends RequiredBlocksPeerValidator {
     super(protocolSchedule, metricsSystem, blockNumber, hash, chainHeightEstimationBuffer);
   }
 
-  public CheckPointBlocksPeerValidator(
+  public CheckpointBlocksPeerValidator(
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final long blockNumber,
@@ -44,7 +44,7 @@ public class CheckPointBlocksPeerValidator extends RequiredBlocksPeerValidator {
   boolean validateBlockHeader(final EthPeer ethPeer, final BlockHeader header) {
     final boolean valid = super.validateBlockHeader(ethPeer, header);
     if (valid) {
-      ethPeer.setCheckPointHeader(header);
+      ethPeer.setCheckpointHeader(header);
     }
     return valid;
   }

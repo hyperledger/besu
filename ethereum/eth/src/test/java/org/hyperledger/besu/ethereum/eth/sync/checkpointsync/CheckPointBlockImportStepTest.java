@@ -39,10 +39,10 @@ import org.junit.Test;
 
 public class CheckPointBlockImportStepTest {
 
-  private final CheckPointSource checkPointSource = mock(CheckPointSource.class);
+  private final CheckpointSource checkPointSource = mock(CheckpointSource.class);
   private final Checkpoint checkpoint = mock(Checkpoint.class);
   private MutableBlockchain blockchain;
-  private CheckPointBlockImportStep checkPointHeaderImportStep;
+  private CheckpointBlockImportStep checkPointHeaderImportStep;
   private KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage;
 
   @Before
@@ -54,7 +54,7 @@ public class CheckPointBlockImportStepTest {
         DefaultBlockchain.createMutable(
             generateBlock(0), blockchainStorage, mock(MetricsSystem.class), 0);
     checkPointHeaderImportStep =
-        new CheckPointBlockImportStep(checkPointSource, checkpoint, blockchain);
+        new CheckpointBlockImportStep(checkPointSource, checkpoint, blockchain);
   }
 
   @Test
