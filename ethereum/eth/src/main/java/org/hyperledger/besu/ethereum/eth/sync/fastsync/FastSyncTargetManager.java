@@ -36,7 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class FastSyncTargetManager extends SyncTargetManager {
+public class FastSyncTargetManager extends SyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncTargetManager.class);
 
   private final WorldStateStorage worldStateStorage;

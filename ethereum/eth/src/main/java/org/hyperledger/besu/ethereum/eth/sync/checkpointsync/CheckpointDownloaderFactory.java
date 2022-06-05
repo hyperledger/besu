@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync;
+package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -24,7 +24,10 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -41,11 +44,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SnapDownloaderFactory extends FastDownloaderFactory {
+public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CheckpointDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader<?>> createSnapDownloader(
+  public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -64,7 +67,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
-            "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
+            "Unable to change the sync mode when snap sync is incomplete, please restart with checkpoint sync mode");
       } else {
         return Optional.empty();
       }
@@ -78,8 +81,38 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
-          "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
+          "Checkpoint sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
+    }
+
+    final FastSyncActions fastSyncActions;
+    if (syncState.getCheckpoint().isEmpty()) {
+      LOG.warn("Unable to find a valid checkpoint configuration. The genesis will be used");
+      fastSyncActions =
+          new FastSyncActions(
+              syncConfig,
+              worldStateStorage,
+              protocolSchedule,
+              protocolContext,
+              ethContext,
+              syncState,
+              pivotBlockSelector,
+              metricsSystem);
+    } else {
+      LOG.info(
+          "Checkpoint sync start with block {} and hash {}",
+          syncState.getCheckpoint().get().blockNumber(),
+          syncState.getCheckpoint().get().blockHash());
+      fastSyncActions =
+          new CheckpointSyncActions(
+              syncConfig,
+              worldStateStorage,
+              protocolSchedule,
+              protocolContext,
+              ethContext,
+              syncState,
+              pivotBlockSelector,
+              metricsSystem);
     }
 
     final SnapSyncState snapSyncState =
@@ -103,15 +136,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             metricsSystem);
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
-            new FastSyncActions(
-                syncConfig,
-                worldStateStorage,
-                protocolSchedule,
-                protocolContext,
-                ethContext,
-                syncState,
-                pivotBlockSelector,
-                metricsSystem),
+            fastSyncActions,
             worldStateStorage,
             snapWorldStateDownloader,
             fastSyncStateStorage,
@@ -120,10 +145,5 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             snapSyncState);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
-  }
-
-  protected static InMemoryTasksPriorityQueues<SnapDataRequest>
-      createSnapWorldStateDownloaderTaskCollection() {
-    return new InMemoryTasksPriorityQueues<>();
   }
 }
