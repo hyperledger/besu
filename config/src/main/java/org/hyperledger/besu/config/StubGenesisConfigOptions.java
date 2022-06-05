@@ -111,6 +111,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public CheckpointConfigOptions getCheckpointOptions() {
+    return CheckpointConfigOptions.DEFAULT;
+  }
+
+  @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return CliqueConfigOptions.DEFAULT;
   }

@@ -93,15 +93,15 @@ public class PipelineChainDownloaderTest {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
     when(syncTargetManager.findSyncTarget()).thenReturn(selectTargetFuture);
     when(syncTargetManager.shouldContinueDownloading()).thenReturn(true);
-    expectPipelineCreation(syncTarget, downloadPipeline);
-    when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
+    expectPipelineCreation(syncTarget, downloadPipeline, new CompletableFuture<>());
     chainDownloader.start();
     verifyNoInteractions(downloadPipelineFactory);
 
     selectTargetFuture.complete(syncTarget);
 
     verify(downloadPipelineFactory).createDownloadPipelineForSyncTarget(syncTarget);
-    verify(scheduler).startPipeline(downloadPipeline);
+    verify(downloadPipelineFactory)
+        .startPipeline(scheduler, syncState, syncTarget, downloadPipeline);
   }
 
   @Test
@@ -109,8 +109,7 @@ public class PipelineChainDownloaderTest {
     final CompletableFuture<SyncTarget> selectTargetFuture = new CompletableFuture<>();
     when(syncTargetManager.findSyncTarget()).thenReturn(selectTargetFuture);
     when(syncTargetManager.shouldContinueDownloading()).thenReturn(true);
-    expectPipelineCreation(syncTarget, downloadPipeline);
-    when(scheduler.startPipeline(downloadPipeline)).thenReturn(new CompletableFuture<>());
+    expectPipelineCreation(syncTarget, downloadPipeline, new CompletableFuture<>());
     chainDownloader.start();
     verifyNoInteractions(downloadPipelineFactory);
     selectTargetFuture.complete(syncTarget);
@@ -244,6 +243,8 @@ public class PipelineChainDownloaderTest {
     final CompletableFuture<Void> result = chainDownloader.start();
     verify(syncTargetManager).findSyncTarget();
     verify(downloadPipelineFactory).createDownloadPipelineForSyncTarget(syncTarget);
+    verify(downloadPipelineFactory)
+        .startPipeline(scheduler, syncState, syncTarget, downloadPipeline);
 
     chainDownloader.cancel();
     // Pipeline is aborted immediately.
@@ -267,11 +268,8 @@ public class PipelineChainDownloaderTest {
         .thenReturn(completedFuture(syncTarget))
         .thenReturn(completedFuture(syncTarget2));
 
-    expectPipelineCreation(syncTarget, downloadPipeline);
-    expectPipelineCreation(syncTarget2, downloadPipeline2);
-
-    when(scheduler.startPipeline(downloadPipeline)).thenReturn(pipelineFuture1);
-    when(scheduler.startPipeline(downloadPipeline2)).thenReturn(pipelineFuture2);
+    expectPipelineCreation(syncTarget, downloadPipeline, pipelineFuture1);
+    expectPipelineCreation(syncTarget2, downloadPipeline2, pipelineFuture2);
 
     final CompletableFuture<Void> result = chainDownloader.start();
 
@@ -337,15 +335,19 @@ public class PipelineChainDownloaderTest {
       final SyncTarget syncTarget, final Pipeline<?> pipeline) {
     final CompletableFuture<Void> pipelineFuture = new CompletableFuture<>();
     when(syncTargetManager.findSyncTarget()).thenReturn(completedFuture(syncTarget));
-    expectPipelineCreation(syncTarget, pipeline);
-    when(scheduler.startPipeline(pipeline)).thenReturn(pipelineFuture);
+    expectPipelineCreation(syncTarget, pipeline, pipelineFuture);
     return pipelineFuture;
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"}) // Mockito really doesn't like Pipeline<?>
-  private void expectPipelineCreation(final SyncTarget syncTarget, final Pipeline<?> pipeline) {
+  private void expectPipelineCreation(
+      final SyncTarget syncTarget,
+      final Pipeline<?> pipeline,
+      final CompletableFuture<Void> completableFuture) {
     when(downloadPipelineFactory.createDownloadPipelineForSyncTarget(syncTarget))
         .thenReturn((Pipeline) pipeline);
+    when(downloadPipelineFactory.startPipeline(scheduler, syncState, syncTarget, pipeline))
+        .thenReturn(completableFuture);
   }
 
   private void assertExceptionallyCompletedWith(

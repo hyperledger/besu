@@ -80,7 +80,7 @@ public class FastSyncDownloader<REQUEST> {
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.info("Starting fast sync.");
+    LOG.info("Starting sync.");
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       LOG.info("Clearing bonsai flat account db");
       worldStateStorage.clearFlatDatabase();

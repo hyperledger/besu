@@ -47,6 +47,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
+  private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -166,6 +167,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, DISCOVERY_CONFIG_KEY)
         .map(DiscoveryOptions::new)
         .orElse(DiscoveryOptions.DEFAULT);
+  }
+
+  @Override
+  public CheckpointConfigOptions getCheckpointOptions() {
+    return JsonUtil.getObjectNode(configRoot, CHECKPOINT_CONFIG_KEY)
+        .map(CheckpointConfigOptions::new)
+        .orElse(CheckpointConfigOptions.DEFAULT);
   }
 
   @Override
