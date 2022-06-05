@@ -91,7 +91,6 @@ public class EthGetFilterChangesIntegrationTest {
   private final Transaction transaction = createTransaction(1);
   private FilterManager filterManager;
   private EthGetFilterChanges method;
-  private final SyncState syncState = mock(SyncState.class);
 
   @BeforeEach
   public void setUp() {
