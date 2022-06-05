@@ -141,7 +141,7 @@ public class SnapsyncMetricsManager {
       lastNotifyTimestamp = now;
       if (!isHeal) {
         LOG.info(
-            "Snapsync in progress synced={}%, accounts={}, slots={}, codes={}, nodes={}",
+            "Worldstate download in progress synced={}%, accounts={}, slots={}, codes={}, nodes={}",
             percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP),
             nbAccounts,
             nbSlots,
