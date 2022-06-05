@@ -117,7 +117,6 @@ public class EthGetFilterChangesIntegrationTest {
             executionContext.getProtocolSchedule(),
             protocolContext,
             batchAddedListener,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,

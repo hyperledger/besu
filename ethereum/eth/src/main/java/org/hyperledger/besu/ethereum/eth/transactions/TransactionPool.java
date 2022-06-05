@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -65,14 +64,12 @@ public class TransactionPool implements BlockAddedObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
 
-  private static final long SYNC_TOLERANCE = 100L;
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
   private final AbstractPendingTransactionsSorter pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
-  private final SyncState syncState;
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final TransactionPoolConfiguration configuration;
@@ -82,7 +79,6 @@ public class TransactionPool implements BlockAddedObserver {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
-      final SyncState syncState,
       final EthContext ethContext,
       final MiningParameters miningParameters,
       final MetricsSystem metricsSystem,
@@ -91,7 +87,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBroadcaster = transactionBroadcaster;
-    this.syncState = syncState;
     this.miningParameters = miningParameters;
     this.configuration = configuration;
 
@@ -141,9 +136,6 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
-    if (!syncState.isInSync(SYNC_TOLERANCE)) {
-      return;
-    }
     final Set<Transaction> addedTransactions = new HashSet<>(transactions.size());
     for (final Transaction transaction : transactions) {
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
