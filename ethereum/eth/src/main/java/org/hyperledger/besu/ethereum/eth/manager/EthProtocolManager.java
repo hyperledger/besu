@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -54,7 +55,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
+public class EthProtocolManager
+    implements ProtocolManager, MinedBlockObserver, NewMergeStateCallback {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
   private final EthScheduler scheduler;
@@ -401,4 +403,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ? Collections.emptyList()
         : chainHeadForkId.getForkIdAsBytesList();
   }
+
+  @Override
+  public void onNewIsPostMergeState(
+      final boolean newIsPostMergeState, final Difficulty difficulty) {}
 }
