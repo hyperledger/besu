@@ -98,19 +98,27 @@ public class FastSyncTargetManager extends SyncTargetManager {
     return ethContext
         .getScheduler()
         .timeout(task)
-        .thenApply(
+        .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
-                LOG.warn(
-                    "Best peer has wrong pivot block (#{}) expecting {} but received {}.  Disconnect: {}",
-                    pivotBlockHeader.getNumber(),
-                    pivotBlockHeader.getHash(),
-                    result.size() == 1 ? result.get(0).getHash() : "invalid response",
-                    bestPeer);
-                bestPeer.disconnect(DisconnectReason.USELESS_PEER);
-                return Optional.<EthPeer>empty();
+                if (!hasPivotChanged(pivotBlockHeader)) {
+                  // if the pivot block has not changed, then warn and disconnect this peer
+                  LOG.warn(
+                      "Best peer has wrong pivot block (#{}) expecting {} but received {}.  Disconnect: {}",
+                      pivotBlockHeader.getNumber(),
+                      pivotBlockHeader.getHash(),
+                      result.size() == 1 ? result.get(0).getHash() : "invalid response",
+                      bestPeer);
+                  bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                  return CompletableFuture.completedFuture(Optional.<EthPeer>empty());
+                }
+                LOG.debug(
+                    "Retrying best peer {} with new pivot block {}",
+                    bestPeer.getShortNodeId(),
+                    pivotBlockHeader.toLogString());
+                return confirmPivotBlockHeader(bestPeer);
               } else {
-                return Optional.of(bestPeer);
+                return CompletableFuture.completedFuture(Optional.of(bestPeer));
               }
             })
         .exceptionally(
@@ -118,6 +126,13 @@ public class FastSyncTargetManager extends SyncTargetManager {
               LOG.debug("Could not confirm best peer had pivot block", error);
               return Optional.empty();
             });
+  }
+
+  private boolean hasPivotChanged(final BlockHeader requestedPivot) {
+    return fastSyncState
+        .getPivotBlockHash()
+        .filter(currentPivotHash -> requestedPivot.getBlockHash().equals(currentPivotHash))
+        .isEmpty();
   }
 
   private boolean peerHasDifferentPivotBlock(final List<BlockHeader> result) {
