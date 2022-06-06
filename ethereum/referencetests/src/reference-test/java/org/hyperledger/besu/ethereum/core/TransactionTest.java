@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -38,16 +37,14 @@ import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TransactionTest {
 
   private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
@@ -60,77 +57,76 @@ public class TransactionTest {
         .getTransactionValidator();
   }
 
-  private final String name;
-  private final TransactionTestCaseSpec spec;
-
   private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";
 
-  @Parameters(name = "Name: {0}")
-  public static Collection<Object[]> getTestParametersForConfig() {
+  public static Stream<Arguments> getTestParametersForConfig() {
     return JsonTestParameters.create(TransactionTestCaseSpec.class)
         .generator((name, spec, collector) -> collector.add(name, spec, true))
-        .generate(TEST_CONFIG_FILE_DIR_PATH);
+        .generate(TEST_CONFIG_FILE_DIR_PATH).stream().map(params -> Arguments.of(params[0], params[1]));
   }
 
-  public TransactionTest(
-      final String name, final TransactionTestCaseSpec spec, final boolean runTest) {
-    this.name = name;
-    this.spec = spec;
-    assumeTrue("Test " + name + " was ignored", runTest);
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void frontier(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Frontier", new FrontierGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void frontier() {
-    milestone("Frontier", new FrontierGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void homestead(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Homestead", new HomesteadGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void homestead() {
-    milestone("Homestead", new HomesteadGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void eIP150(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "EIP150", new TangerineWhistleGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void eIP150() {
-    milestone("EIP150", new TangerineWhistleGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void eIP158(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "EIP158", new SpuriousDragonGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void eIP158() {
-    milestone("EIP158", new SpuriousDragonGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void byzantium(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Byzantium", new ByzantiumGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void byzantium() {
-    milestone("Byzantium", new ByzantiumGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void constantinople(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Constantinople", new ConstantinopleGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void constantinople() {
-    milestone("Constantinople", new ConstantinopleGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void petersburg(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "ConstantinopleFix", new PetersburgGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void petersburg() {
-    milestone("ConstantinopleFix", new PetersburgGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void istanbul(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Istanbul", new IstanbulGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void istanbul() {
-    milestone("Istanbul", new IstanbulGasCalculator(), Optional.empty());
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void berlin(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Berlin", new BerlinGasCalculator(), Optional.empty());
   }
 
-  @Test
-  public void berlin() {
-    milestone("Berlin", new BerlinGasCalculator(), Optional.empty());
-  }
-
-  @Test
-  public void london() {
-    milestone("London", new LondonGasCalculator(), Optional.of(Wei.of(0)));
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void london(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "London", new LondonGasCalculator(), Optional.of(Wei.of(0)));
   }
 
   public void milestone(
-      final String milestone, final GasCalculator gasCalculator, final Optional<Wei> baseFee) {
+      final TransactionTestCaseSpec spec, final String name, final String milestone, final GasCalculator gasCalculator, final Optional<Wei> baseFee) {
 
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
 

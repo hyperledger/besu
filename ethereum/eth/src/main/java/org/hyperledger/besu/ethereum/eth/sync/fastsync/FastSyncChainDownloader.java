@@ -26,7 +26,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FastSyncChainDownloader {
 
-  private FastSyncChainDownloader() {}
+  protected FastSyncChainDownloader() {}
 
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
@@ -47,7 +47,6 @@ public class FastSyncChainDownloader {
             ethContext,
             metricsSystem,
             fastSyncState);
-
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,

@@ -319,6 +319,37 @@ public class DefaultBlockchain implements MutableBlockchain {
     return blockAddedEvent;
   }
 
+  @Override
+  public synchronized void unsafeImportBlock(
+      final Block block,
+      final List<TransactionReceipt> transactionReceipts,
+      final Optional<Difficulty> maybeTotalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    final Hash hash = block.getHash();
+    updater.putBlockHeader(hash, block.getHeader());
+    updater.putBlockHash(block.getHeader().getNumber(), hash);
+    updater.putBlockBody(hash, block.getBody());
+    final int nbTrx = block.getBody().getTransactions().size();
+    for (int i = 0; i < nbTrx; i++) {
+      final Hash transactionHash = block.getBody().getTransactions().get(i).getHash();
+      updater.putTransactionLocation(transactionHash, new TransactionLocation(transactionHash, i));
+    }
+    updater.putTransactionReceipts(hash, transactionReceipts);
+    maybeTotalDifficulty.ifPresent(
+        totalDifficulty -> updater.putTotalDifficulty(hash, totalDifficulty));
+    updater.commit();
+  }
+
+  @Override
+  public synchronized void unsafeSetChainHead(
+      final BlockHeader blockHeader, final Difficulty totalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    this.chainHeader = blockHeader;
+    this.totalDifficulty = totalDifficulty;
+    updater.setChainHead(blockHeader.getBlockHash());
+    updater.commit();
+  }
+
   private Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       return blockHeader.getDifficulty();
