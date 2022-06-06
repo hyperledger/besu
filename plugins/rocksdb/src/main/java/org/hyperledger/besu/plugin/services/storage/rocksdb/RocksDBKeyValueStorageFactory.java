@@ -146,10 +146,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       databaseVersion = readDatabaseVersion(commonConfiguration);
     } catch (final IOException e) {
       final String message =
-          e.getMessage() != null
-              ? "Failed to retrieve the RocksDB database meta version: " + e.getMessage()
-              : "Failed to retrieve the RocksDB database meta version";
-
+          "Failed to retrieve the RocksDB database meta version: " + e.getMessage();
       throw new StorageException(message, e);
     }
     isSegmentIsolationSupported = databaseVersion >= 1;
