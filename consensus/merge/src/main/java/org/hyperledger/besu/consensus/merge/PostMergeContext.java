@@ -83,13 +83,13 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void setIsPostMerge(final Difficulty totalDifficulty) {
+  public void setIsPostMerge(final Difficulty difficultyStoppedAt) {
     if (isPostMerge.get().orElse(Boolean.FALSE) && lastFinalized.get() != null) {
       // if we have finalized, we never switch back to a pre-merge once we have transitioned
       // post-TTD.
       return;
     }
-    final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
+    final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(difficultyStoppedAt);
     final Optional<Boolean> oldState = isPostMerge.getAndSet(Optional.of(newState));
 
     // if we are past TTD, set it:
@@ -100,7 +100,7 @@ public class PostMergeContext implements MergeContext {
     if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback ->
-              newMergeStateCallback.onNewIsPostMergeState(newState, totalDifficulty));
+              newMergeStateCallback.onCrossingMergeBoundary(newState, Optional.of(difficultyStoppedAt)));
     }
   }
 

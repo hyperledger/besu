@@ -172,9 +172,9 @@ public class PostMergeContextTest {
     final List<Boolean> stateChanges = new ArrayList<>();
 
     @Override
-    public void onNewIsPostMergeState(
-        final boolean newIsPostMergeState, final Difficulty difficulty) {
-      stateChanges.add(newIsPostMergeState);
+    public void onCrossingMergeBoundary(
+        final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+      stateChanges.add(isPoS);
     }
 
     public void reset() {

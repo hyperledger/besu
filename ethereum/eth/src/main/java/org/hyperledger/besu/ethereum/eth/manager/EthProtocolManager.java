@@ -405,6 +405,17 @@ public class EthProtocolManager
   }
 
   @Override
-  public void onNewIsPostMergeState(
-      final boolean newIsPostMergeState, final Difficulty difficulty) {}
+  public void onCrossingMergeBoundary(
+      final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+    if(isPoS && difficultyStoppedAt.isPresent()) {
+      LOG.info("transitioned to PoS, disconnecting peers with total difficulty over {}",
+          difficultyStoppedAt.get().toBigInteger());
+      ethPeers.streamAllPeers().filter(ethPeer -> ethPeer.chainState().getBestBlock().totalDifficulty.greaterThan(
+          difficultyStoppedAt.get())).forEach(ethPeer -> ethPeer.disconnect(DisconnectReason.USELESS_PEER));
+
+      LOG.info("transitioned to PoS, no longer accepting peers with total difficulty over {}",
+          difficultyStoppedAt.get().toBigInteger());
+
+    }
+  }
 }

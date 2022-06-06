@@ -16,9 +16,10 @@
 
 package org.hyperledger.besu.consensus.merge;
 
+import java.util.Optional;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
 public interface NewMergeStateCallback {
 
-  void onNewIsPostMergeState(final boolean newIsPostMergeState, final Difficulty difficulty);
+  void onCrossingMergeBoundary(final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt);
 }

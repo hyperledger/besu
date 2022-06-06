@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -198,6 +199,46 @@ public final class EthProtocolManagerTest {
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
+  public void disconnectPoWPeersAfterPoS() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+
+      final MockPeerConnection workPeer =
+          setupPeer(ethManager, (cap, msg, conn) -> {});
+      final MockPeerConnection stakePeer =
+          setupPeer(ethManager, (cap, msg, conn) -> {});
+
+      final StatusMessage workPeerStatus =
+          StatusMessage.create(
+              EthProtocol.EthVersion.V63,
+              BigInteger.ONE,
+              blockchain.getChainHead().getTotalDifficulty().add(20),
+              blockchain.getChainHeadHash(),
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+
+      final StatusMessage stakePeerStatus =
+          StatusMessage.create(
+              EthProtocol.EthVersion.V63,
+              BigInteger.ONE,
+              blockchain.getChainHead().getTotalDifficulty(),
+              blockchain.getChainHeadHash(),
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
+
+      ethManager.onCrossingMergeBoundary(true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+      assertThat(workPeer.isDisconnected()).isTrue();
+      assertThat(stakePeer.isDisconnected()).isFalse();
     }
   }
 
