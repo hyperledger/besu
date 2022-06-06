@@ -49,16 +49,16 @@ import org.slf4j.LoggerFactory;
 public class FastSyncActions {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
-  private final SynchronizerConfiguration syncConfig;
-  private final WorldStateStorage worldStateStorage;
-  private final ProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
-  private final EthContext ethContext;
-  private final SyncState syncState;
-  private final PivotBlockSelector pivotBlockSelector;
-  private final MetricsSystem metricsSystem;
-  private final Counter pivotBlockSelectionCounter;
-  private final AtomicLong pivotBlockGauge = new AtomicLong(0);
+  protected final SynchronizerConfiguration syncConfig;
+  protected final WorldStateStorage worldStateStorage;
+  protected final ProtocolSchedule protocolSchedule;
+  protected final ProtocolContext protocolContext;
+  protected final EthContext ethContext;
+  protected final SyncState syncState;
+  protected final PivotBlockSelector pivotBlockSelector;
+  protected final MetricsSystem metricsSystem;
+  protected final Counter pivotBlockSelectionCounter;
+  protected final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,

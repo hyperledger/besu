@@ -3,6 +3,7 @@
 ## 22.4.3
 
 ### Additions and Improvements
+- \[EXPERIMENTAL\] Add checkpoint sync `--sync-mode="X_CHECKPOINT"` [#3849](https://github.com/hyperledger/besu/pull/3849)
 
 ### Bug Fixes
 
