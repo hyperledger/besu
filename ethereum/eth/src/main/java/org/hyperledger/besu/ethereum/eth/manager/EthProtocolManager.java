@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.StampedLock;
 import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -62,7 +64,7 @@ public class EthProtocolManager
   private final EthScheduler scheduler;
   private final CountDownLatch shutdown;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
-
+  private final AtomicBoolean isProofOfStake = new AtomicBoolean(false);
   private final Hash genesisHash;
   private final ForkIdManager forkIdManager;
   private final BigInteger networkId;
@@ -73,6 +75,8 @@ public class EthProtocolManager
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
+  private Optional<Difficulty> powTerminalDifficulty;
+  private final StampedLock lastDifficultyLock = new StampedLock();
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -371,6 +375,18 @@ public class EthProtocolManager
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      } else if (this.isProofOfStake.get()) {
+        long lockStamp = this.lastDifficultyLock.readLock();
+        try {
+          if (this.powTerminalDifficulty.isPresent()
+              && status.totalDifficulty().greaterThan(this.powTerminalDifficulty.get())) {
+            LOG.debug("Disconnecting peer with difficulty {}, likely still on PoW chain",
+                status.totalDifficulty());
+            peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+          }
+        } finally {
+          this.lastDifficultyLock.unlockRead(lockStamp);
+        }
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(
@@ -407,11 +423,20 @@ public class EthProtocolManager
   @Override
   public void onCrossingMergeBoundary(
       final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+    this.isProofOfStake.set(isPoS);
+
+    long lockStamp = this.lastDifficultyLock.writeLock();
+    try {
+      this.powTerminalDifficulty = difficultyStoppedAt;
+    } finally {
+      this.lastDifficultyLock.unlockWrite(lockStamp);
+    }
+
     if(isPoS && difficultyStoppedAt.isPresent()) {
       LOG.info("transitioned to PoS, disconnecting peers with total difficulty over {}",
           difficultyStoppedAt.get().toBigInteger());
       ethPeers.streamAllPeers().filter(ethPeer -> ethPeer.chainState().getBestBlock().totalDifficulty.greaterThan(
-          difficultyStoppedAt.get())).forEach(ethPeer -> ethPeer.disconnect(DisconnectReason.USELESS_PEER));
+          difficultyStoppedAt.get())).forEach(ethPeer -> ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED));
 
       LOG.info("transitioned to PoS, no longer accepting peers with total difficulty over {}",
           difficultyStoppedAt.get().toBigInteger());

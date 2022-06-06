@@ -67,6 +67,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -203,7 +204,7 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
-  public void disconnectPoWPeersAfterPoS() {
+  public void disconnectPoWPeersAfterTransition() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
@@ -238,6 +239,55 @@ public final class EthProtocolManagerTest {
 
       ethManager.onCrossingMergeBoundary(true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
       assertThat(workPeer.isDisconnected()).isTrue();
+      assertThat(workPeer.getDisconnectReason()).isPresent();
+      assertThat(workPeer.getDisconnectReason()).get().isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      assertThat(stakePeer.isDisconnected()).isFalse();
+    }
+  }
+
+  @Test
+  public void disconnectNewPoWPeers() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+
+      final MockPeerConnection workPeer =
+          setupPeer(ethManager, (cap, msg, conn) -> {
+          });
+      final MockPeerConnection stakePeer =
+          setupPeer(ethManager, (cap, msg, conn) -> {
+          });
+
+      final StatusMessage workPeerStatus =
+          StatusMessage.create(
+              EthProtocol.EthVersion.V63,
+              BigInteger.ONE,
+              blockchain.getChainHead().getTotalDifficulty().add(20),
+              blockchain.getChainHeadHash(),
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+
+      final StatusMessage stakePeerStatus =
+          StatusMessage.create(
+              EthProtocol.EthVersion.V63,
+              BigInteger.ONE,
+              blockchain.getChainHead().getTotalDifficulty(),
+              blockchain.getChainHeadHash(),
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
+
+      ethManager.onCrossingMergeBoundary(true,
+          Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
+      assertThat(workPeer.isDisconnected()).isTrue();
+      assertThat(workPeer.getDisconnectReason()).isPresent();
+      assertThat(workPeer.getDisconnectReason()).get().isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       assertThat(stakePeer.isDisconnected()).isFalse();
     }
   }
