@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -80,6 +79,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -213,10 +213,8 @@ public final class EthProtocolManagerTest {
             transactionPool,
             EthProtocolConfiguration.defaultConfig())) {
 
-      final MockPeerConnection workPeer =
-          setupPeer(ethManager, (cap, msg, conn) -> {});
-      final MockPeerConnection stakePeer =
-          setupPeer(ethManager, (cap, msg, conn) -> {});
+      final MockPeerConnection workPeer = setupPeer(ethManager, (cap, msg, conn) -> {});
+      final MockPeerConnection stakePeer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
       final StatusMessage workPeerStatus =
           StatusMessage.create(
@@ -237,10 +235,13 @@ public final class EthProtocolManagerTest {
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
 
-      ethManager.onCrossingMergeBoundary(true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+      ethManager.onCrossingMergeBoundary(
+          true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
       assertThat(workPeer.isDisconnected()).isTrue();
       assertThat(workPeer.getDisconnectReason()).isPresent();
-      assertThat(workPeer.getDisconnectReason()).get().isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      assertThat(workPeer.getDisconnectReason())
+          .get()
+          .isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       assertThat(stakePeer.isDisconnected()).isFalse();
     }
   }
@@ -255,12 +256,8 @@ public final class EthProtocolManagerTest {
             transactionPool,
             EthProtocolConfiguration.defaultConfig())) {
 
-      final MockPeerConnection workPeer =
-          setupPeer(ethManager, (cap, msg, conn) -> {
-          });
-      final MockPeerConnection stakePeer =
-          setupPeer(ethManager, (cap, msg, conn) -> {
-          });
+      final MockPeerConnection workPeer = setupPeer(ethManager, (cap, msg, conn) -> {});
+      final MockPeerConnection stakePeer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
       final StatusMessage workPeerStatus =
           StatusMessage.create(
@@ -278,16 +275,17 @@ public final class EthProtocolManagerTest {
               blockchain.getChainHeadHash(),
               blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
 
-
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
 
-      ethManager.onCrossingMergeBoundary(true,
-          Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+      ethManager.onCrossingMergeBoundary(
+          true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
       assertThat(workPeer.isDisconnected()).isTrue();
       assertThat(workPeer.getDisconnectReason()).isPresent();
-      assertThat(workPeer.getDisconnectReason()).get().isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      assertThat(workPeer.getDisconnectReason())
+          .get()
+          .isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       assertThat(stakePeer.isDisconnected()).isFalse();
     }
   }
