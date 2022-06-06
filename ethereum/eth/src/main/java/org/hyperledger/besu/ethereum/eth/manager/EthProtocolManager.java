@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.StampedLock;
 import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -50,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.StampedLock;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -380,7 +379,8 @@ public class EthProtocolManager
         try {
           if (this.powTerminalDifficulty.isPresent()
               && status.totalDifficulty().greaterThan(this.powTerminalDifficulty.get())) {
-            LOG.debug("Disconnecting peer with difficulty {}, likely still on PoW chain",
+            LOG.debug(
+                "Disconnecting peer with difficulty {}, likely still on PoW chain",
                 status.totalDifficulty());
             peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
           }
@@ -432,15 +432,24 @@ public class EthProtocolManager
       this.lastDifficultyLock.unlockWrite(lockStamp);
     }
 
-    if(isPoS && difficultyStoppedAt.isPresent()) {
-      LOG.info("transitioned to PoS, disconnecting peers with total difficulty over {}",
+    if (isPoS && difficultyStoppedAt.isPresent()) {
+      LOG.info(
+          "transitioned to PoS, disconnecting peers with total difficulty over {}",
           difficultyStoppedAt.get().toBigInteger());
-      ethPeers.streamAllPeers().filter(ethPeer -> ethPeer.chainState().getBestBlock().totalDifficulty.greaterThan(
-          difficultyStoppedAt.get())).forEach(ethPeer -> ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED));
+      ethPeers
+          .streamAllPeers()
+          .filter(
+              ethPeer ->
+                  ethPeer
+                      .chainState()
+                      .getBestBlock()
+                      .totalDifficulty
+                      .greaterThan(difficultyStoppedAt.get()))
+          .forEach(ethPeer -> ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED));
 
-      LOG.info("transitioned to PoS, no longer accepting peers with total difficulty over {}",
+      LOG.info(
+          "transitioned to PoS, no longer accepting peers with total difficulty over {}",
           difficultyStoppedAt.get().toBigInteger());
-
     }
   }
 }
