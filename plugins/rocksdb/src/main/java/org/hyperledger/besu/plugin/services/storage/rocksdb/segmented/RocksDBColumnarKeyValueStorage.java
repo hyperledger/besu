@@ -77,7 +77,8 @@ public class RocksDBColumnarKeyValueStorage
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
   private final RocksDBMetrics metrics;
-  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
+  private final WriteOptions tryDeleteOptions =
+      new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -169,6 +170,7 @@ public class RocksDBColumnarKeyValueStorage
   public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
+    writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
         new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions));
   }
