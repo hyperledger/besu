@@ -767,7 +767,8 @@ public class RunnerBuilder {
                   privacyParameters,
                   protocolSchedule,
                   blockchainQueries,
-                  DefaultAuthenticationService.create(vertx, webSocketConfiguration)));
+                  DefaultAuthenticationService.create(vertx, webSocketConfiguration),
+                  metricsSystem));
 
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
@@ -1105,7 +1106,8 @@ public class RunnerBuilder {
       final PrivacyParameters privacyParameters,
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,
-      final Optional<AuthenticationService> authenticationService) {
+      final Optional<AuthenticationService> authenticationService,
+      final ObservableMetricsSystem metricsSystem) {
 
     final WebSocketMethodsFactory websocketMethodsFactory =
         new WebSocketMethodsFactory(subscriptionManager, jsonRpcMethods);
@@ -1143,7 +1145,7 @@ public class RunnerBuilder {
             webSocketConfiguration.getTimeoutSec());
 
     return new WebSocketService(
-        vertx, configuration, websocketMessageHandler, authenticationService);
+        vertx, configuration, websocketMessageHandler, authenticationService, metricsSystem);
   }
 
   private Optional<MetricsService> createMetricsService(

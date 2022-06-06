@@ -37,7 +37,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   private static final long TEN_SECONDS = TimeUnit.SECONDS.toMillis(10L);
 
   private final ProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
+  protected final ProtocolContext protocolContext;
   private final ValidationPolicy headerValidationPolicy;
   private final ValidationPolicy ommerValidationPolicy;
   private final EthContext ethContext;
@@ -93,7 +93,7 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     }
   }
 
-  private boolean importBlock(final BlockWithReceipts blockWithReceipts) {
+  protected boolean importBlock(final BlockWithReceipts blockWithReceipts) {
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockWithReceipts.getNumber()).getBlockImporter();
     return importer.fastImportBlock(

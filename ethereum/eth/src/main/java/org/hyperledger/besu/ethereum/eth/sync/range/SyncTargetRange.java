@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
+package org.hyperledger.besu.ethereum.eth.sync.range;
 
 import static java.lang.Math.toIntExact;
 
@@ -24,19 +24,19 @@ import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
-public class CheckpointRange {
+public class SyncTargetRange {
 
   private final EthPeer syncTarget;
   private final BlockHeader start;
   private final Optional<BlockHeader> end;
 
-  public CheckpointRange(final EthPeer syncTarget, final BlockHeader start) {
+  public SyncTargetRange(final EthPeer syncTarget, final BlockHeader start) {
     this.syncTarget = syncTarget;
     this.start = start;
     this.end = Optional.empty();
   }
 
-  public CheckpointRange(final EthPeer syncTarget, final BlockHeader start, final BlockHeader end) {
+  public SyncTargetRange(final EthPeer syncTarget, final BlockHeader start, final BlockHeader end) {
     this.syncTarget = syncTarget;
     this.start = start;
     this.end = Optional.of(end);
@@ -70,7 +70,7 @@ public class CheckpointRange {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final CheckpointRange that = (CheckpointRange) o;
+    final SyncTargetRange that = (SyncTargetRange) o;
     return Objects.equals(syncTarget, that.syncTarget)
         && Objects.equals(start, that.start)
         && Objects.equals(end, that.end);

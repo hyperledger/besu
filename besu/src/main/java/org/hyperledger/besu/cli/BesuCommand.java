@@ -202,7 +202,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -588,8 +587,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Option(
         names = {"--engine-jwt-enabled"},
-        description = "Require authentication for Engine APIs (default: ${DEFAULT-VALUE})")
-    private final Boolean isEngineAuthEnabled = false;
+        description = "deprecated option, engine jwt auth is enabled by default",
+        hidden = true)
+    @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
+    private final Boolean deprecatedIsEngineAuthEnabled = true;
+
+    @Option(
+        names = {"--engine-jwt-disabled"},
+        description = "Disable authentication for Engine APIs (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineAuthDisabled = false;
 
     @Option(
         names = {"--engine-host-allowlist"},
@@ -1874,7 +1880,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--sync-mode",
-        !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncMode),
+        SyncMode.isFullSync(syncMode),
         singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -2118,7 +2124,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
     }
     engineConfig.setEnabled(isMergeEnabled());
-    if (engineRPCOptionGroup.isEngineAuthEnabled) {
+    if (!engineRPCOptionGroup.isEngineAuthDisabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
