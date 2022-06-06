@@ -205,7 +205,7 @@ public class GenesisConfigFileTest {
 
     assertThat(ropstenOptions.getTerminalTotalDifficulty()).isPresent();
     assertThat(ropstenOptions.getTerminalTotalDifficulty().get())
-        .isEqualTo(UInt256.valueOf(new BigInteger("100000000000000000000000")));
+        .isEqualTo(UInt256.valueOf(new BigInteger("50000000000000000")));
   }
 
   @Test
