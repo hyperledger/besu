@@ -360,11 +360,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           Optional.of(
               ImmutableCheckpoint.builder()
                   .blockHash(
-                      Hash.fromHexString(configOptions.getCheckpointOptions().getHash().get())) //NOSONAR
+                      Hash.fromHexString(
+                          configOptions.getCheckpointOptions().getHash().get())) // NOSONAR
                   .blockNumber(configOptions.getCheckpointOptions().getNumber().getAsLong())
                   .totalDifficulty(
                       Difficulty.fromHexString(
-                          configOptions.getCheckpointOptions().getTotalDifficulty().get())) //NOSONAR
+                          configOptions
+                              .getCheckpointOptions()
+                              .getTotalDifficulty()
+                              .get())) // NOSONAR
                   .build());
     }
 
@@ -428,7 +432,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
-
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -529,7 +532,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected void prepForBuild() {}
 
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) { //NOSONAR
+      final ProtocolContext protocolContext) { // NOSONAR
     return apis -> Collections.emptyMap();
   }
 
@@ -540,8 +543,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
     maybeSnapProtocolManager.ifPresent(
         snapProtocolManager ->
-          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager)
-        );
+            subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager));
     return subProtocolConfiguration;
   }
 

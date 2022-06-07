@@ -282,12 +282,10 @@ public class EthProtocolManager
       return;
     }
 
-
-      if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
-        LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
-        ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      }
-
+    if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
+      LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
+      ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+    }
 
     // This will handle responses
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
