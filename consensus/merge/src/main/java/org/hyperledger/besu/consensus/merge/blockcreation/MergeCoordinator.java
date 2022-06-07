@@ -175,6 +175,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     Result result = executeBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+      // TODO: temporary workaround for implicit head change by validateAndProcessBlock:
+      protocolContext.getBlockchain().rewindToBlock(emptyBlock.getHeader().getParentHash());
     } else {
       LOG.warn(
           "failed to execute empty block proposal {}, reason {}",
@@ -194,6 +196,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 final var resultBest = executeBlock(bestBlock);
                 if (resultBest.blockProcessingOutputs.isPresent()) {
                   mergeContext.putPayloadById(payloadIdentifier, bestBlock);
+                  // TODO: temporary workaround for implicit head change by validateAndProcessBlock:
+                  protocolContext
+                      .getBlockchain()
+                      .rewindToBlock(emptyBlock.getHeader().getParentHash());
                 } else {
                   LOG.warn(
                       "failed to execute block proposal {}, reason {}",
