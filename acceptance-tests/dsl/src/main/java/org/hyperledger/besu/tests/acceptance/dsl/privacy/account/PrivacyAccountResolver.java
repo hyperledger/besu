@@ -19,79 +19,83 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import java.net.URL;
 
 /** Supplier of known funded accounts defined in dev.json */
-public class PrivacyAccountResolver {
-
-  public PrivacyAccountResolver() {}
-
-  public PrivacyAccount resolve(
-      final Integer account, final EnclaveEncryptorType enclaveEncryptorType) {
-    switch (account) {
-      case 0:
-        // ALICE
-        return PrivacyAccount.create(
-            resolveResource("key"),
+public enum PrivacyAccountResolver {
+  ALICE {
+    @Override
+    public PrivacyAccount resolve(final EnclaveEncryptorType enclaveEncryptorType) {
+      return PrivacyAccount.create(
+          resolveResource("key"),
+          enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+              ? resolveResource("enclave_ec_key_0.pub")
+              : resolveResource("enclave_key_0.pub"),
+          enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+              ? resolveResource("enclave_ec_key_0.key")
+              : resolveResource("enclave_key_0.key"),
+          enclaveEncryptorType);
+    }
+  },
+  BOB {
+    @Override
+    public PrivacyAccount resolve(final EnclaveEncryptorType enclaveEncryptorType) {
+      return PrivacyAccount.create(
+          resolveResource("key1"),
+          enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+              ? resolveResource("enclave_ec_key_1.pub")
+              : resolveResource("enclave_key_1.pub"),
+          enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+              ? resolveResource("enclave_ec_key_1.key")
+              : resolveResource("enclave_key_1.key"),
+          enclaveEncryptorType);
+    }
+  },
+  CHARLIE {
+    @Override
+    public PrivacyAccount resolve(final EnclaveEncryptorType enclaveEncryptorType) {
+      return PrivacyAccount.create(
+          resolveResource("key2"),
+          enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+              ? resolveResource("enclave_ec_key_2.pub")
+              : resolveResource("enclave_key_2.pub"),
+          enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+              ? resolveResource("enclave_ec_key_2.key")
+              : resolveResource("enclave_key_2.key"),
+          enclaveEncryptorType);
+    }
+  },
+  MULTI_TENANCY {
+    @Override
+    public PrivacyAccount resolve(final EnclaveEncryptorType enclaveEncryptorType) {
+      return PrivacyAccount.create(
+          resolveResource("key"),
+          new URL[] {
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_0.pub")
                 : resolveResource("enclave_key_0.pub"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                ? resolveResource("enclave_ec_key_0.key")
-                : resolveResource("enclave_key_0.key"),
-            enclaveEncryptorType);
-      case 1:
-        // BOB
-        return PrivacyAccount.create(
-            resolveResource("key1"),
-            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_1.pub")
                 : resolveResource("enclave_key_1.pub"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_2.pub")
+                : resolveResource("enclave_key_2.pub")
+          },
+          new URL[] {
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
+                ? resolveResource("enclave_ec_key_0.key")
+                : resolveResource("enclave_key_0.key"),
+            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_1.key")
                 : resolveResource("enclave_key_1.key"),
-            enclaveEncryptorType);
-      case 2:
-        // CHARLIE
-        return PrivacyAccount.create(
-            resolveResource("key2"),
-            enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                ? resolveResource("enclave_ec_key_2.pub")
-                : resolveResource("enclave_key_2.pub"),
             enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
                 ? resolveResource("enclave_ec_key_2.key")
-                : resolveResource("enclave_key_2.key"),
-            enclaveEncryptorType);
-      case 3:
-        // MULTI_TENANCY
-        return PrivacyAccount.create(
-            resolveResource("key"),
-            new URL[] {
-              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                  ? resolveResource("enclave_ec_key_0.pub")
-                  : resolveResource("enclave_key_0.pub"),
-              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                  ? resolveResource("enclave_ec_key_1.pub")
-                  : resolveResource("enclave_key_1.pub"),
-              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                  ? resolveResource("enclave_ec_key_2.pub")
-                  : resolveResource("enclave_key_2.pub")
-            },
-            new URL[] {
-              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                  ? resolveResource("enclave_ec_key_0.key")
-                  : resolveResource("enclave_key_0.key"),
-              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                  ? resolveResource("enclave_ec_key_1.key")
-                  : resolveResource("enclave_key_1.key"),
-              enclaveEncryptorType.equals(EnclaveEncryptorType.EC)
-                  ? resolveResource("enclave_ec_key_2.key")
-                  : resolveResource("enclave_key_2.key")
-            },
-            enclaveEncryptorType);
-      default:
-        throw new RuntimeException("Unknown privacy account");
+                : resolveResource("enclave_key_2.key")
+          },
+          enclaveEncryptorType);
     }
-  }
+  };
 
-  private static URL resolveResource(final String resource) {
+  public abstract PrivacyAccount resolve(final EnclaveEncryptorType enclaveEncryptorType);
+
+  URL resolveResource(final String resource) {
     return PrivacyAccountResolver.class.getClassLoader().getResource(resource);
   }
 }

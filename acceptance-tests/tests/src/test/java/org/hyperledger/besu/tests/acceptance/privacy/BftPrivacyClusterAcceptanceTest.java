@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
@@ -118,7 +119,8 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     if (bftPrivacyType.consensusType == ConsensusType.IBFT2) {
       return privacyBesu.createIbft2NodePrivacyEnabled(
           nodeName,
-          privacyAccountResolver.resolve(privacyAccount, bftPrivacyType.enclaveEncryptorType),
+          PrivacyAccountResolver.values()[privacyAccount].resolve(
+              bftPrivacyType.enclaveEncryptorType),
           true,
           bftPrivacyType.enclaveType,
           Optional.of(containerNetwork),
@@ -129,7 +131,8 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     } else if (bftPrivacyType.consensusType == ConsensusType.QBFT) {
       return privacyBesu.createQbftNodePrivacyEnabled(
           nodeName,
-          privacyAccountResolver.resolve(privacyAccount, bftPrivacyType.enclaveEncryptorType),
+          PrivacyAccountResolver.values()[privacyAccount].resolve(
+              bftPrivacyType.enclaveEncryptorType),
           bftPrivacyType.enclaveType,
           Optional.of(containerNetwork),
           false,

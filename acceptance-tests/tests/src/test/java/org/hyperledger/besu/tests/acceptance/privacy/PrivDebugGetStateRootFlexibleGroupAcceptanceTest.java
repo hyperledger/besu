@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
@@ -62,14 +63,14 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
     aliceNode =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "alice-node",
-            privacyAccountResolver.resolve(0, EnclaveEncryptorType.NACL),
+            PrivacyAccountResolver.ALICE.resolve(EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bobNode =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "bob-node",
-            privacyAccountResolver.resolve(1, EnclaveEncryptorType.NACL),
+            PrivacyAccountResolver.BOB.resolve(EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));

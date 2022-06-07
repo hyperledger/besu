@@ -23,6 +23,7 @@ import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -73,7 +74,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),
@@ -84,7 +85,7 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node2",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),

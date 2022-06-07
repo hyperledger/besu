@@ -19,6 +19,7 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
@@ -56,7 +57,7 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
     node =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-node",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.empty(),
             false,

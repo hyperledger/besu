@@ -20,6 +20,7 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -50,7 +51,7 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
     aliceNode =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "alice-node",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),
@@ -61,7 +62,7 @@ public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends Parameteri
     bobNode =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "bob-node",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),

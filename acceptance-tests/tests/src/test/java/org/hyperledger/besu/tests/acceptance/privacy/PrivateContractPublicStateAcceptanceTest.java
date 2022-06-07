@@ -21,6 +21,7 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.CrossContractReader;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.besu.tests.web3j.generated.RemoteSimpleStorage;
@@ -56,7 +57,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     final PrivacyNode minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-miner-node",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
@@ -66,7 +67,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     transactionNode =
         privacyBesu.createPrivateTransactionEnabledNode(
             restriction + "-transaction-node",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,

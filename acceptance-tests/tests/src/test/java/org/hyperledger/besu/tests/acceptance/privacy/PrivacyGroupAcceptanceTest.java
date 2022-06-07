@@ -22,6 +22,7 @@ import static org.web3j.utils.Restriction.RESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
@@ -68,7 +69,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     alice =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             "node1",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
@@ -77,7 +78,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     bob =
         privacyBesu.createPrivateTransactionEnabledNode(
             "node2",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
@@ -87,7 +88,7 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
     charlie =
         privacyBesu.createPrivateTransactionEnabledNode(
             "node3",
-            privacyAccountResolver.resolve(2, enclaveEncryptorType),
+            PrivacyAccountResolver.CHARLIE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,

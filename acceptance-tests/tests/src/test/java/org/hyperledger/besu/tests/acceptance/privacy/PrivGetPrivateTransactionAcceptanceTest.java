@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
@@ -53,7 +54,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
-            privacyAccountResolver.resolve(0, enclaveEncryptorType),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),
@@ -64,7 +65,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
     bob =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node2",
-            privacyAccountResolver.resolve(1, enclaveEncryptorType),
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.of(containerNetwork),
