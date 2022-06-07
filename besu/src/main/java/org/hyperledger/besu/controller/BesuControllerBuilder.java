@@ -98,6 +98,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -403,19 +404,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
 
     final Synchronizer synchronizer =
-        new DefaultSynchronizer(
-            syncConfig,
+        createSynchronizer(
             protocolSchedule,
-            protocolContext,
             worldStateStorage,
-            ethProtocolManager.getBlockBroadcaster(),
+            protocolContext,
             maybePruner,
             ethContext,
             syncState,
-            dataDirectory,
-            clock,
-            metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            ethProtocolManager,
             pivotBlockSelector);
 
     final MiningCoordinator miningCoordinator =
@@ -459,6 +455,32 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  @NotNull
+  protected DefaultSynchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+    return new DefaultSynchronizer(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        worldStateStorage,
+        ethProtocolManager.getBlockBroadcaster(),
+        maybePruner,
+        ethContext,
+        syncState,
+        dataDirectory,
+        clock,
+        metricsSystem,
+        getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+        pivotBlockSelector);
   }
 
   private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {

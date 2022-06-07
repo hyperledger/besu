@@ -67,11 +67,4 @@ public interface MergeContext extends ConsensusContext {
       final Hash headBlockHash,
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash);
-
-  interface NewForkchoiceMessageListener {
-    void onNewForkchoiceMessage(
-        final Hash headBlockHash,
-        final Optional<Hash> maybeFinalizedBlockHash,
-        final Hash safeBlockHash);
-  }
 }

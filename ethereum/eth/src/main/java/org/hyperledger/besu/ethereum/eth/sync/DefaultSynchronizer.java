@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.merge.NewForkchoiceMessageListener;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -41,11 +43,12 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer, NewForkchoiceMessageListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -58,6 +61,8 @@ public class DefaultSynchronizer implements Synchronizer {
   private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
+  private Hash lastFinalized = Hash.ZERO;
+  private final AtomicLong numFinalizedSeen = new AtomicLong(0);
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -287,5 +292,20 @@ public class DefaultSynchronizer implements Synchronizer {
     maybePruner.ifPresent(Pruner::stop);
     running.set(false);
     return null;
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (maybeFinalizedBlockHash.isPresent()
+        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
+      this.lastFinalized = maybeFinalizedBlockHash.get();
+      this.numFinalizedSeen.getAndIncrement();
+      if (this.numFinalizedSeen.get() > 1) {
+        blockPropagationManager.ifPresent(BlockPropagationManager::stop);
+      }
+    }
   }
 }

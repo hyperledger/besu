@@ -237,6 +237,10 @@ public final class EthProtocolManagerTest {
 
       ethManager.onCrossingMergeBoundary(
           true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+      ethManager.onNewForkchoiceMessage(
+          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
+      ethManager.onNewForkchoiceMessage(
+          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(2))), Hash.EMPTY);
       assertThat(workPeer.isDisconnected()).isTrue();
       assertThat(workPeer.getDisconnectReason()).isPresent();
       assertThat(workPeer.getDisconnectReason())
@@ -279,6 +283,10 @@ public final class EthProtocolManagerTest {
 
       ethManager.onCrossingMergeBoundary(
           true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+      ethManager.onNewForkchoiceMessage(
+          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
+      ethManager.onNewForkchoiceMessage(
+          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(2))), Hash.EMPTY);
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
       assertThat(workPeer.isDisconnected()).isTrue();

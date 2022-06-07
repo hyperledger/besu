@@ -37,6 +37,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -45,8 +47,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -151,6 +155,34 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
+  protected DefaultSynchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+
+    DefaultSynchronizer sync =
+        super.createSynchronizer(
+            protocolSchedule,
+            worldStateStorage,
+            protocolContext,
+            maybePruner,
+            ethContext,
+            syncState,
+            ethProtocolManager,
+            pivotBlockSelector);
+
+    protocolContext
+        .getConsensusContext(TransitionContext.class)
+        .addNewForkchoiceMessageListener(sync);
+    return sync;
+  }
+
+  @Override
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
       final boolean fastSyncEnabled,
@@ -177,6 +209,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     protocolContext
         .getConsensusContext(TransitionContext.class)
         .observeNewIsPostMergeState(ethProtocolManager);
+    protocolContext
+        .getConsensusContext(TransitionContext.class)
+        .addNewForkchoiceMessageListener(ethProtocolManager);
 
     return ethProtocolManager;
   }
