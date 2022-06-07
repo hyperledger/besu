@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
@@ -75,6 +76,7 @@ public class QbftBesuControllerBuilderTest {
   @Mock private GenesisConfigOptions genesisConfigOptions;
   @Mock private SynchronizerConfiguration synchronizerConfiguration;
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
+  @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock private MiningParameters miningParameters;
   @Mock private ObservableMetricsSystem observableMetricsSystem;
   @Mock private PrivacyParameters privacyParameters;
@@ -98,6 +100,7 @@ public class QbftBesuControllerBuilderTest {
     when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(storageProvider.createBlockchainStorage(any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(

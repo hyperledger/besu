@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -46,7 +47,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CheckpointHeaderFetcherTest {
+public class RangeHeadersFetcherTest {
 
   private static final int SEGMENT_SIZE = 5;
   private static Blockchain blockchain;
@@ -88,10 +89,10 @@ public class CheckpointHeaderFetcherTest {
 
   @Test
   public void shouldRequestHeadersFromPeerAndExcludeExistingHeader() {
-    final CheckpointHeaderFetcher checkpointHeaderFetcher = createCheckpointHeaderFetcher();
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher();
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(1));
+        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(1));
 
     assertThat(result).isNotDone();
 
@@ -102,11 +103,10 @@ public class CheckpointHeaderFetcherTest {
 
   @Test
   public void shouldNotRequestHeadersBeyondTargetWhenTargetIsMultipleOfSegmentSize() {
-    final CheckpointHeaderFetcher checkpointHeaderFetcher =
-        createCheckpointHeaderFetcher(header(11));
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(11));
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(1));
+        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(1));
 
     respondingPeer.respond(responder);
 
@@ -115,11 +115,10 @@ public class CheckpointHeaderFetcherTest {
 
   @Test
   public void shouldNotRequestHeadersBeyondTargetWhenTargetIsNotAMultipleOfSegmentSize() {
-    final CheckpointHeaderFetcher checkpointHeaderFetcher =
-        createCheckpointHeaderFetcher(header(15));
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(15));
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(1));
+        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(1));
 
     respondingPeer.respond(responder);
 
@@ -127,71 +126,68 @@ public class CheckpointHeaderFetcherTest {
   }
 
   @Test
-  public void shouldReturnOnlyTargetHeaderWhenLastHeaderIsTheCheckpointBeforeTarget() {
-    final CheckpointHeaderFetcher checkpointHeaderFetcher =
-        createCheckpointHeaderFetcher(header(15));
+  public void shouldReturnOnlyTargetHeaderWhenLastHeaderIsTheRangeBeforeTarget() {
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(15));
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(11));
+        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(11));
 
     assertThat(result).isCompletedWithValue(singletonList(header(15)));
   }
 
   @Test
   public void shouldReturnEmptyListWhenLastHeaderIsTarget() {
-    final CheckpointHeaderFetcher checkpointHeaderFetcher =
-        createCheckpointHeaderFetcher(header(15));
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(15));
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(15));
+        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(15));
     assertThat(result).isCompletedWithValue(emptyList());
   }
 
   @Test
   public void shouldReturnEmptyListWhenLastHeaderIsAfterTarget() {
-    final CheckpointHeaderFetcher checkpointHeaderFetcher =
-        createCheckpointHeaderFetcher(header(15));
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(15));
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(respondingPeer.getEthPeer(), header(16));
+        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(16));
     assertThat(result).isCompletedWithValue(emptyList());
   }
 
   @Test
-  public void nextCheckpointShouldEndAtChainHeadWhenNextCheckpointHeaderIsAfterHead() {
+  public void nextRangeShouldEndAtChainHeadWhenNextRangeHeaderIsAfterHead() {
     final long remoteChainHeight = blockchain.getChainHeadBlockNumber();
-    final CheckpointHeaderFetcher checkpointHeaderFetcher = createCheckpointHeaderFetcher();
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher();
 
     assertThat(
-            checkpointHeaderFetcher.nextCheckpointEndsAtChainHead(
+            rangeHeaderFetcher.nextRangeEndsAtChainHead(
                 respondingPeer.getEthPeer(), header(remoteChainHeight - SEGMENT_SIZE + 1)))
         .isTrue();
   }
 
   @Test
-  public void nextCheckpointShouldNotEndAtChainHeadWhenAFinalCheckpointHeaderIsSpecified() {
+  public void nextRangeShouldNotEndAtChainHeadWhenAFinalRangeHeaderIsSpecified() {
     final long remoteChainHeight = blockchain.getChainHeadBlockNumber();
-    final CheckpointHeaderFetcher checkpointHeaderFetcher =
-        createCheckpointHeaderFetcher(header(remoteChainHeight));
+    final RangeHeadersFetcher rangeHeaderFetcher =
+        createRangeHeaderFetcher(header(remoteChainHeight));
 
     assertThat(
-            checkpointHeaderFetcher.nextCheckpointEndsAtChainHead(
+            rangeHeaderFetcher.nextRangeEndsAtChainHead(
                 respondingPeer.getEthPeer(), header(remoteChainHeight - SEGMENT_SIZE + 1)))
         .isFalse();
   }
 
   @Test
-  public void shouldReturnRemoteChainHeadWhenNextCheckpointHeaderIsTheRemoteHead() {
+  public void shouldReturnRemoteChainHeadWhenNextRangeHeaderIsTheRemoteHead() {
     final long remoteChainHeight = blockchain.getChainHeadBlockNumber();
-    final CheckpointHeaderFetcher checkpointHeaderFetcher = createCheckpointHeaderFetcher();
+    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher();
 
     assertThat(
-            checkpointHeaderFetcher.nextCheckpointEndsAtChainHead(
+            rangeHeaderFetcher.nextRangeEndsAtChainHead(
                 respondingPeer.getEthPeer(), header(remoteChainHeight - SEGMENT_SIZE)))
         .isFalse();
 
     final CompletableFuture<List<BlockHeader>> result =
-        checkpointHeaderFetcher.getNextCheckpointHeaders(
+        rangeHeaderFetcher.getNextRangeHeaders(
             respondingPeer.getEthPeer(), header(remoteChainHeight - SEGMENT_SIZE));
 
     respondingPeer.respond(responder);
@@ -199,9 +195,9 @@ public class CheckpointHeaderFetcherTest {
     assertThat(result).isCompletedWithValue(singletonList(header(remoteChainHeight)));
   }
 
-  private CheckpointHeaderFetcher createCheckpointHeaderFetcher() {
+  private RangeHeadersFetcher createRangeHeaderFetcher() {
     final EthContext ethContext = ethProtocolManager.ethContext();
-    return new CheckpointHeaderFetcher(
+    return new RangeHeadersFetcher(
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(SEGMENT_SIZE)
             .downloaderHeadersRequestSize(3)
@@ -211,9 +207,9 @@ public class CheckpointHeaderFetcherTest {
         metricsSystem);
   }
 
-  private CheckpointHeaderFetcher createCheckpointHeaderFetcher(final BlockHeader targetHeader) {
+  private RangeHeadersFetcher createRangeHeaderFetcher(final BlockHeader targetHeader) {
     final EthContext ethContext = ethProtocolManager.ethContext();
-    return new CheckpointHeaderFetcher(
+    return new RangeHeadersFetcher(
         SynchronizerConfiguration.builder()
             .downloaderChainSegmentSize(SEGMENT_SIZE)
             .downloaderHeadersRequestSize(3)

@@ -460,9 +460,7 @@ workflows:
             - referenceTests
             - buildDocker
           context:
-            - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
       - publishArm64Docker:
           filters:
             branches:
@@ -476,9 +474,7 @@ workflows:
             - referenceTests
             - buildArm64Docker
           context:
-            - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
       - manifestDocker:
           filters:
             branches:
@@ -489,9 +485,7 @@ workflows:
             - publishDocker
             - publishArm64Docker
           context:
-            - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
 
   nightly:
     triggers:
