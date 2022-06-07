@@ -360,11 +360,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           Optional.of(
               ImmutableCheckpoint.builder()
                   .blockHash(
-                      Hash.fromHexString(configOptions.getCheckpointOptions().getHash().get()))
+                      Hash.fromHexString(configOptions.getCheckpointOptions().getHash().get())) //NOSONAR
                   .blockNumber(configOptions.getCheckpointOptions().getNumber().getAsLong())
                   .totalDifficulty(
                       Difficulty.fromHexString(
-                          configOptions.getCheckpointOptions().getTotalDifficulty().get()))
+                          configOptions.getCheckpointOptions().getTotalDifficulty().get())) //NOSONAR
                   .build());
     }
 
@@ -428,7 +428,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
-    ;
+
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -529,7 +529,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected void prepForBuild() {}
 
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext) { //NOSONAR
     return apis -> Collections.emptyMap();
   }
 
@@ -539,9 +539,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final SubProtocolConfiguration subProtocolConfiguration =
         new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
     maybeSnapProtocolManager.ifPresent(
-        snapProtocolManager -> {
-          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
-        });
+        snapProtocolManager ->
+          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager)
+        );
     return subProtocolConfiguration;
   }
 

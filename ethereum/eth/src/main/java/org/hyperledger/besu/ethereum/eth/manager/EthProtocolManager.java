@@ -102,7 +102,7 @@ public class EthProtocolManager
     this.blockchain = blockchain;
 
     this.shutdown = new CountDownLatch(1);
-    genesisHash = blockchain.getBlockHashByNumber(0L).get();
+    this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO);
 
     this.forkIdManager = forkIdManager;
 
@@ -248,7 +248,7 @@ public class EthProtocolManager
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.debug(
-          "Ignoring message received from unknown peer connection: " + message.getConnection());
+          "Ignoring message received from unknown peer connection: {}", message.getConnection());
       return;
     }
 
@@ -282,12 +282,12 @@ public class EthProtocolManager
       return;
     }
 
-    if (isFinalized()) {
-      if (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES) {
+
+      if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
         LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
         ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       }
-    }
+
 
     // This will handle responses
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
@@ -315,7 +315,7 @@ public class EthProtocolManager
         responseData -> {
           try {
             ethPeer.send(responseData, getSupportedProtocol());
-          } catch (final PeerNotConnected __) {
+          } catch (final PeerNotConnected missingPeerException) {
             // Peer disconnected before we could respond - nothing to do
           }
         });

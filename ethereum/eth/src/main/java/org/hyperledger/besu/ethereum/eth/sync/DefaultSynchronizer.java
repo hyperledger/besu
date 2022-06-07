@@ -303,8 +303,10 @@ public class DefaultSynchronizer implements Synchronizer, NewForkchoiceMessageLi
         && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
       this.lastFinalized = maybeFinalizedBlockHash.get();
       this.numFinalizedSeen.getAndIncrement();
-      if (this.numFinalizedSeen.get() > 1) {
-        blockPropagationManager.ifPresent(BlockPropagationManager::stop);
+      if (this.numFinalizedSeen.get() > 1
+          && blockPropagationManager.isPresent()
+          && blockPropagationManager.get().isRunning()) {
+        blockPropagationManager.get().stop();
       }
     }
   }
