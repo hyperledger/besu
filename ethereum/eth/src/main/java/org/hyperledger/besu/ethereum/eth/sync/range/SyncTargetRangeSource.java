@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
+package org.hyperledger.besu.ethereum.eth.sync.range;
 
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -36,59 +36,58 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CheckpointRangeSource implements Iterator<CheckpointRange> {
-  private static final Logger LOG = LoggerFactory.getLogger(CheckpointRangeSource.class);
+public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
+  private static final Logger LOG = LoggerFactory.getLogger(SyncTargetRangeSource.class);
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
 
-  private final CheckpointHeaderFetcher checkpointFetcher;
+  private final RangeHeadersFetcher fetcher;
   private final SyncTargetChecker syncTargetChecker;
   private final EthPeer peer;
   private final EthScheduler ethScheduler;
-  private final int checkpointTimeoutsPermitted;
+  private final int rangeTimeoutsPermitted;
   private final Duration newHeaderWaitDuration;
   private final SyncTerminationCondition terminationCondition;
 
-  private final Queue<CheckpointRange> retrievedRanges = new ArrayDeque<>();
+  private final Queue<SyncTargetRange> retrievedRanges = new ArrayDeque<>();
   private BlockHeader lastRangeEnd;
-  private boolean reachedEndOfCheckpoints = false;
-  private Optional<CompletableFuture<List<BlockHeader>>> pendingCheckpointsRequest =
-      Optional.empty();
+  private boolean reachedEndOfRanges = false;
+  private Optional<CompletableFuture<List<BlockHeader>>> pendingRequests = Optional.empty();
   private int requestFailureCount = 0;
 
-  public CheckpointRangeSource(
-      final CheckpointHeaderFetcher checkpointFetcher,
+  public SyncTargetRangeSource(
+      final RangeHeadersFetcher fetcher,
       final SyncTargetChecker syncTargetChecker,
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int checkpointTimeoutsPermitted,
+      final int rangeTimeoutsPermitted,
       final SyncTerminationCondition terminationCondition) {
     this(
-        checkpointFetcher,
+        fetcher,
         syncTargetChecker,
         ethScheduler,
         peer,
         commonAncestor,
-        checkpointTimeoutsPermitted,
+        rangeTimeoutsPermitted,
         Duration.ofSeconds(5),
         terminationCondition);
   }
 
-  CheckpointRangeSource(
-      final CheckpointHeaderFetcher checkpointFetcher,
+  public SyncTargetRangeSource(
+      final RangeHeadersFetcher fetcher,
       final SyncTargetChecker syncTargetChecker,
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int checkpointTimeoutsPermitted,
+      final int rangeTimeoutsPermitted,
       final Duration newHeaderWaitDuration,
       final SyncTerminationCondition terminationCondition) {
-    this.checkpointFetcher = checkpointFetcher;
+    this.fetcher = fetcher;
     this.syncTargetChecker = syncTargetChecker;
     this.ethScheduler = ethScheduler;
     this.peer = peer;
     this.lastRangeEnd = commonAncestor;
-    this.checkpointTimeoutsPermitted = checkpointTimeoutsPermitted;
+    this.rangeTimeoutsPermitted = rangeTimeoutsPermitted;
     this.newHeaderWaitDuration = newHeaderWaitDuration;
     this.terminationCondition = terminationCondition;
   }
@@ -97,45 +96,43 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
   public boolean hasNext() {
     return terminationCondition.shouldContinueDownload()
         && (!retrievedRanges.isEmpty()
-            || (requestFailureCount < checkpointTimeoutsPermitted
+            || (requestFailureCount < rangeTimeoutsPermitted
                 && syncTargetChecker.shouldContinueDownloadingFromSyncTarget(peer, lastRangeEnd)
-                && !reachedEndOfCheckpoints));
+                && !reachedEndOfRanges));
   }
 
   @Override
-  public CheckpointRange next() {
+  public SyncTargetRange next() {
     if (!retrievedRanges.isEmpty()) {
       return retrievedRanges.poll();
     }
-    if (pendingCheckpointsRequest.isPresent()) {
-      return getCheckpointRangeFromPendingRequest();
+    if (pendingRequests.isPresent()) {
+      return getRangeFromPendingRequest();
     }
-    if (reachedEndOfCheckpoints) {
+    if (reachedEndOfRanges) {
       return null;
     }
-    if (checkpointFetcher.nextCheckpointEndsAtChainHead(peer, lastRangeEnd)) {
-      reachedEndOfCheckpoints = true;
-      return new CheckpointRange(peer, lastRangeEnd);
+    if (fetcher.nextRangeEndsAtChainHead(peer, lastRangeEnd)) {
+      reachedEndOfRanges = true;
+      return new SyncTargetRange(peer, lastRangeEnd);
     }
-    pendingCheckpointsRequest = Optional.of(getNextCheckpointHeaders());
-    return getCheckpointRangeFromPendingRequest();
+    pendingRequests = Optional.of(getNextRangeHeaders());
+    return getRangeFromPendingRequest();
   }
 
-  private CompletableFuture<List<BlockHeader>> getNextCheckpointHeaders() {
-    return checkpointFetcher
-        .getNextCheckpointHeaders(peer, lastRangeEnd)
+  private CompletableFuture<List<BlockHeader>> getNextRangeHeaders() {
+    return fetcher
+        .getNextRangeHeaders(peer, lastRangeEnd)
         .exceptionally(
             error -> {
-              LOG.debug("Failed to retrieve checkpoint headers", error);
+              LOG.debug("Failed to retrieve range headers", error);
               return emptyList();
             })
-        .thenCompose(
-            checkpoints -> checkpoints.isEmpty() ? pauseBriefly() : completedFuture(checkpoints));
+        .thenCompose(range -> range.isEmpty() ? pauseBriefly() : completedFuture(range));
   }
 
   /**
-   * Pause after failing to get new checkpoints to prevent requesting new checkpoint headers in a
-   * tight loop.
+   * Pause after failing to get new range to prevent requesting new range headers in a tight loop.
    *
    * @return a future that after the pause completes with an empty list.
    */
@@ -144,28 +141,28 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
         () -> completedFuture(emptyList()), RETRY_DELAY_DURATION);
   }
 
-  private CheckpointRange getCheckpointRangeFromPendingRequest() {
-    final CompletableFuture<List<BlockHeader>> pendingRequest = pendingCheckpointsRequest.get();
+  private SyncTargetRange getRangeFromPendingRequest() {
+    final CompletableFuture<List<BlockHeader>> pendingRequest = this.pendingRequests.get();
     try {
-      final List<BlockHeader> newCheckpointHeaders =
+      final List<BlockHeader> newHeaders =
           pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
-      pendingCheckpointsRequest = Optional.empty();
-      if (newCheckpointHeaders.isEmpty()) {
+      this.pendingRequests = Optional.empty();
+      if (newHeaders.isEmpty()) {
         requestFailureCount++;
       } else {
         requestFailureCount = 0;
       }
-      for (final BlockHeader checkpointHeader : newCheckpointHeaders) {
-        retrievedRanges.add(new CheckpointRange(peer, lastRangeEnd, checkpointHeader));
-        lastRangeEnd = checkpointHeader;
+      for (final BlockHeader header : newHeaders) {
+        retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
+        lastRangeEnd = header;
       }
       return retrievedRanges.poll();
     } catch (final InterruptedException e) {
-      LOG.trace("Interrupted while waiting for new checkpoint headers", e);
+      LOG.trace("Interrupted while waiting for new range headers", e);
       return null;
     } catch (final ExecutionException e) {
-      LOG.debug("Failed to retrieve new checkpoint headers", e);
-      pendingCheckpointsRequest = Optional.empty();
+      LOG.debug("Failed to retrieve new range headers", e);
+      this.pendingRequests = Optional.empty();
       requestFailureCount++;
       return null;
     } catch (final TimeoutException e) {
@@ -174,6 +171,6 @@ public class CheckpointRangeSource implements Iterator<CheckpointRange> {
   }
 
   public interface SyncTargetChecker {
-    boolean shouldContinueDownloadingFromSyncTarget(EthPeer peer, BlockHeader lastCheckpointHeader);
+    boolean shouldContinueDownloadingFromSyncTarget(EthPeer peer, BlockHeader lastRangeHeader);
   }
 }

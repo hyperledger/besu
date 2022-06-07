@@ -21,6 +21,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.EthashConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -69,6 +70,7 @@ public class BesuControllerBuilderTest {
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock EthashConfigOptions ethashConfigOptions;
+  @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock Keccak256ConfigOptions keccak256ConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
@@ -97,6 +99,7 @@ public class BesuControllerBuilderTest {
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getEthashConfigOptions()).thenReturn(ethashConfigOptions);
+    when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getKeccak256ConfigOptions()).thenReturn(keccak256ConfigOptions);
     when(keccak256ConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());

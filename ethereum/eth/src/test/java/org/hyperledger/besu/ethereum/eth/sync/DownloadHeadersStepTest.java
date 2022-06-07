@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
+import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -50,7 +52,7 @@ public class DownloadHeadersStepTest {
   private final EthPeer syncTarget = mock(EthPeer.class);
   private EthProtocolManager ethProtocolManager;
   private DownloadHeadersStep downloader;
-  private CheckpointRange checkpointRange;
+  private SyncTargetRange checkpointRange;
 
   @BeforeClass
   public static void setUpClass() {
@@ -74,27 +76,27 @@ public class DownloadHeadersStepTest {
             new NoOpMetricsSystem());
 
     checkpointRange =
-        new CheckpointRange(
+        new SyncTargetRange(
             syncTarget, blockchain.getBlockHeader(1).get(), blockchain.getBlockHeader(10).get());
   }
 
   @Test
   public void shouldRetrieveHeadersForCheckpointRange() {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    final CompletableFuture<CheckpointRangeHeaders> result = downloader.apply(checkpointRange);
+    final CompletableFuture<RangeHeaders> result = downloader.apply(checkpointRange);
 
     peer.respond(blockchainResponder(blockchain));
 
     // The start of the range should have been imported as part of the previous batch hence 2-10.
     assertThat(result)
-        .isCompletedWithValue(new CheckpointRangeHeaders(checkpointRange, headersFromChain(2, 10)));
+        .isCompletedWithValue(new RangeHeaders(checkpointRange, headersFromChain(2, 10)));
   }
 
   @Test
   public void shouldCancelRequestToPeerWhenReturnedFutureIsCancelled() {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    final CompletableFuture<CheckpointRangeHeaders> result = this.downloader.apply(checkpointRange);
+    final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
 
     result.cancel(true);
 
@@ -107,28 +109,28 @@ public class DownloadHeadersStepTest {
 
   @Test
   public void shouldReturnOnlyEndHeaderWhenCheckpointRangeHasLengthOfOne() {
-    final CheckpointRange checkpointRange =
-        new CheckpointRange(
+    final SyncTargetRange checkpointRange =
+        new SyncTargetRange(
             syncTarget, blockchain.getBlockHeader(3).get(), blockchain.getBlockHeader(4).get());
 
-    final CompletableFuture<CheckpointRangeHeaders> result = this.downloader.apply(checkpointRange);
+    final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
 
     assertThat(result)
-        .isCompletedWithValue(new CheckpointRangeHeaders(checkpointRange, headersFromChain(4, 4)));
+        .isCompletedWithValue(new RangeHeaders(checkpointRange, headersFromChain(4, 4)));
   }
 
   @Test
   public void shouldGetRemainingHeadersWhenRangeHasNoEnd() {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    final CheckpointRange checkpointRange =
-        new CheckpointRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
+    final SyncTargetRange checkpointRange =
+        new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
 
-    final CompletableFuture<CheckpointRangeHeaders> result = this.downloader.apply(checkpointRange);
+    final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
 
     peer.respond(blockchainResponder(blockchain));
 
     assertThat(result)
-        .isCompletedWithValue(new CheckpointRangeHeaders(checkpointRange, headersFromChain(4, 19)));
+        .isCompletedWithValue(new RangeHeaders(checkpointRange, headersFromChain(4, 19)));
   }
 
   private List<BlockHeader> headersFromChain(final long startNumber, final long endNumber) {

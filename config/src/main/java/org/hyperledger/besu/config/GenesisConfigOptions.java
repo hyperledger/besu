@@ -48,6 +48,8 @@ public interface GenesisConfigOptions {
 
   IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
+  CheckpointConfigOptions getCheckpointOptions();
+
   CliqueConfigOptions getCliqueConfigOptions();
 
   BftConfigOptions getBftConfigOptions();
