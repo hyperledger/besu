@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
@@ -274,6 +275,13 @@ public class EthProtocolManager
       LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
+    }
+
+    if(isProofOfStake.get()) {
+      if(code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES) {
+        LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
+        ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      }
     }
 
     // This will handle responses
