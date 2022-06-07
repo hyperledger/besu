@@ -96,9 +96,28 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getFinalizedBlockHash(),
         forkChoice.getSafeBlockHash());
 
+    if (optionalPayloadAttributes.isPresent()) {
+      debugLambda(
+          LOG,
+          new StringBuilder("timestamp: ")
+              .append(optionalPayloadAttributes.get().getTimestamp())
+              .append(", prevRandao: ")
+              .append(optionalPayloadAttributes.get().getPrevRandao().toHexString())
+              .append(", suggestedFeeRecipient: ")
+              .append(optionalPayloadAttributes.get().getSuggestedFeeRecipient().toHexString())
+              .toString());
+    } else {
+      debugLambda(LOG, "Payload attributes are null");
+    }
+
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
+    }
+
+    if (optionalPayloadAttributes.isPresent()
+        && !isPayloadAttributesValid(optionalPayloadAttributes.get(), newHead.get())) {
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
@@ -198,6 +217,11 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     // a valid safe block must be an ancestor of the new block
     return mergeCoordinator.isDescendantOf(maybeSafeBlock.get(), newBlock);
+  }
+
+  private boolean isPayloadAttributesValid(
+      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
+    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   private JsonRpcResponse syncingResponse(final Object requestId) {
