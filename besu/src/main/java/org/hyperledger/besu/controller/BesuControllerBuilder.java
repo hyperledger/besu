@@ -98,6 +98,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -359,11 +360,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           Optional.of(
               ImmutableCheckpoint.builder()
                   .blockHash(
-                      Hash.fromHexString(configOptions.getCheckpointOptions().getHash().get()))
+                      Hash.fromHexString(
+                          configOptions.getCheckpointOptions().getHash().get())) // NOSONAR
                   .blockNumber(configOptions.getCheckpointOptions().getNumber().getAsLong())
                   .totalDifficulty(
                       Difficulty.fromHexString(
-                          configOptions.getCheckpointOptions().getTotalDifficulty().get()))
+                          configOptions
+                              .getCheckpointOptions()
+                              .getTotalDifficulty()
+                              .get())) // NOSONAR
                   .build());
     }
 
@@ -403,19 +408,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
 
     final Synchronizer synchronizer =
-        new DefaultSynchronizer(
-            syncConfig,
+        createSynchronizer(
             protocolSchedule,
-            protocolContext,
             worldStateStorage,
-            ethProtocolManager.getBlockBroadcaster(),
+            protocolContext,
             maybePruner,
             ethContext,
             syncState,
-            dataDirectory,
-            clock,
-            metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            ethProtocolManager,
             pivotBlockSelector);
 
     final MiningCoordinator miningCoordinator =
@@ -432,7 +432,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
-    ;
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -459,6 +458,32 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  @NotNull
+  protected DefaultSynchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+    return new DefaultSynchronizer(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        worldStateStorage,
+        ethProtocolManager.getBlockBroadcaster(),
+        maybePruner,
+        ethContext,
+        syncState,
+        dataDirectory,
+        clock,
+        metricsSystem,
+        getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+        pivotBlockSelector);
   }
 
   private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
@@ -507,7 +532,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected void prepForBuild() {}
 
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext) { // NOSONAR
     return apis -> Collections.emptyMap();
   }
 
@@ -517,9 +542,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final SubProtocolConfiguration subProtocolConfiguration =
         new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
     maybeSnapProtocolManager.ifPresent(
-        snapProtocolManager -> {
-          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
-        });
+        snapProtocolManager ->
+            subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager));
     return subProtocolConfiguration;
   }
 
