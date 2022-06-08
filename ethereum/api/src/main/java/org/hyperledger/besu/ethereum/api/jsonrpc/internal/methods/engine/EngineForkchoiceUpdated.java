@@ -96,19 +96,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getFinalizedBlockHash(),
         forkChoice.getSafeBlockHash());
 
-    if (optionalPayloadAttributes.isPresent()) {
-      debugLambda(
-          LOG,
-          new StringBuilder("timestamp: ")
-              .append(optionalPayloadAttributes.get().getTimestamp())
-              .append(", prevRandao: ")
-              .append(optionalPayloadAttributes.get().getPrevRandao().toHexString())
-              .append(", suggestedFeeRecipient: ")
-              .append(optionalPayloadAttributes.get().getSuggestedFeeRecipient().toHexString())
-              .toString());
-    } else {
-      debugLambda(LOG, "Payload attributes are null");
-    }
+    optionalPayloadAttributes.ifPresentOrElse(
+        this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
@@ -171,6 +160,15 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             result.getNewHead().map(BlockHeader::getHash).orElse(null),
             payloadId.orElse(null),
             Optional.empty()));
+  }
+
+  private void logPayload(EnginePayloadAttributesParameter payloadAttributes) {
+    debugLambda(
+        LOG,
+        "timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}",
+        payloadAttributes::getTimestamp,
+        () -> payloadAttributes.getPrevRandao().toHexString(),
+        () -> payloadAttributes.getPrevRandao().toHexString());
   }
 
   private boolean isValidForkchoiceState(
