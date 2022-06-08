@@ -162,7 +162,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
-  private void logPayload(EnginePayloadAttributesParameter payloadAttributes) {
+  private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
     debugLambda(
         LOG,
         "timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}",
