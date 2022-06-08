@@ -210,7 +210,8 @@ public class RlpxAgent {
    * @return A future that will resolve to the existing or newly-established connection with this
    *     peer.
    */
-  public CompletableFuture<PeerConnection> connect(final Peer peer) {
+  public CompletableFuture<PeerConnection> connect(
+      final Peer peer) { // TODO: with the new approach to only
     // Check if we're ready to establish connections
     if (!localNode.isReady()) {
       return CompletableFuture.failedFuture(
@@ -264,7 +265,10 @@ public class RlpxAgent {
             final RlpxConnection newConnection = RlpxConnection.outboundConnection(peer, future);
             newConnection.subscribeConnectionEstablished(
                 (conn) -> {
-                  this.dispatchConnect(conn.getPeerConnection());
+                  final PeerConnection newPeerConnection = conn.getPeerConnection();
+                  newPeerConnection.setOnPeerReadyCallback(
+                      () -> callOnConnectionReady(newPeerConnection));
+                  this.dispatchConnect(newPeerConnection);
                   this.enforceConnectionLimits();
                 },
                 (failedConn) -> cleanUpPeerConnection(failedConn.getId()));
@@ -383,38 +387,44 @@ public class RlpxAgent {
       return;
     }
 
+    peerConnection.setOnPeerReadyCallback(() -> callOnConnectionReady(peerConnection));
+    dispatchConnect(peerConnection);
+  }
+
+  private boolean callOnConnectionReady(final PeerConnection peerConnection) {
+
     // Track this new connection, deduplicating existing connection if necessary
     final AtomicBoolean newConnectionAccepted = new AtomicBoolean(false);
-    final RlpxConnection inboundConnection = RlpxConnection.inboundConnection(peerConnection);
+    final RlpxConnection newConnection = RlpxConnection.inboundConnection(peerConnection);
     // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
     // disconnect command until we've returned from our compute() calculation
     final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
     connectionsById.compute(
-        peer.getId(),
+        peerConnection.getPeer().getId(),
         (nodeId, existingConnection) -> {
           if (existingConnection == null) {
             // The new connection is unique, set it and return
-            LOG.debug("Inbound connection established with {}", peerConnection.getPeer().getId());
+            LOG.debug("Connection established with {}", peerConnection.getPeer().getId());
             newConnectionAccepted.set(true);
-            return inboundConnection;
+            return newConnection;
           }
           // We already have an existing connection, figure out which connection to keep
-          if (compareDuplicateConnections(inboundConnection, existingConnection) < 0) {
+          if (compareDuplicateConnections(newConnection, existingConnection) < 0) {
             // Keep the inbound connection
             LOG.debug(
-                "Duplicate connection detected, disconnecting previously established connection in favor of new inbound connection for peer:  {}",
+                "Duplicate connection detected, disconnecting previously established connection in favor of new connection for peer:  {}",
                 peerConnection.getPeer().getId());
             disconnectAction.set(
                 () -> existingConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             newConnectionAccepted.set(true);
-            return inboundConnection;
+            return newConnection;
           } else {
             // Keep the existing connection
             LOG.debug(
-                "Duplicate connection detected, disconnecting inbound connection in favor of previously established connection for peer:  {}",
+                "Duplicate connection detected, disconnecting connection in favor of previously established connection for peer:  {}",
                 peerConnection.getPeer().getId());
             disconnectAction.set(
-                () -> inboundConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
+                () -> newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             return existingConnection;
           }
         });
@@ -422,13 +432,13 @@ public class RlpxAgent {
     if (!isNull(disconnectAction.get())) {
       disconnectAction.get().run();
     }
-    if (newConnectionAccepted.get()) {
-      dispatchConnect(peerConnection);
-    }
+
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();
     enforceConnectionLimits();
     traceLambda(LOG, "{}", this::logConnectionsByIdToString);
+
+    return newConnectionAccepted.get();
   }
 
   private boolean shouldLimitRemoteConnections() {

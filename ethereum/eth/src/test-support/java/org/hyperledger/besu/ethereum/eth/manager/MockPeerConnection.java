@@ -112,6 +112,15 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
+  public boolean onPeerReady() {
+    return true;
+  }
+
+  @Override
+  public void setOnPeerReadyCallback(
+      final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {}
+
+  @Override
   public boolean isDisconnected() {
     return disconnected;
   }

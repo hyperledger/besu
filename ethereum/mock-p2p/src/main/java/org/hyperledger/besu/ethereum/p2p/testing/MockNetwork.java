@@ -308,5 +308,14 @@ public final class MockNetwork {
     public InetSocketAddress getRemoteAddress() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean onPeerReady() {
+      return true;
+    }
+
+    @Override
+    public void setOnPeerReadyCallback(
+        final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {}
   }
 }

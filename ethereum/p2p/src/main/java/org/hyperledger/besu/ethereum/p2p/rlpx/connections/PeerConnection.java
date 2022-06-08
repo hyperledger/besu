@@ -112,6 +112,10 @@ public interface PeerConnection {
 
   InetSocketAddress getRemoteAddress();
 
+  boolean onPeerReady();
+
+  void setOnPeerReadyCallback(PeerConnectionReadyCallback onPeerConnectionReadyCallback);
+
   class PeerNotConnected extends IOException {
 
     public PeerNotConnected(final String message) {
@@ -121,5 +125,10 @@ public interface PeerConnection {
 
   default EnodeURL getRemoteEnode() {
     return getPeer().getEnodeURL();
+  }
+
+  @FunctionalInterface
+  public interface PeerConnectionReadyCallback {
+    boolean onPeerConnectionReady();
   }
 }

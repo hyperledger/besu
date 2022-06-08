@@ -43,6 +43,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -455,7 +456,7 @@ public class EthPeerTest {
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
-    PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
+    final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return new EthPeer(
         peerConnection,
@@ -463,7 +464,8 @@ public class EthPeerTest {
         onPeerReady,
         Collections.emptyList(),
         clock,
-        Collections.emptyList());
+        Collections.emptyList(),
+        new CompletableFuture<>());
   }
 
   private EthPeer createPeer(
@@ -474,7 +476,13 @@ public class EthPeerTest {
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     return new EthPeer(
-        peerConnection, "foo", onPeerReady, peerValidators, clock, permissioningProviders);
+        peerConnection,
+        "foo",
+        onPeerReady,
+        peerValidators,
+        clock,
+        permissioningProviders,
+        new CompletableFuture<>());
   }
 
   @FunctionalInterface

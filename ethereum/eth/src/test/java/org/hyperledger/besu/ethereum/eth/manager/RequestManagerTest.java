@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -305,6 +306,7 @@ public class RequestManagerTest {
         onPeerReady,
         Collections.emptyList(),
         TestClock.fixed(),
-        Collections.emptyList());
+        Collections.emptyList(),
+        new CompletableFuture<>());
   }
 }

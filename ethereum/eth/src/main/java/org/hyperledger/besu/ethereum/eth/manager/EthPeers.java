@@ -30,11 +30,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthPeers {
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
@@ -49,7 +53,8 @@ public class EthPeers {
       Comparator.comparing(EthPeer::outstandingRequests)
           .thenComparing(EthPeer::getLastRequestTimestamp);
 
-  private final Map<PeerConnection, EthPeer> connections = new ConcurrentHashMap<>();
+  private final Map<Bytes, EthPeer> connections = new ConcurrentHashMap<>();
+  private final Map<PeerConnection, EthPeer> preStatusExchangedPeers = new ConcurrentHashMap<>();
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
@@ -83,8 +88,25 @@ public class EthPeers {
         pendingRequests::size);
   }
 
-  public void registerConnection(
+  public void registerConnection(final PeerConnection peerConnection) {
+    connections.compute(
+        peerConnection.getPeer().getId(),
+        (con, existingPeer) -> {
+          if (existingPeer != null) {
+            existingPeer.replaceConnection(peerConnection);
+            return existingPeer;
+          } else {
+            return preStatusExchangedPeers.get(peerConnection);
+          }
+        });
+    preStatusExchangedPeers.remove(
+        peerConnection); // TODO: should we have a time limit that peers can be in the preStatus
+    // list?
+  }
+
+  public EthPeer preStatusExchangedConnection(
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
+    final CompletableFuture<EthPeer> ethPeerCompletableFuture = new CompletableFuture<>();
     final EthPeer peer =
         new EthPeer(
             peerConnection,
@@ -92,12 +114,30 @@ public class EthPeers {
             this::invokeConnectionCallbacks,
             peerValidators,
             clock,
-            permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
+            permissioningProviders,
+            ethPeerCompletableFuture);
+    ethPeerCompletableFuture.whenComplete(
+        (peerToAdd, execption) -> {
+          if (execption == null) {
+            connections.put(
+                peerConnection.getPeer().getId(),
+                peer); // TODO: add getter for id to EthPeer. I think it is a bit confusing that
+            // EthPeer is not implementing Peer ...
+          } else {
+            // TODO: do we have to call disconnect on the connection here? Maybe only if that was a
+            // TimeoutException?
+          }
+          preStatusExchangedPeers.remove(peerConnection.getPeer().getId());
+        });
+    ethPeerCompletableFuture.orTimeout(
+        5, TimeUnit.SECONDS); // if the connection is not ready after 5 seconds complete the future
+    // exeptionally
+    preStatusExchangedPeers.put(peerConnection, peer);
+    return peer;
   }
 
   public void registerDisconnect(final PeerConnection connection) {
-    final EthPeer peer = connections.remove(connection);
+    final EthPeer peer = connections.remove(connection.getPeer().getId());
     if (peer != null) {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
@@ -119,7 +159,8 @@ public class EthPeers {
   }
 
   public EthPeer peer(final PeerConnection peerConnection) {
-    return connections.get(peerConnection);
+    return connections.getOrDefault(
+        peerConnection.getPeer().getId(), preStatusExchangedPeers.get(peerConnection));
   }
 
   public PendingPeerRequest executePeerRequest(
@@ -176,7 +217,9 @@ public class EthPeers {
     return connections.values().stream();
   }
 
-  public Stream<EthPeer> streamAvailablePeers() {
+  public Stream<EthPeer>
+      streamAvailablePeers() { // TODO: remove this method, as all the conections in 'connections'
+    // are ready!
     return streamAllPeers().filter(EthPeer::readyForRequests);
   }
 
@@ -199,7 +242,8 @@ public class EthPeers {
 
   @FunctionalInterface
   public interface ConnectCallback {
-    void onPeerConnected(EthPeer newPeer);
+    void onPeerConnected(
+        EthPeer newPeer); // TODO: We could make use of a "ready" callback instead of this ... ?
   }
 
   @Override

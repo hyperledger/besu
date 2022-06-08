@@ -123,7 +123,7 @@ public class RespondingEthPeer {
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
-    ethPeers.registerConnection(peerConnection, peerValidators);
+    ethPeers.preStatusExchangedConnection(peerConnection, peerValidators);
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));

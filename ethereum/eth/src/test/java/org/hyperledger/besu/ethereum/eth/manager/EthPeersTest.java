@@ -272,7 +272,7 @@ public class EthPeersTest {
     final EthPeer peerA =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(50), 20)
             .getEthPeer();
-    ethPeers.registerConnection(peerA.getConnection(), Collections.emptyList());
+    ethPeers.preStatusExchangedConnection(peerA.getConnection(), Collections.emptyList());
     assertThat(ethPeers.toString()).contains("1 EthPeers {");
     assertThat(ethPeers.toString()).contains(peerA.getShortNodeId());
   }

@@ -36,6 +36,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -117,7 +118,14 @@ public class AdminPeersTest {
             new InetSocketAddress("1.2.3.4", 9876),
             new InetSocketAddress("4.3.2.1", 6789));
     final EthPeer ethPeer =
-        new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed(), Collections.emptyList());
+        new EthPeer(
+            p,
+            "eth",
+            c -> {},
+            List.of(),
+            TestClock.fixed(),
+            Collections.emptyList(),
+            new CompletableFuture<>());
     return Lists.newArrayList(ethPeer);
   }
 

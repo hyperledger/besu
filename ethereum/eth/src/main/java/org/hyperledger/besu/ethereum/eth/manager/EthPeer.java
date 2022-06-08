@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,8 +69,9 @@ public class EthPeer implements Comparable<EthPeer> {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeer.class);
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
+  private final CompletableFuture<EthPeer> ethPeerCompletableFuture;
 
-  private final PeerConnection connection;
+  private PeerConnection connection;
 
   private final int maxTrackedSeenBlocks = 300;
 
@@ -82,7 +84,6 @@ public class EthPeer implements Comparable<EthPeer> {
                   return size() > maxTrackedSeenBlocks;
                 }
               }));
-
   private Optional<BlockHeader> checkpointHeader = Optional.empty();
 
   private final String protocolName;
@@ -125,12 +126,14 @@ public class EthPeer implements Comparable<EthPeer> {
       final Consumer<EthPeer> onStatusesExchanged,
       final List<PeerValidator> peerValidators,
       final Clock clock,
-      final List<NodeMessagePermissioningProvider> permissioningProviders) {
+      final List<NodeMessagePermissioningProvider> permissioningProviders,
+      final CompletableFuture<EthPeer> ethPeerCompletableFuture) {
     this.connection = connection;
     this.protocolName = protocolName;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.onStatusesExchanged.set(onStatusesExchanged);
+    this.ethPeerCompletableFuture = ethPeerCompletableFuture;
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
@@ -433,10 +436,16 @@ public class EthPeer implements Comparable<EthPeer> {
   private void maybeExecuteStatusesExchangedCallback() {
     if (readyForRequests()) {
       final Consumer<EthPeer> callback = onStatusesExchanged.getAndSet(null);
-      if (callback == null) {
-        return;
+      if (connection
+          .onPeerReady()) { // returns true if the new connection was added to the rlpx connections
+        ethPeerCompletableFuture.complete(this);
+        if (callback == null) {
+          return;
+        }
+        callback.accept(this);
+      } else {
+        ethPeerCompletableFuture.completeExceptionally(new RuntimeException());
       }
-      callback.accept(this);
     }
   }
 
@@ -565,6 +574,10 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public Optional<BlockHeader> getCheckpointHeader() {
     return checkpointHeader;
+  }
+
+  public void replaceConnection(final PeerConnection peerConnection) {
+    this.connection = peerConnection;
   }
 
   @FunctionalInterface

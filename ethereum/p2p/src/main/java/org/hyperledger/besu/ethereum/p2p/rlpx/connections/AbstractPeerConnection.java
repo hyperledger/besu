@@ -53,6 +53,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private PeerConnectionReadyCallback onPeerConnectionReadyCallback;
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -175,6 +176,20 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public InetSocketAddress getRemoteAddress() {
     return remoteAddress;
+  }
+
+  @Override
+  public boolean onPeerReady() {
+    if (onPeerConnectionReadyCallback != null) {
+      return onPeerConnectionReadyCallback.onPeerConnectionReady();
+    }
+    return true;
+  }
+
+  @Override
+  public void setOnPeerReadyCallback(
+      final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
+    this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
   }
 
   @Override

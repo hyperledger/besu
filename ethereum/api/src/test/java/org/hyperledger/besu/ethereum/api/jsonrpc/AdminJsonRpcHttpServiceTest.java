@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -77,7 +78,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             c -> {},
             List.of(),
             TestClock.fixed(),
-            Collections.emptyList()));
+            Collections.emptyList(),
+            new CompletableFuture<>()));
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info2, addr30301, addr60302),
@@ -85,7 +87,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             c -> {},
             List.of(),
             TestClock.fixed(),
-            Collections.emptyList()));
+            Collections.emptyList(),
+            new CompletableFuture<>()));
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info3, addr30301, addr60303),
@@ -93,7 +96,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             c -> {},
             List.of(),
             TestClock.fixed(),
-            Collections.emptyList()));
+            Collections.emptyList(),
+            new CompletableFuture<>()));
 
     when(ethPeersMock.streamAllPeers()).thenReturn(peerList.stream());
     when(peerDiscoveryMock.getPeerCount()).thenReturn(peerList.size());

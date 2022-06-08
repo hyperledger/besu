@@ -305,11 +305,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    ethPeers.registerConnection(connection, peerValidators);
-    final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
-      return;
-    }
+    // before adding a new EthPeer to EthPeers we wait until the new connection is useful
+    final EthPeer tmpEthPeer = ethPeers.preStatusExchangedConnection(connection, peerValidators);
 
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
@@ -325,9 +322,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {}.", peer);
-      peer.send(status, getSupportedProtocol());
-      peer.registerStatusSent();
+      LOG.debug("Sending status message to {}.", tmpEthPeer);
+      tmpEthPeer.send(status, getSupportedProtocol());
+      tmpEthPeer.registerStatusSent();
+      // arrived at the peer
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
