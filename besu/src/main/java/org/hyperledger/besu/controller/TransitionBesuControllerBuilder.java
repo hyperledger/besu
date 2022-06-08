@@ -178,10 +178,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             pivotBlockSelector);
 
     ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
-    if(cc instanceof MergeContext) {
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(sync);
+    if (cc instanceof MergeContext) {
+      protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
     }
     return sync;
   }
@@ -211,7 +209,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             peerValidators);
 
     ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
-    if(cc instanceof MergeContext) {
+    if (cc instanceof MergeContext) {
       protocolContext
           .getConsensusContext(MergeContext.class)
           .observeNewIsPostMergeState(ethProtocolManager);
