@@ -61,7 +61,9 @@ dependencies {
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:api')
+  testImplementation project(path: ':ethereum:blockcreation')
   testImplementation project(path: ':ethereum:referencetests')
+  testImplementation project(path: ':ethereum:eth')
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
