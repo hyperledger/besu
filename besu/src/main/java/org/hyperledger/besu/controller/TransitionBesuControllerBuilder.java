@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
@@ -176,9 +177,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             ethProtocolManager,
             pivotBlockSelector);
 
-    protocolContext
-        .getConsensusContext(TransitionContext.class)
-        .addNewForkchoiceMessageListener(sync);
+    ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
+    if(cc instanceof MergeContext) {
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .addNewForkchoiceMessageListener(sync);
+    }
     return sync;
   }
 
@@ -206,12 +210,15 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             scheduler,
             peerValidators);
 
-    protocolContext
-        .getConsensusContext(TransitionContext.class)
-        .observeNewIsPostMergeState(ethProtocolManager);
-    protocolContext
-        .getConsensusContext(TransitionContext.class)
-        .addNewForkchoiceMessageListener(ethProtocolManager);
+    ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
+    if(cc instanceof MergeContext) {
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .observeNewIsPostMergeState(ethProtocolManager);
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .addNewForkchoiceMessageListener(ethProtocolManager);
+    }
 
     return ethProtocolManager;
   }
