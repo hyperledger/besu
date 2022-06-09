@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - \[EXPERIMENTAL\] Add checkpoint sync `--sync-mode="X_CHECKPOINT"` [#3849](https://github.com/hyperledger/besu/pull/3849)
+- Support `latest` and `safe` as tags for the block parameter in RPC APIs [#3950](https://github.com/hyperledger/besu/pull/3950)
 
 ### Bug Fixes
 

@@ -71,6 +71,7 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
   private Object posRelatedResult(
       final JsonRpcRequestContext request,
       final Function<BlockchainQueries, Optional<BlockHeader>> blockHeaderSupplier) {
+
     return blockHeaderSupplier
         .apply(blockchainQueriesSupplier.get())
         .map(header -> resultByBlockNumber(request, header.getNumber()))
