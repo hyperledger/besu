@@ -202,6 +202,10 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless
+      - run:
           name: IntegrationTests
           command: |
             ./gradlew --no-daemon integrationTest
@@ -236,6 +240,10 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless
       - run:
           name: AcceptanceTests
           no_output_timeout: 30m
