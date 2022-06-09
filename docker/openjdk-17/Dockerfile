@@ -1,9 +1,9 @@
 
 FROM ubuntu:20.04
-
 ARG VERSION="dev"
-RUN apt-get update  && \
- apt-get install --no-install-recommends -q --assume-yes curl=7* wget=1.20* jq=1.6* net-tools=1.60* openjdk-11-jdk-headless=11* && \
+
+RUN apt-get update && \
+ apt-get install --no-install-recommends -q --assume-yes openjdk-17-jre-headless=17* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  adduser --disabled-password --gecos "" --home /opt/besu besu && \
@@ -15,31 +15,19 @@ WORKDIR /opt/besu
 COPY --chown=besu:besu besu /opt/besu/
 
 # Expose services ports
-# 5005 JDWP for attaching remote debuggers
 # 8545 HTTP JSON-RPC
 # 8546 WS JSON-RPC
 # 8547 HTTP GraphQL
 # 8550 HTTP ENGINE JSON-RPC
 # 8551 WS ENGINE JSON-RPC
-# 9545 Metrics
-# 1098 JMX / JMX-RMI
 # 30303 P2P
-EXPOSE 5005 8545 8546 8547 8550 8551 9545 1098 30303
+EXPOSE 8545 8546 8547 8550 8551 30303
 
 # defaults for host interfaces
 ENV BESU_RPC_HTTP_HOST 0.0.0.0
 ENV BESU_RPC_WS_HOST 0.0.0.0
 ENV BESU_GRAPHQL_HTTP_HOST 0.0.0.0
-ENV BESU_METRICS_HOST 0.0.0.0
-ENV BESU_JMX_HOST 0.0.0.0
 ENV BESU_PID_PATH "/tmp/pid"
-ENV BESU_HOST_ALLOWLIST "*"
-
-#debug options for maximum observability
-ENV BESU_LOGGING "INFO"
-ENV BESU_RPC_HTTP_API  "ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL"
-ENV JDWP_OPTS "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
-ENV JAVA_OPTS "${JDWP_OPTS} "
 
 ENV OTEL_RESOURCE_ATTRIBUTES="service.name=besu,service.version=$VERSION"
 

@@ -48,7 +48,7 @@ executors:
 
   xl_machine_executor:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2204:2022.04.2
     resource_class: xlarge
 
   trivy_executor:
@@ -225,6 +225,10 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless
+      - run:
           name: IntegrationTests
           command: |
             ./gradlew --no-daemon integrationTest
@@ -259,6 +263,10 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless
       - run:
           name: AcceptanceTests
           no_output_timeout: 30m
