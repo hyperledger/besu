@@ -212,7 +212,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   public Result executeBlockWithoutSaving(final Block block) {
     return executeBlockWithoutSaving(block,false);
   }
-  public Result executeBlockWithoutSaving(final Block block, boolean shouldSave) {
+  public Result executeBlockWithoutSaving(final Block block, final boolean shouldSave) {
 
     final var chain = protocolContext.getBlockchain();
     chain
