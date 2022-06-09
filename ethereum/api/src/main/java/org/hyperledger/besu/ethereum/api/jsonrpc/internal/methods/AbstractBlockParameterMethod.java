@@ -82,22 +82,19 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
   protected Object findResultByParamType(final JsonRpcRequestContext request) {
     final BlockParameter blockParam = blockParameter(request);
-
     final Optional<Long> blockNumber = blockParam.getNumber();
+
     if (blockNumber.isPresent()) {
       return resultByBlockNumber(request, blockNumber.get());
-    }
-    if (blockParam.isLatest()) {
+    } else if (blockParam.isLatest()) {
       return latestResult(request);
-    }
-    if (blockParam.isFinalized()) {
+    } else if (blockParam.isFinalized()) {
       return finalizedResult(request);
-    }
-    if (blockParam.isSafe()) {
+    } else if (blockParam.isSafe()) {
       return safeResult(request);
+    } else {
+      return pendingResult(request);
     }
-
-    return pendingResult(request);
   }
 
   @Override
