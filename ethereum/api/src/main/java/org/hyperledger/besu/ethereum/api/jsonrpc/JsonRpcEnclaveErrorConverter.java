@@ -26,7 +26,7 @@ public class JsonRpcEnclaveErrorConverter {
 
     final List<JsonRpcError> err =
         Arrays.stream(JsonRpcError.values())
-            .filter(e -> reason.contains(e.getMessage()))
+            .filter(e -> e.getMessage().equals(reason))
             .collect(Collectors.toList());
 
     if (err.size() == 1) {
