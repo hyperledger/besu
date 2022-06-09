@@ -169,20 +169,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
-    final Block emptyBlock =
-        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
-
-    Result result = executeBlock(emptyBlock);
-    if (result.blockProcessingOutputs.isPresent()) {
-      mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
-      // TODO: temporary workaround for implicit head change by validateAndProcessBlock:
-      protocolContext.getBlockchain().rewindToBlock(emptyBlock.getHeader().getParentHash());
-    } else {
-      LOG.warn(
-          "failed to execute empty block proposal {}, reason {}",
-          emptyBlock.getHash(),
-          result.errorMessage);
-    }
+    mergeContext.putPayloadById(
+        payloadIdentifier,
+        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp));
 
     // start working on a full block and update the payload value and candidate when it's ready
     CompletableFuture.supplyAsync(
@@ -193,19 +182,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                final var resultBest = executeBlock(bestBlock);
-                if (resultBest.blockProcessingOutputs.isPresent()) {
-                  mergeContext.putPayloadById(payloadIdentifier, bestBlock);
-                  // TODO: temporary workaround for implicit head change by validateAndProcessBlock:
-                  protocolContext
-                      .getBlockchain()
-                      .rewindToBlock(emptyBlock.getHeader().getParentHash());
-                } else {
-                  LOG.warn(
-                      "failed to execute block proposal {}, reason {}",
-                      bestBlock.getHash(),
-                      resultBest.errorMessage);
-                }
+                mergeContext.putPayloadById(payloadIdentifier, bestBlock);
               }
             });
 
@@ -228,29 +205,37 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public Result executeBlock(final Block block) {
+    return  executeBlockWithoutSaving(block,true);
+  }
+
+  @Override
+  public Result executeBlockWithoutSaving(final Block block) {
+    return executeBlockWithoutSaving(block,false);
+  }
+  public Result executeBlockWithoutSaving(final Block block, boolean shouldSave) {
 
     final var chain = protocolContext.getBlockchain();
     chain
-        .getBlockHeader(block.getHeader().getParentHash())
-        .ifPresentOrElse(
-            blockHeader ->
-                debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
-            () -> backwardSyncContext.syncBackwardsUntil(block));
+            .getBlockHeader(block.getHeader().getParentHash())
+            .ifPresentOrElse(
+                    blockHeader ->
+                            debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
+                    () -> backwardSyncContext.syncBackwardsUntil(block));
 
     final var validationResult =
-        protocolSchedule
-            .getByBlockNumber(block.getHeader().getNumber())
-            .getBlockValidator()
-            .validateAndProcessBlock(
-                protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
+            protocolSchedule
+                    .getByBlockNumber(block.getHeader().getNumber())
+                    .getBlockValidator()
+                    .validateAndProcessBlock(
+                            protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE,shouldSave);
 
     validationResult.blockProcessingOutputs.ifPresentOrElse(
-        result -> chain.appendBlock(block, result.receipts),
-        () ->
-            protocolSchedule
-                .getByBlockNumber(chain.getChainHeadBlockNumber())
-                .getBadBlocksManager()
-                .addBadBlock(block));
+            result -> chain.appendBlock(block, result.receipts),
+            () ->
+                    protocolSchedule
+                            .getByBlockNumber(chain.getChainHeadBlockNumber())
+                            .getBadBlocksManager()
+                            .addBadBlock(block));
 
     return validationResult;
   }

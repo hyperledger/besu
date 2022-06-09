@@ -56,6 +56,14 @@ public interface BlockValidator {
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode);
 
+
+  Result validateAndProcessBlock(
+          final ProtocolContext context,
+          final Block block,
+          final HeaderValidationMode headerValidationMode,
+          final HeaderValidationMode ommerValidationMode,
+          final boolean shouldPersist);
+
   boolean fastBlockValidation(
       final ProtocolContext context,
       final Block block,
