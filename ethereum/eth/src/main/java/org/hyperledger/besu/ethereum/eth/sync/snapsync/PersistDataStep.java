@@ -50,8 +50,7 @@ public class PersistDataStep {
           if (!task.getData().isExpired(snapSyncState)) {
             enqueueChildren(childRequests);
           } else {
-            // not saved because it's expired and missing child requests
-            return tasks;
+            continue;
           }
         }
 
