@@ -30,8 +30,8 @@ plugins {
   id 'maven-publish'
 }
 
-if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+  throw new GradleException("Java 17 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -99,8 +99,8 @@ allprojects {
     from javadoc.outputDirectory
   }
 
-  sourceCompatibility = 11
-  targetCompatibility = 11
+  sourceCompatibility = 17
+  targetCompatibility = 17
 
   repositories {
     maven {
@@ -261,8 +261,10 @@ allprojects {
   }
 
   javadoc {
-    options.addStringOption('Xdoclint:all', '-quiet')
-    options.addStringOption('Xwerror', '-html5')
+    options.addStringOption('Xdoclint:all,-missing')
+    options.addStringOption('quiet')
+    options.addStringOption('Xwerror')
+    options.addStringOption('html5')
     options.encoding = 'UTF-8'
   }
 
@@ -605,10 +607,9 @@ artifactoryPublish {
 }
 
 def dockerVariants = [
-  "openjdk-11",
-  "openjdk-11-debug",
+  "openjdk-17",
+  "openjdk-17-debug",
   "graalvm",
-  "openjdk-latest"
 ]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -703,7 +704,7 @@ task acceptanceTestsQuorum {
 
   doLast {
     exec {
-      def variant = "openjdk-latest"
+      def variant = "openjdk-17"
       def variantDirectory = "${buildDir}/quorum-at/${variant}"
       def dataDirectory = "${variantDirectory}/data"
       def reportsDirectory = "${variantDirectory}/reports"
