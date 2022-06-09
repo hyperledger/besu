@@ -16,12 +16,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -57,21 +60,43 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
     return resultByBlockNumber(request, blockchainQueriesSupplier.get().headBlockNumber());
   }
 
+  protected Object finalizedResult(final JsonRpcRequestContext request) {
+    return posRelatedResult(request, BlockchainQueries::finalizedBlockHeader);
+  }
+
+  protected Object safeResult(final JsonRpcRequestContext request) {
+    return posRelatedResult(request, BlockchainQueries::safeBlockHeader);
+  }
+
+  private Object posRelatedResult(
+      final JsonRpcRequestContext request,
+      final Function<BlockchainQueries, Optional<BlockHeader>> blockHeaderSupplier) {
+    return blockHeaderSupplier
+        .apply(blockchainQueriesSupplier.get())
+        .map(header -> resultByBlockNumber(request, header.getNumber()))
+        .orElseGet(
+            () ->
+                new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_BLOCK));
+  }
+
   protected Object findResultByParamType(final JsonRpcRequestContext request) {
     final BlockParameter blockParam = blockParameter(request);
 
-    final Object result;
     final Optional<Long> blockNumber = blockParam.getNumber();
     if (blockNumber.isPresent()) {
-      result = resultByBlockNumber(request, blockNumber.get());
-    } else if (blockParam.isLatest()) {
-      result = latestResult(request);
-    } else {
-      // If block parameter is not numeric or latest, it is pending.
-      result = pendingResult(request);
+      return resultByBlockNumber(request, blockNumber.get());
+    }
+    if (blockParam.isLatest()) {
+      return latestResult(request);
+    }
+    if (blockParam.isFinalized()) {
+      return finalizedResult(request);
+    }
+    if (blockParam.isSafe()) {
+      return safeResult(request);
     }
 
-    return result;
+    return pendingResult(request);
   }
 
   @Override
