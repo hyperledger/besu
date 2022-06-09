@@ -14,9 +14,15 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -36,19 +42,11 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 public class MergeCoordinator implements MergeMiningCoordinator {
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
@@ -230,7 +228,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                             protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE,shouldSave);
 
     validationResult.blockProcessingOutputs.ifPresentOrElse(
-            result -> chain.appendBlock(block, result.receipts),
+            result -> {
+              if (shouldSave) {
+                chain.appendBlock(block, result.receipts);
+              }
+            },
             () ->
                     protocolSchedule
                             .getByBlockNumber(chain.getChainHeadBlockNumber())
