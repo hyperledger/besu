@@ -43,8 +43,8 @@ sonarqube {
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
-if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+  throw new GradleException("Java 17 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -112,8 +112,8 @@ allprojects {
     from javadoc.outputDirectory
   }
 
-  sourceCompatibility = 11
-  targetCompatibility = 11
+  sourceCompatibility = 17
+  targetCompatibility = 17
 
   repositories {
     mavenCentral()
@@ -616,8 +616,8 @@ artifactoryPublish {
 }
 
 def dockerVariants = [
-  "openjdk-11",
-  "openjdk-11-debug",
+  "openjdk-17",
+  "openjdk-17-debug",
   "graalvm",
   "openjdk-latest"
 ]

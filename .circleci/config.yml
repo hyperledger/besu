@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_small:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: small
     working_directory: ~/project
     environment:
@@ -14,7 +14,7 @@ executors:
 
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -32,7 +32,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: xlarge
     working_directory: ~/project
     environment:
@@ -40,7 +40,7 @@ executors:
       
   quorum_ats_executor_med:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -299,13 +299,13 @@ jobs:
           at: ~/project
       - setup_remote_docker
       - run:
-          name: hadoLint_openjdk_11
+          name: hadoLint_openjdk_17
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
       - run:
-          name: hadoLint_openjdk_11_debug
+          name: hadoLint_openjdk_17_debug
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11-debug/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
       - run:
           name: hadoLint_openjdk_latest
           command: |
@@ -332,9 +332,9 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: hadoLint_openjdk_11
+          name: hadoLint_openjdk_17
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
       - run:
           name: hadoLint_openjdk_latest
           command: |
