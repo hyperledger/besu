@@ -70,7 +70,7 @@ import org.slf4j.LoggerFactory;
  * <p>When necessary, it updates the underlying {@link PeerTable}, particularly with additions which
  * may succeed or not depending on the contents of the target bucket for the peer.
  *
- * <h3>Peer state machine</h3>
+ * <h2>Peer state machine</h2>
  *
  * <pre>{@code
  *                                                                +--------------------+
