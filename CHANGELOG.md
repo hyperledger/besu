@@ -7,6 +7,7 @@
 - Support `finalized` and `safe` as tags for the block parameter in RPC APIs [#3950](https://github.com/hyperledger/besu/pull/3950)
 
 ### Bug Fixes
+- alias engine-rpc-port parameter with the former rpc param name [#3958](https://github.com/hyperledger/besu/pull/3958)
 
 ## 22.4.2
 
