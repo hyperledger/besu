@@ -190,7 +190,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
               Assertions.fail("service.start should have failed");
             })
         .withCauseInstanceOf(JsonRpcServiceException.class)
-        .withMessageContaining("Short read of DER length");
+        .withMessageContaining("Tag number over 30 is not supported");
   }
 
   @Test
