@@ -1,4 +1,4 @@
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.snapshot;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
@@ -13,6 +13,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -47,7 +49,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BonsaiWorldStateIsolationTests {
+public class BonsaiSnapshotIsolationTests {
   private BonsaiWorldStateArchive archive;
   private ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
@@ -77,6 +79,8 @@ public class BonsaiWorldStateIsolationTests {
           .filter(ga -> ga.getPrivateKey().isPresent())
           .collect(Collectors.toList());
 
+  KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
+
   @Before
   public void createStorage() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
@@ -88,19 +92,65 @@ public class BonsaiWorldStateIsolationTests {
   }
 
   @Test
-  public void testCopyIsolation() {
-    KeyPair sender = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
-    var tx1 = burnTransaction(sender, 0L, Address.ZERO);
+  public void testFindPathFromHead_behindHead() {
+    Address testAddress = Address.fromHexString("0xdeadbeef");
+    // assert we can find the correct path if we are some number of blocks behind head
+    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash());
 
+    var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
+    var res = executeBlock(archive.getMutable(), firstBlock);
+
+    var isolated2 =  archive.getMutableSnapshot(firstBlock.getHash());
+
+    var res2 = executeBlock(
+        archive.getMutable(),
+        forTransactions(List.of(burnTransaction(sender1, 1L, testAddress))));
+    assertThat(res.isSuccessful()).isTrue();
+    assertThat(res2.isSuccessful()).isTrue();
+
+    var pathToIsolatedFromHead = isolated.get().pathFromHead();
+    assertThat(pathToIsolatedFromHead).isPresent();
+    // our path to genesis should be 2 blocks from head
+    assertThat(pathToIsolatedFromHead.get().collect(Collectors.toList()).size()).isEqualTo(2);
+
+    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
+    assertThat(pathToIsolated2FromHead).isPresent();
+    // our path to genesis should be 1 block from head
+    assertThat(pathToIsolated2FromHead.get().collect(Collectors.toList()).size()).isEqualTo(1);
+
+    assertThat(isolated.get().get(testAddress)).isNull();
+    assertThat(isolated2.get().get(testAddress)).isNotNull();
+    assertThat(isolated2.get().get(testAddress).getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+  }
+
+  @Test
+  public void testFindPathFromHead_pastHead() {
+    // assert we can find the correct path if our state is n blocks ahead of head
+
+  }
+
+    @Test
+  public void testFindPathFromHead_commonAncestor() {
+    // assert we can find the correct path if we are on a different fork from head
+  }
+
+
+  @Test
+  public void testFindPathFromHead_noPath() {
+    // assert we correctly handle when there is no available path between 2 trieLogLayers
+  }
+
+  /**
+   * this is an initial negative test case.  we should expect this to fail with
+   * a mutable and non-persisting copy of the persisted state.
+   */
+  @Test
+  public void testCopyNonIsolation() {
+    var tx1 = burnTransaction(sender1, 0L, Address.ZERO);
     Block oneTx = forTransactions(List.of(tx1));
 
     MutableWorldState firstWorldState = archive.getMutable();
-    var res =
-        protocolSchedule
-            .getByBlockNumber(0)
-            .getBlockProcessor()
-            .processBlock(blockchain, firstWorldState, oneTx);
-    blockchain.appendBlock(oneTx, res.getReceipts());
+    var res = executeBlock(firstWorldState, oneTx);
 
     assertThat(res.isSuccessful()).isTrue();
     // get a copy of this worldstate after it has persisted, then save the account val
@@ -109,18 +159,14 @@ public class BonsaiWorldStateIsolationTests {
     var before = isolated.get().get(beforeAddress);
 
     // build and execute another block
-    var tx2 = burnTransaction(sender, 1L, beforeAddress);
+    var tx2 = burnTransaction(sender1, 1L, beforeAddress);
 
     Block oneMoreTx = forTransactions(List.of(tx2));
 
-    var res2 =
-        protocolSchedule
-            .getByBlockNumber(0)
-            .getBlockProcessor()
-            .processBlock(
-                blockchain,
-                archive.getMutable(oneTx.getHeader().getNumber(), true).get(),
-                oneMoreTx);
+    var res2 = executeBlock(
+        archive.getMutable(
+            oneTx.getHeader().getNumber(), true).get(),
+        oneMoreTx);
     assertThat(res2.isSuccessful()).isTrue();
 
     // compare the cached account value to the current account value from the mutable worldstate
@@ -142,6 +188,15 @@ public class BonsaiWorldStateIsolationTests {
     return TestBlockCreator.forHeader(
             blockchain.getChainHeadHeader(), protocolContext, protocolSchedule, sorter)
         .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis());
+  }
+
+  private BlockProcessor.Result executeBlock(final MutableWorldState ws, final Block block) {
+    var res = protocolSchedule
+        .getByBlockNumber(0)
+        .getBlockProcessor()
+        .processBlock(blockchain, ws, block);
+    blockchain.appendBlock(block, res.getReceipts());
+    return res;
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
