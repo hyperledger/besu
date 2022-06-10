@@ -21,6 +21,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -65,7 +66,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     final EngineForkchoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
-    final Optional<EnginePayloadAttributesParameter> optionalPayloadAttributes =
+    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     Optional<Hash> maybeFinalizedHash =
@@ -96,17 +97,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         forkChoice.getFinalizedBlockHash(),
         forkChoice.getSafeBlockHash());
 
-    optionalPayloadAttributes.ifPresentOrElse(
+    maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
-    }
-
-    if (optionalPayloadAttributes.isPresent()
-        && !isPayloadAttributesValid(optionalPayloadAttributes.get(), newHead.get())) {
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
@@ -122,22 +118,23 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead.get(), forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+            newHead.get(),
+            forkChoice.getFinalizedBlockHash(),
+            forkChoice.getSafeBlockHash(),
+            maybePayloadAttributes.map(
+                payloadAttributes ->
+                    new PayloadAttributes(
+                        payloadAttributes.getTimestamp(),
+                        payloadAttributes.getPrevRandao(),
+                        payloadAttributes.getSuggestedFeeRecipient())));
 
-    if (result.isFailed()) {
-      final Optional<Hash> latestValid = result.getLatestValid();
-      return new JsonRpcSuccessResponse(
-          requestId,
-          new EngineUpdateForkchoiceResult(
-              INVALID,
-              latestValid.isPresent() ? latestValid.get() : null,
-              null,
-              result.getErrorMessage()));
+    if (!result.isValid()) {
+      return handleForkchoiceError(requestId, result);
     }
 
     // begin preparing a block if we have a non-empty payload attributes param
     Optional<PayloadIdentifier> payloadId =
-        optionalPayloadAttributes.map(
+        maybePayloadAttributes.map(
             payloadAttributes ->
                 mergeCoordinator.preparePayload(
                     newHead.get(),
@@ -151,7 +148,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                 LOG,
                 "returning identifier {} for requested payload {}",
                 pid::toHexString,
-                () -> optionalPayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
+                () -> maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
 
     return new JsonRpcSuccessResponse(
         requestId,
@@ -162,13 +159,43 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
+  private JsonRpcResponse handleForkchoiceError(
+      final Object requestId, final ForkchoiceResult result) {
+    JsonRpcResponse response;
+
+    final Optional<Hash> latestValid = result.getLatestValid();
+
+    switch (result.getStatus()) {
+      case INVALID:
+        response =
+            new JsonRpcSuccessResponse(
+                requestId,
+                new EngineUpdateForkchoiceResult(
+                    INVALID,
+                    latestValid.isPresent() ? latestValid.get() : null,
+                    null,
+                    result.getErrorMessage()));
+        break;
+      case INVALID_PAYLOAD_ATTRIBUTES:
+        response = new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+        break;
+      default:
+        throw new AssertionError(
+            "ForkchoiceResult.Status "
+                + result.getStatus()
+                + " not handled in EngineForkchoiceUpdated.handleForkchoiceError");
+    }
+
+    return response;
+  }
+
   private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
     debugLambda(
         LOG,
         "timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}",
         payloadAttributes::getTimestamp,
         () -> payloadAttributes.getPrevRandao().toHexString(),
-        () -> payloadAttributes.getPrevRandao().toHexString());
+        () -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
   }
 
   private boolean isValidForkchoiceState(
@@ -215,11 +242,6 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     // a valid safe block must be an ancestor of the new block
     return mergeCoordinator.isDescendantOf(maybeSafeBlock.get(), newBlock);
-  }
-
-  private boolean isPayloadAttributesValid(
-      final EnginePayloadAttributesParameter payloadAttributes, final BlockHeader headBlockHeader) {
-    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   private JsonRpcResponse syncingResponse(final Object requestId) {
