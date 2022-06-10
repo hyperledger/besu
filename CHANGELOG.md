@@ -1,14 +1,28 @@
 # Changelog
 
+## 22.4.3
+
+### Additions and Improvements
+- \[EXPERIMENTAL\] Add checkpoint sync `--sync-mode="X_CHECKPOINT"` [#3849](https://github.com/hyperledger/besu/pull/3849)
+- Support `finalized` and `safe` as tags for the block parameter in RPC APIs [#3950](https://github.com/hyperledger/besu/pull/3950)
+
+### Bug Fixes
+
 ## 22.4.2
 
 ### Additions and Improvements
 - Engine API Update: Replace deprecated INVALID_TERMINAL_BLOCK with INVALID last valid hash 0x0 [#3882](https://github.com/hyperledger/besu/pull/3882)
+- Deprecate experimental merge flag and engine-rpc-enabled flag [#3875](https://github.com/hyperledger/besu/pull/3875)
+- Update besu-native dependencies to 0.5.0 for linux arm64 support
+- Update ropsten TTD to 100000000000000000000000
 
 ### Bug Fixes
 - Stop backward sync if genesis block has been reached [#3869](https://github.com/hyperledger/besu/pull/3869)
-- Deprecate experimental merge flag and engine-rpc-enabled flag [#3875](https://github.com/hyperledger/besu/pull/3875)
 - Allow to backward sync to request headers back to last finalized block if present or genesis [#3888](https://github.com/hyperledger/besu/pull/3888)
+
+### Download link
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.2/besu-22.4.2.zip / sha256: `e8e9eb7e3f544ecefeec863712fb8d3f6a569c9d70825a4ed2581c596db8fd45`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.4.2/besu-22.4.2.tar.gz / sha256: `9db0c37440cb56bcf671b8de13e0ecb6235171a497bdad91020b8c4a9dac2a27`
 
 ## 22.4.1
 

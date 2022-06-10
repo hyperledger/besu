@@ -16,9 +16,12 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.merge.NewForkchoiceMessageListener;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
@@ -40,11 +43,12 @@ import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer, NewForkchoiceMessageListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -57,6 +61,8 @@ public class DefaultSynchronizer implements Synchronizer {
   private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
+  private Hash lastFinalized = Hash.ZERO;
+  private final AtomicLong numFinalizedSeen = new AtomicLong(0);
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -112,9 +118,22 @@ public class DefaultSynchronizer implements Synchronizer {
                     metricsSystem,
                     terminationCondition));
 
-    if (SyncMode.X_SNAP.equals(syncConfig.getSyncMode())) {
+    if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
-          SnapDownloaderFactory.createSnapDownloader(
+          FastDownloaderFactory.create(
+              pivotBlockSelector,
+              syncConfig,
+              dataDirectory,
+              protocolSchedule,
+              protocolContext,
+              metricsSystem,
+              ethContext,
+              worldStateStorage,
+              syncState,
+              clock);
+    } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
+      this.fastSyncDownloader =
+          CheckpointDownloaderFactory.createCheckpointDownloader(
               pivotBlockSelector,
               syncConfig,
               dataDirectory,
@@ -127,7 +146,7 @@ public class DefaultSynchronizer implements Synchronizer {
               clock);
     } else {
       this.fastSyncDownloader =
-          FastDownloaderFactory.create(
+          SnapDownloaderFactory.createSnapDownloader(
               pivotBlockSelector,
               syncConfig,
               dataDirectory,
@@ -168,7 +187,7 @@ public class DefaultSynchronizer implements Synchronizer {
       blockPropagationManager.ifPresent(BlockPropagationManager::start);
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
-        future = fastSyncDownloader.get().start().thenCompose(this::handleFastSyncResult);
+        future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
 
       } else {
         syncState.markInitialSyncPhaseAsDone();
@@ -198,7 +217,7 @@ public class DefaultSynchronizer implements Synchronizer {
     }
   }
 
-  private CompletableFuture<Void> handleFastSyncResult(final FastSyncState result) {
+  private CompletableFuture<Void> handleSyncResult(final FastSyncState result) {
     if (!running.get()) {
       // We've been shutdown which will have triggered the fast sync future to complete
       return CompletableFuture.completedFuture(null);
@@ -210,7 +229,7 @@ public class DefaultSynchronizer implements Synchronizer {
             blockHeader ->
                 protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
     LOG.info(
-        "Fast sync completed successfully with pivot block {}",
+        "Sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());
     pivotBlockSelector.close();
     syncState.markInitialSyncPhaseAsDone();
@@ -273,5 +292,22 @@ public class DefaultSynchronizer implements Synchronizer {
     maybePruner.ifPresent(Pruner::stop);
     running.set(false);
     return null;
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (maybeFinalizedBlockHash.isPresent()
+        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
+      this.lastFinalized = maybeFinalizedBlockHash.get();
+      this.numFinalizedSeen.getAndIncrement();
+      if (this.numFinalizedSeen.get() > 1
+          && blockPropagationManager.isPresent()
+          && blockPropagationManager.get().isRunning()) {
+        blockPropagationManager.get().stop();
+      }
+    }
   }
 }

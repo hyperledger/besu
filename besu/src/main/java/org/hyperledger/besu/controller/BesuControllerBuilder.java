@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -48,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -59,6 +62,8 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.TransitionPivotSelector;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -87,19 +92,28 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Supplier;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  protected GenesisConfigFile genesisConfig;
+  private GenesisConfigFile genesisConfig;
+  private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
+
+  protected Supplier<GenesisConfigOptions> configOptionsSupplier =
+      () ->
+          Optional.ofNullable(genesisConfig)
+              .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
+              .orElseGet(genesisConfig::getConfigOptions);
+
   protected SynchronizerConfiguration syncConfig;
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
@@ -117,7 +131,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected StorageProvider storageProvider;
   protected boolean isPruningEnabled;
   protected PrunerConfiguration prunerConfiguration;
-  protected Map<String, String> genesisConfigOverrides;
   protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
   protected long reorgLoggingThreshold;
   protected DataStorageConfiguration dataStorageConfiguration =
@@ -337,10 +350,31 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncConfig.getTransactionsParallelism(),
             syncConfig.getComputationParallelism(),
             metricsSystem);
+
+    final GenesisConfigOptions configOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides);
+
+    Optional<Checkpoint> checkpoint = Optional.empty();
+    if (configOptions.getCheckpointOptions().isValid()) {
+      checkpoint =
+          Optional.of(
+              ImmutableCheckpoint.builder()
+                  .blockHash(
+                      Hash.fromHexString(
+                          configOptions.getCheckpointOptions().getHash().get())) // NOSONAR
+                  .blockNumber(configOptions.getCheckpointOptions().getNumber().getAsLong())
+                  .totalDifficulty(
+                      Difficulty.fromHexString(
+                          configOptions
+                              .getCheckpointOptions()
+                              .getTotalDifficulty()
+                              .get())) // NOSONAR
+                  .build());
+    }
+
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled =
-        EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncConfig.getSyncMode());
-    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled);
+    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
     syncState.subscribeTTDReached(new PandaPrinter());
 
     final TransactionPool transactionPool =
@@ -374,19 +408,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
 
     final Synchronizer synchronizer =
-        new DefaultSynchronizer(
-            syncConfig,
+        createSynchronizer(
             protocolSchedule,
-            protocolContext,
             worldStateStorage,
-            ethProtocolManager.getBlockBroadcaster(),
+            protocolContext,
             maybePruner,
             ethContext,
             syncState,
-            dataDirectory,
-            clock,
-            metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            ethProtocolManager,
             pivotBlockSelector);
 
     final MiningCoordinator miningCoordinator =
@@ -403,7 +432,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final SubProtocolConfiguration subProtocolConfiguration =
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
-    ;
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
         createAdditionalJsonRpcMethodFactory(protocolContext);
@@ -418,7 +446,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         protocolSchedule,
         protocolContext,
         ethProtocolManager,
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        configOptionsSupplier.get(),
         subProtocolConfiguration,
         synchronizer,
         syncState,
@@ -432,10 +460,36 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
+  @NotNull
+  protected DefaultSynchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+    return new DefaultSynchronizer(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        worldStateStorage,
+        ethProtocolManager.getBlockBroadcaster(),
+        maybePruner,
+        ethContext,
+        syncState,
+        dataDirectory,
+        clock,
+        metricsSystem,
+        getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+        pivotBlockSelector);
+  }
+
   private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
 
     final PivotSelectorFromPeers pivotSelectorFromPeers = new PivotSelectorFromPeers(syncConfig);
-    final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
+    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
@@ -468,8 +522,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
-    return genesisConfig
-        .getConfigOptions()
+    return configOptionsSupplier
+        .get()
         .getTerminalTotalDifficulty()
         .map(difficulty -> SyncTerminationCondition.difficulty(difficulty, blockchain))
         .orElse(SyncTerminationCondition.never());
@@ -478,7 +532,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected void prepForBuild() {}
 
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext) { // NOSONAR
     return apis -> Collections.emptyMap();
   }
 
@@ -488,9 +542,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final SubProtocolConfiguration subProtocolConfiguration =
         new SubProtocolConfiguration().withSubProtocol(EthProtocol.get(), ethProtocolManager);
     maybeSnapProtocolManager.ifPresent(
-        snapProtocolManager -> {
-          subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager);
-        });
+        snapProtocolManager ->
+            subProtocolConfiguration.withSubProtocol(SnapProtocol.get(), snapProtocolManager));
     return subProtocolConfiguration;
   }
 
@@ -575,16 +628,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
-    final OptionalLong daoBlock =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getDaoForkBlock();
+    final OptionalLong daoBlock = configOptionsSupplier.get().getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
     }
 
-    final OptionalLong classicBlock =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getClassicForkBlock();
+    final OptionalLong classicBlock = configOptionsSupplier.get().getClassicForkBlock();
     // setup classic validator
     if (classicBlock.isPresent()) {
       validators.add(
@@ -597,6 +648,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
     }
 
+    final CheckpointConfigOptions checkpointConfigOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
+    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
+        && checkpointConfigOptions.isValid()) {
+      validators.add(
+          new CheckpointBlocksPeerValidator(
+              protocolSchedule,
+              metricsSystem,
+              checkpointConfigOptions.getNumber().orElseThrow(),
+              checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
+    }
     return validators;
   }
 

@@ -91,16 +91,13 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration);
+        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled, evmConfiguration);
   }
 
   @Override
   protected void prepForBuild() {
-    genesisConfig
-        .getConfigOptions()
+    configOptionsSupplier
+        .get()
         .getThanosBlockNumber()
         .ifPresent(
             activationBlock -> epochCalculator = new EpochCalculator.Ecip1099EpochCalculator());
