@@ -29,22 +29,41 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
+@RunWith(Parameterized.class)
 public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBase {
   private PrivacyNode minerNode;
 
+  private final EnclaveEncryptorType enclaveEncryptorType;
+
+  public PluginPrivacySigningAcceptanceTest(final EnclaveEncryptorType enclaveEncryptorType) {
+    this.enclaveEncryptorType = enclaveEncryptorType;
+  }
+
+  @Parameterized.Parameters(name = "{0}")
+  public static Collection<EnclaveEncryptorType> enclaveEncryptorTypes() {
+    return Arrays.stream(EnclaveEncryptorType.values())
+        .filter(encryptorType -> !EnclaveEncryptorType.NOOP.equals(encryptorType))
+        .collect(Collectors.toList());
+  }
+
   @Before
   public void setup() throws IOException {
-    final PrivacyAccount BOB = PrivacyAccountResolver.BOB.resolve(EnclaveEncryptorType.NACL);
+    final PrivacyAccount BOB = PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType);
 
     minerNode =
         privacyBesu.create(
@@ -78,7 +97,10 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
 
   @Test
   public void canDeployContractSignedByPlugin() throws Exception {
-    final String contractAddress = "0xd0152772c54cecfa7684f09f7616dcc825545dff";
+    final String contractAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0xf01ec73d91fdeb8bb9388ec74e6a3981da86e021"
+            : "0xd0152772c54cecfa7684f09f7616dcc825545dff";
 
     final EventEmitter eventEmitter =
         minerNode.execute(
