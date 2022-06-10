@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -100,11 +101,11 @@ public class BonsaiSnapshotIsolationTests {
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(archive.getMutable(), firstBlock);
 
-    var isolated2 =  archive.getMutableSnapshot(firstBlock.getHash());
-
-    var res2 = executeBlock(
-        archive.getMutable(),
-        forTransactions(List.of(burnTransaction(sender1, 1L, testAddress))));
+    var isolated2 = archive.getMutableSnapshot(firstBlock.getHash());
+    var res2 =
+        executeBlock(
+            archive.getMutable(),
+            forTransactions(List.of(burnTransaction(sender1, 1L, testAddress))));
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
@@ -120,20 +121,57 @@ public class BonsaiSnapshotIsolationTests {
 
     assertThat(isolated.get().get(testAddress)).isNull();
     assertThat(isolated2.get().get(testAddress)).isNotNull();
-    assertThat(isolated2.get().get(testAddress).getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(isolated2.get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
   }
 
   @Test
   public void testFindPathFromHead_pastHead() {
     // assert we can find the correct path if our state is n blocks ahead of head
+    Address testAddress = Address.fromHexString("0xdeadbeef");
 
+    var res =
+        executeBlock(
+            archive.getMutable(),
+            forTransactions(List.of(burnTransaction(sender1, 0L, testAddress))));
+
+    var block2 = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
+    var res2 = executeBlock(archive.getMutable(), block2);
+    var isolated2 = archive.getMutableSnapshot(block2.getHash());
+
+    var block3 = forTransactions(List.of(burnTransaction(sender1, 2L, testAddress)));
+    var res3 = executeBlock(archive.getMutable(), block3);
+    var isolated3 = archive.getMutableSnapshot(block3.getHash());
+
+    assertThat(res.isSuccessful()).isTrue();
+    assertThat(res2.isSuccessful()).isTrue();
+    assertThat(res3.isSuccessful()).isTrue();
+
+    blockchain.rewindToBlock(1L);
+
+    // we should be 1 blocks ahead of head
+    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
+    assertThat(pathToIsolated2FromHead).isPresent();
+    // our path to genesis should be 2 blocks from head
+    assertThat(pathToIsolated2FromHead.get().collect(Collectors.toList()).size()).isEqualTo(1);
+    assertThat(isolated2.get().get(testAddress)).isNotNull();
+    assertThat(isolated2.get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+
+    // we should be 2 blocks ahead of head
+    var pathToIsolated3FromHead = isolated3.get().pathFromHead();
+    assertThat(pathToIsolated3FromHead).isPresent();
+    // our path to genesis should be 2 blocks from head
+    assertThat(pathToIsolated3FromHead.get().collect(Collectors.toList()).size()).isEqualTo(2);
+    assertThat(isolated3.get().get(testAddress)).isNotNull();
+    assertThat(isolated3.get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(3_000_000_000_000_000_000L));
   }
 
-    @Test
+  @Test
   public void testFindPathFromHead_commonAncestor() {
     // assert we can find the correct path if we are on a different fork from head
   }
-
 
   @Test
   public void testFindPathFromHead_noPath() {
@@ -141,10 +179,11 @@ public class BonsaiSnapshotIsolationTests {
   }
 
   /**
-   * this is an initial negative test case.  we should expect this to fail with
-   * a mutable and non-persisting copy of the persisted state.
+   * this is an initial negative test case. we should expect this to fail with a mutable and
+   * non-persisting copy of the persisted state.
    */
   @Test
+  @Ignore("this is expected to fail without getting an isolated mutable copy")
   public void testCopyNonIsolation() {
     var tx1 = burnTransaction(sender1, 0L, Address.ZERO);
     Block oneTx = forTransactions(List.of(tx1));
@@ -163,10 +202,8 @@ public class BonsaiSnapshotIsolationTests {
 
     Block oneMoreTx = forTransactions(List.of(tx2));
 
-    var res2 = executeBlock(
-        archive.getMutable(
-            oneTx.getHeader().getNumber(), true).get(),
-        oneMoreTx);
+    var res2 =
+        executeBlock(archive.getMutable(oneTx.getHeader().getNumber(), true).get(), oneMoreTx);
     assertThat(res2.isSuccessful()).isTrue();
 
     // compare the cached account value to the current account value from the mutable worldstate
@@ -191,10 +228,11 @@ public class BonsaiSnapshotIsolationTests {
   }
 
   private BlockProcessor.Result executeBlock(final MutableWorldState ws, final Block block) {
-    var res = protocolSchedule
-        .getByBlockNumber(0)
-        .getBlockProcessor()
-        .processBlock(blockchain, ws, block);
+    var res =
+        protocolSchedule
+            .getByBlockNumber(0)
+            .getBlockProcessor()
+            .processBlock(blockchain, ws, block);
     blockchain.appendBlock(block, res.getReceipts());
     return res;
   }

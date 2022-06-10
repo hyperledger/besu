@@ -3,7 +3,6 @@ package org.hyperledger.besu.ethereum.bonsai.snapshot;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldView;
 import org.hyperledger.besu.ethereum.bonsai.TrieLogLayer;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -18,15 +17,13 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * This class attempts to roll forward or backward trielog layers in-memory to maintain a
- * consistent view of a particular worldstate/stateroot.
+ * This class attempts to roll forward or backward trielog layers in-memory to maintain a consistent
+ * view of a particular worldstate/stateroot.
  */
-public class BonsaiSnapshotWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
+public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState {
 
   protected final TrieLogLayer trieLog;
   private final Hash worldStateRootHash;
@@ -60,90 +57,113 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, BonsaiWorldV
       final Blockchain blockchain,
       final BonsaiWorldStateArchive archive,
       final Hash blockHash,
-      final TrieLogLayer trieLog
-  ) {
-    return blockchain.getBlockHeader(blockHash)
-        .map(header ->
-            new BonsaiSnapshotWorldState(
-                blockchain,
-                archive,
-                header.getStateRoot(),
-                blockHash,
-                header.getParentHash(),
-                header.getNumber(),
-                trieLog));
+      final TrieLogLayer trieLog) {
+    return blockchain
+        .getBlockHeader(blockHash)
+        .map(
+            header ->
+                new BonsaiSnapshotWorldState(
+                    blockchain,
+                    archive,
+                    header.getStateRoot(),
+                    blockHash,
+                    header.getParentHash(),
+                    header.getNumber(),
+                    trieLog));
   }
 
   Hash headBlockHash() {
-    return headBlockHeader().getHash();
+    return getHeadBlockHeader().getHash();
   }
 
   Hash headBlockParentHash() {
-    return headBlockHeader().getParentHash();
+    return getHeadBlockHeader().getParentHash();
   }
 
-  BlockHeader headBlockHeader() {
-    // TODO: expose persistedWorldState blockhash in BonsaiWorldStateArchive rather than relying on blockchain
+  BlockHeader getHeadBlockHeader() {
+    // TODO: expose persistedWorldState blockhash in BonsaiWorldStateArchive rather than relying on
+    // blockchain
+    // TODO: rewinding to genesis breaks assumptions about trielog layer existence, highly unlikely
+    // corner case
     return blockchain.getChainHeadHeader();
   }
 
   Optional<Stream<TrieLogLayer>> pathFromHead() {
-    return archive.getTrieLogLayer(headBlockParentHash())
-        .map(this::pathFromHash);
+    BlockHeader headHeader = getHeadBlockHeader();
+    // TODO: we do not deal with forks here, need to add handling for that
+    if (headHeader.getNumber() == blockNumber) {
+      return Optional.of(Stream.empty());
+    } else if (headHeader.getNumber() > blockNumber) {
+      return archive
+          .getTrieLogLayer(headHeader.getBlockHash())
+          .or(() -> archive.getTrieLogLayer(headHeader.getParentHash()))
+          .map(this::pathBackFromHash);
+    } else {
+      return archive
+          .getTrieLogLayer(parentHash)
+          .map(priorTrieLog -> pathBackwardFromSnapshot(headHeader.getHash(), priorTrieLog));
+    }
   }
 
   /**
-   * pathFromHash will return a stream of trie logs to apply, in order, to arrive back at OUR worldstate.
-   * Null response implies there is no path from hash.
+   * pathBackFromHash will return a stream of trie logs to apply to the state represented by
+   * fromTrieLog, in order, to arrive back at OUR worldstate.
+   *
+   * <p>A null response implies there is no path from hash.
    */
-  Stream<TrieLogLayer> pathFromHash(final TrieLogLayer fromTrieLog) {
-    if (fromTrieLog == null) {
+  Stream<TrieLogLayer> pathBackFromHash(final TrieLogLayer sourceTrieLog) {
+    if (sourceTrieLog == null) {
       return null;
-    } else if (blockHash.equals(fromTrieLog.getBlockHash())) {
-      return Stream.of(trieLog);
+    } else if (blockHash.equals(sourceTrieLog.getBlockHash())) {
+      // TODO: this assumes a common history between the hashes, add a hash check and ancestor
+      // selection if we are on different forks
+      // empty because there is nothing to apply to head once we are there
+      return Stream.empty();
     }
 
-    // TODO: this assumes a common history between the hashes, add hash check and ancestor selection for forks
-    return blockchain.getBlockHeader(fromTrieLog.getBlockHash())
-        .flatMap(headHeader -> (headHeader.getNumber() > blockNumber) ?
-            // hash is ahead of us, recurse with head's parent
-            archive.getTrieLogLayer(headHeader.getParentHash()).map(headParentLog ->
-                Streams.concat(pathFromHash(headParentLog), Stream.of(fromTrieLog))) :
-            // hash is behind us recurse with our parent
-            archive.getTrieLogLayer(parentHash).map(ourPriorLog ->
-                Streams.concat(pathFromHash(ourPriorLog), Stream.of(fromTrieLog))))
+    // TODO: limit our lookback to the configured max layers back
+    return blockchain
+        .getBlockHeader(sourceTrieLog.getBlockHash())
+        .flatMap(
+            fromHeader ->
+                archive
+                    .getTrieLogLayer(fromHeader.getParentHash())
+                    .map(
+                        priorTrieLog ->
+                            Streams.concat(
+                                Stream.of(sourceTrieLog), pathBackFromHash(priorTrieLog))))
         .orElse(null);
   }
 
+  /**
+   * pathBackFromHash will return a stream of trie logs to apply to the state represented by
+   * targetHash, in order, to arrive back at OUR "future" worldstate.
+   *
+   * <p>A null response implies there is no path from hash.
+   */
+  Stream<TrieLogLayer> pathBackwardFromSnapshot(
+      final Hash targetHash, final TrieLogLayer sourceTrieLog) {
+    if (targetHash == null) {
+      return null;
+    } else if (targetHash.equals(sourceTrieLog.getBlockHash())) {
+      // TODO: this assumes a common history between the hashes, add a hash check and ancestor
+      // selection if we are on different forks
+      return Stream.of(sourceTrieLog);
+    }
 
-  @Override
-  public Optional<Bytes> getCode(final Address address) {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return Optional.empty();
-  }
-
-  @Override
-  public UInt256 getStorageValue(final Address address, final UInt256 key) {
-    return null;
-  }
-
-  @Override
-  public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
-    return Optional.empty();
-  }
-
-  @Override
-  public UInt256 getPriorStorageValue(final Address address, final UInt256 key) {
-    return null;
-  }
-
-  @Override
-  public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
-    return null;
+    // TODO: limit our lookback to the configured max layers back
+    return blockchain
+        .getBlockHeader(sourceTrieLog.getBlockHash())
+        .flatMap(
+            fromHeader ->
+                archive
+                    .getTrieLogLayer(fromHeader.getParentHash())
+                    .map(
+                        priorTrieLog ->
+                            Streams.concat(
+                                pathBackwardFromSnapshot(targetHash, priorTrieLog),
+                                Stream.of(sourceTrieLog))))
+        .orElse(null);
   }
 
   @Override
@@ -187,23 +207,31 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, BonsaiWorldV
     if (headBlockHash().equals(blockHash)) {
       return headVal;
     } else {
-      Account mutatedAccount = Optional.ofNullable(trieLog)
-          .filter(log -> log.getAccount(address).isPresent())
-          .map(Optional::of)
-          .orElseGet(() -> pathFromHead()
-              .flatMap(logs -> logs
-                  .filter(log -> log.getAccount(address).isPresent())
-                  .reduce((a, b) -> b)))
-          .flatMap(earliestLog -> (earliestLog.getBlockHash().equals(blockHash)) ?
-              earliestLog.getAccount(address):
-              earliestLog.getPriorAccount(address))
-          .map(val -> (Account) new BonsaiSnapshotAccount(
-              //TODO: load code and storage, ugh.
-              address, val.getNonce(), val.getBalance(), null, null))
-          .orElse(null);
+      Account mutatedAccount =
+          Optional.ofNullable(trieLog)
+              .filter(log -> log.getAccount(address).isPresent())
+              .map(Optional::of)
+              .orElseGet(
+                  () ->
+                      pathFromHead()
+                          .flatMap(
+                              logs ->
+                                  logs.filter(log -> log.getAccount(address).isPresent())
+                                      .reduce((a, b) -> b)))
+              .flatMap(
+                  earliestLog ->
+                      (earliestLog.getBlockHash().equals(blockHash))
+                          ? earliestLog.getAccount(address)
+                          : earliestLog.getPriorAccount(address))
+              .map(
+                  val ->
+                      (Account)
+                          new BonsaiSnapshotAccount(
+                              // TODO: load code and storage, ugh.
+                              address, val.getNonce(), val.getBalance(), null, null))
+              .orElse(null);
       mutatedAccounts.put(address, mutatedAccount);
       return mutatedAccount;
     }
   }
-
 }

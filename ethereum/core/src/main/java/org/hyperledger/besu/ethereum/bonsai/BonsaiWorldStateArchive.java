@@ -89,13 +89,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
-  //TODO: work this into WorldStateArchive interface and type hierarchy
+  // TODO: work this into WorldStateArchive interface and type hierarchy
   public Optional<BonsaiSnapshotWorldState> getMutableSnapshot(final Hash blockHash) {
     // implied that we are NOT persisting state
     return trieLogManager.getTrieLogLayer(blockHash)
-        .flatMap(layer -> BonsaiSnapshotWorldState.create(blockchain, this,
-            blockHash,
-            layer));
+        .flatMap(layer -> BonsaiSnapshotWorldState.create(blockchain, this, blockHash, layer));
   }
 
   @Override

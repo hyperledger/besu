@@ -70,22 +70,20 @@ public class BonsaiSnapshotAccount implements MutableAccount {
 
   @Override
   public UInt256 getStorageValue(final UInt256 key) {
-    return Optional.ofNullable(storage.get(key))
-        .map(AccountStorageEntry::getValue)
-        .orElse(null);
+    return Optional.ofNullable(storage.get(key)).map(AccountStorageEntry::getValue).orElse(null);
   }
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
     return Optional.ofNullable(
-        Optional.ofNullable(originalValues.get(key))
-            .orElse(storage.get(key)))
+            Optional.ofNullable(originalValues.get(key)).orElse(storage.get(key)))
         .map(AccountStorageEntry::getValue)
         .orElse(null);
   }
 
   @Override
-  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(final Bytes32 startKeyHash, final int limit) {
+  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
+      final Bytes32 startKeyHash, final int limit) {
     return null;
   }
 
@@ -112,15 +110,13 @@ public class BonsaiSnapshotAccount implements MutableAccount {
 
   @Override
   public void clearStorage() {
-    storage.forEach((k,v) ->
-        originalValues.computeIfAbsent(k, __ -> v));
+    storage.forEach((k, v) -> originalValues.computeIfAbsent(k, __ -> v));
   }
 
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     // TODO: check to see if this is the expected implementation, how do we return cleared storage?
-    return originalValues.keySet()
-        .stream()
+    return originalValues.keySet().stream()
         .map(k -> new AbstractMap.SimpleEntry<>(UInt256.fromBytes(k), storage.get(k).getValue()))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
