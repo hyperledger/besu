@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.MergeContext.NewMergeStateCallback;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -173,8 +172,9 @@ public class PostMergeContextTest {
     final List<Boolean> stateChanges = new ArrayList<>();
 
     @Override
-    public void onNewIsPostMergeState(final boolean newIsPostMergeState) {
-      stateChanges.add(newIsPostMergeState);
+    public void onCrossingMergeBoundary(
+        final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+      stateChanges.add(isPoS);
     }
 
     public void reset() {

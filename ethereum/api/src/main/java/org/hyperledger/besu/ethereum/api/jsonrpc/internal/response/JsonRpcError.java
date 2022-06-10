@@ -33,6 +33,9 @@ public enum JsonRpcError {
 
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
+  // eth_getBlockByNumber specific error message
+  UNKNOWN_BLOCK(-39001, "Unknown block"),
+
   // eth_sendTransaction specific error message
   ETH_SEND_TX_NOT_AVAILABLE(
       -32604,
