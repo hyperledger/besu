@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A memory holder for testing. */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -51,6 +52,7 @@ public class ReferenceTestEnv extends BlockHeader {
   public ReferenceTestEnv(
       @JsonProperty("currentCoinbase") final String coinbase,
       @JsonProperty("currentDifficulty") final String difficulty,
+      @JsonProperty("currentRandom") final String currentRandom,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
       @JsonProperty(value = "currentBaseFee", required = false) final String baseFee,
@@ -63,14 +65,14 @@ public class ReferenceTestEnv extends BlockHeader {
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
-        Difficulty.fromHexString(difficulty),
+        Difficulty.fromHexString(difficulty == null ? "0x0" : difficulty),
         Long.decode(number),
         Long.decode(gasLimit),
         0L,
         Long.decode(timestamp),
         Bytes.EMPTY,
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
-        Hash.ZERO,
+        currentRandom == null ? Hash.ZERO : Bytes32.fromHexString(currentRandom),
         0L,
         new MainnetBlockHeaderFunctions());
   }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -125,10 +126,17 @@ public class TransactionTest {
     milestone(spec, name, "London", new LondonGasCalculator(), Optional.of(Wei.of(0)));
   }
 
+  @ParameterizedTest(name = "Name: {0}")
+  @MethodSource("getTestParametersForConfig")
+  public void merge(final String name, final TransactionTestCaseSpec spec) {
+    milestone(spec, name, "Merge", new LondonGasCalculator(), Optional.of(Wei.of(0)));
+  }
+
   public void milestone(
       final TransactionTestCaseSpec spec, final String name, final String milestone, final GasCalculator gasCalculator, final Optional<Wei> baseFee) {
 
     final TransactionTestCaseSpec.Expectation expected = spec.expectation(milestone);
+    assumeTrue(expected.isExecute());
 
     try {
       Bytes rlp = spec.getRlp();

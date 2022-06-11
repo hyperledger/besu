@@ -70,6 +70,7 @@ public class GeneralStateTestCaseSpec {
             new ReferenceTestEnv(
                 blockHeader.getCoinbase().toShortHexString(),
                 blockHeader.getDifficulty().toShortHexString(),
+                Hash.ZERO.toHexString(),
                 UInt256.valueOf(blockHeader.getGasLimit()).toShortHexString(),
                 UInt256.valueOf(blockHeader.getNumber()).toShortHexString(),
                 "0x0a",

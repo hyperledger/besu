@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class ReferenceTestProtocolSchedules {
 
@@ -67,6 +68,10 @@ public class ReferenceTestProtocolSchedules {
     builder.put("London", createSchedule(new StubGenesisConfigOptions().londonBlock(0)));
     builder.put(
         "ArrowGlacier", createSchedule(new StubGenesisConfigOptions().arrowGlacierBlock(0)));
+    builder.put(
+        "Merge",
+        createSchedule(
+            new StubGenesisConfigOptions().parisBlock(0).terminalTotalDifficulty(UInt256.ZERO)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

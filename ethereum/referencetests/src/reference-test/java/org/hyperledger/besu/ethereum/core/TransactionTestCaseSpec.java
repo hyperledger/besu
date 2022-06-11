@@ -35,15 +35,18 @@ public class TransactionTestCaseSpec {
 
     private final Address sender;
 
-    private long intrinsicGas;
+    private final long intrinsicGas;
 
     private final boolean succeeds;
+
+    private final boolean execute;
 
     Expectation(
         @JsonProperty("exception") final String exception,
         @JsonProperty("hash") final String hash,
         @JsonProperty("intrinsicGas") final String intrinsicGas,
         @JsonProperty("sender") final String sender) {
+      this.execute = true;
       this.succeeds = exception == null;
       if (succeeds) {
         this.hash = Hash.fromHexString(hash);
@@ -52,7 +55,20 @@ public class TransactionTestCaseSpec {
       } else {
         this.hash = null;
         this.sender = null;
+        this.intrinsicGas = 0L;
       }
+    }
+
+    Expectation() {
+      this.execute = false;
+      this.succeeds = false;
+      this.hash = null;
+      this.sender = null;
+      this.intrinsicGas = 0L;
+    }
+
+    public boolean isExecute() {
+      return execute;
     }
 
     public boolean isSucceeds() {
@@ -109,10 +125,6 @@ public class TransactionTestCaseSpec {
   public Expectation expectation(final String milestone) {
     final Expectation expectation = expectations.get(milestone);
 
-    if (expectation == null) {
-      throw new IllegalStateException("Expectation for milestone " + milestone + " not found");
-    }
-
-    return expectation;
+    return expectation == null ? new Expectation() : expectation;
   }
 }
