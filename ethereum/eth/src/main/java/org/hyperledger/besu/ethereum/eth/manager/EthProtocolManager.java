@@ -242,7 +242,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     }
 
     if (messageData.getSize() > 10 * 1_000_000 /*10MB*/) {
-      LOG.debug("Received message over 10MB. Disconnecting from {}", ethPeer);
+      LOG.info("Received message over 10MB. Disconnecting from {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
@@ -253,7 +253,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
-      LOG.debug(
+      LOG.info(
           "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
@@ -266,7 +266,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
+      LOG.info(
+          "Unsolicited message received from peer {}, disconnecting connection: {}",
+          message.getConnection().getPeer().getId(),
+          message.getConnection());
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
@@ -288,7 +291,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         maybeResponseData = ethMessages.dispatch(ethMessage);
       }
     } catch (final RLPException e) {
-      LOG.debug(
+      LOG.info(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
 
       ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
@@ -305,6 +308,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
+    LOG.info(
+        "Handling new connection ({}) with peer {}. Sending status message",
+        System.identityHashCode(connection),
+        connection.getPeer().getId());
     // before adding a new EthPeer to EthPeers we wait until the new connection is useful
     final EthPeer tmpEthPeer = ethPeers.preStatusExchangedConnection(connection, peerValidators);
 
@@ -322,7 +329,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {}.", tmpEthPeer);
       tmpEthPeer.send(status, getSupportedProtocol());
       tmpEthPeer.registerStatusSent();
       // arrived at the peer
@@ -394,7 +400,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   public List<Bytes> getForkIdAsBytesList() {
-    ForkId chainHeadForkId = forkIdManager.getForkIdForChainHead();
+    final ForkId chainHeadForkId = forkIdManager.getForkIdForChainHead();
     return chainHeadForkId == null
         ? Collections.emptyList()
         : chainHeadForkId.getForkIdAsBytesList();

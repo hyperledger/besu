@@ -310,7 +310,7 @@ public final class MockNetwork {
     }
 
     @Override
-    public boolean onPeerReady() {
+    public boolean onPeerConnectionReady() {
       return true;
     }
 

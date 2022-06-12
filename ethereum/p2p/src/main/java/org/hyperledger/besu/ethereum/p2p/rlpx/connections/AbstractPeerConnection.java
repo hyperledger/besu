@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
@@ -53,7 +54,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
-  private PeerConnectionReadyCallback onPeerConnectionReadyCallback;
+  private AtomicReference<PeerConnectionReadyCallback> onPeerConnectionReadyCallback;
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -142,6 +143,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
+    LOG.info(
+        "Terminating connection {} with peer {}, reason {}, peer initiated: {}",
+        System.identityHashCode(this),
+        this.getPeer().getId(),
+        reason,
+        peerInitiated);
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
     }
@@ -157,6 +164,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
+      LOG.info(
+          "Disconnecting connection {} with peer {}, reason {}",
+          System.identityHashCode(this),
+          this.getPeer().getId(),
+          reason);
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       closeConnection();
@@ -179,17 +191,29 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   }
 
   @Override
-  public boolean onPeerReady() {
-    if (onPeerConnectionReadyCallback != null) {
-      return onPeerConnectionReadyCallback.onPeerConnectionReady();
+  public boolean onPeerConnectionReady() {
+    final PeerConnectionReadyCallback peerConnectionReadyCallback =
+        onPeerConnectionReadyCallback.getAndSet(null);
+    if (peerConnectionReadyCallback != null) {
+      final boolean ret = peerConnectionReadyCallback.onPeerConnectionReady();
+      LOG.info(
+          "Calling peer ready callback of connection {}, returning {}",
+          System.identityHashCode(this),
+          ret);
+      return ret;
     }
+    LOG.info(
+        "No callback set for connection {} (Peer {}), returning {}",
+        System.identityHashCode(this),
+        getPeer().getId(),
+        true);
     return true;
   }
 
   @Override
   public void setOnPeerReadyCallback(
       final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
-    this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
+    this.onPeerConnectionReadyCallback.set(onPeerConnectionReadyCallback);
   }
 
   @Override

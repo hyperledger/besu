@@ -112,7 +112,7 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
-  public boolean onPeerReady() {
+  public boolean onPeerConnectionReady() {
     return true;
   }
 

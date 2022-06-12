@@ -117,7 +117,7 @@ public class NetworkRunner implements AutoCloseable {
               if (!protocol.isValidMessageCode(cap.getVersion(), code)) {
                 inboundMessageCounter.labels(cap.toString(), "Invalid", "").inc();
                 // Handle invalid messages by disconnecting
-                LOG.debug(
+                LOG.info(
                     "Invalid message code ({}-{}, {}) received from peer, disconnecting from: {}",
                     cap.getName(),
                     cap.getVersion(),

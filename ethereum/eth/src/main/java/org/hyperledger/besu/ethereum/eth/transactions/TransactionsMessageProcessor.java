@@ -112,7 +112,7 @@ class TransactionsMessageProcessor {
 
     } catch (final RLPException ex) {
       if (peer != null) {
-        LOG.debug("Malformed transaction message received, disconnecting: {}", peer, ex);
+        LOG.info("Malformed transaction message received, disconnecting: {}", peer, ex);
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }
     }

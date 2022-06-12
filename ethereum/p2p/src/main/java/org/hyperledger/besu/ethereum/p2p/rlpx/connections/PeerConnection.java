@@ -112,7 +112,7 @@ public interface PeerConnection {
 
   InetSocketAddress getRemoteAddress();
 
-  boolean onPeerReady();
+  boolean onPeerConnectionReady();
 
   void setOnPeerReadyCallback(PeerConnectionReadyCallback onPeerConnectionReadyCallback);
 

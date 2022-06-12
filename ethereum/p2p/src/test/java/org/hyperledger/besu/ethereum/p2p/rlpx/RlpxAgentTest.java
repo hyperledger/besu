@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.rlpx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper.createMutableLocalNode;
 import static org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper.createPeer;
 import static org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper.enode;
@@ -141,7 +142,13 @@ public class RlpxAgentTest {
     assertThat(connection).isDone();
     assertThat(connection).isNotCompletedExceptionally();
 
-    assertThat(agent.getPeerConnection(peer)).contains(connection);
+    assertThat(agent.getPeerConnection(peer)).isPresent();
+    assertThat(agent.getPeerConnection(peer).get()).isDone();
+    try {
+      assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(connection.get());
+    } catch (final Exception e) {
+      fail("Optional does not contain the connection");
+    }
   }
 
   @Test
@@ -233,7 +240,11 @@ public class RlpxAgentTest {
 
     assertThat(connection2).isDone();
     assertThat(connection2).isNotCompletedExceptionally();
-    assertThat(connection2).isEqualTo(connection1);
+    try {
+      assertThat(connection2.get()).isEqualTo(connection1.get());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
 
     assertThat(agent.getPeerConnection(peer)).contains(connection2);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
@@ -252,7 +263,11 @@ public class RlpxAgentTest {
     connectionInitializer.simulateIncomingConnection(incomingConnection);
 
     // Existing connection should be kept
-    assertThat(agent.getPeerConnection(peer)).contains(existingConnection);
+    try {
+      assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(existingConnection.get());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
     assertThat(agent.getConnectionCount()).isEqualTo(1);
     assertThat(incomingConnection.isDisconnected()).isTrue();
     assertThat(incomingConnection.getDisconnectReason())
@@ -414,7 +429,11 @@ public class RlpxAgentTest {
       final CompletableFuture<PeerConnection> connection = agent.connect(peer);
       assertThat(connection).isDone();
       assertThat(connection).isNotCompletedExceptionally();
-      assertThat(agent.getPeerConnection(peer)).contains(connection);
+      try {
+        assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(connection.get());
+      } catch (final Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -449,7 +468,11 @@ public class RlpxAgentTest {
       final CompletableFuture<PeerConnection> connection = agent.connect(peer);
       assertThat(connection).isDone();
       assertThat(connection).isNotCompletedExceptionally();
-      assertThat(agent.getPeerConnection(peer)).contains(connection);
+      try {
+        assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(connection.get());
+      } catch (final Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -482,7 +505,11 @@ public class RlpxAgentTest {
       final CompletableFuture<PeerConnection> connection = agent.connect(peer);
       assertThat(connection).isDone();
       assertThat(connection).isNotCompletedExceptionally();
-      assertThat(agent.getPeerConnection(peer)).contains(connection);
+      try {
+        assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(connection.get());
+      } catch (final Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -544,8 +571,11 @@ public class RlpxAgentTest {
     assertThat(connection).isDone();
     assertThat(connection).isNotCompletedExceptionally();
 
-    assertThat(agent.getPeerConnection(peer)).contains(connection);
-    // Previous, non-exempt connection should be disconnected
+    try {
+      assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(connection.get());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    } // Previous, non-exempt connection should be disconnected
     assertThat(existingConnection.isDisconnected()).isTrue();
     assertThat(existingConnection.getDisconnectReason()).contains(DisconnectReason.TOO_MANY_PEERS);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
@@ -575,8 +605,16 @@ public class RlpxAgentTest {
     assertThat(connection).isNotCompletedExceptionally();
 
     // Both connections should be kept since they are both exempt from max peer limits
-    assertThat(agent.getPeerConnection(peerA)).contains(existingConnection);
-    assertThat(agent.getPeerConnection(peerB)).contains(connection);
+    try {
+      assertThat(agent.getPeerConnection(peerA).get().get()).isEqualTo(existingConnection.get());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+    try {
+      assertThat(agent.getPeerConnection(peerB).get().get()).isEqualTo(connection.get());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
     assertThat(agent.getConnectionCount()).isEqualTo(2);
   }
 
@@ -997,7 +1035,8 @@ public class RlpxAgentTest {
     final CompletableFuture<PeerConnection> future = agent.connect(peer);
     assertThat(future).isNotDone();
 
-    assertThat(agent.getPeerConnection(peer)).contains(future);
+    //    assertThat(agent.getPeerConnection(peer)).contains(future); This is now only done when the
+    // connect is successful
   }
 
   @Test
@@ -1008,7 +1047,11 @@ public class RlpxAgentTest {
     final CompletableFuture<PeerConnection> future = agent.connect(peer);
     assertThat(future).isDone();
 
-    assertThat(agent.getPeerConnection(peer)).contains(future);
+    try {
+      assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(future.get());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void assertPeerConnectionNotTracked(final Peer peer) {
@@ -1035,6 +1078,7 @@ public class RlpxAgentTest {
 
   private void startAgent(final Bytes nodeId) {
     agent.start();
+    agent.subscribeConnect(c -> c.onPeerConnectionReady());
     localNode.setEnode(enodeBuilder().nodeId(nodeId).build());
   }
 

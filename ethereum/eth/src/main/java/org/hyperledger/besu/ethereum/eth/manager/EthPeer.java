@@ -70,8 +70,9 @@ public class EthPeer implements Comparable<EthPeer> {
 
   private static final int MAX_OUTSTANDING_REQUESTS = 5;
   private final CompletableFuture<EthPeer> ethPeerCompletableFuture;
+  private final AtomicBoolean callbackAllreadyExecuted = new AtomicBoolean(false);
 
-  private PeerConnection connection;
+  private final PeerConnection connection;
 
   private final int maxTrackedSeenBlocks = 300;
 
@@ -351,7 +352,8 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public boolean validateReceivedMessage(final EthMessage message, final String protocolName) {
-    checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
+    final EthPeer peer = message.getPeer();
+    checkArgument(peer.equals(this), "Mismatched message sent to peer for dispatch");
     return getRequestManager(protocolName, message.getData().getCode())
         .map(requestManager -> requestManager.outstandingRequests() != 0)
         .orElse(true);
@@ -434,16 +436,26 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   private void maybeExecuteStatusesExchangedCallback() {
-    if (readyForRequests()) {
+    if (readyForRequests() && !callbackAllreadyExecuted.getAndSet(true)) {
       final Consumer<EthPeer> callback = onStatusesExchanged.getAndSet(null);
-      if (connection
-          .onPeerReady()) { // returns true if the new connection was added to the rlpx connections
+      if (connection.onPeerConnectionReady()) {
+        // This calls the callback set against the connection in the RlpxAgent.
+        // It will return true if the connection has been added to the
+        // RlpxConnections, which means we have to add the peer with that connection here as well
         ethPeerCompletableFuture.complete(this);
+        LOG.info(
+            "Future completed because statuses have been exchanged. Peer {}, connection {}",
+            connection.getPeer().getId(),
+            System.identityHashCode(connection));
         if (callback == null) {
           return;
         }
         callback.accept(this);
       } else {
+        LOG.info(
+            "completing the future exceptionally (Peer {}, connection {})",
+            connection.getPeer().getId(),
+            System.identityHashCode(connection));
         ethPeerCompletableFuture.completeExceptionally(new RuntimeException());
       }
     }
@@ -556,10 +568,10 @@ public class EthPeer implements Comparable<EthPeer> {
 
   @Override
   public int compareTo(final @Nonnull EthPeer ethPeer) {
-    int repCompare = this.reputation.compareTo(ethPeer.reputation);
+    final int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 
-    int headStateCompare =
+    final int headStateCompare =
         Long.compare(
             this.chainHeadState.getBestBlock().getNumber(),
             ethPeer.chainHeadState.getBestBlock().getNumber());
@@ -574,10 +586,6 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public Optional<BlockHeader> getCheckpointHeader() {
     return checkpointHeader;
-  }
-
-  public void replaceConnection(final PeerConnection peerConnection) {
-    this.connection = peerConnection;
   }
 
   @FunctionalInterface
