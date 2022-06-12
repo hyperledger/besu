@@ -54,7 +54,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
-  private AtomicReference<PeerConnectionReadyCallback> onPeerConnectionReadyCallback;
+  private PeerConnectionReadyCallback onPeerConnectionReadyCallback;
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -192,10 +192,8 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public boolean onPeerConnectionReady() {
-    final PeerConnectionReadyCallback peerConnectionReadyCallback =
-        onPeerConnectionReadyCallback.getAndSet(null);
-    if (peerConnectionReadyCallback != null) {
-      final boolean ret = peerConnectionReadyCallback.onPeerConnectionReady();
+    if (onPeerConnectionReadyCallback != null) {
+      final boolean ret = onPeerConnectionReadyCallback.onPeerConnectionReady();
       LOG.info(
           "Calling peer ready callback of connection {}, returning {}",
           System.identityHashCode(this),
@@ -213,7 +211,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void setOnPeerReadyCallback(
       final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
-    this.onPeerConnectionReadyCallback.set(onPeerConnectionReadyCallback);
+    this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
   }
 
   @Override
