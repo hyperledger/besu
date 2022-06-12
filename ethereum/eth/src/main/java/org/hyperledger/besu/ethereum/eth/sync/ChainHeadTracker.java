@@ -85,11 +85,12 @@ public class ChainHeadTracker implements ConnectCallback {
                 trailingPeerLimiter.enforceTrailingPeerLimit();
                 debugLambda(
                     LOG,
-                    "Retrieved chain head info {} from {}",
+                    "Retrieved chain head info {} from {} with connection {}",
                     () -> chainHeadHeader.getNumber() + " (" + chainHeadHeader.getBlockHash() + ")",
-                    () -> peer);
+                    () -> peer,
+                    () -> System.identityHashCode(peer.getConnection()));
               } else {
-                LOG.debug("Failed to retrieve chain head info. Disconnecting {}", peer, error);
+                LOG.info("Failed to retrieve chain head info. Disconnecting {}", peer, error);
                 peer.disconnect(DisconnectReason.USELESS_PEER);
               }
             });

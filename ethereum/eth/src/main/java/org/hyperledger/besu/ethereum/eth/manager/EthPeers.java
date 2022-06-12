@@ -265,7 +265,16 @@ public class EthPeers {
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
     return bestPeerMatchingCriteria(
-        p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight());
+        p -> {
+          final boolean fullyValidated = p.isFullyValidated();
+          final boolean hasEstimatedHeight = p.chainState().hasEstimatedHeight();
+          LOG.info(
+              "Peer {} is fully validated: {}, hasEstimatedHeight: {}",
+              p.getConnection().getPeer().getId(),
+              fullyValidated,
+              hasEstimatedHeight);
+          return fullyValidated && hasEstimatedHeight;
+        });
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
