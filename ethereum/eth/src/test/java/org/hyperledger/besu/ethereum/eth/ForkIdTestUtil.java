@@ -89,6 +89,7 @@ public class ForkIdTestUtil {
             new ForkId(Bytes.fromHexString("0x0eb440f6"), 12965000L), // First Berlin block
             new ForkId(Bytes.fromHexString("0xb715077d"), 13773000L), // First London block
             new ForkId(Bytes.fromHexString("0x20c327fc"), 0L)); // First Arrow Glacier block
+    // TODO add gray glacier
     public static final List<ForkId> ROPSTEN =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0x30c7ddbc"), 10L),

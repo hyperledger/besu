@@ -232,6 +232,7 @@ public class EIP2124Test {
             Optional.of(ForkIds.MAINNET),
             empty()
           },
+          // TODO add Gray glacier
           // Ropsten test cases
           {
             "Ropsten // Unsynced, last Frontier, Homestead and first Tangerine block",

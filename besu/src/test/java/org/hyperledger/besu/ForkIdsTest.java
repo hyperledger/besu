@@ -112,6 +112,7 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
               new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L),
               new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L))
+          // TODO add Gray glacier
         },
         new Object[] {
           NetworkName.MORDOR,
