@@ -8,6 +8,7 @@
 - Added verification of payload attributes in ForkchoiceUpdated [#3837](https://github.com/hyperledger/besu/pull/3837)
 
 ### Bug Fixes
+- alias engine-rpc-port parameter with the former rpc param name [#3958](https://github.com/hyperledger/besu/pull/3958)
 
 ## 22.4.2
 
