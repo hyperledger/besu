@@ -573,7 +573,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Boolean deprecatedIsEngineRpcEnabled = false;
 
     @Option(
-        names = {"--engine-rpc-port"},
+        names = {"--engine-rpc-port", "--engine-rpc-http-port"},
         paramLabel = MANDATORY_PORT_FORMAT_HELP,
         description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
         arity = "1")
