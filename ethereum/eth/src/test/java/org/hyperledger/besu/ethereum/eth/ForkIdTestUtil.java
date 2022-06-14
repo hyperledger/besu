@@ -64,7 +64,7 @@ public class ForkIdTestUtil {
     public static final List<Long> MAINNET =
         Arrays.asList(
             1920000L, 1150000L, 2463000L, 2675000L, 2675000L, 4370000L, 7280000L, 7280000L,
-            9069000L, 9200000L, 12244000L, 12965000L, 13773000L);
+            9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L);
     public static final List<Long> ROPSTEN =
         Arrays.asList(0L, 0L, 10L, 1700000L, 4230000L, 4939394L, 6485846L, 7117117L);
     public static final List<Long> RINKEBY =
@@ -88,8 +88,8 @@ public class ForkIdTestUtil {
             new ForkId(Bytes.fromHexString("0xe029e991"), 12244000L), // First Muir Glacier block
             new ForkId(Bytes.fromHexString("0x0eb440f6"), 12965000L), // First Berlin block
             new ForkId(Bytes.fromHexString("0xb715077d"), 13773000L), // First London block
-            new ForkId(Bytes.fromHexString("0x20c327fc"), 0L)); // First Arrow Glacier block
-    // TODO add gray glacier
+            new ForkId(Bytes.fromHexString("0x20c327fc"), 15050000L), // First Arrow Glacier block
+            new ForkId(Bytes.fromHexString("0xf0afd0e3"), 0L)); // First Gray Glacier block
     public static final List<ForkId> ROPSTEN =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0x30c7ddbc"), 10L),

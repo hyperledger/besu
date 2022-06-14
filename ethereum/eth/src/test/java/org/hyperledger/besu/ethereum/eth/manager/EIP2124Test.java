@@ -220,19 +220,26 @@ public class EIP2124Test {
             "Mainnet // First Arrow Glacier block",
             Network.MAINNET,
             13773000L,
-            ForkIdTestUtil.wantForkId("0x20c327fc", 0L),
+            ForkIdTestUtil.wantForkId("0x20c327fc", 15050000L),
             Optional.of(ForkIds.MAINNET),
             empty()
           },
           {
-            "Mainnet // Future Arrow Glacier block",
+            "Mainnet // First Gray Glacier block",
             Network.MAINNET,
-            20000000L,
-            ForkIdTestUtil.wantForkId("0x20c327fc", 0L),
+            15050000L,
+            ForkIdTestUtil.wantForkId("0xf0afd0e3", 0L),
             Optional.of(ForkIds.MAINNET),
             empty()
           },
-          // TODO add Gray glacier
+          {
+            "Mainnet // Future Gray Glacier block",
+            Network.MAINNET,
+            20000000L,
+            ForkIdTestUtil.wantForkId("0xf0afd0e3", 0L),
+            Optional.of(ForkIds.MAINNET),
+            empty()
+          },
           // Ropsten test cases
           {
             "Ropsten // Unsynced, last Frontier, Homestead and first Tangerine block",
