@@ -106,7 +106,7 @@ public class BackwardChain {
     if (!firstHeader.getParentHash().equals(blockHeader.getHash())) {
       throw new BackwardSyncException(
           "Hash of header does not match our expectations, was "
-              + blockHeader.getHash().toHexString()
+              + blockHeader.toLogString()
               + " when we expected "
               + firstHeader.getParentHash().toHexString());
     }
@@ -116,9 +116,9 @@ public class BackwardChain {
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
-        () -> blockHeader.getHash().toHexString(),
+        () -> blockHeader.toLogString(),
         blockHeader::getNumber,
-        () -> lastStoredPivot.orElseThrow().getHash().toHexString(),
+        () -> lastStoredPivot.orElseThrow().toLogString(),
         firstHeader::getNumber);
   }
 

@@ -96,13 +96,7 @@ public class BackwardSyncContext {
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
     final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (backwardChain.isTrusted(newBlockHash)) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          newBlockHash::toHexString);
-      return future;
-    }
+    if (isTrusted(newBlockHash)) return future;
     backwardChain.addNewHash(newBlockHash);
     if (future != null) {
       return future;
@@ -114,24 +108,25 @@ public class BackwardSyncContext {
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
     final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (backwardChain.isTrusted(newPivot.getHash())) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          () -> newPivot.getHash().toHexString());
-      return future;
-    }
+    if (isTrusted(newPivot.getHash())) return future;
     backwardChain.appendTrustedBlock(newPivot);
     if (future != null) {
       return future;
     }
-    infoLambda(
-        LOG,
-        "Starting new backward sync towards a pivot {}({})",
-        () -> newPivot.getHeader().getNumber(),
-        () -> newPivot.getHash().toHexString());
+    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newPivot::toLogString);
     this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
     return this.currentBackwardSyncFuture.get();
+  }
+
+  private boolean isTrusted(final Hash hash) {
+    if (backwardChain.isTrusted(hash)) {
+      debugLambda(
+          LOG,
+          "not fetching or appending hash {} to backwards sync since it is present in successors",
+          hash::toHexString);
+      return true;
+    }
+    return false;
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
@@ -278,23 +273,23 @@ public class BackwardSyncContext {
       }
       final BlockHeader finalizedHeader = maybeFinalizedHeader.get();
       if (finalizedHeader.getHash().equals(block.getHash())) {
-        debugLambda(LOG, "Saving new finalized block {}", () -> block.getHash().toHexString());
+        debugLambda(LOG, "Saving new finalized block {}", block::toLogString);
         return;
       }
 
       if (finalizedHeader.getNumber() == block.getHeader().getNumber()) {
         throw new BackwardSyncException(
             "This block is not the target finalized block. Is "
-                + block.getHash().toHexString()
+                + block.toLogString()
                 + " but was expecting "
-                + finalizedHeader.getHash().toHexString());
+                + finalizedHeader.toLogString());
       }
       if (!getProtocolContext().getBlockchain().contains(finalizedHeader.getHash())) {
         debugLambda(
             LOG,
             "Saving block {} before finalized {} reached",
-            () -> block.getHash().toHexString(),
-            () -> finalizedHeader.getHash().toHexString()); // todo: some check here??
+            block::toLogString,
+            finalizedHeader::toLogString); // todo: some check here??
         return;
       }
       final Hash canonicalHash =
@@ -307,7 +302,7 @@ public class BackwardSyncContext {
           && !canonicalHash.equals(finalizedHeader.getHash())) {
         throw new BackwardSyncException(
             "Finalized block "
-                + finalizedHeader.getHash().toHexString()
+                + finalizedHeader.toLogString()
                 + " is not on canonical chain. Canonical is"
                 + canonicalHash.toHexString()
                 + ". We need to reorg before saving this block.");
