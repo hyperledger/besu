@@ -15,6 +15,8 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
+import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
+import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -267,7 +269,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
+      final BlockHeader newHead,
+      final Hash finalizedBlockHash,
+      final Hash safeBlockHash,
+      final Optional<PayloadAttributes> maybePayloadAttributes) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
@@ -278,6 +283,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         && newFinalized.isPresent()
         && !isDescendantOf(currentFinalized.get(), newFinalized.get())) {
       return ForkchoiceResult.withFailure(
+          INVALID,
           String.format(
               "new finalized block %s is not a descendant of current finalized block %s",
               finalizedBlockHash, currentFinalized.get().getBlockHash()),
@@ -297,14 +303,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                         newHead.getBlockHash(), finalized.getBlockHash()));
 
     if (descendantError.isPresent()) {
-      return ForkchoiceResult.withFailure(descendantError.get(), latestValid);
+      return ForkchoiceResult.withFailure(INVALID, descendantError.get(), latestValid);
     }
 
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
     if (parentOfNewHead.isPresent()
         && parentOfNewHead.get().getTimestamp() >= newHead.getTimestamp()) {
       return ForkchoiceResult.withFailure(
-          "new head timestamp not greater than parent", latestValid);
+          INVALID, "new head timestamp not greater than parent", latestValid);
     }
     // set the new head
     blockchain.rewindToBlock(newHead.getHash());
@@ -323,6 +329,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               blockchain.setSafeBlock(safeBlockHash);
               mergeContext.setSafeBlock(newSafeBlock);
             });
+
+    if (maybePayloadAttributes.isPresent()
+        && !isPayloadAttributesValid(maybePayloadAttributes.get(), newHead)) {
+      return ForkchoiceResult.withFailure(INVALID_PAYLOAD_ATTRIBUTES, null, Optional.empty());
+    }
 
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
@@ -486,6 +497,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
     // neither matching nor is the ancestor block height lower than newBlock
     return false;
+  }
+
+  private boolean isPayloadAttributesValid(
+      final PayloadAttributes payloadAttributes, final BlockHeader headBlockHeader) {
+    return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
   @FunctionalInterface

@@ -144,10 +144,13 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     when(mergeContext.isSyncing()).thenReturn(false);
-    when(mergeCoordinator.updateForkChoice(mockHeader, parent.getHash(), parent.getHash()))
+    when(mergeCoordinator.updateForkChoice(
+            mockHeader, parent.getHash(), parent.getHash(), Optional.empty()))
         .thenReturn(
             ForkchoiceResult.withFailure(
-                "new head timestamp not greater than parent", Optional.of(parent.getHash())));
+                ForkchoiceResult.Status.INVALID,
+                "new head timestamp not greater than parent",
+                Optional.of(parent.getHash())));
 
     EngineForkchoiceUpdatedParameter param =
         new EngineForkchoiceUpdatedParameter(
@@ -352,7 +355,7 @@ public class EngineForkchoiceUpdatedTest {
 
     // result from mergeCoordinator has no new finalized, new head:
     when(mergeCoordinator.updateForkChoice(
-            any(BlockHeader.class), any(Hash.class), any(Hash.class)))
+            any(BlockHeader.class), any(Hash.class), any(Hash.class), any()))
         .thenReturn(forkchoiceResult);
     var resp =
         resp(new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash), payloadParam);

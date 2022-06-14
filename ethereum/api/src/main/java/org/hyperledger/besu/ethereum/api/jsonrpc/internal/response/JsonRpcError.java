@@ -33,6 +33,9 @@ public enum JsonRpcError {
 
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
+  // eth_getBlockByNumber specific error message
+  UNKNOWN_BLOCK(-39001, "Unknown block"),
+
   // eth_sendTransaction specific error message
   ETH_SEND_TX_NOT_AVAILABLE(
       -32604,
@@ -73,6 +76,7 @@ public enum JsonRpcError {
   UNKNOWN_PAYLOAD(-32001, "Payload does not exist / is not available"),
   INVALID_TERMINAL_BLOCK(-32002, "Terminal block doesn't satisfy terminal block conditions"),
   INVALID_FORKCHOICE_STATE(-38002, "Invalid forkchoice state"),
+  INVALID_PAYLOAD_ATTRIBUTES(-38003, "Invalid payload attributes"),
 
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),
