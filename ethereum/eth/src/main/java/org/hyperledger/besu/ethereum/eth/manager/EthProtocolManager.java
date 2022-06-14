@@ -78,7 +78,7 @@ public class EthProtocolManager
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
-  private Optional<Difficulty> powTerminalDifficulty;
+  private Optional<Difficulty> powTerminalDifficulty = Optional.empty();
   private final StampedLock powTerminalDifficultyLock = new StampedLock();
   private Hash lastFinalized = Hash.ZERO;
   private final AtomicLong numFinalizedSeen = new AtomicLong(0);
