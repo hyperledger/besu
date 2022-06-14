@@ -683,7 +683,7 @@ public class RunnerBuilder {
                   engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
                   metricsSystem,
                   natService,
-                  websocketMethodsFactory.methods(),
+                  webSocketConfiguration.isEnabled() ? websocketMethodsFactory.methods() : engineMethods,
                   Optional.ofNullable(engineSocketConfig),
                   besuController.getProtocolManager().ethContext().getScheduler(),
                   authToUse,

@@ -305,6 +305,49 @@ public final class RunnerBuilderTest {
   }
 
   @Test
+  public void whenEngineApiAddedEthSubscribeAvailable() {
+    WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
+    wsRpc.setEnabled(true);
+    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    MergeConfigOptions.setMergeEnabled(true);
+    when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
+    engineConf.setEnabled(true);
+
+    final Runner runner =
+        new RunnerBuilder()
+            .discovery(true)
+            .p2pListenInterface("0.0.0.0")
+            .p2pListenPort(30303)
+            .p2pAdvertisedHost("127.0.0.1")
+            .p2pEnabled(true)
+            .natMethod(NatMethod.NONE)
+            .besuController(besuController)
+            .ethNetworkConfig(mockMainnet)
+            .metricsSystem(mock(ObservableMetricsSystem.class))
+            .permissioningService(mock(PermissioningServiceImpl.class))
+            .jsonRpcConfiguration(JsonRpcConfiguration.createDefault())
+            .engineJsonRpcConfiguration(engineConf)
+            .webSocketConfiguration(wsRpc)
+            .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
+            .graphQLConfiguration(mock(GraphQLConfiguration.class))
+            .metricsConfiguration(mock(MetricsConfiguration.class))
+            .vertx(Vertx.vertx())
+            .dataDir(dataDir.getRoot().toPath())
+            .storageProvider(mock(KeyValueStorageProvider.class))
+            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+            .rpcEndpointService(new RpcEndpointServiceImpl())
+            .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .build();
+
+    assertThat(runner.getEngineJsonRpcPort()).isPresent();
+    runner.startExternalServices();
+    //assert that rpc method collection has eth_subscribe in it.
+    runner.stop();
+  }
+
+  @Test
   public void noEngineApiNoServiceForMethods() {
     JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();
     defaultRpcConfig.setEnabled(true);
