@@ -143,9 +143,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ForkchoiceResult result =
         coordinator.updateForkChoice(
-            childHeader, terminalHeader.getHash(), terminalHeader.getHash());
+            childHeader, terminalHeader.getHash(), terminalHeader.getHash(), Optional.empty());
 
-    assertThat(result.isSuccessful()).isFalse();
+    assertThat(result.isValid()).isFalse();
     assertThat(result.getErrorMessage()).isPresent();
     assertThat(result.getErrorMessage().get())
         .isEqualTo("new head timestamp not greater than parent");
@@ -220,7 +220,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     coordinator.executeBlock(headBlock);
 
     coordinator.updateForkChoice(
-        headBlockHeader, firstFinalizedBlock.getHash(), firstFinalizedBlock.getHash());
+        headBlockHeader,
+        firstFinalizedBlock.getHash(),
+        firstFinalizedBlock.getHash(),
+        Optional.empty());
 
     verify(blockchain).setFinalized(firstFinalizedBlock.getHash());
     verify(mergeContext).setFinalized(firstFinalizedHeader);
@@ -248,7 +251,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     coordinator.executeBlock(headBlock);
 
     coordinator.updateForkChoice(
-        headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
+        headBlockHeader,
+        lastFinalizedBlock.getHash(),
+        lastFinalizedBlock.getHash(),
+        Optional.empty());
 
     verify(blockchain).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext).setFinalized(lastFinalizedHeader);
@@ -281,8 +287,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(Optional.of(headBlockHeader));
     var res =
         coordinator.updateForkChoice(
-            headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
-    assertThat(res.isFailed()).isTrue();
+            headBlockHeader,
+            lastFinalizedBlock.getHash(),
+            lastFinalizedBlock.getHash(),
+            Optional.empty());
+    assertThat(res.isValid()).isFalse();
+    assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID);
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
@@ -315,9 +325,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(Optional.of(headBlockHeader));
     var res =
         coordinator.updateForkChoice(
-            headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
-    assertThat(res.isSuccessful()).isFalse();
-    assertThat(res.isFailed()).isTrue();
+            headBlockHeader,
+            lastFinalizedBlock.getHash(),
+            lastFinalizedBlock.getHash(),
+            Optional.empty());
+    assertThat(res.isValid()).isFalse();
+    assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID);
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
@@ -349,9 +362,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(Optional.of(headBlockHeader));
     var res =
         coordinator.updateForkChoice(
-            headBlockHeader, lastFinalizedBlock.getHash(), lastFinalizedBlock.getHash());
-    assertThat(res.isSuccessful()).isFalse();
-    assertThat(res.isFailed()).isTrue();
+            headBlockHeader,
+            lastFinalizedBlock.getHash(),
+            lastFinalizedBlock.getHash(),
+            Optional.empty());
+    assertThat(res.isValid()).isFalse();
+    assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID);
 
     verify(blockchain, never()).setFinalized(lastFinalizedBlock.getHash());
     verify(mergeContext, never()).setFinalized(lastFinalizedHeader);
@@ -519,6 +535,43 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isFalse();
     // assert true if we send in a merge-at-genesis block
     assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isFalse();
+  }
+
+  @Test
+  public void invalidPayloadShouldReturnErrorAndUpdateForkchoiceState() {
+    BlockHeader terminalHeader = terminalPowBlock();
+    coordinator.executeBlock(new Block(terminalHeader, BlockBody.empty()));
+
+    BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(prevFinalizedBlock);
+
+    when(mergeContext.getFinalized()).thenReturn(Optional.of(prevFinalizedHeader));
+
+    BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    coordinator.executeBlock(lastFinalizedBlock);
+
+    BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
+    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    coordinator.executeBlock(headBlock);
+
+    var res =
+        coordinator.updateForkChoice(
+            headBlockHeader,
+            lastFinalizedBlock.getHash(),
+            lastFinalizedBlock.getHash(),
+            Optional.of(
+                new PayloadAttributes(
+                    headBlockHeader.getTimestamp() - 1, Hash.ZERO, Address.ZERO)));
+
+    assertThat(res.isValid()).isFalse();
+    assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES);
+
+    verify(blockchain).setFinalized(lastFinalizedBlock.getHash());
+    verify(mergeContext).setFinalized(lastFinalizedHeader);
+    verify(blockchain).setSafeBlock(lastFinalizedBlock.getHash());
+    verify(mergeContext).setSafeBlock(lastFinalizedHeader);
   }
 
   private BlockHeader terminalPowBlock() {
