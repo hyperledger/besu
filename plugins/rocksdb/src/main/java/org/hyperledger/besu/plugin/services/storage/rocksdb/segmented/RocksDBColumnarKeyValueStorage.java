@@ -153,7 +153,8 @@ public class RocksDBColumnarKeyValueStorage
         .setBlockCache(cache)
         .setFormatVersion(5)
         .setOptimizeFiltersForMemory(true)
-        .setBlockSize(32568);
+        .setCacheIndexAndFilterBlocks(true)
+        .setBlockSize(32768);
   }
 
   @Override
