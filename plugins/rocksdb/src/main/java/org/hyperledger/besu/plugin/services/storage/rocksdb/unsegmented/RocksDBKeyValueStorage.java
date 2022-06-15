@@ -76,8 +76,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
               .setCreateIfMissing(true)
               .setMaxOpenFiles(configuration.getMaxOpenFiles())
               .setTableFormatConfig(createBlockBasedTableConfig(configuration))
-                  .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                  .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
+              .setCompressionType(CompressionType.LZ4_COMPRESSION)
+              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
               .setStatistics(stats);
       options.getEnv().setBackgroundThreads(configuration.getBackgroundThreadCount());
 
@@ -172,12 +172,12 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
-            .setBlockCache(cache)
-            .setFormatVersion(5)
-            .setOptimizeFiltersForMemory(true)
-            .setCacheIndexAndFilterBlocks(true)
-            .setFilterPolicy(new BloomFilter())
-            .setBlockSize(32768);
+        .setBlockCache(cache)
+        .setFormatVersion(5)
+        .setOptimizeFiltersForMemory(true)
+        .setCacheIndexAndFilterBlocks(true)
+        .setFilterPolicy(new BloomFilter())
+        .setBlockSize(32768);
   }
 
   private void throwIfClosed() {
