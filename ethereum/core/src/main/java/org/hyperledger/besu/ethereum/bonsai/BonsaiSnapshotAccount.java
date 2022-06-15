@@ -19,7 +19,9 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.AbstractMap;
@@ -35,27 +37,47 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiSnapshotAccount implements MutableAccount {
+public class BonsaiSnapshotAccount implements MutableAccount, EvmAccount {
   private final Address address;
   private long nonce;
   private Wei balance;
   private Optional<Bytes> code;
   private final Map<Bytes32, Optional<BonsaiValue<UInt256>>> mutatedStorage = new HashMap<>();
+  private Boolean hasMutated = false;
 
   private final Function<Address, Optional<Bytes>> codeFetcher;
   private final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageSlotFetcher;
 
   public BonsaiSnapshotAccount(
-      final Address address,
-      final long nonce,
-      final Wei balance,
-      final Function<Address, Optional<Bytes>> codeFetcher,
-      final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher) {
+    final Address address,
+    final long nonce,
+    final Wei balance,
+    final Function<Address, Optional<Bytes>> codeFetcher,
+    final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher) {
     this.address = address;
     this.nonce = nonce;
     this.balance = balance;
     this.codeFetcher = codeFetcher;
     this.storageSlotFetcher = storageFetcher;
+  }
+
+  public BonsaiSnapshotAccount(
+    final Address address,
+    final long nonce,
+    final Wei balance,
+    final Function<Address, Optional<Bytes>> codeFetcher,
+    final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher,
+    final boolean hasMutated) {
+    this.address = address;
+    this.nonce = nonce;
+    this.balance = balance;
+    this.codeFetcher = codeFetcher;
+    this.storageSlotFetcher = storageFetcher;
+    this.hasMutated = hasMutated;
+  }
+
+  public boolean hasMutated() {
+    return hasMutated;
   }
 
   @Override
@@ -153,5 +175,10 @@ public class BonsaiSnapshotAccount implements MutableAccount {
                 new AbstractMap.SimpleEntry<>(
                     UInt256.fromBytes(entry.getKey()), entry.getValue().get().getUpdated()))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
+  @Override
+  public MutableAccount getMutable() throws ModificationNotAllowedException {
+    return this;
   }
 }
