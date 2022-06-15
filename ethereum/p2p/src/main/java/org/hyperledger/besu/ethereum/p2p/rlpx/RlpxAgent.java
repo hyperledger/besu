@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -429,27 +430,45 @@ public class RlpxAgent {
     dispatchConnect(peerConnection);
   }
 
-  private boolean callOnConnectionReady(
+  @VisibleForTesting
+  public boolean callOnConnectionReady(
       final PeerConnection peerConnection, final boolean isInboundConnection) {
 
     // Track this new connection, deduplicating existing connection if necessary
     final AtomicBoolean newConnectionAccepted = new AtomicBoolean(false);
+    final Peer peer = peerConnection.getPeer();
     final RlpxConnection newConnection =
         isInboundConnection
             ? RlpxConnection.inboundConnection(peerConnection)
             : RlpxConnection.outboundConnection(
-                peerConnection.getPeer(), CompletableFuture.completedFuture(peerConnection));
+                peer, CompletableFuture.completedFuture(peerConnection));
     // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
     // disconnect command until we've returned from our compute() calculation
+    // Disconnect if too many peers
+
+    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
+      LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
+      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
+      return false;
+    }
+    // Disconnect if too many remotely-initiated connections
+    if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
+      LOG.debug(
+          "Too many remotely-initiated connections. Disconnect incoming connection: {}",
+          peerConnection);
+      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
+      return false;
+    }
+
     final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
     connectionsById.compute(
-        peerConnection.getPeer().getId(),
+        peer.getId(),
         (nodeId, existingConnection) -> {
           if (existingConnection == null) {
             // The new connection is unique, set it and return
             LOG.info(
                 "Ready connection established with {}, connection {}",
-                peerConnection.getPeer().getId(),
+                peer.getId(),
                 System.identityHashCode(newConnection.getPeerConnection()));
             newConnectionAccepted.set(true);
             return newConnection;
@@ -461,7 +480,7 @@ public class RlpxAgent {
                 "Duplicate connection detected, disconnecting existing connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(existingConnection.getPeerConnection()),
                 System.identityHashCode(newConnection.getPeerConnection()),
-                peerConnection.getPeer().getId());
+                peer.getId());
             disconnectAction.set(
                 () -> existingConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             newConnectionAccepted.set(true);
@@ -472,7 +491,7 @@ public class RlpxAgent {
                 "Duplicate connection detected, disconnecting connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(newConnection.getPeerConnection()),
                 System.identityHashCode(existingConnection.getPeerConnection()),
-                peerConnection.getPeer().getId());
+                peer.getId());
             disconnectAction.set(
                 () -> newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             return existingConnection;
@@ -625,7 +644,9 @@ public class RlpxAgent {
   }
 
   private void dispatchConnect(final PeerConnection connection) {
-    connectedPeersCounter.inc();
+    connectedPeersCounter
+        .inc(); // TODO: this probably has to happen in the onReady callback, when we are adding the
+    // connection to the hashmap
     connectSubscribers.forEach(c -> c.onConnect(connection));
   }
 

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -115,8 +116,16 @@ public class EthPeers {
           callWhenStatusesExchanged(peerConnection, peerToAdd, throwable);
         });
     preStatusExchangedPeers.put(peerConnection, peer);
-    // if the status messages has not been received within 30s remove the entry
-    scheduler.schedule(() -> preStatusExchangedPeers.remove(peerConnection), 30, TimeUnit.SECONDS);
+    // if the status messages has not been received within 20s remove the entry
+    scheduler.schedule(
+        () -> {
+          if (!peerConnection.isDisconnected()) {
+            peerConnection.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+          }
+          preStatusExchangedPeers.remove(peerConnection);
+        },
+        20,
+        TimeUnit.SECONDS);
 
     return peer;
   }
@@ -136,13 +145,17 @@ public class EthPeers {
           peerConnection.getPeer().getId(),
           (id, prevPeer) -> {
             if (prevPeer != null) {
-              previouslyUsedPeers.put(peerConnection, prevPeer);
-              // remove this entry after 40s. We have to keep it for a bit to make sure that
+              previouslyUsedPeers.put(
+                  peerConnection,
+                  prevPeer); // TODO: When moving a previous eth peer out of the connections map we
+              // might have to copy validationStatus and/or chainHeadState or similar
+              // to the new member
+              // remove this entry after 30s. We have to keep it for a bit to make sure that
               // requests we might have made with
               // this peer can be used. Makes sure that we do not flag these messages as unsolicited
               // messages.
               scheduler.schedule(
-                  () -> previouslyUsedPeers.remove(peerConnection), 40, TimeUnit.SECONDS);
+                  () -> previouslyUsedPeers.remove(peerConnection), 30, TimeUnit.SECONDS);
             }
             return peerToAdd;
           });
