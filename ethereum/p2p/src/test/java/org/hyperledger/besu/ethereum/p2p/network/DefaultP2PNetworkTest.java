@@ -53,21 +53,27 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
-import org.apache.tuweni.discovery.DNSDaemonListener;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Assertions;
+import org.ethereum.beacon.discovery.schema.EnrField;
+import org.ethereum.beacon.discovery.schema.IdentitySchema;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,6 +91,7 @@ public final class DefaultP2PNetworkTest {
               "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
+  @Mock Vertx vertx;
 
   private final ArgumentCaptor<PeerBondedObserver> discoverySubscriberCaptor =
       ArgumentCaptor.forClass(PeerBondedObserver.class);
@@ -93,7 +100,6 @@ public final class DefaultP2PNetworkTest {
 
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setActive(false))
           .setRlpx(
               RlpxConfiguration.create()
                   .setBindPort(0)
@@ -370,8 +376,8 @@ public final class DefaultP2PNetworkTest {
   public void shouldNotStartDnsDiscoveryWhenDnsURLIsNotConfigured() {
     DefaultP2PNetwork testClass = network();
     testClass.start();
-    // ensure DnsDaemon is NOT present:
-    assertThat(testClass.getDnsDaemon()).isNotPresent();
+    // ensure DnsDiscoveryService is NOT present:
+    assertThat(testClass.getDnsDiscoveryService()).isNull();
   }
 
   @Test
@@ -387,8 +393,7 @@ public final class DefaultP2PNetworkTest {
     // spy on DefaultP2PNetwork
     DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
 
-    testClass.start();
-    assertThat(testClass.getDnsDaemon()).isPresent();
+    assertThat(testClass.getDnsDiscoveryService()).isNotNull();
   }
 
   @Test
@@ -403,40 +408,61 @@ public final class DefaultP2PNetworkTest {
     doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
 
     DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
-    testClass.start();
 
-    // ensure we used the dns server override config when building DNSDaemon:
-    assertThat(testClass.getDnsDaemon()).isPresent();
+    // ensure we used the dns server override config when building DNSPeerDiscoveryService:
+    assertThat(testClass.getDnsDiscoveryService()).isNotNull();
     verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
   }
 
   @Test
   public void shouldNotDropDnsHostsOnEmptyLookup() {
-    DefaultP2PNetwork network = network();
-    DNSDaemonListener listenerUnderTest = network.createDaemonListener();
+    // create a discovery config with a dns config
+    DiscoveryConfiguration disco =
+        DiscoveryConfiguration.create().setDnsDiscoveryURL("enrtree://mock@localhost");
+
+    // spy on config to return dns discovery config:
+    NetworkingConfiguration dnsConfig =
+        when(spy(config).getDiscovery()).thenReturn(disco).getMock();
+
+    // spy on DefaultP2PNetwork
+    DefaultP2PNetwork network = (DefaultP2PNetwork) builder().config(dnsConfig).build();
+
+    Consumer<NodeRecord> listenerUnderTest = network.createNodeRecordListener();
 
     // assert no entries prior to lookup
-    assertThat(network.dnsPeers.get()).isNull();
+    assertThat(network.dnsPeers).isEmpty();
+
+    final InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+    final String ipEnrFieldName;
+    final String udpEnrFieldName;
+    final String tcpEnrFieldName;
+    if (loopbackAddress instanceof Inet4Address) {
+      ipEnrFieldName = EnrField.IP_V4;
+      udpEnrFieldName = EnrField.UDP;
+      tcpEnrFieldName = EnrField.TCP;
+    } else {
+      ipEnrFieldName = EnrField.IP_V6;
+      udpEnrFieldName = EnrField.UDP_V6;
+      tcpEnrFieldName = EnrField.TCP_V6;
+    }
 
     // simulate successful lookup of 1 peer
-    listenerUnderTest.newRecords(
-        1,
-        List.of(
-            EthereumNodeRecord.create(
-                SECP256K1.KeyPair.fromSecretKey(mockKey),
-                1L,
-                null,
-                null,
-                InetAddress.getLoopbackAddress(),
-                30303,
-                30303)));
-    assertThat(network.dnsPeers.get()).isNotEmpty();
-    assertThat(network.dnsPeers.get().size()).isEqualTo(1);
-
-    // simulate failed lookup empty list
-    listenerUnderTest.newRecords(2, Collections.emptyList());
-    assertThat(network.dnsPeers.get()).isNotEmpty();
-    assertThat(network.dnsPeers.get().size()).isEqualTo(1);
+    listenerUnderTest.accept(
+        NodeRecordFactory.DEFAULT.createFromValues(
+            UInt64.valueOf(1L),
+            new EnrField(EnrField.ID, IdentitySchema.V4),
+            new EnrField(
+                EnrField.PKEY_SECP256K1,
+                Bytes.wrap(
+                    SECP256K1.KeyPair.fromSecretKey(mockKey)
+                        .publicKey()
+                        .asEcPoint()
+                        .getEncoded(true))),
+            new EnrField(ipEnrFieldName, Bytes.wrap(loopbackAddress.getAddress())),
+            new EnrField(tcpEnrFieldName, 30303),
+            new EnrField(udpEnrFieldName, 30303)));
+    assertThat(network.dnsPeers).isNotEmpty();
+    assertThat(network.dnsPeers).hasSize(1);
   }
 
   private DefaultP2PNetwork network() {
@@ -444,13 +470,13 @@ public final class DefaultP2PNetworkTest {
   }
 
   private DefaultP2PNetwork.Builder builder() {
-
     final NodeKey nodeKey = NodeKeyUtils.generate();
 
     return DefaultP2PNetwork.builder()
         .config(config)
         .peerDiscoveryAgent(discoveryAgent)
         .rlpxAgent(rlpxAgent)
+        .vertx(vertx)
         .nodeKey(nodeKey)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())

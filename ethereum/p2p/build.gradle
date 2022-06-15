@@ -40,19 +40,12 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.google.guava:guava'
-  implementation 'dnsjava:dnsjava'
   implementation 'io.netty:netty-transport-native-unix-common'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-crypto'
-  implementation('org.apache.tuweni:tuweni-devp2p') {
-    exclude group:'ch.qos.logback', module:'logback-classic'
-  }
-  implementation('org.apache.tuweni:tuweni-dns-discovery'){
-    exclude group:'ch.qos.logback', module:'logback-classic'
-  }
   implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.apache.tuweni:tuweni-units'
@@ -81,12 +74,14 @@ dependencies {
     exclude group: 'io.pkts', module: 'pkts-sip'
   }
   testImplementation 'io.vertx:vertx-codegen'
+  testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'io.vertx:vertx-unit'
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
