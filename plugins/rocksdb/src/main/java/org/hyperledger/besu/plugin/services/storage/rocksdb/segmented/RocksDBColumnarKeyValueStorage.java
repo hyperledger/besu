@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
@@ -96,6 +97,7 @@ public class RocksDBColumnarKeyValueStorage
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setTtl(0)
+                              .setOptimizeFiltersForHits(true)
                               .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
       columnDescriptors.add(
@@ -103,6 +105,7 @@ public class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
+                  .setOptimizeFiltersForHits(true)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
@@ -154,6 +157,7 @@ public class RocksDBColumnarKeyValueStorage
         .setFormatVersion(5)
         .setOptimizeFiltersForMemory(true)
         .setCacheIndexAndFilterBlocks(true)
+        .setFilterPolicy(new BloomFilter())
         .setBlockSize(32768);
   }
 
