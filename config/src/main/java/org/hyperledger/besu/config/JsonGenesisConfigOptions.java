@@ -276,6 +276,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getGrayGlacierBlockNumber() {
+    return getOptionalLong("grayglacierblock");
+  }
+
+  @Override
   public OptionalLong getParisBlockNumber() {
     var parisBlock = getOptionalLong("parisblock");
     var preMergeAlias = getOptionalLong("premergeforkblock");
@@ -441,6 +446,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
+    getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
@@ -559,6 +565,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
+            getGrayGlacierBlockNumber(),
             getParisBlockNumber(),
             getTerminalBlockNumber(),
             getEcip1015BlockNumber(),
