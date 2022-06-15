@@ -35,6 +35,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.BloomFilter;
+import org.rocksdb.CompressionType;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDBException;
@@ -74,7 +76,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
               .setCreateIfMissing(true)
               .setMaxOpenFiles(configuration.getMaxOpenFiles())
               .setTableFormatConfig(createBlockBasedTableConfig(configuration))
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
+                  .setCompressionType(CompressionType.LZ4_COMPRESSION)
+                  .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
               .setStatistics(stats);
       options.getEnv().setBackgroundThreads(configuration.getBackgroundThreadCount());
 
@@ -168,7 +171,13 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
+    return new BlockBasedTableConfig()
+            .setBlockCache(cache)
+            .setFormatVersion(5)
+            .setOptimizeFiltersForMemory(true)
+            .setCacheIndexAndFilterBlocks(true)
+            .setFilterPolicy(new BloomFilter())
+            .setBlockSize(32768);
   }
 
   private void throwIfClosed() {
