@@ -1,6 +1,21 @@
+/*
+ * Copyright Hyperledger Besu contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -8,13 +23,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -22,7 +36,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * This class attempts to roll forward or backward trielog layers in-memory to maintain a consistent
@@ -94,9 +108,10 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState {
   }
 
   StorageException noPathFrom(final Hash hash) {
-    return new StorageException(String.format(
-        "No path from hash %s to this log blockhash %s",
-        hash.toHexString(), blockHash.toHexString()));
+    return new StorageException(
+        String.format(
+            "No path from hash %s to this log blockhash %s",
+            hash.toHexString(), blockHash.toHexString()));
   }
 
   Stream<TrieLogLayer> pathFromHead() {
@@ -222,14 +237,18 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState {
     if (headBlockHash().equals(blockHash)) {
       return headVal;
     } else {
-      Account mutatedAccount = getLatestStateTrieAccountValue(address)
-          .map(val -> (Account) new BonsaiSnapshotAccount(
-              address,
-              val.getNonce(),
-              val.getBalance(),
-              this::getLatestCodeFromTries,
-              this::getLatestStorageSlotFromTries))
-          .orElse(null);
+      Account mutatedAccount =
+          getLatestStateTrieAccountValue(address)
+              .map(
+                  val ->
+                      (Account)
+                          new BonsaiSnapshotAccount(
+                              address,
+                              val.getNonce(),
+                              val.getBalance(),
+                              this::getLatestCodeFromTries,
+                              this::getLatestStorageSlotFromTries))
+              .orElse(null);
       mutatedAccounts.put(address, mutatedAccount);
       return mutatedAccount;
     }
@@ -243,12 +262,13 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState {
     return resolveValueFromPath(address, TrieLogLayer::getCode, TrieLogLayer::getPriorCode);
   }
 
-  private Optional<BonsaiValue<UInt256>> getLatestStorageSlotFromTries(final Address address, final UInt256 key) {
+  private Optional<BonsaiValue<UInt256>> getLatestStorageSlotFromTries(
+      final Address address, final UInt256 key) {
     // derive from path looking for storage
-    return bonsaiValueFromPath(address,
+    return bonsaiValueFromPath(
+        address,
         (log, k) -> log.getStorageBySlotHash(address, Hash.hash(k)),
-        (log, k) -> log.getPriorStorageBySlotHash(address, Hash.hash(k))
-    );
+        (log, k) -> log.getPriorStorageBySlotHash(address, Hash.hash(k)));
   }
 
   <T> Optional<T> resolveValueFromPath(
@@ -256,12 +276,12 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState {
       final BiFunction<TrieLogLayer, Address, Optional<T>> logCurrent,
       final BiFunction<TrieLogLayer, Address, Optional<T>> logPrior) {
 
-      return trieLogLayerFromPath(address, logCurrent)
-          .flatMap(mostRecentLog -> {
-            var mapper = (mostRecentLog.getBlockHash().equals(blockHash))
-                ? logCurrent: logPrior;
-            return mapper.apply(mostRecentLog, address);
-    });
+    return trieLogLayerFromPath(address, logCurrent)
+        .flatMap(
+            mostRecentLog -> {
+              var mapper = (mostRecentLog.getBlockHash().equals(blockHash)) ? logCurrent : logPrior;
+              return mapper.apply(mostRecentLog, address);
+            });
   }
 
   <T> Optional<BonsaiValue<T>> bonsaiValueFromPath(
@@ -269,22 +289,24 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState {
       final BiFunction<TrieLogLayer, Address, Optional<T>> logCurrent,
       final BiFunction<TrieLogLayer, Address, Optional<T>> logPrior) {
     // check to see if our current log layer has a value for this type
-        return trieLogLayerFromPath(address, logCurrent)
-        .map(log -> new BonsaiValue<>(
-            logCurrent.apply(log, address).orElse(null),
-            logPrior.apply(log, address).orElse(null)));
+    return trieLogLayerFromPath(address, logCurrent)
+        .map(
+            log ->
+                new BonsaiValue<>(
+                    logCurrent.apply(log, address).orElse(null),
+                    logPrior.apply(log, address).orElse(null)));
   }
 
-  <T> Optional<TrieLogLayer> trieLogLayerFromPath (
+  <T> Optional<TrieLogLayer> trieLogLayerFromPath(
       final Address address,
       final BiFunction<TrieLogLayer, Address, Optional<T>> isPresentInLayer) {
+    // see if our snapshot trielog contains a change for this address:
     return Optional.ofNullable(trieLog)
         .filter(log -> isPresentInLayer.apply(log, address).isPresent())
         .map(Optional::of)
-        // otherwise try to fetch it from the stream of forks
-        .orElseGet(() -> pathFromHead()
-            .filter(log -> log.getCode(address).isPresent())
-            .reduce((a,b) -> b));
+        // otherwise try to fetch it from the stream of logs, in case we are ahead of head
+        .orElseGet(
+            () ->
+                pathFromHead().filter(log -> log.getCode(address).isPresent()).reduce((a, b) -> b));
   }
 }
-
