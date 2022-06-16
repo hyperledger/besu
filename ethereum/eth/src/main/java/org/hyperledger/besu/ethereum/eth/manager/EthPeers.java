@@ -72,7 +72,7 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();  // We might want to schedule using the ctx
   ;
 
   public EthPeers(
@@ -120,7 +120,7 @@ public class EthPeers {
     // if the status messages has not been received within 20s remove the entry
     scheduler.schedule(
         () -> {
-          if (!peerConnection.isDisconnected()) {
+          if ((!connections.containsKey(peer.nodeId()) || !connections.get(peer.nodeId()).getConnection().equals(peerConnection))) {
             peerConnection.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
           }
           preStatusExchangedPeers.remove(peerConnection);
@@ -149,8 +149,9 @@ public class EthPeers {
             if (prevPeer != null) {
               previouslyUsedPeers.put(
                   peerConnection,
-                  prevPeer); // TODO: When moving a previous eth peer out of the connections map we
+                  prevPeer);
               chainStateFromPrevPeer.set(prevPeer.chainState());
+              // TODO: When moving a previous eth peer out of the connections map we
               // might have to copy validationStatus and/or chainHeadState or similar
               // to the new member
               // remove this entry after 30s. We have to keep it for a bit to make sure that
@@ -158,7 +159,10 @@ public class EthPeers {
               // this peer can be used. Makes sure that we do not flag these messages as unsolicited
               // messages.
               scheduler.schedule(
-                  () -> previouslyUsedPeers.remove(peerConnection), 30, TimeUnit.SECONDS);
+                  () -> {
+                    previouslyUsedPeers.remove(peerConnection);
+                    peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+                  }, 30, TimeUnit.SECONDS);
             }
             return peerToAdd;
           });
