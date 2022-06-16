@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.consensus.merge.NewForkchoiceMessageListener;
-import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -49,8 +47,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.StampedLock;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -58,16 +54,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthProtocolManager
-    implements ProtocolManager,
-        MinedBlockObserver,
-        NewMergeStateCallback,
-        NewForkchoiceMessageListener {
+public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
   private final EthScheduler scheduler;
   private final CountDownLatch shutdown;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
+
   private final Hash genesisHash;
   private final ForkIdManager forkIdManager;
   private final BigInteger networkId;
@@ -78,10 +71,6 @@ public class EthProtocolManager
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
-  private Optional<Difficulty> powTerminalDifficulty = Optional.empty();
-  private final StampedLock powTerminalDifficultyLock = new StampedLock();
-  private Hash lastFinalized = Hash.ZERO;
-  private final AtomicLong numFinalizedSeen = new AtomicLong(0);
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -102,7 +91,7 @@ public class EthProtocolManager
     this.blockchain = blockchain;
 
     this.shutdown = new CountDownLatch(1);
-    this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO);
+    genesisHash = blockchain.getBlockHashByNumber(0L).get();
 
     this.forkIdManager = forkIdManager;
 
@@ -248,7 +237,7 @@ public class EthProtocolManager
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.debug(
-          "Ignoring message received from unknown peer connection: {}", message.getConnection());
+          "Ignoring message received from unknown peer connection: " + message.getConnection());
       return;
     }
 
@@ -282,11 +271,6 @@ public class EthProtocolManager
       return;
     }
 
-    if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
-      LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
-      ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-    }
-
     // This will handle responses
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 
@@ -313,7 +297,7 @@ public class EthProtocolManager
         responseData -> {
           try {
             ethPeer.send(responseData, getSupportedProtocol());
-          } catch (final PeerNotConnected missingPeerException) {
+          } catch (final PeerNotConnected __) {
             // Peer disconnected before we could respond - nothing to do
           }
         });
@@ -385,19 +369,6 @@ public class EthProtocolManager
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (isFinalized()) {
-        long lockStamp = this.powTerminalDifficultyLock.readLock();
-        try {
-          if (this.powTerminalDifficulty.isPresent()
-              && status.totalDifficulty().greaterThan(this.powTerminalDifficulty.get())) {
-            LOG.debug(
-                "Disconnecting peer with difficulty {}, likely still on PoW chain",
-                status.totalDifficulty());
-            peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-          }
-        } finally {
-          this.powTerminalDifficultyLock.unlockRead(lockStamp);
-        }
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(
@@ -409,10 +380,6 @@ public class EthProtocolManager
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
     }
-  }
-
-  private boolean isFinalized() {
-    return this.numFinalizedSeen.get() > 1;
   }
 
   @Override
@@ -433,56 +400,5 @@ public class EthProtocolManager
     return chainHeadForkId == null
         ? Collections.emptyList()
         : chainHeadForkId.getForkIdAsBytesList();
-  }
-
-  @Override
-  public void onCrossingMergeBoundary(
-      final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
-    if (isPoS) {
-      long lockStamp = this.powTerminalDifficultyLock.writeLock();
-      try {
-        this.powTerminalDifficulty = difficultyStoppedAt;
-      } finally {
-        this.powTerminalDifficultyLock.unlockWrite(lockStamp);
-      }
-    }
-  }
-
-  private void disconnectKnownPowPeers() {
-    long lockStamp = powTerminalDifficultyLock.readLock();
-    try {
-      if (powTerminalDifficulty.isPresent()) {
-        LOG.info(
-            "disconnecting peers with total difficulty over {}",
-            powTerminalDifficulty.get().toBigInteger());
-        ethPeers
-            .streamAllPeers()
-            .filter(
-                ethPeer ->
-                    ethPeer
-                        .chainState()
-                        .getBestBlock()
-                        .totalDifficulty
-                        .greaterThan(powTerminalDifficulty.get()))
-            .forEach(ethPeer -> ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED));
-      }
-    } finally {
-      powTerminalDifficultyLock.unlockRead(lockStamp);
-    }
-  }
-
-  @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
-      this.lastFinalized = maybeFinalizedBlockHash.get();
-      this.numFinalizedSeen.getAndIncrement();
-      if (isFinalized()) {
-        disconnectKnownPowPeers();
-      }
-    }
   }
 }
