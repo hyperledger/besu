@@ -11,6 +11,7 @@
     "istanbulBlock":0,
     "berlinBlock":0,
     "londonBlock":0,
+    "terminalTotalDifficulty": 100000000000000000000000,
     "ethash":{},
     "discovery": {
       "bootnodes": [
