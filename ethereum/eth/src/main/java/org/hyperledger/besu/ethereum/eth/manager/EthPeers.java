@@ -72,7 +72,8 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();// We might want to schedule using the ctx
+  private final ScheduledExecutorService scheduler =
+      Executors.newSingleThreadScheduledExecutor(); // We might want to schedule using the ctx
   ;
 
   public EthPeers(
@@ -136,28 +137,28 @@ public class EthPeers {
           System.identityHashCode(peerConnection));
       final AtomicReference<ChainState> chainStateFromPrevPeer = new AtomicReference<>();
       connections.compute(
-              peerConnection.getPeer().getId(),
-              (id, prevPeer) -> {
-                if (prevPeer != null) {
-                  previouslyUsedPeers.put(peerConnection, prevPeer);
-                  chainStateFromPrevPeer.set(prevPeer.chainState());
-                  // TODO: When moving a previous eth peer out of the connections map we
-                  // might have to copy validationStatus and/or chainHeadState or similar
-                  // to the new member
-                  // remove this entry after 30s. We have to keep it for a bit to make sure that
-                  // requests we might have made with
-                  // this peer can be used. Makes sure that we do not flag these messages as unsolicited
-                  // messages.
-                  scheduler.schedule(
-                          () -> {
-                            previouslyUsedPeers.remove(peerConnection);
-                            peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
-                          },
-                          30,
-                          TimeUnit.SECONDS);
-                }
-                return peerToAdd;
-              });
+          peerConnection.getPeer().getId(),
+          (id, prevPeer) -> {
+            if (prevPeer != null) {
+              previouslyUsedPeers.put(peerConnection, prevPeer);
+              chainStateFromPrevPeer.set(prevPeer.chainState());
+              // TODO: When moving a previous eth peer out of the connections map we
+              // might have to copy validationStatus and/or chainHeadState or similar
+              // to the new member
+              // remove this entry after 30s. We have to keep it for a bit to make sure that
+              // requests we might have made with
+              // this peer can be used. Makes sure that we do not flag these messages as unsolicited
+              // messages.
+              scheduler.schedule(
+                  () -> {
+                    previouslyUsedPeers.remove(peerConnection);
+                    peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+                  },
+                  30,
+                  TimeUnit.SECONDS);
+            }
+            return peerToAdd;
+          });
       final ChainState chainState = chainStateFromPrevPeer.get();
       if (chainState != null) {
         peerToAdd.setChaintate(chainState);

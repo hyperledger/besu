@@ -117,7 +117,7 @@ public class P2PPlainNetworkTest {
       final CompletableFuture<PeerConnection> secondFuture =
           connector.connect(createPeer(listenId, listenPort));
       secondFuture.whenComplete(
-              (c, e) -> Assertions.assertThat(e.getMessage()).isEqualTo("Already trying to connect"));
+          (c, e) -> Assertions.assertThat(e.getMessage()).isEqualTo("Already trying to connect"));
 
       final PeerConnection firstConnection = firstFuture.get(30L, TimeUnit.SECONDS);
       Assertions.assertThat(firstConnection.getPeerInfo().getNodeId()).isEqualTo(listenId);

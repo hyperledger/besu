@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.isNull;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -56,6 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -447,7 +447,7 @@ public class RlpxAgent {
 
     if (!randomPeerPriority) {
       if (!peerPrivileges.canExceedConnectionLimits(peer)
-              && getConnectionCount() >= maxConnections) {
+          && getConnectionCount() >= maxConnections) {
         LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return false;
@@ -455,8 +455,8 @@ public class RlpxAgent {
       // Disconnect if too many remotely-initiated connections
       if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
         LOG.debug(
-                "Too many remotely-initiated connections. Disconnect incoming connection: {}",
-                peerConnection);
+            "Too many remotely-initiated connections. Disconnect incoming connection: {}",
+            peerConnection);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
