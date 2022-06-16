@@ -212,11 +212,6 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
-# Temporarily disabled
-#      - run:
-#          name: SonarQube
-#          no_output_timeout: 30m
-#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: xl_machine_executor
