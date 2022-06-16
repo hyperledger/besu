@@ -72,7 +72,8 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();  // We might want to schedule using the ctx
+  private final ScheduledExecutorService scheduler =
+      Executors.newSingleThreadScheduledExecutor(); // We might want to schedule using the ctx
   ;
 
   public EthPeers(
@@ -118,10 +119,7 @@ public class EthPeers {
         });
     preStatusExchangedPeers.put(peerConnection, peer);
     // if the status messages has not been received within 20s remove the entry
-    scheduler.schedule(
-        () -> preStatusExchangedPeers.remove(peerConnection),
-        20,
-        TimeUnit.SECONDS);
+    scheduler.schedule(() -> preStatusExchangedPeers.remove(peerConnection), 20, TimeUnit.SECONDS);
 
     return peer;
   }
@@ -142,9 +140,7 @@ public class EthPeers {
           peerConnection.getPeer().getId(),
           (id, prevPeer) -> {
             if (prevPeer != null) {
-              previouslyUsedPeers.put(
-                  peerConnection,
-                  prevPeer);
+              previouslyUsedPeers.put(peerConnection, prevPeer);
               chainStateFromPrevPeer.set(prevPeer.chainState());
               // TODO: When moving a previous eth peer out of the connections map we
               // might have to copy validationStatus and/or chainHeadState or similar
@@ -157,7 +153,9 @@ public class EthPeers {
                   () -> {
                     previouslyUsedPeers.remove(peerConnection);
                     peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
-                  }, 30, TimeUnit.SECONDS);
+                  },
+                  30,
+                  TimeUnit.SECONDS);
             }
             return peerToAdd;
           });
