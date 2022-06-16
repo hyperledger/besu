@@ -55,7 +55,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -430,48 +429,27 @@ public class RlpxAgent {
     dispatchConnect(peerConnection);
   }
 
-  @VisibleForTesting
-  public boolean callOnConnectionReady(
+  private boolean callOnConnectionReady(
       final PeerConnection peerConnection, final boolean isInboundConnection) {
 
     // Track this new connection, deduplicating existing connection if necessary
     final AtomicBoolean newConnectionAccepted = new AtomicBoolean(false);
-    final Peer peer = peerConnection.getPeer();
     final RlpxConnection newConnection =
         isInboundConnection
             ? RlpxConnection.inboundConnection(peerConnection)
             : RlpxConnection.outboundConnection(
-                peer, CompletableFuture.completedFuture(peerConnection));
+                peerConnection.getPeer(), CompletableFuture.completedFuture(peerConnection));
     // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
     // disconnect command until we've returned from our compute() calculation
-    // Disconnect if too many peers
-
-    if (!randomPeerPriority) {
-      if (!peerPrivileges.canExceedConnectionLimits(peer)
-          && getConnectionCount() >= maxConnections) {
-        LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
-        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-        return false;
-      }
-      // Disconnect if too many remotely-initiated connections
-      if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
-        LOG.debug(
-            "Too many remotely-initiated connections. Disconnect incoming connection: {}",
-            peerConnection);
-        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-        return false;
-      }
-    }
-
     final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
     connectionsById.compute(
-        peer.getId(),
+        peerConnection.getPeer().getId(),
         (nodeId, existingConnection) -> {
           if (existingConnection == null) {
             // The new connection is unique, set it and return
             LOG.info(
                 "Ready connection established with {}, connection {}",
-                peer.getId(),
+                peerConnection.getPeer().getId(),
                 System.identityHashCode(newConnection.getPeerConnection()));
             newConnectionAccepted.set(true);
             return newConnection;
@@ -483,7 +461,7 @@ public class RlpxAgent {
                 "Duplicate connection detected, disconnecting existing connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(existingConnection.getPeerConnection()),
                 System.identityHashCode(newConnection.getPeerConnection()),
-                peer.getId());
+                peerConnection.getPeer().getId());
             disconnectAction.set(
                 () -> existingConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             newConnectionAccepted.set(true);
@@ -494,7 +472,7 @@ public class RlpxAgent {
                 "Duplicate connection detected, disconnecting connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(newConnection.getPeerConnection()),
                 System.identityHashCode(existingConnection.getPeerConnection()),
-                peer.getId());
+                peerConnection.getPeer().getId());
             disconnectAction.set(
                 () -> newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             return existingConnection;
@@ -519,7 +497,7 @@ public class RlpxAgent {
 
   private boolean remoteConnectionLimitReached() {
     return shouldLimitRemoteConnections()
-        && countUntrustedRemotelyInitiatedConnections() > maxRemotelyInitiatedConnections;
+        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
   }
 
   private long countUntrustedRemotelyInitiatedConnections() {
@@ -647,9 +625,7 @@ public class RlpxAgent {
   }
 
   private void dispatchConnect(final PeerConnection connection) {
-    connectedPeersCounter
-        .inc(); // TODO: this probably has to happen in the onReady callback, when we are adding the
-    // connection to the hashmap
+    connectedPeersCounter.inc();
     connectSubscribers.forEach(c -> c.onConnect(connection));
   }
 

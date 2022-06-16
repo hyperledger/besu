@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -37,7 +36,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,8 +70,7 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final ScheduledExecutorService scheduler =
-      Executors.newSingleThreadScheduledExecutor(); // We might want to schedule using the ctx
+  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   ;
 
   public EthPeers(
@@ -118,8 +115,8 @@ public class EthPeers {
           callWhenStatusesExchanged(peerConnection, peerToAdd, throwable);
         });
     preStatusExchangedPeers.put(peerConnection, peer);
-    // if the status messages has not been received within 20s remove the entry
-    scheduler.schedule(() -> preStatusExchangedPeers.remove(peerConnection), 20, TimeUnit.SECONDS);
+    // if the status messages has not been received within 30s remove the entry
+    scheduler.schedule(() -> preStatusExchangedPeers.remove(peerConnection), 30, TimeUnit.SECONDS);
 
     return peer;
   }
@@ -135,36 +132,22 @@ public class EthPeers {
           "Adding peer {} with connection {}",
           peerConnection.getPeer().getId(),
           System.identityHashCode(peerConnection));
-      final AtomicReference<ChainState> chainStateFromPrevPeer = new AtomicReference<>();
       connections.compute(
           peerConnection.getPeer().getId(),
           (id, prevPeer) -> {
             if (prevPeer != null) {
               previouslyUsedPeers.put(peerConnection, prevPeer);
-              chainStateFromPrevPeer.set(prevPeer.chainState());
-              // TODO: When moving a previous eth peer out of the connections map we
-              // might have to copy validationStatus and/or chainHeadState or similar
-              // to the new member
-              // remove this entry after 30s. We have to keep it for a bit to make sure that
+              // remove this entry after 40s. We have to keep it for a bit to make sure that
               // requests we might have made with
               // this peer can be used. Makes sure that we do not flag these messages as unsolicited
               // messages.
               scheduler.schedule(
-                  () -> {
-                    previouslyUsedPeers.remove(peerConnection);
-                    peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
-                  },
-                  30,
-                  TimeUnit.SECONDS);
+                  () -> previouslyUsedPeers.remove(peerConnection), 40, TimeUnit.SECONDS);
             }
             return peerToAdd;
           });
-      final ChainState chainState = chainStateFromPrevPeer.get();
-      if (chainState != null) {
-        peerToAdd.setChainState(chainState);
-      }
     }
-    preStatusExchangedPeers.remove(peerConnection);
+    preStatusExchangedPeers.remove(peerConnection.getPeer().getId());
   }
 
   public void registerDisconnect(final PeerConnection connection) {
