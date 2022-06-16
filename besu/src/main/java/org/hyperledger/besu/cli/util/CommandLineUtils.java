@@ -101,8 +101,17 @@ public class CommandLineUtils {
     return commandLine.getCommandSpec().options().stream()
         .filter(
             option ->
-                Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
-                    && !option.stringValues().isEmpty())
+                Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains))
+        .filter(
+            option -> {
+              try {
+                return !option.stringValues().isEmpty()
+                        || commandLine.getDefaultValueProvider().defaultValue(option) != null;
+              } catch (Exception e) {
+                return false;
+              }
+            }
+        )
         .map(option -> option.names()[0])
         .collect(
             Collectors.collectingAndThen(
