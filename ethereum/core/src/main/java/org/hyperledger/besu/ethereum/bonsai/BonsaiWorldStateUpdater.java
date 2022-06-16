@@ -39,11 +39,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+@ThreadSafe
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
@@ -72,23 +74,24 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   @Override
-  public Account get(final Address address) {
+  public synchronized Account get(final Address address) {
     return super.get(address);
   }
 
   @Override
-  protected UpdateTrackingAccount<BonsaiAccount> track(
+  protected synchronized UpdateTrackingAccount<BonsaiAccount> track(
       final UpdateTrackingAccount<BonsaiAccount> account) {
     return super.track(account);
   }
 
   @Override
-  public EvmAccount getAccount(final Address address) {
+  public synchronized EvmAccount getAccount(final Address address) {
     return super.getAccount(address);
   }
 
   @Override
-  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public synchronized EvmAccount createAccount(
+      final Address address, final long nonce, final Wei balance) {
     BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
     if (bonsaiValue == null) {
       bonsaiValue = new BonsaiValue<>(null, null);
@@ -110,7 +113,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
   }
 
-  Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
+  synchronized Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
     return accountsToUpdate;
   }
 

@@ -70,7 +70,7 @@ public class RollingImport {
         }
         final TrieLogLayer layer =
             TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-        final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
+        final ThreadSafeBonsaiWorldStateUpdaterFacade updater = bonsaiState.updater();
         updater.rollForward(layer);
         updater.commit();
         bonsaiState.persist(null);
@@ -98,7 +98,7 @@ public class RollingImport {
         final byte[] bytes = reader.readBytes();
         final TrieLogLayer layer =
             TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-        final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
+        final ThreadSafeBonsaiWorldStateUpdaterFacade updater = bonsaiState.updater();
         updater.rollBack(layer);
         updater.commit();
         bonsaiState.persist(null);

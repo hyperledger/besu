@@ -176,8 +176,7 @@ public class LogRollingTests {
                 secondStorageStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
-    final BonsaiWorldStateUpdater secondUpdater =
-        (BonsaiWorldStateUpdater) secondWorldState.updater();
+    final ThreadSafeBonsaiWorldStateUpdaterFacade secondUpdater = secondWorldState.updater();
 
     final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
 
@@ -233,8 +232,7 @@ public class LogRollingTests {
                 secondStorageStorage,
                 secondTrieBranchStorage,
                 secondTrieLogStorage));
-    final BonsaiWorldStateUpdater secondUpdater =
-        (BonsaiWorldStateUpdater) secondWorldState.updater();
+    final ThreadSafeBonsaiWorldStateUpdaterFacade secondUpdater = secondWorldState.updater();
 
     final TrieLogLayer layerOne = getTrieLogLayer(trieLogStorage, headerOne.getHash());
     secondUpdater.rollForward(layerOne);
@@ -281,8 +279,7 @@ public class LogRollingTests {
     updater2.commit();
 
     worldState.persist(headerTwo);
-    final BonsaiWorldStateUpdater firstRollbackUpdater =
-        (BonsaiWorldStateUpdater) worldState.updater();
+    final ThreadSafeBonsaiWorldStateUpdaterFacade firstRollbackUpdater = worldState.updater();
 
     final TrieLogLayer layerTwo = getTrieLogLayer(trieLogStorage, headerTwo.getHash());
     firstRollbackUpdater.rollBack(layerTwo);

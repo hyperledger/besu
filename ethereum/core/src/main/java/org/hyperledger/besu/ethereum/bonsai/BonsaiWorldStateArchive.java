@@ -226,8 +226,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
 
         // attempt the state rolling
-        final BonsaiWorldStateUpdater bonsaiUpdater =
-            (BonsaiWorldStateUpdater) persistedState.updater();
+        final ThreadSafeBonsaiWorldStateUpdaterFacade bonsaiUpdater = persistedState.updater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());

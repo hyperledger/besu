@@ -277,6 +277,6 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public WorldUpdater updater() {
-    return new BonsaiWorldStateUpdater(this);
+    return new ThreadSafeBonsaiWorldStateUpdaterFacade(new BonsaiWorldStateUpdater(this));
   }
 }
