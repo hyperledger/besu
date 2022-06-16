@@ -209,9 +209,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find plugin \"{}\" in resources", pluginName);
           }
         });
-    engineRpcConfiguration.ifPresent(config -> {
-      MergeConfigOptions.setMergeEnabled(true);
-    });
+    engineRpcConfiguration.ifPresent(
+        config -> {
+          MergeConfigOptions.setMergeEnabled(true);
+        });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
