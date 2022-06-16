@@ -29,6 +29,9 @@ public class SyncTarget {
 
   public SyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
     this.peer = peer;
+    // TODO we might want to change that to peer id, so if the current target EthPeer is
+    // replaced by one with an EthPeer with a different connection with the same peer we
+    // can continue syncing against that peer
     this.commonAncestor = commonAncestor;
   }
 

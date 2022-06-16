@@ -105,14 +105,12 @@ public class P2PNetworkTest {
           connector.connect(createPeer(listenId, listenPort));
       final CompletableFuture<PeerConnection> secondFuture =
           connector.connect(createPeer(listenId, listenPort));
+      secondFuture.whenComplete(
+              (c, e) -> Assertions.assertThat(e.getMessage()).isEqualTo("Already trying to connect"));
 
       final PeerConnection firstConnection = firstFuture.get(30L, TimeUnit.SECONDS);
-      final PeerConnection secondConnection = secondFuture.get(30L, TimeUnit.SECONDS);
       Assertions.assertThat(firstConnection.getPeerInfo().getNodeId()).isEqualTo(listenId);
 
-      // Connections should reference the same instance - i.e. we shouldn't create 2 distinct
-      // connections
-      assertThat(firstConnection == secondConnection).isTrue();
     }
   }
 
@@ -137,6 +135,7 @@ public class P2PNetworkTest {
     try (final P2PNetwork listener = builder().nodeKey(nodeKey).config(listenerConfig).build();
         final P2PNetwork connector1 = builder().build();
         final P2PNetwork connector2 = builder().build()) {
+      listener.subscribeConnect((conn) -> conn.onPeerConnectionReady());
 
       // Setup listener and first connection
       listener.start();
@@ -146,7 +145,7 @@ public class P2PNetworkTest {
       final int listenPort = listenerEnode.getListeningPort().get();
 
       final Peer listeningPeer = createPeer(listenId, listenPort);
-      Assertions.assertThat(
+      assertThat(
               connector1
                   .connect(listeningPeer)
                   .get(30L, TimeUnit.SECONDS)
@@ -163,14 +162,14 @@ public class P2PNetworkTest {
             reasonFuture.complete(reason);
           });
       connector2.start();
-      Assertions.assertThat(
+      assertThat(
               connector2
                   .connect(listeningPeer)
                   .get(30L, TimeUnit.SECONDS)
                   .getPeerInfo()
                   .getNodeId())
           .isEqualTo(listenId);
-      Assertions.assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
+      assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
           .isEqualTo(listenId);
       assertThat(reasonFuture.get(30L, TimeUnit.SECONDS))
           .isEqualByComparingTo(DisconnectReason.TOO_MANY_PEERS);
