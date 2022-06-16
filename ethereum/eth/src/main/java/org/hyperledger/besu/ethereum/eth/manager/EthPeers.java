@@ -119,12 +119,7 @@ public class EthPeers {
     preStatusExchangedPeers.put(peerConnection, peer);
     // if the status messages has not been received within 20s remove the entry
     scheduler.schedule(
-        () -> {
-          if ((!connections.containsKey(peer.nodeId()) || !connections.get(peer.nodeId()).getConnection().equals(peerConnection))) {
-            peerConnection.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
-          }
-          preStatusExchangedPeers.remove(peerConnection);
-        },
+        () -> preStatusExchangedPeers.remove(peerConnection),
         20,
         TimeUnit.SECONDS);
 
