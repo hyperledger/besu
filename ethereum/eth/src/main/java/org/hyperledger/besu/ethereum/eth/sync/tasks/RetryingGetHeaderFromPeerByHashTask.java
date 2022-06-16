@@ -43,7 +43,6 @@ public class RetryingGetHeaderFromPeerByHashTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, 3, List::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
@@ -55,10 +54,9 @@ public class RetryingGetHeaderFromPeerByHashTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem) {
     return new RetryingGetHeaderFromPeerByHashTask(
-        protocolSchedule, ethContext, referenceHash, minimumRequiredBlockNumber, metricsSystem);
+        protocolSchedule, ethContext, referenceHash, metricsSystem);
   }
 
   @Override

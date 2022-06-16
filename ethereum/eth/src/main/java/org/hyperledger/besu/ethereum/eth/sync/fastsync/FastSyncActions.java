@@ -253,11 +253,7 @@ public class FastSyncActions {
 
   private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
     return RetryingGetHeaderFromPeerByHashTask.byHash(
-            protocolSchedule,
-            ethContext,
-            hash,
-            pivotBlockSelector.getMinRequiredBlockNumber(),
-            metricsSystem)
+            protocolSchedule, ethContext, hash, metricsSystem)
         .getHeader()
         .thenApply(
             blockHeader -> {
