@@ -248,4 +248,10 @@ public interface BesuEvents extends BesuService {
      */
     void onTTDReached(boolean reached);
   }
+
+  interface InitialSyncCompletionListener {
+
+    /** Emitted when initial sync finishes */
+    void onInitialSyncCompleted();
+  }
 }
