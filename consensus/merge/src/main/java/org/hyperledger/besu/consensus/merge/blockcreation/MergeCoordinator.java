@@ -258,37 +258,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       final Hash safeBlockHash,
       final Optional<PayloadAttributes> maybePayloadAttributes) {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
-    Optional<BlockHeader> currentFinalized = mergeContext.getFinalized();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
     final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
-
-    if (currentFinalized.isPresent()
-        && newFinalized.isPresent()
-        && !isDescendantOf(currentFinalized.get(), newFinalized.get())) {
-      return ForkchoiceResult.withFailure(
-          INVALID,
-          String.format(
-              "new finalized block %s is not a descendant of current finalized block %s",
-              finalizedBlockHash, currentFinalized.get().getBlockHash()),
-          latestValid);
-    }
-
-    // ensure new head is descendant of finalized
-    Optional<String> descendantError =
-        newFinalized
-            .map(Optional::of)
-            .orElse(currentFinalized)
-            .filter(finalized -> !isDescendantOf(finalized, newHead))
-            .map(
-                finalized ->
-                    String.format(
-                        "new head block %s is not a descendant of current finalized block %s",
-                        newHead.getBlockHash(), finalized.getBlockHash()));
-
-    if (descendantError.isPresent()) {
-      return ForkchoiceResult.withFailure(INVALID, descendantError.get(), latestValid);
-    }
 
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
     if (parentOfNewHead.isPresent()
