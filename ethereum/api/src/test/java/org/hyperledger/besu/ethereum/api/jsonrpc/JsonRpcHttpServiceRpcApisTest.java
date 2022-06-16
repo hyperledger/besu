@@ -220,7 +220,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    storageProvider));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
@@ -318,7 +319,8 @@ public class JsonRpcHttpServiceRpcApisTest {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    storageProvider));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,

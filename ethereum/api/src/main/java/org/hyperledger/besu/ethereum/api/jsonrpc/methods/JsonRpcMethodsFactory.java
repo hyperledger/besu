@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -73,7 +74,8 @@ public class JsonRpcMethodsFactory {
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
-      final EthPeers ethPeers) {
+      final EthPeers ethPeers,
+      final StorageProvider storageProvider) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -125,7 +127,8 @@ public class JsonRpcMethodsFactory {
               new Web3JsonRpcMethods(clientVersion),
               new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, privacyParameters),
               new TxPoolJsonRpcMethods(transactionPool),
-              new PluginsJsonRpcMethods(namedPlugins));
+              new PluginsJsonRpcMethods(namedPlugins),
+              new DatabaseJsonRpcMethods(storageProvider));
 
       if (MergeConfigOptions.isMergeEnabled()) {
         enabled.putAll(

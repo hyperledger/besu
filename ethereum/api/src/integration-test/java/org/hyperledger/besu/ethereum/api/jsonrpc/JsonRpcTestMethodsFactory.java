@@ -180,6 +180,7 @@ public class JsonRpcTestMethodsFactory {
             natService,
             new HashMap<>(),
             dataDir,
-            ethPeers);
+            ethPeers,
+            storageProvider);
   }
 }

@@ -125,7 +125,8 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     natService,
                     Collections.emptyMap(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    storageProvider));
   }
 
   @After

@@ -127,7 +127,8 @@ public class JsonRpcHttpServiceTlsTest {
                     natService,
                     Collections.emptyMap(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    storageProvider));
     service = createJsonRpcHttpService(createJsonRpcConfig());
     service.start().join();
     baseUrl = service.url();

@@ -169,6 +169,7 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.externaldb.ExternalDBPlugin;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -1532,6 +1533,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
+    new ExternalDBPlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
 

@@ -612,7 +612,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              storageProvider);
 
       jsonRpcHttpService =
           Optional.of(
@@ -652,7 +653,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              storageProvider);
 
       Optional<AuthenticationService> authToUse =
           engineJsonRpcConfiguration.get().isAuthenticationEnabled()
@@ -741,7 +743,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              storageProvider);
 
       final SubscriptionManager subscriptionManager =
           createSubscriptionManager(vertx, transactionPool, blockchainQueries);
@@ -821,7 +824,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              storageProvider);
 
       jsonRpcIpcService =
           Optional.of(
@@ -978,7 +982,8 @@ public class RunnerBuilder {
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
-      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+      final StorageProvider storageProvider) {
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -1005,7 +1010,8 @@ public class RunnerBuilder {
                 natService,
                 namedPlugins,
                 dataDir,
-                besuController.getProtocolManager().ethContext().getEthPeers());
+                besuController.getProtocolManager().ethContext().getEthPeers(),
+                storageProvider);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());

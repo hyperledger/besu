@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,34 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
+package org.hyperledger.besu.plugin.services.storage.externaldb.configuration;
 
-import java.util.Arrays;
-import java.util.List;
+import java.net.URL;
 
-public enum RpcApis {
-  ETH,
-  DEBUG,
-  MINER,
-  NET,
-  PERM,
-  WEB3,
-  ADMIN,
-  EEA,
-  PRIV,
-  TXPOOL,
-  TRACE,
-  PLUGINS,
-  GOQUORUM,
-  CLIQUE,
-  IBFT,
-  ENGINE,
-  QBFT,
-  DATABASE;
+public class ExternalDbConfiguration {
 
-  public static final List<String> DEFAULT_RPC_APIS = Arrays.asList("ETH", "NET", "WEB3");
+  private final URL endpoint;
 
-  @SuppressWarnings("unused")
-  public static final List<RpcApis> ALL_JSON_RPC_APIS =
-      Arrays.asList(ETH, DEBUG, MINER, NET, PERM, WEB3, ADMIN, EEA, PRIV, TXPOOL, TRACE, PLUGINS);
+  public ExternalDbConfiguration(final URL endpoint) {
+    this.endpoint = endpoint;
+  }
+
+  public URL getEndpoint() {
+    return endpoint;
+  }
 }

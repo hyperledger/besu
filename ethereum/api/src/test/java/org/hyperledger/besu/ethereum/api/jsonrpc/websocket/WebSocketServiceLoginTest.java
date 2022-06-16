@@ -184,7 +184,8 @@ public class WebSocketServiceLoginTest {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    storageProvider));
 
     websocketMethods.putAll(rpcMethods);
     webSocketMessageHandlerSpy =
