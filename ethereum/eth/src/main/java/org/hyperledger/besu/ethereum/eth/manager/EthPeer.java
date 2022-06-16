@@ -90,7 +90,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final String protocolName;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
-  private final ChainState chainHeadState = new ChainState();
+  private ChainState chainHeadState = new ChainState();
   private final AtomicBoolean statusHasBeenSentToPeer = new AtomicBoolean(false);
   private final AtomicBoolean statusHasBeenReceivedFromPeer = new AtomicBoolean(false);
   private final AtomicBoolean fullyValidated = new AtomicBoolean(false);
@@ -586,6 +586,10 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public Optional<BlockHeader> getCheckpointHeader() {
     return checkpointHeader;
+  }
+
+  public void setChainState(final ChainState chainState) {
+    this.chainHeadState = chainState;
   }
 
   @FunctionalInterface

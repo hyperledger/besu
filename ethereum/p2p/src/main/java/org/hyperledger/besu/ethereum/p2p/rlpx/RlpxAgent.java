@@ -446,18 +446,21 @@ public class RlpxAgent {
     // disconnect command until we've returned from our compute() calculation
     // Disconnect if too many peers
 
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
-      LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
-      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-      return false;
-    }
-    // Disconnect if too many remotely-initiated connections
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
-      LOG.debug(
-          "Too many remotely-initiated connections. Disconnect incoming connection: {}",
-          peerConnection);
-      peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
-      return false;
+    if (!randomPeerPriority) {
+      if (!peerPrivileges.canExceedConnectionLimits(peer)
+          && getConnectionCount() >= maxConnections) {
+        LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
+        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
+        return false;
+      }
+      // Disconnect if too many remotely-initiated connections
+      if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
+        LOG.debug(
+            "Too many remotely-initiated connections. Disconnect incoming connection: {}",
+            peerConnection);
+        peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
+        return false;
+      }
     }
 
     final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
@@ -516,7 +519,7 @@ public class RlpxAgent {
 
   private boolean remoteConnectionLimitReached() {
     return shouldLimitRemoteConnections()
-        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
+        && countUntrustedRemotelyInitiatedConnections() > maxRemotelyInitiatedConnections;
   }
 
   private long countUntrustedRemotelyInitiatedConnections() {

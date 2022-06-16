@@ -37,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -141,6 +142,7 @@ public class EthPeers {
           "Adding peer {} with connection {}",
           peerConnection.getPeer().getId(),
           System.identityHashCode(peerConnection));
+      final AtomicReference<ChainState> chainStateFromPrevPeer = new AtomicReference<>();
       connections.compute(
           peerConnection.getPeer().getId(),
           (id, prevPeer) -> {
@@ -148,6 +150,7 @@ public class EthPeers {
               previouslyUsedPeers.put(
                   peerConnection,
                   prevPeer); // TODO: When moving a previous eth peer out of the connections map we
+              chainStateFromPrevPeer.set(prevPeer.chainState());
               // might have to copy validationStatus and/or chainHeadState or similar
               // to the new member
               // remove this entry after 30s. We have to keep it for a bit to make sure that
@@ -159,8 +162,12 @@ public class EthPeers {
             }
             return peerToAdd;
           });
+      final ChainState chainState = chainStateFromPrevPeer.get();
+      if (chainState != null) {
+        peerToAdd.setChainState(chainState);
+      }
     }
-    preStatusExchangedPeers.remove(peerConnection.getPeer().getId());
+    preStatusExchangedPeers.remove(peerConnection);
   }
 
   public void registerDisconnect(final PeerConnection connection) {
