@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.externaldb.client;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.externaldb.configuration.ExternalDbConfiguration;
@@ -39,6 +36,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 
 public class ExternalDBClientKeyValueStorage implements SegmentedKeyValueStorage<String> {

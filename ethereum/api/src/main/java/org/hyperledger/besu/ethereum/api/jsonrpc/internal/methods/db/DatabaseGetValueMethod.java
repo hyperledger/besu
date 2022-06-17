@@ -50,7 +50,8 @@ public class DatabaseGetValueMethod implements JsonRpcMethod {
         storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.valueOf(segment));
     final Optional<byte[]> value = keyValueStorage.get(Bytes.fromHexString(key).toArrayUnsafe());
     if (value.isPresent()) {
-      return new JsonRpcSuccessResponse(request.getRequest().getId(), value.map(Bytes::of).map(Bytes::toHexString));
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(), value.map(Bytes::of).map(Bytes::toHexString));
     } else {
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
     }
