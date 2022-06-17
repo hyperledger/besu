@@ -79,8 +79,7 @@ public class GetHeadersFromPeerByNumberTask extends AbstractGetHeadersFromPeerTa
         peer -> {
           LOG.debug("Requesting {} headers from peer {}.", count, peer);
           return peer.getHeadersByNumber(blockNumber, count, skip, reverse);
-        },
-        blockNumber);
+        });
   }
 
   @Override
