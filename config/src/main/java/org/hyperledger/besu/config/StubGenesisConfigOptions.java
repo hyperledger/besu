@@ -42,6 +42,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong berlinBlockNumber = OptionalLong.empty();
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
+  private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong parisBlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
@@ -108,6 +109,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
     return IbftLegacyConfigOptions.DEFAULT;
+  }
+
+  @Override
+  public CheckpointConfigOptions getCheckpointOptions() {
+    return CheckpointConfigOptions.DEFAULT;
   }
 
   @Override
@@ -198,6 +204,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getArrowGlacierBlockNumber() {
     return arrowGlacierBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getGrayGlacierBlockNumber() {
+    return grayGlacierBlockNumber;
   }
 
   @Override
@@ -331,6 +342,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
+    getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
@@ -457,6 +469,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions arrowGlacierBlock(final long blockNumber) {
     arrowGlacierBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions grayGlacierBlock(final long blockNumber) {
+    grayGlacierBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

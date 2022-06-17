@@ -203,7 +203,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -575,7 +574,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Boolean deprecatedIsEngineRpcEnabled = false;
 
     @Option(
-        names = {"--engine-rpc-port"},
+        names = {"--engine-rpc-port", "--engine-rpc-http-port"},
         paramLabel = MANDATORY_PORT_FORMAT_HELP,
         description = "Port to provide consensus client APIS on (default: ${DEFAULT-VALUE})",
         arity = "1")
@@ -1883,7 +1882,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger,
         commandLine,
         "--sync-mode",
-        !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncMode),
+        SyncMode.isFullSync(syncMode),
         singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)

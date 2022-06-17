@@ -589,6 +589,26 @@ public abstract class MainnetProtocolSpecs {
         .name("ArrowGlacier");
   }
 
+  static ProtocolSpecBuilder grayGlacierDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+    return arrowGlacierDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .difficultyCalculator(MainnetDifficultyCalculators.GRAY_GLACIER)
+        .name("GrayGlacier");
+  }
+
   static ProtocolSpecBuilder parisDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,

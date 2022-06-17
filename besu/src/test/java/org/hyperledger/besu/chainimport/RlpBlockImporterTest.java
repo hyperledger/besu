@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -87,6 +88,9 @@ public final class RlpBlockImporterTest {
 
   @Test
   public void blockImportRejectsBadPow() throws IOException {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfigOptions.setMergeEnabled(false);
+
     final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);

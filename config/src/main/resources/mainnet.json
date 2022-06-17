@@ -12,6 +12,7 @@
     "berlinBlock": 12244000,
     "londonBlock": 12965000,
     "arrowGlacierBlock": 13773000,
+    "grayGlacierBlock": 15050000,
     "ethash": {
     },
     "discovery": {
@@ -32,6 +33,11 @@
         "enode://1118980bf48b0a3640bdba04e0fe78b1add18e1cd99bf22d53daac1fd9972ad650df52176e7c7d89d1114cfef2bc23a2959aa54998a46afcf7d91809f0855082@52.74.57.123:30303",
         "enode://979b7fa28feeb35a4741660a16076f1943202cb72b6af70d327f053e248bab9ba81760f39d0701ef1d8f89cc1fbd2cacba0710a12cd5314d5e0c9021aa3637f9@5.1.83.226:30303"
       ]
+    },
+    "checkpoint": {
+      "hash": "0x844d581cb00058d19f0584fb582fa2de208876ee56bbae27446a679baf4633f4",
+      "number": 14700000,
+      "totalDifficulty": "0xA2539264C62BF98CFC6"
     }
   },
   "nonce": "0x42",

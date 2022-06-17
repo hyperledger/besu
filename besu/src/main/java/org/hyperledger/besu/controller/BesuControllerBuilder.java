@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -48,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
+import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -59,6 +62,8 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.TransitionPivotSelector;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -87,7 +92,6 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -345,10 +349,27 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncConfig.getTransactionsParallelism(),
             syncConfig.getComputationParallelism(),
             metricsSystem);
+
+    final GenesisConfigOptions configOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides);
+
+    Optional<Checkpoint> checkpoint = Optional.empty();
+    if (configOptions.getCheckpointOptions().isValid()) {
+      checkpoint =
+          Optional.of(
+              ImmutableCheckpoint.builder()
+                  .blockHash(
+                      Hash.fromHexString(configOptions.getCheckpointOptions().getHash().get()))
+                  .blockNumber(configOptions.getCheckpointOptions().getNumber().getAsLong())
+                  .totalDifficulty(
+                      Difficulty.fromHexString(
+                          configOptions.getCheckpointOptions().getTotalDifficulty().get()))
+                  .build());
+    }
+
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled =
-        EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP).contains(syncConfig.getSyncMode());
-    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled);
+    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
     syncState.subscribeTTDReached(new PandaPrinter());
 
     final TransactionPool transactionPool =
@@ -603,6 +624,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
     }
 
+    final CheckpointConfigOptions checkpointConfigOptions =
+        genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
+    if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
+        && checkpointConfigOptions.isValid()) {
+      validators.add(
+          new CheckpointBlocksPeerValidator(
+              protocolSchedule,
+              metricsSystem,
+              checkpointConfigOptions.getNumber().orElseThrow(),
+              checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
+    }
     return validators;
   }
 
