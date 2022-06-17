@@ -291,33 +291,38 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState, 
                 pathFromHead().filter(log -> log.getCode(address).isPresent()).reduce((a, b) -> b));
   }
 
-  /* WorldUpdater methods */
-
   @Override
   public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     final BonsaiValue<Bytes> codeValue = new BonsaiValue<>(null, null);
     final Map<UInt256, BonsaiValue<UInt256>> storageMap = new HashMap<>();
-    var ephemeralAccount = new BonsaiSnapshotAccount(
-      address,
-      nonce,
-      balance,
-      __ -> Optional.ofNullable(codeValue.getUpdated()),
-      (addr, slot) -> Optional.ofNullable(storageMap.get(slot)));
+    var ephemeralAccount =
+        new BonsaiSnapshotAccount(
+            address,
+            nonce,
+            balance,
+            __ -> Optional.ofNullable(codeValue.getUpdated()),
+            (addr, slot) -> Optional.ofNullable(storageMap.get(slot)),
+            true);
     accumulatedAccounts.put(address, Optional.of(ephemeralAccount));
     return ephemeralAccount;
   }
 
   BonsaiSnapshotAccount cloneAccount(final Account account) {
     if (accumulatedAccounts.containsKey(account.getAddress())) {
-      throw new StorageException(String.format("Account %s already exists", account.getAddress().toHexString()));
+      throw new StorageException(
+          String.format("Account %s already exists", account.getAddress().toHexString()));
     }
 
-    var ephemeralAccount = new BonsaiSnapshotAccount(
-      account.getAddress(),
-      account.getNonce(),
-      account.getBalance(),
-      this::getLatestCodeFromTries,
-      this::getLatestStorageSlotFromTries);
+    // TODO: we might need to set this value modified if the underlying worldstate has already
+    // mutated this account
+    //      by the time we load it from the the underlying BonsaiPersistedWorldState.
+    var ephemeralAccount =
+        new BonsaiSnapshotAccount(
+            account.getAddress(),
+            account.getNonce(),
+            account.getBalance(),
+            this::getLatestCodeFromTries,
+            this::getLatestStorageSlotFromTries);
     accumulatedAccounts.put(account.getAddress(), Optional.of(ephemeralAccount));
     return ephemeralAccount;
   }
@@ -338,47 +343,50 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, WorldState, 
 
     if (headBlockHash().equals(blockHash)) {
       // clone account for mutation:
-      return cloneAccount(headVal);
+      return Optional.ofNullable(headVal).map(this::cloneAccount).orElse(null);
     } else {
       Optional<BonsaiSnapshotAccount> mutatedAccount =
-        getLatestStateTrieAccountValue(address)
-          .map(
-            val ->
-              new BonsaiSnapshotAccount(
-                address,
-                val.getNonce(),
-                val.getBalance(),
-                this::getLatestCodeFromTries,
-                this::getLatestStorageSlotFromTries));
+          getLatestStateTrieAccountValue(address)
+              .map(
+                  val ->
+                      new BonsaiSnapshotAccount(
+                          address,
+                          val.getNonce(),
+                          val.getBalance(),
+                          this::getLatestCodeFromTries,
+                          this::getLatestStorageSlotFromTries));
       mutatedAccount.ifPresent(acct -> accumulatedAccounts.put(address, Optional.of(acct)));
-      return mutatedAccount.orElse(null);
+      return mutatedAccount.orElseGet(
+          () ->
+              // if we have no trie log changes, defer to the worldstate version:
+              Optional.ofNullable(headVal).map(this::cloneAccount).orElse(null));
     }
   }
 
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
     return accumulatedAccounts.values().stream()
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .collect(Collectors.toList());
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toList());
   }
 
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
     return accumulatedAccounts.entrySet().stream()
-      .filter(e -> e.getValue().isEmpty())
-      .map(Map.Entry::getKey)
-      .collect(Collectors.toList());
+        .filter(e -> e.getValue().isEmpty())
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toList());
   }
 
   @Override
   public void revert() {
-    //no-op
+    // no-op
   }
 
   @Override
   public void commit() {
-   //no-op
+    // no-op
   }
 
   @Override

@@ -49,11 +49,11 @@ public class BonsaiSnapshotAccount implements MutableAccount, EvmAccount {
   private final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageSlotFetcher;
 
   public BonsaiSnapshotAccount(
-    final Address address,
-    final long nonce,
-    final Wei balance,
-    final Function<Address, Optional<Bytes>> codeFetcher,
-    final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher) {
+      final Address address,
+      final long nonce,
+      final Wei balance,
+      final Function<Address, Optional<Bytes>> codeFetcher,
+      final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher) {
     this.address = address;
     this.nonce = nonce;
     this.balance = balance;
@@ -62,12 +62,12 @@ public class BonsaiSnapshotAccount implements MutableAccount, EvmAccount {
   }
 
   public BonsaiSnapshotAccount(
-    final Address address,
-    final long nonce,
-    final Wei balance,
-    final Function<Address, Optional<Bytes>> codeFetcher,
-    final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher,
-    final boolean hasMutated) {
+      final Address address,
+      final long nonce,
+      final Wei balance,
+      final Function<Address, Optional<Bytes>> codeFetcher,
+      final BiFunction<Address, UInt256, Optional<BonsaiValue<UInt256>>> storageFetcher,
+      final boolean hasMutated) {
     this.address = address;
     this.nonce = nonce;
     this.balance = balance;
