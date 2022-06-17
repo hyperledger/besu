@@ -16,18 +16,25 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.ExceptionUtils;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.Test;
 
@@ -147,4 +154,16 @@ public abstract class PeerMessageTaskTest<T>
   }
 
   protected abstract void assertPartialResultMatchesExpectation(T requestedData, T partialResponse);
+
+  protected EthPeer createPeer() {
+    final PeerConnection peerConnection = new MockPeerConnection(Set.of(EthProtocol.ETH66));
+    final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    return new EthPeer(
+        peerConnection,
+        EthProtocol.NAME,
+        onPeerReady,
+        Collections.emptyList(),
+        TestClock.fixed(),
+        Collections.emptyList());
+  }
 }

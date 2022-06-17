@@ -37,18 +37,15 @@ public class RetryingGetHeaderFromPeerByHashTask
 
   private final Hash referenceHash;
   private final ProtocolSchedule protocolSchedule;
-  private final long minimumRequiredBlockNumber;
 
   @VisibleForTesting
   RetryingGetHeaderFromPeerByHashTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, 3, List::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
-    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
@@ -57,10 +54,9 @@ public class RetryingGetHeaderFromPeerByHashTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem) {
     return new RetryingGetHeaderFromPeerByHashTask(
-        protocolSchedule, ethContext, referenceHash, minimumRequiredBlockNumber, metricsSystem);
+        protocolSchedule, ethContext, referenceHash, metricsSystem);
   }
 
   @Override
@@ -68,11 +64,7 @@ public class RetryingGetHeaderFromPeerByHashTask
       final Optional<EthPeer> assignedPeer) {
     final AbstractGetHeadersFromPeerTask task =
         GetHeadersFromPeerByHashTask.forSingleHash(
-            protocolSchedule,
-            getEthContext(),
-            referenceHash,
-            minimumRequiredBlockNumber,
-            getMetricsSystem());
+            protocolSchedule, getEthContext(), referenceHash, getMetricsSystem());
     assignedPeer.ifPresent(task::assignPeer);
     return executeSubTask(task::run)
         .thenApply(

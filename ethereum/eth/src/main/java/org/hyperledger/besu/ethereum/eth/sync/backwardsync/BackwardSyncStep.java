@@ -62,12 +62,6 @@ public class BackwardSyncStep {
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
     final int batchSize = context.getBatchSize();
     debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
-    final Optional<BlockHeader> maybeFinalizedHeader =
-        context
-            .getProtocolContext()
-            .getBlockchain()
-            .getFinalized()
-            .flatMap(context.getProtocolContext().getBlockchain()::getBlockHeader);
 
     final RetryingGetHeadersEndingAtFromPeerByHashTask
         retryingGetHeadersEndingAtFromPeerByHashTask =
@@ -75,7 +69,6 @@ public class BackwardSyncStep {
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
-                maybeFinalizedHeader.map(BlockHeader::getNumber).orElse(0L),
                 batchSize,
                 context.getMetricsSystem());
     return context
