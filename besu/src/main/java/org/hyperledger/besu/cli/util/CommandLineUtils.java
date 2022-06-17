@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.util;
 
+import com.google.common.base.Strings;
 import org.hyperledger.besu.util.StringUtils;
 
 import java.util.Arrays;
@@ -99,19 +100,21 @@ public class CommandLineUtils {
   private static String getAffectedOptions(
       final CommandLine commandLine, final List<String> dependentOptionsNames) {
     return commandLine.getCommandSpec().options().stream()
-        .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains))
-        .filter(
-            option -> {
-              try {
-                return !option.stringValues().isEmpty()
-                    || commandLine.getDefaultValueProvider().defaultValue(option) != null;
-              } catch (Exception e) {
-                return false;
-              }
-            })
+        .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
+                && isOptionSet(option))
         .map(option -> option.names()[0])
         .collect(
             Collectors.collectingAndThen(
                 Collectors.toList(), StringUtils.joiningWithLastDelimiter(", ", " and ")));
+  }
+
+  private static boolean isOptionSet(final CommandLine.Model.OptionSpec option) {
+    CommandLine commandLine = option.command().commandLine();
+    try {
+      return !option.stringValues().isEmpty()
+              || !Strings.isNullOrEmpty(commandLine.getDefaultValueProvider().defaultValue(option));
+    } catch (Exception e) {
+      return false;
+    }
   }
 }
