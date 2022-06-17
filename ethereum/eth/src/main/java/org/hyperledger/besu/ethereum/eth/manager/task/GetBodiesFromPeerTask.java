@@ -82,14 +82,12 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
   protected PendingPeerRequest sendRequest() {
     final List<Hash> blockHashes =
         headers.stream().map(BlockHeader::getHash).collect(Collectors.toList());
-    final long minimumRequiredBlockNumber = headers.get(headers.size() - 1).getNumber();
 
     return sendRequestToPeer(
         peer -> {
           LOG.debug("Requesting {} bodies from peer {}.", blockHashes.size(), peer);
           return peer.getBodies(blockHashes);
-        },
-        minimumRequiredBlockNumber);
+        });
   }
 
   @Override

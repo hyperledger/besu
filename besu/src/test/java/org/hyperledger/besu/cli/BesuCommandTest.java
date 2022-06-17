@@ -1213,6 +1213,43 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void p2pOptionsRequiresServiceToBeEnabledToml() throws IOException {
+    final String[] nodes = {
+      "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"
+    };
+
+    final Path toml =
+        createTempFile(
+            "toml",
+            "p2p-enabled=false\n"
+                + "bootnodes=[\""
+                + String.join("\",\"", VALID_ENODE_STRINGS)
+                + "\"]\n"
+                + "discovery-enabled=false\n"
+                + "max-peers=42\n"
+                + "remote-connections-max-percentage=50\n"
+                + "banned-node-id=[\""
+                + String.join(",", nodes)
+                + "\"]\n"
+                + "banned-node-ids=[\""
+                + String.join(",", nodes)
+                + "\"]\n");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall(
+        "--p2p-enabled",
+        "--discovery-enabled",
+        "--bootnodes",
+        "--max-peers",
+        "--banned-node-ids",
+        "--remote-connections-max-percentage");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
@@ -2074,6 +2111,31 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcHttpOptionsRequiresServiceToBeEnabledToml() throws IOException {
+    final Path toml =
+        createTempFile(
+            "toml",
+            "rpc-http-api=[\"ETH\",\"NET\"]\n"
+                + "rpc-http-host=\"0.0.0.0\"\n"
+                + "rpc-http-port=1234\n"
+                + "rpc-http-cors-origins=[\"all\"]\n"
+                + "rpc-http-max-active-connections=88");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall(
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        "--rpc-http-port",
+        "--rpc-http-cors-origins",
+        "--rpc-http-api",
+        "--rpc-http-max-active-connections");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void privacyTlsOptionsRequiresTlsToBeEnabled() {
     when(storageService.getByName("rocksdb-privacy"))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
@@ -2100,6 +2162,38 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabledToml() throws IOException {
+    when(storageService.getByName("rocksdb-privacy"))
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+    final String coinbaseStr = String.format("%040x", 1);
+
+    final Path toml =
+        createTempFile(
+            "toml",
+            "privacy-enabled=true\n"
+                + "miner-enabled=true\n"
+                + "miner-coinbase=\""
+                + coinbaseStr
+                + "\"\n"
+                + "min-gas-price=0\n"
+                + "privacy-url=\""
+                + ENCLAVE_URI
+                + "\"\n"
+                + "privacy-public-key-file=\""
+                + configFile.getPath()
+                + "\"\n"
+                + "privacy-tls-keystore-file=\"/Users/me/key\"");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
     parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
 
@@ -2110,8 +2204,34 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresPrivacyToBeEnabledToml() throws IOException {
+    final Path toml =
+        createTempFile(
+            "toml", "privacy-tls-enabled=true\n" + "privacy-tls-keystore-file=\"/Users/me/key\"");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
     parseCommand("--fast-sync-min-peers", "5");
+
+    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void fastSyncOptionsRequiresFastSyncModeToBeSetToml() throws IOException {
+    final Path toml = createTempFile("toml", "fast-sync-min-peers=5\n");
+
+    parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
 
@@ -2244,6 +2364,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void rpcHttpTlsRequiresRpcHttpEnabled() {
     parseCommand("--rpc-http-tls-enabled");
+
+    verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsRequiresRpcHttpEnabledToml() throws IOException {
+    final Path toml = createTempFile("toml", "rpc-http-tls-enabled=true\n");
+
+    parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
 
@@ -3079,6 +3211,31 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcWsOptionsRequiresServiceToBeEnabledToml() throws IOException {
+    final Path toml =
+        createTempFile(
+            "toml",
+            "rpc-ws-api=[\"ETH\", \"NET\"]\n"
+                + "rpc-ws-host=\"0.0.0.0\"\n"
+                + "rpc-ws-port=1234\n"
+                + "rpc-ws-max-active-connections=77\n"
+                + "rpc-ws-max-frame-size=65535\n");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall(
+        "--rpc-ws-enabled",
+        "--rpc-ws-host",
+        "--rpc-ws-port",
+        "--rpc-ws-api",
+        "--rpc-ws-max-active-connections",
+        "--rpc-ws-max-frame-size");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcWsApiPropertyMustBeUsed() {
     TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
 
@@ -3187,8 +3344,43 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void metricsPushOptionsRequiresPushToBeEnabledToml() throws IOException {
+    final Path toml =
+        createTempFile(
+            "toml",
+            "metrics-push-host=\"0.0.0.0\"\n"
+                + "metrics-push-port=1234\n"
+                + "metrics-push-interval=2\n"
+                + "metrics-push-prometheus-job=\"job-name\"\n");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall(
+        "--metrics-push-enabled",
+        "--metrics-push-host",
+        "--metrics-push-port",
+        "--metrics-push-interval",
+        "--metrics-push-prometheus-job");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void metricsOptionsRequiresPullMetricsToBeEnabled() {
     parseCommand("--metrics-host", "0.0.0.0", "--metrics-port", "1234");
+
+    verifyOptionsConstraintLoggerCall("--metrics-enabled", "--metrics-host", "--metrics-port");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void metricsOptionsRequiresPullMetricsToBeEnabledToml() throws IOException {
+    final Path toml = createTempFile("toml", "metrics-host=\"0.0.0.0\"\n" + "metrics-port=1234\n");
+
+    parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--metrics-enabled", "--metrics-host", "--metrics-port");
 
@@ -3399,6 +3591,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void stratumMiningOptionsRequiresServiceToBeEnabledToml() throws IOException {
+    final Path toml = createTempFile("toml", "miner-stratum-enabled=true\n");
+
+    parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+  }
+
+  @Test
   public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
@@ -3409,6 +3615,29 @@ public class BesuCommandTest extends CommandTestAbstract {
         "42",
         "--miner-extra-data",
         "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verifyOptionsConstraintLoggerCall(
+        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void blockProducingOptionsWarnsMinerShouldBeEnabledToml() throws IOException {
+
+    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
+
+    final Path toml =
+        createTempFile(
+            "toml",
+            "miner-coinbase=\""
+                + requestedCoinbase.toString()
+                + "\"\n"
+                + "min-gas-price=42\n"
+                + "miner-extra-data=\"0x1122334455667788990011223344556677889900112233445566778899001122\"\n");
+
+    parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall(
         "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
@@ -3446,6 +3675,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void minGasPriceRequiresMainOption() {
     parseCommand("--min-gas-price", "0");
+
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void minGasPriceRequiresMainOptionToml() throws IOException {
+    final Path toml = createTempFile("toml", "min-gas-price=0\n");
+
+    parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 

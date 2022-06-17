@@ -21,6 +21,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -140,11 +141,17 @@ public final class RunnerTest {
 
   @Test
   public void fullSyncFromGenesis() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfigOptions.setMergeEnabled(false);
+
     syncFromGenesis(SyncMode.FULL, getFastSyncGenesis());
   }
 
   @Test
   public void fastSyncFromGenesis() throws Exception {
+    // set merge flag to false, otherwise this test can fail if a merge test runs first
+    MergeConfigOptions.setMergeEnabled(false);
+
     syncFromGenesis(SyncMode.FAST, getFastSyncGenesis());
   }
 
