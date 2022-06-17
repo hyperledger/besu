@@ -17,14 +17,12 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain.generateTestBlockHash;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -41,12 +39,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<BlockHeader>> {
-  @Mock private EthPeer peerMock;
 
   @Override
   protected void assertPartialResultMatchesExpectation(
@@ -73,12 +69,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
       final List<BlockHeader> requestedData) {
     final BlockHeader firstHeader = requestedData.get(0);
     return GetHeadersFromPeerByHashTask.startingAtHash(
-        protocolSchedule,
-        ethContext,
-        firstHeader.getHash(),
-        firstHeader.getNumber(),
-        requestedData.size(),
-        metricsSystem);
+        protocolSchedule, ethContext, firstHeader.getHash(), requestedData.size(), metricsSystem);
   }
 
   @Test
@@ -122,7 +113,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
             protocolSchedule,
             ethContext,
             blockchain.getBlockHashByNumber(startNumber).get(),
-            startNumber,
             count,
             skip,
             reverse,
@@ -145,56 +135,46 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
 
   @Test
   public void checkThatSequentialHeadersFormingAChainWorks() {
-    final int startNumber = 1;
-
     final BlockHeader block1 =
         new BlockHeaderTestFixture().number(1).parentHash(generateTestBlockHash(0)).buildHeader();
     final BlockHeader block2 =
         new BlockHeaderTestFixture().number(2).parentHash(block1.getHash()).buildHeader();
     final List<BlockHeader> headers = Arrays.asList(block1, block2);
 
+    final EthPeer peer = createPeer();
+
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            protocolSchedule,
-            ethContext,
-            block1.getHash(),
-            startNumber,
-            2,
-            0,
-            false,
-            metricsSystem);
+            protocolSchedule, ethContext, block1.getHash(), 2, 0, false, metricsSystem);
     final Optional<List<BlockHeader>> optionalBlockHeaders =
-        task.processResponse(false, BlockHeadersMessage.create(headers), peerMock);
+        task.processResponse(false, BlockHeadersMessage.create(headers), peer);
     assertThat(optionalBlockHeaders).isNotNull();
     assertThat(optionalBlockHeaders).isPresent();
     final List<BlockHeader> blockHeaders = optionalBlockHeaders.get();
     MatcherAssert.assertThat(blockHeaders, hasSize(2));
-    verify(peerMock, times(0)).disconnect(any());
+    assertThat(peer.chainState().getEstimatedHeight()).isEqualTo(2);
+    assertThat(peer.isDisconnected()).isFalse();
   }
 
   @Test
   public void checkThatSequentialHeadersNotFormingAChainFails() {
-    final int startNumber = 1;
-
     final BlockHeader block1 =
         new BlockHeaderTestFixture().number(1).parentHash(generateTestBlockHash(0)).buildHeader();
     final BlockHeader block2 =
         new BlockHeaderTestFixture().number(2).parentHash(generateTestBlockHash(1)).buildHeader();
     final List<BlockHeader> headers = Arrays.asList(block1, block2);
+
+    final EthPeer peer = createPeer();
+
     final AbstractGetHeadersFromPeerTask task =
         new GetHeadersFromPeerByHashTask(
-            protocolSchedule,
-            ethContext,
-            block1.getHash(),
-            startNumber,
-            2,
-            0,
-            false,
-            metricsSystem);
+            protocolSchedule, ethContext, block1.getHash(), 2, 0, false, metricsSystem);
     final Optional<List<BlockHeader>> optionalBlockHeaders =
-        task.processResponse(false, BlockHeadersMessage.create(headers), peerMock);
+        task.processResponse(false, BlockHeadersMessage.create(headers), peer);
     assertThat(optionalBlockHeaders).isNotNull();
     assertThat(optionalBlockHeaders).isEmpty();
-    verify(peerMock).disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+    assertThat(peer.isDisconnected()).isTrue();
+    assertThat(((MockPeerConnection) peer.getConnection()).getDisconnectReason().get())
+        .isEqualTo(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
   }
 }
