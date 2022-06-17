@@ -55,9 +55,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   CompletableFuture<Void> appendNewPayloadToSync(Block newPayload);
 
-  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockhash);
+  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash);
 
   boolean isMiningBeforeMerge();
+
+  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash, Hash finalizedBlockHash);
 
   class ForkchoiceResult {
     public enum Status {

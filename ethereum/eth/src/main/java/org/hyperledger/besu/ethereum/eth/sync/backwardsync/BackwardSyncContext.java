@@ -16,24 +16,26 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -54,6 +56,8 @@ public class BackwardSyncContext {
       new AtomicReference<>();
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
+  private Optional<Hash> maybeFinalized = Optional.empty();
+  private Optional<Hash> maybeHead = Optional.empty();
 
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
@@ -71,21 +75,28 @@ public class BackwardSyncContext {
     this.backwardChain = backwardChain;
   }
 
-  public boolean isSyncing() {
+  public synchronized boolean isSyncing() {
     return Optional.ofNullable(currentBackwardSyncFuture.get())
         .map(CompletableFuture::isDone)
         .orElse(Boolean.FALSE);
   }
 
-  public CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (backwardChain.isTrusted(newBlockHash)) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          newBlockHash::toHexString);
-      return future;
+  public synchronized void updateHeads(final Hash head, final Hash finalizedBlockHash) {
+    if (Hash.ZERO.equals(finalizedBlockHash)) {
+      this.maybeFinalized = Optional.empty();
+    } else {
+      this.maybeFinalized = Optional.ofNullable(finalizedBlockHash);
     }
+    if (Hash.ZERO.equals(head)) {
+      this.maybeHead = Optional.empty();
+    } else {
+      this.maybeHead = Optional.ofNullable(head);
+    }
+  }
+
+  public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
+    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
+    if (isTrusted(newBlockHash)) return future;
     backwardChain.addNewHash(newBlockHash);
     if (future != null) {
       return future;
@@ -95,26 +106,27 @@ public class BackwardSyncContext {
     return this.currentBackwardSyncFuture.get();
   }
 
-  public CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
+  public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
     final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (backwardChain.isTrusted(newPivot.getHash())) {
-      debugLambda(
-          LOG,
-          "not fetching or appending hash {} to backwards sync since it is present in successors",
-          () -> newPivot.getHash().toHexString());
-      return future;
-    }
+    if (isTrusted(newPivot.getHash())) return future;
     backwardChain.appendTrustedBlock(newPivot);
     if (future != null) {
       return future;
     }
-    infoLambda(
-        LOG,
-        "Starting new backward sync towards a pivot {}({})",
-        () -> newPivot.getHeader().getNumber(),
-        () -> newPivot.getHash().toHexString());
+    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newPivot::toLogString);
     this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
     return this.currentBackwardSyncFuture.get();
+  }
+
+  private boolean isTrusted(final Hash hash) {
+    if (backwardChain.isTrusted(hash)) {
+      debugLambda(
+          LOG,
+          "not fetching or appending hash {} to backwards sync since it is present in successors",
+          hash::toHexString);
+      return true;
+    }
+    return false;
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
@@ -125,18 +137,10 @@ public class BackwardSyncContext {
           f.thenApply(CompletableFuture::completedFuture)
               .exceptionally(
                   ex -> {
-                    if (ex instanceof BackwardSyncException && ex.getCause() == null) {
-                      LOG.info(
-                          "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
-                          ex.getMessage(),
-                          ethContext.getEthPeers().peerCount());
-                    } else {
-                      LOG.warn("there was an uncaught exception during backward sync", ex);
-                    }
+                    processException(ex);
                     return ethContext
                         .getScheduler()
-                        .scheduleFutureTask(
-                            () -> prepareBackwardSyncFuture(), Duration.ofSeconds(5));
+                        .scheduleFutureTask(this::prepareBackwardSyncFuture, Duration.ofSeconds(5));
                   })
               .thenCompose(Function.identity());
     }
@@ -150,8 +154,37 @@ public class BackwardSyncContext {
         });
   }
 
+  @VisibleForTesting
+  protected void processException(final Throwable throwable) {
+    Throwable currentCause = throwable;
+
+    while (currentCause != null) {
+      if (currentCause instanceof BackwardSyncException) {
+        if (((BackwardSyncException) currentCause).shouldRestart()) {
+          LOG.info(
+              "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
+              currentCause.getMessage(),
+              ethContext.getEthPeers().peerCount());
+          return;
+        } else {
+          throw new BackwardSyncException(throwable);
+        }
+      }
+      currentCause = currentCause.getCause();
+    }
+    LOG.warn(
+        "There was an uncaught exception during Backwards Sync... Retrying in few seconds...",
+        throwable);
+  }
+
   private CompletableFuture<Void> prepareBackwardSyncFuture() {
-    return executeNextStep(null);
+    final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
+    return new BackwardsSyncAlgorithm(
+            this,
+            FinalBlockConfirmation.confirmationChain(
+                FinalBlockConfirmation.genesisConfirmation(blockchain),
+                FinalBlockConfirmation.finalizedConfirmation(blockchain)))
+        .executeBackwardsSync(null);
   }
 
   public ProtocolSchedule getProtocolSchedule() {
@@ -187,102 +220,6 @@ public class BackwardSyncContext {
     return currentBackwardSyncFuture.get();
   }
 
-  public CompletableFuture<Void> executeNextStep(final Void unused) {
-    final Optional<Hash> firstHash = backwardChain.getFirstHash();
-    if (firstHash.isPresent()) {
-      return executeSyncStep(firstHash.get());
-    }
-    if (!isReady()) {
-      return waitForTTD().thenCompose(this::executeNextStep);
-    }
-
-    final Optional<BlockHeader> maybeFirstAncestorHeader = backwardChain.getFirstAncestorHeader();
-    if (maybeFirstAncestorHeader.isEmpty()) {
-      LOG.info("The Backward sync is done...");
-      return CompletableFuture.completedFuture(null);
-    }
-
-    final BlockHeader firstAncestorHeader = maybeFirstAncestorHeader.get();
-
-    if (getProtocolContext().getBlockchain().getChainHead().getHeight()
-        > firstAncestorHeader.getNumber() - 1) {
-      LOG.info(
-          "Backward reached below previous head {}({}) : {} ({})",
-          getProtocolContext().getBlockchain().getChainHead().getHeight(),
-          getProtocolContext().getBlockchain().getChainHead().getHash().toHexString(),
-          firstAncestorHeader.getNumber(),
-          firstAncestorHeader.getHash());
-    }
-
-    if (firstAncestorHeader.getNumber() == 0) {
-      final BlockHeader genesisBlockHeader =
-          getProtocolContext()
-              .getBlockchain()
-              .getBlockHeader(0)
-              .orElseThrow(
-                  () -> new IllegalStateException("Really we do not have the genesis block?"));
-
-      if (genesisBlockHeader.getHash().equals(firstAncestorHeader.getHash())) {
-        LOG.info("Backward sync reached genesis, starting Forward sync");
-        return executeForwardAsync(genesisBlockHeader);
-      } else {
-        return CompletableFuture.failedFuture(
-            new BackwardSyncException(
-                String.format(
-                    "Backward sync reached genesis, but ancestor header hash %s does not match our genesis header hash %s",
-                    firstAncestorHeader.getHash(), genesisBlockHeader.getHash())));
-      }
-    }
-
-    if (getProtocolContext().getBlockchain().contains(firstAncestorHeader.getParentHash())) {
-      return executeForwardAsync(firstAncestorHeader);
-    }
-    return executeBackwardAsync(firstAncestorHeader);
-  }
-
-  private CompletableFuture<Void> executeSyncStep(final Hash hash) {
-    return new SyncStepStep(this, backwardChain).executeAsync(hash);
-  }
-
-  @VisibleForTesting
-  protected CompletableFuture<Void> executeBackwardAsync(final BlockHeader firstHeader) {
-    return new BackwardSyncStep(this, backwardChain).executeAsync(firstHeader);
-  }
-
-  @VisibleForTesting
-  protected CompletableFuture<Void> executeForwardAsync(final BlockHeader firstHeader) {
-    return new ForwardSyncStep(this, backwardChain).executeAsync();
-  }
-
-  @VisibleForTesting
-  protected CompletableFuture<Void> waitForTTD() {
-    final CountDownLatch latch = new CountDownLatch(1);
-    final long id =
-        syncState.subscribeTTDReached(
-            reached -> {
-              if (reached && syncState.isInitialSyncPhaseDone()) {
-                latch.countDown();
-              }
-            });
-    return CompletableFuture.runAsync(
-        () -> {
-          try {
-            if (!isReady()) {
-              LOG.info("Waiting for preconditions...");
-              final boolean await = latch.await(2, TimeUnit.MINUTES);
-              if (await) {
-                LOG.info("Preconditions meet...");
-              }
-            }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new BackwardSyncException("Wait for TTD preconditions interrupted");
-          } finally {
-            syncState.unsubscribeTTDReached(id);
-          }
-        });
-  }
-
   // In rare case when we request too many headers/blocks we get response that does not contain all
   // data and we might want to retry with smaller batch size
   public int getBatchSize() {
@@ -295,5 +232,119 @@ public class BackwardSyncContext {
 
   public void resetBatchSize() {
     this.batchSize = BATCH_SIZE;
+  }
+
+  protected Void saveBlock(final Block block) {
+    traceLambda(LOG, "Going to validate block {}", block::toLogString);
+    checkFinalizedSuccessionRuleBeforeSave(block);
+    var optResult =
+        this.getBlockValidatorForBlock(block)
+            .validateAndProcessBlock(
+                this.getProtocolContext(),
+                block,
+                HeaderValidationMode.FULL,
+                HeaderValidationMode.NONE);
+    optResult.blockProcessingOutputs.ifPresent(
+        result -> {
+          traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
+          result.worldState.persist(block.getHeader());
+          this.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
+          possiblyMoveHead(block);
+        });
+    return null;
+  }
+
+  @VisibleForTesting
+  protected synchronized void checkFinalizedSuccessionRuleBeforeSave(final Block block) {
+    final Optional<Hash> finalized = findMaybeFinalized();
+    if (finalized.isPresent()) {
+      final Optional<BlockHeader> maybeFinalizedHeader =
+          protocolContext
+              .getBlockchain()
+              .getBlockByHash(finalized.get())
+              .map(Block::getHeader)
+              .or(() -> backwardChain.getHeader(finalized.get()));
+      if (maybeFinalizedHeader.isEmpty()) {
+        throw new BackwardSyncException(
+            "We know a block "
+                + finalized.get().toHexString()
+                + " was finalized, but we don't have it downloaded yet, cannot save new block",
+            true);
+      }
+      final BlockHeader finalizedHeader = maybeFinalizedHeader.get();
+      if (finalizedHeader.getHash().equals(block.getHash())) {
+        debugLambda(LOG, "Saving new finalized block {}", block::toLogString);
+        return;
+      }
+
+      if (finalizedHeader.getNumber() == block.getHeader().getNumber()) {
+        throw new BackwardSyncException(
+            "This block is not the target finalized block. Is "
+                + block.toLogString()
+                + " but was expecting "
+                + finalizedHeader.toLogString());
+      }
+      if (!getProtocolContext().getBlockchain().contains(finalizedHeader.getHash())) {
+        debugLambda(
+            LOG,
+            "Saving block {} before finalized {} reached",
+            block::toLogString,
+            finalizedHeader::toLogString); // todo: some check here??
+        return;
+      }
+      final Hash canonicalHash =
+          getProtocolContext()
+              .getBlockchain()
+              .getBlockByNumber(finalizedHeader.getNumber())
+              .orElseThrow()
+              .getHash();
+      if (finalizedHeader.getNumber() < block.getHeader().getNumber()
+          && !canonicalHash.equals(finalizedHeader.getHash())) {
+        throw new BackwardSyncException(
+            "Finalized block "
+                + finalizedHeader.toLogString()
+                + " is not on canonical chain. Canonical is"
+                + canonicalHash.toHexString()
+                + ". We need to reorg before saving this block.");
+      }
+    }
+    LOG.debug("Finalized block not known yet...");
+  }
+
+  @VisibleForTesting
+  protected void possiblyMoveHead(final Block lastSavedBlock) {
+    final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
+    if (maybeHead.isEmpty()) {
+      LOG.debug("Nothing to do with the head");
+      return;
+    }
+    if (blockchain.getChainHead().getHash().equals(maybeHead.get())) {
+      LOG.debug("Head is already properly set");
+      return;
+    }
+    if (blockchain.contains(maybeHead.get())) {
+      LOG.debug("Changing head to {}", maybeHead.get().toHexString());
+      blockchain.rewindToBlock(maybeHead.get());
+      return;
+    }
+    if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
+      LOG.debug("Rewinding head to lastSavedBlock {}", lastSavedBlock.getHash());
+      blockchain.rewindToBlock(lastSavedBlock.getHash());
+    }
+  }
+
+  public SyncState getSyncState() {
+    return syncState;
+  }
+
+  public synchronized BackwardChain getBackwardChain() {
+    return backwardChain;
+  }
+
+  public Optional<Hash> findMaybeFinalized() {
+    return Stream.of(maybeFinalized, getProtocolContext().getBlockchain().getFinalized())
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .findFirst();
   }
 }
