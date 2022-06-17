@@ -93,7 +93,10 @@ public class RocksDBColumnarKeyValueStorage
               .map(
                   segment ->
                       new ColumnFamilyDescriptor(
-                          segment.getId(), new ColumnFamilyOptions().setTtl(0)))
+                          segment.getId(),
+                          new ColumnFamilyOptions()
+                              .setTtl(0)
+                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
@@ -146,7 +149,12 @@ public class RocksDBColumnarKeyValueStorage
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
+    return new BlockBasedTableConfig()
+        .setBlockCache(cache)
+        .setFormatVersion(5)
+        .setOptimizeFiltersForMemory(true)
+        .setCacheIndexAndFilterBlocks(true)
+        .setBlockSize(32768);
   }
 
   @Override
