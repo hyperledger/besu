@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -189,7 +190,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             new HashMap<>(),
             folder.getRoot().toPath(),
             mock(EthPeers.class),
-            storageProvider);
+            mock(StorageProvider.class));
   }
 
   protected void startService() throws Exception {

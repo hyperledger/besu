@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -131,7 +132,7 @@ public class JsonRpcHttpServiceTestBase {
                     new HashMap<>(),
                     folder.getRoot().toPath(),
                     ethPeersMock,
-                    storageProvider));
+                    mock(StorageProvider.class)));
     service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
     service.start().join();
 
