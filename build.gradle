@@ -558,6 +558,22 @@ task autocomplete(type: JavaExec) {
   }
 }
 
+// Useful for building / validating during development without running all tests
+task minBuild(dependsOn: [
+  spotlessApply,
+  build,
+  checkLicenses,
+  javadoc
+])
+// Ignore tests when running minBuild
+gradle.taskGraph.whenReady { graph ->
+  if (graph.hasTask(minBuild)) {
+    tasks.withType(Test){
+      enabled = false
+    }
+  }
+}
+
 installDist { dependsOn checkLicenses }
 
 distTar {
