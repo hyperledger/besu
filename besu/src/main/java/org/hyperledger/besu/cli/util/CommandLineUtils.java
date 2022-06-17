@@ -99,10 +99,16 @@ public class CommandLineUtils {
   private static String getAffectedOptions(
       final CommandLine commandLine, final List<String> dependentOptionsNames) {
     return commandLine.getCommandSpec().options().stream()
+        .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains))
         .filter(
-            option ->
-                Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
-                    && !option.stringValues().isEmpty())
+            option -> {
+              try {
+                return !option.stringValues().isEmpty()
+                    || commandLine.getDefaultValueProvider().defaultValue(option) != null;
+              } catch (Exception e) {
+                return false;
+              }
+            })
         .map(option -> option.names()[0])
         .collect(
             Collectors.collectingAndThen(
