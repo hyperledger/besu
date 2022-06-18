@@ -85,18 +85,6 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   interface Transaction<S> {
 
     /**
-     * Returns the specified value with the specified key from the transaction view of the underlying storage.
-     *
-     * @param key the given value is associated with.
-     * @param value the transaction view of the value associated with the specified key.
-     */
-    default Optional<byte[]> get(S segment, byte[] key, byte[] value) {
-      throw new UnsupportedOperationException(String.format(
-        "Transaction view gets are not supported by %s",
-        this.getClass().getSimpleName()));
-    }
-
-    /**
      * Add the given key-value pair to the set of updates to be committed.
      *
      * @param segment the database segment

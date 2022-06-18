@@ -179,6 +179,12 @@ public class RocksDBColumnarKeyValueStorage
     }
   }
 
+  public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
+      throws StorageException {
+    throwIfClosed();
+    return new RocksDBColumnarKeyValueSnapshot(db, segment, metrics);
+  }
+
   @Override
   public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
     throwIfClosed();

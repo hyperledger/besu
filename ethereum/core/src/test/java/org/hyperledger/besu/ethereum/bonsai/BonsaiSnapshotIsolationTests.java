@@ -124,15 +124,15 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
-    var pathToIsolatedFromHead = isolated.get().pathFromHead();
+    //    var pathToIsolatedFromHead = isolated.get().pathFromHead();
 
     // our path to genesis should be 2 blocks from head
-    assertThat(pathToIsolatedFromHead.collect(Collectors.toList()).size()).isEqualTo(2);
+    //    assertThat(pathToIsolatedFromHead.collect(Collectors.toList()).size()).isEqualTo(2);
 
-    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
+    //    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
 
     // our path to genesis should be 1 block from head
-    assertThat(pathToIsolated2FromHead.collect(Collectors.toList()).size()).isEqualTo(1);
+    //    assertThat(pathToIsolated2FromHead.collect(Collectors.toList()).size()).isEqualTo(1);
 
     assertThat(isolated.get().get(testAddress)).isNull();
     assertThat(isolated2.get().get(testAddress)).isNotNull();
@@ -165,19 +165,19 @@ public class BonsaiSnapshotIsolationTests {
     blockchain.rewindToBlock(1L);
 
     // we should be 1 blocks ahead of head
-    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
+    //    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
 
     // our path to genesis should be 2 blocks from head
-    assertThat(pathToIsolated2FromHead.collect(Collectors.toList()).size()).isEqualTo(1);
+    //    assertThat(pathToIsolated2FromHead.collect(Collectors.toList()).size()).isEqualTo(1);
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
 
     // we should be 2 blocks ahead of head
-    var pathToIsolated3FromHead = isolated3.get().pathFromHead();
+    //    var pathToIsolated3FromHead = isolated3.get().pathFromHead();
 
     // our path to genesis should be 2 blocks from head
-    assertThat(pathToIsolated3FromHead.collect(Collectors.toList()).size()).isEqualTo(2);
+    //    assertThat(pathToIsolated3FromHead.collect(Collectors.toList()).size()).isEqualTo(2);
     assertThat(isolated3.get().get(testAddress)).isNotNull();
     assertThat(isolated3.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(3_000_000_000_000_000_000L));

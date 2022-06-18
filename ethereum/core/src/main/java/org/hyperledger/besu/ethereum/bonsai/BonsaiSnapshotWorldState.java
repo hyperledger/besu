@@ -1,6 +1,5 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -11,51 +10,41 @@ import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 /**
- * This class takes a snapshot of the worldstate as the basis of a mutable worldstate.
- * It is not able to commit or persist however.  This is useful for async blockchain
- * opperations like block creation and/or point-in-time queries.
+ * This class takes a snapshot of the worldstate as the basis of a mutable worldstate. It is not
+ * able to commit or persist however. This is useful for async blockchain opperations like block
+ * creation and/or point-in-time queries.
  */
 public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorldView {
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldState.class);
-  final KeyValueStorageTransaction accountStorageTx;
-  final KeyValueStorageTransaction codeStorageTx;
-  final KeyValueStorageTransaction storageStorageTx;
+  //  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldState.class);
+  final KeyValueStorage accountStorageTx;
+  final KeyValueStorage codeStorageTx;
+  final KeyValueStorage storageStorageTx;
   final WorldUpdater txUpdter;
 
-  private BonsaiSnapshotWorldState(
-    final KeyValueStorageTransaction accountStorageTx,
-    final KeyValueStorageTransaction codeStorageTx,
-    final KeyValueStorageTransaction storageStorageTx) {
-    this.accountStorageTx = accountStorageTx;
-    this.codeStorageTx = codeStorageTx;
-    this.storageStorageTx = storageStorageTx;
+  public BonsaiSnapshotWorldState(
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage codeStorage,
+      final KeyValueStorage storageStorage) {
+    this.accountStorageTx = accountStorage;
+    this.codeStorageTx = codeStorage;
+    this.storageStorageTx = storageStorage;
 
-    this.txUpdter = new SnapshotTransactionUpdater();
-  };
-
-  public static BonsaiSnapshotWorldState createSnapshot(
-    BonsaiWorldStateKeyValueStorage storage) {
-    // TODO: need to get bonsai ws kv storage supporting snapshot transactions in here.
-    return new BonsaiSnapshotWorldState(
-      null,null,null);
-
+    this.txUpdter = new SnapshotTransactionUpdater<EvmAccount>();
   }
-
-  public static BonsaiSnapshotWorldState createSnapshotAt(
-    BonsaiWorldStateArchive archive, Hash blockHash, BonsaiWorldStateKeyValueStorage storage) {
-
-    //TODO: atomically roll the chain to this hash (if it exists), take a snapshot,
-    //      then roll the state back to the prior head
-    throw new UnsupportedOperationException("Not implemented yet");
-  }
+  ;
 
   @Override
   public MutableWorldState copy() {
@@ -65,9 +54,10 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
   }
 
   @Override
-  public void persist(BlockHeader blockHeader) {
+  public void persist(final BlockHeader blockHeader) {
     // snapshots are mutable but not persistable
-    throw new UnsupportedOperationException("BonsaiSnapshotWorldState does not support persisting changes to database");
+    throw new UnsupportedOperationException(
+        "BonsaiSnapshotWorldState does not support persisting changes to database");
   }
 
   @Override
@@ -86,12 +76,12 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
   }
 
   @Override
-  public Stream<StreamableAccount> streamAccounts(Bytes32 startKeyHash, int limit) {
+  public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
     return null;
   }
 
   @Override
-  public Account get(Address address) {
+  public Account get(final Address address) {
     return null;
   }
 
@@ -100,13 +90,16 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
     protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
     protected Set<Address> deletedAccounts = new HashSet<>();
 
-
-    private UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
-      final Address address = account.getAddress();
-      updatedAccounts.put(address, account);
-      deletedAccounts.remove(address);
-      return account;
+    SnapshotTransactionUpdater() {
+      // TODO: writeme
     }
+
+    //    private UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
+    //      final Address address = account.getAddress();
+    //      updatedAccounts.put(address, account);
+    //      deletedAccounts.remove(address);
+    //      return account;
+    //    }
 
     @Override
     public WorldUpdater updater() {
@@ -114,19 +107,17 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
     }
 
     @Override
-    public EvmAccount createAccount(Address address, long nonce, Wei balance) {
+    public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
       return null;
     }
 
     @Override
-    public EvmAccount getAccount(Address address) {
+    public EvmAccount getAccount(final Address address) {
       return null;
     }
 
     @Override
-    public void deleteAccount(Address address) {
-
-    }
+    public void deleteAccount(final Address address) {}
 
     @Override
     public Collection<? extends Account> getTouchedAccounts() {
@@ -139,9 +130,7 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
     }
 
     @Override
-    public void revert() {
-
-    }
+    public void revert() {}
 
     @Override
     public void commit() {
@@ -154,10 +143,8 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
     }
 
     @Override
-    public Account get(Address address) {
+    public Account get(final Address address) {
       return null;
     }
   }
 }
-
-

@@ -88,17 +88,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
-  // TODO: work this into WorldStateArchive interface and type hierarchy
-  public Optional<BonsaiInMemoryLogWorldstate> getMutableSnapshot(final Hash blockHash) {
-    // implied that we are NOT persisting state
-<<<<<<< HEAD
-    return trieLogManager.getTrieLogLayer(blockHash)
-        .flatMap(layer -> BonsaiSnapshotWorldState.create(blockchain, this, blockHash, layer));
-=======
-    return Optional.ofNullable(layeredWorldStatesByHash.get(blockHash))
-        .flatMap(
-            layer -> BonsaiInMemoryLogWorldstate.create(blockchain, this, blockHash, layer.trieLog));
->>>>>>> lots of plumbing for a segmented snapshot kvstore
+  public Optional<BonsaiSnapshotWorldState> getMutableSnapshot(final Hash blockHash) {
+    // TODO: lock mutable worldstate, roll to this blockhash, take snapshot, and then roll back
+
+    return Optional.ofNullable(worldStateStorage.snapshotWorldState());
   }
 
   @Override
@@ -111,41 +104,41 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
-  @Override
-  public Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
-    if (!isPersistingState) {
-      final Optional<MutableWorldState> layeredWorldState =
-          trieLogManager.getBonsaiLayeredWorldState(blockHash);
-      if (layeredWorldState.isPresent()) {
-        return layeredWorldState;
+    @Override
+    public Optional<MutableWorldState> getMutable(
+    final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
+      if (!isPersistingState) {
+        final Optional<MutableWorldState> layeredWorldState =
+            trieLogManager.getBonsaiLayeredWorldState(blockHash);
+        if (layeredWorldState.isPresent()) {
+          return layeredWorldState;
+        } else {
+          final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
+          final BlockHeader currentHeader = blockchain.getChainHeadHeader();
+          if ((currentHeader.getNumber() - header.getNumber())
+              >= trieLogManager.getMaxLayersToLoad()) {
+            LOG.warn(
+                "Exceeded the limit of back layers that can be loaded ({})",
+                trieLogManager.getMaxLayersToLoad());
+            return Optional.empty();
+          }
+          final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
+          if (trieLogLayer.isPresent()) {
+            return Optional.of(
+                new BonsaiLayeredWorldState(
+                    blockchain,
+                    this,
+                    Optional.empty(),
+                    header.getNumber(),
+                    fromPlugin(header.getStateRoot()),
+                    trieLogLayer.get()));
+          }
+        }
       } else {
-        final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
-        final BlockHeader currentHeader = blockchain.getChainHeadHeader();
-        if ((currentHeader.getNumber() - header.getNumber())
-            >= trieLogManager.getMaxLayersToLoad()) {
-          LOG.warn(
-              "Exceeded the limit of back layers that can be loaded ({})",
-              trieLogManager.getMaxLayersToLoad());
-          return Optional.empty();
-        }
-        final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
-        if (trieLogLayer.isPresent()) {
-          return Optional.of(
-              new BonsaiLayeredWorldState(
-                  blockchain,
-                  this,
-                  Optional.empty(),
-                  header.getNumber(),
-                  fromPlugin(header.getStateRoot()),
-                  trieLogLayer.get()));
-        }
+        return getMutable(rootHash, blockHash);
       }
-    } else {
-      return getMutable(rootHash, blockHash);
+      return Optional.empty();
     }
-    return Optional.empty();
-  }
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {

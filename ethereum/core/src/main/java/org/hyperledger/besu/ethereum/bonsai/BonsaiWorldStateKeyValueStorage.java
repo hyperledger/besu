@@ -72,10 +72,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   // provide a snapshot of the worldstate at the current state:
-  public BonsaiSnapshotWorldState takeSnapshot() {
-    accountStorage.startTransaction()
-    return new BonsaiSnapshotWorldState()
-
+  public BonsaiSnapshotWorldState snapshotWorldState() {
+    // TODO: get SegmentedKeyValueStorage ref / resolve the segmented/unsegmented KeyValueStorage
+    // cruft
+    return null;
   }
 
   @Override
