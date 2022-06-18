@@ -71,6 +71,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     this.trieLogStorage = trieLogStorage;
   }
 
+  // provide a snapshot of the worldstate at the current state:
+  public BonsaiSnapshotWorldState takeSnapshot() {
+    accountStorage.startTransaction()
+    return new BonsaiSnapshotWorldState()
+
+  }
+
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);

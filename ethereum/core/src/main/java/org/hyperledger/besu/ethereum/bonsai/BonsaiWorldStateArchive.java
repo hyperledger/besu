@@ -89,10 +89,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   // TODO: work this into WorldStateArchive interface and type hierarchy
-  public Optional<BonsaiSnapshotWorldState> getMutableSnapshot(final Hash blockHash) {
+  public Optional<BonsaiInMemoryLogWorldstate> getMutableSnapshot(final Hash blockHash) {
     // implied that we are NOT persisting state
+<<<<<<< HEAD
     return trieLogManager.getTrieLogLayer(blockHash)
         .flatMap(layer -> BonsaiSnapshotWorldState.create(blockchain, this, blockHash, layer));
+=======
+    return Optional.ofNullable(layeredWorldStatesByHash.get(blockHash))
+        .flatMap(
+            layer -> BonsaiInMemoryLogWorldstate.create(blockchain, this, blockHash, layer.trieLog));
+>>>>>>> lots of plumbing for a segmented snapshot kvstore
   }
 
   @Override
