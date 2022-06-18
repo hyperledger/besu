@@ -117,7 +117,7 @@ public class ChainStateTest {
     assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
-    chainState.update(bestBlockHeader);
+    chainState.update(bestBlockHeader.getHash(), bestBlockHeader.getNumber());
     assertThat(chainState.getEstimatedHeight()).isEqualTo(blockNumber);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(blockNumber);
     assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getHash());
@@ -134,7 +134,8 @@ public class ChainStateTest {
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
     final long newHeaderNumber = blockNumber + 1;
-    chainState.update(new BlockHeaderTestFixture().number(newHeaderNumber).buildHeader());
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(newHeaderNumber).buildHeader();
+    chainState.update(blockHeader.getHash(), blockHeader.getNumber());
     assertThat(chainState.getEstimatedHeight()).isEqualTo(newHeaderNumber);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
     assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getHash());
@@ -150,8 +151,9 @@ public class ChainStateTest {
     assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(0L);
 
-    chainState.update(bestBlockHeader);
-    chainState.update(new BlockHeaderTestFixture().number(blockNumber - 5).buildHeader());
+    chainState.update(bestBlockHeader.getHash(), blockNumber);
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(blockNumber - 5).buildHeader();
+    chainState.update(blockHeader.getHash(), blockHeader.getNumber());
     assertThat(chainState.getEstimatedHeight()).isEqualTo(blockNumber);
     assertThat(chainState.getBestBlock().getNumber()).isEqualTo(blockNumber);
     assertThat(chainState.getBestBlock().getHash()).isEqualTo(bestBlockHeader.getHash());
@@ -244,7 +246,8 @@ public class ChainStateTest {
     chainState.statusReceived(Hash.EMPTY_LIST_HASH, Difficulty.ONE);
     assertThat(chainState.hasEstimatedHeight()).isFalse();
 
-    chainState.update(new BlockHeaderTestFixture().number(12).buildHeader());
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(12).buildHeader();
+    chainState.update(blockHeader.getHash(), blockHeader.getNumber());
 
     assertThat(chainState.hasEstimatedHeight()).isTrue();
   }
@@ -271,7 +274,7 @@ public class ChainStateTest {
     final ChainState.EstimatedHeightListener listener =
         mock(ChainState.EstimatedHeightListener.class);
     chainState.addEstimatedHeightListener(listener);
-    chainState.update(bestBlockHeader);
+    chainState.update(bestBlockHeader.getHash(), bestBlockHeader.getNumber());
     verify(listener).onEstimatedHeightChanged(blockNumber);
   }
 
@@ -297,13 +300,13 @@ public class ChainStateTest {
     final ChainState.EstimatedHeightListener listener =
         mock(ChainState.EstimatedHeightListener.class);
     chainState.addEstimatedHeightListener(listener);
-    chainState.update(bestBlockHeader);
+    chainState.update(bestBlockHeader.getHash(), bestBlockHeader.getNumber());
     verify(listener).onEstimatedHeightChanged(blockNumber);
 
     final long lowerBlockNumber = 12;
     final BlockHeader lowerBlockHeader =
         new BlockHeaderTestFixture().number(lowerBlockNumber).buildHeader();
-    chainState.update(lowerBlockHeader);
+    chainState.update(lowerBlockHeader.getHash(), bestBlockHeader.getNumber());
 
     verifyNoMoreInteractions(listener);
   }
