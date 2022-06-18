@@ -77,15 +77,6 @@ public class ChainState implements ChainHeadEstimate {
     }
   }
 
-  public void update(final BlockHeader header) {
-    synchronized (this) {
-      if (header.getHash().equals(bestBlock.hash)) {
-        bestBlock.number = header.getNumber();
-      }
-      updateHeightEstimate(header.getNumber());
-    }
-  }
-
   public void updateForAnnouncedBlock(
       final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     synchronized (this) {
@@ -107,9 +98,13 @@ public class ChainState implements ChainHeadEstimate {
       if (blockNumber > estimatedHeight) {
         estimatedHeightKnown = true;
         estimatedHeight = blockNumber;
-        estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
+        callListeners();
       }
     }
+  }
+
+  public void callListeners() {
+    estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
   }
 
   @Override

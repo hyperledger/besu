@@ -654,7 +654,7 @@ public class RunnerBuilder {
               dataDir,
               rpcEndpointServiceImpl);
 
-      Optional<AuthenticationService> authToUse =
+      final Optional<AuthenticationService> authToUse =
           engineJsonRpcConfiguration.get().isAuthenticationEnabled()
               ? Optional.of(
                   new EngineAuthService(
@@ -664,7 +664,7 @@ public class RunnerBuilder {
                       dataDir))
               : Optional.empty();
 
-      WebSocketConfiguration engineSocketConfig =
+      final WebSocketConfiguration engineSocketConfig =
           webSocketConfiguration.isEnabled()
               ? webSocketConfiguration
               : WebSocketConfiguration.createEngineDefault();
@@ -773,7 +773,8 @@ public class RunnerBuilder {
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
 
-    Optional<MetricsService> metricsService = createMetricsService(vertx, metricsConfiguration);
+    final Optional<MetricsService> metricsService =
+        createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
     if (!Strings.isNullOrEmpty(ethstatsUrl)) {
@@ -796,7 +797,7 @@ public class RunnerBuilder {
 
     final Optional<JsonRpcIpcService> jsonRpcIpcService;
     if (jsonRpcIpcConfiguration.isEnabled()) {
-      Map<String, JsonRpcMethod> ipcMethods =
+      final Map<String, JsonRpcMethod> ipcMethods =
           jsonRpcMethods(
               protocolSchedule,
               context,
@@ -1008,9 +1009,10 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers());
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
-    var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
+    final var pluginMethods =
+        rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
 
-    var overriddenMethods =
+    final var overriddenMethods =
         methods.keySet().stream().filter(pluginMethods::containsKey).collect(Collectors.toList());
     if (overriddenMethods.size() > 0) {
       throw new RuntimeException("You can not override built in methods " + overriddenMethods);

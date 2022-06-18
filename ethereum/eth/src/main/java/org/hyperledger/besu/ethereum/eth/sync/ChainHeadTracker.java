@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers.ConnectCallback;
@@ -68,31 +69,39 @@ public class ChainHeadTracker implements ConnectCallback {
 
   @Override
   public void onPeerConnected(final EthPeer peer) {
-    LOG.debug("Requesting chain head info from {}", peer);
-    GetHeadersFromPeerByHashTask.forSingleHash(
-            protocolSchedule,
-            ethContext,
-            Hash.wrap(peer.chainState().getBestBlock().getHash()),
-            0,
-            metricsSystem)
-        .assignPeer(peer)
-        .run()
-        .whenComplete(
-            (peerResult, error) -> {
-              if (peerResult != null && !peerResult.getResult().isEmpty()) {
-                final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
-                peer.chainState().update(chainHeadHeader);
-                trailingPeerLimiter.enforceTrailingPeerLimit();
-                debugLambda(
-                    LOG,
-                    "Retrieved chain head info {} from {} with connection {}",
-                    () -> chainHeadHeader.getNumber() + " (" + chainHeadHeader.getBlockHash() + ")",
-                    () -> peer,
-                    () -> System.identityHashCode(peer.getConnection()));
-              } else {
-                LOG.info("Failed to retrieve chain head info. Disconnecting {}", peer, error);
-                peer.disconnect(DisconnectReason.USELESS_PEER);
-              }
-            });
+    final ChainState peerChainState = peer.chainState();
+    if (peerChainState.hasEstimatedHeight()) {
+      // This can be the case if the peer for the new EthPeer was connected with a previous EthPeer
+      peerChainState.callListeners();
+      trailingPeerLimiter.enforceTrailingPeerLimit();
+    } else {
+      LOG.debug("Requesting chain head info from {}", peer);
+      GetHeadersFromPeerByHashTask.forSingleHash(
+              protocolSchedule,
+              ethContext,
+              Hash.wrap(peerChainState.getBestBlock().getHash()),
+              0,
+              metricsSystem)
+          .assignPeer(peer)
+          .run()
+          .whenComplete(
+              (peerResult, error) -> {
+                if (peerResult != null && !peerResult.getResult().isEmpty()) {
+                  final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
+                  peerChainState.update(chainHeadHeader.getHash(), chainHeadHeader.getNumber());
+                  trailingPeerLimiter.enforceTrailingPeerLimit();
+                  infoLambda(
+                      LOG,
+                      "Retrieved chain head info {} from {} with connection {}",
+                      () ->
+                          chainHeadHeader.getNumber() + " (" + chainHeadHeader.getBlockHash() + ")",
+                      () -> peer,
+                      () -> System.identityHashCode(peer.getConnection()));
+                } else {
+                  LOG.info("Failed to retrieve chain head info. Disconnecting {}", peer, error);
+                  peer.disconnect(DisconnectReason.USELESS_PEER);
+                }
+              });
+    }
   }
 }
