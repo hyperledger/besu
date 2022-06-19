@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -54,6 +55,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.hyperledger.besu.plugin.services.StorageService;
 
 /** Provides a facade to construct the JSON-RPC component. */
 public class JsonRpcTestMethodsFactory {
@@ -145,6 +147,7 @@ public class JsonRpcTestMethodsFactory {
     final WebSocketConfiguration webSocketConfiguration = mock(WebSocketConfiguration.class);
     final MetricsConfiguration metricsConfiguration = mock(MetricsConfiguration.class);
     final NatService natService = new NatService(Optional.empty());
+    final StorageProvider storageProvider = mock(StorageProvider.class);
 
     final List<String> apis = new ArrayList<>();
     apis.add(RpcApis.ETH.name());
