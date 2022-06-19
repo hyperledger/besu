@@ -164,7 +164,7 @@ public class EthPeers {
         peerToAdd.setChaintate(chainState);
       }
     }
-    preStatusExchangedPeers.remove(peerConnection);
+    preStatusExchangedPeers.remove(peerConnection.getPeer().getId());
   }
 
   public void registerDisconnect(final PeerConnection connection) {
