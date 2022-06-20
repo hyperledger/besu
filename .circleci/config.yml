@@ -46,10 +46,23 @@ executors:
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false
 
+  quorum_ats_arm_executor_med:
+    docker:
+      - image: cimg/openjdk:11.0
+    resource_class: arm.medium
+    working_directory: ~/project
+    environment:
+      GRADLE_OPTS: -Dorg.gradle.daemon=false
+
   xl_machine_executor:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: xlarge
+
+  xl_arm_machine_executor:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.xlarge
 
   trivy_executor:
     docker:
@@ -277,6 +290,46 @@ jobs:
   acceptanceTestsQuorum:
     parallelism: 1
     executor: quorum_ats_executor_med
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - setup_remote_docker
+      - run:
+          name: Quorum Acceptance Tests
+          no_output_timeout: 30m
+          command: ./gradlew --no-daemon acceptanceTestsQuorum
+      - store_artifacts:
+          path: build/quorum-at
+          destination: quorum-at-artifacts
+      - store_test_results:
+          path: build/quorum-at/openjdk-latest/reports/xml-report
+
+
+  acceptanceTestsARM:
+    parallelism: 6
+    executor: xl_arm_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests
+          no_output_timeout: 30m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsQuorumARM:
+    parallelism: 1
+    executor: quorum_ats_arm_executor_med
     steps:
       - attach_workspace:
           at: ~/project
