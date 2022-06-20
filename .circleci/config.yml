@@ -539,6 +539,12 @@ workflows:
             - publishArm64Docker
           context:
             - besu-dockerhub-rw
+      - acceptanceTestsARM:
+          requires:
+            - assemble
+      - acceptanceTestsQuorumARM:
+          requires:
+            - assemble
 
   nightly:
     triggers:
