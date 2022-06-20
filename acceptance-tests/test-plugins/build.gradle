@@ -34,6 +34,4 @@ task testPluginsJar(type: Jar) {
 artifacts { testPluginsJar }
 
 
-javadoc {
-  enabled = false
-}
+javadoc { enabled = false }

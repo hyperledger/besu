@@ -68,6 +68,4 @@ tasks.withType(JavaCompile) {
   ]
 }
 
-javadoc {
-  enabled = false
-}
+javadoc { enabled = false }
