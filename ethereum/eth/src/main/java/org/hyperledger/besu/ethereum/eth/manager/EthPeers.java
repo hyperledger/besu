@@ -37,7 +37,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -119,7 +118,7 @@ public class EthPeers {
         });
     preStatusExchangedPeers.put(peerConnection, peer);
     // if the status messages has not been received within 20s remove the entry
-    scheduler.schedule(() -> preStatusExchangedPeers.remove(peerConnection), 20, TimeUnit.SECONDS);
+    scheduler.schedule(() -> preStatusExchangedPeers.remove(peerConnection), 30, TimeUnit.SECONDS);
 
     return peer;
   }
@@ -135,13 +134,11 @@ public class EthPeers {
           "Adding peer {} with connection {}",
           peerConnection.getPeer().getId(),
           System.identityHashCode(peerConnection));
-      final AtomicReference<ChainState> chainStateFromPrevPeer = new AtomicReference<>();
       connections.compute(
           peerConnection.getPeer().getId(),
           (id, prevPeer) -> {
             if (prevPeer != null) {
               previouslyUsedPeers.put(peerConnection, prevPeer);
-              chainStateFromPrevPeer.set(prevPeer.chainState());
               // TODO: When moving a previous eth peer out of the connections map we
               // might have to copy validationStatus and/or chainHeadState or similar
               // to the new member
@@ -159,12 +156,7 @@ public class EthPeers {
             }
             return peerToAdd;
           });
-      final ChainState chainState = chainStateFromPrevPeer.get();
-      if (chainState != null) {
-        peerToAdd.setChaintate(chainState);
-      }
     }
-    preStatusExchangedPeers.remove(peerConnection.getPeer().getId());
   }
 
   public void registerDisconnect(final PeerConnection connection) {
@@ -298,10 +290,37 @@ public class EthPeers {
     return streamAvailablePeers().filter(matchesCriteria).max(BEST_CHAIN);
   }
 
+  public ChainState getChainState(final Bytes id) {
+    final Optional<ChainState> optionalChainState =
+        previouslyUsedPeers.entrySet().stream()
+            .filter(entry -> entry.getValue().getConnection().getPeer().getId().equals(id))
+            .map(entry -> entry.getValue().chainState())
+            .filter(ChainState::hasEstimatedHeight)
+            .findFirst();
+    if (optionalChainState.isPresent()) {
+      return optionalChainState.get();
+    }
+    final Optional<ChainState> optionalChainState2 =
+        preStatusExchangedPeers.entrySet().stream()
+            .filter(entry -> entry.getValue().getConnection().getPeer().getId().equals(id))
+            .map((entry) -> entry.getValue().chainState())
+            .filter(ChainState::hasEstimatedHeight)
+            .findFirst();
+    if (optionalChainState2.isPresent()) {
+      return optionalChainState2.get();
+    }
+    if (connections.containsKey(id)) {
+      final ChainState chainState = connections.get(id).chainState();
+      if (chainState.hasEstimatedHeight()) {
+        return chainState;
+      }
+    }
+    return null;
+  }
+
   @FunctionalInterface
   public interface ConnectCallback {
-    void onPeerConnected(
-        EthPeer newPeer); // TODO: We could make use of a "ready" callback instead of this ... ?
+    void onPeerConnected(EthPeer newPeer);
   }
 
   @Override

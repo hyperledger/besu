@@ -70,10 +70,25 @@ public class ChainHeadTracker implements ConnectCallback {
   @Override
   public void onPeerConnected(final EthPeer peer) {
     final ChainState peerChainState = peer.chainState();
-    if (peerChainState.hasEstimatedHeight()) {
-      // This can be the case if the peer for the new EthPeer was connected with a previous EthPeer
-      peerChainState.callListeners();
+    // check other EthPeer from this peer for the chainstate
+    final ChainState chainState =
+        ethContext.getEthPeers().getChainState(peer.getConnection().getPeer().getId());
+    if (chainState != null
+        && peerChainState.getEstimatedHeight() < chainState.getEstimatedHeight()) {
+      peer.setChaintate(chainState);
+      chainState.callListeners(); // TODO: I think these are the only two things that happen when we
+      // receive the header the other way.
       trailingPeerLimiter.enforceTrailingPeerLimit();
+      infoLambda(
+          LOG,
+          "Retrieved chain head info {} from {} with connection {} FROM ANOTHER ETH_PEER",
+          () ->
+              chainState.getBestBlock().getNumber()
+                  + " ("
+                  + chainState.getBestBlock().getHash()
+                  + ")",
+          () -> peer,
+          () -> System.identityHashCode(peer.getConnection()));
     } else {
       LOG.debug("Requesting chain head info from {}", peer);
       GetHeadersFromPeerByHashTask.forSingleHash(
