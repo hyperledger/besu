@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import com.google.common.base.Strings;
 import org.hyperledger.besu.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
@@ -100,8 +100,10 @@ public class CommandLineUtils {
   private static String getAffectedOptions(
       final CommandLine commandLine, final List<String> dependentOptionsNames) {
     return commandLine.getCommandSpec().options().stream()
-        .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
-                && isOptionSet(option))
+        .filter(
+            option ->
+                Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
+                    && isOptionSet(option))
         .map(option -> option.names()[0])
         .collect(
             Collectors.collectingAndThen(
@@ -112,7 +114,7 @@ public class CommandLineUtils {
     CommandLine commandLine = option.command().commandLine();
     try {
       return !option.stringValues().isEmpty()
-              || !Strings.isNullOrEmpty(commandLine.getDefaultValueProvider().defaultValue(option));
+          || !Strings.isNullOrEmpty(commandLine.getDefaultValueProvider().defaultValue(option));
     } catch (Exception e) {
       return false;
     }

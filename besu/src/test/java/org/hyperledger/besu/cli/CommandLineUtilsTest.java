@@ -20,8 +20,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static picocli.CommandLine.defaultExceptionHandler;
 
-import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.CascadingDefaultProvider;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider;
 import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
 import org.hyperledger.besu.util.StringUtils;
@@ -33,8 +33,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -69,14 +69,12 @@ public class CommandLineUtilsTest {
       this.logger = logger;
       commandLine = new CommandLine(this);
       if (configFile.isPresent()) {
-        commandLine.setDefaultValueProvider(new CascadingDefaultProvider(
-                new EnvironmentVariableDefaultProvider(environment),
-                new TomlConfigFileDefaultProvider(commandLine, configFile.get())
-        ));
-      } else {
         commandLine.setDefaultValueProvider(
-                new EnvironmentVariableDefaultProvider(environment)
-        );
+            new CascadingDefaultProvider(
+                new EnvironmentVariableDefaultProvider(environment),
+                new TomlConfigFileDefaultProvider(commandLine, configFile.get())));
+      } else {
+        commandLine.setDefaultValueProvider(new EnvironmentVariableDefaultProvider(environment));
       }
     }
 
@@ -212,7 +210,8 @@ public class CommandLineUtilsTest {
 
   @Test
   public void noDependencies() {
-    final AbstractTestCommand testCommand = new TestCommandWithoutDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand =
+        new TestCommandWithoutDeps(mockLogger, Optional.empty());
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -233,7 +232,8 @@ public class CommandLineUtilsTest {
 
   @Test
   public void multipleMainOptions() {
-    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand =
+        new TestMultiCommandWithDeps(mockLogger, Optional.empty());
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -255,20 +255,19 @@ public class CommandLineUtilsTest {
   @Test
   public void multipleMainOptionsToml() throws IOException {
     final Path toml = Files.createTempFile("toml", "");
-    Files.write(toml, (
-            "option-enabled=false\n" +
-            "other-option-enabled=false\n" +
-            "option2=30").getBytes(StandardCharsets.UTF_8));
+    Files.write(
+        toml,
+        ("option-enabled=false\n" + "other-option-enabled=false\n" + "option2=30")
+            .getBytes(StandardCharsets.UTF_8));
     toml.toFile().deleteOnExit();
 
-    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger, Optional.of(toml.toFile()));
-    testCommand.commandLine.parseWithHandlers(
-            new RunLast(),
-            defaultExceptionHandler());
+    final AbstractTestCommand testCommand =
+        new TestMultiCommandWithDeps(mockLogger, Optional.of(toml.toFile()));
+    testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
 
     verifyMultiOptionsConstraintLoggerCall(
-            mockLogger,
-            "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
+        mockLogger,
+        "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
 
     assertThat(testCommand.optionEnabled).isFalse();
     assertThat(testCommand.otherOptionEnabled).isFalse();
@@ -277,18 +276,17 @@ public class CommandLineUtilsTest {
 
   @Test
   public void multipleMainOptionsEnv() {
-    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand =
+        new TestMultiCommandWithDeps(mockLogger, Optional.empty());
     testCommand.environment.put("BESU_OPTION_ENABLED", "false");
     testCommand.environment.put("BESU_OTHER_OPTION_ENABLED", "false");
     testCommand.environment.put("BESU_OPTION2", "40");
 
-    testCommand.commandLine.parseWithHandlers(
-            new RunLast(),
-            defaultExceptionHandler());
+    testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
 
     verifyMultiOptionsConstraintLoggerCall(
-            mockLogger,
-            "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
+        mockLogger,
+        "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
 
     assertThat(testCommand.optionEnabled).isFalse();
     assertThat(testCommand.otherOptionEnabled).isFalse();

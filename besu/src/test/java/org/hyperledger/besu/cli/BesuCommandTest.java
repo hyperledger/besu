@@ -1252,7 +1252,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void p2pOptionsRequiresServiceToBeEnabledEnv() {
     final String[] nodes = {
-            "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"
+      "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"
     };
 
     setEnvironmentVariable("BESU_P2P_ENABLED", "false");
@@ -1265,12 +1265,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     verifyOptionsConstraintLoggerCall(
-            "--p2p-enabled",
-            "--discovery-enabled",
-            "--bootnodes",
-            "--max-peers",
-            "--banned-node-ids",
-            "--remote-connections-max-percentage");
+        "--p2p-enabled",
+        "--discovery-enabled",
+        "--bootnodes",
+        "--max-peers",
+        "--banned-node-ids",
+        "--remote-connections-max-percentage");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2173,12 +2173,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     verifyOptionsConstraintLoggerCall(
-            "--rpc-http-enabled",
-            "--rpc-http-host",
-            "--rpc-http-port",
-            "--rpc-http-cors-origins",
-            "--rpc-http-api",
-            "--rpc-http-max-active-connections");
+        "--rpc-http-enabled",
+        "--rpc-http-host",
+        "--rpc-http-port",
+        "--rpc-http-cors-origins",
+        "--rpc-http-api",
+        "--rpc-http-max-active-connections");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2245,7 +2245,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void privacyTlsOptionsRequiresTlsToBeEnabledEnv() {
     when(storageService.getByName("rocksdb-privacy"))
-            .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+        .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
     final URL configFile = this.getClass().getResource("/orion_publickey.pub");
     final String coinbaseStr = String.format("%040x", 1);
 
@@ -3355,12 +3355,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     verifyOptionsConstraintLoggerCall(
-            "--rpc-ws-enabled",
-            "--rpc-ws-host",
-            "--rpc-ws-port",
-            "--rpc-ws-api",
-            "--rpc-ws-max-active-connections",
-            "--rpc-ws-max-frame-size");
+        "--rpc-ws-enabled",
+        "--rpc-ws-host",
+        "--rpc-ws-port",
+        "--rpc-ws-api",
+        "--rpc-ws-max-active-connections",
+        "--rpc-ws-max-frame-size");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -3507,11 +3507,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
 
     verifyOptionsConstraintLoggerCall(
-            "--metrics-push-enabled",
-            "--metrics-push-host",
-            "--metrics-push-port",
-            "--metrics-push-interval",
-            "--metrics-push-prometheus-job");
+        "--metrics-push-enabled",
+        "--metrics-push-host",
+        "--metrics-push-port",
+        "--metrics-push-interval",
+        "--metrics-push-prometheus-job");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -3778,8 +3778,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-            .startsWith(
-                    "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+        .startsWith(
+            "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
   }
 
   @Test
@@ -3830,12 +3830,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     setEnvironmentVariable("BESU_MINER_COINBASE", requestedCoinbase.toString());
     setEnvironmentVariable("BESU_MIN_GAS_PRICE", "42");
-    setEnvironmentVariable("BESU_MINER_EXTRA_DATA", "0x1122334455667788990011223344556677889900112233445566778899001122");
+    setEnvironmentVariable(
+        "BESU_MINER_EXTRA_DATA",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
 
     parseCommand();
 
     verifyOptionsConstraintLoggerCall(
-            "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
+        "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
