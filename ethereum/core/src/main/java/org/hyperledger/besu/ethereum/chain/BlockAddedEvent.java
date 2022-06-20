@@ -36,7 +36,8 @@ public class BlockAddedEvent {
   public enum EventType {
     HEAD_ADVANCED,
     FORK,
-    CHAIN_REORG
+    CHAIN_REORG,
+    STORED_ONLY
   }
 
   private BlockAddedEvent(
@@ -90,6 +91,17 @@ public class BlockAddedEvent {
   public static BlockAddedEvent createForFork(final Block block) {
     return new BlockAddedEvent(
         EventType.FORK,
+        block,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        block.getHeader().getParentHash());
+  }
+
+  public static BlockAddedEvent createForStoredOnly(final Block block) {
+    return new BlockAddedEvent(
+        EventType.STORED_ONLY,
         block,
         Collections.emptyList(),
         Collections.emptyList(),

@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
@@ -237,6 +238,35 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
+  public void remember(final BlockHeader blockHeader) {
+    checkArgument(blockHeader != null, "Block header must not be null");
+
+    final BonsaiWorldStateUpdater localUpdater = updater.copy();
+    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
+
+    try {
+      worldStateRootHash = calculateRootHash(stateUpdater, localUpdater);
+
+      if (!worldStateRootHash.equals(blockHeader.getStateRoot())) {
+        throw new RuntimeException(
+            "World State Root does not match expected value, header "
+                + blockHeader.getStateRoot().toHexString()
+                + " calculated "
+                + worldStateRootHash.toHexString());
+      }
+
+      final TrieLogLayer trieLog =
+          localUpdater.generateTrieLog(Hash.fromPlugin(blockHeader.getBlockHash()));
+      trieLog.freeze();
+      archive.addLayeredWorldState(this, blockHeader, worldStateRootHash, trieLog);
+    } finally {
+      stateUpdater.rollback();
+      updater.reset();
+    }
+    archive.scrubLayeredCache(blockHeader.getNumber());
+  }
+
+  @Override
   public void persist(final BlockHeader blockHeader) {
     boolean success = false;
 
@@ -253,8 +283,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
           .put(WORLD_ROOT_HASH_KEY, worldStateRootHash.toArrayUnsafe());
 
       // if we are persisted with a block header, and the prior state is the parent
-      // then persist the TrieLog for that transition.  If specified but not a direct
-      // descendant simply store the new block hash.
+      // then persist the TrieLog for that transition.
+      // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
         if (!worldStateRootHash.equals(blockHeader.getStateRoot())) {
           throw new RuntimeException(

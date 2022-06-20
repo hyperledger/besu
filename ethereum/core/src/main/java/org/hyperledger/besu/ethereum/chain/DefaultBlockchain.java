@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BlockchainStorage.Updater;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -50,6 +51,7 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -282,20 +284,33 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+    appendBlockHelper(new BlockWithReceipts(block, receipts), false);
+  }
+
+  @Override
+  public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
+    appendBlockHelper(new BlockWithReceipts(block, receipts), true);
+  }
+
+  private boolean blockShouldBeProcessed(
+      final Block block, final List<TransactionReceipt> receipts) {
     checkArgument(
         block.getBody().getTransactions().size() == receipts.size(),
         "Supplied receipts do not match block transactions.");
     if (blockIsAlreadyTracked(block)) {
-      return;
+      return false;
     }
     checkArgument(blockIsConnected(block), "Attempt to append non-connected block.");
-
-    final BlockAddedEvent blockAddedEvent =
-        appendBlockHelper(new BlockWithReceipts(block, receipts));
-    blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
+    return true;
   }
 
-  private BlockAddedEvent appendBlockHelper(final BlockWithReceipts blockWithReceipts) {
+  private void appendBlockHelper(
+      final BlockWithReceipts blockWithReceipts, final boolean storeOnly) {
+
+    if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
+      return;
+    }
+
     final Block block = blockWithReceipts.getBlock();
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
     final Hash hash = block.getHash();
@@ -308,15 +323,18 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
-    // Update canonical chain data
-    final BlockAddedEvent blockAddedEvent = updateCanonicalChainData(updater, blockWithReceipts);
-
-    updater.commit();
-    if (blockAddedEvent.isNewCanonicalHead()) {
-      updateCacheForNewCanonicalHead(block, td);
+    final BlockAddedEvent blockAddedEvent;
+    if (storeOnly) {
+      blockAddedEvent = handleStoreOnly(blockWithReceipts);
+    } else {
+      blockAddedEvent = updateCanonicalChainData(updater, blockWithReceipts);
+      if (blockAddedEvent.isNewCanonicalHead()) {
+        updateCacheForNewCanonicalHead(block, td);
+      }
     }
 
-    return blockAddedEvent;
+    updater.commit();
+    blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
   }
 
   @Override
@@ -371,18 +389,9 @@ public class DefaultBlockchain implements MutableBlockchain {
       throw new IllegalStateException("Blockchain is missing chain head.");
     }
 
-    final Hash newBlockHash = newBlock.getHash();
     try {
-      if (chainHead == null || newBlock.getHeader().getParentHash().equals(chainHead)) {
-        // This block advances the chain, update the chain head
-        updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
-        updater.setChainHead(newBlockHash);
-        indexTransactionForBlock(updater, newBlockHash, newBlock.getBody().getTransactions());
-        return BlockAddedEvent.createForHeadAdvancement(
-            newBlock,
-            LogWithMetadata.generate(
-                blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
-            blockWithReceipts.getReceipts());
+      if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
+        return handleNewHead(updater, blockWithReceipts);
       } else if (blockChoiceRule.compare(newBlock.getHeader(), chainHeader) > 0) {
         // New block represents a chain reorganization
         return handleChainReorg(updater, blockWithReceipts);
@@ -396,6 +405,27 @@ public class DefaultBlockchain implements MutableBlockchain {
       updater.rollback();
       throw new IllegalStateException("Blockchain is missing data that should be present.", e);
     }
+  }
+
+  private BlockAddedEvent handleStoreOnly(final BlockWithReceipts blockWithReceipts) {
+    return BlockAddedEvent.createForStoredOnly(blockWithReceipts.getBlock());
+  }
+
+  @NotNull
+  private BlockAddedEvent handleNewHead(
+      final Updater updater, final BlockWithReceipts blockWithReceipts) {
+    // This block advances the chain, update the chain head
+    final Hash newBlockHash = blockWithReceipts.getHash();
+
+    updater.putBlockHash(blockWithReceipts.getNumber(), newBlockHash);
+    updater.setChainHead(newBlockHash);
+    indexTransactionForBlock(
+        updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
+    return BlockAddedEvent.createForHeadAdvancement(
+        blockWithReceipts.getBlock(),
+        LogWithMetadata.generate(
+            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
+        blockWithReceipts.getReceipts());
   }
 
   private BlockAddedEvent handleFork(final BlockchainStorage.Updater updater, final Block fork) {
