@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -34,7 +33,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.FlatFileTaskCollection;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -138,10 +136,6 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
   protected static PersistentTaskCollection<SnapDataRequest>
       createSnapWorldStateDownloaderTaskCollection(final Path dataDirectory) {
-    return new PersistentTaskCollection<>(
-        new FlatFileTaskCollection<>(
-            dataDirectory,
-            AccountRangeDataRequest::serialize,
-            AccountRangeDataRequest::deserialize));
+    return new PersistentTaskCollection<>(dataDirectory);
   }
 }

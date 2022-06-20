@@ -225,4 +225,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       in.leaveList();
     }
   }
+
+  @Override
+  public String toString() {
+    return "AccountRangeDataRequest{"
+        + "startKeyHash="
+        + startKeyHash
+        + ", endKeyHash="
+        + endKeyHash
+        + '}';
+  }
 }

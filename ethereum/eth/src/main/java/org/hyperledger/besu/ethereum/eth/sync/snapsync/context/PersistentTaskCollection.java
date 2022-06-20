@@ -14,46 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.context;
 
-import org.hyperledger.besu.services.tasks.FlatFileTaskCollection;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.nio.file.Path;
 
 public class PersistentTaskCollection<T> implements TaskCollection<T> {
 
   // The underlying collection
-  private final TaskCollection<T> wrappedCollection;
+  private final InMemoryTaskQueue<T> wrappedCollection;
 
-  private final FlatFileTaskCollection<T> persistedTasks;
-
-  private boolean closed = false;
-
-  public PersistentTaskCollection(final FlatFileTaskCollection<T> persistedTasks) {
+  public PersistentTaskCollection(final Path directory) {
     this.wrappedCollection = new InMemoryTaskQueue<>();
-    this.persistedTasks = persistedTasks;
   }
 
   @Override
   public synchronized void add(final T taskData) {
-    assertNotClosed();
     wrappedCollection.add(taskData);
-    persistedTasks.add(taskData);
   }
 
   @Override
   public synchronized Task<T> remove() {
-    assertNotClosed();
-    return new PersistedTask<T>(this, wrappedCollection.remove().getData());
+    return wrappedCollection.remove();
   }
 
   @Override
   public synchronized void clear() {
-    assertNotClosed();
     wrappedCollection.clear();
-    persistedTasks.clear();
   }
 
   @Override
@@ -72,51 +61,12 @@ public class PersistentTaskCollection<T> implements TaskCollection<T> {
     return wrappedCollection.allTasksCompleted();
   }
 
-  private synchronized boolean markTaskCompleted(final PersistedTask<T> task) {
-    // this is not a problem because this list is always small
-    Task<T> remove = persistedTasks.remove();
-    while (!remove.getData().equals(task)) {
-      persistedTasks.add(task.getData());
-    }
-    return true;
+  public synchronized void persist() {
+    System.out.println("persist list " + wrappedCollection.asList());
   }
 
   @Override
-  public synchronized void close() throws IOException {
+  public void close() throws IOException {
     wrappedCollection.close();
-    persistedTasks.close();
-    closed = true;
-  }
-
-  private void assertNotClosed() {
-    if (closed) {
-      throw new IllegalStateException("Attempt to access closed " + getClass().getSimpleName());
-    }
-  }
-
-  private static class PersistedTask<T> implements Task<T> {
-    private final AtomicBoolean completed = new AtomicBoolean(false);
-    private final PersistentTaskCollection<T> parentQueue;
-    private final T data;
-
-    private PersistedTask(final PersistentTaskCollection<T> parentQueue, final T data) {
-      this.parentQueue = parentQueue;
-      this.data = data;
-    }
-
-    @Override
-    public T getData() {
-      return data;
-    }
-
-    @Override
-    public void markCompleted() {
-      if (completed.compareAndSet(false, true)) {
-        parentQueue.markTaskCompleted(this);
-      }
-    }
-
-    @Override
-    public void markFailed() {}
   }
 }

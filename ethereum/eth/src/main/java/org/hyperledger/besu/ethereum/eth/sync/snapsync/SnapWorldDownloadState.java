@@ -34,6 +34,7 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -213,7 +214,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueRequestBlocking(
       final List<TaskCollection<SnapDataRequest>> queueDependencies,
-      final List<TaskCollection<SnapDataRequest>> queues) {
+      final TaskCollection<SnapDataRequest> queue,
+      final Consumer<Void> unBlocked) {
     while (!internalFuture.isDone()) {
       while (queueDependencies.stream()
           .map(TaskCollection::allTasksCompleted)
@@ -225,11 +227,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           return null;
         }
       }
-      for (TaskCollection<SnapDataRequest> queue : queues) {
-        Task<SnapDataRequest> task = queue.remove();
-        if (task != null) {
-          return task;
-        }
+      unBlocked.accept(null);
+      Task<SnapDataRequest> task = queue.remove();
+      if (task != null) {
+        return task;
       }
 
       try {
@@ -245,25 +246,30 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
-        List.of(pendingAccountRequests));
+        pendingAccountRequests,
+        unused -> {
+          pendingAccountRequests.persist();
+        });
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingBigStorageRequests));
+    return dequeueRequestBlocking(Collections.emptyList(), pendingBigStorageRequests, unused -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingStorageRequests));
+    return dequeueRequestBlocking(Collections.emptyList(), pendingStorageRequests, unused -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueCodeRequestBlocking() {
-    return dequeueRequestBlocking(List.of(pendingStorageRequests), List.of(pendingCodeRequests));
+    return dequeueRequestBlocking(
+        List.of(pendingStorageRequests), pendingCodeRequests, unused -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
-        List.of(pendingTrieNodeRequests));
+        pendingTrieNodeRequests,
+        unused -> {});
   }
 
   public SnapsyncMetricsManager getMetricsManager() {
