@@ -45,10 +45,24 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -60,12 +74,15 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BonsaiSnapshotIsolationTests {
+
   private BonsaiWorldStateArchive archive;
   private ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
@@ -97,10 +114,13 @@ public class BonsaiSnapshotIsolationTests {
 
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
 
+  @Rule
+  public final TemporaryFolder tempData = new TemporaryFolder();
+
   @Before
   public void createStorage() {
-    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive = new BonsaiWorldStateArchive(provider, blockchain);
+//    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    archive = new BonsaiWorldStateArchive(createKeyValueStorageProvider(), blockchain);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     ws.persist(blockchain.getChainHeadHeader());
@@ -124,20 +144,17 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
-    //    var pathToIsolatedFromHead = isolated.get().pathFromHead();
-
-    // our path to genesis should be 2 blocks from head
-    //    assertThat(pathToIsolatedFromHead.collect(Collectors.toList()).size()).isEqualTo(2);
-
-    //    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
-
-    // our path to genesis should be 1 block from head
-    //    assertThat(pathToIsolated2FromHead.collect(Collectors.toList()).size()).isEqualTo(1);
-
+    assertThat(archive.getMutable().get(testAddress)).isNotNull();
+    assertThat(archive.getMutable().get(testAddress).getBalance())
+      .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
     assertThat(isolated.get().get(testAddress)).isNull();
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+
+    // hacky snapshot release using persist
+    isolated.get().persist(null);
+    isolated2.get().persist(null);
   }
 
   @Test
@@ -165,22 +182,18 @@ public class BonsaiSnapshotIsolationTests {
     blockchain.rewindToBlock(1L);
 
     // we should be 1 blocks ahead of head
-    //    var pathToIsolated2FromHead = isolated2.get().pathFromHead();
-
-    // our path to genesis should be 2 blocks from head
-    //    assertThat(pathToIsolated2FromHead.collect(Collectors.toList()).size()).isEqualTo(1);
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
 
     // we should be 2 blocks ahead of head
-    //    var pathToIsolated3FromHead = isolated3.get().pathFromHead();
-
-    // our path to genesis should be 2 blocks from head
-    //    assertThat(pathToIsolated3FromHead.collect(Collectors.toList()).size()).isEqualTo(2);
     assertThat(isolated3.get().get(testAddress)).isNotNull();
     assertThat(isolated3.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(3_000_000_000_000_000_000L));
+
+    // hacky close using persist
+    isolated2.get().persist(null);
+    isolated3.get().persist(null);
   }
 
   @Test
@@ -304,6 +317,47 @@ public class BonsaiSnapshotIsolationTests {
           .nonce(0L)
           .blockHeaderFunctions(blockHeaderFunctions)
           .buildBlockHeader();
+    }
+  }
+
+  // storage provider which uses a temporary directory based rocksdb
+  private StorageProvider createKeyValueStorageProvider() {
+    try {
+      tempData.create();
+      return new KeyValueStorageProviderBuilder()
+          .withStorageFactory(
+              new RocksDBKeyValueStorageFactory(
+                  () ->
+                      new RocksDBFactoryConfiguration(
+                          1024 /* MAX_OPEN_FILES*/,
+                          4 /*MAX_BACKGROUND_COMPACTIONS*/,
+                          4 /*BACKGROUND_THREAD_COUNT*/,
+                          8388608 /*CACHE_CAPACITY*/),
+                  Arrays.asList(KeyValueSegmentIdentifier.values()),
+                  2,
+                  RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
+          .withCommonConfiguration(
+              new BesuConfiguration() {
+
+                @Override
+                public Path getStoragePath() {
+                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database").toPath();
+                }
+
+                @Override
+                public Path getDataPath() {
+                  return tempData.getRoot().toPath();
+                }
+
+                @Override
+                public int getDatabaseVersion() {
+                  return 2;
+                }
+              })
+          .withMetricsSystem(new NoOpMetricsSystem())
+          .build();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

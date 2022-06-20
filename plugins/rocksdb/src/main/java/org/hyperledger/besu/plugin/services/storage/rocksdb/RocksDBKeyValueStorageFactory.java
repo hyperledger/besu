@@ -59,7 +59,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private final Supplier<RocksDBFactoryConfiguration> configuration;
   private final List<SegmentIdentifier> segments;
 
-  RocksDBKeyValueStorageFactory(
+  public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
       final int defaultVersion,

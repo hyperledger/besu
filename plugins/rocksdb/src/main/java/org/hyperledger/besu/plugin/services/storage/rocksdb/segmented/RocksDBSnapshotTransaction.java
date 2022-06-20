@@ -47,7 +47,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction {
 
   public Optional<byte[]> get(final byte[] key) {
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(snapTx.get(readOptions, key));
+      return Optional.ofNullable(snapTx.getForUpdate(readOptions, columnFamilyHandle, key, false));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

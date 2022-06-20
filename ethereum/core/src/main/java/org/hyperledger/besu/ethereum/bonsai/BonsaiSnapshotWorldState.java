@@ -1,10 +1,15 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
@@ -12,15 +17,18 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes32;
+import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 
 /**
  * This class takes a snapshot of the worldstate as the basis of a mutable worldstate. It is not
@@ -29,18 +37,21 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorldView {
   //  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldState.class);
-  final KeyValueStorage accountStorageTx;
-  final KeyValueStorage codeStorageTx;
-  final KeyValueStorage storageStorageTx;
+  final KeyValueStorage trieBranchStorage;
+  final KeyValueStorage accountStorage;
+  final KeyValueStorage codeStorage;
+  final KeyValueStorage storageStorage;
   final WorldUpdater txUpdter;
 
   public BonsaiSnapshotWorldState(
+      final KeyValueStorage trieBranchStorage,
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage) {
-    this.accountStorageTx = accountStorage;
-    this.codeStorageTx = codeStorage;
-    this.storageStorageTx = storageStorage;
+    this.trieBranchStorage = trieBranchStorage;
+    this.accountStorage = accountStorage;
+    this.codeStorage = codeStorage;
+    this.storageStorage = storageStorage;
 
     this.txUpdter = new SnapshotTransactionUpdater<EvmAccount>();
   }
@@ -56,8 +67,18 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
   @Override
   public void persist(final BlockHeader blockHeader) {
     // snapshots are mutable but not persistable
-    throw new UnsupportedOperationException(
-        "BonsaiSnapshotWorldState does not support persisting changes to database");
+//    throw new UnsupportedOperationException(
+//        "BonsaiSnapshotWorldState does not support persisting changes to database");
+    // TODO: for testing we are using persist to indicate we can release the snapshot
+  try {
+    trieBranchStorage.close();
+    accountStorage.close();
+    codeStorage.close();
+    storageStorage.close();
+    } catch (IOException ex) {
+    System.err.println("unexpected ioexception closing snapshot: " + ex);
+  }
+
   }
 
   @Override
@@ -82,8 +103,37 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
 
   @Override
   public Account get(final Address address) {
-    return null;
+    //TODO: this should be moved to shared abstract BonsaiWorldStateKVStorage
+    //TODO: need to add context for code lookup
+    final var accountHash = Hash.hash(address).toArrayUnsafe();
+    return accountStorage
+      .get(accountHash)
+        .map(Bytes::wrap)
+        .map(Optional::of)
+      .orElseGet(() -> getWorldStateRootHash()
+        .map(stateRootHash -> new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                    Bytes32.wrap(stateRootHash)))
+          .flatMap(mpt -> mpt.get(Bytes.of(accountHash))))
+        .map(bytes -> fromRLP(null, address, bytes, true))
+        .orElse(null);
   }
+
+  //TODO: this is a WorldStateStorage method, refactor
+  Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    } else {
+      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+    }
+  }
+  //TODO: also ripped off from WorldStateStorage
+  static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
+  Optional<Bytes> getWorldStateRootHash() {
+    return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
+  }
+
 
   static class SnapshotTransactionUpdater<A extends Account> implements WorldUpdater {
 
@@ -147,4 +197,6 @@ public class BonsaiSnapshotWorldState implements MutableWorldState, MutableWorld
       return null;
     }
   }
+
+
 }

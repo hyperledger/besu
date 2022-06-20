@@ -32,7 +32,7 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final SnappableKeyValueStorage accountStorage,
       final SnappableKeyValueStorage codeStorage,
       final SnappableKeyValueStorage storageStorage,
-      final KeyValueStorage trieBranchStorage,
+      final SnappableKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
   }

@@ -44,7 +44,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   protected final SnappableKeyValueStorage accountStorage;
   protected final SnappableKeyValueStorage codeStorage;
   protected final SnappableKeyValueStorage storageStorage;
-  protected final KeyValueStorage trieBranchStorage;
+  protected final SnappableKeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
@@ -57,7 +57,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         provider.getSnappableStorageBySegmentIdentifier(
             KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     trieBranchStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+        provider.getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
   }
@@ -66,7 +66,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       final SnappableKeyValueStorage accountStorage,
       final SnappableKeyValueStorage codeStorage,
       final SnappableKeyValueStorage storageStorage,
-      final KeyValueStorage trieBranchStorage,
+      final SnappableKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
@@ -78,7 +78,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   // provide a snapshot of the worldstate at the current state:
   public BonsaiSnapshotWorldState snapshotWorldState() {
     return new BonsaiSnapshotWorldState(
-        accountStorage.takeSnapshot(), codeStorage.takeSnapshot(), storageStorage.takeSnapshot());
+        trieBranchStorage.takeSnapshot(), accountStorage.takeSnapshot(), codeStorage.takeSnapshot(), storageStorage.takeSnapshot()
+    );
   }
 
   @Override
