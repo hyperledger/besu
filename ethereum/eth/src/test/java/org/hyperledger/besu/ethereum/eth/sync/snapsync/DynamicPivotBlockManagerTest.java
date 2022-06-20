@@ -119,4 +119,32 @@ public class DynamicPivotBlockManagerTest {
     verify(snapSyncState).setCurrentHeader(pivotBlockHeader);
     verify(fastSyncActions).waitForSuitablePeers(any());
   }
+
+  @Test
+  public void shouldSwitchToNewPivotOnlyOnCe() {
+
+    final CompletableFuture<FastSyncState> COMPLETE =
+        completedFuture(FastSyncState.EMPTY_SYNC_STATE);
+    final FastSyncState selectPivotBlockState = new FastSyncState(1060);
+    final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1060).buildHeader();
+    final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
+    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
+    when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
+        .thenReturn(completedFuture(selectPivotBlockState));
+    when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
+        .thenReturn(completedFuture(downloadPivotBlockHeaderState));
+
+    when(syncState.bestChainHeight()).thenReturn(1066L);
+
+    dynamicPivotBlockManager.check(
+        (blockHeader, newBlockFound) -> {
+          assertThat(blockHeader.getNumber()).isEqualTo(pivotBlockHeader.getNumber());
+          assertThat(newBlockFound).isTrue();
+          dynamicPivotBlockManager.check(
+              (blockHeader1, aBoolean) -> {
+                assertThat(blockHeader1.getNumber()).isEqualTo(939);
+                assertThat(aBoolean).isFalse();
+              });
+        });
+  }
 }
