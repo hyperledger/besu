@@ -34,4 +34,15 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *     `null` should be passed in.
    */
   void persist(BlockHeader blockHeader);
+
+  /**
+   * Remember accumulated changes to underlying storage for future use, without making this the
+   * current world state. This is useful in the PoS where can precompute a future world state, that
+   * will be committed in a later step
+   *
+   * @param blockHeader The block hash of the world state this represents. Must not be null
+   */
+  default void remember(final BlockHeader blockHeader) {
+    persist(blockHeader);
+  }
 }

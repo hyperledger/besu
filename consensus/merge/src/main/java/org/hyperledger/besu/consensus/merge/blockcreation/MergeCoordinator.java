@@ -257,7 +257,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
 
     validationResult.blockProcessingOutputs.ifPresentOrElse(
-        result -> chain.appendBlock(block, result.receipts),
+        result -> {
+          result.worldState.remember(block.getHeader());
+          chain.storeBlock(block, result.receipts);
+        },
         () ->
             protocolSchedule
                 .getByBlockNumber(chain.getChainHeadBlockNumber())
