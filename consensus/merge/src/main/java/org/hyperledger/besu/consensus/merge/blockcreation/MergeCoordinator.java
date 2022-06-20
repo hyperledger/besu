@@ -174,7 +174,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
 
-    Result result = executeBlock(emptyBlock);
+    Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
     } else {
@@ -193,7 +193,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                final var resultBest = executeBlock(bestBlock);
+                final var resultBest = validateBlock(bestBlock);
                 if (resultBest.blockProcessingOutputs.isPresent()) {
                   mergeContext.putPayloadById(payloadIdentifier, bestBlock);
                 } else {
@@ -239,7 +239,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public Result executeBlock(final Block block) {
+  public Result validateBlock(final Block block) {
 
     final var chain = protocolContext.getBlockchain();
     chain
@@ -256,6 +256,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .validateAndProcessBlock(
                 protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
 
+    return validationResult;
+  }
+
+  @Override
+  public Result executeBlock(final Block block) {
+    final var chain = protocolContext.getBlockchain();
+
+    final var validationResult = validateBlock(block);
     validationResult.blockProcessingOutputs.ifPresentOrElse(
         result -> {
           result.worldState.remember(block.getHeader());

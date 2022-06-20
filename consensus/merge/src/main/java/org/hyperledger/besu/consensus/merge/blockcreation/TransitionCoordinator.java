@@ -138,6 +138,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public Result validateBlock(final Block block) {
+    return mergeCoordinator.validateBlock(block);
+  }
+
+  @Override
   public ForkchoiceResult updateForkChoice(
       final BlockHeader newHead,
       final Hash finalizedBlockHash,
