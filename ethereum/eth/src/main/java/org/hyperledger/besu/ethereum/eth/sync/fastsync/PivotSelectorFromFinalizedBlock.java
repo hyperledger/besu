@@ -48,7 +48,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     if (maybeHash.isPresent()) {
       return Optional.of(selectLastFinalizedBlockAsPivot(maybeHash.get()));
     }
-    LOG.info("No finalized block hash announced yet");
+    LOG.trace("No finalized block hash announced yet");
     return Optional.empty();
   }
 
