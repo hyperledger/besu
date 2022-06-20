@@ -146,7 +146,8 @@ public class EthPeers {
           peerConnection.getPeer().getId(),
           (id, prevPeer) -> {
             if (prevPeer != null) {
-              previouslyUsedPeers.put(peerConnection, prevPeer);
+              final PeerConnection prevConn = prevPeer.getConnection();
+              previouslyUsedPeers.put(prevConn, prevPeer);
               // TODO: When moving a previous eth peer out of the connections map we
               // might have to copy validationStatus and/or chainHeadState or similar
               // to the new member
@@ -156,8 +157,8 @@ public class EthPeers {
               // messages.
               scheduler.schedule(
                   () -> {
-                    previouslyUsedPeers.remove(peerConnection);
-                    peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+                    previouslyUsedPeers.remove(prevConn);
+                    prevConn.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
                   },
                   30,
                   TimeUnit.SECONDS);
