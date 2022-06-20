@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -32,7 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
+import org.hyperledger.besu.services.tasks.FlatFileTaskCollection;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -88,13 +90,13 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
 
-    final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
-        createSnapWorldStateDownloaderTaskCollection();
+    final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests =
+        createSnapWorldStateDownloaderTaskCollection(getStateQueueDirectory(dataDirectory));
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
             worldStateStorage,
-            snapTaskCollection,
+            pendingAccountRequests,
             syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
@@ -115,15 +117,31 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             worldStateStorage,
             snapWorldStateDownloader,
             fastSyncStateStorage,
-            snapTaskCollection,
+            pendingAccountRequests,
             fastSyncDataDirectory,
             snapSyncState);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
 
-  protected static InMemoryTasksPriorityQueues<SnapDataRequest>
-      createSnapWorldStateDownloaderTaskCollection() {
-    return new InMemoryTasksPriorityQueues<>();
+  private static Path geSyncDataDirectory(final Path dataDirectory) {
+    final Path fastSyncDataDir = dataDirectory.resolve(FAST_SYNC_FOLDER);
+    ensureDirectoryExists(fastSyncDataDir.toFile());
+    return fastSyncDataDir;
+  }
+
+  protected static Path getStateQueueDirectory(final Path dataDirectory) {
+    final Path queueDataDir = geSyncDataDirectory(dataDirectory).resolve("snapqueue");
+    ensureDirectoryExists(queueDataDir.toFile());
+    return queueDataDir;
+  }
+
+  protected static PersistentTaskCollection<SnapDataRequest>
+      createSnapWorldStateDownloaderTaskCollection(final Path dataDirectory) {
+    return new PersistentTaskCollection<>(
+        new FlatFileTaskCollection<>(
+            dataDirectory,
+            AccountRangeDataRequest::serialize,
+            AccountRangeDataRequest::deserialize));
   }
 }

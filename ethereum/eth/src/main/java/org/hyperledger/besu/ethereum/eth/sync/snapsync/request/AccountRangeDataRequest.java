@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -196,5 +197,32 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   @VisibleForTesting
   public TreeMap<Bytes32, Bytes> getAccounts() {
     return stackTrie.getElement(startKeyHash).keys();
+  }
+
+  public static Bytes serialize(final SnapDataRequest request) {
+    return RLP.encode(
+        out -> {
+          final AccountRangeDataRequest accountRangeDataRequest = (AccountRangeDataRequest) request;
+          out.startList();
+          out.writeByte(accountRangeDataRequest.getRequestType().getValue());
+          out.writeBytes(accountRangeDataRequest.getRootHash());
+          out.writeBytes(accountRangeDataRequest.getStartKeyHash());
+          out.writeBytes(accountRangeDataRequest.getEndKeyHash());
+          out.endList();
+        });
+  }
+
+  public static SnapDataRequest deserialize(final Bytes encoded) {
+    final RLPInput in = RLP.input(encoded);
+    in.enterList();
+    try {
+      in.skipNext(); // ignore request type
+      final Hash rootHash = Hash.wrap(in.readBytes32());
+      final Bytes32 startKeyHash = in.readBytes32();
+      final Bytes32 endKeyHash = in.readBytes32();
+      return createAccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
+    } finally {
+      in.leaveList();
+    }
   }
 }

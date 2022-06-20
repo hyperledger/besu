@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -44,8 +45,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
-      new InMemoryTaskQueue<>();
+  protected final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests;
   protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
       new InMemoryTaskQueue<>();
   protected final InMemoryTaskQueue<SnapDataRequest> pendingBigStorageRequests =
@@ -65,17 +65,18 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
       final SnapSyncState snapSyncState,
-      final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
+      final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final SnapsyncMetricsManager metricsManager,
       final Clock clock) {
     super(
         worldStateStorage,
-        pendingRequests,
+        new InMemoryTasksPriorityQueues<>(),
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock);
+    this.pendingAccountRequests = pendingAccountRequests;
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
     metricsManager

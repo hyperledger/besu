@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -121,13 +121,13 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
 
-    final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
-        createSnapWorldStateDownloaderTaskCollection();
+    final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests =
+        createSnapWorldStateDownloaderTaskCollection(getStateQueueDirectory(dataDirectory));
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
             worldStateStorage,
-            snapTaskCollection,
+            pendingAccountRequests,
             syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
@@ -140,7 +140,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
             worldStateStorage,
             snapWorldStateDownloader,
             fastSyncStateStorage,
-            snapTaskCollection,
+            pendingAccountRequests,
             fastSyncDataDirectory,
             snapSyncState);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
