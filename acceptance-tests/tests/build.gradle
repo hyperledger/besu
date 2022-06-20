@@ -81,6 +81,9 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
+  constraints {
+    implementation('jnr-posix:3.1.15') { because '3.0.47 from web3j has issues' }
+  }
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
@@ -88,11 +91,7 @@ dependencies {
 test.enabled = false
 
 sourceSets {
-  test {
-    resources {
-      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
-    }
-  }
+  test { resources { srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs" } }
 }
 
 processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
