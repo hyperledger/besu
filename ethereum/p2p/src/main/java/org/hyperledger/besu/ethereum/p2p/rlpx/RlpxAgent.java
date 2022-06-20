@@ -51,7 +51,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -464,7 +463,6 @@ public class RlpxAgent {
 
     // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
     // disconnect command until we've returned from our compute() calculation
-    final AtomicReference<Runnable> disconnectAction = new AtomicReference<>();
     connectionsById.compute(
         peer.getId(),
         (nodeId, existingConnection) -> {
@@ -485,8 +483,6 @@ public class RlpxAgent {
                 System.identityHashCode(existingConnection.getPeerConnection()),
                 System.identityHashCode(newConnection.getPeerConnection()),
                 peer.getId());
-            disconnectAction.set(
-                () -> existingConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             newConnectionAccepted.set(true);
             return newConnection;
           } else {
@@ -496,15 +492,9 @@ public class RlpxAgent {
                 System.identityHashCode(newConnection.getPeerConnection()),
                 System.identityHashCode(existingConnection.getPeerConnection()),
                 peer.getId());
-            disconnectAction.set(
-                () -> newConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
             return existingConnection;
           }
         });
-
-    if (!isNull(disconnectAction.get())) {
-      disconnectAction.get().run();
-    }
 
     // Check remote connections again to control for race conditions
     enforceRemoteConnectionLimits();

@@ -48,7 +48,7 @@ public class EthMessages {
   }
 
   public void unsubsribe(final long id) {
-    for (Subscribers<MessageCallback> subscribers : listenersByCode.values()) {
+    for (final Subscribers<MessageCallback> subscribers : listenersByCode.values()) {
       subscribers.unsubscribe(id);
     }
   }
