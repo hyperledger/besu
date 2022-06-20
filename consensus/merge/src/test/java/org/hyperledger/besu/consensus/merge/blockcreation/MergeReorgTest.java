@@ -24,6 +24,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -101,20 +102,19 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   then you can and should be able to re-org to a different pre-TTD block
   say there is viable TTD block A and B, then we can have a PoS chain build on A for a while
       and then see another PoS chain build on B that has a higher fork choice weight and causes a re-org
-  once any post-merge PoS chain is finalied though, you'd never re-org any PoW blocks in the tree ever again */
+  once any post-merge PoS chain is finalized though, you'd never re-org any PoW blocks in the tree ever again */
 
   @Test
   public void reorgsAcrossTDDToDifferentTargetsWhenNotFinal() {
     // Add N blocks to chain from genesis, where total diff is < TTD
     Log4j2ConfiguratorUtil.setLevelDebug(BlockHeaderValidator.class.getName());
     List<Block> endOfWork = subChain(genesisState.getBlock().getHeader(), 10, Difficulty.of(100L));
-    endOfWork.stream().forEach(coordinator::executeBlock);
+    endOfWork.stream().forEach(this::appendBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(10L);
     BlockHeader tddPenultimate = this.blockchain.getChainHeadHeader();
     // Add TTD block A to chain as child of N.
     Block ttdA = new Block(terminalPowBlock(tddPenultimate, Difficulty.ONE), BlockBody.empty());
-    boolean worked = coordinator.executeBlock(ttdA).blockProcessingOutputs.isPresent();
-    assertThat(worked).isTrue();
+    appendBlock(ttdA);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(11L);
     assertThat(blockchain.getTotalDifficultyByHash(ttdA.getHash())).isPresent();
     Difficulty tdd = blockchain.getTotalDifficultyByHash(ttdA.getHash()).get();
@@ -127,22 +127,31 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
                 .toBigInteger());
     assertThat(mergeContext.isPostMerge()).isTrue();
     List<Block> builtOnTTDA = subChain(ttdA.getHeader(), 5, Difficulty.of(0L));
-    builtOnTTDA.stream().forEach(coordinator::executeBlock);
+    builtOnTTDA.stream().forEach(this::appendBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(16);
     assertThat(blockchain.getChainHead().getHash())
         .isEqualTo(builtOnTTDA.get(builtOnTTDA.size() - 1).getHash());
 
     Block ttdB = new Block(terminalPowBlock(tddPenultimate, Difficulty.of(2L)), BlockBody.empty());
-    worked = coordinator.executeBlock(ttdB).blockProcessingOutputs.isPresent();
-    assertThat(worked).isTrue();
+    appendBlock(ttdB);
     List<Block> builtOnTTDB = subChain(ttdB.getHeader(), 10, Difficulty.of(0L));
-    builtOnTTDB.stream().forEach(coordinator::executeBlock);
+    builtOnTTDB.stream().forEach(this::appendBlock);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(21);
     assertThat(blockchain.getChainHead().getHash())
         .isEqualTo(builtOnTTDB.get(builtOnTTDB.size() - 1).getHash());
     // don't finalize
     // Create a new chain back to A which has
 
+  }
+
+  private void appendBlock(final Block block) {
+    final Result result = coordinator.validateBlock(block);
+
+    result.blockProcessingOutputs.ifPresentOrElse(
+        outputs -> blockchain.appendBlock(block, outputs.receipts),
+        () -> {
+          throw new RuntimeException(result.errorMessage.get());
+        });
   }
 
   private List<Block> subChain(
