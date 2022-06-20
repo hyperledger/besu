@@ -611,7 +611,6 @@ def dockerVariants = [
   "openjdk-17",
   "openjdk-17-debug",
   "graalvm",
-  "openjdk-latest"
 ]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -706,7 +705,7 @@ task acceptanceTestsQuorum {
 
   doLast {
     exec {
-      def variant = "openjdk-latest"
+      def variant = "openjdk-17"
       def variantDirectory = "${buildDir}/quorum-at/${variant}"
       def dataDirectory = "${variantDirectory}/data"
       def reportsDirectory = "${variantDirectory}/reports"
