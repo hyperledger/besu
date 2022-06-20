@@ -113,8 +113,32 @@ public class ChainHeadTracker implements ConnectCallback {
                       () -> peer,
                       () -> System.identityHashCode(peer.getConnection()));
                 } else {
-                  LOG.info("Failed to retrieve chain head info. Disconnecting {}", peer, error);
-                  peer.disconnect(DisconnectReason.USELESS_PEER);
+                  final ChainState state =
+                      ethContext
+                          .getEthPeers()
+                          .getChainState(peer.getConnection().getPeer().getId());
+                  if (state != null
+                      && peerChainState.getEstimatedHeight() < state.getEstimatedHeight()) {
+                    peer.setChaintate(state);
+                    state
+                        .callListeners(); // TODO: I think these are the only two things that happen
+                    // when we
+                    // receive the header the other way.
+                    trailingPeerLimiter.enforceTrailingPeerLimit();
+                    infoLambda(
+                        LOG,
+                        "Retrieved chain head info {} from {} with connection {} FROM ANOTHER ETH_PEER",
+                        () ->
+                            state.getBestBlock().getNumber()
+                                + " ("
+                                + state.getBestBlock().getHash()
+                                + ")",
+                        () -> peer,
+                        () -> System.identityHashCode(peer.getConnection()));
+                  } else {
+                    LOG.info("Failed to retrieve chain head info. Disconnecting {}", peer, error);
+                    peer.disconnect(DisconnectReason.USELESS_PEER);
+                  }
                 }
               });
     }

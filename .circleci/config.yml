@@ -37,7 +37,7 @@ executors:
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
-      
+
   quorum_ats_executor_med:
     docker:
       - image: cimg/openjdk:11.0
@@ -273,6 +273,8 @@ jobs:
             ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
+      - store_test_results:
+          path: test-results
 
   acceptanceTestsQuorum:
     parallelism: 1
