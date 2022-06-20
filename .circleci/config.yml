@@ -23,7 +23,7 @@ executors:
 
   besu_arm64_executor_med: # 2cpu, 8G ram
     machine:
-      image: ubuntu-2004:202101-01
+      image: cimg/openjdk:17.0
     resource_class: arm.medium
     working_directory: ~/project
     environment:
