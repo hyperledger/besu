@@ -1250,6 +1250,33 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void p2pOptionsRequiresServiceToBeEnabledEnv() {
+    final String[] nodes = {
+            "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"
+    };
+
+    setEnvironmentVariable("BESU_P2P_ENABLED", "false");
+    setEnvironmentVariable("BESU_DISCOVERY_ENABLED", "false");
+    setEnvironmentVariable("BESU_BOOTNODES", String.join(",", VALID_ENODE_STRINGS));
+    setEnvironmentVariable("BESU_MAX_PEERS", "42");
+    setEnvironmentVariable("BESU_BANNED_NODE_IDS", String.join(",", nodes));
+    setEnvironmentVariable("BESU_REMOTE_CONNECTIONS_MAX_PERCENTAGE", "50");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall(
+            "--p2p-enabled",
+            "--discovery-enabled",
+            "--bootnodes",
+            "--max-peers",
+            "--banned-node-ids",
+            "--remote-connections-max-percentage");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
@@ -2136,6 +2163,28 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcHttpOptionsRequiresServiceToBeEnabledEnv() {
+    setEnvironmentVariable("BESU_RPC_HTTP_API", "ETH,NET");
+    setEnvironmentVariable("BESU_RPC_HTTP_HOST", "0.0.0.0");
+    setEnvironmentVariable("BESU_RPC_HTTP_PORT", "1234");
+    setEnvironmentVariable("BESU_RPC_HTTP_CORS_ORIGINS", "all");
+    setEnvironmentVariable("BESU_RPC_HTTP_MAX_ACTIVE_CONNECTIONS", "88");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall(
+            "--rpc-http-enabled",
+            "--rpc-http-host",
+            "--rpc-http-port",
+            "--rpc-http-cors-origins",
+            "--rpc-http-api",
+            "--rpc-http-max-active-connections");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void privacyTlsOptionsRequiresTlsToBeEnabled() {
     when(storageService.getByName("rocksdb-privacy"))
         .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
@@ -2194,6 +2243,29 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresTlsToBeEnabledEnv() {
+    when(storageService.getByName("rocksdb-privacy"))
+            .thenReturn(Optional.of(rocksDBSPrivacyStorageFactory));
+    final URL configFile = this.getClass().getResource("/orion_publickey.pub");
+    final String coinbaseStr = String.format("%040x", 1);
+
+    setEnvironmentVariable("BESU_PRIVACY_ENABLED", "true");
+    setEnvironmentVariable("BESU_MINER_ENABLED", "true");
+    setEnvironmentVariable("BESU_MINER_COINBASE", coinbaseStr);
+    setEnvironmentVariable("BESU_MIN_GAS_PRICE", "0");
+    setEnvironmentVariable("BESU_PRIVACY_URL", ENCLAVE_URI);
+    setEnvironmentVariable("BESU_PRIVACY_PUBLIC_KEY_FILE", configFile.getPath());
+    setEnvironmentVariable("BESU_PRIVACY_TLS_KEYSTORE_FILE", "/Users/me/key");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall("--privacy-tls-enabled", "--privacy-tls-keystore-file");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void privacyTlsOptionsRequiresPrivacyToBeEnabled() {
     parseCommand("--privacy-tls-enabled", "--privacy-tls-keystore-file", "/Users/me/key");
 
@@ -2218,6 +2290,19 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyTlsOptionsRequiresPrivacyToBeEnabledEnv() {
+    setEnvironmentVariable("BESU_PRIVACY_TLS_ENABLED", "true");
+    setEnvironmentVariable("BESU_PRIVACY_TLS_KEYSTORE_FILE", "/Users/me/key");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
     parseCommand("--fast-sync-min-peers", "5");
 
@@ -2232,6 +2317,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml = createTempFile("toml", "fast-sync-min-peers=5\n");
 
     parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void fastSyncOptionsRequiresFastSyncModeToBeSetEnv() {
+    setEnvironmentVariable("BESU_FAST_SYNC_MIN_PEERS", "5");
+
+    parseCommand();
 
     verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
 
@@ -2376,6 +2473,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml = createTempFile("toml", "rpc-http-tls-enabled=true\n");
 
     parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpTlsRequiresRpcHttpEnabledEnv() {
+    setEnvironmentVariable("BESU_RPC_HTTP_TLS_ENABLED", "true");
+
+    parseCommand();
 
     verifyOptionsConstraintLoggerCall("--rpc-http-enabled", "--rpc-http-tls-enabled");
 
@@ -3236,6 +3345,28 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcWsOptionsRequiresServiceToBeEnabledEnv() {
+    setEnvironmentVariable("BESU_RPC_WS_API", "ETH,NET");
+    setEnvironmentVariable("BESU_RPC_WS_HOST", "0.0.0.0");
+    setEnvironmentVariable("BESU_RPC_WS_PORT", "1234");
+    setEnvironmentVariable("BESU_RPC_WS_MAX_ACTIVE_CONNECTIONS", "77");
+    setEnvironmentVariable("BESU_RPC_WS_MAX_FRAME_SIZE", "65525");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall(
+            "--rpc-ws-enabled",
+            "--rpc-ws-host",
+            "--rpc-ws-port",
+            "--rpc-ws-api",
+            "--rpc-ws-max-active-connections",
+            "--rpc-ws-max-frame-size");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void rpcWsApiPropertyMustBeUsed() {
     TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
 
@@ -3367,6 +3498,26 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void metricsPushOptionsRequiresPushToBeEnabledEnv() {
+    setEnvironmentVariable("BESU_METRICS_PUSH_HOST", "0.0.0.0");
+    setEnvironmentVariable("BESU_METRICS_PUSH_PORT", "1234");
+    setEnvironmentVariable("BESU_METRICS_PUSH_INTERVAL", "2");
+    setEnvironmentVariable("BESU_METRICS_PUSH_PROMETHEUS_JOB", "job-name");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall(
+            "--metrics-push-enabled",
+            "--metrics-push-host",
+            "--metrics-push-port",
+            "--metrics-push-interval",
+            "--metrics-push-prometheus-job");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void metricsOptionsRequiresPullMetricsToBeEnabled() {
     parseCommand("--metrics-host", "0.0.0.0", "--metrics-port", "1234");
 
@@ -3381,6 +3532,19 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml = createTempFile("toml", "metrics-host=\"0.0.0.0\"\n" + "metrics-port=1234\n");
 
     parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--metrics-enabled", "--metrics-host", "--metrics-port");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void metricsOptionsRequiresPullMetricsToBeEnabledEnv() {
+    setEnvironmentVariable("BESU_METRICS_HOST", "0.0.0.0");
+    setEnvironmentVariable("BESU_METRICS_PORT", "1234");
+
+    parseCommand();
 
     verifyOptionsConstraintLoggerCall("--metrics-enabled", "--metrics-host", "--metrics-port");
 
@@ -3605,6 +3769,20 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void stratumMiningOptionsRequiresServiceToBeEnabledEnv() {
+    setEnvironmentVariable("BESU_MINER_STRATUM_ENABLED", "true");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+            .startsWith(
+                    "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) or specify mining is enabled (--miner-enabled)");
+  }
+
+  @Test
   public void blockProducingOptionsWarnsMinerShouldBeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
@@ -3641,6 +3819,23 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     verifyOptionsConstraintLoggerCall(
         "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void blockProducingOptionsWarnsMinerShouldBeEnabledEnv() {
+    final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
+
+    setEnvironmentVariable("BESU_MINER_COINBASE", requestedCoinbase.toString());
+    setEnvironmentVariable("BESU_MIN_GAS_PRICE", "42");
+    setEnvironmentVariable("BESU_MINER_EXTRA_DATA", "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    parseCommand();
+
+    verifyOptionsConstraintLoggerCall(
+            "--miner-enabled", "--miner-coinbase", "--min-gas-price", "--miner-extra-data");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -3687,6 +3882,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml = createTempFile("toml", "min-gas-price=0\n");
 
     parseCommand("--config-file", toml.toString());
+
+    verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void minGasPriceRequiresMainOptionEnv() {
+    setEnvironmentVariable("BESU_MIN_GAS_PRICE", "0");
+
+    parseCommand();
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
