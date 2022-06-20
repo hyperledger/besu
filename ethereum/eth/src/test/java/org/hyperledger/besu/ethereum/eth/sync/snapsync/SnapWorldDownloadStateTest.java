@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
-import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Arrays;
@@ -64,8 +64,8 @@ public class SnapWorldDownloadStateTest {
   private WorldStateStorage worldStateStorage;
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
-  private final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests =
-      new InMemoryTasksPriorityQueues<>();
+  private final PersistentTaskCollection<SnapDataRequest> pendingRequests =
+      new PersistentTaskCollection<>(null);
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
