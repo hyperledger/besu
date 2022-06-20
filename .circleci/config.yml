@@ -297,7 +297,7 @@ jobs:
           path: build/quorum-at
           destination: quorum-at-artifacts
       - store_test_results:
-          path: build/quorum-at/openjdk-latest/reports/xml-report
+          path: build/quorum-at/openjdk-17/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
@@ -314,10 +314,6 @@ jobs:
           name: hadoLint_openjdk_17_debug
           command: |
             docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
-      - run:
-          name: hadoLint_openjdk_latest
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - run:
           name: hadoLint_graalvm
           command: |
@@ -343,10 +339,6 @@ jobs:
           name: hadoLint_openjdk_17
           command: |
             docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
-      - run:
-          name: hadoLint_openjdk_latest
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - run:
           name: hadoLint_graalvm
           command: |
