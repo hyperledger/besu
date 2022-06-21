@@ -100,10 +100,8 @@ public class CommandLineUtils {
   private static String getAffectedOptions(
       final CommandLine commandLine, final List<String> dependentOptionsNames) {
     return commandLine.getCommandSpec().options().stream()
-        .filter(
-            option ->
-                Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
-                    && isOptionSet(option))
+        .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains))
+        .filter(CommandLineUtils::isOptionSet)
         .map(option -> option.names()[0])
         .collect(
             Collectors.collectingAndThen(

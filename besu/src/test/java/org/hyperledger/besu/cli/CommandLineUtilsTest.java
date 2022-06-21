@@ -20,13 +20,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static picocli.CommandLine.defaultExceptionHandler;
 
-import org.hyperledger.besu.cli.util.CascadingDefaultProvider;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider;
 import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
 import org.hyperledger.besu.util.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,7 +34,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,17 +63,10 @@ public class CommandLineUtilsTest {
 
     final Map<String, String> environment = new HashMap<>();
 
-    AbstractTestCommand(final Logger logger, final Optional<File> configFile) {
+    AbstractTestCommand(final Logger logger) {
       this.logger = logger;
       commandLine = new CommandLine(this);
-      if (configFile.isPresent()) {
-        commandLine.setDefaultValueProvider(
-            new CascadingDefaultProvider(
-                new EnvironmentVariableDefaultProvider(environment),
-                new TomlConfigFileDefaultProvider(commandLine, configFile.get())));
-      } else {
-        commandLine.setDefaultValueProvider(new EnvironmentVariableDefaultProvider(environment));
-      }
+      commandLine.setDefaultValueProvider(new EnvironmentVariableDefaultProvider(environment));
     }
 
     // Completely disables p2p within Besu.
@@ -102,8 +92,8 @@ public class CommandLineUtilsTest {
 
   private static class TestCommandWithDeps extends AbstractTestCommand {
 
-    TestCommandWithDeps(final Logger logger, final Optional<File> configFile) {
-      super(logger, configFile);
+    TestCommandWithDeps(final Logger logger) {
+      super(logger);
     }
 
     @Override
@@ -120,8 +110,8 @@ public class CommandLineUtilsTest {
 
   private static class TestCommandWithoutDeps extends AbstractTestCommand {
 
-    TestCommandWithoutDeps(final Logger logger, final Optional<File> configFile) {
-      super(logger, configFile);
+    TestCommandWithoutDeps(final Logger logger) {
+      super(logger);
     }
 
     @Override
@@ -133,8 +123,8 @@ public class CommandLineUtilsTest {
   }
 
   private static class TestMultiCommandWithDeps extends AbstractTestCommand {
-    TestMultiCommandWithDeps(final Logger logger, final Optional<File> configFile) {
-      super(logger, configFile);
+    TestMultiCommandWithDeps(final Logger logger) {
+      super(logger);
     }
 
     @Override
@@ -150,7 +140,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void optionsAreNotExpected() {
-    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -172,7 +162,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void optionIsNotExpected() {
-    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -192,7 +182,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void optionsAreExpected() {
-    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand = new TestCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -211,8 +201,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void noDependencies() {
-    final AbstractTestCommand testCommand =
-        new TestCommandWithoutDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand = new TestCommandWithoutDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -233,8 +222,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void multipleMainOptions() {
-    final AbstractTestCommand testCommand =
-        new TestMultiCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
     testCommand.commandLine.parseWithHandlers(
         new RunLast(),
         defaultExceptionHandler(),
@@ -262,8 +250,9 @@ public class CommandLineUtilsTest {
             .getBytes(StandardCharsets.UTF_8));
     toml.toFile().deleteOnExit();
 
-    final AbstractTestCommand testCommand =
-        new TestMultiCommandWithDeps(mockLogger, Optional.of(toml.toFile()));
+    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
+    testCommand.commandLine.setDefaultValueProvider(
+        new TomlConfigFileDefaultProvider(testCommand.commandLine, toml.toFile()));
     testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
 
     verifyMultiOptionsConstraintLoggerCall(
@@ -277,8 +266,7 @@ public class CommandLineUtilsTest {
 
   @Test
   public void multipleMainOptionsEnv() {
-    final AbstractTestCommand testCommand =
-        new TestMultiCommandWithDeps(mockLogger, Optional.empty());
+    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
     testCommand.environment.put("BESU_OPTION_ENABLED", "false");
     testCommand.environment.put("BESU_OTHER_OPTION_ENABLED", "false");
     testCommand.environment.put("BESU_OPTION2", "40");
