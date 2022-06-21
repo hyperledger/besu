@@ -111,11 +111,11 @@ public class CommandLineUtils {
   }
 
   private static boolean isOptionSet(final CommandLine.Model.OptionSpec option) {
-    CommandLine commandLine = option.command().commandLine();
+    final CommandLine commandLine = option.command().commandLine();
     try {
       return !option.stringValues().isEmpty()
           || !Strings.isNullOrEmpty(commandLine.getDefaultValueProvider().defaultValue(option));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       return false;
     }
   }

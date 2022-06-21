@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -63,7 +64,7 @@ public class CommandLineUtilsTest {
 
     final CommandLine commandLine;
 
-    final HashMap<String, String> environment = new HashMap<>();
+    final Map<String, String> environment = new HashMap<>();
 
     AbstractTestCommand(final Logger logger, final Optional<File> configFile) {
       this.logger = logger;
