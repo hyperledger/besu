@@ -18,16 +18,14 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 public interface FinalBlockConfirmation {
-  boolean finalHeaderReached(final BlockHeader firstHeader);
+  boolean ancestorHeaderReached(final BlockHeader firstHeader);
 
-  public static FinalBlockConfirmation genesisConfirmation(final MutableBlockchain blockchain) {
+  static FinalBlockConfirmation genesisConfirmation(final MutableBlockchain blockchain) {
     final BlockHeader genesisBlockHeader = blockchain.getBlockHeader(0).orElseThrow();
     return firstHeader -> {
       if (firstHeader.getNumber() > 0) {
@@ -45,29 +43,17 @@ public interface FinalBlockConfirmation {
     };
   }
 
-  public static FinalBlockConfirmation finalizedConfirmation(final MutableBlockchain blockchain) {
-    return firstHeader -> {
-      final Optional<Block> finalized =
-          blockchain.getFinalized().flatMap(blockchain::getBlockByHash);
-      if (finalized.isPresent()
-          && (finalized.get().getHeader().getNumber() >= firstHeader.getNumber())) {
-        throw new BackwardSyncException("Cannot continue below finalized...");
-      }
-      if (blockchain.contains(firstHeader.getParentHash())) {
-        return true;
-      }
-      return false;
-    };
+  static FinalBlockConfirmation ancestorConfirmation(final MutableBlockchain blockchain) {
+    return firstHeader -> blockchain.contains(firstHeader.getParentHash());
   }
 
-  public static FinalBlockConfirmation confirmationChain(
-      final FinalBlockConfirmation... confirmations) {
+  static FinalBlockConfirmation confirmationChain(final FinalBlockConfirmation... confirmations) {
     return firstHeader -> {
       return Arrays.stream(confirmations)
           .reduce(
               false,
               (aBoolean, confirmation2) ->
-                  aBoolean || confirmation2.finalHeaderReached(firstHeader),
+                  aBoolean || confirmation2.ancestorHeaderReached(firstHeader),
               (aBoolean, aBoolean2) -> aBoolean || aBoolean2);
     };
   }

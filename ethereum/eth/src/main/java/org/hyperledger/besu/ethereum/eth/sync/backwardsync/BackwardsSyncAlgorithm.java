@@ -83,8 +83,8 @@ public class BackwardsSyncAlgorithm {
           () -> firstAncestorHeader.get().toLogString());
     }
 
-    if (finalBlockConfirmation.finalHeaderReached(firstAncestorHeader.get())) {
-      LOG.info("Backward sync reached final header, starting Forward sync");
+    if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader.get())) {
+      LOG.info("Backward sync reached ancestor header, starting Forward sync");
       return executeForwardAsync();
     }
 
@@ -179,9 +179,6 @@ public class BackwardsSyncAlgorithm {
                   () ->
                       new BackwardSyncException(
                           "The header " + oldFinalized.toHexString() + "not found"));
-      if (newFinalizedHeader.getNumber() < oldFinalizedHeader.getNumber()) {
-        throw new BackwardSyncException("Cannot finalize below already finalized...");
-      }
       LOG.info(
           "Updating finalized {} block to new finalized block {}",
           oldFinalizedHeader.toLogString(),

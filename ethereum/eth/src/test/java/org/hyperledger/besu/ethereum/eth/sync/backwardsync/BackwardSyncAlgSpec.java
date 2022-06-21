@@ -100,7 +100,7 @@ public class BackwardSyncAlgSpec {
                 context,
                 FinalBlockConfirmation.confirmationChain(
                     FinalBlockConfirmation.genesisConfirmation(localBlockchain),
-                    FinalBlockConfirmation.finalizedConfirmation(localBlockchain))));
+                    FinalBlockConfirmation.ancestorConfirmation(localBlockchain))));
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
   }
 
@@ -321,34 +321,6 @@ public class BackwardSyncAlgSpec {
     finalized = localBlockchain.getFinalized();
     assertThat(finalized).isPresent();
     assertThat(finalized).contains(localBlockchain.getChainHead().getHash());
-  }
-
-  @Test
-  public void successionShouldThrowWhenFinalizingBellowPreviousFinalized() {
-    final BackwardsSyncAlgorithm backwardsSyncAlgorithm =
-        new BackwardsSyncAlgorithm(context, firstHeader -> false);
-
-    Optional<Hash> finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isEmpty();
-
-    backwardsSyncAlgorithm.runFinalizedSuccessionRule(
-        localBlockchain, Optional.of(localBlockchain.getChainHead().getHash()));
-
-    finalized = localBlockchain.getFinalized();
-    assertThat(finalized).isPresent();
-    assertThat(finalized).contains(localBlockchain.getChainHead().getHash());
-
-    assertThatThrownBy(
-            () ->
-                backwardsSyncAlgorithm.runFinalizedSuccessionRule(
-                    localBlockchain,
-                    Optional.of(
-                        localBlockchain
-                            .getBlockHeader(LOCAL_HEIGHT - 1)
-                            .orElseThrow()
-                            .getBlockHash())))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Cannot finalize below already finalized");
   }
 
   @Test
