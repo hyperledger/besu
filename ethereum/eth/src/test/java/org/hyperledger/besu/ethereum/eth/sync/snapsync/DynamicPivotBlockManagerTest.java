@@ -121,7 +121,7 @@ public class DynamicPivotBlockManagerTest {
   }
 
   @Test
-  public void shouldSwitchToNewPivotOnlyOnCe() {
+  public void shouldSwitchToNewPivotOnlyOnce() {
 
     final CompletableFuture<FastSyncState> COMPLETE =
         completedFuture(FastSyncState.EMPTY_SYNC_STATE);
