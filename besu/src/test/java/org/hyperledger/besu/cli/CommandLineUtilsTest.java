@@ -21,11 +21,19 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static picocli.CommandLine.defaultExceptionHandler;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.cli.util.EnvironmentVariableDefaultProvider;
+import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
 import org.hyperledger.besu.util.StringUtils;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,9 +61,12 @@ public class CommandLineUtilsTest {
 
     final CommandLine commandLine;
 
+    final Map<String, String> environment = new HashMap<>();
+
     AbstractTestCommand(final Logger logger) {
       this.logger = logger;
       commandLine = new CommandLine(this);
+      commandLine.setDefaultValueProvider(new EnvironmentVariableDefaultProvider(environment));
     }
 
     // Completely disables p2p within Besu.
@@ -228,6 +239,47 @@ public class CommandLineUtilsTest {
     assertThat(testCommand.optionEnabled).isFalse();
     assertThat(testCommand.otherOptionEnabled).isFalse();
     assertThat(testCommand.option2).isEqualTo(20);
+  }
+
+  @Test
+  public void multipleMainOptionsToml() throws IOException {
+    final Path toml = Files.createTempFile("toml", "");
+    Files.write(
+        toml,
+        ("option-enabled=false\n" + "other-option-enabled=false\n" + "option2=30")
+            .getBytes(StandardCharsets.UTF_8));
+    toml.toFile().deleteOnExit();
+
+    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
+    testCommand.commandLine.setDefaultValueProvider(
+        new TomlConfigFileDefaultProvider(testCommand.commandLine, toml.toFile()));
+    testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
+
+    verifyMultiOptionsConstraintLoggerCall(
+        mockLogger,
+        "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
+
+    assertThat(testCommand.optionEnabled).isFalse();
+    assertThat(testCommand.otherOptionEnabled).isFalse();
+    assertThat(testCommand.option2).isEqualTo(30);
+  }
+
+  @Test
+  public void multipleMainOptionsEnv() {
+    final AbstractTestCommand testCommand = new TestMultiCommandWithDeps(mockLogger);
+    testCommand.environment.put("BESU_OPTION_ENABLED", "false");
+    testCommand.environment.put("BESU_OTHER_OPTION_ENABLED", "false");
+    testCommand.environment.put("BESU_OPTION2", "40");
+
+    testCommand.commandLine.parseWithHandlers(new RunLast(), defaultExceptionHandler());
+
+    verifyMultiOptionsConstraintLoggerCall(
+        mockLogger,
+        "--option2 and/or --option3 ignored because none of --option-enabled or --other-option-enabled was defined.");
+
+    assertThat(testCommand.optionEnabled).isFalse();
+    assertThat(testCommand.otherOptionEnabled).isFalse();
+    assertThat(testCommand.option2).isEqualTo(40);
   }
 
   /**
