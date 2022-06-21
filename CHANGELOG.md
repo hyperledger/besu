@@ -1,11 +1,21 @@
 # Changelog
 
+## 22.7.1
+
+### Additions and Improvements
+### Bug Fixes
+
 ## 22.4.3
 
 ### Additions and Improvements
 - \[EXPERIMENTAL\] Add checkpoint sync `--sync-mode="X_CHECKPOINT"` [#3849](https://github.com/hyperledger/besu/pull/3849)
+- Support `finalized` and `safe` as tags for the block parameter in RPC APIs [#3950](https://github.com/hyperledger/besu/pull/3950)
+- Added verification of payload attributes in ForkchoiceUpdated [#3837](https://github.com/hyperledger/besu/pull/3837)
+- Add support for Gray Glacier hardfork [#3961](https://github.com/hyperledger/besu/issues/3961)
+- Do not require a minimum block height when downloading headers or blocks [#3911](https://github.com/hyperledger/besu/pull/3911)
 
 ### Bug Fixes
+- alias engine-rpc-port parameter with the former rpc param name [#3958](https://github.com/hyperledger/besu/pull/3958)
 
 ## 22.4.2
 

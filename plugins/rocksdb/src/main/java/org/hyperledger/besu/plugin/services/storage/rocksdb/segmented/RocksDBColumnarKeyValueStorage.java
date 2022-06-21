@@ -77,7 +77,8 @@ public class RocksDBColumnarKeyValueStorage
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
   private final RocksDBMetrics metrics;
-  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
+  private final WriteOptions tryDeleteOptions =
+      new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
 
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -92,7 +93,10 @@ public class RocksDBColumnarKeyValueStorage
               .map(
                   segment ->
                       new ColumnFamilyDescriptor(
-                          segment.getId(), new ColumnFamilyOptions().setTtl(0)))
+                          segment.getId(),
+                          new ColumnFamilyOptions()
+                              .setTtl(0)
+                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
@@ -145,7 +149,12 @@ public class RocksDBColumnarKeyValueStorage
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
-    return new BlockBasedTableConfig().setBlockCache(cache);
+    return new BlockBasedTableConfig()
+        .setBlockCache(cache)
+        .setFormatVersion(5)
+        .setOptimizeFiltersForMemory(true)
+        .setCacheIndexAndFilterBlocks(true)
+        .setBlockSize(32768);
   }
 
   @Override
@@ -169,6 +178,7 @@ public class RocksDBColumnarKeyValueStorage
   public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
+    writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
         new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions));
   }

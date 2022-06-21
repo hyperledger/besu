@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -90,7 +91,7 @@ public class ChainHeadTracker implements ConnectCallback {
           () -> peer,
           () -> System.identityHashCode(peer.getConnection()));
     } else {
-      LOG.debug("Requesting chain head info from {}", peer);
+      LOG.info("Requesting chain head info from {}", peer);
       GetHeadersFromPeerByHashTask.forSingleHash(
               protocolSchedule,
               ethContext,

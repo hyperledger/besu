@@ -143,11 +143,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
     LOG.info(
-        "Terminating connection {} with peer {}, reason {}, peer initiated: {}",
+        "Terminating connection {} with peer {}, reason {}, peer initiated: {}, connection: {}",
         System.identityHashCode(this),
         this.getPeer().getId(),
         reason,
-        peerInitiated);
+        peerInitiated,
+        System.identityHashCode(this));
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
     }

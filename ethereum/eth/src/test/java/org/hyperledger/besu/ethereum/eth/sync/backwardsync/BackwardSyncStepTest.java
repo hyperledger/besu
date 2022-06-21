@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.failBecauseExceptionWasNotThrown;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -34,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -42,9 +40,6 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
@@ -114,7 +109,6 @@ public class BackwardSyncStepTest {
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(5);
-    when(context.executeNextStep(null)).thenReturn(CompletableFuture.completedFuture(null));
 
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(ethScheduler);
 
@@ -187,41 +181,6 @@ public class BackwardSyncStepTest {
   }
 
   @Test
-  public void shouldNotRequestHeaderBeforeLastFinalizedBlock() throws Exception {
-    final MutableBlockchain localBlockchain = context.getProtocolContext().getBlockchain();
-    extendBlockchain(REMOTE_HEIGHT + 2, localBlockchain);
-    localBlockchain.setFinalized(
-        localBlockchain.getBlockHashByNumber(REMOTE_HEIGHT + 1).orElseThrow());
-
-    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
-    final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
-
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(remoteBlockchain);
-
-    final CompletableFuture<List<BlockHeader>> future =
-        step.requestHeaders(lookingForBlock.getHeader().getHash());
-
-    ScheduledExecutorService schedExecutor = Executors.newScheduledThreadPool(2);
-    schedExecutor.submit(
-        () -> peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone()));
-
-    schedExecutor.scheduleWithFixedDelay(
-        ethScheduler::expirePendingTimeouts, 0, 100, TimeUnit.MILLISECONDS);
-
-    future
-        .handle(
-            (r, t) -> {
-              if (t == null || !(t.getCause() instanceof MaxRetriesReachedException)) {
-                failBecauseExceptionWasNotThrown(MaxRetriesReachedException.class);
-              }
-              return r;
-            })
-        .thenRun(schedExecutor::shutdownNow)
-        .join();
-  }
-
-  @Test
   public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() throws Exception {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
@@ -235,7 +194,7 @@ public class BackwardSyncStepTest {
     assertThatThrownBy(future::get)
         .getCause()
         .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Did not receive a header for hash");
+        .hasMessageContaining("Did not receive a headers for hash");
   }
 
   @Test

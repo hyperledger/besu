@@ -287,10 +287,11 @@ public class EthPeers {
           final boolean fullyValidated = p.isFullyValidated();
           final boolean hasEstimatedHeight = p.chainState().hasEstimatedHeight();
           LOG.info(
-              "Peer {} is fully validated: {}, hasEstimatedHeight: {}",
+              "Peer {} is fully validated: {}, hasEstimatedHeight: {}, connection: {}",
               p.getConnection().getPeer().getId(),
               fullyValidated,
-              hasEstimatedHeight);
+              hasEstimatedHeight,
+              System.identityHashCode(p.getConnection()));
           return fullyValidated && hasEstimatedHeight;
         });
   }
