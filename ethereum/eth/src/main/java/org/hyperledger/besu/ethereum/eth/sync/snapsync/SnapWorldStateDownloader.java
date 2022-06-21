@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -48,7 +48,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
-  private final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests;
+  private final SnapRequestTaskCollection pendingAccountRequests;
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
@@ -62,7 +62,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests,
+      final SnapRequestTaskCollection pendingAccountRequests,
       final SnapSyncConfiguration snapSyncConfiguration,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
@@ -134,6 +134,13 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               minMillisBeforeStalling,
               snapsyncMetricsManager,
               clock);
+
+      // load persisted request
+      pendingAccountRequests.loadPersistQueue(
+          snapDataRequest ->
+              snapsyncMetricsManager.notifyStateDownloaded(
+                  ((AccountRangeDataRequest) snapDataRequest).getStartKeyHash(),
+                  ((AccountRangeDataRequest) snapDataRequest).getEndKeyHash()));
 
       if (pendingAccountRequests.isEmpty()) {
         final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);

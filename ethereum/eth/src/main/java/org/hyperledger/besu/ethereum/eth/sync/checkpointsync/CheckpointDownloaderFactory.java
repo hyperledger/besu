@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -121,7 +121,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
 
-    final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests =
+    final SnapRequestTaskCollection pendingAccountRequests =
         createSnapWorldStateDownloaderTaskCollection(getStateQueueDirectory(dataDirectory));
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(

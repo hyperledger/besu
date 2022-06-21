@@ -15,12 +15,14 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import static org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest.MAX_CHILDREN;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
@@ -166,5 +168,23 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   @Override
   public int getDepth() {
     return 0;
+  }
+
+  public Bytes serialize() {
+    throw new UnsupportedOperationException();
+  }
+
+  public static SnapDataRequest deserialize(final RLPInput in) {
+    in.enterList();
+    try {
+      switch (RequestType.fromValue(in.readByte())) {
+        case ACCOUNT_RANGE:
+          return AccountRangeDataRequest.deserialize(in);
+        default:
+          throw new UnsupportedOperationException();
+      }
+    } finally {
+      in.leaveList();
+    }
   }
 }

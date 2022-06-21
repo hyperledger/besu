@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -88,7 +88,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
 
-    final PersistentTaskCollection<SnapDataRequest> pendingAccountRequests =
+    final SnapRequestTaskCollection pendingAccountRequests =
         createSnapWorldStateDownloaderTaskCollection(getStateQueueDirectory(dataDirectory));
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
@@ -129,13 +129,13 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
   }
 
   protected static Path getStateQueueDirectory(final Path dataDirectory) {
-    final Path queueDataDir = geSyncDataDirectory(dataDirectory).resolve("snapqueue");
+    final Path queueDataDir = geSyncDataDirectory(dataDirectory).resolve("snap");
     ensureDirectoryExists(queueDataDir.toFile());
     return queueDataDir;
   }
 
-  protected static PersistentTaskCollection<SnapDataRequest>
-      createSnapWorldStateDownloaderTaskCollection(final Path dataDirectory) {
-    return new PersistentTaskCollection<>(dataDirectory);
+  protected static SnapRequestTaskCollection createSnapWorldStateDownloaderTaskCollection(
+      final Path dataDirectory) {
+    return new SnapRequestTaskCollection(dataDirectory);
   }
 }

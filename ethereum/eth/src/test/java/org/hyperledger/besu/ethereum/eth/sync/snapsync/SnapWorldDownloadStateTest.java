@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.PersistentTaskCollection;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -64,8 +64,7 @@ public class SnapWorldDownloadStateTest {
   private WorldStateStorage worldStateStorage;
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
-  private final PersistentTaskCollection<SnapDataRequest> pendingRequests =
-      new PersistentTaskCollection<>(null);
+  private final SnapRequestTaskCollection pendingRequests = new SnapRequestTaskCollection();
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);

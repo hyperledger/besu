@@ -199,31 +199,24 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     return stackTrie.getElement(startKeyHash).keys();
   }
 
-  public static Bytes serialize(final SnapDataRequest request) {
+  @Override
+  public Bytes serialize() {
     return RLP.encode(
         out -> {
-          final AccountRangeDataRequest accountRangeDataRequest = (AccountRangeDataRequest) request;
           out.startList();
-          out.writeByte(accountRangeDataRequest.getRequestType().getValue());
-          out.writeBytes(accountRangeDataRequest.getRootHash());
-          out.writeBytes(accountRangeDataRequest.getStartKeyHash());
-          out.writeBytes(accountRangeDataRequest.getEndKeyHash());
+          out.writeByte(getRequestType().getValue());
+          out.writeBytes(getRootHash());
+          out.writeBytes(getStartKeyHash());
+          out.writeBytes(getEndKeyHash());
           out.endList();
         });
   }
 
-  public static SnapDataRequest deserialize(final Bytes encoded) {
-    final RLPInput in = RLP.input(encoded);
-    in.enterList();
-    try {
-      in.skipNext(); // ignore request type
-      final Hash rootHash = Hash.wrap(in.readBytes32());
-      final Bytes32 startKeyHash = in.readBytes32();
-      final Bytes32 endKeyHash = in.readBytes32();
-      return createAccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
-    } finally {
-      in.leaveList();
-    }
+  public static SnapDataRequest deserialize(final RLPInput in) {
+    final Hash rootHash = Hash.wrap(in.readBytes32());
+    final Bytes32 startKeyHash = in.readBytes32();
+    final Bytes32 endKeyHash = in.readBytes32();
+    return createAccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
   }
 
   @Override
