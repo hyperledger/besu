@@ -3,6 +3,8 @@
 ## 22.7.1
 
 ### Additions and Improvements
+- Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
+
 ### Bug Fixes
 
 ## 22.4.3
