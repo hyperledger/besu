@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.util.number.ByteUnits.MEGABYTE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -247,7 +246,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (messageData.getSize() > maxMessageSize) {
       LOG.warn(
-          "Received message over {} MB. Disconnecting from {}", maxMessageSize / MEGABYTE, ethPeer);
+          "Received message exceeding size limit of {} bytes: {} bytes. Disconnecting from {}",
+          maxMessageSize,
+          messageData.getSize(),
+          ethPeer);
       ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       return;
     }
