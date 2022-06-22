@@ -383,8 +383,10 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private BlockAddedEvent updateCanonicalChainData(
       final BlockchainStorage.Updater updater, final BlockWithReceipts blockWithReceipts) {
+
     final Block newBlock = blockWithReceipts.getBlock();
     final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
+
     if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
       throw new IllegalStateException("Blockchain is missing chain head.");
     }
@@ -580,6 +582,31 @@ public class DefaultBlockchain implements MutableBlockchain {
       updater.commit();
 
       updateCacheForNewCanonicalHead(block, calculateTotalDifficulty(block.getHeader()));
+      return true;
+    } catch (final NoSuchElementException e) {
+      // Any Optional.get() calls in this block should be present, missing data means data
+      // corruption or a bug.
+      updater.rollback();
+      throw new IllegalStateException("Blockchain is missing data that should be present.", e);
+    }
+  }
+
+  @Override
+  public boolean forwardToBlock(final BlockHeader blockHeader) {
+    checkArgument(
+        chainHeader.getHash().equals(blockHeader.getParentHash()),
+        "Supplied block header is not a child of the current chain head.");
+
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+
+    try {
+      final BlockWithReceipts blockWithReceipts = getBlockWithReceipts(blockHeader).get();
+
+      BlockAddedEvent newHeadEvent = handleNewHead(updater, blockWithReceipts);
+      updateCacheForNewCanonicalHead(
+          blockWithReceipts.getBlock(), calculateTotalDifficulty(blockHeader));
+      updater.commit();
+      blockAddedObservers.forEach(observer -> observer.onBlockAdded(newHeadEvent));
       return true;
     } catch (final NoSuchElementException e) {
       // Any Optional.get() calls in this block should be present, missing data means data
