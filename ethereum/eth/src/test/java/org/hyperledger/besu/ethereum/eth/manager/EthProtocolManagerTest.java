@@ -211,12 +211,31 @@ public final class EthProtocolManagerTest {
             transactionPool,
             EthProtocolConfiguration.defaultConfig())) {
       final MessageData messageData = mock(MessageData.class);
-      when(messageData.getSize()).thenReturn(10 * 1_000_000 + 1 /* just over 10MB*/);
+      when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE + 1);
       when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
+  public void doNotDisconnectOnLargeMessageWithinLimits() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+      final MessageData messageData = mock(MessageData.class);
+      when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+      when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
+      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      assertThat(peer.isDisconnected()).isFalse();
     }
   }
 
