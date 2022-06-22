@@ -1,5 +1,12 @@
 # Changelog
 
+## 22.4.4
+
+### Additions and Improvements
+### Bug Fixes
+- Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
+- remove peer block height requirements for block fetching
+
 ## 22.4.3
 
 ### Additions and Improvements
