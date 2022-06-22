@@ -237,6 +237,7 @@ public final class MockNetwork {
     private final Peer to;
 
     private final MockNetwork network;
+    private PeerConnectionReadyCallback onPeerConnectionReadyCallback;
 
     MockPeerConnection(final Peer source, final Peer target, final MockNetwork network) {
       from = source;
@@ -307,6 +308,34 @@ public final class MockNetwork {
     @Override
     public InetSocketAddress getRemoteAddress() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean callOnConnectionReadyCallback() {
+      if (onPeerConnectionReadyCallback != null) {
+        return onPeerConnectionReadyCallback.onPeerConnectionReady();
+      }
+      return true;
+    }
+
+    @Override
+    public void setOnConnectionReadyCallback(final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
+      this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
+    }
+
+    @Override
+    public boolean registerStatusSentAndCheckIfReady() {
+      return true;
+    }
+
+    @Override
+    public boolean registerStatusReceivedAndCheckIfReady() {
+      return true;
+    }
+
+    @Override
+    public boolean statusHasBeenReceived() {
+      return true;
     }
   }
 }

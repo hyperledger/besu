@@ -453,14 +453,14 @@ public class EthPeerTest {
   private EthPeer createPeerWithPeerInfo(final Bytes nodeId) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    System.out.println("opt" + onPeerReady);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
-    PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
+    final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return new EthPeer(
         peerConnection,
         "foo",
-        onPeerReady,
         Collections.emptyList(),
         clock,
         Collections.emptyList());
@@ -471,10 +471,11 @@ public class EthPeerTest {
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    System.out.println("opr" + onPeerReady);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     return new EthPeer(
-        peerConnection, "foo", onPeerReady, peerValidators, clock, permissioningProviders);
+        peerConnection, "foo", peerValidators, clock, permissioningProviders);
   }
 
   @FunctionalInterface

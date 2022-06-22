@@ -74,7 +74,6 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         new EthPeer(
             MockPeerConnection.create(info1, addr60301, addr30302),
             "eth",
-            c -> {},
             List.of(),
             TestClock.fixed(),
             Collections.emptyList()));
@@ -82,7 +81,6 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         new EthPeer(
             MockPeerConnection.create(info2, addr30301, addr60302),
             "eth",
-            c -> {},
             List.of(),
             TestClock.fixed(),
             Collections.emptyList()));
@@ -90,7 +88,6 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
         new EthPeer(
             MockPeerConnection.create(info3, addr30301, addr60303),
             "eth",
-            c -> {},
             List.of(),
             TestClock.fixed(),
             Collections.emptyList()));

@@ -40,6 +40,7 @@ public class MockPeerConnection implements PeerConnection {
   private final Peer peer;
   private final PeerInfo peerInfo;
   private Optional<DisconnectReason> disconnectReason = Optional.empty();
+  private PeerConnectionReadyCallback onPeerConnectionReadyCallback;
 
   public MockPeerConnection(final Set<Capability> caps, final PeerSendHandler onSend) {
     this.caps = caps;
@@ -109,6 +110,34 @@ public class MockPeerConnection implements PeerConnection {
   @Override
   public InetSocketAddress getRemoteAddress() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean callOnConnectionReadyCallback() {
+    if (onPeerConnectionReadyCallback != null) {
+      return onPeerConnectionReadyCallback.onPeerConnectionReady();
+    }
+    return true;
+  }
+
+  @Override
+  public void setOnConnectionReadyCallback(final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
+    this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
+  }
+
+  @Override
+  public boolean registerStatusSentAndCheckIfReady() {
+    return true;
+  }
+
+  @Override
+  public boolean registerStatusReceivedAndCheckIfReady() {
+    return true;
+  }
+
+  @Override
+  public boolean statusHasBeenReceived() {
+    return true;
   }
 
   @Override
