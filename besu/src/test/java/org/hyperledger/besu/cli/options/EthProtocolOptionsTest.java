@@ -20,7 +20,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.util.number.PositiveNumber;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +28,28 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthProtocolOptionsTest
     extends AbstractCLIOptionsTest<EthProtocolConfiguration, EthProtocolOptions> {
+
+  @Test
+  public void parsesValidMaxMessageSizeOptions() {
+
+    final TestBesuCommand cmd = parseCommand("--eth-max-message-size", "4");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMaxMessageSize()).isEqualTo(4);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidMaxMessageSizeOptionsShouldFail() {
+    parseCommand("--eth-max-message-size", "-4");
+    verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--eth-max-message-size': cannot convert '-4' to PositiveNumber");
+  }
 
   @Test
   public void parsesValidEwpMaxGetHeadersOptions() {
@@ -127,17 +148,12 @@ public class EthProtocolOptionsTest
   @Override
   EthProtocolConfiguration createCustomizedDomainObject() {
     return EthProtocolConfiguration.builder()
-        .maxGetBlockHeaders(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2))
-        .maxGetBlockBodies(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2))
-        .maxGetReceipts(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2))
-        .maxGetNodeData(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2))
-        .maxGetPooledTransactions(
-            PositiveNumber.fromInt(
-                EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
+        .maxMessageSize(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE * 2)
+        .maxGetBlockHeaders(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2)
+        .maxGetBlockBodies(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2)
+        .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
+        .maxGetNodeData(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2)
+        .maxGetPooledTransactions(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2)
         .build();
   }
 

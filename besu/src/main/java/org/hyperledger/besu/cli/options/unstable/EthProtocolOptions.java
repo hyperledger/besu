@@ -25,6 +25,7 @@ import java.util.List;
 import picocli.CommandLine;
 
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
+  private static final String MAX_MESSAGE_SIZE_FLAG = "--eth-max-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
   private static final String MAX_GET_BODIES_FLAG = "--Xewp-max-get-bodies";
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
@@ -32,6 +33,15 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
   private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
       "--compatibility-eth64-forkid-enabled";
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_MESSAGE_SIZE_FLAG},
+      paramLabel = "<INTEGER>",
+      description =
+          "Maximum message size (in MB) for Ethereum Wire Protocol messages. (default: ${DEFAULT-VALUE})")
+  private PositiveNumber maxMessageSize =
+      PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
 
   @CommandLine.Option(
       hidden = true,
@@ -93,6 +103,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   public static EthProtocolOptions fromConfig(final EthProtocolConfiguration config) {
     final EthProtocolOptions options = create();
+    options.maxMessageSize = PositiveNumber.fromInt(config.getMaxMessageSize());
     options.maxGetBlockHeaders = PositiveNumber.fromInt(config.getMaxGetBlockHeaders());
     options.maxGetBlockBodies = PositiveNumber.fromInt(config.getMaxGetBlockBodies());
     options.maxGetReceipts = PositiveNumber.fromInt(config.getMaxGetReceipts());
@@ -105,6 +116,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   @Override
   public EthProtocolConfiguration toDomainObject() {
     return EthProtocolConfiguration.builder()
+        .maxMessageSize(maxMessageSize)
         .maxGetBlockHeaders(maxGetBlockHeaders)
         .maxGetBlockBodies(maxGetBlockBodies)
         .maxGetReceipts(maxGetReceipts)
@@ -117,6 +129,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
+        MAX_MESSAGE_SIZE_FLAG,
+        OptionParser.format(maxMessageSize.getValue()),
         MAX_GET_HEADERS_FLAG,
         OptionParser.format(maxGetBlockHeaders.getValue()),
         MAX_GET_BODIES_FLAG,

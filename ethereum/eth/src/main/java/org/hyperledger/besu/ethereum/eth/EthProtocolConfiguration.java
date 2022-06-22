@@ -154,6 +154,11 @@ public class EthProtocolConfiguration {
       return this;
     }
 
+    public Builder maxMessageSize(final int maxMessageSize) {
+      this.maxMessageSize = PositiveNumber.fromInt(maxMessageSize);
+      return this;
+    }
+
     public Builder maxGetBlockHeaders(final PositiveNumber maxGetBlockHeaders) {
       this.maxGetBlockHeaders = maxGetBlockHeaders;
       return this;
