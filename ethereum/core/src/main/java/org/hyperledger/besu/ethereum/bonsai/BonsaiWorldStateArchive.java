@@ -80,15 +80,41 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private void blockAddedHandler(final BlockAddedEvent event) {
     LOG.debug("New block add event {}", event);
     if (event.isNewCanonicalHead()) {
+      LOG.error("layeredWorldStatesByHash {}", layeredWorldStatesByHash.toString());
       final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+      LOG.error(
+          "layeredWorldStatesByHash parent hash {} is present? {}",
+          eventBlockHeader.getParentHash(),
+          layeredWorldStatesByHash.containsKey(eventBlockHeader.getParentHash()));
+
       layeredWorldStatesByHash.computeIfPresent(
           eventBlockHeader.getParentHash(),
-          (hash, bonsaiLayeredWorldState) -> {
-            if (layeredWorldStatesByHash.containsKey(eventBlockHeader.getBlockHash())) {
-              bonsaiLayeredWorldState.setNextWorldView(
-                  Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getBlockHash())));
-            }
-            return bonsaiLayeredWorldState;
+          (parentHash, parentBonsaiLayeredWorldState) -> {
+            LOG.error(
+                "layeredWorldStatesByHash hash {} is present? {}",
+                eventBlockHeader.getBlockHash(),
+                layeredWorldStatesByHash.containsKey(eventBlockHeader.getBlockHash()));
+            layeredWorldStatesByHash.computeIfPresent(
+                eventBlockHeader.getBlockHash(),
+                (hash, bonsaiLayeredWorldState) -> {
+                  LOG.error(
+                      "worldStateStorage root hash {}, block hash {}, is present? {}",
+                      bonsaiLayeredWorldState.rootHash(),
+                      eventBlockHeader.getBlockHash(),
+                      worldStateStorage.isWorldStateAvailable(
+                          bonsaiLayeredWorldState.rootHash(), eventBlockHeader.getBlockHash()));
+
+                  if (!worldStateStorage.isWorldStateAvailable(
+                      bonsaiLayeredWorldState.rootHash(), eventBlockHeader.getBlockHash())) {
+                    LOG.error(
+                        "saving root hash {}, block hash {}",
+                        bonsaiLayeredWorldState.rootHash(),
+                        eventBlockHeader.getBlockHash());
+                  }
+                  return bonsaiLayeredWorldState;
+                });
+            return layeredWorldStatesByHash.getOrDefault(
+                eventBlockHeader.getBlockHash(), parentBonsaiLayeredWorldState);
           });
     }
   }
@@ -117,7 +143,14 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
-    layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
+    addLayeredWorldState(blockHeader, bonsaiLayeredWorldState);
+  }
+
+  public void addLayeredWorldState(
+      final BlockHeader blockHeader, final BonsaiLayeredWorldState bonsaiLayeredWorldState) {
+    LOG.error("adding {}, block {}", bonsaiLayeredWorldState, blockHeader.toLogString());
+    layeredWorldStatesByHash.put(blockHeader.getHash(), bonsaiLayeredWorldState);
+    LOG.error("layeredWorldStatesByHash {}", layeredWorldStatesByHash);
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {

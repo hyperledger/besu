@@ -107,8 +107,8 @@ public class MainnetBlockValidator implements BlockValidator {
               + " is not available");
     }
     final MutableWorldState worldState = maybeWorldState.get();
-
-    final BlockProcessor.Result result = processBlock(context, worldState, block);
+    LOG.error("world state {}", worldState.rootHash());
+    final BlockProcessor.Result result = processBlock(context, worldState, block, shouldPersist);
     if (result.isFailed()) {
       return handleAndReportFailure(block, "Error processing block");
     }
@@ -152,9 +152,22 @@ public class MainnetBlockValidator implements BlockValidator {
    * @return the result of processing the block
    */
   protected BlockProcessor.Result processBlock(
-      final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+      final ProtocolContext context, final MutableWorldState worldState, final Block block, final boolean shouldPersist) {
 
-    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
+    return blockProcessor.processBlock(context.getBlockchain(), worldState, block, shouldPersist);
+  }
+
+  /**
+   * Processes a block, returning the result of the processing
+   *
+   * @param context the ProtocolContext
+   * @param worldState the world state for the parent block state root hash
+   * @param block the block to be processed
+   * @return the result of processing the block
+   */
+  protected BlockProcessor.Result processBlock(
+      final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+    return processBlock(context,worldState,block,true);
   }
 
   @Override

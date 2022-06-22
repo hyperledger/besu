@@ -133,13 +133,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Result executeBlock(final Block block) {
-    return mergeCoordinator.executeBlock(block);
-  }
-
-  @Override
-  public Result executeBlockWithoutSaving(final Block block) {
-    return mergeCoordinator.executeBlockWithoutSaving(block);
+  public Result rememberBlock(final Block block) {
+    return mergeCoordinator.rememberBlock(block);
   }
 
   @Override

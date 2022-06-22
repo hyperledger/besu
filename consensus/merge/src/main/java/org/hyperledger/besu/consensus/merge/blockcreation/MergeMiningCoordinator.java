@@ -35,9 +35,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient);
 
-  Result executeBlock(final Block block);
-
-  Result executeBlockWithoutSaving(final Block block);
+  Result rememberBlock(final Block block);
 
   Result validateBlock(final Block block);
 

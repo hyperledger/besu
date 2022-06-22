@@ -254,54 +254,37 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .getByBlockNumber(block.getHeader().getNumber())
             .getBlockValidator()
             .validateAndProcessBlock(
-                protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
-
-    return validationResult;
-  }
-
-  @Override
-  public Result executeBlock(final Block block) {
-    return executeBlockWithoutSaving(block, true);
-  }
-
-  @Override
-  public Result executeBlockWithoutSaving(final Block block) {
-    return executeBlockWithoutSaving(block, false);
-  }
-
-  public Result executeBlockWithoutSaving(final Block block, final boolean shouldSave) {
-
-    final var chain = protocolContext.getBlockchain();
-    chain
-        .getBlockHeader(block.getHeader().getParentHash())
-        .ifPresentOrElse(
-            blockHeader ->
-                debugLambda(LOG, "Parent of block {} is already present", block::toLogString),
-            () -> backwardSyncContext.syncBackwardsUntil(block));
-
-    final var validationResult =
-        protocolSchedule
-            .getByBlockNumber(block.getHeader().getNumber())
-            .getBlockValidator()
-            .validateAndProcessBlock(
                 protocolContext,
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
-                shouldSave);
+                false);
 
-    validationResult.blockProcessingOutputs.ifPresentOrElse(
-        result -> {
-          if (shouldSave) {
-            chain.appendBlock(block, result.receipts);
-          }
-        },
-        () ->
+    validationResult.errorMessage.ifPresent(
+        errMsg ->
             protocolSchedule
                 .getByBlockNumber(chain.getChainHeadBlockNumber())
                 .getBadBlocksManager()
                 .addBadBlock(block));
 
+    return validationResult;
+  }
+
+  @Override
+  public Result rememberBlock(final Block block) {
+    final var chain = protocolContext.getBlockchain();
+    LOG.error("rememberBlock {}", block.toLogString());
+    final var validationResult = validateBlock(block);
+    LOG.error(
+        "validationResult.blockProcessingOutputs present? {}",
+        validationResult.blockProcessingOutputs.isPresent());
+    validationResult.blockProcessingOutputs.ifPresent(
+        result -> {
+          LOG.error("result.worldState {}", result.worldState.getClass());
+
+          result.worldState.remember(block.getHeader());
+          chain.storeBlock(block, result.receipts);
+        });
     return validationResult;
   }
 

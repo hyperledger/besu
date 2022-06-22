@@ -71,14 +71,18 @@ public interface BlockProcessor {
    * @return the block processing result
    */
   default Result processBlock(
-      final Blockchain blockchain, final MutableWorldState worldState, final Block block) {
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final boolean shouldPersist) {
     return processBlock(
         blockchain,
         worldState,
         block.getHeader(),
         block.getBody().getTransactions(),
         block.getBody().getOmmers(),
-        null);
+        null,
+        shouldPersist);
   }
 
   /**
@@ -97,7 +101,29 @@ public interface BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
-    return processBlock(blockchain, worldState, blockHeader, transactions, ommers, null);
+    return processBlock(blockchain, worldState, blockHeader, transactions, ommers, null, true);
+  }
+
+  /**
+   * Processes the block and persist everything
+   *
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param blockHeader the block header for the block
+   * @param transactions the transactions in the block
+   * @param ommers the block ommers
+   * @param privateMetadataUpdater the updater used to update the private metadata for the block
+   * @return the block processing result
+   */
+  default Result processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    return processBlock(
+        blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater, true);
   }
 
   /**
@@ -117,7 +143,8 @@ public interface BlockProcessor {
       BlockHeader blockHeader,
       List<Transaction> transactions,
       List<BlockHeader> ommers,
-      PrivateMetadataUpdater privateMetadataUpdater);
+      PrivateMetadataUpdater privateMetadataUpdater,
+      boolean shouldPersist);
 
   /**
    * Processes the block when running Besu in GoQuorum-compatible mode

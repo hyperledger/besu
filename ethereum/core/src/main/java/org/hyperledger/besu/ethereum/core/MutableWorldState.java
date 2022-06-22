@@ -42,7 +42,5 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *
    * @param blockHeader The block hash of the world state this represents. Must not be null
    */
-  default void remember(final BlockHeader blockHeader) {
-    persist(blockHeader);
-  }
+  void remember(final BlockHeader blockHeader);
 }

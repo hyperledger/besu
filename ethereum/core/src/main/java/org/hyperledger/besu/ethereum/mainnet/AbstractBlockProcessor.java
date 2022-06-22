@@ -144,7 +144,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final boolean shouldPersist) {
+    LOG.error("world state {}", worldState.rootHash());
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
@@ -169,6 +171,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               true,
               TransactionValidationParams.processingBlock(),
               privateMetadataUpdater);
+      LOG.error("world state {}", worldState.rootHash());
       if (result.isInvalid()) {
         LOG.info(
             "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
@@ -180,11 +183,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         }
         return AbstractBlockProcessor.Result.failed();
       }
-
+      LOG.error("world state {}", worldState.rootHash());
       worldStateUpdater.commit();
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
-
+      LOG.error("world state {}", worldState.rootHash());
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
@@ -199,12 +202,18 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    try {
-      worldState.persist(blockHeader);
-    } catch (Exception e) {
-      LOG.error("failed persisting block", e);
-      return AbstractBlockProcessor.Result.failed();
+    LOG.error("world state {}", worldState.getClass());
+    if (shouldPersist) {
+      try {
+        worldState.persist(blockHeader);
+      } catch (Exception e) {
+        LOG.error("failed persisting block", e);
+        return AbstractBlockProcessor.Result.failed();
+      }
+    } else {
+      worldState.remember(blockHeader);
     }
+    LOG.error("world state {}", worldState.rootHash());
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

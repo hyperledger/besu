@@ -203,6 +203,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
     stateUpdater.commit();
   }
 
+  @Override
+  public void remember(final BlockHeader blockHeader) {
+    persist(blockHeader);
+  }
+
   private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
     return Optional.ofNullable(newStorageKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getStorageTrieKeyPreimage(trieKey));

@@ -86,7 +86,8 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater) {
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final boolean shouldPersist) {
 
     if (privateMetadataUpdater != null) {
       throw new IllegalArgumentException("PrivateMetadataUpdater passed in is not null.");
@@ -99,7 +100,13 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
     final Result result =
         blockProcessor.processBlock(
-            blockchain, worldState, blockHeader, transactions, ommers, metadataUpdater);
+            blockchain,
+            worldState,
+            blockHeader,
+            transactions,
+            ommers,
+            metadataUpdater,
+            shouldPersist);
     metadataUpdater.commit();
     return result;
   }

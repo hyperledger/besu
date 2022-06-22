@@ -279,4 +279,9 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   public WorldUpdater updater() {
     return new BonsaiWorldStateUpdater(this);
   }
+
+  @Override
+  public void remember(final BlockHeader blockHeader) {
+    archive.addLayeredWorldState(blockHeader, this);
+  }
 }

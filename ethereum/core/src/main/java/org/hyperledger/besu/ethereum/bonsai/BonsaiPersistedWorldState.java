@@ -240,7 +240,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   @Override
   public void remember(final BlockHeader blockHeader) {
     checkArgument(blockHeader != null, "Block header must not be null");
-
+    LOG.error("remember {}", blockHeader.toLogString());
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
 
@@ -268,6 +268,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public void persist(final BlockHeader blockHeader) {
+    LOG.warn("persist {}", new Exception());
     boolean success = false;
 
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
