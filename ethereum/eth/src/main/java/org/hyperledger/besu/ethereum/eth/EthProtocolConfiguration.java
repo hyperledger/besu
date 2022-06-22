@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth;
 
+import org.hyperledger.besu.util.number.ByteUnits;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.Objects;
@@ -22,7 +23,7 @@ import com.google.common.base.MoreObjects;
 
 public class EthProtocolConfiguration {
 
-  public static final int DEFAULT_MAX_MESSAGE_SIZE = 10;
+  public static final int DEFAULT_MAX_MESSAGE_SIZE = 10 * ByteUnits.MEGABYTE;
   public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 192;
   public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
@@ -30,7 +31,7 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
   public static final boolean DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED = false;
 
-  // Limit the size of p2p messages (in megabytes)
+  // Limit the size of p2p messages (in bytes)
   private final int maxMessageSize;
 
   // These options impose limits on the max number of elements returned when responding to

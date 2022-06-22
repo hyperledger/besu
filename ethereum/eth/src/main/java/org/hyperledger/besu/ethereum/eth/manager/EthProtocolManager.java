@@ -92,7 +92,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.peerValidators = peerValidators;
     this.scheduler = scheduler;
     this.blockchain = blockchain;
-    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize() * MEGABYTE;
+    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     this.shutdown = new CountDownLatch(1);
     genesisHash = blockchain.getBlockHashByNumber(0L).get();

@@ -35,11 +35,10 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       "--compatibility-eth64-forkid-enabled";
 
   @CommandLine.Option(
-      hidden = true,
       names = {MAX_MESSAGE_SIZE_FLAG},
       paramLabel = "<INTEGER>",
       description =
-          "Maximum message size (in MB) for Ethereum Wire Protocol messages. (default: ${DEFAULT-VALUE})")
+          "Maximum message size (in bytes) for Ethereum Wire Protocol messages. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxMessageSize =
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
 
