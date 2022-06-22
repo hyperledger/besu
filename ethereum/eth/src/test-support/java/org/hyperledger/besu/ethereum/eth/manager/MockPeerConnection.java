@@ -121,7 +121,8 @@ public class MockPeerConnection implements PeerConnection {
   }
 
   @Override
-  public void setOnConnectionReadyCallback(final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
+  public void setOnConnectionReadyCallback(
+      final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
     this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
   }
 

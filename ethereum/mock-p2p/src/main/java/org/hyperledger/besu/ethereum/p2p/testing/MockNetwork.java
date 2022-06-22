@@ -319,7 +319,8 @@ public final class MockNetwork {
     }
 
     @Override
-    public void setOnConnectionReadyCallback(final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
+    public void setOnConnectionReadyCallback(
+        final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
       this.onPeerConnectionReadyCallback = onPeerConnectionReadyCallback;
     }
 

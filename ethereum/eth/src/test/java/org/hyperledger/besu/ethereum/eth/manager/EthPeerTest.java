@@ -459,11 +459,7 @@ public class EthPeerTest {
     final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return new EthPeer(
-        peerConnection,
-        "foo",
-        Collections.emptyList(),
-        clock,
-        Collections.emptyList());
+        peerConnection, "foo", Collections.emptyList(), clock, Collections.emptyList());
   }
 
   private EthPeer createPeer(
@@ -474,8 +470,7 @@ public class EthPeerTest {
     System.out.println("opr" + onPeerReady);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
-    return new EthPeer(
-        peerConnection, "foo", peerValidators, clock, permissioningProviders);
+    return new EthPeer(peerConnection, "foo", peerValidators, clock, permissioningProviders);
   }
 
   @FunctionalInterface
