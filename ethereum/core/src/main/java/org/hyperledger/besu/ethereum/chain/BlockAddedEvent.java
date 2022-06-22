@@ -115,7 +115,7 @@ public class BlockAddedEvent {
   }
 
   public boolean isNewCanonicalHead() {
-    return eventType != EventType.FORK;
+    return eventType == EventType.HEAD_ADVANCED || eventType == EventType.CHAIN_REORG;
   }
 
   public EventType getEventType() {
@@ -140,5 +140,25 @@ public class BlockAddedEvent {
 
   public Hash getCommonAncestorHash() {
     return commonAncestorHash;
+  }
+
+  @Override
+  public String toString() {
+    return "BlockAddedEvent{"
+        + "eventType="
+        + eventType
+        + ", block="
+        + block.toLogString()
+        + ", commonAncestorHash="
+        + commonAncestorHash
+        + ", addedTransactions count="
+        + addedTransactions.size()
+        + ", removedTransactions count="
+        + removedTransactions.size()
+        + ", transactionReceipts count ="
+        + transactionReceipts.size()
+        + ", logsWithMetadata count="
+        + logsWithMetadata.size()
+        + '}';
   }
 }

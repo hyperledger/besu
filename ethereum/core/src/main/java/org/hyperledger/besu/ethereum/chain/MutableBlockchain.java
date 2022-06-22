@@ -75,6 +75,16 @@ public interface MutableBlockchain extends Blockchain {
   boolean rewindToBlock(final Hash blockHash);
 
   /**
+   * Forward the canonical chainhead to the specified block hash. The block hash must be a child of
+   * the current chainhead, that is already stored
+   *
+   * @param blockHeader The block header to forward to.
+   * @return {@code true} on success, {@code false} if the block is not a child of the current head
+   *     {@code blockNumber}
+   */
+  boolean forwardToBlock(final BlockHeader blockHeader);
+
+  /**
    * Set the hash of the last finalized block.
    *
    * @param blockHash The hash of the last finalized block.

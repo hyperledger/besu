@@ -317,14 +317,16 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       return ForkchoiceResult.withFailure(INVALID, descendantError.get(), latestValid);
     }
 
-    Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
+    final Optional<BlockHeader> parentOfNewHead =
+        blockchain.getBlockHeader(newHead.getParentHash());
+
     if (parentOfNewHead.isPresent()
         && parentOfNewHead.get().getTimestamp() >= newHead.getTimestamp()) {
       return ForkchoiceResult.withFailure(
           INVALID, "new head timestamp not greater than parent", latestValid);
     }
-    // set the new head
-    blockchain.rewindToBlock(newHead.getHash());
+
+    setNewHead(blockchain, newHead, newHead.getParentHash());
 
     // set and persist the new finalized block if it is present
     newFinalized.ifPresent(
@@ -347,6 +349,26 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
 
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
+  }
+
+  private boolean setNewHead(
+      final MutableBlockchain blockchain, final BlockHeader newHead, final Hash parentHash) {
+
+    if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
+      debugLambda(LOG, "Nothing to do new head {} is already chain head", newHead::toLogString);
+      return true;
+    }
+
+    if (parentHash.equals(blockchain.getChainHeadHash())) {
+      debugLambda(
+          LOG,
+          "Forwarding chain head to the block {} saved from a previous newPayload invocation",
+          newHead::toLogString);
+      return blockchain.forwardToBlock(newHead);
+    }
+
+    debugLambda(LOG, "New head {} is a chain reorg, rewind chain head to it", newHead::toLogString);
+    return blockchain.rewindToBlock(newHead.getHash());
   }
 
   @Override
