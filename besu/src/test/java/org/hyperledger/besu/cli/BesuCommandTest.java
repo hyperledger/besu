@@ -1621,6 +1621,17 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void syncMode_invalid() {
+    parseCommand("--sync-mode", "bogus");
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, X_SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
+  }
+
+  @Test
   public void syncMode_full_by_default_for_dev() {
     parseCommand("--network", "dev");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
