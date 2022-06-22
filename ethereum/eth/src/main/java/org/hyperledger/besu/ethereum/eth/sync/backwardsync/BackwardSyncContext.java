@@ -21,6 +21,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -244,13 +245,28 @@ public class BackwardSyncContext {
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
-    optResult.blockProcessingOutputs.ifPresent(
-        result -> {
-          traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
-          result.worldState.persist(block.getHeader());
-          this.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
-          possiblyMoveHead(block);
-        });
+    if (optResult.blockProcessingOutputs.isPresent()) {
+      traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
+      optResult.blockProcessingOutputs.get().worldState.persist(block.getHeader());
+      this.getProtocolContext()
+          .getBlockchain()
+          .appendBlock(block, optResult.blockProcessingOutputs.get().receipts);
+      possiblyMoveHead(block);
+    } else {
+      final BadBlockManager badBlocksManager =
+          protocolSchedule
+              .getByBlockNumber(getProtocolContext().getBlockchain().getChainHeadBlockNumber())
+              .getBadBlocksManager();
+      badBlocksManager.addBadBlock(block);
+      getBackwardChain().addBadChainToManager(badBlocksManager, block.getHash());
+      throw new BackwardSyncException(
+          "Cannot save block "
+              + block.getHash()
+              + " because of "
+              + optResult.errorMessage.orElseThrow());
+    }
+    optResult.blockProcessingOutputs.ifPresent(result -> {});
+
     return null;
   }
 
