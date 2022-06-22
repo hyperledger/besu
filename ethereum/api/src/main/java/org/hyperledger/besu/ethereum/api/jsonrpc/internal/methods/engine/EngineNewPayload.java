@@ -177,7 +177,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // execute block and return result response
-    final BlockValidator.Result executionResult = mergeCoordinator.executeBlock(block);
+    final BlockValidator.Result executionResult = mergeCoordinator.executeBlockWithoutSaving(block);
 
     if (executionResult.errorMessage.isEmpty()) {
       return respondWith(reqId, newBlockHeader.getHash(), VALID);

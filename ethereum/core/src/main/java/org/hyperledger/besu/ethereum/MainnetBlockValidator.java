@@ -68,6 +68,16 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
+    return validateAndProcessBlock(context, block, headerValidationMode, ommerValidationMode, true);
+  }
+
+  @Override
+  public BlockValidator.Result validateAndProcessBlock(
+      final ProtocolContext context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode,
+      final boolean shouldPersist) {
 
     final BlockHeader header = block.getHeader();
 
@@ -87,7 +97,8 @@ public class MainnetBlockValidator implements BlockValidator {
     final Optional<MutableWorldState> maybeWorldState =
         context
             .getWorldStateArchive()
-            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
+            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash(), shouldPersist);
+
     if (maybeWorldState.isEmpty()) {
       return handleAndReportFailure(
           block,

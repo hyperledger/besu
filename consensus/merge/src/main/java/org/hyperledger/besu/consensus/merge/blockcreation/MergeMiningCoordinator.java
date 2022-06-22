@@ -37,6 +37,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   Result executeBlock(final Block block);
 
+  Result executeBlockWithoutSaving(final Block block);
+
   Result validateBlock(final Block block);
 
   ForkchoiceResult updateForkChoice(
