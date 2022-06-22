@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import com.google.common.cache.CacheBuilder;
 public class BadBlockManager {
 
   private final Cache<Hash, Block> badBlocks =
+      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+  private final Cache<Hash, BlockHeader> badHeaders =
       CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
 
   /**
@@ -56,5 +59,13 @@ public class BadBlockManager {
    */
   public Optional<Block> getBadBlock(final Hash hash) {
     return Optional.ofNullable(badBlocks.getIfPresent(hash));
+  }
+
+  public void addBadHeader(final BlockHeader header) {
+    badHeaders.put(header.getHash(), header);
+  }
+
+  public Optional<BlockHeader> getBadHash(final Hash blockHash) {
+    return Optional.ofNullable(badHeaders.getIfPresent(blockHash));
   }
 }

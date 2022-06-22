@@ -282,6 +282,19 @@ public class EngineNewPayloadTest {
     assertThat(res.getError()).isEqualTo("Field extraData must not be null");
   }
 
+  @Test
+  public void shouldReturnInvalidWhenBadBlock() {
+    when(mergeCoordinator.isBadBlock(any(Hash.class))).thenReturn(true);
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isNull();
+  }
+
   private JsonRpcResponse resp(final EnginePayloadParameter payload) {
     return method.response(
         new JsonRpcRequestContext(

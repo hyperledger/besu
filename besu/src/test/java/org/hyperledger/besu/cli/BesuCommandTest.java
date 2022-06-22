@@ -3643,7 +3643,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         createTempFile(
             "toml",
             "miner-coinbase=\""
-                + requestedCoinbase.toString()
+                + requestedCoinbase
                 + "\"\n"
                 + "min-gas-price=42\n"
                 + "miner-extra-data=\"0x1122334455667788990011223344556677889900112233445566778899001122\"\n");
