@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.number.ByteUnits.MEGABYTE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -71,6 +72,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
+  // The max size of messages (in bytes)
+  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -89,6 +92,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.peerValidators = peerValidators;
     this.scheduler = scheduler;
     this.blockchain = blockchain;
+    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize() * MEGABYTE;
 
     this.shutdown = new CountDownLatch(1);
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
@@ -241,9 +245,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
-    if (messageData.getSize() > 10 * 1_000_000 /*10MB*/) {
-      LOG.debug("Received message over 10MB. Disconnecting from {}", ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    if (messageData.getSize() > maxMessageSize) {
+      LOG.warn(
+          "Received message over {} MB. Disconnecting from {}", maxMessageSize / MEGABYTE, ethPeer);
+      ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       return;
     }
 
