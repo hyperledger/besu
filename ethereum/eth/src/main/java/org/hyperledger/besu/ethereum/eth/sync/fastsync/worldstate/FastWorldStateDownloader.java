@@ -170,6 +170,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   @Override
   public void cancel() {
     synchronized (this) {
+      taskCollection.close();
       final FastWorldDownloadState downloadState = this.downloadState.get();
       if (downloadState != null) {
         downloadState.getDownloadFuture().cancel(true);

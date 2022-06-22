@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.io.IOException;
@@ -39,14 +38,13 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FastSyncDownloader<REQUEST> {
+public class FastSyncDownloader {
 
   private static final Duration FAST_SYNC_RETRY_DELAY = Duration.ofSeconds(5);
 
   private static final Logger LOG = LoggerFactory.getLogger(FastSyncDownloader.class);
   private final WorldStateStorage worldStateStorage;
   private final WorldStateDownloader worldStateDownloader;
-  private final TaskCollection<REQUEST> taskCollection;
   private final Path fastSyncDataDirectory;
   private volatile Optional<TrailingPeerRequirements> trailingPeerRequirements = Optional.empty();
   private final AtomicBoolean running = new AtomicBoolean(false);
@@ -60,14 +58,12 @@ public class FastSyncDownloader<REQUEST> {
       final WorldStateStorage worldStateStorage,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
-      final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
       final FastSyncState initialFastSyncState) {
     this.fastSyncActions = fastSyncActions;
     this.worldStateStorage = worldStateStorage;
     this.worldStateDownloader = worldStateDownloader;
     this.fastSyncStateStorage = fastSyncStateStorage;
-    this.taskCollection = taskCollection;
     this.fastSyncDataDirectory = fastSyncDataDirectory;
     this.initialFastSyncState = initialFastSyncState;
   }
@@ -137,7 +133,6 @@ public class FastSyncDownloader<REQUEST> {
     // Make sure downloader is stopped before we start cleaning up its dependencies
     worldStateDownloader.cancel();
     try {
-      taskCollection.close();
       if (fastSyncDataDirectory.toFile().exists()) {
         // Clean up this data for now (until fast sync resume functionality is in place)
         MoreFiles.deleteRecursively(fastSyncDataDirectory, RecursiveDeleteOption.ALLOW_INSECURE);

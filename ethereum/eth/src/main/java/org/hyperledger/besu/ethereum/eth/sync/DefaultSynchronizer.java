@@ -53,7 +53,7 @@ public class DefaultSynchronizer implements Synchronizer {
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final Optional<BlockPropagationManager> blockPropagationManager;
-  private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
+  private final Optional<FastSyncDownloader> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;

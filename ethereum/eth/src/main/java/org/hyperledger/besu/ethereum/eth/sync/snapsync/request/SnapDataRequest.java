@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -35,8 +35,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public abstract class SnapDataRequest implements TasksPriorityProvider {
-
-  public static final int MAX_CHILD = 16;
 
   protected Optional<TrieNodeDataRequest> possibleParent = Optional.empty();
   protected int depth;
@@ -75,7 +73,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   public static AccountTrieNodeDataRequest createAccountTrieNodeDataRequest(
-      final Hash hash, final Bytes location, final HashSet<Bytes> inconsistentAccounts) {
+      final Hash hash, final Bytes location, final List<Bytes> inconsistentAccounts) {
     return new AccountTrieNodeDataRequest(hash, hash, location, inconsistentAccounts);
   }
 
@@ -83,7 +81,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final Hash hash,
       final Hash rootHash,
       final Bytes location,
-      final HashSet<Bytes> inconsistentAccounts) {
+      final List<Bytes> inconsistentAccounts) {
     return new AccountTrieNodeDataRequest(hash, rootHash, location, inconsistentAccounts);
   }
 

@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -37,13 +36,13 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
-  private final HashSet<Bytes> inconsistentAccounts;
+  private final List<Bytes> inconsistentAccounts;
 
   AccountTrieNodeDataRequest(
       final Hash hash,
       final Hash originalRootHash,
       final Bytes location,
-      final HashSet<Bytes> inconsistentAccounts) {
+      final List<Bytes> inconsistentAccounts) {
     super(hash, originalRootHash, location);
     this.inconsistentAccounts = inconsistentAccounts;
   }
@@ -75,8 +74,8 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
         childHash, getRootHash(), location, getSubLocation(location));
   }
 
-  private HashSet<Bytes> getSubLocation(final Bytes location) {
-    final HashSet<Bytes> foundAccountsToHeal = new HashSet<>();
+  private List<Bytes> getSubLocation(final Bytes location) {
+    final List<Bytes> foundAccountsToHeal = new ArrayList<>();
     for (Bytes account : inconsistentAccounts) {
       if (account.commonPrefixLength(location) == location.size()) {
         foundAccountsToHeal.add(account);

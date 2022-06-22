@@ -32,7 +32,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipe;
 import org.hyperledger.besu.services.tasks.Task;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -50,7 +50,7 @@ public class LoadLocalDataStepTest {
       new BlockHeaderTestFixture().stateRoot(HASH).buildHeader();
   private final AccountTrieNodeDataRequest request =
       SnapDataRequest.createAccountTrieNodeDataRequest(
-          HASH, Bytes.fromHexString("0x01"), new HashSet<>());
+          HASH, Bytes.fromHexString("0x01"), new ArrayList<>());
   private final Task<SnapDataRequest> task = new StubTask(request);
 
   private final Pipe<Task<SnapDataRequest>> completedTasks =

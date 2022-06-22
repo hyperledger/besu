@@ -122,6 +122,10 @@ public class SnapsyncMetricsManager {
     this.nbSlots.getAndAdd(nbSlots);
   }
 
+  public void notifyCodesDownloaded(final long nbCodes) {
+    this.nbSlots.getAndAdd(nbCodes);
+  }
+
   public void notifyCodeDownloaded() {
     this.nbCodes.getAndIncrement();
   }
@@ -141,8 +145,10 @@ public class SnapsyncMetricsManager {
       lastNotifyTimestamp = now;
       if (!isHeal) {
         LOG.info(
-            "Worldstate download in progress synced={}%, accounts={}, slots={}, codes={}, nodes={}",
-            percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP),
+            "Worldstate download in progress synced={}%",
+            percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP));
+        LOG.trace(
+            "Snapsync metrics : accounts={}, slots={}, codes={}, nodes={}",
             nbAccounts,
             nbSlots,
             nbCodes,
@@ -156,13 +162,15 @@ public class SnapsyncMetricsManager {
   public void notifySnapSyncCompleted() {
     final Duration duration = Duration.ofMillis(System.currentTimeMillis() - startSyncTime);
     LOG.info(
-        "Finished snapsync with nodes {} (healed={}) duration {}{}:{},{}",
-        nbNodesGenerated.addAndGet(nbNodesHealed.get()),
-        nbNodesHealed,
+        "Finished worldstate download duration {}{}:{},{}",
         duration.toHoursPart() > 0 ? (duration.toHoursPart() + ":") : "",
         duration.toMinutesPart(),
         duration.toSecondsPart(),
         duration.toMillisPart());
+    LOG.trace(
+        "Snapsync metrics : nodes {} (healed={})",
+        nbNodesGenerated.addAndGet(nbNodesHealed.get()),
+        nbNodesHealed);
   }
 
   public MetricsSystem getMetricsSystem() {

@@ -24,12 +24,11 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapContextLoader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -48,7 +47,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(CheckpointDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
+  public static Optional<FastSyncDownloader> createCheckpointDownloader(
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -121,26 +120,27 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
 
-    final SnapRequestTaskCollection pendingAccountRequests =
-        createSnapWorldStateDownloaderTaskCollection(getStateQueueDirectory(dataDirectory));
+    final SnapContextLoader snapContextLoader =
+        new SnapContextLoader(geSyncDataDirectory(dataDirectory));
+
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
             worldStateStorage,
-            pendingAccountRequests,
+            snapContextLoader,
             syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
+    final SnapSyncDownloader fastSyncDownloader =
         new SnapSyncDownloader(
             fastSyncActions,
             worldStateStorage,
+            snapContextLoader,
             snapWorldStateDownloader,
             fastSyncStateStorage,
-            pendingAccountRequests,
             fastSyncDataDirectory,
             snapSyncState);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);

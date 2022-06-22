@@ -31,11 +31,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastWorldStateDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
@@ -61,20 +59,16 @@ public class FastSyncDownloaderTest {
   private final WorldStateDownloader worldStateDownloader = mock(FastWorldStateDownloader.class);
   private final FastSyncStateStorage storage = mock(FastSyncStateStorage.class);
 
-  @SuppressWarnings("unchecked")
-  private final TaskCollection<NodeDataRequest> taskCollection = mock(TaskCollection.class);
-
   private final ChainDownloader chainDownloader = mock(ChainDownloader.class);
 
   private final Path fastSyncDataDirectory = null;
 
-  private final FastSyncDownloader<NodeDataRequest> downloader =
-      new FastSyncDownloader<>(
+  private final FastSyncDownloader downloader =
+      new FastSyncDownloader(
           fastSyncActions,
           worldStateStorage,
           worldStateDownloader,
           storage,
-          taskCollection,
           fastSyncDataDirectory,
           FastSyncState.EMPTY_SYNC_STATE);
 
@@ -128,13 +122,12 @@ public class FastSyncDownloaderTest {
             any(FastSyncActions.class), eq(new FastSyncState(pivotBlockHeader))))
         .thenReturn(completedFuture(null));
 
-    final FastSyncDownloader<NodeDataRequest> resumedDownloader =
-        new FastSyncDownloader<>(
+    final FastSyncDownloader resumedDownloader =
+        new FastSyncDownloader(
             fastSyncActions,
             worldStateStorage,
             worldStateDownloader,
             storage,
-            taskCollection,
             fastSyncDataDirectory,
             fastSyncState);
 

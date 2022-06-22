@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -25,14 +24,15 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -45,15 +45,17 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  protected final SnapRequestTaskCollection pendingAccountRequests;
-  protected final SnapRequestTaskCollection pendingStorageRequests =
-      new SnapRequestTaskCollection();
-  protected final SnapRequestTaskCollection pendingBigStorageRequests =
-      new SnapRequestTaskCollection();
-  protected final SnapRequestTaskCollection pendingCodeRequests = new SnapRequestTaskCollection();
+  private final SnapContextLoader snapContextLoader;
+  protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests;
+  protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
+      new InMemoryTaskQueue<>();
+  protected final InMemoryTaskQueue<SnapDataRequest> pendingBigStorageRequests =
+      new InMemoryTaskQueue<>();
+  protected final InMemoryTaskQueue<SnapDataRequest> pendingCodeRequests =
+      new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
-  public final HashSet<Bytes> inconsistentAccounts = new HashSet<>();
+  public final List<Bytes> inconsistentAccounts;
 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
   private final SnapSyncState snapSyncState;
@@ -62,9 +64,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final SnapsyncMetricsManager metricsManager;
 
   public SnapWorldDownloadState(
+      final SnapContextLoader snapContextLoader,
       final WorldStateStorage worldStateStorage,
       final SnapSyncState snapSyncState,
-      final SnapRequestTaskCollection pendingAccountRequests,
+      final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final SnapsyncMetricsManager metricsManager,
@@ -75,7 +78,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock);
+    this.snapContextLoader = snapContextLoader;
     this.pendingAccountRequests = pendingAccountRequests;
+    this.inconsistentAccounts =
+        new CopyOnWriteArrayList<>(snapContextLoader.getInconsistentAccounts());
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
     metricsManager
@@ -165,6 +171,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     // try to find new pivot block before healing
     dynamicPivotBlockManager.switchToNewPivotBlock(
         (blockHeader, newPivotBlockFound) -> {
+          snapContextLoader.updateContext(pendingAccountRequests, inconsistentAccounts);
           enqueueRequest(
               createAccountTrieNodeDataRequest(
                   blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
@@ -250,9 +257,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
         pendingAccountRequests,
-        unused -> {
-          pendingAccountRequests.persist();
-        });
+        unused -> snapContextLoader.updateContext(pendingAccountRequests, inconsistentAccounts));
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {

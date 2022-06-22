@@ -21,12 +21,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 
 import java.time.Clock;
 import java.util.Map;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +50,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
-  private final SnapRequestTaskCollection pendingAccountRequests;
+  private final SnapContextLoader snapContextLoader;
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
@@ -62,7 +64,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final SnapRequestTaskCollection pendingAccountRequests,
+      final SnapContextLoader snapContextLoader,
       final SnapSyncConfiguration snapSyncConfiguration,
       final int maxOutstandingRequests,
       final int maxNodeRequestsWithoutProgress,
@@ -71,7 +73,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.worldStateStorage = worldStateStorage;
-    this.pendingAccountRequests = pendingAccountRequests;
+    this.snapContextLoader = snapContextLoader;
     this.snapSyncConfiguration = snapSyncConfiguration;
     this.maxOutstandingRequests = maxOutstandingRequests;
     this.maxNodeRequestsWithoutProgress = maxNodeRequestsWithoutProgress;
@@ -116,8 +118,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(
-          "Downloading world state from peers for block {} ({}). State root {} pending request "
-              + pendingAccountRequests.size(),
+          "Downloading world state from peers for block {} ({}). State root {}",
           header.getNumber(),
           header.getHash(),
           stateRoot);
@@ -125,8 +126,11 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final SnapsyncMetricsManager snapsyncMetricsManager =
           new SnapsyncMetricsManager(metricsSystem);
 
+      final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests = new InMemoryTaskQueue<>();
+
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
+              snapContextLoader,
               worldStateStorage,
               snapSyncState,
               pendingAccountRequests,
@@ -135,16 +139,28 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapsyncMetricsManager,
               clock);
 
-      // load persisted request
-      pendingAccountRequests.loadPersistQueue(
-          snapDataRequest ->
-              snapsyncMetricsManager.notifyStateDownloaded(
-                  ((AccountRangeDataRequest) snapDataRequest).getStartKeyHash(),
-                  ((AccountRangeDataRequest) snapDataRequest).getEndKeyHash()));
+      snapContextLoader.loadContext();
 
-      if (pendingAccountRequests.isEmpty()) {
-        final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
-        snapsyncMetricsManager.initRange(ranges);
+      final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
+      snapsyncMetricsManager.initRange(ranges);
+
+      if (snapContextLoader.isContextAvailable()) {
+        if (snapContextLoader.isHealing()) {
+          snapSyncState.setHealStatus(true);
+          newDownloadState.enqueueRequest(
+              SnapDataRequest.createAccountTrieNodeDataRequest(
+                  stateRoot, Bytes.EMPTY, snapContextLoader.getInconsistentAccounts()));
+        } else {
+          snapContextLoader.getSnapDataRequests().stream()
+              .map(AccountRangeDataRequest.class::cast)
+              .forEach(
+                  snapDataRequest -> {
+                    snapsyncMetricsManager.notifyStateDownloaded(
+                        snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
+                    newDownloadState.enqueueRequest(snapDataRequest);
+                  });
+        }
+      } else {
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(

@@ -51,7 +51,7 @@ public class FastDownloaderFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(FastDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader<?>> create(
+  public static Optional<FastSyncDownloader> create(
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -111,8 +111,8 @@ public class FastDownloaderFactory {
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader<NodeDataRequest> fastSyncDownloader =
-        new FastSyncDownloader<>(
+    final FastSyncDownloader fastSyncDownloader =
+        new FastSyncDownloader(
             new FastSyncActions(
                 syncConfig,
                 worldStateStorage,
@@ -125,7 +125,6 @@ public class FastDownloaderFactory {
             worldStateStorage,
             worldStateDownloader,
             fastSyncStateStorage,
-            taskCollection,
             fastSyncDataDirectory,
             fastSyncState);
     syncState.setWorldStateDownloadStatus(worldStateDownloader);

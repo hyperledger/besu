@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,7 +59,7 @@ public class CompleteTaskStepTest {
   public void shouldMarkAccountTrieNodeTaskAsFailedIfItDoesNotHaveData() {
     final StubTask task =
         new StubTask(
-            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new HashSet<>()));
+            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new ArrayList<>()));
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 
@@ -73,7 +73,7 @@ public class CompleteTaskStepTest {
   public void shouldMarkAccountTrieNodeTaskCompleteIfItDoesNotHaveDataAndExpired() {
     final StubTask task =
         new StubTask(
-            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new HashSet<>()));
+            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new ArrayList<>()));
 
     when(snapSyncState.isExpired(any())).thenReturn(true);
 

@@ -18,10 +18,8 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -29,16 +27,18 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
+public class SnapSyncDownloader extends FastSyncDownloader {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncDownloader.class);
+
+  private final SnapContextLoader snapContextLoader;
 
   public SnapSyncDownloader(
       final FastSyncActions fastSyncActions,
       final WorldStateStorage worldStateStorage,
+      final SnapContextLoader snapContextLoader,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
-      final TaskCollection<SnapDataRequest> taskCollection,
       final Path fastSyncDataDirectory,
       final FastSyncState initialFastSyncState) {
     super(
@@ -46,15 +46,21 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
         worldStateStorage,
         worldStateDownloader,
         fastSyncStateStorage,
-        taskCollection,
         fastSyncDataDirectory,
         initialFastSyncState);
+    this.snapContextLoader = snapContextLoader;
   }
 
   @Override
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
     LOG.info("Starting sync.");
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
+  }
+
+  @Override
+  protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
+    snapContextLoader.clear();
+    return super.handleFailure(error);
   }
 
   @Override

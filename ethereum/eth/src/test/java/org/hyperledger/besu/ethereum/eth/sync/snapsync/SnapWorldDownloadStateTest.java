@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -36,11 +35,12 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -64,7 +64,8 @@ public class SnapWorldDownloadStateTest {
   private WorldStateStorage worldStateStorage;
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
-  private final SnapRequestTaskCollection pendingRequests = new SnapRequestTaskCollection();
+  private final SnapContextLoader snapContextLoader = mock(SnapContextLoader.class);
+  private final InMemoryTaskQueue<SnapDataRequest> pendingRequests = new InMemoryTaskQueue<>();
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
@@ -99,6 +100,7 @@ public class SnapWorldDownloadStateTest {
     }
     downloadState =
         new SnapWorldDownloadState(
+            snapContextLoader,
             worldStateStorage,
             snapSyncState,
             pendingRequests,
@@ -202,7 +204,7 @@ public class SnapWorldDownloadStateTest {
     when(snapSyncState.isHealInProgress()).thenReturn(true);
     downloadState.pendingTrieNodeRequests.add(
         SnapDataRequest.createAccountTrieNodeDataRequest(
-            Hash.wrap(Bytes32.random()), Bytes.EMPTY, new HashSet<>()));
+            Hash.wrap(Bytes32.random()), Bytes.EMPTY, new ArrayList<>()));
 
     downloadState.checkCompletion(header);
 

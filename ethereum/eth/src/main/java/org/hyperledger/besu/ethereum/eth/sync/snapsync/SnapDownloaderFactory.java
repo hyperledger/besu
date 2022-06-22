@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.collection.SnapRequestTaskCollection;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,7 +43,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
-  public static Optional<FastSyncDownloader<?>> createSnapDownloader(
+  protected static final String SNAP_SYNC_FOLDER = "snapsync";
+
+  public static Optional<FastSyncDownloader> createSnapDownloader(
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -88,20 +88,21 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
     worldStateStorage.clear();
 
-    final SnapRequestTaskCollection pendingAccountRequests =
-        createSnapWorldStateDownloaderTaskCollection(getStateQueueDirectory(dataDirectory));
+    final SnapContextLoader snapContextLoader =
+        new SnapContextLoader(geSyncDataDirectory(dataDirectory));
+
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
             worldStateStorage,
-            pendingAccountRequests,
+            snapContextLoader,
             syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
             metricsSystem);
-    final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
+    final FastSyncDownloader fastSyncDownloader =
         new SnapSyncDownloader(
             new FastSyncActions(
                 syncConfig,
@@ -113,29 +114,18 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 pivotBlockSelector,
                 metricsSystem),
             worldStateStorage,
+            snapContextLoader,
             snapWorldStateDownloader,
             fastSyncStateStorage,
-            pendingAccountRequests,
             fastSyncDataDirectory,
             snapSyncState);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
 
-  private static Path geSyncDataDirectory(final Path dataDirectory) {
-    final Path fastSyncDataDir = dataDirectory.resolve(FAST_SYNC_FOLDER);
-    ensureDirectoryExists(fastSyncDataDir.toFile());
-    return fastSyncDataDir;
-  }
-
-  protected static Path getStateQueueDirectory(final Path dataDirectory) {
-    final Path queueDataDir = geSyncDataDirectory(dataDirectory).resolve("snap");
-    ensureDirectoryExists(queueDataDir.toFile());
-    return queueDataDir;
-  }
-
-  protected static SnapRequestTaskCollection createSnapWorldStateDownloaderTaskCollection(
-      final Path dataDirectory) {
-    return new SnapRequestTaskCollection(dataDirectory);
+  protected static Path geSyncDataDirectory(final Path dataDirectory) {
+    final Path syncDataDir = dataDirectory.resolve(SNAP_SYNC_FOLDER);
+    ensureDirectoryExists(syncDataDir.toFile());
+    return syncDataDir;
   }
 }
