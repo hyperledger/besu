@@ -22,6 +22,7 @@ import com.google.common.base.MoreObjects;
 
 public class EthProtocolConfiguration {
 
+  public static final int DEFAULT_MAX_MESSAGE_SIZE = 10;
   public static final int DEFAULT_MAX_GET_BLOCK_HEADERS = 192;
   public static final int DEFAULT_MAX_GET_BLOCK_BODIES = 128;
   public static final int DEFAULT_MAX_GET_RECEIPTS = 256;
@@ -29,6 +30,11 @@ public class EthProtocolConfiguration {
   public static final int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
   public static final boolean DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED = false;
 
+  // Limit the size of p2p messages (in megabytes)
+  private final int maxMessageSize;
+
+  // These options impose limits on the max number of elements returned when responding to
+  // peers' p2p RPC requests
   private final int maxGetBlockHeaders;
   private final int maxGetBlockBodies;
   private final int maxGetReceipts;
@@ -36,13 +42,15 @@ public class EthProtocolConfiguration {
   private final int maxGetPooledTransactions;
   private final boolean legacyEth64ForkIdEnabled;
 
-  public EthProtocolConfiguration(
+  private EthProtocolConfiguration(
+      final int maxMessageSize,
       final int maxGetBlockHeaders,
       final int maxGetBlockBodies,
       final int maxGetReceipts,
       final int maxGetNodeData,
       final int maxGetPooledTransactions,
       final boolean legacyEth64ForkIdEnabled) {
+    this.maxMessageSize = maxMessageSize;
     this.maxGetBlockHeaders = maxGetBlockHeaders;
     this.maxGetBlockBodies = maxGetBlockBodies;
     this.maxGetReceipts = maxGetReceipts;
@@ -52,17 +60,15 @@ public class EthProtocolConfiguration {
   }
 
   public static EthProtocolConfiguration defaultConfig() {
-    return new EthProtocolConfiguration(
-        DEFAULT_MAX_GET_BLOCK_HEADERS,
-        DEFAULT_MAX_GET_BLOCK_BODIES,
-        DEFAULT_MAX_GET_RECEIPTS,
-        DEFAULT_MAX_GET_NODE_DATA,
-        DEFAULT_MAX_GET_POOLED_TRANSACTIONS,
-        DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED);
+    return builder().build();
   }
 
   public static Builder builder() {
     return new Builder();
+  }
+
+  public int getMaxMessageSize() {
+    return maxMessageSize;
   }
 
   public int getMaxGetBlockHeaders() {
@@ -122,6 +128,9 @@ public class EthProtocolConfiguration {
   }
 
   public static class Builder {
+    private PositiveNumber maxMessageSize =
+        PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+
     private PositiveNumber maxGetBlockHeaders =
         PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS);
 
@@ -140,8 +149,18 @@ public class EthProtocolConfiguration {
     private boolean legacyEth64ForkIdEnabled =
         EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
+    public Builder maxMessageSize(final PositiveNumber maxMessageSize) {
+      this.maxMessageSize = maxMessageSize;
+      return this;
+    }
+
     public Builder maxGetBlockHeaders(final PositiveNumber maxGetBlockHeaders) {
       this.maxGetBlockHeaders = maxGetBlockHeaders;
+      return this;
+    }
+
+    public Builder maxGetBlockHeaders(final int maxGetBlockHeaders) {
+      this.maxGetBlockHeaders = PositiveNumber.fromInt(maxGetBlockHeaders);
       return this;
     }
 
@@ -150,8 +169,18 @@ public class EthProtocolConfiguration {
       return this;
     }
 
+    public Builder maxGetBlockBodies(final int maxGetBlockBodies) {
+      this.maxGetBlockBodies = PositiveNumber.fromInt(maxGetBlockBodies);
+      return this;
+    }
+
     public Builder maxGetReceipts(final PositiveNumber maxGetReceipts) {
       this.maxGetReceipts = maxGetReceipts;
+      return this;
+    }
+
+    public Builder maxGetReceipts(final int maxGetReceipts) {
+      this.maxGetReceipts = PositiveNumber.fromInt(maxGetReceipts);
       return this;
     }
 
@@ -160,8 +189,18 @@ public class EthProtocolConfiguration {
       return this;
     }
 
+    public Builder maxGetNodeData(final int maxGetNodeData) {
+      this.maxGetNodeData = PositiveNumber.fromInt(maxGetNodeData);
+      return this;
+    }
+
     public Builder maxGetPooledTransactions(final PositiveNumber maxGetPooledTransactions) {
       this.maxGetPooledTransactions = maxGetPooledTransactions;
+      return this;
+    }
+
+    public Builder maxGetPooledTransactions(final int maxGetPooledTransactions) {
+      this.maxGetPooledTransactions = PositiveNumber.fromInt(maxGetPooledTransactions);
       return this;
     }
 
@@ -172,6 +211,7 @@ public class EthProtocolConfiguration {
 
     public EthProtocolConfiguration build() {
       return new EthProtocolConfiguration(
+          maxMessageSize.getValue(),
           maxGetBlockHeaders.getValue(),
           maxGetBlockBodies.getValue(),
           maxGetReceipts.getValue(),
