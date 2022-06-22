@@ -84,9 +84,7 @@ public class SyncState {
         Optional.of(
             ethPeers.subscribeConnect(
                 newPeer -> {
-                  if (newPeer.readyForRequests()) {
-                    checkInSync();
-                  }
+                  checkInSync();
                 }));
     this.checkpoint = checkpoint;
   }

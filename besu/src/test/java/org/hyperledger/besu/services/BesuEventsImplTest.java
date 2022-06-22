@@ -121,7 +121,7 @@ public class BesuEventsImplTest {
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
+    when(mockEthPeers.streamAllPeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);

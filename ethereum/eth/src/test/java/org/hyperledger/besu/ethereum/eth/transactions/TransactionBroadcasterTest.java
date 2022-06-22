@@ -152,7 +152,7 @@ public class TransactionBroadcasterTest {
   @Test
   public void onTransactionsAddedWithOnlyNonEth66PeersSendFullTransactions() {
     when(ethPeers.peerCount()).thenReturn(2);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeerNoEth66, ethPeerNoEth66_2));
+    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeerNoEth66, ethPeerNoEth66_2));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
@@ -171,8 +171,7 @@ public class TransactionBroadcasterTest {
   @Test
   public void onTransactionsAddedWithOnlyFewEth66PeersSendFullTransactions() {
     when(ethPeers.peerCount()).thenReturn(2);
-    when(ethPeers.streamAvailablePeers())
-        .thenReturn(Stream.of(ethPeerWithEth66, ethPeerWithEth66_2));
+    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeerWithEth66, ethPeerWithEth66_2));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
@@ -190,7 +189,7 @@ public class TransactionBroadcasterTest {
   @Test
   public void onTransactionsAddedWithOnlyEth66PeersSendFullTransactionsAndTransactionHashes() {
     when(ethPeers.peerCount()).thenReturn(3);
-    when(ethPeers.streamAvailablePeers())
+    when(ethPeers.streamAllPeers())
         .thenReturn(Stream.of(ethPeerWithEth66, ethPeerWithEth66_2, ethPeerWithEth66_3));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
@@ -212,7 +211,7 @@ public class TransactionBroadcasterTest {
     List<EthPeer> eth66Peers = List.of(ethPeerWithEth66, ethPeerWithEth66_2);
 
     when(ethPeers.peerCount()).thenReturn(3);
-    when(ethPeers.streamAvailablePeers())
+    when(ethPeers.streamAllPeers())
         .thenReturn(Stream.concat(eth66Peers.stream(), Stream.of(ethPeerNoEth66)));
 
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));

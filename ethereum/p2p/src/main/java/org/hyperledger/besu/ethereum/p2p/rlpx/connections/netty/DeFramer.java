@@ -183,7 +183,7 @@ final class DeFramer extends ByteToMessageDecoder {
             new PeerDisconnectedException(disconnectMessage.getReason()));
       } else {
         // Unexpected message - disconnect
-        LOG.debug(
+        LOG.info(
             "Message received before HELLO's exchanged, disconnecting.  Peer: {}, Code: {}, Data: {}",
             expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
             message.getCode(),
@@ -227,8 +227,9 @@ final class DeFramer extends ByteToMessageDecoder {
     if (cause instanceof FramingException
         || cause instanceof RLPException
         || cause instanceof IllegalArgumentException) {
-      LOG.debug("Invalid incoming message", throwable);
+      LOG.info("Invalid incoming message", throwable);
       if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
+        LOG.info("BREACH HERE");
         connectFuture.get().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
         return;
       }

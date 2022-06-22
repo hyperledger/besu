@@ -170,7 +170,7 @@ public class FastSyncActions {
   private long countPeersThatCanDeterminePivotBlock() {
     return ethContext
         .getEthPeers()
-        .streamAvailablePeers()
+        .streamAllPeers()
         .filter(this::canPeerDeterminePivotBlock)
         .count();
   }

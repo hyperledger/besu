@@ -48,7 +48,7 @@ public class BlockBroadcaster {
     final NewBlockMessage newBlockMessage = NewBlockMessage.create(block, totalDifficulty);
     ethContext
         .getEthPeers()
-        .streamAvailablePeers()
+        .streamAllPeers()
         .filter(ethPeer -> !ethPeer.hasSeenBlock(block.getHash()))
         .forEach(
             ethPeer -> {

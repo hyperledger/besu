@@ -44,7 +44,7 @@ public class Slf4jLambdaHelper {
 
   public static void debugLambda(
       final Logger log, final String message, final Supplier<?>... params) {
-    if (log.isDebugEnabled()) {
+    if (log.isInfoEnabled()) {
       log.debug(message, Arrays.stream(params).map(Supplier::get).toArray());
     }
   }

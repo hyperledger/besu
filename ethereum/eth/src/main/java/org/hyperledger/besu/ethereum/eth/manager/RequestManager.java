@@ -29,7 +29,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RequestManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
+
   private final AtomicLong requestIdCounter = new AtomicLong(0);
   private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
@@ -57,6 +63,13 @@ public class RequestManager {
       throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
     final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
+    LOG.info(
+        "dispatching request protocol name {}, peer {}, connection {}, requestID {}, outstanding requests {}",
+        protocolName,
+        peer.toString(),
+        System.identityHashCode(peer.getConnection()),
+        requestId,
+        outstandingRequests.get());
     final ResponseStream stream = createStream(requestId);
     sender.send(supportsRequestId ? messageData.wrapMessageData(requestId) : messageData);
     return stream;
@@ -69,11 +82,24 @@ public class RequestManager {
       // If there's a requestId, find the specific stream it belongs to
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           ethMessage.getData().unwrapMessageData();
+      LOG.info(
+          "dispatching response protocol name {}, peer {}, connection {}, requestID {}, outstanding requests {}",
+          protocolName,
+          peer.toString(),
+          System.identityHashCode(peer.getConnection()),
+          requestIdAndEthMessage.getKey(),
+          outstandingRequests.get());
       Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
           .ifPresentOrElse(
               responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
               // disconnect on incorrect requestIds
-              () -> peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
+              () -> {
+                LOG.info(
+                    "Disconnecting because of incorrect request IDs, Peer {}, connection {}",
+                    ethMessage.getPeer().getConnection().getPeer().getId(),
+                    System.identityHashCode(ethMessage.getPeer().getConnection()));
+                peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+              });
     } else {
       // otherwise iterate through all of them
       streams.forEach(stream -> stream.processMessage(ethMessage.getData()));

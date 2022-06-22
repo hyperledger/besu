@@ -83,7 +83,7 @@ public class PendingPeerRequest {
     return peer.isPresent()
         ? peer
         : ethPeers
-            .streamAvailablePeers()
+            .streamAllPeers()
             .filter(peer -> peer.chainState().getEstimatedHeight() >= minimumBlockNumber)
             .min(EthPeers.LEAST_TO_MOST_BUSY);
   }

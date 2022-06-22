@@ -148,7 +148,7 @@ public class CheckPointSyncChainDownloaderTest {
     final long pivotBlockNumber = 25;
     ethContext
         .getEthPeers()
-        .streamAvailablePeers()
+        .streamAllPeers()
         .forEach(
             ethPeer -> {
               ethPeer.setCheckpointHeader(
@@ -178,7 +178,7 @@ public class CheckPointSyncChainDownloaderTest {
     final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
     ethContext
         .getEthPeers()
-        .streamAvailablePeers()
+        .streamAllPeers()
         .forEach(
             ethPeer -> {
               ethPeer.setCheckpointHeader(

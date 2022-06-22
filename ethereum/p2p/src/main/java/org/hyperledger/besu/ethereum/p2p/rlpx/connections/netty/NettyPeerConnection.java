@@ -32,8 +32,12 @@ import java.util.concurrent.Callable;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class NettyPeerConnection extends AbstractPeerConnection {
+
+  private static final Logger LOG = LoggerFactory.getLogger(NettyPeerConnection.class);
 
   private final ChannelHandlerContext ctx;
 
@@ -69,11 +73,13 @@ final class NettyPeerConnection extends AbstractPeerConnection {
 
   @Override
   protected void closeConnectionImmediately() {
+    LOG.info("Closing connection immediately {}", System.identityHashCode(this));
     ctx.close();
   }
 
   @Override
   protected void closeConnection() {
+    LOG.info("Closing connection {}", System.identityHashCode(this));
     ctx.channel().eventLoop().schedule((Callable<ChannelFuture>) ctx::close, 2L, SECONDS);
   }
 }

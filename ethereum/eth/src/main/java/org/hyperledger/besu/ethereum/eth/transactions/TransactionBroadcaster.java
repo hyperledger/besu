@@ -81,7 +81,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
 
     ethContext
         .getEthPeers()
-        .streamAvailablePeers()
+        .streamAllPeers()
         .forEach(
             peer -> {
               if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {

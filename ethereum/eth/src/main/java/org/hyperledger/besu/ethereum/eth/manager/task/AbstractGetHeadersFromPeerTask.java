@@ -108,7 +108,7 @@ public abstract class AbstractGetHeadersFromPeerTask
         final BlockHeader parent = reverse ? header : prevBlockHeader;
         final BlockHeader child = reverse ? prevBlockHeader : header;
         if (!parent.getHash().equals(child.getParentHash())) {
-          LOG.debug(
+          LOG.info(
               "Sequential headers must form a chain through hashes, disconnecting peer: {}", peer);
           peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
           return Optional.empty();

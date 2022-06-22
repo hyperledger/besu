@@ -42,7 +42,7 @@ public class BlockBroadcasterTest {
   public void blockPropagationUnitTest() throws PeerConnection.PeerNotConnected {
     final EthPeer ethPeer = mock(EthPeer.class);
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeer));
+    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeer));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
@@ -65,7 +65,7 @@ public class BlockBroadcasterTest {
     final EthPeer ethPeer1 = mock(EthPeer.class);
 
     final EthPeers ethPeers = mock(EthPeers.class);
-    when(ethPeers.streamAvailablePeers()).thenReturn(Stream.of(ethPeer0, ethPeer1));
+    when(ethPeers.streamAllPeers()).thenReturn(Stream.of(ethPeer0, ethPeer1));
 
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);

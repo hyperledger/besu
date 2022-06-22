@@ -118,7 +118,7 @@ public class PipelineChainDownloader implements ChainDownloader {
   private CompletionStage<Void> handleFailedDownload(final Throwable error) {
     pipelineErrorCounter.inc();
     if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
-      LOG.warn(
+      LOG.info(
           "Invalid block detected. Disconnecting from sync target. {}",
           ExceptionUtils.rootCause(error).getMessage());
       syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);

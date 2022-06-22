@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
@@ -53,6 +55,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private PeerConnectionReadyCallback onConnectionReadyCallback;
+  private final AtomicBoolean statusHasBeenSent = new AtomicBoolean(false);
+  private final AtomicBoolean statusHasBeenReceived = new AtomicBoolean(false);
+  private final AtomicReference<Consumer<PeerConnection>> onStatusesExchanged =
+      new AtomicReference<>();
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -141,6 +148,13 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
+    LOG.info(
+        "Terminating connection {} with peer {}, reason {}, peer initiated: {}, connection: {}",
+        System.identityHashCode(this),
+        this.getPeer().getId(),
+        reason,
+        peerInitiated,
+        System.identityHashCode(this));
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
     }
@@ -156,6 +170,11 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
+      LOG.info(
+          "Disconnecting connection {} with peer {}, reason {}",
+          System.identityHashCode(this),
+          this.getPeer().getId(),
+          reason);
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
       closeConnection();
@@ -176,6 +195,66 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public InetSocketAddress getRemoteAddress() {
     return remoteAddress;
   }
+
+  @Override
+  public boolean callOnConnectionReadyCallback() {
+    if (onConnectionReadyCallback != null) {
+      final boolean ret = onConnectionReadyCallback.onPeerConnectionReady();
+      LOG.info(
+          "Calling peer ready callback of connection {}, returning {}",
+          System.identityHashCode(this),
+          ret);
+      return ret;
+    }
+    LOG.info(
+        "No callback set for connection {} (Peer {}), returning {}",
+        System.identityHashCode(this),
+        getPeer().getId(),
+        true);
+    return true;
+  }
+
+  @Override
+  public void setOnConnectionReadyCallback(
+      final PeerConnectionReadyCallback onPeerConnectionReadyCallback) {
+    this.onConnectionReadyCallback = onPeerConnectionReadyCallback;
+  }
+
+  @Override
+  public boolean registerStatusSentAndCheckIfReady() {
+    synchronized (this) {
+      statusHasBeenSent.set(true);
+      if (statusHasBeenReceived.get()) {
+        final Consumer<PeerConnection> callback = onStatusesExchanged.getAndSet(null);
+        if (callback != null) {
+          callback.accept(this);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean registerStatusReceivedAndCheckIfReady() {
+    synchronized (this) {
+      statusHasBeenReceived.set(true);
+      if (statusHasBeenSent.get()) {
+        final Consumer<PeerConnection> callback = onStatusesExchanged.getAndSet(null);
+        if (callback != null) {
+          callback.accept(this);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean statusHasBeenReceived() {
+    return statusHasBeenReceived.get();
+  }
+  ;
 
   @Override
   public boolean equals(final Object o) {
