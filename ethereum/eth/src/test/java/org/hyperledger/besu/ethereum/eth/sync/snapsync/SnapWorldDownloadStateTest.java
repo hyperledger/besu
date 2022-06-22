@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -250,11 +250,15 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
     verify(snapSyncState).setHealStatus(true);
     assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
+    // add useless requests
+    downloadState.pendingTrieNodeRequests.add(
+        BytecodeRequest.createAccountTrieNodeDataRequest(Hash.EMPTY, Bytes.EMPTY, new HashSet<>()));
+    downloadState.pendingCodeRequests.add(
+        BytecodeRequest.createBytecodeRequest(Bytes32.ZERO, Hash.EMPTY, Bytes32.ZERO));
     // reload the heal
     downloadState.reloadHeal();
     verify(snapSyncState).setHealStatus(false);
-    spy(downloadState.pendingTrieNodeRequests).clearInternalQueues();
-    spy(downloadState).checkCompletion(header);
-    assertThat(downloadState.pendingTrieNodeRequests.isEmpty()).isFalse();
+    assertThat(downloadState.pendingTrieNodeRequests.size()).isEqualTo(1);
+    assertThat(downloadState.pendingCodeRequests.isEmpty()).isTrue();
   }
 }

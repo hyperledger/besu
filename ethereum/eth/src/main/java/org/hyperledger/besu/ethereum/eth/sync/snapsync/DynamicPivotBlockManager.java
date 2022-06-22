@@ -93,9 +93,9 @@ public class DynamicPivotBlockManager {
           LOG.info(
               "Select new pivot block {} {}", blockHeader.getNumber(), blockHeader.getStateRoot());
           syncState.setCurrentHeader(blockHeader);
+          lastPivotBlockFound = Optional.empty();
           onSwitchDone.accept(blockHeader, true);
         },
         () -> onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false));
-    lastPivotBlockFound = Optional.empty();
   }
 }
