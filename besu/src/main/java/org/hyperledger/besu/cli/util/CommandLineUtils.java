@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
@@ -100,18 +101,20 @@ public class CommandLineUtils {
       final CommandLine commandLine, final List<String> dependentOptionsNames) {
     return commandLine.getCommandSpec().options().stream()
         .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains))
-        .filter(
-            option -> {
-              try {
-                return !option.stringValues().isEmpty()
-                    || commandLine.getDefaultValueProvider().defaultValue(option) != null;
-              } catch (Exception e) {
-                return false;
-              }
-            })
+        .filter(CommandLineUtils::isOptionSet)
         .map(option -> option.names()[0])
         .collect(
             Collectors.collectingAndThen(
                 Collectors.toList(), StringUtils.joiningWithLastDelimiter(", ", " and ")));
+  }
+
+  private static boolean isOptionSet(final CommandLine.Model.OptionSpec option) {
+    final CommandLine commandLine = option.command().commandLine();
+    try {
+      return !option.stringValues().isEmpty()
+          || !Strings.isNullOrEmpty(commandLine.getDefaultValueProvider().defaultValue(option));
+    } catch (final Exception e) {
+      return false;
+    }
   }
 }

@@ -134,23 +134,22 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash()));
       return respondWith(reqId, null, INVALID_BLOCK_HASH);
-    } else {
-      // do we already have this payload
-      if (protocolContext
-          .getBlockchain()
-          .getBlockByHash(newBlockHeader.getBlockHash())
-          .isPresent()) {
-        LOG.debug("block already present");
-        return respondWith(reqId, blockParam.getBlockHash(), VALID);
-      }
+    }
+    // do we already have this payload
+    if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
+      LOG.debug("block already present");
+      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+    }
+    if (mergeCoordinator.isBadBlock(blockParam.getParentHash())) {
+      return respondWith(reqId, Hash.ZERO, INVALID);
+    }
 
-      Optional<BlockHeader> parentHeader =
-          protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-      if (parentHeader.isPresent()
-          && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
-        LOG.info("method parameter timestamp not greater than parent");
-        return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);
-      }
+    Optional<BlockHeader> parentHeader =
+        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+    if (parentHeader.isPresent()
+        && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
+      LOG.info("method parameter timestamp not greater than parent");
+      return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);
     }
 
     final var block =
