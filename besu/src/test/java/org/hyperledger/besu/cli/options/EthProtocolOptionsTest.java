@@ -32,7 +32,7 @@ public class EthProtocolOptionsTest
   @Test
   public void parsesValidMaxMessageSizeOptions() {
 
-    final TestBesuCommand cmd = parseCommand("--eth-max-message-size", "4");
+    final TestBesuCommand cmd = parseCommand("--Xeth-max-message-size", "4");
 
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
@@ -43,12 +43,12 @@ public class EthProtocolOptionsTest
 
   @Test
   public void parsesInvalidMaxMessageSizeOptionsShouldFail() {
-    parseCommand("--eth-max-message-size", "-4");
+    parseCommand("--Xeth-max-message-size", "-4");
     verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--eth-max-message-size': cannot convert '-4' to PositiveNumber");
+            "Invalid value for option '--Xeth-max-message-size': cannot convert '-4' to PositiveNumber");
   }
 
   @Test
