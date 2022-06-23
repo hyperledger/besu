@@ -8,7 +8,7 @@
     "constantinopleBlock": 6,
     "petersburgBlock": 7,
     "clique": {
-      "blockperiodseconds": 10,
+      "blockperiodseconds": 5,
       "epochlength": 30000
     }
   },
