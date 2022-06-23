@@ -15,24 +15,28 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
-    dependency 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.2'
 
-    dependency 'com.github.ben-manes.caffeine:caffeine:3.0.5'
+    dependencySet(group:'com.fasterxml.jackson.core', version:'2.13.3') {
+      entry 'jackson-databind'
+      entry 'jackson-datatype'
+      entry 'jackson-datatype-jdk8'
+    }
 
-    dependencySet(group: 'com.github.tomakehurst', version: '2.32.0') {
+    dependency 'com.github.ben-manes.caffeine:caffeine:3.1.1'
+
+    dependencySet(group: 'com.github.tomakehurst', version: '2.33.2') {
       entry'wiremock-jre8-standalone'
       entry'wiremock-jre8'
     }
 
     dependency 'com.google.auto.service:auto-service:1.0.1'
 
-    dependencySet(group: 'com.google.dagger', version: '2.41') {
+    dependencySet(group: 'com.google.dagger', version: '2.42') {
       entry'dagger-compiler'
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.13.1') {
+    dependencySet(group: 'com.google.errorprone', version: '2.14.0') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
@@ -41,21 +45,21 @@ dependencyManagement {
 
     dependency 'com.google.guava:guava:31.1-jre'
 
-    dependency 'com.graphql-java:graphql-java:17.3'
+    dependency 'com.graphql-java:graphql-java:18.1'
 
-    dependency 'com.splunk.logging:splunk-library-javalogging:1.11.4'
+    dependency 'com.splunk.logging:splunk-library-javalogging:1.11.5'
 
-    dependency 'com.squareup.okhttp3:okhttp:4.9.3'
+    dependency 'com.squareup.okhttp3:okhttp:4.10.0'
 
     dependency 'commons-codec:commons-codec:1.15'
 
     dependency 'commons-io:commons-io:2.11.0'
 
-    dependency 'dnsjava:dnsjava:3.5.0'
+    dependency 'dnsjava:dnsjava:3.5.1'
 
     dependency 'info.picocli:picocli:4.6.3'
 
-    dependencySet(group: 'io.grpc', version: '1.45.0') {
+    dependencySet(group: 'io.grpc', version: '1.47.0') {
       entry'grpc-core'
       entry'grpc-netty'
       entry'grpc-stub'
@@ -64,13 +68,13 @@ dependencyManagement {
     dependency 'io.jaegertracing:jaeger-client:1.8.0'
     dependency 'io.jaegertracing:jaeger-proto:0.7.0'
 
-    dependency 'io.kubernetes:client-java:14.0.1'
+    dependency 'io.kubernetes:client-java:15.0.1'
 
-    dependency 'io.netty:netty-all:4.1.74.Final'
+    dependency 'io.netty:netty-all:4.1.78.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.50.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.74.Final', classifier: 'linux-x86_64'
-    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.74.Final', classifier: 'osx-x86_64'
-    dependency 'io.netty:netty-transport-native-unix-common:4.1.74.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.78.Final', classifier: 'linux-x86_64'
+    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.78.Final', classifier: 'osx-x86_64'
+    dependency 'io.netty:netty-transport-native-unix-common:4.1.78.Final'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.6.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp-metrics:1.6.0-alpha'
@@ -87,15 +91,16 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.10'
 
-    dependency 'io.prometheus:simpleclient:0.9.0'
-    dependency 'io.prometheus:simpleclient_common:0.9.0'
-    dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
-    dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
+    dependencySet(group:'io.prometheus', version:'0.16.0') {
+      entry 'simpleclient'
+      entry 'simpleclient_common'
+      entry 'simpleclient_hotspot'
+      entry 'simpleclient_pushgateway'
+    }
 
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-
-    dependencySet(group: 'io.vertx', version: '4.2.7') {
+    dependencySet(group: 'io.vertx', version: '4.3.1') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
@@ -110,7 +115,7 @@ dependencyManagement {
 
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 
-    dependency 'net.java.dev.jna:jna:5.10.0'
+    dependency 'net.java.dev.jna:jna:5.11.0'
 
     dependency 'org.apache.commons:commons-compress:1.21'
     dependency 'org.apache.commons:commons-text:1.9'
@@ -132,7 +137,7 @@ dependencyManagement {
     dependency 'org.apache.tuweni:tuweni-toml:2.2.0'
     dependency 'org.apache.tuweni:tuweni-units:2.2.0'
 
-    dependency 'org.assertj:assertj-core:3.22.0'
+    dependency 'org.assertj:assertj-core:3.23.1'
 
     dependency 'org.awaitility:awaitility:4.2.0'
 
@@ -150,12 +155,9 @@ dependencyManagement {
     dependency 'org.immutables:value-annotations:2.9.0'
     dependency 'org.immutables:value:2.9.0'
 
-    dependency 'org.java-websocket:Java-WebSocket:1.5.2'
+    dependency 'org.java-websocket:Java-WebSocket:1.5.3'
 
-    dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.6.10'
-
-    dependency 'org.jupnp:org.jupnp.support:2.6.0'
-    dependency 'org.jupnp:org.jupnp:2.6.0'
+    dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.7.0'
 
     dependency 'org.junit.jupiter:junit-jupiter:5.8.2'
     dependency 'org.junit.jupiter:junit-jupiter-api:5.8.2'
@@ -165,19 +167,28 @@ dependencyManagement {
 
     dependency 'org.junit.vintage:junit-vintage-engine:5.8.2'
 
-    dependency 'org.mockito:mockito-core:4.4.0'
-    dependency 'org.mockito:mockito-junit-jupiter:4.4.0'
+    dependencySet(group: 'org.jupnp', version:'2.6.1') {
+      entry 'org.jupnp.support'
+      entry 'org.jupnp'
+    }
 
-    dependency 'org.openjdk.jmh:jmh-core:1.34'
-    dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
+    dependencySet(group: 'org.mockito', version:'4.6.1') {
+      entry 'mockito-core'
+      entry 'mockito-junit-jupiter'
+    }
+
+    dependencySet(group:'org.openjdk.jmh', version:'1.35') {
+      entry 'jmh-core'
+      entry 'jmh-generator-annprocess'
+    }
 
     dependency 'org.rocksdb:rocksdbjni:6.29.5'
 
-    dependency 'org.slf4j:slf4j-api:1.7.25'
+    dependency 'org.slf4j:slf4j-api:1.7.36'
 
-    dependency 'org.springframework.security:spring-security-crypto:5.6.2'
+    dependency 'org.springframework.security:spring-security-crypto:5.7.2'
 
-    dependency 'org.testcontainers:testcontainers:1.16.3'
+    dependency 'org.testcontainers:testcontainers:1.17.2'
 
     dependency 'org.web3j:abi:4.8.9'
     dependency 'org.web3j:besu:4.8.9'
