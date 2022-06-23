@@ -55,7 +55,8 @@ public class PrivGetPrivateTransactionTest {
 
   private final User user =
       new UserImpl(
-          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()));
+          new JsonObject().put("privacyPublicKey", VALID_BASE64_ENCLAVE_KEY.toBase64String()),
+          new JsonObject());
   private final PrivacyIdProvider privacyIdProvider =
       (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
