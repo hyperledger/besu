@@ -71,6 +71,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final Blockchain blockchain;
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
+  // The max size of messages (in bytes)
+  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -89,6 +91,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.peerValidators = peerValidators;
     this.scheduler = scheduler;
     this.blockchain = blockchain;
+    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     this.shutdown = new CountDownLatch(1);
     genesisHash = blockchain.getBlockHashByNumber(0L).get();
@@ -241,9 +244,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
-    if (messageData.getSize() > 10 * 1_000_000 /*10MB*/) {
-      LOG.debug("Received message over 10MB. Disconnecting from {}", ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    if (messageData.getSize() > maxMessageSize) {
+      LOG.warn(
+          "Received message exceeding size limit of {} bytes: {} bytes. Disconnecting from {}",
+          maxMessageSize,
+          messageData.getSize(),
+          ethPeer);
+      ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       return;
     }
 

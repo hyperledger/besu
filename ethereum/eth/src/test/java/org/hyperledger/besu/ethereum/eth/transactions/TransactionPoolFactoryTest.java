@@ -106,7 +106,7 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, false),
+            EthProtocolConfiguration.defaultConfig(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,

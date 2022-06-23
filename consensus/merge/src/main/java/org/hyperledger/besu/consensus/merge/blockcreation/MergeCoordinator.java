@@ -551,4 +551,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
+
+  @Override
+  public boolean isBadBlock(final Hash blockHash) {
+    final BadBlockManager badBlocksManager =
+        protocolSchedule
+            .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+            .getBadBlocksManager();
+    return badBlocksManager.getBadBlock(blockHash).isPresent()
+        || badBlocksManager.getBadHash(blockHash).isPresent();
+  }
 }

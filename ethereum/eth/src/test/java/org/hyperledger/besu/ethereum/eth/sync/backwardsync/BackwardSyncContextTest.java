@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -59,6 +61,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -323,5 +326,23 @@ public class BackwardSyncContextTest {
     context.processException(
         new RuntimeException(new BackwardSyncException("shouldNotThrow", true)));
     context.processException(new RuntimeException(new RuntimeException("shouldNotThrow")));
+  }
+
+  @Test
+  public void makeSureWeRememberBadBlocks() {
+    Block block = Mockito.mock(Block.class);
+    when(block.getHash()).thenReturn(Hash.ZERO);
+    doReturn(blockValidator).when(context).getBlockValidatorForBlock(any());
+    Result result = new Result("custom error");
+    doReturn(result).when(blockValidator).validateAndProcessBlock(any(), any(), any(), any());
+
+    final BadBlockManager manager = mock(BadBlockManager.class);
+    doReturn(manager).when(mockProtocolSpec).getBadBlocksManager();
+
+    assertThatThrownBy(() -> context.saveBlock(block))
+        .isInstanceOf(BackwardSyncException.class)
+        .hasMessageContaining("custom error");
+
+    Mockito.verify(manager).addBadBlock(block);
   }
 }

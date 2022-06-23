@@ -198,4 +198,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
     return mergeCoordinator.isDescendantOf(ancestorBlock, newBlock);
   }
+
+  @Override
+  public boolean isBadBlock(final Hash blockHash) {
+    return mergeCoordinator.isBadBlock(blockHash);
+  }
 }

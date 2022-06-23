@@ -63,32 +63,33 @@ public class BackwardsSyncAlgorithm {
     }
     runFinalizedSuccessionRule(
         context.getProtocolContext().getBlockchain(), context.findMaybeFinalized());
-    final Optional<BlockHeader> firstAncestorHeader =
+    final Optional<BlockHeader> possibleFirstAncestorHeader =
         context.getBackwardChain().getFirstAncestorHeader();
-    if (firstAncestorHeader.isEmpty()) {
+    if (possibleFirstAncestorHeader.isEmpty()) {
       this.finished = true;
       LOG.info("The Backward sync is done...");
       context.getBackwardChain().clear();
       return CompletableFuture.completedFuture(null);
     }
     final MutableBlockchain blockchain = context.getProtocolContext().getBlockchain();
-    if (blockchain.contains(firstAncestorHeader.get().getHash())) {
+    final BlockHeader firstAncestorHeader = possibleFirstAncestorHeader.get();
+    if (blockchain.contains(firstAncestorHeader.getHash())) {
       return executeProcessKnownAncestors();
     }
-    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.get().getNumber()) {
+    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.getNumber()) {
       debugLambda(
           LOG,
           "Backward reached below previous head {} : {}",
           () -> blockchain.getChainHead().toLogString(),
-          () -> firstAncestorHeader.get().toLogString());
+          firstAncestorHeader::toLogString);
     }
 
-    if (finalBlockConfirmation.finalHeaderReached(firstAncestorHeader.get())) {
+    if (finalBlockConfirmation.finalHeaderReached(firstAncestorHeader)) {
       LOG.info("Backward sync reached final header, starting Forward sync");
       return executeForwardAsync();
     }
 
-    return executeBackwardAsync(firstAncestorHeader.get());
+    return executeBackwardAsync(firstAncestorHeader);
   }
 
   @VisibleForTesting
