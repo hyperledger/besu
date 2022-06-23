@@ -25,7 +25,7 @@ import java.util.List;
 import picocli.CommandLine;
 
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
-  private static final String MAX_MESSAGE_SIZE_FLAG = "--eth-max-message-size";
+  private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
   private static final String MAX_GET_BODIES_FLAG = "--Xewp-max-get-bodies";
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
@@ -35,6 +35,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       "--compatibility-eth64-forkid-enabled";
 
   @CommandLine.Option(
+      hidden = true,
       names = {MAX_MESSAGE_SIZE_FLAG},
       paramLabel = "<INTEGER>",
       description =
