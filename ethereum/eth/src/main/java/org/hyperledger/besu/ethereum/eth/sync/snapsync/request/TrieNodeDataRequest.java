@@ -40,7 +40,6 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   private final Bytes location;
   protected Bytes data;
 
-  protected boolean isInCache = false;
   protected boolean requiresPersisting = true;
 
   protected TrieNodeDataRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
@@ -121,16 +120,8 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
     return snapSyncState.isExpired(this);
   }
 
-  public boolean isInCache() {
-    return isInCache;
-  }
-
   public boolean isRequiresPersisting() {
     return requiresPersisting;
-  }
-
-  public void setInCache(final boolean inCache) {
-    isInCache = inCache;
   }
 
   public Bytes32 getNodeHash() {
