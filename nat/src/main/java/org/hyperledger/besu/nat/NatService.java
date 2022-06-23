@@ -95,10 +95,12 @@ public class NatService {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.debug(
+        LOG.warn(
             "Nat manager failed to configure itself automatically due to the following reason : {}. {}",
             e.getMessage(),
-            (fallbackEnabled) ? "NONE mode will be used" : "");
+            (fallbackEnabled)
+                ? "NONE mode will be used as a fallback (set --Xnat-method-fallback-enabled=false to disable)"
+                : "");
         if (fallbackEnabled) {
           disableNatManager();
         } else {
