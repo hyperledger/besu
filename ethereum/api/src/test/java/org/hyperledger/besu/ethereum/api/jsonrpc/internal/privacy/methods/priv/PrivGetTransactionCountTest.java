@@ -55,7 +55,8 @@ class PrivGetTransactionCountTest {
   private final Address senderAddress =
       Address.fromHexString("0x627306090abab3a6e1400e9345bc60c78a8bef57");
   private final User user =
-      new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY)) {};
+      new UserImpl(
+          new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), new JsonObject()) {};
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   @BeforeEach
