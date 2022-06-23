@@ -348,9 +348,9 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public boolean validateReceivedMessage(final EthMessage message, final String protocolName) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
-        return getRequestManager(protocolName, message.getData().getCode())
-            .map(requestManager -> requestManager.outstandingRequests() != 0)
-            .orElse(true);
+    return getRequestManager(protocolName, message.getData().getCode())
+        .map(requestManager -> requestManager.outstandingRequests() != 0)
+        .orElse(true);
   }
 
   /**
