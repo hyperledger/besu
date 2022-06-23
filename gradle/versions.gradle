@@ -95,6 +95,7 @@ dependencyManagement {
     dependency 'io.prometheus:simpleclient_common:0.9.0'
     dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
     dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
+
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
     dependencySet(group: 'io.vertx', version: '4.2.7') {
