@@ -91,16 +91,13 @@ dependencyManagement {
 
     dependency 'io.pkts:pkts-core:3.0.10'
 
-    dependencySet(group:'io.prometheus', version:'0.16.0') {
-      entry 'simpleclient'
-      entry 'simpleclient_common'
-      entry 'simpleclient_hotspot'
-      entry 'simpleclient_pushgateway'
-    }
-
+    dependency 'io.prometheus:simpleclient:0.9.0'
+    dependency 'io.prometheus:simpleclient_common:0.9.0'
+    dependency 'io.prometheus:simpleclient_hotspot:0.9.0'
+    dependency 'io.prometheus:simpleclient_pushgateway:0.9.0'
     dependency 'io.reactivex.rxjava2:rxjava:2.2.21'
 
-    dependencySet(group: 'io.vertx', version: '4.3.1') {
+    dependencySet(group: 'io.vertx', version: '4.2.7') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
