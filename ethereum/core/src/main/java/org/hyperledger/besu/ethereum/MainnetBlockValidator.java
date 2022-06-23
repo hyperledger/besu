@@ -151,7 +151,10 @@ public class MainnetBlockValidator implements BlockValidator {
    * @return the result of processing the block
    */
   protected BlockProcessor.Result processBlock(
-      final ProtocolContext context, final MutableWorldState worldState, final Block block, final boolean shouldPersist) {
+      final ProtocolContext context,
+      final MutableWorldState worldState,
+      final Block block,
+      final boolean shouldPersist) {
 
     return blockProcessor.processBlock(context.getBlockchain(), worldState, block, shouldPersist);
   }
@@ -166,7 +169,7 @@ public class MainnetBlockValidator implements BlockValidator {
    */
   protected BlockProcessor.Result processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-    return processBlock(context,worldState,block,true);
+    return processBlock(context, worldState, block, true);
   }
 
   @Override

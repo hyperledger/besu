@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -88,35 +88,22 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             layeredWorldStatesByHash.computeIfPresent(
                 eventBlockHeader.getBlockHash(),
                 (hash, bonsaiLayeredWorldState) -> {
-                  LOG.error(
-                      "worldStateStorage root hash {}, block hash {}, trieLog is present? {}, isWorldStateAvailable? {}",
-                      bonsaiLayeredWorldState.rootHash(),
-                      eventBlockHeader.getBlockHash(),
-                      worldStateStorage.getTrieLog(eventBlockHeader.getBlockHash()),
-                      worldStateStorage.isWorldStateAvailable(
-                          bonsaiLayeredWorldState.rootHash(), eventBlockHeader.getBlockHash()));
-
                   if (worldStateStorage.getTrieLog(eventBlockHeader.getBlockHash()).isEmpty()) {
-                    LOG.error(
-                        "saving trieLog now for root hash {}, block hash {}",
-                        bonsaiLayeredWorldState.rootHash(),
-                        eventBlockHeader.getBlockHash());
+                    debugLambda(
+                        LOG,
+                        "Trie log not yet stored, doing it now for root hash {}, block hash {}",
+                        () -> bonsaiLayeredWorldState.rootHash(),
+                        () -> eventBlockHeader.getBlockHash());
                     persistedState.persistTrieLog(
                         eventBlockHeader,
                         bonsaiLayeredWorldState.rootHash(),
                         bonsaiLayeredWorldState.getTrieLog());
-                    LOG.error(
-                        "worldStateStorage root hash {}, block hash {}, trieLog is present? {}, isWorldStateAvailable? {}",
-                        bonsaiLayeredWorldState.rootHash(),
-                        eventBlockHeader.getBlockHash(),
-                        worldStateStorage.getTrieLog(eventBlockHeader.getBlockHash()),
-                        worldStateStorage.isWorldStateAvailable(
-                            bonsaiLayeredWorldState.rootHash(), eventBlockHeader.getBlockHash()));
                   }
+                  parentBonsaiLayeredWorldState.setNextWorldView(
+                      Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getBlockHash())));
                   return bonsaiLayeredWorldState;
                 });
-            return layeredWorldStatesByHash.getOrDefault(
-                eventBlockHeader.getBlockHash(), parentBonsaiLayeredWorldState);
+            return parentBonsaiLayeredWorldState;
           });
     }
   }
@@ -150,9 +137,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   public void addLayeredWorldState(
       final BlockHeader blockHeader, final BonsaiLayeredWorldState bonsaiLayeredWorldState) {
-    LOG.error("adding {}, block {}", bonsaiLayeredWorldState, blockHeader.toLogString());
     layeredWorldStatesByHash.put(blockHeader.getHash(), bonsaiLayeredWorldState);
-    LOG.error("layeredWorldStatesByHash {}", layeredWorldStatesByHash);
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {

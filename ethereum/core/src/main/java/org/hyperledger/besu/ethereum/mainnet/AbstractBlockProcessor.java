@@ -205,9 +205,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed persisting block", e);
         return AbstractBlockProcessor.Result.failed();
       }
-    } else {
-      worldState.remember(blockHeader);
     }
+
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 

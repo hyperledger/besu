@@ -272,16 +272,11 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public Result rememberBlock(final Block block) {
+    debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
-    LOG.error("rememberBlock {}", block.toLogString());
     final var validationResult = validateBlock(block);
-    LOG.error(
-        "validationResult.blockProcessingOutputs present? {}",
-        validationResult.blockProcessingOutputs.isPresent());
     validationResult.blockProcessingOutputs.ifPresent(
         result -> {
-          LOG.error("result.worldState {}", result.worldState.getClass());
-
           result.worldState.remember(block.getHeader());
           chain.storeBlock(block, result.receipts);
         });
