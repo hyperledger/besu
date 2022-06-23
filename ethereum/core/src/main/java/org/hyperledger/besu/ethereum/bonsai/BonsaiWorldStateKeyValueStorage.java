@@ -33,9 +33,11 @@ import java.util.function.Predicate;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
-
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
@@ -171,6 +173,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
+    LOG.error(
+        "trieBranchStorage {}, trieLogStorage {}",
+        trieBranchStorage
+            .get(WORLD_ROOT_HASH_KEY)
+            .map(Bytes32::wrap)
+            .filter(hash -> hash.equals(rootHash))
+            .isPresent(),
+        trieLogStorage.containsKey(blockHash.toArrayUnsafe()));
     return trieBranchStorage
             .get(WORLD_ROOT_HASH_KEY)
             .map(Bytes32::wrap)

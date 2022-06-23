@@ -107,7 +107,6 @@ public class MainnetBlockValidator implements BlockValidator {
               + " is not available");
     }
     final MutableWorldState worldState = maybeWorldState.get();
-    LOG.error("world state {}", worldState.rootHash());
     final BlockProcessor.Result result = processBlock(context, worldState, block, shouldPersist);
     if (result.isFailed()) {
       return handleAndReportFailure(block, "Error processing block");
