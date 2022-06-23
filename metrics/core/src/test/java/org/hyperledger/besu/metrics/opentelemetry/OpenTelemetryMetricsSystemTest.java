@@ -38,6 +38,8 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
@@ -52,6 +54,19 @@ public class OpenTelemetryMetricsSystemTest {
   private final ObservableMetricsSystem metricsSystem =
       new OpenTelemetrySystem(DEFAULT_METRIC_CATEGORIES, true, "job", false);
 
+  private List<Observation> getObservation(final ObservableMetricsSystem metricsSystem)
+      throws InterruptedException {
+    for (int i = 0; i < 20; i++) {
+      Stream<Observation> observations = metricsSystem.streamObservations();
+      List<Observation> result = observations.collect(Collectors.toList());
+      if (!result.isEmpty()) {
+        return result;
+      }
+      Thread.sleep(100);
+    }
+    return null;
+  }
+
   @Test
   public void shouldCreateObservationFromCounter() throws InterruptedException {
     final Counter counter = metricsSystem.createCounter(PEERS, "connected", "Some help string");
@@ -61,8 +76,7 @@ public class OpenTelemetryMetricsSystemTest {
         .containsExactly(new Observation(PEERS, "connected", 1L, emptyList()));
 
     counter.inc();
-    Thread.sleep(1000);
-    assertThat(metricsSystem.streamObservations())
+    assertThat(getObservation(metricsSystem))
         .containsExactly(new Observation(PEERS, "connected", 2L, emptyList()));
   }
 
@@ -79,8 +93,7 @@ public class OpenTelemetryMetricsSystemTest {
         .containsExactly(new Observation(PEERS, "connected", 1L, emptyList()));
 
     counter2.labels().inc();
-    Thread.sleep(1000);
-    assertThat(metricsSystem.streamObservations())
+    assertThat(getObservation(metricsSystem))
         .containsExactly(new Observation(PEERS, "connected", 2L, emptyList()));
   }
 
@@ -108,8 +121,7 @@ public class OpenTelemetryMetricsSystemTest {
         .containsExactly(new Observation(PEERS, "connected", 5L, emptyList()));
 
     counter.inc(6);
-    Thread.sleep(1000);
-    assertThat(metricsSystem.streamObservations())
+    assertThat(getObservation(metricsSystem))
         .containsExactly(new Observation(PEERS, "connected", 11L, emptyList()));
   }
 
@@ -232,8 +244,7 @@ public class OpenTelemetryMetricsSystemTest {
     assertThat(counterR).isNotSameAs(NoOpMetricsSystem.NO_OP_LABELLED_1_COUNTER);
 
     counterR.labels("op").inc();
-    Thread.sleep(1000);
-    assertThat(localMetricSystem.streamObservations())
+    assertThat(getObservation(localMetricSystem))
         .containsExactly(new Observation(RPC, "name", (long) 1, singletonList("op")));
   }
 

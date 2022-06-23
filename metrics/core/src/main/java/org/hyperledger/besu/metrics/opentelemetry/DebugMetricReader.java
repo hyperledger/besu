@@ -41,7 +41,7 @@ class DebugMetricReader implements MetricReader {
 
   @Override
   public CompletableResultCode forceFlush() {
-    return null;
+    return CompletableResultCode.ofSuccess();
   }
 
   @Override
@@ -52,6 +52,6 @@ class DebugMetricReader implements MetricReader {
   @Override
   public AggregationTemporality getAggregationTemporality(
       final @NotNull InstrumentType instrumentType) {
-    return null;
+    return AggregationTemporality.CUMULATIVE;
   }
 }
