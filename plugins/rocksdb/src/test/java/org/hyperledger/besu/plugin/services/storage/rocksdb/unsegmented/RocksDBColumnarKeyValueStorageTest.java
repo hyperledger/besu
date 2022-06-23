@@ -21,7 +21,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;

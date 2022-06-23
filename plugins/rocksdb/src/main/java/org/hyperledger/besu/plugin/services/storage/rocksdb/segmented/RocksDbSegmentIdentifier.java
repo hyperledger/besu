@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.storage.rocksdb;
+package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -33,6 +33,19 @@ public class RocksDbSegmentIdentifier {
       final TransactionDB db, final ColumnFamilyHandle columnFamilyHandle) {
     this.db = db;
     this.reference = new AtomicReference<>(columnFamilyHandle);
+  }
+
+  void drop() {
+    reference.getAndUpdate(
+        oldHandle -> {
+          try {
+            db.dropColumnFamily(oldHandle);
+            oldHandle.close();
+            return null;
+          } catch (final RocksDBException e) {
+            throw new StorageException(e);
+          }
+        });
   }
 
   public void reset() {

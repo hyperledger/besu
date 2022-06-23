@@ -24,7 +24,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
@@ -208,6 +207,13 @@ public class RocksDBColumnarKeyValueStorage
   public Set<byte[]> getAllKeysThat(
       final RocksDbSegmentIdentifier segmentHandle, final Predicate<byte[]> returnCondition) {
     return streamKeys(segmentHandle).filter(returnCondition).collect(toUnmodifiableSet());
+  }
+
+  public void drop(final RocksDbSegmentIdentifier segmentHandle) {
+    columnHandlesByName.values().stream()
+        .filter(e -> e.equals(segmentHandle))
+        .findAny()
+        .ifPresent(segmentIdentifier -> segmentIdentifier.drop());
   }
 
   @Override
