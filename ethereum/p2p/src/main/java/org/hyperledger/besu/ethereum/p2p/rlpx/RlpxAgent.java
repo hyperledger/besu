@@ -214,6 +214,7 @@ public class RlpxAgent {
    */
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
     if (checkAlreadyTrying(peer)) {
+      LOG.info("ALREADY trying to establish connection with peer {}", peer.getId());
       return CompletableFuture.failedFuture((new RuntimeException("Already trying to connect")));
     }
     LOG.info("Trying to establish connection with peer {}", peer.getId());

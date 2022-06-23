@@ -51,8 +51,8 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
-    KeyPair minerNodeKeyPair = createKeyPair(MINER_NODE_PRIVATE_KEY);
-    KeyPair otherNodeKeyPair = createKeyPair(OTHER_NODE_PRIVATE_KEY);
+    final KeyPair minerNodeKeyPair = createKeyPair(MINER_NODE_PRIVATE_KEY);
+    final KeyPair otherNodeKeyPair = createKeyPair(OTHER_NODE_PRIVATE_KEY);
 
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();

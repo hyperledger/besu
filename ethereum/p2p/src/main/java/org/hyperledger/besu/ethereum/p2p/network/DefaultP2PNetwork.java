@@ -258,7 +258,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     // Periodically check maintained connections
     final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
     peerConnectionScheduler.scheduleWithFixedDelay(
-        this::checkMaintainedConnectionPeers, 2, checkMaintainedConnectionsSec, TimeUnit.SECONDS);
+        this::checkMaintainedConnectionPeers, 10, checkMaintainedConnectionsSec, TimeUnit.SECONDS);
     // Periodically initiate outgoing connections to discovered peers
     final int checkConnectionsSec = config.getInitiateConnectionsFrequencySec();
     peerConnectionScheduler.scheduleWithFixedDelay(
