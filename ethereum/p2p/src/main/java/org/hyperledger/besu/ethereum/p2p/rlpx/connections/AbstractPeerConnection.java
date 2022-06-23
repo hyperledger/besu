@@ -60,6 +60,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean statusHasBeenReceived = new AtomicBoolean(false);
   private final AtomicReference<Consumer<PeerConnection>> onStatusesExchanged =
       new AtomicReference<>();
+  private final AtomicBoolean statusSentAndReceived = new AtomicBoolean(false);
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -224,7 +225,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public boolean registerStatusSentAndCheckIfReady() {
     synchronized (this) {
       statusHasBeenSent.set(true);
-      if (statusHasBeenReceived.get()) {
+      if (statusHasBeenReceived.get() && statusSentAndReceived.compareAndSet(false, true)) {
         final Consumer<PeerConnection> callback = onStatusesExchanged.getAndSet(null);
         if (callback != null) {
           callback.accept(this);
@@ -239,7 +240,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public boolean registerStatusReceivedAndCheckIfReady() {
     synchronized (this) {
       statusHasBeenReceived.set(true);
-      if (statusHasBeenSent.get()) {
+      if (statusHasBeenSent.get() && statusSentAndReceived.compareAndSet(false, true)) {
         final Consumer<PeerConnection> callback = onStatusesExchanged.getAndSet(null);
         if (callback != null) {
           callback.accept(this);

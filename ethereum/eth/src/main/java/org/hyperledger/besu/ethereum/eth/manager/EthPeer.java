@@ -398,7 +398,7 @@ public class EthPeer implements Comparable<EthPeer> {
         return Optional.of(managers.get(requestCode));
       }
     }
-    LOG.info("EthPeer {}Returning Optional empty", this);
+    LOG.info("EthPeer {} Returning Optional empty", this);
     return Optional.empty();
   }
 

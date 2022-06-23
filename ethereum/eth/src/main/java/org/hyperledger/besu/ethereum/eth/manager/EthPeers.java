@@ -204,7 +204,8 @@ public class EthPeers {
 
   public EthPeer peer(final PeerConnection peerConnection) {
     // potentially has to use the "new" connection
-    return nonReadyConnections.getOrDefault(peerConnection, connections.get(peerConnection));
+    return nonReadyConnections.getOrDefault(
+        peerConnection, connections.get(peerConnection.getPeer().getId()));
   }
 
   public PendingPeerRequest executePeerRequest(
