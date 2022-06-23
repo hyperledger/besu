@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
@@ -61,6 +62,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -997,6 +999,80 @@ public class TransactionPoolTest {
         transactionPool.addLocalTransaction(transaction);
 
     assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMinGasPriceIsZero() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void
+      shouldAcceptZeroGasPriceFrontierTransactionsWhenMinGasPriceIsZeroAndLondonFeeMarket() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
+    whenBlockBaseFeeIsZero();
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  private void whenBlockBaseFeeIsZero() {
+    final BlockHeader header =
+        BlockHeaderBuilder.fromHeader(blockchain.getChainHeadHeader())
+            .baseFee(Wei.ZERO)
+            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .parentHash(blockchain.getChainHeadHash())
+            .buildBlockHeader();
+    blockchain.appendBlock(new Block(header, BlockBody.empty()), emptyList());
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPrice1559TransactionsWhenMinGasPriceIsZeroAndLondonFeeMarket() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
+    whenBlockBaseFeeIsZero();
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
+            .gasPrice(null)
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .gasLimit(0L)
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
   }
 
   private void assertTransactionPending(final Transaction t) {

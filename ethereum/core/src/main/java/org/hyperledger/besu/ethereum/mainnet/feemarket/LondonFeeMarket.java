@@ -83,11 +83,12 @@ public class LondonFeeMarket implements BaseFeeMarket {
   public boolean satisfiesFloorTxCost(final Transaction txn) {
     // London fee market arithmetic never allows for a base fee below 7 wei
     // ensure effective baseFee is at least 7 wei
-    return txn.getGasPrice()
-        .map(Optional::of)
-        .orElse(txn.getMaxFeePerGas())
-        .filter(fee -> fee.greaterOrEqualThan(Wei.of(7L)))
-        .isPresent();
+    return baseFeeInitialValue.isZero()
+        || txn.getGasPrice()
+            .map(Optional::of)
+            .orElse(txn.getMaxFeePerGas())
+            .filter(fee -> fee.greaterOrEqualThan(Wei.of(7L)))
+            .isPresent();
   }
 
   @Override
