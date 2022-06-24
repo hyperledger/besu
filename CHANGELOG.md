@@ -3,7 +3,10 @@
 ## 22.7.1
 
 ### Additions and Improvements
+- Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
+
 ### Bug Fixes
+- Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
 
 ## 22.4.3
 

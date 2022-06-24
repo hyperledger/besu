@@ -22,9 +22,7 @@ pluginManagement {
      *  com.github.hierynomus.license plugin. Can be removed when an
      *  official version with the fix is release upstream
      */
-    maven {
-      url = uri("https://raw.githubusercontent.com/ConsenSys/license-gradle-plugin-fix-artifacts/main/")
-    }
+    maven { url = uri("https://raw.githubusercontent.com/ConsenSys/license-gradle-plugin-fix-artifacts/main/") }
   }
 }
 
