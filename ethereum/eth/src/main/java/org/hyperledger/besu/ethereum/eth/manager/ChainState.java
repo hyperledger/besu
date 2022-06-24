@@ -70,7 +70,7 @@ public class ChainState implements ChainHeadEstimate {
 
   public void update(final Hash blockHash, final long blockNumber) {
     synchronized (this) {
-      if (bestBlock.hash.equals(blockHash)) {
+      if (bestBlock.hash == null || bestBlock.hash.equals(blockHash)) {
         bestBlock.number = blockNumber;
       }
       updateHeightEstimate(blockNumber);
