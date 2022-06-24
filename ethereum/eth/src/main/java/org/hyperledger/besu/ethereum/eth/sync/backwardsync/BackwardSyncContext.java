@@ -184,7 +184,7 @@ public class BackwardSyncContext {
             this,
             FinalBlockConfirmation.confirmationChain(
                 FinalBlockConfirmation.genesisConfirmation(blockchain),
-                FinalBlockConfirmation.finalizedConfirmation(blockchain)))
+                FinalBlockConfirmation.ancestorConfirmation(blockchain)))
         .executeBackwardsSync(null);
   }
 
