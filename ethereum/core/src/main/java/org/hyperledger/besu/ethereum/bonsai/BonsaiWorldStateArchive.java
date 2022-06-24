@@ -50,7 +50,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final Blockchain blockchain;
 
-  private final BonsaiPersistedWorldState persistedState;
+  private BonsaiPersistedWorldState persistedState;
   private final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final long maxLayersToLoad;
@@ -199,7 +199,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
     if (blockHash.equals(persistedState.blockHash())) {
-      return Optional.of(persistedState);
+      return Optional.of(safeCopy(persistedState));
     } else {
       try {
 
@@ -262,7 +262,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           persistedState.persist(blockchain.getBlockHeader(blockHash).get());
 
           LOG.debug("Archive rolling finished, now at {}", blockHash);
-          return Optional.of(persistedState);
+          return Optional.of(safeCopy(persistedState));
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
@@ -275,9 +275,19 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     }
   }
 
+  private BonsaiPersistedWorldState safeCopy(
+      final BonsaiPersistedWorldState bonsaiPersistedWorldState) {
+    return new BonsaiPersistedWorldState(
+        bonsaiPersistedWorldState.getArchive(), bonsaiPersistedWorldState.getWorldStateStorage());
+  }
+
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
+  }
+
+  public void applyPersistState(final BonsaiPersistedWorldState bonsaiPersistedWorldState) {
+    this.persistedState = bonsaiPersistedWorldState;
   }
 
   @Override

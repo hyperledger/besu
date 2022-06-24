@@ -284,6 +284,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (success) {
         stateUpdater.commit();
         updater.reset();
+        archive.applyPersistState(this);
       } else {
         stateUpdater.rollback();
         updater.reset();
