@@ -119,10 +119,6 @@ public class EthPeer implements Comparable<EthPeer> {
       final List<PeerValidator> peerValidators,
       final Clock clock,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
-    LOG.info(
-        "new eth peer for id {}, EthPeer {}",
-        connection.getPeer().getId(),
-        System.identityHashCode(this));
     this.connection = connection;
     this.protocolName = protocolName;
     this.clock = clock;
