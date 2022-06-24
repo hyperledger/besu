@@ -298,7 +298,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           INVALID, "new head timestamp not greater than parent", latestValid);
     }
 
-    setNewHead(blockchain, newHead, newHead.getParentHash());
+    setNewHead(blockchain, newHead);
 
     // set and persist the new finalized block if it is present
     newFinalized.ifPresent(
@@ -323,15 +323,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
 
-  private boolean setNewHead(
-      final MutableBlockchain blockchain, final BlockHeader newHead, final Hash parentHash) {
+  private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       debugLambda(LOG, "Nothing to do new head {} is already chain head", newHead::toLogString);
       return true;
     }
 
-    if (parentHash.equals(blockchain.getChainHeadHash())) {
+    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
       debugLambda(
           LOG,
           "Forwarding chain head to the block {} saved from a previous newPayload invocation",
