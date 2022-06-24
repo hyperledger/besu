@@ -55,7 +55,6 @@ public class DefaultSynchronizer implements Synchronizer {
   private final Optional<BlockPropagationManager> blockPropagationManager;
   private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
-  private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
 
@@ -76,7 +75,6 @@ public class DefaultSynchronizer implements Synchronizer {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
-    this.protocolContext = protocolContext;
     this.terminationCondition = terminationCondition;
 
     ChainHeadTracker.trackChainHeadForPeers(
