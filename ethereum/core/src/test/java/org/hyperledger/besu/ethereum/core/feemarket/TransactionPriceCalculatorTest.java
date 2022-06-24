@@ -72,6 +72,8 @@ public class TransactionPriceCalculatorTest {
         new Object[][] {
           // legacy transaction must return gas price
           {FRONTIER_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
+          // legacy transaction zero price
+          {FRONTIER_CALCULATOR, FRONTIER, Wei.ZERO, null, null, Optional.empty(), Wei.ZERO},
           // ACCESSLIST transaction must return gas price
           {
             FRONTIER_CALCULATOR,
@@ -92,6 +94,8 @@ public class TransactionPriceCalculatorTest {
             Optional.of(Wei.of(150L)),
             Wei.of(578L)
           },
+          // london legacy transaction zero price
+          {EIP_1559_CALCULATOR, FRONTIER, Wei.ZERO, null, null, Optional.of(Wei.ZERO), Wei.ZERO},
           // ACCESSLIST transaction must return gas price
           {
             EIP_1559_CALCULATOR,
@@ -121,7 +125,9 @@ public class TransactionPriceCalculatorTest {
             Wei.of(300L),
             Optional.of(Wei.of(250L)),
             Wei.of(300L)
-          }
+          },
+          // EIP-1559 transaction zero price
+          {EIP_1559_CALCULATOR, EIP1559, null, Wei.ZERO, Wei.ZERO, Optional.of(Wei.ZERO), Wei.ZERO}
         });
   }
 

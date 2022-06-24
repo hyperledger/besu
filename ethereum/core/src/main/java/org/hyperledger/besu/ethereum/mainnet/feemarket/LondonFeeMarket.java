@@ -32,11 +32,14 @@ public class LondonFeeMarket implements BaseFeeMarket {
       GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
+  // required for integer arithmetic to work when baseFee > 0
+  private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(7L);
   private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
 
   private final Wei baseFeeInitialValue;
   private final long londonForkBlockNumber;
   private final TransactionPriceCalculator txPriceCalculator;
+  private Wei baseFeeFloor = DEFAULT_BASEFEE_FLOOR;
 
   public LondonFeeMarket(final long londonForkBlockNumber) {
     this(londonForkBlockNumber, Optional.empty());
@@ -47,6 +50,14 @@ public class LondonFeeMarket implements BaseFeeMarket {
     this.txPriceCalculator = TransactionPriceCalculator.eip1559();
     this.londonForkBlockNumber = londonForkBlockNumber;
     this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
+    if (baseFeeInitialValue.isZero()) {
+      baseFeeFloor = Wei.ZERO;
+    } else if (baseFeeInitialValue.lessThan(DEFAULT_BASEFEE_FLOOR)) {
+      throw new IllegalStateException(
+          String.format(
+              "baseFee must be either 0 or > %s wei to avoid integer arithmetic issues",
+              DEFAULT_BASEFEE_FLOOR));
+    }
   }
 
   @Override
@@ -81,14 +92,12 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   @Override
   public boolean satisfiesFloorTxCost(final Transaction txn) {
-    // London fee market arithmetic never allows for a base fee below 7 wei
-    // ensure effective baseFee is at least 7 wei
-    return baseFeeInitialValue.isZero()
-        || txn.getGasPrice()
-            .map(Optional::of)
-            .orElse(txn.getMaxFeePerGas())
-            .filter(fee -> fee.greaterOrEqualThan(Wei.of(7L)))
-            .isPresent();
+    // ensure effective baseFee is at least above floor
+    return txn.getGasPrice()
+        .map(Optional::of)
+        .orElse(txn.getMaxFeePerGas())
+        .filter(fee -> fee.greaterOrEqualThan(baseFeeFloor))
+        .isPresent();
   }
 
   @Override

@@ -1002,7 +1002,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMinGasPriceIsZero() {
+  public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZero() {
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
 
     final Transaction transaction =
@@ -1022,8 +1022,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void
-      shouldAcceptZeroGasPriceFrontierTransactionsWhenMinGasPriceIsZeroAndLondonFeeMarket() {
+  public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIsZero();
@@ -1053,7 +1052,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldAcceptZeroGasPrice1559TransactionsWhenMinGasPriceIsZeroAndLondonFeeMarket() {
+  public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIsZero();
@@ -1064,7 +1063,6 @@ public class TransactionPoolTest {
             .gasPrice(null)
             .maxFeePerGas(Optional.of(Wei.ZERO))
             .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
-            .gasLimit(0L)
             .createTransaction(KEY_PAIR1);
 
     givenTransactionIsValid(transaction);
