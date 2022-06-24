@@ -7,6 +7,7 @@
 
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
+- Support free gas networks in the London fee market [#4003](https://github.com/hyperledger/besu/pull/4003)
 
 ## 22.4.3
 
