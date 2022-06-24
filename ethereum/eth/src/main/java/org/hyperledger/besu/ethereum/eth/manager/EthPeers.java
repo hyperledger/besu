@@ -147,14 +147,15 @@ public class EthPeers {
               nonReadyConnections.put(peerConnection, peer);
 
               // TODO: We might want to schedule using the ctx
-              // this makes sure that the content of the nonReadyConnections is cleaned up. The connection has 30s time to create a "ready" connection. If this doesn't happen
+              // this makes sure that the content of the nonReadyConnections is cleaned up. The
+              // connection has 30s time to create a "ready" connection. If this doesn't happen
               scheduler.schedule(
                   () -> {
                     try {
                       final EthPeer removed = nonReadyConnections.remove(peerConnection);
                       if (removed != null && removed.getConnection() != peerConnection) {
                         peerConnection.disconnect(
-                                DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+                            DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
                       }
                     } catch (final Throwable t) {
                       LOG.info("Caught Throwable in ScheduledExecutorService {}", t);

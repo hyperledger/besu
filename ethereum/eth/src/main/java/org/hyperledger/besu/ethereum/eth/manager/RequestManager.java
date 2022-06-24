@@ -63,13 +63,14 @@ public class RequestManager {
       throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
     final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
-//    LOG.info(
-//        "dispatching request protocol name {}, peer {}, connection {}, requestID {}, outstanding requests {}",
-//        protocolName,
-//        peer.toString(),
-//        System.identityHashCode(peer.getConnection()),
-//        requestId,
-//        outstandingRequests.get());
+    //    LOG.info(
+    //        "dispatching request protocol name {}, peer {}, connection {}, requestID {},
+    // outstanding requests {}",
+    //        protocolName,
+    //        peer.toString(),
+    //        System.identityHashCode(peer.getConnection()),
+    //        requestId,
+    //        outstandingRequests.get());
     final ResponseStream stream = createStream(requestId);
     sender.send(supportsRequestId ? messageData.wrapMessageData(requestId) : messageData);
     return stream;
