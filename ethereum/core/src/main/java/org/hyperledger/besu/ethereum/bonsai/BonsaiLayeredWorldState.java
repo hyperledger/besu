@@ -230,8 +230,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
       } else if (currentLayer.getNextWorldView().get() instanceof BonsaiLayeredWorldState) {
         currentLayer = (BonsaiLayeredWorldState) currentLayer.getNextWorldView().get();
       } else {
-        return new BonsaiAccount(
-            (BonsaiAccount) currentLayer.getNextWorldView().get().get(address), this, false);
+        return currentLayer.getNextWorldView().get().get(address);
       }
     }
     return null;
