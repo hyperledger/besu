@@ -35,15 +35,15 @@ public class SStoreOperation extends AbstractOperation {
       new OperationResult(
           OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
 
-  private final long minumumGasRemaining;
+  private final long minimumGasRemaining;
 
-  public SStoreOperation(final GasCalculator gasCalculator, final long minumumGasRemaining) {
+  public SStoreOperation(final GasCalculator gasCalculator, final long minimumGasRemaining) {
     super(0x55, "SSTORE", 2, 0, 1, gasCalculator);
-    this.minumumGasRemaining = minumumGasRemaining;
+    this.minimumGasRemaining = minimumGasRemaining;
   }
 
-  public long getMinumumGasRemaining() {
-    return minumumGasRemaining;
+  public long getMinimumGasRemaining() {
+    return minimumGasRemaining;
   }
 
   @Override
@@ -71,9 +71,9 @@ public class SStoreOperation extends AbstractOperation {
     } else if (remainingGas < cost) {
       return new OperationResult(
           OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-    } else if (remainingGas <= minumumGasRemaining) {
+    } else if (remainingGas <= minimumGasRemaining) {
       return new OperationResult(
-          OptionalLong.of(minumumGasRemaining),
+          OptionalLong.of(minimumGasRemaining),
           Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
