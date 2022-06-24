@@ -1425,6 +1425,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       startPlugins();
       validatePluginOptions();
+      setReleaseMetrics();
       preSynchronization();
 
       runner.startEthereumMainLoop();
@@ -1669,6 +1670,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             commandLine, "Privacy Plugin can not be used with flexible privacy groups");
       }
     }
+  }
+
+  private void setReleaseMetrics() {
+    metricsSystem
+        .get()
+        .createLabelledGauge(
+            StandardMetricCategory.PROCESS, "release", "Release information", "version")
+        .labels(() -> 1, BesuInfo.version());
   }
 
   public void configureLogging(final boolean announce) {

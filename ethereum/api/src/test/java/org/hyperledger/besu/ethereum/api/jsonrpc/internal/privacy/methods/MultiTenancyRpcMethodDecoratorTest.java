@@ -45,7 +45,7 @@ public class MultiTenancyRpcMethodDecoratorTest {
   public void delegatesWhenHasValidToken() {
     final JsonObject principle = new JsonObject();
     principle.put("privacyPublicKey", "ABC123");
-    final UserImpl user = new UserImpl(principle);
+    final UserImpl user = new UserImpl(principle, new JsonObject());
     final JsonRpcRequestContext rpcRequestContext = new JsonRpcRequestContext(rpcRequest, user);
 
     when(jsonRpcMethod.response(rpcRequestContext))
@@ -80,7 +80,7 @@ public class MultiTenancyRpcMethodDecoratorTest {
 
   @Test
   public void failsWhenTokenDoesNotHavePrivacyPublicKey() {
-    final User user = new UserImpl(new JsonObject());
+    final User user = new UserImpl(new JsonObject(), new JsonObject());
     final JsonRpcRequestContext rpcRequestContext = new JsonRpcRequestContext(rpcRequest, user);
     final MultiTenancyRpcMethodDecorator tokenRpcDecorator =
         new MultiTenancyRpcMethodDecorator(jsonRpcMethod);

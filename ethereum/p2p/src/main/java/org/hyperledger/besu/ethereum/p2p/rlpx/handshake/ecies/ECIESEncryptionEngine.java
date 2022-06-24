@@ -359,7 +359,7 @@ public class ECIESEncryptionEngine {
       final int cThreshold = (len + outLen - 1) / outLen;
       final byte[] dig = new byte[digestSize];
       final byte[] C = Pack.intToBigEndian(COUNTER_START);
-      int counterBase = COUNTER_START & ~0xFF;
+      int counterBase = 0; // COUNTER_START & ~0xFF is always zero
       int offset = outOff;
       int length = len;
 
