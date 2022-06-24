@@ -34,9 +34,7 @@ sourceSets {
       runtimeClasspath += main.output
       srcDir file('src/reference-test/java')
     }
-    resources {
-      srcDir file('src/reference-test/resources')
-    }
+    resources { srcDir file('src/reference-test/resources') }
   }
 }
 
