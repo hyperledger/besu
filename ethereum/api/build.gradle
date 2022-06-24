@@ -27,9 +27,7 @@ jar {
   }
 }
 
-configurations {
-  testResourceGeneration.extendsFrom testImplementation
-}
+configurations { testResourceGeneration.extendsFrom testImplementation }
 
 dependencies {
   api 'org.slf4j:slf4j-api'
@@ -122,9 +120,7 @@ dependencies {
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
 
-artifacts {
-  testSupportArtifacts testSupportJar
-}
+artifacts { testSupportArtifacts testSupportJar }
 
 task generateTestBlockchain() {
   def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'

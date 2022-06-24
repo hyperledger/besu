@@ -35,7 +35,7 @@ public class MultiTenancyUserUtilTest {
   @Test
   public void noEnclavePublicKeyWhenUserWithoutEnclavePublicKeyClaimProvided() {
     final JsonObject token = new JsonObject();
-    final Optional<User> user = Optional.of(new UserImpl(token));
+    final Optional<User> user = Optional.of(new UserImpl(token, new JsonObject()));
 
     assertThat(privacyUserId(user)).isEmpty();
   }
@@ -44,7 +44,7 @@ public class MultiTenancyUserUtilTest {
   public void enclavePublicKeyKeyReturnedForUserWithEnclavePublicKeyClaim() {
     final JsonObject principle = new JsonObject();
     principle.put("privacyPublicKey", "ABC123");
-    final Optional<User> user = Optional.of(new UserImpl(principle));
+    final Optional<User> user = Optional.of(new UserImpl(principle, new JsonObject()));
 
     assertThat(privacyUserId(user)).contains("ABC123");
   }

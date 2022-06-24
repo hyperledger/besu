@@ -13,18 +13,14 @@
 
 plugins {
   id 'org.web3j' version '4.8.9'
-  id 'org.web3j.solidity' version '0.3.3'
+  id 'org.web3j.solidity' version '0.3.5'
 }
 
-web3j {
-  generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated'
-}
+web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
 
 sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
-solidity {
-  resolvePackages = false
-}
+solidity { resolvePackages = false }
 
 dependencies {
   implementation project(':crypto')
@@ -77,9 +73,7 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
   constraints {
-    implementation('jnr-posix:3.1.15') {
-      because '3.0.47 from web3j has issues'
-    }
+    implementation('jnr-posix:3.1.15') { because '3.0.47 from web3j has issues' }
   }
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
@@ -88,11 +82,7 @@ dependencies {
 test.enabled = false
 
 sourceSets {
-  test {
-    resources {
-      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
-    }
-  }
+  test { resources { srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs" } }
 }
 
 processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
@@ -118,7 +108,5 @@ task acceptanceTest(type: Test) {
     showCauses = true
   }
 
-  doFirst {
-    mkdir "${buildDir}/jvmErrorLogs"
-  }
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
