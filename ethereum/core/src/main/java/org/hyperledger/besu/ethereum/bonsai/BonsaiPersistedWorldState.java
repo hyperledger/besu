@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
