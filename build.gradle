@@ -20,15 +20,15 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.spotless' version '5.16.0'
+  id 'com.diffplug.spotless' version '6.7.2'
   id 'com.github.ben-manes.versions' version '0.42.0'
   id 'com.github.hierynomus.license' version '0.16.1-fix'
-  id 'com.jfrog.artifactory' version '4.27.1'
+  id 'com.jfrog.artifactory' version '4.28.3'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'me.champeau.jmh' version '0.6.6' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
-  id 'org.sonarqube' version '3.3'
+  id 'org.sonarqube' version '3.4.0.2513'
 }
 
 sonarqube {
@@ -139,7 +139,7 @@ allprojects {
     }
     groovyGradle {
       target '*.gradle'
-      greclipse().configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.6.3').configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
@@ -307,9 +307,7 @@ subprojects {
       }
     }
 
-    dependencies {
-      testImplementation sourceSets.testSupport.output
-    }
+    dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
       archiveBaseName = "${project.name}-support-test"
@@ -331,9 +329,7 @@ subprojects {
     }
 
     if (file('src/test-support').directory) {
-      dependencies {
-        integrationTestImplementation sourceSets.testSupport.output
-      }
+      dependencies { integrationTestImplementation sourceSets.testSupport.output }
     }
 
     task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
@@ -520,9 +516,7 @@ def tweakStartScript(createScriptTask) {
 startScripts {
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
-  doLast {
-    tweakStartScript(startScripts)
-  }
+  doLast { tweakStartScript(startScripts) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
@@ -535,9 +529,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
-  doLast {
-    tweakStartScript(evmToolStartScripts)
-  }
+  doLast { tweakStartScript(evmToolStartScripts) }
 }
 
 task autocomplete(type: JavaExec) {
@@ -583,9 +575,7 @@ publishing {
       version = project.version
       artifactId = 'besu'
       artifact("$buildDir/distributions/besu-${project.version}.zip")
-      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") {
-        extension = 'tar.gz'
-      }
+      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
     }
   }
 }
@@ -754,9 +744,7 @@ task dockerUpload {
       exec {
         def archVariantImage = "${variantImage}-${architecture}"
         def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
-        additionalTags.each { tag ->
-          cmd += " && docker tag '${variantImage}' '${dockerImage}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${variant}-${architecture}'"
-        }
+        additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImage}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${variant}-${architecture}'" }
         executable "sh"
         args "-c", cmd
       }
@@ -765,9 +753,7 @@ task dockerUpload {
     exec {
       def archImage = "${image}-${architecture}"
       def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
-      additionalTags.each { tag ->
-        cmd += " && docker tag '${image}' '${dockerImage}:${tag.trim()}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${architecture}'"
-      }
+      additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImage}:${tag.trim()}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${architecture}'" }
       executable "sh"
       args "-c", cmd
     }
@@ -839,9 +825,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching {
-    exclude 'org/hyperledger/besu/tests/acceptance/**'
-  }
+  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true

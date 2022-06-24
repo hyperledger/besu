@@ -50,12 +50,17 @@ public class EthServerTest {
 
   @Before
   public void setUp() {
-    new EthServer(
-        blockchain,
-        worldStateArchive,
-        transactionPool,
-        ethMessages,
-        new EthProtocolConfiguration(2, 2, 2, 2, 2, false));
+    final int limit = 2;
+    final EthProtocolConfiguration ethConfig =
+        EthProtocolConfiguration.builder()
+            .maxGetBlockHeaders(limit)
+            .maxGetBlockBodies(limit)
+            .maxGetReceipts(limit)
+            .maxGetNodeData(limit)
+            .maxGetPooledTransactions(limit)
+            .build();
+
+    new EthServer(blockchain, worldStateArchive, transactionPool, ethMessages, ethConfig);
   }
 
   @Test
