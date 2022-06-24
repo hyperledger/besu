@@ -276,10 +276,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final var chain = protocolContext.getBlockchain();
     final var validationResult = validateBlock(block);
     validationResult.blockProcessingOutputs.ifPresent(
-        result -> {
-          result.worldState.remember(block.getHeader());
-          chain.storeBlock(block, result.receipts);
-        });
+        result -> chain.storeBlock(block, result.receipts));
     return validationResult;
   }
 
@@ -369,6 +366,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           LOG,
           "Forwarding chain head to the block {} saved from a previous newPayload invocation",
           newHead::toLogString);
+
       return blockchain.forwardToBlock(newHead);
     }
 

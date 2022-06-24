@@ -52,11 +52,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   protected final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  private final BonsaiWorldStateArchive archive;
-  private final BonsaiWorldStateUpdater updater;
+  protected final BonsaiWorldStateArchive archive;
+  protected final BonsaiWorldStateUpdater updater;
 
-  private Hash worldStateRootHash;
-  private Hash worldStateBlockHash;
+  protected Hash worldStateRootHash;
+  protected Hash worldStateBlockHash;
 
   public BonsaiPersistedWorldState(
       final BonsaiWorldStateArchive archive,
@@ -295,7 +295,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     }
   }
 
-  private TrieLogLayer prepareTrieLog(
+  protected TrieLogLayer prepareTrieLog(
       final BlockHeader blockHeader,
       final BonsaiWorldStateUpdater localUpdater,
       final Hash currentWorldStateRootHash,

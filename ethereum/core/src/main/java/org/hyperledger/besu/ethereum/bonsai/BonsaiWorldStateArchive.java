@@ -86,18 +86,28 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           eventBlockHeader.getParentHash(),
           (parentHash, parentBonsaiLayeredWorldState) -> {
             layeredWorldStatesByHash.computeIfPresent(
-                eventBlockHeader.getBlockHash(),
+                eventBlockHeader.getHash(),
                 (hash, bonsaiLayeredWorldState) -> {
-                  if (worldStateStorage.getTrieLog(eventBlockHeader.getBlockHash()).isEmpty()) {
+                  if (worldStateStorage.getTrieLog(eventBlockHeader.getHash()).isEmpty()) {
                     debugLambda(
                         LOG,
-                        "Trie log not yet stored, doing it now for root hash {}, block hash {}",
-                        () -> bonsaiLayeredWorldState.rootHash(),
-                        () -> eventBlockHeader.getBlockHash());
-                    persistedState.persistTrieLog(
-                        eventBlockHeader,
-                        bonsaiLayeredWorldState.rootHash(),
-                        bonsaiLayeredWorldState.getTrieLog());
+                        "World state not yet persisted, doing it now for root hash {}, block hash {}",
+                        eventBlockHeader::getStateRoot,
+                        eventBlockHeader::getHash);
+
+                    getMutable(eventBlockHeader.getStateRoot(), eventBlockHeader.getHash())
+                        .ifPresentOrElse(
+                            mutableWorldState ->
+                                debugLambda(
+                                    LOG,
+                                    "World state for state root hash {} and block hash {} persisted successfully",
+                                    mutableWorldState::rootHash,
+                                    eventBlockHeader::getHash),
+                            () ->
+                                LOG.error(
+                                    "Could not persist world for root hash {} and block hash {}",
+                                    eventBlockHeader.getStateRoot(),
+                                    eventBlockHeader.getHash()));
                   }
                   parentBonsaiLayeredWorldState.setNextWorldView(
                       Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getBlockHash())));

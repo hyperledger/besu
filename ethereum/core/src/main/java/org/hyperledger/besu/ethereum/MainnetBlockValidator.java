@@ -97,7 +97,7 @@ public class MainnetBlockValidator implements BlockValidator {
     final Optional<MutableWorldState> maybeWorldState =
         context
             .getWorldStateArchive()
-            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash(), shouldPersist);
+            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
 
     if (maybeWorldState.isEmpty()) {
       return handleAndReportFailure(
@@ -106,8 +106,10 @@ public class MainnetBlockValidator implements BlockValidator {
               + parentHeader.getStateRoot()
               + " is not available");
     }
-    final MutableWorldState worldState = maybeWorldState.get();
-    final BlockProcessor.Result result = processBlock(context, worldState, block, shouldPersist);
+    final MutableWorldState worldState =
+        shouldPersist ? maybeWorldState.get() : maybeWorldState.get().copy();
+
+    final BlockProcessor.Result result = processBlock(context, worldState, block);
     if (result.isFailed()) {
       return handleAndReportFailure(block, "Error processing block");
     }
