@@ -155,23 +155,9 @@ public class MainnetBlockValidator implements BlockValidator {
   protected BlockProcessor.Result processBlock(
       final ProtocolContext context,
       final MutableWorldState worldState,
-      final Block block,
-      final boolean shouldPersist) {
+      final Block block) {
 
-    return blockProcessor.processBlock(context.getBlockchain(), worldState, block, shouldPersist);
-  }
-
-  /**
-   * Processes a block, returning the result of the processing
-   *
-   * @param context the ProtocolContext
-   * @param worldState the world state for the parent block state root hash
-   * @param block the block to be processed
-   * @return the result of processing the block
-   */
-  protected BlockProcessor.Result processBlock(
-      final ProtocolContext context, final MutableWorldState worldState, final Block block) {
-    return processBlock(context, worldState, block, true);
+    return blockProcessor.processBlock(context.getBlockchain(), worldState, block);
   }
 
   @Override

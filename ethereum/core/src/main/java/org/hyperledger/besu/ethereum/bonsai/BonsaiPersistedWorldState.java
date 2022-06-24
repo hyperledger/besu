@@ -239,23 +239,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public void remember(final BlockHeader blockHeader) {
-    checkArgument(blockHeader != null, "Block header must not be null");
-    debugLambda(LOG, "Remember world state for block {}", blockHeader::toLogString);
-    final BonsaiWorldStateUpdater localUpdater = updater.copy();
-    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
-
-    try {
-      final Hash newWorldStateRootHash = calculateRootHash(stateUpdater, localUpdater);
-      prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash, worldStateBlockHash);
-    } finally {
-      stateUpdater.rollback();
-      updater.reset();
-    }
-    archive.scrubLayeredCache(blockHeader.getNumber());
-  }
-
-  @Override
   public void persist(final BlockHeader blockHeader) {
     debugLambda(LOG, "Persist world state for block {}", blockHeader::toLogString);
     boolean success = false;
@@ -309,26 +292,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               + currentWorldStateRootHash.toHexString());
     }
 
-    if (blockHeader.getNumber() > 0 && !previousBlockHash.equals(blockHeader.getParentHash())) {
-      throw new RuntimeException(
-          "Previous block hash "
-              + previousBlockHash.toHexString()
-              + " is not the parent of the current block "
-              + blockHeader.toLogString());
-    }
-
     debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
     final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
     trieLog.freeze();
     archive.addLayeredWorldState(this, blockHeader, currentWorldStateRootHash, trieLog);
     return trieLog;
-  }
-
-  void persistTrieLog(
-      final BlockHeader blockHeader, final Hash worldStateRootHash, final TrieLogLayer trieLog) {
-    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
-    persistTrieLog(blockHeader, worldStateRootHash, trieLog, stateUpdater);
-    stateUpdater.commit();
   }
 
   private void persistTrieLog(

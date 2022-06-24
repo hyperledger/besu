@@ -366,12 +366,30 @@ public class MergeCoordinator implements MergeMiningCoordinator {
           LOG,
           "Forwarding chain head to the block {} saved from a previous newPayload invocation",
           newHead::toLogString);
-
+      forwardWorldStateTo(newHead);
       return blockchain.forwardToBlock(newHead);
     }
 
     debugLambda(LOG, "New head {} is a chain reorg, rewind chain head to it", newHead::toLogString);
     return blockchain.rewindToBlock(newHead.getHash());
+  }
+
+  private void forwardWorldStateTo(final BlockHeader newHead) {
+    protocolContext
+        .getWorldStateArchive()
+        .getMutable(newHead.getStateRoot(), newHead.getHash())
+        .ifPresentOrElse(
+            mutableWorldState ->
+                debugLambda(
+                    LOG,
+                    "World state for state root hash {} and block hash {} persisted successfully",
+                    mutableWorldState::rootHash,
+                    newHead::getHash),
+            () ->
+                LOG.error(
+                    "Could not persist world for root hash {} and block hash {}",
+                    newHead.getStateRoot(),
+                    newHead.getHash()));
   }
 
   @Override

@@ -706,17 +706,10 @@ public abstract class MainnetProtocolSpecs {
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
-        final PrivateMetadataUpdater privateMetadataUpdater,
-        final boolean shouldPersist) {
+        final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-          blockchain,
-          worldState,
-          blockHeader,
-          transactions,
-          ommers,
-          privateMetadataUpdater,
-          shouldPersist);
+          blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

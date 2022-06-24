@@ -144,8 +144,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final PrivateMetadataUpdater privateMetadataUpdater,
-      final boolean shouldPersist) {
+      final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
@@ -198,13 +197,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return AbstractBlockProcessor.Result.failed();
     }
 
-    if (shouldPersist) {
-      try {
-        worldState.persist(blockHeader);
-      } catch (Exception e) {
-        LOG.error("failed persisting block", e);
-        return AbstractBlockProcessor.Result.failed();
-      }
+    try {
+      worldState.persist(blockHeader);
+    } catch (Exception e) {
+      LOG.error("failed persisting block", e);
+      return AbstractBlockProcessor.Result.failed();
     }
 
     return AbstractBlockProcessor.Result.successful(receipts);

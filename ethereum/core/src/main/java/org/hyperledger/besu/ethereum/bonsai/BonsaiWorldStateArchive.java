@@ -84,36 +84,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final BlockHeader eventBlockHeader = event.getBlock().getHeader();
       layeredWorldStatesByHash.computeIfPresent(
           eventBlockHeader.getParentHash(),
-          (parentHash, parentBonsaiLayeredWorldState) -> {
-            layeredWorldStatesByHash.computeIfPresent(
-                eventBlockHeader.getHash(),
-                (hash, bonsaiLayeredWorldState) -> {
-                  if (worldStateStorage.getTrieLog(eventBlockHeader.getHash()).isEmpty()) {
-                    debugLambda(
-                        LOG,
-                        "World state not yet persisted, doing it now for root hash {}, block hash {}",
-                        eventBlockHeader::getStateRoot,
-                        eventBlockHeader::getHash);
-
-                    getMutable(eventBlockHeader.getStateRoot(), eventBlockHeader.getHash())
-                        .ifPresentOrElse(
-                            mutableWorldState ->
-                                debugLambda(
-                                    LOG,
-                                    "World state for state root hash {} and block hash {} persisted successfully",
-                                    mutableWorldState::rootHash,
-                                    eventBlockHeader::getHash),
-                            () ->
-                                LOG.error(
-                                    "Could not persist world for root hash {} and block hash {}",
-                                    eventBlockHeader.getStateRoot(),
-                                    eventBlockHeader.getHash()));
-                  }
-                  parentBonsaiLayeredWorldState.setNextWorldView(
-                      Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getBlockHash())));
-                  return bonsaiLayeredWorldState;
-                });
-            return parentBonsaiLayeredWorldState;
+          (parentHash, bonsaiLayeredWorldState) -> {
+            if (layeredWorldStatesByHash.containsKey(eventBlockHeader.getHash())) {
+              bonsaiLayeredWorldState.setNextWorldView(
+                  Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getHash())));
+            }
+            return bonsaiLayeredWorldState;
           });
     }
   }
@@ -142,11 +118,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
-    addLayeredWorldState(blockHeader, bonsaiLayeredWorldState);
-  }
-
-  public void addLayeredWorldState(
-      final BlockHeader blockHeader, final BonsaiLayeredWorldState bonsaiLayeredWorldState) {
+    debugLambda(
+        LOG,
+        "adding layered world state for block {}, state root hash {}",
+        blockHeader::toLogString,
+        worldStateRootHash::toHexString);
     layeredWorldStatesByHash.put(blockHeader.getHash(), bonsaiLayeredWorldState);
   }
 
