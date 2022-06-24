@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -285,7 +286,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isFalse();
 
-    updater.saveWorldState(blockHash, nodeHashKey, nodeValue);
+    updater.saveWorldState(blockHash, nodeHashKey, Optional.of(nodeValue));
     updater.commit();
 
     assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isTrue();

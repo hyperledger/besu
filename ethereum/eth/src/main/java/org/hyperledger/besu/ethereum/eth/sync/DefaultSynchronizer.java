@@ -218,11 +218,6 @@ public class DefaultSynchronizer implements Synchronizer {
       return CompletableFuture.completedFuture(null);
     }
     fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
-    result
-        .getPivotBlockHeader()
-        .ifPresent(
-            blockHeader ->
-                protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
     LOG.info(
         "Sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());

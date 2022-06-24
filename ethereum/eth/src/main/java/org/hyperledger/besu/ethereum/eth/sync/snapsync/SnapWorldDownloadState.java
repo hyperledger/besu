@@ -33,6 +33,7 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -139,7 +140,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         startHeal();
       } else {
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+        updater.saveWorldState(header.getHash(), header.getStateRoot(), Optional.of(rootNodeData));
         updater.commit();
         metricsManager.notifySnapSyncCompleted();
         internalFuture.complete(null);

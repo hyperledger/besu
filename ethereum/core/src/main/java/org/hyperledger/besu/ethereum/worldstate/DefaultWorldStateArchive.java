@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -78,11 +77,6 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return getMutable(EMPTY_ROOT_HASH, null).get();
-  }
-
-  @Override
-  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
-    // ignore for forest
   }
 
   @Override

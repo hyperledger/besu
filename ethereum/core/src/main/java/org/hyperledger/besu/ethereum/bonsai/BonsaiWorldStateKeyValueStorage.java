@@ -272,8 +272,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
     @Override
     public WorldStateStorage.Updater saveWorldState(
-        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
-      trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+        final Bytes blockHash, final Bytes32 nodeHash, final Optional<Bytes> node) {
+      node.ifPresent(
+          bytes ->
+              trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), bytes.toArrayUnsafe()));
       trieBranchStorageTransaction.put(WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
       trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;

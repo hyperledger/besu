@@ -54,7 +54,7 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
         return false;
       }
       final Updater updater = worldStateStorage.updater();
-      updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+      updater.saveWorldState(header.getHash(), header.getStateRoot(), Optional.of(rootNodeData));
       updater.commit();
 
       internalFuture.complete(null);
