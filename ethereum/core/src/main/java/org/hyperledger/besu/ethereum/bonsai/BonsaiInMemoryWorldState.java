@@ -43,7 +43,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     try {
       final Hash newWorldStateRootHash = rootHash();
-      prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash, worldStateBlockHash);
+      prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
       worldStateBlockHash = blockHeader.getHash();
       worldStateRootHash = newWorldStateRootHash;
     } finally {

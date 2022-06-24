@@ -247,7 +247,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
         final TrieLogLayer trieLog =
-            prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash, worldStateBlockHash);
+            prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
         persistTrieLog(blockHeader, newWorldStateRootHash, trieLog, stateUpdater);
         worldStateBlockHash = blockHeader.getHash();
       } else {
@@ -274,8 +274,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   protected TrieLogLayer prepareTrieLog(
       final BlockHeader blockHeader,
       final BonsaiWorldStateUpdater localUpdater,
-      final Hash currentWorldStateRootHash,
-      final Hash previousBlockHash) {
+      final Hash currentWorldStateRootHash) {
 
     if (!currentWorldStateRootHash.equals(blockHeader.getStateRoot())) {
       throw new RuntimeException(
