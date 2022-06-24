@@ -266,7 +266,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return persistedState;
   }
 
-  public void applyPersistState(BonsaiPersistedWorldState bonsaiPersistedWorldState) {
+  public void applyPersistState(final BonsaiPersistedWorldState bonsaiPersistedWorldState) {
     this.persistedState = bonsaiPersistedWorldState;
   }
 
