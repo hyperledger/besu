@@ -158,7 +158,8 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
   }
 
   private User createUser(final String enclavePublicKey) {
-    return new UserImpl(new JsonObject().put("privacyPublicKey", enclavePublicKey)) {};
+    return new UserImpl(
+        new JsonObject().put("privacyPublicKey", enclavePublicKey), new JsonObject()) {};
   }
 
   private static class TestPrivacyApiGroupJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
