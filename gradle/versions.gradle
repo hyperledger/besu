@@ -56,13 +56,11 @@ dependencyManagement {
     dependency 'info.picocli:picocli:4.6.3'
 
     dependencySet(group: 'io.grpc', version: '1.45.0') {
-      entry'grpc-core'
-      entry'grpc-netty'
-      entry'grpc-stub'
+      entry 'grpc-all'
+      entry 'grpc-core'
+      entry 'grpc-netty'
+      entry 'grpc-stub'
     }
-
-    dependency 'io.jaegertracing:jaeger-client:1.8.0'
-    dependency 'io.jaegertracing:jaeger-proto:0.7.0'
 
     dependency 'io.kubernetes:client-java:14.0.1'
 
@@ -82,6 +80,7 @@ dependencyManagement {
     dependency 'io.opentelemetry:opentelemetry-sdk:1.15.0'
     dependency 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure:1.15.0-alpha'
     dependency 'io.opentelemetry:opentelemetry-semconv:1.15.0-alpha'
+    dependency 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0:1.15.0-alpha'
 
     dependency 'io.opentracing.contrib:opentracing-okhttp3:3.0.0'
     dependency 'io.opentracing:opentracing-api:0.33.0'

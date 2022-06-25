@@ -41,7 +41,6 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.grpc:grpc-netty'
   implementation 'io.grpc:grpc-core'
-  implementation 'io.jaegertracing:jaeger-proto'
   implementation 'io.netty:netty-tcnative-boringssl-static'
   implementation 'io.netty:netty-transport-native-epoll'
   implementation 'io.netty:netty-all'
