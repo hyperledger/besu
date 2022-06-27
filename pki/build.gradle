@@ -48,6 +48,4 @@ task testJar(type: Jar) {
   from sourceSets.test.output
 }
 
-artifacts {
-  testArtifacts testJar
-}
+artifacts { testArtifacts testJar }

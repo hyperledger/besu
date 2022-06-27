@@ -211,12 +211,31 @@ public final class EthProtocolManagerTest {
             transactionPool,
             EthProtocolConfiguration.defaultConfig())) {
       final MessageData messageData = mock(MessageData.class);
-      when(messageData.getSize()).thenReturn(10 * 1_000_000 + 1 /* just over 10MB*/);
+      when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE + 1);
       when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
       final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
       assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
+  public void doNotDisconnectOnLargeMessageWithinLimits() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            () -> false,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig())) {
+      final MessageData messageData = mock(MessageData.class);
+      when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+      when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
+      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
+      assertThat(peer.isDisconnected()).isFalse();
     }
   }
 
@@ -309,13 +328,15 @@ public final class EthProtocolManagerTest {
   public void respondToGetHeadersWithinLimits() throws ExecutionException, InterruptedException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final int limit = 5;
+    final EthProtocolConfiguration config =
+        EthProtocolConfiguration.builder().maxGetBlockHeaders(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, false))) {
+            config)) {
       final long startBlock = 5L;
       final int blockCount = 10;
       final MessageData messageData =
@@ -601,13 +622,15 @@ public final class EthProtocolManagerTest {
   public void respondToGetBodiesWithinLimits() throws ExecutionException, InterruptedException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final int limit = 5;
+    final EthProtocolConfiguration config =
+        EthProtocolConfiguration.builder().maxGetBlockBodies(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, false))) {
+            config)) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;
@@ -739,13 +762,15 @@ public final class EthProtocolManagerTest {
   public void respondToGetReceiptsWithinLimits() throws ExecutionException, InterruptedException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final int limit = 5;
+    final EthProtocolConfiguration config =
+        EthProtocolConfiguration.builder().maxGetReceipts(limit).build();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
             () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            new EthProtocolConfiguration(limit, limit, limit, limit, limit, false))) {
+            config)) {
       // Setup blocks query
       final int blockCount = 10;
       final long startBlock = blockchain.getChainHeadBlockNumber() - blockCount;

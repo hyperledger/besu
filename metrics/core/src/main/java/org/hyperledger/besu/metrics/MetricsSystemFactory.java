@@ -54,7 +54,8 @@ public class MetricsSystemFactory {
           new OpenTelemetrySystem(
               metricsConfiguration.getMetricCategories(),
               metricsConfiguration.isTimersEnabled(),
-              metricsConfiguration.getPrometheusJob());
+              metricsConfiguration.getPrometheusJob(),
+              true);
       metricsSystem.initDefaults();
       return metricsSystem;
     } else {
