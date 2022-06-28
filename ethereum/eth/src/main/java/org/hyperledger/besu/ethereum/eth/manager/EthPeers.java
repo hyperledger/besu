@@ -98,13 +98,11 @@ public class EthPeers {
 
   public void registerConnection(
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
-    // TODO: Stefan: this needs to check whether there is an existing EthPeer, If yes, wait for a
-    // callback being called before deciding which connection to keep
     //  Put the new connection into a map (newConnection, existingEthPeer)
     synchronized (this) {
       final Bytes peerId = peerConnection.getPeer().getId();
       LOG.info(
-          "Regestering a connection with peer {}, connection {}",
+          "Registering a connection with peer {}, connection {}",
           peerId,
           System.identityHashCode(peerConnection));
       final Optional<EthPeer> optionalEthPeer =

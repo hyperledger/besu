@@ -393,7 +393,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         if (peerConnection.registerStatusReceivedAndCheckIfReady()) {
           final EthPeer peer = ethPeers.peer(peerConnection);
           peer.chainState().statusReceived(status.bestHash(), status.totalDifficulty());
-          peer.setLastRequestTimestamp(status.protocolVersion());
+          peer.setProtocolVersion(status.protocolVersion());
           ethPeers.maybeUseReadyConnection(peerConnection);
         }
       }

@@ -158,7 +158,6 @@ public abstract class PeerMessageTaskTest<T>
   protected EthPeer createPeer() {
     final PeerConnection peerConnection = new MockPeerConnection(Set.of(EthProtocol.ETH66));
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    System.out.println("opr" + onPeerReady);
     return new EthPeer(
         peerConnection,
         EthProtocol.NAME,

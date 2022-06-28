@@ -526,7 +526,7 @@ public class EthPeer implements Comparable<EthPeer> {
     return connection.statusHasBeenReceived();
   }
 
-  public void setLastRequestTimestamp(final int protocolVersion) {
+  public void setProtocolVersion(final int protocolVersion) {
     lastProtocolVersion.set(protocolVersion);
   }
 
