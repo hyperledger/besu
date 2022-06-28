@@ -34,7 +34,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import org.junit.Test;
 
@@ -157,7 +156,6 @@ public abstract class PeerMessageTaskTest<T>
 
   protected EthPeer createPeer() {
     final PeerConnection peerConnection = new MockPeerConnection(Set.of(EthProtocol.ETH66));
-    final Consumer<EthPeer> onPeerReady = (peer) -> {};
     return new EthPeer(
         peerConnection,
         EthProtocol.NAME,
