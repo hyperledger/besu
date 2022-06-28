@@ -91,6 +91,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     return worldStateStorage.getCode(null, Hash.hash(address));
   }
 
+  public void setArchiveStateUnSafe(final BlockHeader blockHeader) {
+    worldStateBlockHash = Hash.fromPlugin(blockHeader.getBlockHash());
+    worldStateRootHash = Hash.fromPlugin(blockHeader.getStateRoot());
+  }
+
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateStorage;
   }

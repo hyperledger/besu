@@ -55,6 +55,7 @@ public class DefaultSynchronizer implements Synchronizer {
   private final Optional<BlockPropagationManager> blockPropagationManager;
   private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
+  private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
 
@@ -75,6 +76,7 @@ public class DefaultSynchronizer implements Synchronizer {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
+    this.protocolContext = protocolContext;
     this.terminationCondition = terminationCondition;
 
     ChainHeadTracker.trackChainHeadForPeers(
@@ -216,6 +218,11 @@ public class DefaultSynchronizer implements Synchronizer {
       return CompletableFuture.completedFuture(null);
     }
     fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
+    result
+        .getPivotBlockHeader()
+        .ifPresent(
+            blockHeader ->
+                protocolContext.getWorldStateArchive().setArchiveStateUnSafe(blockHeader));
     LOG.info(
         "Sync completed successfully with pivot block {}",
         result.getPivotBlockNumber().getAsLong());
