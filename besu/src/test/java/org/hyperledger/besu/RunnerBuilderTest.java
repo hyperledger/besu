@@ -343,7 +343,7 @@ public final class RunnerBuilderTest {
 
     assertThat(runner.getEngineJsonRpcPort()).isPresent();
     runner.startExternalServices();
-    //assert that rpc method collection has eth_subscribe in it.
+    // assert that rpc method collection has eth_subscribe in it.
     runner.stop();
   }
 
