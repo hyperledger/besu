@@ -95,7 +95,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -604,25 +603,42 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
-    final OptionalLong daoBlock = configOptionsSupplier.get().getDaoForkBlock();
-    if (daoBlock.isPresent()) {
-      // Setup dao validator
-      validators.add(
-          new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
-    }
+    configOptionsSupplier
+        .get()
+        .getDaoForkBlock()
+        .ifPresent(
+            daoBlock ->
+                validators.add(
+                    new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock)));
 
-    final OptionalLong classicBlock = configOptionsSupplier.get().getClassicForkBlock();
-    // setup classic validator
-    if (classicBlock.isPresent()) {
-      validators.add(
-          new ClassicForkPeerValidator(protocolSchedule, metricsSystem, classicBlock.getAsLong()));
-    }
+    configOptionsSupplier
+        .get()
+        .getClassicForkBlock()
+        .ifPresent(
+            classicBlock ->
+                validators.add(
+                    new ClassicForkPeerValidator(protocolSchedule, metricsSystem, classicBlock)));
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
       validators.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
     }
+
+    configOptionsSupplier
+        .get()
+        .getTerminalBlockHash()
+        .filter(hash -> !hash.equals(Hash.ZERO))
+        .ifPresent(
+            powTBH ->
+                configOptionsSupplier
+                    .get()
+                    .getTerminalBlockNumber()
+                    .ifPresent(
+                        powTBN ->
+                            validators.add(
+                                new RequiredBlocksPeerValidator(
+                                    protocolSchedule, metricsSystem, powTBN, powTBH))));
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
