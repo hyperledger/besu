@@ -234,7 +234,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    debugLambda(LOG, "Persist world state for block {}", blockHeader::toLogString);
+    debugLambda(
+        LOG,
+        "Persist world state for block {}",
+        () -> (blockHeader == null ? "null" : blockHeader.toLogString()));
     boolean success = false;
 
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
