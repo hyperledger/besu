@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -243,7 +244,7 @@ public class BlockPropagationManager {
   }
 
   private void handleNewBlockFromNetwork(final EthMessage message) {
-    final Blockchain blockchain = protocolContext.getBlockchain();
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
     final NewBlockMessage newBlockMessage = NewBlockMessage.readFrom(message.getData());
     try {
       final Block block = newBlockMessage.block(protocolSchedule);
@@ -261,6 +262,10 @@ public class BlockPropagationManager {
       // Return early if we don't care about this block
       final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
       final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
+
+      // TODO this is a hack just for testing shared db when light client doesn't sync
+      blockchain.unsafeSetChainHead(block.getHeader(), totalDifficulty);
+
       if (!shouldImportBlockAtHeight(
           block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {
         traceLambda(
