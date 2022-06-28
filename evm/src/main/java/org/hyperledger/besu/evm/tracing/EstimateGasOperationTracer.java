@@ -31,7 +31,7 @@ public class EstimateGasOperationTracer implements OperationTracer {
     } finally {
       if (frame.getCurrentOperation() instanceof SStoreOperation && sStoreStipendNeeded == 0L) {
         sStoreStipendNeeded =
-            ((SStoreOperation) frame.getCurrentOperation()).getMinumumGasRemaining();
+            ((SStoreOperation) frame.getCurrentOperation()).getMinimumGasRemaining();
       }
       if (maxDepth < frame.getMessageStackDepth()) {
         maxDepth = frame.getMessageStackDepth();
