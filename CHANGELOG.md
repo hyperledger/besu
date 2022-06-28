@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 - Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
-- Add TTD and DNS to Sepolia config [#XXXX](https://github.com/hyperledger/besu/pull/XXXX)
+- Add TTD and DNS to Sepolia config [#4022](https://github.com/hyperledger/besu/pull/4022)
 
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
