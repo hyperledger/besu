@@ -19,7 +19,7 @@ import java.util.EnumSet;
 import java.util.Set;
 
 public enum TransactionType {
-  FRONTIER(0xf8 /* doesn't end up being used as we don't serialize legacy txs with their type */),
+  FRONTIER(0xf8 /* this will is serialized as 0x0 in TransactionCompleteResult */),
   ACCESS_LIST(0x01),
   EIP1559(0x02);
 

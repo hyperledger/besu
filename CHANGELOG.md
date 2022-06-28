@@ -5,6 +5,7 @@
 ### Additions and Improvements
 - Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
 - Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
+- Return `type` with value `0x0` when serializing legacy transactions [#XXXX](https://github.com/hyperledger/besu/pull/XXXX)
 
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
