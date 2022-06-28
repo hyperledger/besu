@@ -6,9 +6,11 @@
 - Do not require a minimum block height when downloading headers or blocks [#3911](https://github.com/hyperledger/besu/pull/3911)
 - When on PoS the head can be only be updated by ForkchoiceUpdate [#3994](https://github.com/hyperledger/besu/pull/3994)
 - Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
+- Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
 
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
+- Upgrade OpenTelemetry to version 1.15.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 
 ## 22.4.3
 
