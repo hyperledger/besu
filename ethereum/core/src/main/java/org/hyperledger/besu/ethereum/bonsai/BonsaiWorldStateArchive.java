@@ -232,8 +232,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
 
         // attempt the state rolling
-        final BonsaiWorldStateUpdater bonsaiUpdater =
-            (BonsaiWorldStateUpdater) persistedState.updater();
+        final BonsaiWorldStateUpdater bonsaiUpdater = getUpdater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
@@ -259,6 +258,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         return Optional.empty();
       }
     }
+  }
+
+  BonsaiWorldStateUpdater getUpdater() {
+    return (BonsaiWorldStateUpdater) persistedState.updater();
   }
 
   @Override
