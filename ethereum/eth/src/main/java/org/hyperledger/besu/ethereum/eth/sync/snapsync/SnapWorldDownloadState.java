@@ -164,17 +164,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     snapSyncState.setHealStatus(true);
     // try to find new pivot block before healing
     dynamicPivotBlockManager.switchToNewPivotBlock(
-        (blockHeader, newPivotBlockFound) -> {
-          enqueueRequest(
-              createAccountTrieNodeDataRequest(
-                  blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
-        });
+        (blockHeader, newPivotBlockFound) ->
+            enqueueRequest(
+                createAccountTrieNodeDataRequest(
+                    blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts)));
   }
 
   public synchronized void reloadHeal() {
     worldStateStorage.clearFlatDatabase();
-    pendingTrieNodeRequests.clearInternalQueues();
-    pendingCodeRequests.clearInternalQueue();
+    pendingTrieNodeRequests.clear();
+    pendingCodeRequests.clear();
     snapSyncState.setHealStatus(false);
     checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
   }

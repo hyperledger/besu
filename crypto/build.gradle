@@ -46,6 +46,4 @@ dependencies {
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
-artifacts {
-  testSupportArtifacts testSupportJar
-}
+artifacts { testSupportArtifacts testSupportJar }

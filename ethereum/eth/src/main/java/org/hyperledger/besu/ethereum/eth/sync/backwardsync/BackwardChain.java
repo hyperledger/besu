@@ -19,6 +19,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -187,5 +188,18 @@ public class BackwardChain {
 
   public synchronized Optional<Hash> getFirstHashToAppend() {
     return Optional.ofNullable(hashesToAppend.poll());
+  }
+
+  public void addBadChainToManager(final BadBlockManager badBlocksManager, final Hash hash) {
+    final Optional<Hash> ancestor = chainStorage.get(hash);
+    while (ancestor.isPresent()) {
+      final Optional<Block> block = blocks.get(ancestor.get());
+      if (block.isPresent()) {
+        badBlocksManager.addBadBlock(block.get());
+      } else {
+        final Optional<BlockHeader> blockHeader = headers.get(ancestor.get());
+        blockHeader.ifPresent(badBlocksManager::addBadHeader);
+      }
+    }
   }
 }
