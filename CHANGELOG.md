@@ -3,6 +3,8 @@
 ## 22.4.4
 
 ### Additions and Improvements
+- Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
+
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
 - remove peer block height requirements for block fetching
