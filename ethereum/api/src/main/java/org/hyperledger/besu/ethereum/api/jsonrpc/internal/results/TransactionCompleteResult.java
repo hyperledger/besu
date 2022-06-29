@@ -113,7 +113,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     this.type =
         transactionType.equals(TransactionType.FRONTIER)
-            ? null
+            ? Quantity.create(0)
             : Quantity.create(transactionType.getSerializedType());
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());
