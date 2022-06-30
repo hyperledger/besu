@@ -171,12 +171,12 @@ class EthServer {
       final BlockBody body = maybeBody.get();
       final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
       body.writeTo(bodyOutput);
-      final Bytes encodedBody = bodyOutput.encoded();
-      if (responseSizeEstimate + encodedBody.size() > maxMessageSize) {
+      final int encodedSize = bodyOutput.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
         break;
       }
-      responseSizeEstimate += encodedBody.size();
-      rlp.writeRaw(encodedBody);
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(bodyOutput.encoded());
     }
     rlp.endList();
     return BlockBodiesMessage.createUnsafe(rlp.encoded());
