@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
@@ -246,6 +247,7 @@ public class RespondingEthPeer {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool) {
+    final int maxMsgSize = EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE;
     return (cap, msg) -> {
       MessageData response = null;
       switch (msg.getCode()) {
@@ -253,7 +255,7 @@ public class RespondingEthPeer {
           response = EthServer.constructGetHeadersResponse(blockchain, msg, 200);
           break;
         case EthPV62.GET_BLOCK_BODIES:
-          response = EthServer.constructGetBodiesResponse(blockchain, msg, 200);
+          response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV63.GET_RECEIPTS:
           response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200);

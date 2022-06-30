@@ -36,6 +36,8 @@ import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
@@ -69,6 +71,8 @@ class EthServer {
   }
 
   private void registerResponseConstructors() {
+    final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
+
     ethMessages.registerResponseConstructor(
         EthPV62.GET_BLOCK_HEADERS,
         messageData ->
@@ -80,7 +84,10 @@ class EthServer {
         EthPV62.GET_BLOCK_BODIES,
         messageData ->
             constructGetBodiesResponse(
-                blockchain, messageData, ethereumWireProtocolConfiguration.getMaxGetBlockBodies()));
+                blockchain,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetBlockBodies(),
+                maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthPV63.GET_RECEIPTS,
         messageData ->
@@ -140,11 +147,16 @@ class EthServer {
   }
 
   static MessageData constructGetBodiesResponse(
-      final Blockchain blockchain, final MessageData message, final int requestLimit) {
+      final Blockchain blockchain,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetBlockBodiesMessage getBlockBodiesMessage = GetBlockBodiesMessage.readFrom(message);
     final Iterable<Hash> hashes = getBlockBodiesMessage.hashes();
 
-    final Collection<BlockBody> bodies = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -152,12 +164,22 @@ class EthServer {
       }
       count++;
       final Optional<BlockBody> maybeBody = blockchain.getBlockBody(hash);
-      if (!maybeBody.isPresent()) {
+      if (maybeBody.isEmpty()) {
         continue;
       }
-      bodies.add(maybeBody.get());
+
+      final BlockBody body = maybeBody.get();
+      final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
+      body.writeTo(bodyOutput);
+      final Bytes encodedBody = bodyOutput.encoded();
+      if (responseSizeEstimate + encodedBody.size() > maxMessageSize) {
+        break;
+      }
+      responseSizeEstimate += encodedBody.size();
+      rlp.writeRaw(encodedBody);
     }
-    return BlockBodiesMessage.create(bodies);
+    rlp.endList();
+    return BlockBodiesMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetReceiptsResponse(
