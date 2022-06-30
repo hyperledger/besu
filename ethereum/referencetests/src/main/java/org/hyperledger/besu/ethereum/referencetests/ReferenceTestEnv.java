@@ -50,7 +50,7 @@ public class ReferenceTestEnv extends BlockHeader {
   @JsonCreator
   public ReferenceTestEnv(
       @JsonProperty("currentCoinbase") final String coinbase,
-      @JsonProperty("currentDifficulty") final String difficulty,
+      @JsonProperty(value = "currentDifficulty", required = false) final String difficulty,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
       @JsonProperty(value = "currentBaseFee", required = false) final String baseFee,
@@ -63,7 +63,7 @@ public class ReferenceTestEnv extends BlockHeader {
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),
-        Difficulty.fromHexString(difficulty),
+        Optional.ofNullable(difficulty).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         Long.decode(number),
         Long.decode(gasLimit),
         0L,

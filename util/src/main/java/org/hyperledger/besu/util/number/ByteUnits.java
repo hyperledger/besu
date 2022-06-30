@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,21 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
 
-import java.util.EnumSet;
+package org.hyperledger.besu.util.number;
 
-public enum SyncMode {
-  // Fully validate all blocks as they sync
-  FULL,
-  // Perform light validation on older blocks, and switch to full validation for more recent blocks
-  FAST,
-  // Perform snapsync
-  X_SNAP,
-  // Perform snapsync but starting from a checkpoint instead of starting from genesis
-  X_CHECKPOINT;
+public class ByteUnits {
+  public static final int MEGABYTE = 1 << 20;
 
-  public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
-  }
+  private ByteUnits() {}
 }

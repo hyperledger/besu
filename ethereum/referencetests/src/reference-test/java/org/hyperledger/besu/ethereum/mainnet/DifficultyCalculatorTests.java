@@ -63,6 +63,21 @@ public class DifficultyCalculatorTests {
               EvmConfiguration.DEFAULT)
         ),
         Arguments.of(
+          "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
+          MainnetProtocolSchedule.fromConfig(
+              new StubGenesisConfigOptions().grayGlacierBlock(15050000))
+        ),
+        Arguments.of(
+                "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff1.json",
+                MainnetProtocolSchedule.fromConfig(
+                        new StubGenesisConfigOptions().grayGlacierBlock(15050000))
+        ),
+        Arguments.of(
+                "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierTimeDiff2.json",
+                MainnetProtocolSchedule.fromConfig(
+                        new StubGenesisConfigOptions().grayGlacierBlock(15050000))
+        ),
+        Arguments.of(
           "/DifficultyTests/dfArrowGlacier/difficultyArrowGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
               new StubGenesisConfigOptions().arrowGlacierBlock(13773000))
