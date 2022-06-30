@@ -18,7 +18,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface NodeConfiguration {
@@ -60,6 +59,4 @@ public interface NodeConfiguration {
   boolean isRevertReasonEnabled();
 
   List<String> getStaticNodes();
-
-  Map<String, String> getEnvironment();
 }
