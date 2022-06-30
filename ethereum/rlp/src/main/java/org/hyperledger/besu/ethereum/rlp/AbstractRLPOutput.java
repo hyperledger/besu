@@ -36,7 +36,7 @@ abstract class AbstractRLPOutput implements RLPOutput {
    * (that is, the list that starts at the ith LIST_MARKER in 'values').
    *
    * With that information gathered, encoded() can write its output in a single walk of 'values':
-   * values can encoded directly, and every time we read a list marker, we use the corresponding
+   * values can be encoded directly, and every time we read a list marker, we use the corresponding
    * payload size to write the proper prefix and continue.
    *
    * The main remaining aspect is how the values of 'payloadSizes' are computed. Computing the size
@@ -44,15 +44,15 @@ abstract class AbstractRLPOutput implements RLPOutput {
    * to the running size. The difficulty is with nesting: when we start a new list, we need to
    * track both the sizes of the previous list and the new one. To deal with that, we use the small
    * stack 'parentListStack': it stores the index in 'payloadSizes' of every currently "open" lists.
-   * In other words, payloadSises[parentListStack[stackSize - 1]] corresponds to the size of the
+   * In other words, payloadSizes[parentListStack[stackSize - 1]] corresponds to the size of the
    * current list, the one to which newly added value are currently written (until the next call
-   * to 'endList()' that is, while payloadSises[parentListStack[stackSize - 2]] would be the size
+   * to 'endList()' that is, while payloadSizes[parentListStack[stackSize - 2]] would be the size
    * of the parent list, ....
    *
    * Note that when a new value is added, we add its size only the currently running list. We should
    * add that size to that of any parent list as well, but we do so indirectly when a list is
    * finished: when 'endList()' is called, we add the size of the full list we just finished (and
-   * whose size we have now have completely) to its parent size.
+   * whose size we have now completed) to its parent size.
    *
    * Side-note: this class internally and informally use "element" to refer to a non list items.
    */
@@ -65,7 +65,7 @@ abstract class AbstractRLPOutput implements RLPOutput {
   private final BitSet rlpEncoded = new BitSet();
 
   // First element is the total size of everything (the encoding may be a single non-list item, so
-  // this handle that case more easily; we need that value to size out final output). Following
+  // this handles that case more easily; we need that value to size out final output). Following
   // elements holds the size of the payload of the ith list in 'values'.
   private int[] payloadSizes = new int[8];
   private int listsCount = 1; // number of lists current in 'values' + 1.
