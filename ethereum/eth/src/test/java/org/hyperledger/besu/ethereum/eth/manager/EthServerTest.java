@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration.Builder;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
@@ -33,14 +34,19 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -196,6 +202,51 @@ public class EthServerTest {
     assertThat(result).contains(expectedMsg);
   }
 
+  @Test
+  public void shouldLimitTxReceiptsByMessageSize() {
+    final Map<Hash, List<TransactionReceipt>> receiptsByHash = setupBlockReceipts(10);
+    final List<Hash> hashes = new ArrayList<>(receiptsByHash.keySet());
+    final List<List<TransactionReceipt>> expectedResults = new ArrayList<>();
+    int sizeLimit = RLP.MAX_PREFIX_SIZE;
+    for (int i = 0; i < 4; i++) {
+      final List<TransactionReceipt> receipts = receiptsByHash.get(hashes.get(i));
+      sizeLimit += calculateRlpEncodedSize(receipts);
+      expectedResults.add(receipts);
+    }
+
+    final int msgSizeLimit = sizeLimit;
+    setupEthServer(b -> b.maxMessageSize(msgSizeLimit));
+
+    // Request all records, which will exceed the limit
+    final GetReceiptsMessage bodiesMsg = GetReceiptsMessage.create(hashes);
+    final EthMessage ethMsg = new EthMessage(ethPeer, bodiesMsg);
+
+    // Check response
+    final ReceiptsMessage expectedMsg = ReceiptsMessage.create(expectedResults);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldLimitTxReceiptsByCount() {
+    final int limit = 6;
+    final Map<Hash, List<TransactionReceipt>> receiptsByHash = setupBlockReceipts(10);
+    final List<Hash> hashes = new ArrayList<>(receiptsByHash.keySet());
+    final List<List<TransactionReceipt>> expectedResults =
+        receiptsByHash.values().stream().limit(limit).collect(Collectors.toList());
+
+    setupEthServer(b -> b.maxGetReceipts(limit));
+
+    // Request all records, which will exceed the limit
+    final GetReceiptsMessage bodiesMsg = GetReceiptsMessage.create(hashes);
+    final EthMessage ethMsg = new EthMessage(ethPeer, bodiesMsg);
+
+    // Check response
+    final ReceiptsMessage expectedMsg = ReceiptsMessage.create(expectedResults);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    assertThat(result).contains(expectedMsg);
+  }
+
   private void setupEthServer(Function<Builder, Builder> configModifier) {
     final Builder configBuilder = EthProtocolConfiguration.builder();
     final EthProtocolConfiguration ethConfig = configModifier.apply(configBuilder).build();
@@ -215,11 +266,31 @@ public class EthServerTest {
     return blocks;
   }
 
+  private Map<Hash, List<TransactionReceipt>> setupBlockReceipts(final int count) {
+    final Map<Hash, List<TransactionReceipt>> txReceiptsByHash = new HashMap<>();
+    final List<Block> blocks = dataGenerator.blockSequence(count);
+    for (Block block : blocks) {
+      final List<TransactionReceipt> receipts = dataGenerator.receipts(block);
+      when(blockchain.getTxReceipts(block.getHash())).thenReturn(Optional.of(receipts));
+      txReceiptsByHash.put(block.getHash(), receipts);
+    }
+
+    return txReceiptsByHash;
+  }
+
   private int calculateRlpEncodedSize(final BlockBody blockBody) {
     return RLP.encode(blockBody::writeTo).size();
   }
 
   private int calculateRlpEncodedSize(final BlockHeader header) {
     return RLP.encode(header::writeTo).size();
+  }
+
+  private int calculateRlpEncodedSize(final List<TransactionReceipt> receipts) {
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
+    receipts.forEach(r -> r.writeTo(rlp));
+    rlp.endList();
+    return rlp.encodedSize();
   }
 }

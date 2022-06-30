@@ -91,7 +91,10 @@ class EthServer {
         EthPV63.GET_RECEIPTS,
         messageData ->
             constructGetReceiptsResponse(
-                blockchain, messageData, ethereumWireProtocolConfiguration.getMaxGetReceipts()));
+                blockchain,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetReceipts(),
+                maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthPV63.GET_NODE_DATA,
         messageData ->
@@ -206,11 +209,16 @@ class EthServer {
   }
 
   static MessageData constructGetReceiptsResponse(
-      final Blockchain blockchain, final MessageData message, final int requestLimit) {
+      final Blockchain blockchain,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetReceiptsMessage getReceipts = GetReceiptsMessage.readFrom(message);
     final Iterable<Hash> hashes = getReceipts.hashes();
 
-    final List<List<TransactionReceipt>> receipts = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -218,12 +226,24 @@ class EthServer {
       }
       count++;
       final Optional<List<TransactionReceipt>> maybeReceipts = blockchain.getTxReceipts(hash);
-      if (!maybeReceipts.isPresent()) {
+      if (maybeReceipts.isEmpty()) {
         continue;
       }
-      receipts.add(maybeReceipts.get());
+      final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
+      encodedReceipts.startList();
+      maybeReceipts.get().forEach(r -> r.writeTo(encodedReceipts));
+      encodedReceipts.endList();
+      final int encodedSize = encodedReceipts.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(encodedReceipts.encoded());
     }
-    return ReceiptsMessage.create(receipts);
+    rlp.endList();
+
+    return ReceiptsMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetPooledTransactionsResponse(

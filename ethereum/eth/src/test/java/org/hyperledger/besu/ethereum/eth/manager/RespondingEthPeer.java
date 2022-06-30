@@ -258,7 +258,7 @@ public class RespondingEthPeer {
           response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV63.GET_RECEIPTS:
-          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200);
+          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV63.GET_NODE_DATA:
           response = EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200);
