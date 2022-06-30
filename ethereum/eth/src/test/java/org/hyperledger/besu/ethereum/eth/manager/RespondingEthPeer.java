@@ -264,7 +264,9 @@ public class RespondingEthPeer {
           response = EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200);
           break;
         case EthPV65.GET_POOLED_TRANSACTIONS:
-          response = EthServer.constructGetPooledTransactionsResponse(transactionPool, msg, 200);
+          response =
+              EthServer.constructGetPooledTransactionsResponse(
+                  transactionPool, msg, 200, maxMsgSize);
       }
       return Optional.ofNullable(response);
     };

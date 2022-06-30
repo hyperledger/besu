@@ -108,7 +108,8 @@ class EthServer {
             constructGetPooledTransactionsResponse(
                 transactionPool,
                 messageData,
-                ethereumWireProtocolConfiguration.getMaxGetPooledTransactions()));
+                ethereumWireProtocolConfiguration.getMaxGetPooledTransactions(),
+                maxMessageSize));
   }
 
   static MessageData constructGetHeadersResponse(
@@ -247,12 +248,17 @@ class EthServer {
   }
 
   static MessageData constructGetPooledTransactionsResponse(
-      final TransactionPool transactionPool, final MessageData message, final int requestLimit) {
+      final TransactionPool transactionPool,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetPooledTransactionsMessage getPooledTransactions =
         GetPooledTransactionsMessage.readFrom(message);
     final Iterable<Hash> hashes = getPooledTransactions.pooledTransactions();
 
-    final List<Transaction> tx = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -263,9 +269,19 @@ class EthServer {
       if (maybeTx.isEmpty()) {
         continue;
       }
-      tx.add(maybeTx.get());
+      final BytesValueRLPOutput txRlp = new BytesValueRLPOutput();
+      maybeTx.get().writeTo(txRlp);
+      final int encodedSize = txRlp.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(txRlp.encoded());
     }
-    return PooledTransactionsMessage.create(tx);
+    rlp.endList();
+
+    return PooledTransactionsMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetNodeDataResponse(

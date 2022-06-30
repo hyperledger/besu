@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration.Builder;
@@ -34,8 +35,10 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -50,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -247,6 +251,53 @@ public class EthServerTest {
     assertThat(result).contains(expectedMsg);
   }
 
+  @Test
+  public void shouldLimitTransactionsByMessageSize() {
+    final List<Transaction> transactions = setupTransactions(10);
+    final List<Transaction> expectedResult = new ArrayList<>();
+    int sizeLimit = RLP.MAX_PREFIX_SIZE;
+    for (int i = 0; i < 4; i++) {
+      final Transaction tx = transactions.get(i);
+      sizeLimit += calculateRlpEncodedSize(tx);
+      expectedResult.add(tx);
+    }
+
+    final int msgSizeLimit = sizeLimit;
+    setupEthServer(b -> b.maxMessageSize(msgSizeLimit));
+
+    // Request all hashes, which will exceed the limit
+    final List<Hash> hashes =
+        transactions.stream().map(Transaction::getHash).collect(Collectors.toList());
+    final GetPooledTransactionsMessage msgData = GetPooledTransactionsMessage.create(hashes);
+    final EthMessage ethMsg = new EthMessage(ethPeer, msgData);
+
+    // Check response
+    final PooledTransactionsMessage expectedMsg = PooledTransactionsMessage.create(expectedResult);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldLimitTransactionsByCount() {
+    final int limit = 6;
+    final List<Transaction> transactions = setupTransactions(10);
+    final List<Transaction> expectedResult =
+        transactions.stream().limit(limit).collect(Collectors.toList());
+
+    setupEthServer(b -> b.maxGetPooledTransactions(limit));
+
+    // Request all hashes, which will exceed the limit
+    final List<Hash> hashes =
+        transactions.stream().map(Transaction::getHash).collect(Collectors.toList());
+    final GetPooledTransactionsMessage msgData = GetPooledTransactionsMessage.create(hashes);
+    final EthMessage ethMsg = new EthMessage(ethPeer, msgData);
+
+    // Check response
+    final PooledTransactionsMessage expectedMsg = PooledTransactionsMessage.create(expectedResult);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    assertThat(result).contains(expectedMsg);
+  }
+
   private void setupEthServer(Function<Builder, Builder> configModifier) {
     final Builder configBuilder = EthProtocolConfiguration.builder();
     final EthProtocolConfiguration ethConfig = configModifier.apply(configBuilder).build();
@@ -278,12 +329,27 @@ public class EthServerTest {
     return txReceiptsByHash;
   }
 
+  private List<Transaction> setupTransactions(final int count) {
+    List<Transaction> txs =
+        Stream.generate(dataGenerator::transaction).limit(count).collect(Collectors.toList());
+
+    for (Transaction tx : txs) {
+      when(transactionPool.getTransactionByHash(tx.getHash())).thenReturn(Optional.of(tx));
+    }
+
+    return txs;
+  }
+
   private int calculateRlpEncodedSize(final BlockBody blockBody) {
     return RLP.encode(blockBody::writeTo).size();
   }
 
   private int calculateRlpEncodedSize(final BlockHeader header) {
     return RLP.encode(header::writeTo).size();
+  }
+
+  private int calculateRlpEncodedSize(final Transaction tx) {
+    return RLP.encode(tx::writeTo).size();
   }
 
   private int calculateRlpEncodedSize(final List<TransactionReceipt> receipts) {
