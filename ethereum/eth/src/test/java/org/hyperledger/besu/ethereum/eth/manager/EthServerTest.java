@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration.Builder;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
@@ -320,8 +319,10 @@ public class EthServerTest {
     setupEthServer(Function.identity());
   }
 
-  private void setupEthServer(Function<Builder, Builder> configModifier) {
-    final Builder configBuilder = EthProtocolConfiguration.builder();
+  private void setupEthServer(
+      final Function<EthProtocolConfiguration.Builder, EthProtocolConfiguration.Builder>
+          configModifier) {
+    final EthProtocolConfiguration.Builder configBuilder = EthProtocolConfiguration.builder();
     final EthProtocolConfiguration ethConfig = configModifier.apply(configBuilder).build();
 
     new EthServer(blockchain, worldStateArchive, transactionPool, ethMessages, ethConfig);
