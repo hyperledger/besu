@@ -41,12 +41,10 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 
 class EthServer {
@@ -79,7 +77,8 @@ class EthServer {
             constructGetHeadersResponse(
                 blockchain,
                 messageData,
-                ethereumWireProtocolConfiguration.getMaxGetBlockHeaders()));
+                ethereumWireProtocolConfiguration.getMaxGetBlockHeaders(),
+                maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthPV62.GET_BLOCK_BODIES,
         messageData ->
@@ -110,13 +109,18 @@ class EthServer {
   }
 
   static MessageData constructGetHeadersResponse(
-      final Blockchain blockchain, final MessageData message, final int requestLimit) {
+      final Blockchain blockchain,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
+    // Extract parameters from request
     final GetBlockHeadersMessage getHeaders = GetBlockHeadersMessage.readFrom(message);
     final Optional<Hash> hash = getHeaders.hash();
     final int skip = getHeaders.skip();
     final int maxHeaders = Math.min(requestLimit, getHeaders.maxHeaders());
     final boolean reversed = getHeaders.reverse();
     final BlockHeader firstHeader;
+    // Query first header by hash or number depending on request arguments
     if (hash.isPresent()) {
       final Hash startHash = hash.get();
       firstHeader = blockchain.getBlockHeader(startHash).orElse(null);
@@ -124,26 +128,45 @@ class EthServer {
       final long firstNumber = getHeaders.blockNumber().getAsLong();
       firstHeader = blockchain.getBlockHeader(firstNumber).orElse(null);
     }
-    final Collection<BlockHeader> resp;
+
+    // The initial header was not found, nothing to return
     if (firstHeader == null) {
-      resp = Collections.emptyList();
-    } else {
-      resp = Lists.newArrayList(firstHeader);
-      final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
-      for (int i = 1; i < maxHeaders; i++) {
-        final long blockNumber = firstHeader.getNumber() + i * numberDelta;
-        if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
-          break;
-        }
-        final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNumber);
-        if (maybeHeader.isPresent()) {
-          resp.add(maybeHeader.get());
-        } else {
-          break;
-        }
-      }
+      return BlockHeadersMessage.create(Collections.emptyList());
     }
-    return BlockHeadersMessage.create(resp);
+
+    // Encode the first header
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
+    final Bytes firstEncodedHeader = RLP.encode(firstHeader::writeTo);
+    if (responseSizeEstimate + firstEncodedHeader.size() > maxMessageSize) {
+      return BlockHeadersMessage.create(Collections.emptyList());
+    }
+    responseSizeEstimate += firstEncodedHeader.size();
+    rlp.writeRaw(firstEncodedHeader);
+    // Collect and encode the remaining headers
+    final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
+    for (int i = 1; i < maxHeaders; i++) {
+      final long blockNumber = firstHeader.getNumber() + i * numberDelta;
+      if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
+        break;
+      }
+      final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNumber);
+      if (maybeHeader.isEmpty()) {
+        break;
+      }
+      final BytesValueRLPOutput headerRlp = new BytesValueRLPOutput();
+      maybeHeader.get().writeTo(headerRlp);
+      final int encodedSize = headerRlp.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(headerRlp.encoded());
+    }
+    rlp.endList();
+
+    return BlockHeadersMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetBodiesResponse(

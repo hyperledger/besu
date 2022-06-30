@@ -25,15 +25,17 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration.Builder;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -101,6 +103,54 @@ public class EthServerTest {
   }
 
   @Test
+  public void shouldLimitBlockHeadersByMessageSize() {
+    final List<Block> blocks = setupBlocks(10);
+    final List<BlockHeader> expectedHeaders = new ArrayList<>();
+    int sizeLimit = RLP.MAX_PREFIX_SIZE;
+    for (int i = 0; i < 4; i++) {
+      final BlockHeader header = blocks.get(i).getHeader();
+      sizeLimit += calculateRlpEncodedSize(header);
+      expectedHeaders.add(header);
+    }
+
+    final int msgSizeLimit = sizeLimit;
+    setupEthServer(b -> b.maxMessageSize(msgSizeLimit));
+
+    // Request all blocks, which will exceed the limit
+    final BlockHeader firstHeader = blocks.get(0).getHeader();
+    final GetBlockHeadersMessage headersMsg =
+        GetBlockHeadersMessage.create(firstHeader.getHash(), blocks.size(), 0, false);
+    final EthMessage ethMsg = new EthMessage(ethPeer, headersMsg);
+
+    // Check response
+    final BlockHeadersMessage expectedMsg = BlockHeadersMessage.create(expectedHeaders);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldLimitBlockHeadersByCount() {
+    final int blockCount = 10;
+    final int limit = 6;
+    final List<Block> blocks = setupBlocks(blockCount);
+    final List<BlockHeader> expectedHeaders =
+        blocks.stream().limit(limit).map(Block::getHeader).collect(Collectors.toList());
+
+    setupEthServer(b -> b.maxGetBlockHeaders(limit));
+
+    // Request all blocks, which will exceed the limit
+    final BlockHeader firstHeader = blocks.get(0).getHeader();
+    final GetBlockHeadersMessage headersMsg =
+        GetBlockHeadersMessage.create(firstHeader.getHash(), blocks.size(), 0, false);
+    final EthMessage ethMsg = new EthMessage(ethPeer, headersMsg);
+
+    // Check response
+    final BlockHeadersMessage expectedMsg = BlockHeadersMessage.create(expectedHeaders);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
   public void shouldLimitBlockBodiesByMessageSize() {
     final List<Block> blocks = setupBlocks(10);
     final List<BlockBody> expectedBodies = new ArrayList<>();
@@ -157,14 +207,19 @@ public class EthServerTest {
     final List<Block> blocks = dataGenerator.blockSequence(count);
     for (Block block : blocks) {
       when(blockchain.getBlockBody(block.getHash())).thenReturn(Optional.of(block.getBody()));
+      when(blockchain.getBlockHeader(block.getHash())).thenReturn(Optional.of(block.getHeader()));
+      when(blockchain.getBlockHeader(block.getHeader().getNumber()))
+          .thenReturn(Optional.of(block.getHeader()));
     }
 
     return blocks;
   }
 
   private int calculateRlpEncodedSize(final BlockBody blockBody) {
-    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-    blockBody.writeTo(rlp);
-    return rlp.encoded().size();
+    return RLP.encode(blockBody::writeTo).size();
+  }
+
+  private int calculateRlpEncodedSize(final BlockHeader header) {
+    return RLP.encode(header::writeTo).size();
   }
 }

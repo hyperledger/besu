@@ -252,7 +252,7 @@ public class RespondingEthPeer {
       MessageData response = null;
       switch (msg.getCode()) {
         case EthPV62.GET_BLOCK_HEADERS:
-          response = EthServer.constructGetHeadersResponse(blockchain, msg, 200);
+          response = EthServer.constructGetHeadersResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV62.GET_BLOCK_BODIES:
           response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
