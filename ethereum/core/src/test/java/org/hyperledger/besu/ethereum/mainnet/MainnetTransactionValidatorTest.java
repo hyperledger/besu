@@ -396,6 +396,29 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
+  public void shouldAcceptZeroGasPriceTransactionIfBaseFeeIsZero() {
+    final Optional<Wei> zeroBaseFee = Optional.of(Wei.ZERO);
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            FeeMarket.london(0L, zeroBaseFee),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            defaultGoQuorumCompatibilityMode);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+
+    assertThat(validator.validate(transaction, zeroBaseFee, transactionValidationParams))
+        .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
   public void shouldAcceptValidEIP1559() {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(

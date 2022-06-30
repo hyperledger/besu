@@ -127,7 +127,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<Integer> exitCode = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
-  private final Map<String, String> environment;
 
   public BesuNode(
       final String name,
@@ -160,8 +159,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
-      final boolean isStrictTxReplayProtectionEnabled,
-      final Map<String, String> environment)
+      final boolean isStrictTxReplayProtectionEnabled)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
@@ -218,7 +216,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
-    this.environment = environment;
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -796,10 +793,5 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public void setExitCode(final int exitValue) {
     this.exitCode = Optional.of(exitValue);
-  }
-
-  @Override
-  public Map<String, String> getEnvironment() {
-    return environment;
   }
 }

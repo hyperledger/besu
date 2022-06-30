@@ -5,10 +5,11 @@
 ### Additions and Improvements
 - Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
 - Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
+- Return `type` with value `0x0` when serializing legacy transactions [#4027](https://github.com/hyperledger/besu/pull/4027)
 
 ### Bug Fixes
 - Fixed a snapsync issue that can sometimes block the healing step [#3920](https://github.com/hyperledger/besu/pull/3920)
-- Upgrade OpenTelemetry to version 1.15.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
+- Support free gas networks in the London fee market [#4003](https://github.com/hyperledger/besu/pull/4003)
 
 ## 22.4.3
 
