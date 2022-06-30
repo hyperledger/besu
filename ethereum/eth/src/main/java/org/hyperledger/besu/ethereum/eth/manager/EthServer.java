@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -101,7 +100,8 @@ class EthServer {
             constructGetNodeDataResponse(
                 worldStateArchive,
                 messageData,
-                ethereumWireProtocolConfiguration.getMaxGetNodeData()));
+                ethereumWireProtocolConfiguration.getMaxGetNodeData(),
+                maxMessageSize));
     ethMessages.registerResponseConstructor(
         EthPV65.GET_POOLED_TRANSACTIONS,
         messageData ->
@@ -287,11 +287,14 @@ class EthServer {
   static MessageData constructGetNodeDataResponse(
       final WorldStateArchive worldStateArchive,
       final MessageData message,
-      final int requestLimit) {
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetNodeDataMessage getNodeDataMessage = GetNodeDataMessage.readFrom(message);
     final Iterable<Hash> hashes = getNodeDataMessage.hashes();
 
-    final List<Bytes> nodeData = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -299,8 +302,23 @@ class EthServer {
       }
       count++;
 
-      worldStateArchive.getNodeData(hash).ifPresent(nodeData::add);
+      final Optional<Bytes> maybeNodeData = worldStateArchive.getNodeData(hash);
+      if (maybeNodeData.isEmpty()) {
+        continue;
+      }
+
+      final BytesValueRLPOutput rlpNodeData = new BytesValueRLPOutput();
+      rlpNodeData.writeBytes(maybeNodeData.get());
+      final int encodedSize = rlpNodeData.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(rlpNodeData.encoded());
     }
-    return NodeDataMessage.create(nodeData);
+    rlp.endList();
+
+    return NodeDataMessage.createUnsafe(rlp.encoded());
   }
 }
