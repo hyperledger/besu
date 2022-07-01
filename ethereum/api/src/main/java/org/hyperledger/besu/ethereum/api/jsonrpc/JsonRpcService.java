@@ -603,12 +603,11 @@ public class JsonRpcService {
             : event.request().host();
     final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
-    // if (hostPieces > 1) {
     // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
     if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
       return Optional.empty();
     }
-    // }
+
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
