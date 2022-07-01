@@ -64,7 +64,13 @@ public class TransactionPoolFactoryTest {
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
     when(context.getBlockchain()).thenReturn(blockchain);
-    final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem(), 25);
+    final EthPeers ethPeers =
+        new EthPeers(
+            "ETH",
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
