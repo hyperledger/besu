@@ -87,11 +87,13 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -331,26 +333,21 @@ public class JsonRpcService {
                 user -> {
                   if (user.isEmpty()) {
                     websocket.reject(403);
+                  } else {
+                    final Handler<Buffer> socketHandler =
+                        handlerForUser(socketAddress, websocket, user);
+                    websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
+                    websocket.binaryMessageHandler(socketHandler);
                   }
                 });
+      } else {
+        final Handler<Buffer> socketHandler =
+            handlerForUser(socketAddress, websocket, Optional.empty());
+        websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
+        websocket.binaryMessageHandler(socketHandler);
       }
-      LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
-
-      final Handler<Buffer> socketHandler =
-          buffer -> {
-            LOG.debug(
-                "Received Websocket request (binary frame) {} ({})",
-                buffer.toString(),
-                socketAddressAsString(socketAddress));
-
-            if (webSocketMessageHandler.isPresent()) {
-              webSocketMessageHandler.get().handle(websocket, buffer, Optional.empty());
-            } else {
-              LOG.error("No socket request handler configured");
-            }
-          };
-      websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
-      websocket.binaryMessageHandler(socketHandler);
+      String addr = socketAddressAsString(socketAddress);
+      LOG.debug("Websocket Connected ({})", addr);
 
       websocket.closeHandler(
           v -> {
@@ -368,6 +365,24 @@ public class JsonRpcService {
                 socketAddressAsString(socketAddress));
             websocket.close();
           });
+    };
+  }
+
+  @NotNull
+  private Handler<Buffer> handlerForUser(
+      final SocketAddress socketAddress,
+      final ServerWebSocket websocket,
+      final Optional<User> user) {
+    return buffer -> {
+      String addr = socketAddressAsString(socketAddress);
+      LOG.debug("Received Websocket request (binary frame) {} ({})", buffer, addr);
+
+      if (webSocketMessageHandler.isPresent()) {
+        // if auth enabled and user empty will always 401
+        webSocketMessageHandler.get().handle(websocket, buffer, user);
+      } else {
+        LOG.error("No socket request handler configured");
+      }
     };
   }
 
@@ -588,20 +603,19 @@ public class JsonRpcService {
             : event.request().host();
     final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
+    // if (hostPieces > 1) {
+    // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
+    if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
+      return Optional.empty();
     }
+    // }
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {
     if (config.getHostsAllowlist().contains("*")
         || config.getHostsAllowlist().stream()
-            .anyMatch(
-                allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+            .anyMatch(allowlistEntry -> allowlistEntry.equalsIgnoreCase(hostHeader))) {
       return true;
     } else {
       LOG.trace("Host not in allowlist: '{}'", hostHeader);

@@ -70,7 +70,6 @@ public class JsonRpcJWTTest {
 
   private final JsonRpcConfiguration jsonRpcConfiguration =
       JsonRpcConfiguration.createEngineDefault();
-  private JsonRpcService jsonRpcService;
   private HttpClient httpClient;
   private Optional<AuthenticationService> jwtAuth;
   private HealthService healthy;
@@ -127,7 +126,7 @@ public class JsonRpcJWTTest {
   @Test
   public void unauthenticatedWebsocketAllowedWithoutJWTAuth(final TestContext context) {
 
-    jsonRpcService =
+    JsonRpcService jsonRpcService =
         new JsonRpcService(
             vertx,
             bufferDir,
@@ -187,7 +186,7 @@ public class JsonRpcJWTTest {
   @Test
   public void httpRequestWithDefaultHeaderAndValidJWTIsAccepted(final TestContext context) {
 
-    jsonRpcService =
+    JsonRpcService jsonRpcService =
         new JsonRpcService(
             vertx,
             bufferDir,
@@ -215,7 +214,6 @@ public class JsonRpcJWTTest {
     wsOpts.setPort(listenPort);
     wsOpts.setHost(HOSTNAME);
     wsOpts.setURI("/");
-    wsOpts.addHeader("Origin", "localhost");
     wsOpts.addHeader(
         "Authorization", "Bearer " + ((EngineAuthService) jwtAuth.get()).createToken());
 
@@ -228,14 +226,68 @@ public class JsonRpcJWTTest {
           }
           assertThat(connected.succeeded()).isTrue();
           WebSocket ws = connected.result();
-          JsonRpcRequest req = new JsonRpcRequest("1", "admin_nodeInfo", new Object[0]);
+          JsonRpcRequest req =
+              new JsonRpcRequest("1", "eth_subscribe", List.of("syncing").toArray());
           ws.frameHandler(
               resp -> {
                 assertThat(resp.isText()).isTrue();
                 System.out.println(resp.textData());
+                assertThat(resp.textData()).doesNotContain("error");
+                MutableJsonRpcSuccessResponse messageReply =
+                    Json.decodeValue(resp.textData(), MutableJsonRpcSuccessResponse.class);
+                assertThat(messageReply.getResult()).isEqualTo("0x1");
                 async.complete();
               });
           ws.writeTextMessage(Json.encode(req));
+        });
+
+    async.awaitSuccess(10000);
+    jsonRpcService.stop();
+    httpClient.close();
+  }
+
+  @Test
+  public void httpRequestWithDefaultHeaderAndInvalidJWTIsDenied(final TestContext context) {
+
+    JsonRpcService jsonRpcService =
+        new JsonRpcService(
+            vertx,
+            bufferDir,
+            jsonRpcConfiguration,
+            new NoOpMetricsSystem(),
+            new NatService(Optional.empty(), true),
+            websocketMethods,
+            Optional.empty(),
+            scheduler,
+            jwtAuth,
+            healthy,
+            healthy);
+
+    jsonRpcService.start().join();
+
+    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    int listenPort = inetSocketAddress.getPort();
+
+    final HttpClientOptions httpClientOptions =
+        new HttpClientOptions().setDefaultHost(HOSTNAME).setDefaultPort(listenPort);
+
+    httpClient = vertx.createHttpClient(httpClientOptions);
+
+    WebSocketConnectOptions wsOpts = new WebSocketConnectOptions();
+    wsOpts.setPort(listenPort);
+    wsOpts.setHost(HOSTNAME);
+    wsOpts.setURI("/");
+    wsOpts.addHeader("Authorization", "Bearer totallyunparseablenonsense");
+
+    final Async async = context.async();
+    httpClient.webSocket(
+        wsOpts,
+        connected -> {
+          if (connected.failed()) {
+            connected.cause().printStackTrace();
+          }
+          assertThat(connected.succeeded()).isFalse();
+          async.complete();
         });
 
     async.awaitSuccess(10000);
