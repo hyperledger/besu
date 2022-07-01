@@ -87,9 +87,9 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       Optional.ofNullable(forkChoice.getHeadBlockHash())
           .filter(hash -> !hash.equals(Hash.ZERO))
           .ifPresent(
-              blockhash ->
+              blockHash ->
                   mergeCoordinator.getOrSyncHeaderByHash(
-                      blockhash, forkChoice.getFinalizedBlockHash()));
+                      blockHash, forkChoice.getFinalizedBlockHash()));
 
       return syncingResponse(requestId);
     }

@@ -30,13 +30,24 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   @Override
   public Hash rootHash() {
     final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
-    final Hash calculatedRootHash = calculateRootHash(updater);
-    updater.rollback();
-    return Hash.wrap(calculatedRootHash);
+    try {
+      final Hash calculatedRootHash = calculateRootHash(updater);
+      return Hash.wrap(calculatedRootHash);
+    } finally {
+      updater.rollback();
+    }
   }
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    throw new UnsupportedOperationException("In Memory worldState can not be persisted.");
+    final BonsaiWorldStateUpdater localUpdater = updater.copy();
+    try {
+      final Hash newWorldStateRootHash = rootHash();
+      prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
+      worldStateBlockHash = blockHeader.getHash();
+      worldStateRootHash = newWorldStateRootHash;
+    } finally {
+      localUpdater.reset();
+    }
   }
 }
