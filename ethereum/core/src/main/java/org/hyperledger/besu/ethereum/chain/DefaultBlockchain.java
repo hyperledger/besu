@@ -51,7 +51,6 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -413,7 +412,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     return BlockAddedEvent.createForStoredOnly(blockWithReceipts.getBlock());
   }
 
-  @NotNull
   private BlockAddedEvent handleNewHead(
       final Updater updater, final BlockWithReceipts blockWithReceipts) {
     // This block advances the chain, update the chain head
