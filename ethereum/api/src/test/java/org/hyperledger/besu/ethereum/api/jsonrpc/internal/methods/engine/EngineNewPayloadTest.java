@@ -96,7 +96,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.executeBlock(any()))
+    when(mergeCoordinator.rememberBlock(any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -117,7 +117,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.executeBlock(any())).thenReturn(new Result("error 42"));
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(new Result("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
