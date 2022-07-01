@@ -88,8 +88,7 @@ public class BesuNodeFactory {
         config.getRunCommand(),
         config.getKeyPair(),
         config.getPkiKeyStoreConfiguration(),
-        config.isStrictTxReplayProtectionEnabled(),
-        config.getEnvironment());
+        config.isStrictTxReplayProtectionEnabled());
   }
 
   public BesuNode createMinerNode(

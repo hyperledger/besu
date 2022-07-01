@@ -82,7 +82,7 @@ public abstract class SyncTargetManager {
                             return waitForPeerAndThenSetSyncTarget();
                           }
                           final SyncTarget syncTarget = new SyncTarget(bestPeer, target);
-                          LOG.info(
+                          LOG.debug(
                               "Found common ancestor with peer {} at block {}",
                               bestPeer,
                               target.getNumber());

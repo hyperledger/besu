@@ -44,9 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class BesuNodeConfigurationBuilder {
@@ -87,7 +85,6 @@ public class BesuNodeConfigurationBuilder {
   private Optional<KeyPair> keyPair = Optional.empty();
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
-  private Map<String, String> environment = new HashMap<>();
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -481,11 +478,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder environment(final Map<String, String> environment) {
-    this.environment = environment;
-    return this;
-  }
-
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -518,7 +510,6 @@ public class BesuNodeConfigurationBuilder {
         runCommand,
         keyPair,
         pkiKeyStoreConfiguration,
-        strictTxReplayProtectionEnabled,
-        environment);
+        strictTxReplayProtectionEnabled);
   }
 }
