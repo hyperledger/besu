@@ -46,12 +46,18 @@ public enum BesuMetricCategory implements MetricCategory {
     // Why not KVSTORE_ROCKSDB and KVSTORE_ROCKSDB_STATS, KVSTORE_PRIVATE_ROCKSDB_STATS,
     // KVSTORE_PRIVATE_ROCKSDB_STATS?  They hurt performance under load.
     final EnumSet<BesuMetricCategory> besuCategories =
-        EnumSet.complementOf(
-            EnumSet.of(
-                KVSTORE_ROCKSDB,
-                KVSTORE_ROCKSDB_STATS,
-                KVSTORE_PRIVATE_ROCKSDB,
-                KVSTORE_PRIVATE_ROCKSDB_STATS));
+        EnumSet.of(
+            BLOCKCHAIN,
+            ETHEREUM,
+            EXECUTORS,
+            NETWORK,
+            PEERS,
+            PERMISSIONING,
+            PRUNER,
+            RPC,
+            SYNCHRONIZER,
+            TRANSACTION_POOL,
+            STRATUM);
 
     DEFAULT_METRIC_CATEGORIES =
         ImmutableSet.<MetricCategory>builder()

@@ -148,7 +148,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
-    final LRUCache cache = new LRUCache(config.getCacheCapacity(), -1, true);
+    final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setBlockCache(cache)
         .setFormatVersion(5)
