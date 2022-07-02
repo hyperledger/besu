@@ -490,7 +490,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
         .map(
             header -> {
               // if block is PoW, return ZERO hash
-              if (header.getDifficulty().greaterOrEqualThan(Difficulty.ZERO)) {
+              if (header.getDifficulty().greaterThan(Difficulty.ZERO)) {
                 return Hash.ZERO;
               } else {
                 return header.getHash();
