@@ -52,6 +52,12 @@ public class EngineAuthService implements AuthenticationService {
     this.jwtAuthProvider = JWTAuth.create(vertx, jwtAuthOptions);
   }
 
+  public String createToken() {
+    JsonObject claims = new JsonObject();
+    claims.put("iat", System.currentTimeMillis() / 1000);
+    return this.jwtAuthProvider.generateToken(claims);
+  }
+
   private JWTAuthOptions engineApiJWTOptions(
       final JwtAlgorithm jwtAlgorithm, final Optional<File> keyFile, final Path datadir) {
     byte[] signingKey = null;
