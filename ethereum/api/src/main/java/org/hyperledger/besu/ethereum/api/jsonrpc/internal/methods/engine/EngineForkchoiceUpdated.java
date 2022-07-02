@@ -80,6 +80,16 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
       return syncingResponse(requestId);
     }
 
+    if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())) {
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID,
+              Hash.ZERO,
+              null,
+              Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
+    }
+
     Optional<BlockHeader> newHead =
         protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
 

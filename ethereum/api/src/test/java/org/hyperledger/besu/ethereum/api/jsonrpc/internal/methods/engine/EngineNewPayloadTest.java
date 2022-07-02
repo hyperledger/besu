@@ -231,7 +231,12 @@ public class EngineNewPayloadTest {
     when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    var res = ((JsonRpcSuccessResponse) resp).getResult();
+    assertThat(res).isInstanceOf(EnginePayloadStatusResult.class);
+    var payloadStatusResult = (EnginePayloadStatusResult) res;
+    assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
+    assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
   }
 
   @Test
