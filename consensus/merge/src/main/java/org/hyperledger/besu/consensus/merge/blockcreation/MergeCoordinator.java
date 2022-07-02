@@ -487,7 +487,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // check chain first
     return chain
         .getBlockHeader(parentHash)
-        .map(BlockHeader::getHash)
+        .map(
+            header -> {
+              // if block is PoW, return ZERO hash
+              if (header.getDifficulty().greaterThan(Difficulty.ZERO)) {
+                return Hash.ZERO;
+              } else {
+                return header.getHash();
+              }
+            })
         .map(Optional::of)
         .orElseGet(
             () ->

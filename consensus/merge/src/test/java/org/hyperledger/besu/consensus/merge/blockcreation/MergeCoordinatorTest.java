@@ -166,13 +166,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
     Block parent = new Block(parentHeader, BlockBody.empty());
-    sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
 
+    // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
+    var lvh = this.coordinator.getLatestValidAncestor(parentHeader);
+    assertThat(lvh).isPresent();
+    assertThat(lvh.get()).isEqualTo(Hash.ZERO);
+
+    sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
     BlockHeader childHeader = nextBlockHeader(parentHeader);
     Block child = new Block(childHeader, BlockBody.empty());
     coordinator.validateBlock(child);
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();
+    var nextLvh = this.coordinator.getLatestValidAncestor(childHeader);
+    assertThat(nextLvh).isPresent();
+    assertThat(nextLvh.get()).isEqualTo(parentHeader.getHash());
   }
 
   @Test
@@ -183,8 +191,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     BlockHeader grandParentHeader = nextBlockHeader(terminalHeader);
     Block grandParent = new Block(grandParentHeader, BlockBody.empty());
-    sendNewPayloadAndForkchoiceUpdate(grandParent, Optional.empty(), terminalHeader.getHash());
 
+    // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
+    var lvh = this.coordinator.getLatestValidAncestor(grandParentHeader);
+    assertThat(lvh).isPresent();
+    assertThat(lvh.get()).isEqualTo(Hash.ZERO);
+
+    sendNewPayloadAndForkchoiceUpdate(grandParent, Optional.empty(), terminalHeader.getHash());
     BlockHeader parentHeader = nextBlockHeader(grandParentHeader);
     Block parent = new Block(parentHeader, BlockBody.empty());
     sendNewPayloadAndForkchoiceUpdate(
@@ -196,6 +209,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();
+
+    var nextLvh = this.coordinator.getLatestValidAncestor(childHeader);
+    assertThat(nextLvh).isPresent();
+    assertThat(nextLvh.get()).isEqualTo(parentHeader.getHash());
+
     verify(mergeContext, never()).getTerminalPoWBlock();
   }
 
