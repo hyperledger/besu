@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
@@ -93,6 +94,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,
+          blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           "Failed to decode transactions from block parameter");
     }
@@ -100,6 +102,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     if (blockParam.getExtraData() == null) {
       return respondWithInvalid(
           reqId,
+          blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           "Field extraData must not be null");
     }
@@ -131,15 +134,15 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           String.format(
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash()));
-      return respondWith(reqId, null, INVALID_BLOCK_HASH);
+      return respondWith(reqId, blockParam, null, INVALID_BLOCK_HASH);
     }
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
-      return respondWith(reqId, blockParam.getBlockHash(), VALID);
+      return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
     if (mergeCoordinator.isBadBlock(blockParam.getParentHash())) {
-      return respondWith(reqId, Hash.ZERO, INVALID);
+      return respondWith(reqId, blockParam, Hash.ZERO, INVALID);
     }
 
     Optional<BlockHeader> parentHeader =
@@ -149,6 +152,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       LOG.info("method parameter timestamp not greater than parent");
       return respondWithInvalid(
           reqId,
+          blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           "block timestamp not greater than parent");
     }
@@ -159,13 +163,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     if (mergeContext.isSyncing()
         || mergeCoordinator.getOrSyncHeaderByHash(newBlockHeader.getParentHash()).isEmpty()) {
       mergeCoordinator.appendNewPayloadToSync(block);
-      return respondWith(reqId, null, SYNCING);
+      return respondWith(reqId, blockParam, null, SYNCING);
     }
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
       return respondWithInvalid(
-          requestContext.getRequest().getId(),
+          reqId,
+          blockParam,
           Hash.ZERO,
           newBlockHeader.getHash() + " did not descend from terminal block");
     }
@@ -173,27 +178,32 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
 
     if (latestValidAncestor.isEmpty()) {
-      return respondWith(reqId, null, ACCEPTED);
+      return respondWith(reqId, blockParam, null, ACCEPTED);
     }
 
     // execute block and return result response
     final BlockValidator.Result executionResult = mergeCoordinator.rememberBlock(block);
 
     if (executionResult.errorMessage.isEmpty()) {
-      return respondWith(reqId, newBlockHeader.getHash(), VALID);
+      return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
       return respondWithInvalid(
-          reqId, latestValidAncestor.get(), executionResult.errorMessage.get());
+          reqId, blockParam, latestValidAncestor.get(), executionResult.errorMessage.get());
     }
   }
 
   JsonRpcResponse respondWith(
-      final Object requestId, final Hash latestValidHash, final EngineStatus status) {
-    traceLambda(
+      final Object requestId,
+      final EnginePayloadParameter param,
+      final Hash latestValidHash,
+      final EngineStatus status) {
+    infoLambda(
         LOG,
-        "Response: requestId: {}, latestValidHash: {}, status: {}",
-        () -> requestId,
+        "New payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}",
+        () -> param.getBlockNumber(),
+        () -> param.getBlockHash(),
+        () -> param.getParentHash(),
         () -> latestValidHash == null ? null : latestValidHash.toHexString(),
         status::name);
     return new JsonRpcSuccessResponse(
@@ -201,11 +211,16 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   }
 
   JsonRpcResponse respondWithInvalid(
-      final Object requestId, final Hash latestValidHash, final String validationError) {
-    traceLambda(
+      final Object requestId,
+      final EnginePayloadParameter param,
+      final Hash latestValidHash,
+      final String validationError) {
+    infoLambda(
         LOG,
-        "Response: requestId: {}, latestValidHash: {}, status: {}, validationError: {}",
-        () -> requestId,
+        "Invalid new payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}, validationError: {}",
+        () -> param.getBlockNumber(),
+        () -> param.getBlockHash(),
+        () -> param.getParentHash(),
         () -> latestValidHash == null ? null : latestValidHash.toHexString(),
         INVALID::name,
         () -> validationError);
