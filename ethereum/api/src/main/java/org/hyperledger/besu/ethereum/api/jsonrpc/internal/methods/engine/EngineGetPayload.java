@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -56,7 +59,17 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
     final Optional<Block> block = mergeContext.retrieveBlockById(payloadId);
     if (block.isPresent()) {
-      LOG.debug("assembledBlock {}", block.map(Block::toString).get());
+      var proposal = block.get();
+      var proposalHeader = proposal.getHeader();
+      infoLambda(
+          LOG,
+          "Fetch block proposal by identifier: {}, hash: {}, number: {}, coinbase: {}, transaction count: {}",
+          () -> payloadId.toHexString(),
+          () -> proposalHeader.getHash(),
+          () -> proposalHeader.getNumber(),
+          () -> proposalHeader.getCoinbase(),
+          () -> proposal.getBody().getTransactions().size());
+      debugLambda(LOG, "assembledBlock {}", () -> block.map(Block::toString).get());
       return new JsonRpcSuccessResponse(
           request.getRequest().getId(),
           blockResultFactory.enginePayloadTransactionComplete(block.get()));
