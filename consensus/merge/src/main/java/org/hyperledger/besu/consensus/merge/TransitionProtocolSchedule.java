@@ -66,7 +66,7 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
       if (!mergeContext.isPostMerge()) {
         debugLambda(
             LOG,
-            "for {} returning a pre-merge schedule because we are not post merge",
+            "for {} returning a pre-merge schedule because we are not post-merge",
             blockHeader::toLogString);
         return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
       }
@@ -91,7 +91,7 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
           || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
         debugLambda(
             LOG,
-            "returning a pre-merge schedule because block {} is pre merge or TTD",
+            "returning a pre-merge schedule because block {} is pre-merge or TTD",
             blockHeader::toLogString);
         return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
       }
