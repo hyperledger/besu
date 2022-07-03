@@ -96,7 +96,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.executeBlock(any()))
+    when(mergeCoordinator.rememberBlock(any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -117,7 +117,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.executeBlock(any())).thenReturn(new Result("error 42"));
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(new Result("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -231,7 +231,12 @@ public class EngineNewPayloadTest {
     when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    var res = ((JsonRpcSuccessResponse) resp).getResult();
+    assertThat(res).isInstanceOf(EnginePayloadStatusResult.class);
+    var payloadStatusResult = (EnginePayloadStatusResult) res;
+    assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
+    assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
   }
 
   @Test

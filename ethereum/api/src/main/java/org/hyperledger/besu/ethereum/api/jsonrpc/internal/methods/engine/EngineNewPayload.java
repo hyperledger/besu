@@ -29,8 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
@@ -149,7 +147,10 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     if (parentHeader.isPresent()
         && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
       LOG.info("method parameter timestamp not greater than parent");
-      return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_PARAMS);
+      return respondWithInvalid(
+          reqId,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          "block timestamp not greater than parent");
     }
 
     final var block =
@@ -176,7 +177,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // execute block and return result response
-    final BlockValidator.Result executionResult = mergeCoordinator.executeBlock(block);
+    final BlockValidator.Result executionResult = mergeCoordinator.rememberBlock(block);
 
     if (executionResult.errorMessage.isEmpty()) {
       return respondWith(reqId, newBlockHeader.getHash(), VALID);

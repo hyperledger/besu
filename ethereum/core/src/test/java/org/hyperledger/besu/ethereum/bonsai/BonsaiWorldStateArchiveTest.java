@@ -21,8 +21,9 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStora
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -123,10 +124,6 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
-    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-    final TrieLogLayer trieLogLayer = new TrieLogLayer();
-    trieLogLayer.setBlockHash(blockHeader.getHash());
-    trieLogLayer.writeTo(rlpLog);
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
 
@@ -145,12 +142,11 @@ public class BonsaiWorldStateArchiveTest {
     final Map layeredWorldStatesByHash = mock(HashMap.class);
 
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+    var updater = spy(bonsaiWorldStateArchive.getUpdater());
+    when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
+
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
-    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-    final TrieLogLayer trieLogLayer = new TrieLogLayer();
-    trieLogLayer.setBlockHash(blockHeader.getHash());
-    trieLogLayer.writeTo(rlpLog);
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeader));
@@ -160,7 +156,8 @@ public class BonsaiWorldStateArchiveTest {
 
     // verify is not trying to get the trie log layer to rollback when block is present
     verify(layeredWorldStatesByHash).entrySet();
-    verifyNoMoreInteractions(layeredWorldStatesByHash);
+    verify(updater, times(0)).rollBack(any());
+    verify(updater, times(0)).rollForward(any());
   }
 
   @SuppressWarnings({"unchecked"})
@@ -181,7 +178,9 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
 
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+    var updater = spy(bonsaiWorldStateArchive.getUpdater());
+    when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
@@ -198,6 +197,7 @@ public class BonsaiWorldStateArchiveTest {
     verify(layeredWorldStatesByHash).containsKey(eq(blockHeaderChainB.getHash()));
     verify(layeredWorldStatesByHash).get(eq(blockHeaderChainB.getHash()));
     verify(layeredWorldStatesByHash).entrySet();
-    verifyNoMoreInteractions(layeredWorldStatesByHash);
+    verify(updater, times(1)).rollBack(any());
+    verify(updater, times(1)).rollForward(any());
   }
 }
