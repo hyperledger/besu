@@ -472,12 +472,20 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       // non-change, a cached read.
       return;
     }
+
     BonsaiValue<BonsaiAccount> accountValue = accountsToUpdate.get(address);
     if (accountValue == null) {
       accountValue = loadAccountFromParent(address, accountValue);
+      if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+        System.out.println("loadAccountFromParent " + accountValue);
+      }
     }
     if (accountValue == null) {
       if (expectedValue == null && replacementValue != null) {
+        if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+          System.out.println(
+              "accountsToUpdate.put " + new BonsaiAccount(this, address, replacementValue, true));
+        }
         accountsToUpdate.put(
             address,
             new BonsaiValue<>(null, new BonsaiAccount(this, address, replacementValue, true)));
@@ -488,12 +496,18 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
     } else {
       if (expectedValue == null) {
+        if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+          System.out.println("expectedValue==null");
+        }
         if (accountValue.getUpdated() != null) {
           throw new IllegalStateException(
               String.format(
                   "Expected to create account, but the account exists.  Address=%s", address));
         }
       } else {
+        if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+          System.out.println("check " + accountValue.getUpdated() + " " + expectedValue);
+        }
         BonsaiAccount.assertCloseEnoughForDiffing(
             accountValue.getUpdated(),
             expectedValue,
@@ -501,11 +515,22 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
       if (replacementValue == null) {
         if (accountValue.getPrior() == null) {
+          if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+            System.out.println("remove ");
+          }
           accountsToUpdate.remove(address);
         } else {
+          if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+            System.out.println("setUpdated to null ");
+          }
           accountValue.setUpdated(null);
         }
       } else {
+        if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
+          System.out.println(
+              "setUpdated to "
+                  + new BonsaiAccount(wrappedWorldView(), address, replacementValue, true));
+        }
         accountValue.setUpdated(
             new BonsaiAccount(wrappedWorldView(), address, replacementValue, true));
       }

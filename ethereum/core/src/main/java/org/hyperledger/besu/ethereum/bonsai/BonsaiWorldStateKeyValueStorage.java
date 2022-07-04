@@ -89,8 +89,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
               .get(accountHash);
     }
 
-    System.out.println(
-        "compare db flat " + response.map(Hash::hash) + " trie " + response2.map(Hash::hash));
+    if (response.isPresent() && !response.equals(response2))
+      System.out.println(
+          "compare db flat " + response.map(Hash::hash) + " trie " + response2.map(Hash::hash));
     return response;
   }
 
