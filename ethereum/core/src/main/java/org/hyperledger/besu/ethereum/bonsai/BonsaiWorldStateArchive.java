@@ -127,9 +127,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
+    System.out.println("getTrieLogLayer for blockhash " + blockHash);
     if (layeredWorldStatesByHash.containsKey(blockHash)) {
+      System.out.println("layeredWorldStatesByHash contains " + blockHash);
       return Optional.of(layeredWorldStatesByHash.get(blockHash).getTrieLog());
     } else {
+      System.out.println(
+          "trielog on the database " + worldStateStorage.getTrieLog(blockHash).isPresent());
       return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
@@ -184,25 +188,59 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
+    System.out.println(
+        "getMutable found block hash"
+            + persistedState.blockHash()
+            + " stateroot "
+            + persistedState.worldStateRootHash);
+    System.out.println("getMutable asked block hash " + blockHash + " stateroot " + rootHash);
+    System.out.println(
+        "get head asked block hash "
+            + blockchain.getChainHeadHeader().getHash()
+            + " stateroot "
+            + blockchain.getChainHeadHeader().getStateRoot()
+            + " "
+            + blockchain.getChainHeadHeader().getNumber());
+    System.out.println(
+        "stateroot in trie log "
+            + worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, null).map(Hash::hash));
     if (blockHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
     } else {
       try {
-
+        System.out.println("startiing rollback");
         final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(persistedState.blockHash()).map(BlockHeader.class::cast);
-
+        System.out.println("found persisted header " + maybePersistedHeader);
         final List<TrieLogLayer> rollBacks = new ArrayList<>();
         final List<TrieLogLayer> rollForwards = new ArrayList<>();
         if (maybePersistedHeader.isEmpty()) {
           getTrieLogLayer(persistedState.blockHash()).ifPresent(rollBacks::add);
         } else {
           BlockHeader targetHeader = blockchain.getBlockHeader(blockHash).get();
+          System.out.println(
+              "targetHeader header "
+                  + targetHeader.getNumber()
+                  + " "
+                  + targetHeader.getHash()
+                  + " "
+                  + targetHeader.getParentHash()
+                  + " "
+                  + targetHeader.getStateRoot());
           BlockHeader persistedHeader = maybePersistedHeader.get();
+          System.out.println(
+              "persistedHeader header "
+                  + persistedHeader.getNumber()
+                  + " "
+                  + persistedHeader.getHash()
+                  + " "
+                  + persistedHeader.getParentHash()
+                  + " "
+                  + persistedHeader.getStateRoot());
           // roll back from persisted to even with target
           Hash persistedBlockHash = persistedHeader.getBlockHash();
           while (persistedHeader.getNumber() > targetHeader.getNumber()) {
-            LOG.debug("Rollback {}", persistedBlockHash);
+            LOG.info("Rollback {}", persistedBlockHash);
             rollBacks.add(getTrieLogLayer(persistedBlockHash).get());
             persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
             persistedBlockHash = persistedHeader.getBlockHash();
@@ -210,7 +248,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           // roll forward to target
           Hash targetBlockHash = targetHeader.getBlockHash();
           while (persistedHeader.getNumber() < targetHeader.getNumber()) {
-            LOG.debug("Rollforward {}", targetBlockHash);
+            LOG.info("Rollforward {}", targetBlockHash);
             rollForwards.add(getTrieLogLayer(targetBlockHash).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
             targetBlockHash = targetHeader.getBlockHash();
@@ -218,8 +256,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
           // roll back in tandem until we hit a shared state
           while (!persistedBlockHash.equals(targetBlockHash)) {
-            LOG.debug("Paired Rollback {}", persistedBlockHash);
-            LOG.debug("Paired Rollforward {}", targetBlockHash);
+            LOG.info("Paired Rollback {}", persistedBlockHash);
+            LOG.info("Paired Rollforward {}", targetBlockHash);
             rollForwards.add(getTrieLogLayer(targetBlockHash).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
 
@@ -235,11 +273,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         final BonsaiWorldStateUpdater bonsaiUpdater = getUpdater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
-            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
+            LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
-            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
+            LOG.info("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             bonsaiUpdater.rollForward(rollForwards.get(i));
           }
           bonsaiUpdater.commit();
