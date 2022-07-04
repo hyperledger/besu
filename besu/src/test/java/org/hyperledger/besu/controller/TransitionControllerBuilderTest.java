@@ -22,6 +22,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
@@ -86,6 +87,7 @@ public class TransitionControllerBuilderTest {
     when(protocolContext.getConsensusContext(CliqueContext.class))
         .thenReturn(mock(CliqueContext.class));
     when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
+    when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
   }
 
   @Test
@@ -151,6 +153,29 @@ public class TransitionControllerBuilderTest {
     when(preMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(preMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
         .isEqualTo(preMergeProtocolSpec);
+  }
+
+  @Test
+  public void assertPostMergeScheduleForPostMergeExactlyAtTerminalDifficultyIfNotFinalized() {
+    var mockParentBlock = new BlockHeaderTestFixture().number(100).buildHeader();
+    var mockBlock =
+        new BlockHeaderTestFixture()
+            .number(101)
+            .difficulty(Difficulty.of(0L))
+            .parentHash(mockParentBlock.getHash())
+            .buildHeader();
+
+    var postMergeProtocolSpec = mock(ProtocolSpec.class);
+
+    when(mergeContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
+    when(mergeContext.isPostMerge()).thenReturn(Boolean.TRUE);
+    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+    when(mockBlockchain.getTotalDifficultyByHash(any()))
+        .thenReturn(Optional.of(Difficulty.of(1337L)));
+
+    when(postMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(postMergeProtocolSpec);
+    assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
+        .isEqualTo(postMergeProtocolSpec);
   }
 
   TransitionCoordinator buildTransitionCoordinator(
