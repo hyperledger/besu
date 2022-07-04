@@ -127,13 +127,18 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
-    System.out.println("getTrieLogLayer for blockhash " + blockHash);
+    return getTrieLogLayer(blockHash, true);
+  }
+
+  public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash, boolean b) {
+    if (b) System.out.println("getTrieLogLayer for blockhash " + blockHash);
     if (layeredWorldStatesByHash.containsKey(blockHash)) {
-      System.out.println("layeredWorldStatesByHash contains " + blockHash);
+      if (b) System.out.println("layeredWorldStatesByHash contains " + blockHash);
       return Optional.of(layeredWorldStatesByHash.get(blockHash).getTrieLog());
     } else {
-      System.out.println(
-          "trielog on the database " + worldStateStorage.getTrieLog(blockHash).isPresent());
+      if (b)
+        System.out.println(
+            "trielog on the database " + worldStateStorage.getTrieLog(blockHash).isPresent());
       return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
   }
@@ -168,7 +173,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           LOG.warn("Exceeded the limit of back layers that can be loaded ({})", maxLayersToLoad);
           return Optional.empty();
         }
-        final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash);
+        final Optional<TrieLogLayer> trieLogLayer = getTrieLogLayer(blockHash, false);
         if (trieLogLayer.isPresent()) {
           return Optional.of(
               new BonsaiLayeredWorldState(
@@ -202,13 +207,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             + " "
             + blockchain.getChainHeadHeader().getNumber());
     System.out.println(
-        "stateroot in trie log "
-            + worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, null).map(Hash::hash));
+        "stateroot in trie log " + worldStateStorage.getStateTrieNode(Bytes.EMPTY).map(Hash::hash));
     if (blockHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
     } else {
       try {
-        System.out.println("startiing rollback");
+        System.out.println("starting rollback");
         final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(persistedState.blockHash()).map(BlockHeader.class::cast);
         System.out.println("found persisted header " + maybePersistedHeader);
