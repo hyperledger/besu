@@ -78,18 +78,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
     Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    if (response.isEmpty()) {
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (worldStateRootHash.isPresent()) {
-        response =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
-                    Bytes32.wrap(worldStateRootHash.get()))
-                .get(accountHash);
-      }
+    Optional<Bytes> response2 = Optional.empty();
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    if (worldStateRootHash.isPresent()) {
+      response2 =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                  Bytes32.wrap(worldStateRootHash.get()))
+              .get(accountHash);
     }
+
+    System.out.println(
+        "compare db flat " + response.map(Hash::hash) + " trie " + response2.map(Hash::hash));
     return response;
   }
 
@@ -104,7 +105,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      return trieBranchStorage
+          .get(location.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(d -> nodeHash.equals(Hash.hash(d)));
     }
   }
 
