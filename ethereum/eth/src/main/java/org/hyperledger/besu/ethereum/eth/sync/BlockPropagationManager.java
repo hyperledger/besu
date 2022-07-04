@@ -264,7 +264,9 @@ public class BlockPropagationManager {
       final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
 
       // TODO this is a hack just for testing shared db when light client doesn't sync
-      blockchain.unsafeSetChainHead(block.getHeader(), totalDifficulty);
+      if (config.getSyncMode() == SyncMode.X_NONE) {
+        blockchain.unsafeSetChainHead(block.getHeader(), totalDifficulty);
+      }
 
       if (!shouldImportBlockAtHeight(
           block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {

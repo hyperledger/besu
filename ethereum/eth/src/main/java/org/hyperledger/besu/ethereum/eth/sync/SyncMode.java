@@ -24,7 +24,9 @@ public enum SyncMode {
   // Perform snapsync
   X_SNAP,
   // Perform snapsync but starting from a checkpoint instead of starting from genesis
-  X_CHECKPOINT;
+  X_CHECKPOINT,
+  // Turn off syncing for light node
+  X_NONE;
 
   public static SyncMode fromString(final String str) {
     for (final SyncMode mode : SyncMode.values()) {
