@@ -12,6 +12,7 @@
 - remove peer block height requirements for block fetching [#3911](https://github.com/hyperledger/besu/pull/3911)
 - allow upgrade whether websockets enabled or not [#4019](https://github.com/hyperledger/besu/pull/4019)
 - jwt auth on websockets [#4039](https://github.com/hyperledger/besu/pull/4039)
+- Fixed a state root mismatch issue on bonsai that may appear occasionally [#4041](https://github.com/hyperledger/besu/pull/4041)
 
 ## 22.4.3
 
