@@ -130,7 +130,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return getTrieLogLayer(blockHash, true);
   }
 
-  public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash, boolean b) {
+  public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash, final boolean b) {
     if (b) System.out.println("getTrieLogLayer for blockhash " + blockHash);
     if (layeredWorldStatesByHash.containsKey(blockHash)) {
       if (b) System.out.println("layeredWorldStatesByHash contains " + blockHash);
