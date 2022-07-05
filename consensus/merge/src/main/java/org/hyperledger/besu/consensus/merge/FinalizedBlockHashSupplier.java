@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.consensus.merge.MergeContext.NewForkchoiceMessageListener;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;

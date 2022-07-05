@@ -99,7 +99,9 @@ public class PostMergeContext implements MergeContext {
 
     if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
-          newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
+          newMergeStateCallback ->
+              newMergeStateCallback.onCrossingMergeBoundary(
+                  newState, Optional.of(totalDifficulty)));
     }
   }
 

@@ -16,9 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.StampedLock;
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
+import org.hyperledger.besu.consensus.merge.NewForkchoiceMessageListener;
 import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -51,6 +49,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -58,8 +58,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthProtocolManager implements ProtocolManager, MinedBlockObserver,
-    NewMergeStateCallback, ForkchoiceMessageListener {
+public class EthProtocolManager
+    implements ProtocolManager,
+        MinedBlockObserver,
+        NewMergeStateCallback,
+        NewForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
   private final EthScheduler scheduler;
@@ -294,8 +297,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver,
       return;
     }
 
-
-
     // This will handle responses
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 
@@ -407,7 +408,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver,
         } finally {
           this.powTerminalDifficultyLock.unlockRead(lockStamp);
         }
-        } else {
+      } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(
             status.bestHash(), status.totalDifficulty(), status.protocolVersion());
@@ -445,8 +446,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver,
   }
 
   @Override
-  public void onNewForkchoiceMessage(final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash, final Hash safeBlockHash) {
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
     if (maybeFinalizedBlockHash.isPresent()
         && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
       this.lastFinalized = maybeFinalizedBlockHash.get();
@@ -455,8 +458,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver,
   }
 
   @Override
-  public void onCrossingMergeBoundary(final boolean isPoS,
-      final Optional<Difficulty> difficultyStoppedAt) {
+  public void onCrossingMergeBoundary(
+      final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
     if (isPoS) {
       long lockStamp = this.powTerminalDifficultyLock.writeLock();
       try {
