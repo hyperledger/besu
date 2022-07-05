@@ -3712,7 +3712,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "0x1122334455667788990011223344556677889900112233445566778899001122";
     parseCommand(
         "--miner-enabled",
-        "--miner-coinbase=" + requestedCoinbase.toString(),
+        "--miner-coinbase=" + requestedCoinbase,
         "--min-gas-price=15",
         "--miner-extra-data=" + extraDataString);
 

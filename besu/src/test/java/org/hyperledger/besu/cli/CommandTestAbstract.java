@@ -228,6 +228,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.vertx(any())).thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -370,7 +371,7 @@ public abstract class CommandTestAbstract {
             privacyPluginService);
     besuCommands.add(besuCommand);
 
-    File defaultKeyFile =
+    final File defaultKeyFile =
         KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
     try {
       Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());

@@ -229,7 +229,6 @@ final class DeFramer extends ByteToMessageDecoder {
         || cause instanceof IllegalArgumentException) {
       LOG.info("Invalid incoming message", throwable);
       if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
-        LOG.info("BREACH HERE");
         connectFuture.get().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
         return;
       }

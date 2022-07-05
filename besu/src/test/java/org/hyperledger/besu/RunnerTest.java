@@ -183,6 +183,7 @@ public final class RunnerTest {
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .vertx(vertx)
             .build()) {
       setupState(blockCount, controller.getProtocolSchedule(), controller.getProtocolContext());
     }
@@ -204,6 +205,7 @@ public final class RunnerTest {
             .storageProvider(createKeyValueStorageProvider(dataDirAhead, dbAhead))
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .vertx(vertx)
             .build();
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
     final JsonRpcConfiguration aheadJsonRpcConfiguration = jsonRpcConfiguration();
@@ -276,6 +278,7 @@ public final class RunnerTest {
               .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
               .gasLimitCalculator(GasLimitCalculator.constant())
               .evmConfiguration(EvmConfiguration.DEFAULT)
+              .vertx(vertx)
               .build();
       final EnodeURL enode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
