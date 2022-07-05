@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.metrics;
 
-import org.hyperledger.besu.metrics.opentelemetry.MetricsOtelPushService;
+import org.hyperledger.besu.metrics.opentelemetry.MetricsOtelGrpcPushService;
+import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsHttpService;
 import org.hyperledger.besu.metrics.prometheus.MetricsPushGatewayService;
@@ -48,7 +49,8 @@ public interface MetricsService {
       }
     } else if (configuration.getProtocol() == MetricsProtocol.OPENTELEMETRY) {
       if (configuration.isEnabled()) {
-        return Optional.of(new MetricsOtelPushService());
+        return Optional.of(
+            new MetricsOtelGrpcPushService(configuration, (OpenTelemetrySystem) metricsSystem));
       } else {
         return Optional.empty();
       }

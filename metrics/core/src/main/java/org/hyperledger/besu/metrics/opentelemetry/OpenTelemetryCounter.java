@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.api.metrics.BoundLongCounter;
 import io.opentelemetry.api.metrics.LongCounter;
 
 public class OpenTelemetryCounter implements LabelledMetric<Counter> {
@@ -38,26 +39,25 @@ public class OpenTelemetryCounter implements LabelledMetric<Counter> {
       builder.put(labelNames[i], labelValues[i]);
     }
     final Attributes labels = builder.build();
-    return new BoundLongCounter(counter, labels);
+    BoundLongCounter boundLongCounter = counter.bind(labels);
+    return new OpenTelemetryCounter.UnlabelledCounter(boundLongCounter);
   }
 
-  private static class BoundLongCounter implements Counter {
-    private final LongCounter counter;
-    private final Attributes labels;
+  private static class UnlabelledCounter implements Counter {
+    private final BoundLongCounter counter;
 
-    private BoundLongCounter(final LongCounter counter, final Attributes labels) {
+    private UnlabelledCounter(final BoundLongCounter counter) {
       this.counter = counter;
-      this.labels = labels;
     }
 
     @Override
     public void inc() {
-      counter.add(1, labels);
+      counter.add(1);
     }
 
     @Override
     public void inc(final long amount) {
-      counter.add(amount, labels);
+      counter.add(amount);
     }
   }
 }

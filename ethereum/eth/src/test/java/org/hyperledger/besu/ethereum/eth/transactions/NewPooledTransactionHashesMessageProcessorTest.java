@@ -55,9 +55,9 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private EthPeer peer1;
-  @Mock private SyncState syncState;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
+  @Mock private SyncState syncState;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
@@ -72,7 +72,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     metricsSystem = new StubMetricsSystem();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
-
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
     messageHandler =
         new NewPooledTransactionHashesMessageProcessor(
             transactionTracker,
@@ -80,7 +80,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             transactionPoolConfiguration,
             ethContext,
             metricsSystem,
-            syncState);
+            syncState::isInitialSyncPhaseDone);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
@@ -186,5 +186,18 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     verify(ethScheduler, times(1))
         .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
+  }
+
+  @Test
+  public void shouldNotAddTransactionsWhenDisabled() {
+
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(false);
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        now(),
+        ofMinutes(1));
+
+    verifyNoInteractions(transactionPool);
   }
 }

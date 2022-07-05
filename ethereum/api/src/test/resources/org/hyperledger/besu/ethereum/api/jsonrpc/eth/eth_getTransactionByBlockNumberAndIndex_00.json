@@ -24,6 +24,7 @@
       "raw": "0xf86401018304cb2f946295ee1b4f6dd65047762f924ecd367c17eabf8f0a8412a7b9141ba0ed2e0f715eccaab4362c19c1cf35ad8031ab1cabe71ada3fe8b269fe9d726712a06691074f289f826d23c92808ae363959eb958fb7a91fc721875ece4958114c65",
       "to": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
       "transactionIndex": "0x0",
+      "type" : "0x0",
       "value": "0xa",
       "v": "0x1b",
       "r": "0xed2e0f715eccaab4362c19c1cf35ad8031ab1cabe71ada3fe8b269fe9d726712",

@@ -71,10 +71,10 @@ public class CheckpointDownloadBlockStep {
         .run()
         .thenCompose(
             receiptTaskResult -> {
-              final List<TransactionReceipt> transactionReceipts =
-                  receiptTaskResult.getResult().get(block.getHeader());
+              final Optional<List<TransactionReceipt>> transactionReceipts =
+                  Optional.ofNullable(receiptTaskResult.getResult().get(block.getHeader()));
               return CompletableFuture.completedFuture(
-                  Optional.of(new BlockWithReceipts(block, transactionReceipts)));
+                  transactionReceipts.map(receipts -> new BlockWithReceipts(block, receipts)));
             })
         .exceptionally(throwable -> Optional.empty());
   }
