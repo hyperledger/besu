@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -337,6 +338,41 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+  }
+
+  @Test
+  public void shouldIgnoreUpdateToOldHeadAndNotPreparePayload() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
+
+    var ignoreOldHeadUpdateRes = ForkchoiceResult.withIgnoreUpdateToOldHead(mockHeader);
+    when(mergeCoordinator.updateForkChoice(any(), any(), any(), any()))
+        .thenReturn(ignoreOldHeadUpdateRes);
+
+    var payloadParams =
+        new EnginePayloadAttributesParameter(
+            String.valueOf(System.currentTimeMillis()),
+            Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
+            Address.ECREC.toString());
+
+    var resp =
+        (JsonRpcSuccessResponse)
+            resp(
+                new EngineForkchoiceUpdatedParameter(
+                    mockHeader.getBlockHash(), Hash.ZERO, Hash.ZERO),
+                Optional.of(payloadParams));
+
+    var forkchoiceRes = (EngineUpdateForkchoiceResult) resp.getResult();
+
+    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any());
+
+    assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(EngineStatus.VALID);
+    assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();
+    assertThat(forkchoiceRes.getPayloadStatus().getLatestValidHashAsString())
+        .isEqualTo(mockHeader.getHash().toHexString());
+    assertThat(forkchoiceRes.getPayloadId()).isNull();
   }
 
   private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(

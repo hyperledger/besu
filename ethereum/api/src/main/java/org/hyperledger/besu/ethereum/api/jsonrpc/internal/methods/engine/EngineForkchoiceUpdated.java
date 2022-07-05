@@ -142,7 +142,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                         payloadAttributes.getSuggestedFeeRecipient())));
 
     if (!result.isValid()) {
-      return handleForkchoiceError(requestId, result);
+      return handleNonValidForkchoiceUpdate(requestId, result);
     }
 
     // begin preparing a block if we have a non-empty payload attributes param
@@ -172,7 +172,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
-  private JsonRpcResponse handleForkchoiceError(
+  private JsonRpcResponse handleNonValidForkchoiceUpdate(
       final Object requestId, final ForkchoiceResult result) {
     JsonRpcResponse response;
 
@@ -184,13 +184,17 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             new JsonRpcSuccessResponse(
                 requestId,
                 new EngineUpdateForkchoiceResult(
-                    INVALID,
-                    latestValid.isPresent() ? latestValid.get() : null,
-                    null,
-                    result.getErrorMessage()));
+                    INVALID, latestValid.orElse(null), null, result.getErrorMessage()));
         break;
       case INVALID_PAYLOAD_ATTRIBUTES:
         response = new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+        break;
+      case IGNORE_UPDATE_TO_OLD_HEAD:
+        response =
+            new JsonRpcSuccessResponse(
+                requestId,
+                new EngineUpdateForkchoiceResult(
+                    VALID, latestValid.orElse(null), null, result.getErrorMessage()));
         break;
       default:
         throw new AssertionError(
