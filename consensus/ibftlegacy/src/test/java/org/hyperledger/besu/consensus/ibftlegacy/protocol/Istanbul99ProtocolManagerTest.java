@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.vertx.core.Vertx;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -56,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.common.collect.Lists;
+import io.vertx.core.Vertx;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -109,7 +109,13 @@ public class Istanbul99ProtocolManagerTest {
     final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
     final Vertx vertx = Vertx.vertx();
     final EthPeers peers =
-        new EthPeers(Istanbul99Protocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25, Collections.emptyList(), vertx);
+        new EthPeers(
+            Istanbul99Protocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            Collections.emptyList(),
+            vertx);
     final EthMessages messages = new EthMessages();
 
     final BigInteger networkId = BigInteger.ONE;
