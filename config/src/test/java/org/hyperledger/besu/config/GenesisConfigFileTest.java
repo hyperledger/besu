@@ -380,7 +380,7 @@ public class GenesisConfigFileTest {
     final GenesisConfigFile config = GenesisConfigFile.development();
 
     assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(0);
-    assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
+    assertThat(config.getConfigOptions().getIstanbulBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(1337));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
