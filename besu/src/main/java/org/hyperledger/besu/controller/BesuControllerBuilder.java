@@ -336,9 +336,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     prunerConfiguration));
       }
     }
+    final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final EthPeers ethPeers =
         new EthPeers(
-            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
+            getSupportedProtocol(),
+            clock,
+            metricsSystem,
+            maxPeers,
+            maxMessageSize,
+            messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
