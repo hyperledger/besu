@@ -47,6 +47,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String EC_CURVE_CONFIG_KEY = "eccurve";
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
+  private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -169,6 +170,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public CheckpointConfigOptions getCheckpointOptions() {
+    return JsonUtil.getObjectNode(configRoot, CHECKPOINT_CONFIG_KEY)
+        .map(CheckpointConfigOptions::new)
+        .orElse(CheckpointConfigOptions.DEFAULT);
+  }
+
+  @Override
   public CliqueConfigOptions getCliqueConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
         .map(CliqueConfigOptions::new)
@@ -265,6 +273,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getArrowGlacierBlockNumber() {
     return getOptionalLong("arrowglacierblock");
+  }
+
+  @Override
+  public OptionalLong getGrayGlacierBlockNumber() {
+    return getOptionalLong("grayglacierblock");
   }
 
   @Override
@@ -433,6 +446,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getBerlinBlockNumber().ifPresent(l -> builder.put("berlinBlock", l));
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
+    getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
@@ -551,6 +565,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getBerlinBlockNumber(),
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
+            getGrayGlacierBlockNumber(),
             getParisBlockNumber(),
             getTerminalBlockNumber(),
             getEcip1015BlockNumber(),

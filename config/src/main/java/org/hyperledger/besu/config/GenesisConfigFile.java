@@ -45,12 +45,7 @@ public class GenesisConfigFile {
   }
 
   public static GenesisConfigFile mainnet() {
-    try {
-      return fromConfig(
-          Resources.toString(GenesisConfigFile.class.getResource("/mainnet.json"), UTF_8));
-    } catch (final IOException e) {
-      throw new IllegalStateException(e);
-    }
+    return genesisFileFromResources("/mainnet.json");
   }
 
   public static ObjectNode mainnetJsonNode() {
@@ -64,18 +59,17 @@ public class GenesisConfigFile {
   }
 
   public static GenesisConfigFile development() {
-    try {
-      return fromConfig(
-          Resources.toString(GenesisConfigFile.class.getResource("/dev.json"), UTF_8));
-    } catch (final IOException e) {
-      throw new IllegalStateException(e);
-    }
+    return genesisFileFromResources("/dev.json");
   }
 
   public static GenesisConfigFile ecip1049dev() {
+    return genesisFileFromResources("/ecip1049_dev.json");
+  }
+
+  public static GenesisConfigFile genesisFileFromResources(final String resourceName) {
     try {
       return fromConfig(
-          Resources.toString(GenesisConfigFile.class.getResource("/ecip1049_dev.json"), UTF_8));
+          Resources.toString(GenesisConfigFile.class.getResource(resourceName), UTF_8));
     } catch (final IOException e) {
       throw new IllegalStateException(e);
     }

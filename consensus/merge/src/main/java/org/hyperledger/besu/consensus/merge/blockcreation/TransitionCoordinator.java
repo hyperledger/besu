@@ -133,14 +133,23 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Result executeBlock(final Block block) {
-    return mergeCoordinator.executeBlock(block);
+  public Result rememberBlock(final Block block) {
+    return mergeCoordinator.rememberBlock(block);
+  }
+
+  @Override
+  public Result validateBlock(final Block block) {
+    return mergeCoordinator.validateBlock(block);
   }
 
   @Override
   public ForkchoiceResult updateForkChoice(
-      final BlockHeader newHead, final Hash finalizedBlockHash, final Hash safeBlockHash) {
-    return mergeCoordinator.updateForkChoice(newHead, finalizedBlockHash, safeBlockHash);
+      final BlockHeader newHead,
+      final Hash finalizedBlockHash,
+      final Hash safeBlockHash,
+      final Optional<PayloadAttributes> maybePayloadAttributes) {
+    return mergeCoordinator.updateForkChoice(
+        newHead, finalizedBlockHash, safeBlockHash, maybePayloadAttributes);
   }
 
   @Override
@@ -170,8 +179,14 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockhash) {
-    return mergeCoordinator.getOrSyncHeaderByHash(blockhash);
+  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
+    return mergeCoordinator.getOrSyncHeaderByHash(blockHash);
+  }
+
+  @Override
+  public Optional<BlockHeader> getOrSyncHeaderByHash(
+      final Hash blockHash, final Hash finalizedBlockHash) {
+    return mergeCoordinator.getOrSyncHeaderByHash(blockHash, finalizedBlockHash);
   }
 
   @Override
@@ -182,5 +197,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
     return mergeCoordinator.isDescendantOf(ancestorBlock, newBlock);
+  }
+
+  @Override
+  public boolean isBadBlock(final Hash blockHash) {
+    return mergeCoordinator.isBadBlock(blockHash);
   }
 }

@@ -68,7 +68,7 @@ public class TransitionPivotSelector implements PivotBlockSelector {
     }
 
     if (bestPeerEstDifficulty.greaterOrEqualThan(totalTerminalDifficulty)) {
-      LOG.info(
+      LOG.debug(
           "Chain has reached TTD, best peer has estimated difficulty {},"
               + " select pivot from finalized block",
           bestPeerEstDifficulty);

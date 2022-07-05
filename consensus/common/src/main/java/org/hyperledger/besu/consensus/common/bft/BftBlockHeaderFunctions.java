@@ -52,4 +52,9 @@ public class BftBlockHeaderFunctions implements BlockHeaderFunctions {
   public BftExtraData parseExtraData(final BlockHeader header) {
     return bftExtraDataCodec.decodeRaw(header.getExtraData());
   }
+
+  @Override
+  public int getCheckPointWindowSize(final BlockHeader header) {
+    return bftExtraDataCodec.decodeRaw(header.getExtraData()).getValidators().size();
+  }
 }

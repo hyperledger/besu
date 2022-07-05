@@ -57,8 +57,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final CliqueConfigOptions cliqueConfig =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getCliqueConfigOptions();
+    final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
     secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
 
@@ -108,7 +107,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        configOptionsSupplier.get(),
         nodeKey,
         privacyParameters,
         isRevertReasonEnabled,

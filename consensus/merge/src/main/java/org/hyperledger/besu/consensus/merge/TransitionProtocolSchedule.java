@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,8 +29,12 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule>
     implements ProtocolSchedule {
+  private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
@@ -58,23 +64,40 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
 
       // if head is not post-merge, return pre-merge schedule:
       if (!mergeContext.isPostMerge()) {
+        debugLambda(
+            LOG,
+            "for {} returning a pre-merge schedule because we are not post-merge",
+            blockHeader::toLogString);
         return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
       }
 
-      // otherwise check to see if this block represents a re-org below TTD:
+      // otherwise check to see if this block represents a re-org TTD block:
       MutableBlockchain blockchain = protocolContext.getBlockchain();
       Difficulty parentDifficulty =
           blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
+      debugLambda(
+          LOG,
+          " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
+          blockHeader::toLogString,
+          () -> terminalDifficulty,
+          () -> parentDifficulty,
+          () -> thisDifficulty);
 
-      // if this block is pre-merge
-      if (thisDifficulty.lessOrEqualThan(terminalDifficulty)
+      // if this block is pre-merge or a TTD block
+      if ((thisDifficulty.lessOrEqualThan(terminalDifficulty)
+              && thisDifficulty.greaterThan(parentDifficulty))
           || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
+        debugLambda(
+            LOG,
+            "returning a pre-merge schedule because block {} is pre-merge or TTD",
+            blockHeader::toLogString);
         return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
       }
     }
     // else return post-merge schedule
+    debugLambda(LOG, " for {} returning a post-merge schedule", blockHeader::toLogString);
     return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
   }
 

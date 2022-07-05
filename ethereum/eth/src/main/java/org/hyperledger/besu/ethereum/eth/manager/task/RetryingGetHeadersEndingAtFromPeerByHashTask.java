@@ -35,7 +35,6 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
 
   private final Hash referenceHash;
   private final ProtocolSchedule protocolSchedule;
-  private final long minimumRequiredBlockNumber;
   private final int count;
 
   @VisibleForTesting
@@ -43,12 +42,10 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final int count,
       final MetricsSystem metricsSystem) {
     super(ethContext, 3, List::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
-    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     this.count = count;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
@@ -58,16 +55,10 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final int count,
       final MetricsSystem metricsSystem) {
     return new RetryingGetHeadersEndingAtFromPeerByHashTask(
-        protocolSchedule,
-        ethContext,
-        referenceHash,
-        minimumRequiredBlockNumber,
-        count,
-        metricsSystem);
+        protocolSchedule, ethContext, referenceHash, count, metricsSystem);
   }
 
   @Override
@@ -75,12 +66,7 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
       final Optional<EthPeer> assignedPeer) {
     final AbstractGetHeadersFromPeerTask task =
         GetHeadersFromPeerByHashTask.endingAtHash(
-            protocolSchedule,
-            getEthContext(),
-            referenceHash,
-            minimumRequiredBlockNumber,
-            count,
-            getMetricsSystem());
+            protocolSchedule, getEthContext(), referenceHash, count, getMetricsSystem());
     assignedPeer.ifPresent(task::assignPeer);
     return executeSubTask(task::run)
         .thenApply(

@@ -1,5 +1,5 @@
 [submodule "eth-ref-tests"]
-	path = ethereum/referencetests/src/test/resources
+	path = ethereum/referencetests/src/reference-test/external-resources
 	url = https://github.com/ethereum/tests.git
 	ignore = all
 [submodule "qbft-ref-tests"]

@@ -61,7 +61,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
 
-    if (syncConfig.getSyncMode() != SyncMode.X_SNAP) {
+    if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
             "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
@@ -122,7 +122,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     return Optional.of(fastSyncDownloader);
   }
 
-  private static InMemoryTasksPriorityQueues<SnapDataRequest>
+  protected static InMemoryTasksPriorityQueues<SnapDataRequest>
       createSnapWorldStateDownloaderTaskCollection() {
     return new InMemoryTasksPriorityQueues<>();
   }

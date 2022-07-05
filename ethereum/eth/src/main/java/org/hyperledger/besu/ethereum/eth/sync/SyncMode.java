@@ -14,20 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
+import java.util.EnumSet;
+
 public enum SyncMode {
   // Fully validate all blocks as they sync
   FULL,
   // Perform light validation on older blocks, and switch to full validation for more recent blocks
   FAST,
   // Perform snapsync
-  X_SNAP;
+  X_SNAP,
+  // Perform snapsync but starting from a checkpoint instead of starting from genesis
+  X_CHECKPOINT;
 
-  public static SyncMode fromString(final String str) {
-    for (final SyncMode mode : SyncMode.values()) {
-      if (mode.name().equalsIgnoreCase(str)) {
-        return mode;
-      }
-    }
-    return null;
+  public static boolean isFullSync(final SyncMode syncMode) {
+    return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
   }
 }

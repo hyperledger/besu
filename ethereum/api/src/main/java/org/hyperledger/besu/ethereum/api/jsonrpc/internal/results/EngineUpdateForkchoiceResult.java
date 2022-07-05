@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 
@@ -34,7 +33,7 @@ public class EngineUpdateForkchoiceResult {
   private final EnginePayloadStatusResult payloadStatus;
   private final PayloadIdentifier payloadId;
   static final EnumSet<EngineStatus> FORK_CHOICE_ENGINE_STATUS =
-      EnumSet.of(VALID, INVALID, SYNCING, INVALID_TERMINAL_BLOCK);
+      EnumSet.of(VALID, INVALID, SYNCING);
 
   public EngineUpdateForkchoiceResult(
       final EngineStatus status,

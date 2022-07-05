@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -34,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 public class NewPooledTransactionHashesMessageProcessor {
 
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
-  private static final long SYNC_TOLERANCE = 100L;
 
   private static final Logger LOG =
       LoggerFactory.getLogger(NewPooledTransactionHashesMessageProcessor.class);
@@ -56,7 +55,7 @@ public class NewPooledTransactionHashesMessageProcessor {
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final SyncState syncState;
+  private final Supplier<Boolean> shouldProcessMessages;
 
   public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
@@ -64,13 +63,13 @@ public class NewPooledTransactionHashesMessageProcessor {
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final SyncState syncState) {
+      final Supplier<Boolean> shouldProcessMessages) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.syncState = syncState;
+    this.shouldProcessMessages = shouldProcessMessages;
     this.totalSkippedNewPooledTransactionHashesMessageCounter =
         new RunnableCounter(
             metricsSystem.createCounter(
@@ -111,7 +110,7 @@ public class NewPooledTransactionHashesMessageProcessor {
           incomingTransactionHashes::size,
           incomingTransactionHashes::toString);
 
-      if (syncState.isInSync(SYNC_TOLERANCE)) {
+      if (shouldProcessMessages.get()) {
         final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
             scheduledTasks.computeIfAbsent(
                 peer,

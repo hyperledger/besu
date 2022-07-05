@@ -40,4 +40,16 @@ public interface BlockHeaderFunctions {
    *     consensus mechanism does not include parseable information in the extra data field.
    */
   ParsedExtraData parseExtraData(BlockHeader header);
+
+  /**
+   * Depending on the consensus, several block headers must be downloaded before the checkpoint in
+   * order to validate the following blocks. This method returns the necessary number of block
+   * headers to download to be able to start the checkpoint sync
+   *
+   * @param blockHeader of the checkpoint
+   * @return number of headers to download
+   */
+  default int getCheckPointWindowSize(final BlockHeader blockHeader) {
+    return 1;
+  }
 }

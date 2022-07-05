@@ -156,20 +156,20 @@ public class InMemoryBackwardChainTest {
   @Test
   public void shouldAddHeaderToQueue() {
     BackwardChain backwardChain = createChainFromBlock(blocks.get(3));
-    Optional<Hash> firstHash = backwardChain.getFirstHash();
+    Optional<Hash> firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isNotPresent();
     backwardChain.addNewHash(blocks.get(7).getHash());
     backwardChain.addNewHash(blocks.get(9).getHash());
     backwardChain.addNewHash(blocks.get(9).getHash());
     backwardChain.addNewHash(blocks.get(11).getHash());
 
-    firstHash = backwardChain.getFirstHash();
+    firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(7).getHash());
-    firstHash = backwardChain.getFirstHash();
+    firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(9).getHash());
-    firstHash = backwardChain.getFirstHash();
+    firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(11).getHash());
   }

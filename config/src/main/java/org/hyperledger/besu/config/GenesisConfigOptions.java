@@ -48,6 +48,8 @@ public interface GenesisConfigOptions {
 
   IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
+  CheckpointConfigOptions getCheckpointOptions();
+
   CliqueConfigOptions getCliqueConfigOptions();
 
   BftConfigOptions getBftConfigOptions();
@@ -83,6 +85,8 @@ public interface GenesisConfigOptions {
   OptionalLong getLondonBlockNumber();
 
   OptionalLong getArrowGlacierBlockNumber();
+
+  OptionalLong getGrayGlacierBlockNumber();
 
   OptionalLong getParisBlockNumber();
 

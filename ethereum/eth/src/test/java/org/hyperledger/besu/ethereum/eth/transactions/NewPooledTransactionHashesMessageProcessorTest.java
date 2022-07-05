@@ -20,7 +20,6 @@ import static java.time.Instant.now;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -56,9 +55,9 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private EthPeer peer1;
-  @Mock private SyncState syncState;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
+  @Mock private SyncState syncState;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
@@ -73,7 +72,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     metricsSystem = new StubMetricsSystem();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
-
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
     messageHandler =
         new NewPooledTransactionHashesMessageProcessor(
             transactionTracker,
@@ -81,13 +80,12 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             transactionPoolConfiguration,
             ethContext,
             metricsSystem,
-            syncState);
+            syncState::isInitialSyncPhaseDone);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
   @Test
   public void shouldAddInitiatedRequestingTransactions() {
-    when(syncState.isInSync(anyLong())).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
@@ -103,7 +101,6 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Test
   public void shouldNotAddAlreadyPresentTransactions() {
-    when(syncState.isInSync(anyLong())).thenReturn(true);
 
     when(transactionPool.getTransactionByHash(hash1))
         .thenReturn(Optional.of(Transaction.builder().build()));
@@ -123,15 +120,14 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   }
 
   @Test
-  public void shouldNotAddInitiatedRequestingTransactionsWhemOutOfSync() {
-    when(syncState.isInSync(anyLong())).thenReturn(false);
+  public void shouldAddInitiatedRequestingTransactionsWhenOutOfSync() {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
         now(),
         ofMinutes(1));
-    verifyNoInteractions(transactionPool);
+    verify(transactionPool, times(3)).getTransactionByHash(any());
   }
 
   @Test
@@ -162,7 +158,6 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Test
   public void shouldScheduleGetPooledTransactionsTaskWhenNewTransactionAdded() {
-    when(syncState.isInSync(anyLong())).thenReturn(true);
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
@@ -176,7 +171,6 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Test
   public void shouldNotScheduleGetPooledTransactionsTaskTwice() {
-    when(syncState.isInSync(anyLong())).thenReturn(true);
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
@@ -192,5 +186,18 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     verify(ethScheduler, times(1))
         .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
+  }
+
+  @Test
+  public void shouldNotAddTransactionsWhenDisabled() {
+
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(false);
+    messageHandler.processNewPooledTransactionHashesMessage(
+        peer1,
+        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
+        now(),
+        ofMinutes(1));
+
+    verifyNoInteractions(transactionPool);
   }
 }

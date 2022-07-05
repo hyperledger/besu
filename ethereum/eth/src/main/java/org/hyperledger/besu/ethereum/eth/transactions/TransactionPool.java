@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -30,7 +32,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -65,14 +66,12 @@ public class TransactionPool implements BlockAddedObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
 
-  private static final long SYNC_TOLERANCE = 100L;
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
   private final AbstractPendingTransactionsSorter pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
-  private final SyncState syncState;
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final TransactionPoolConfiguration configuration;
@@ -82,7 +81,6 @@ public class TransactionPool implements BlockAddedObserver {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
-      final SyncState syncState,
       final EthContext ethContext,
       final MiningParameters miningParameters,
       final MetricsSystem metricsSystem,
@@ -91,7 +89,6 @@ public class TransactionPool implements BlockAddedObserver {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.transactionBroadcaster = transactionBroadcaster;
-    this.syncState = syncState;
     this.miningParameters = miningParameters;
     this.configuration = configuration;
 
@@ -141,9 +138,6 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
-    if (!syncState.isInSync(SYNC_TOLERANCE)) {
-      return;
-    }
     final Set<Transaction> addedTransactions = new HashSet<>(transactions.size());
     for (final Transaction transaction : transactions) {
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
@@ -221,7 +215,16 @@ public class TransactionPool implements BlockAddedObserver {
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
       final Transaction transaction, final boolean isLocal) {
-    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
+
+    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
+    if (chainHeadBlockHeader == null) {
+      traceLambda(
+          LOG,
+          "rejecting transaction {} due to chain head not available yet",
+          () -> transaction.getHash());
+      return ValidationResult.invalid(CHAIN_HEAD_NOT_AVAILABLE);
+    }
+
     final FeeMarket feeMarket =
         protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
 
@@ -299,17 +302,20 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.getTransactionByHash(hash);
   }
 
-  private BlockHeader getChainHeadBlockHeader() {
+  private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
-    return blockchain.getBlockHeader(blockchain.getChainHeadHash()).get();
+    return blockchain.getBlockHeader(blockchain.getChainHeadHash());
   }
 
   private Wei minTransactionGasPrice(final Transaction transaction) {
-    final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader();
-    return protocolSchedule
-        .getByBlockNumber(chainHeadBlockHeader.getNumber())
-        .getFeeMarket()
-        .minTransactionPriceInNextBlock(transaction, chainHeadBlockHeader::getBaseFee);
+    return getChainHeadBlockHeader()
+        .map(
+            chainHeadBlockHeader ->
+                protocolSchedule
+                    .getByBlockNumber(chainHeadBlockHeader.getNumber())
+                    .getFeeMarket()
+                    .minTransactionPriceInNextBlock(transaction, chainHeadBlockHeader::getBaseFee))
+        .orElse(Wei.ZERO);
   }
 
   public interface TransactionBatchAddedListener {

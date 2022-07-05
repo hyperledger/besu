@@ -23,9 +23,11 @@ import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatus;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents.InitialSyncCompletionListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
 import org.hyperledger.besu.util.Subscribers;
@@ -44,19 +46,27 @@ public class SyncState {
   private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
   private final Subscribers<TTDReachedListener> ttdReachedListeners = Subscribers.create();
+
+  private final Subscribers<InitialSyncCompletionListener> completionListenerSubscribers =
+      Subscribers.create();
+
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
   private Optional<Long> newPeerListenerId;
   private Optional<Boolean> reachedTerminalDifficulty = Optional.empty();
+  private final Optional<Checkpoint> checkpoint;
   private volatile boolean isInitialSyncPhaseDone;
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
-    this(blockchain, ethPeers, false);
+    this(blockchain, ethPeers, false, Optional.empty());
   }
 
   public SyncState(
-      final Blockchain blockchain, final EthPeers ethPeers, final boolean hasInitialSyncPhase) {
+      final Blockchain blockchain,
+      final EthPeers ethPeers,
+      final boolean hasInitialSyncPhase,
+      final Optional<Checkpoint> checkpoint) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
     isInitialSyncPhaseDone = !hasInitialSyncPhase;
@@ -78,6 +88,7 @@ public class SyncState {
                     checkInSync();
                   }
                 }));
+    this.checkpoint = checkpoint;
   }
 
   /**
@@ -123,12 +134,20 @@ public class SyncState {
     return ttdReachedListeners.subscribe(listener);
   }
 
+  public long subscribeCompletionReached(final InitialSyncCompletionListener listener) {
+    return completionListenerSubscribers.subscribe(listener);
+  }
+
   public boolean unsubscribeSyncStatus(final long listenerId) {
     return syncStatusListeners.unsubscribe(listenerId);
   }
 
   public boolean unsubscribeTTDReached(final long listenerId) {
     return ttdReachedListeners.unsubscribe(listenerId);
+  }
+
+  public boolean unsubscribeInitialConditionReached(final long listenerId) {
+    return completionListenerSubscribers.unsubscribe(listenerId);
   }
 
   public Optional<SyncStatus> syncStatus() {
@@ -290,8 +309,13 @@ public class SyncState {
             (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
   }
 
+  public Optional<Checkpoint> getCheckpoint() {
+    return checkpoint;
+  }
+
   public void markInitialSyncPhaseAsDone() {
     isInitialSyncPhaseDone = true;
+    completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
   }
 
   public boolean isInitialSyncPhaseDone() {

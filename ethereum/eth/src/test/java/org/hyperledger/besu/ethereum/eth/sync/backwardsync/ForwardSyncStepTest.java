@@ -44,9 +44,9 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,7 +112,6 @@ public class ForwardSyncStepTest {
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(2);
-    when(context.executeNextStep(null)).thenReturn(CompletableFuture.completedFuture(null));
     EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
 
     peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
@@ -157,21 +156,10 @@ public class ForwardSyncStepTest {
   }
 
   @Test
-  public void shouldDropHeadersAsLongAsWeKnowThem() {
-    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 5, LOCAL_HEIGHT + 3);
-    ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
-
-    assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
-        .isEqualTo(getBlockByNumber(LOCAL_HEIGHT - 5).getHeader());
-    step.returnFirstNUnknownHeaders(null);
-    assertThat(backwardChain.getFirstAncestorHeader().orElseThrow())
-        .isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 1).getHeader());
-  }
-
-  @Test
   public void shouldNotRequestWhenNull() {
     ForwardSyncStep phase = new ForwardSyncStep(context, null);
-    final CompletableFuture<Void> completableFuture = phase.possibleRequestBlock(null);
+    final CompletableFuture<Void> completableFuture =
+        phase.possibleRequestBodies(Collections.emptyList());
     assertThat(completableFuture.isDone()).isTrue();
 
     final CompletableFuture<Void> completableFuture1 =
@@ -187,29 +175,13 @@ public class ForwardSyncStepTest {
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
-    final CompletableFuture<Block> future =
-        step.requestBlock(getBlockByNumber(LOCAL_HEIGHT + 1).getHeader());
+    final CompletableFuture<List<Block>> future =
+        step.requestBodies(List.of(getBlockByNumber(LOCAL_HEIGHT + 1).getHeader()));
     peer.respondWhile(responder, () -> !future.isDone());
-    final Block block = future.get();
-    assertThat(block).isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 1));
-  }
-
-  @Test
-  public void shouldAddSuccessorsWhenNoUnknownBlockSet() throws Exception {
-    BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT - 3, LOCAL_HEIGHT);
-    backwardChain.appendTrustedBlock(getBlockByNumber(LOCAL_HEIGHT + 1));
-    backwardChain.appendTrustedBlock(getBlockByNumber(LOCAL_HEIGHT + 2));
-    backwardChain.appendTrustedBlock(getBlockByNumber(LOCAL_HEIGHT + 3));
-
-    ForwardSyncStep step = new ForwardSyncStep(context, backwardChain);
-    step.processKnownAncestors(null);
-    assertThat(backwardChain.getFirstAncestorHeader()).isEmpty();
-
-    final CompletableFuture<Void> future = step.executeAsync();
-
-    future.get(1, TimeUnit.SECONDS);
-    assertThat(future.isDone()).isTrue();
-    assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(getBlockByNumber(LOCAL_HEIGHT + 3));
+    final List<Block> blocks = future.get();
+    Assertions.assertThat(blocks)
+        .hasSize(1)
+        .containsExactlyInAnyOrder(getBlockByNumber(LOCAL_HEIGHT + 1));
   }
 
   private BackwardChain createBackwardChain(final int from, final int until) {

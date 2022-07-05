@@ -16,7 +16,11 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
+    paths-ignore:
+      - '**/*.json'
+      - '**/*.md'
+      - '**/*.properties'
+      - '**/*.txt'
 jobs:
   analyze:
     name: Analyze
@@ -47,10 +51,10 @@ jobs:
         # Prefix the list here with "+" to use these queries and those in the config file.
         queries: security-and-quality,security-extended
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+    # Autobuild failed (OOM)
+    # Hence, supply memory args for gradle build
+    - run: |
+        JAVA_OPTS="-Xmx1000M" ./gradlew --no-scan compileJava
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2

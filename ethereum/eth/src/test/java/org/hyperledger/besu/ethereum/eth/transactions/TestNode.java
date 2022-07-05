@@ -124,7 +124,13 @@ public class TestNode implements Closeable {
 
     final EthMessages ethMessages = new EthMessages();
 
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem, 25);
+    final EthPeers ethPeers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            metricsSystem,
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
@@ -136,7 +142,7 @@ public class TestNode implements Closeable {
             ethContext,
             TestClock.fixed(),
             metricsSystem,
-            syncState,
+            syncState::isInitialSyncPhaseDone,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT);
 

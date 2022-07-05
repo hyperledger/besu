@@ -43,8 +43,7 @@ public class BackwardSyncStep {
     return CompletableFuture.supplyAsync(() -> firstHeader)
         .thenApply(this::possibleRestoreOldNodes)
         .thenCompose(this::requestHeaders)
-        .thenApply(this::saveHeaders)
-        .thenCompose(context::executeNextStep);
+        .thenApply(this::saveHeaders);
   }
 
   @VisibleForTesting
@@ -61,15 +60,16 @@ public class BackwardSyncStep {
 
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
+    final int batchSize = context.getBatchSize();
     debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
+
     final RetryingGetHeadersEndingAtFromPeerByHashTask
         retryingGetHeadersEndingAtFromPeerByHashTask =
             RetryingGetHeadersEndingAtFromPeerByHashTask.endingAtHash(
                 context.getProtocolSchedule(),
                 context.getEthContext(),
                 hash,
-                context.getProtocolContext().getBlockchain().getChainHead().getHeight(),
-                context.getBatchSize(),
+                batchSize,
                 context.getMetricsSystem());
     return context
         .getEthContext()
@@ -79,7 +79,7 @@ public class BackwardSyncStep {
             blockHeaders -> {
               if (blockHeaders.isEmpty()) {
                 throw new BackwardSyncException(
-                    "Did not receive a header for hash {}" + hash.toHexString(), true);
+                    "Did not receive a headers for hash " + hash.toHexString(), true);
               }
               debugLambda(
                   LOG,

@@ -173,11 +173,11 @@ public class TransactionLogBloomCacher {
                 number++) {
               final Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
               if (ancestorBlockHeader.isPresent()) {
-                cacheSingleBlock(ancestorBlockHeader.get(), cacheFile);
+                cacheSingleBlock(ancestorBlockHeader.get(), cacheFile, true);
               }
             }
           }
-          cacheSingleBlock(blockHeader, cacheFile);
+          cacheSingleBlock(blockHeader, cacheFile, true);
         } catch (final InvalidCacheException e) {
           populateLatestSegment(blockNumber);
         }
@@ -195,16 +195,15 @@ public class TransactionLogBloomCacher {
     }
   }
 
-  private void cacheSingleBlock(final BlockHeader blockHeader, final File cacheFile)
+  private void cacheSingleBlock(
+      final BlockHeader blockHeader, final File cacheFile, final boolean isCheckSizeNeeded)
       throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
 
       final long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
-
-      // detect missing block
-      if (blockIndex > nbCachedBlocks) {
+      if (isCheckSizeNeeded && blockIndex > nbCachedBlocks) {
         throw new InvalidCacheException();
       }
       writer.seek(offset);
@@ -226,9 +225,11 @@ public class TransactionLogBloomCacher {
       long blockNumber =
           Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, eventBlockNumber);
       fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, currentFile);
-
       while (blockNumber <= eventBlockNumber && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
-        cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
+        Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockNumber);
+        if (blockHeader.isPresent()) {
+          cacheSingleBlock(blockHeader.get(), currentFile, false);
+        }
         blockNumber++;
       }
       Files.move(

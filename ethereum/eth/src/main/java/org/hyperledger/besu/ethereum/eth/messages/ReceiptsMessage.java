@@ -53,6 +53,17 @@ public final class ReceiptsMessage extends AbstractMessageData {
     return new ReceiptsMessage(tmp.encoded());
   }
 
+  /**
+   * Create a message with raw, already encoded data. No checks are performed to validate the
+   * rlp-encoded data.
+   *
+   * @param data An rlp-encoded list of sets of receipts
+   * @return A new ReceiptsMessage
+   */
+  public static ReceiptsMessage createUnsafe(final Bytes data) {
+    return new ReceiptsMessage(data);
+  }
+
   private ReceiptsMessage(final Bytes data) {
     super(data);
   }

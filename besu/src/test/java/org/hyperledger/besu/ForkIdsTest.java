@@ -67,8 +67,8 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x4bc66396L), 7117117L),
               new ForkId(Bytes.ofUnsignedInt(0x6727ef90L), 9812189L),
               new ForkId(Bytes.ofUnsignedInt(0xa157d377L), 10499401L),
-              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 12350712L),
+              new ForkId(Bytes.ofUnsignedInt(0xaae42f33L), 0L))
         },
         new Object[] {
           NetworkName.RINKEBY,
@@ -110,8 +110,9 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0xe029e991L), 12244000L),
               new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000L),
               new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
-              new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x20c327fc), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
+              new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L))
         },
         new Object[] {
           NetworkName.MORDOR,

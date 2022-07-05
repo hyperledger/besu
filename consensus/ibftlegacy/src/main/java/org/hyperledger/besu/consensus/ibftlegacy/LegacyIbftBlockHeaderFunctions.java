@@ -29,4 +29,9 @@ public class LegacyIbftBlockHeaderFunctions implements BlockHeaderFunctions {
   public IbftExtraData parseExtraData(final BlockHeader header) {
     return IbftExtraData.decodeRaw(header.getExtraData());
   }
+
+  @Override
+  public int getCheckPointWindowSize(final BlockHeader header) {
+    return IbftExtraData.decodeRaw(header.getExtraData()).getValidators().size();
+  }
 }

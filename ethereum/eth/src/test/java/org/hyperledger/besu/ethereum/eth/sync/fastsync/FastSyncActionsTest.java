@@ -447,7 +447,7 @@ public class FastSyncActionsTest {
         protocolSchedule,
         protocolContext,
         ethContext,
-        new SyncState(blockchain, ethContext.getEthPeers(), true),
+        new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
         pivotBlockSelector,
         new NoOpMetricsSystem());
   }

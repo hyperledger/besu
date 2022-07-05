@@ -140,6 +140,24 @@ public class BlockchainQueries {
   }
 
   /**
+   * Return the header of the last finalized block.
+   *
+   * @return The header of the last finalized block.
+   */
+  public Optional<BlockHeader> finalizedBlockHeader() {
+    return blockchain.getFinalized().flatMap(blockchain::getBlockHeader);
+  }
+
+  /**
+   * Return the header of the last safe block.
+   *
+   * @return The header of the last safe block.
+   */
+  public Optional<BlockHeader> safeBlockHeader() {
+    return blockchain.getSafeBlock().flatMap(blockchain::getBlockHeader);
+  }
+
+  /**
    * Determines the block header for the address associated with this storage index.
    *
    * @param address The address of the account that owns the storage being queried.

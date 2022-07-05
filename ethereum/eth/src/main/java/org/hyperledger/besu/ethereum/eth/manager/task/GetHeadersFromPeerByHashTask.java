@@ -32,20 +32,17 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   private static final Logger LOG = LoggerFactory.getLogger(GetHeadersFromPeerByHashTask.class);
 
   private final Hash referenceHash;
-  private final long minimumRequiredBlockNumber;
 
   @VisibleForTesting
   GetHeadersFromPeerByHashTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
-      final long minimumRequiredBlockNumber,
       final int count,
       final int skip,
       final boolean reverse,
       final MetricsSystem metricsSystem) {
     super(protocolSchedule, ethContext, count, skip, reverse, metricsSystem);
-    this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
@@ -54,65 +51,40 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash firstHash,
-      final long firstBlockNumber,
       final int segmentLength,
       final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
-        protocolSchedule,
-        ethContext,
-        firstHash,
-        firstBlockNumber,
-        segmentLength,
-        0,
-        false,
-        metricsSystem);
+        protocolSchedule, ethContext, firstHash, segmentLength, 0, false, metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask startingAtHash(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash firstHash,
-      final long firstBlockNumber,
       final int segmentLength,
       final int skip,
       final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
-        protocolSchedule,
-        ethContext,
-        firstHash,
-        firstBlockNumber,
-        segmentLength,
-        skip,
-        false,
-        metricsSystem);
+        protocolSchedule, ethContext, firstHash, segmentLength, skip, false, metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask endingAtHash(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash lastHash,
-      final long lastBlockNumber,
       final int segmentLength,
       final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
-        protocolSchedule,
-        ethContext,
-        lastHash,
-        lastBlockNumber,
-        segmentLength,
-        0,
-        true,
-        metricsSystem);
+        protocolSchedule, ethContext, lastHash, segmentLength, 0, true, metricsSystem);
   }
 
   public static AbstractGetHeadersFromPeerTask forSingleHash(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash hash,
-      final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem) {
     return new GetHeadersFromPeerByHashTask(
-        protocolSchedule, ethContext, hash, minimumRequiredBlockNumber, 1, 0, false, metricsSystem);
+        protocolSchedule, ethContext, hash, 1, 0, false, metricsSystem);
   }
 
   @Override
@@ -121,8 +93,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         peer -> {
           LOG.debug("Requesting {} headers from peer {}.", count, peer);
           return peer.getHeadersByHash(referenceHash, count, skip, reverse);
-        },
-        minimumRequiredBlockNumber);
+        });
   }
 
   @Override

@@ -232,10 +232,10 @@ public class EVMExecutor {
       final MessageFrame messageFrame = messageFrameStack.peek();
       switch (messageFrame.getType()) {
         case CONTRACT_CREATION:
-          mcp.process(messageFrame, tracer);
+          ccp.process(messageFrame, tracer);
           break;
         case MESSAGE_CALL:
-          ccp.process(messageFrame, tracer);
+          mcp.process(messageFrame, tracer);
           break;
       }
     }

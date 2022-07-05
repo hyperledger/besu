@@ -162,6 +162,18 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder grayGlacierDefinition(
+      final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.grayGlacierDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
+  }
+
   public ProtocolSpecBuilder parisDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.parisDefinition(
         chainId,

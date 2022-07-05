@@ -30,6 +30,11 @@ public abstract class RLP {
 
   public static final Bytes EMPTY_LIST;
 
+  // RLP encoding requires payloads to be less thatn 2^64 bytes in length
+  // As a result, the longest RLP strings will have a prefix composed of 1 byte encoding the type
+  // of string followed by at most 8 bytes describing the length of the string
+  public static final int MAX_PREFIX_SIZE = 9;
+
   static {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();

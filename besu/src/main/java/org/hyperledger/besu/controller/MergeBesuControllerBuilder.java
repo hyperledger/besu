@@ -95,9 +95,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
-        privacyParameters,
-        isRevertReasonEnabled);
+        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);
   }
 
   @Override
@@ -106,15 +104,15 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
 
-    OptionalLong terminalBlockNumber = genesisConfig.getConfigOptions().getTerminalBlockNumber();
-    Optional<Hash> terminalBlockHash = genesisConfig.getConfigOptions().getTerminalBlockHash();
+    OptionalLong terminalBlockNumber = configOptionsSupplier.get().getTerminalBlockNumber();
+    Optional<Hash> terminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
 
     final MergeContext mergeContext =
         PostMergeContext.get()
             .setSyncState(syncState.get())
             .setTerminalTotalDifficulty(
-                genesisConfig
-                    .getConfigOptions(genesisConfigOverrides)
+                configOptionsSupplier
+                    .get()
                     .getTerminalTotalDifficulty()
                     .map(Difficulty::of)
                     .orElse(Difficulty.ZERO));
@@ -152,9 +150,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     List<PeerValidator> retval = super.createPeerValidators(protocolSchedule);
     final OptionalLong powTerminalBlockNumber =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockNumber();
-    final Optional<Hash> powTerminalBlockHash =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getTerminalBlockHash();
+        configOptionsSupplier.get().getTerminalBlockNumber();
+    final Optional<Hash> powTerminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
     if (powTerminalBlockHash.isPresent() && powTerminalBlockNumber.isPresent()) {
       retval.add(
           new RequiredBlocksPeerValidator(

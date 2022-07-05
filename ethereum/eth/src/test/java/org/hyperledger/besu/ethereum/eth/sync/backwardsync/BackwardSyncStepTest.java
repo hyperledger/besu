@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
@@ -61,6 +62,8 @@ public class BackwardSyncStepTest {
 
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions());
+
+  private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 
   private MutableBlockchain remoteBlockchain;
   private RespondingEthPeer peer;
@@ -102,14 +105,18 @@ public class BackwardSyncStepTest {
         localBlockchain.appendBlock(block, receipts);
       }
     }
+
     when(context.getProtocolContext().getBlockchain()).thenReturn(localBlockchain);
     when(context.getProtocolSchedule()).thenReturn(protocolSchedule);
     when(context.getBatchSize()).thenReturn(5);
-    when(context.executeNextStep(null)).thenReturn(CompletableFuture.completedFuture(null));
 
-    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create(ethScheduler);
 
-    peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    peer =
+        RespondingEthPeer.builder()
+            .ethProtocolManager(ethProtocolManager)
+            .estimatedHeight(REMOTE_HEIGHT)
+            .build();
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
   }
@@ -156,6 +163,24 @@ public class BackwardSyncStepTest {
   }
 
   @Test
+  public void shouldRequestHeaderBeforeCurrentHeight() throws Exception {
+    extendBlockchain(REMOTE_HEIGHT + 1, context.getProtocolContext().getBlockchain());
+
+    BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
+    final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
+
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
+
+    final CompletableFuture<List<BlockHeader>> future =
+        step.requestHeaders(lookingForBlock.getHeader().getHash());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
+
+    final BlockHeader blockHeader = future.get().get(0);
+    assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
+  }
+
+  @Test
   public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() throws Exception {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
@@ -169,7 +194,7 @@ public class BackwardSyncStepTest {
     assertThatThrownBy(future::get)
         .getCause()
         .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Did not receive a header for hash");
+        .hasMessageContaining("Did not receive a headers for hash");
   }
 
   @Test
@@ -203,5 +228,22 @@ public class BackwardSyncStepTest {
   @Nonnull
   private Block getBlockByNumber(final int number) {
     return remoteBlockchain.getBlockByNumber(number).orElseThrow();
+  }
+
+  private void extendBlockchain(final int newHeight, final MutableBlockchain blockchain) {
+    final long currentHeight = blockchain.getChainHeadBlockNumber();
+
+    final long blocksToBuild = newHeight - currentHeight;
+
+    for (long i = currentHeight + 1; i <= currentHeight + blocksToBuild; i++) {
+      final BlockDataGenerator.BlockOptions options =
+          new BlockDataGenerator.BlockOptions()
+              .setBlockNumber(i)
+              .setParentHash(blockchain.getBlockHashByNumber(i - 1).orElseThrow());
+      final Block block = blockDataGenerator.block(options);
+      final List<TransactionReceipt> receipts = blockDataGenerator.receipts(block);
+
+      blockchain.appendBlock(block, receipts);
+    }
   }
 }

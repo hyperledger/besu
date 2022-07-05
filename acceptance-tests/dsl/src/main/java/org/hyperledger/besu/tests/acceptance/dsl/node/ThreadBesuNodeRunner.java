@@ -190,36 +190,37 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final RunnerBuilder runnerBuilder = new RunnerBuilder();
     runnerBuilder.permissioningConfiguration(node.getPermissioningConfiguration());
 
-    final Runner runner =
-        runnerBuilder
-            .vertx(Vertx.vertx())
-            .besuController(besuController)
-            .ethNetworkConfig(ethNetworkConfig)
-            .discovery(node.isDiscoveryEnabled())
-            .p2pAdvertisedHost(node.getHostName())
-            .p2pListenPort(0)
-            .maxPeers(maxPeers)
-            .networkingConfiguration(node.getNetworkingConfiguration())
-            .jsonRpcConfiguration(node.jsonRpcConfiguration())
-            .webSocketConfiguration(node.webSocketConfiguration())
-            .jsonRpcIpcConfiguration(node.jsonRpcIpcConfiguration())
-            .dataDir(node.homeDirectory())
-            .metricsSystem(metricsSystem)
-            .permissioningService(new PermissioningServiceImpl())
-            .metricsConfiguration(node.getMetricsConfiguration())
-            .p2pEnabled(node.isP2pEnabled())
-            .p2pTLSConfiguration(node.getTLSConfiguration())
-            .graphQLConfiguration(GraphQLConfiguration.createDefault())
-            .staticNodes(
-                node.getStaticNodes().stream()
-                    .map(EnodeURLImpl::fromString)
-                    .collect(Collectors.toList()))
-            .besuPluginContext(new BesuPluginContextImpl())
-            .autoLogBloomCaching(false)
-            .storageProvider(storageProvider)
-            .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
-            .rpcEndpointService(new RpcEndpointServiceImpl())
-            .build();
+    runnerBuilder
+        .vertx(Vertx.vertx())
+        .besuController(besuController)
+        .ethNetworkConfig(ethNetworkConfig)
+        .discovery(node.isDiscoveryEnabled())
+        .p2pAdvertisedHost(node.getHostName())
+        .p2pListenPort(0)
+        .maxPeers(maxPeers)
+        .networkingConfiguration(node.getNetworkingConfiguration())
+        .jsonRpcConfiguration(node.jsonRpcConfiguration())
+        .webSocketConfiguration(node.webSocketConfiguration())
+        .jsonRpcIpcConfiguration(node.jsonRpcIpcConfiguration())
+        .dataDir(node.homeDirectory())
+        .metricsSystem(metricsSystem)
+        .permissioningService(new PermissioningServiceImpl())
+        .metricsConfiguration(node.getMetricsConfiguration())
+        .p2pEnabled(node.isP2pEnabled())
+        .p2pTLSConfiguration(node.getTLSConfiguration())
+        .graphQLConfiguration(GraphQLConfiguration.createDefault())
+        .staticNodes(
+            node.getStaticNodes().stream()
+                .map(EnodeURLImpl::fromString)
+                .collect(Collectors.toList()))
+        .besuPluginContext(new BesuPluginContextImpl())
+        .autoLogBloomCaching(false)
+        .storageProvider(storageProvider)
+        .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
+        .rpcEndpointService(new RpcEndpointServiceImpl());
+    node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
+
+    final Runner runner = runnerBuilder.build();
 
     besuPluginContext.beforeExternalServices();
 

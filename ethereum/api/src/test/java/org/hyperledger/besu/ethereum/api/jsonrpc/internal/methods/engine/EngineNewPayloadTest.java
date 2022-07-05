@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_TERMINAL_BLOCK;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
@@ -97,7 +96,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.executeBlock(any()))
+    when(mergeCoordinator.rememberBlock(any()))
         .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -118,7 +117,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.getOrSyncHeaderByHash(any(Hash.class)))
         .thenReturn(Optional.of(mockHeader));
-    when(mergeCoordinator.executeBlock(any())).thenReturn(new Result("error 42"));
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(new Result("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -164,7 +163,7 @@ public class EngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnInvalidTerminalBlock() {
+  public void shouldReturnInvalidOnBadTerminalBlock() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
@@ -177,8 +176,8 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID_TERMINAL_BLOCK.name());
+    assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
   }
 
   @Test
@@ -232,7 +231,12 @@ public class EngineNewPayloadTest {
     when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    var res = ((JsonRpcSuccessResponse) resp).getResult();
+    assertThat(res).isInstanceOf(EnginePayloadStatusResult.class);
+    var payloadStatusResult = (EnginePayloadStatusResult) res;
+    assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
+    assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
   }
 
   @Test
@@ -281,6 +285,19 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Field extraData must not be null");
+  }
+
+  @Test
+  public void shouldReturnInvalidWhenBadBlock() {
+    when(mergeCoordinator.isBadBlock(any(Hash.class))).thenReturn(true);
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isNull();
   }
 
   private JsonRpcResponse resp(final EnginePayloadParameter payload) {

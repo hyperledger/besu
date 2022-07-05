@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
@@ -60,8 +61,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -122,7 +123,6 @@ public class TransactionPoolTest {
   private final ProtocolContext protocolContext = executionContext.getProtocolContext();
   private TransactionPool transactionPool;
   private long genesisBlockGasLimit;
-  private SyncState syncState;
   private EthContext ethContext;
   private EthPeers ethPeers;
   private PeerTransactionTracker peerTransactionTracker;
@@ -143,8 +143,6 @@ public class TransactionPoolTest {
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
     genesisBlockGasLimit = executionContext.getGenesis().getHeader().getGasLimit();
-    syncState = mock(SyncState.class);
-    when(syncState.isInSync(anyLong())).thenReturn(true);
     ethContext = mock(EthContext.class);
 
     final EthScheduler ethScheduler = mock(EthScheduler.class);
@@ -186,7 +184,6 @@ public class TransactionPoolTest {
         protocolSchedule,
         protocolContext,
         transactionBroadcaster,
-        syncState,
         ethContext,
         miningParameters,
         metricsSystem,
@@ -543,7 +540,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -677,16 +673,14 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldRejectRemoteTransactionsWhenNotInSync() {
-    SyncState syncState = mock(SyncState.class);
-    when(syncState.isInSync(anyLong())).thenReturn(false);
+  public void shouldAcceptRemoteTransactionsWhenNotInSync() {
+
     TransactionPool transactionPool =
         new TransactionPool(
             transactions,
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -696,13 +690,28 @@ public class TransactionPoolTest {
     final Transaction transaction1 = builder.nonce(1).createTransaction(KEY_PAIR1);
     final Transaction transaction2 = builder.nonce(2).createTransaction(KEY_PAIR1);
     final Transaction transaction3 = builder.nonce(3).createTransaction(KEY_PAIR1);
+    when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
+        .thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction2), any(Optional.class), any()))
+        .thenReturn(valid());
+    when(transactionValidator.validate(eq(transaction3), any(Optional.class), any()))
+        .thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction1), nullable(Account.class), any(TransactionValidationParams.class)))
+        .thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction2), nullable(Account.class), any(TransactionValidationParams.class)))
+        .thenReturn(valid());
+    when(transactionValidator.validateForSender(
+            eq(transaction3), nullable(Account.class), any(TransactionValidationParams.class)))
+        .thenReturn(valid());
 
     transactionPool.addRemoteTransactions(asList(transaction3, transaction1, transaction2));
 
-    assertTransactionNotPending(transaction1);
-    assertTransactionNotPending(transaction2);
-    assertTransactionNotPending(transaction3);
-    verifyNoInteractions(transactionBroadcaster);
+    assertTransactionPending(transaction1);
+    assertTransactionPending(transaction2);
+    assertTransactionPending(transaction3);
+    // verifyNoInteractions(transactionBroadcaster);
   }
 
   @Test
@@ -741,7 +750,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -799,7 +807,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -832,7 +839,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -865,7 +871,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -901,7 +906,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -938,7 +942,6 @@ public class TransactionPoolTest {
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
-            syncState,
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             metricsSystem,
@@ -996,6 +999,78 @@ public class TransactionPoolTest {
         transactionPool.addLocalTransaction(transaction);
 
     assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZero() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .value(Wei.ONE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
+    whenBlockBaseFeeIsZero();
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.FRONTIER)
+            .gasPrice(Wei.ZERO)
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
+  }
+
+  private void whenBlockBaseFeeIsZero() {
+    final BlockHeader header =
+        BlockHeaderBuilder.fromHeader(blockchain.getChainHeadHeader())
+            .baseFee(Wei.ZERO)
+            .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+            .parentHash(blockchain.getChainHeadHash())
+            .buildBlockHeader();
+    blockchain.appendBlock(new Block(header, BlockBody.empty()), emptyList());
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+    when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
+    whenBlockBaseFeeIsZero();
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .type(TransactionType.EIP1559)
+            .gasPrice(null)
+            .maxFeePerGas(Optional.of(Wei.ZERO))
+            .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
+            .createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction);
+
+    final ValidationResult<TransactionInvalidReason> result =
+        transactionPool.addLocalTransaction(transaction);
+
+    assertThat(result).isEqualTo(ValidationResult.valid());
   }
 
   private void assertTransactionPending(final Transaction t) {

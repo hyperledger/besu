@@ -16,16 +16,12 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -47,74 +43,9 @@ public class ForwardSyncStep {
   }
 
   public CompletableFuture<Void> executeAsync() {
-    return CompletableFuture.supplyAsync(() -> returnFirstNUnknownHeaders(null))
-        .thenCompose(this::possibleRequestBodies)
-        .thenApply(this::processKnownAncestors)
-        .thenCompose(context::executeNextStep);
-  }
-
-  @VisibleForTesting
-  protected Void processKnownAncestors(final Void unused) {
-    while (backwardChain.getFirstAncestorHeader().isPresent()) {
-      BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
-      if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
-        debugLambda(
-            LOG,
-            "Block {} is already imported, we can ignore it for the sync process",
-            () -> header.getHash().toHexString());
-        backwardChain.dropFirstHeader();
-      } else if (context.getProtocolContext().getBlockchain().contains(header.getParentHash())
-          && backwardChain.isTrusted(header.getHash())) {
-        debugLambda(
-            LOG,
-            "Importing trusted block {}({})",
-            header::getNumber,
-            () -> header.getHash().toHexString());
-        saveBlock(backwardChain.getTrustedBlock(header.getHash()));
-      } else {
-        debugLambda(LOG, "First unprocessed header is {}", header::getNumber);
-        return null;
-      }
-    }
-    return null;
-  }
-
-  @VisibleForTesting
-  protected List<BlockHeader> returnFirstNUnknownHeaders(final Void unused) {
-    while (backwardChain.getFirstAncestorHeader().isPresent()) {
-      BlockHeader header = backwardChain.getFirstAncestorHeader().orElseThrow();
-      if (context.getProtocolContext().getBlockchain().contains(header.getHash())) {
-        debugLambda(
-            LOG,
-            "Block {}({}) is already imported, we can ignore it for the sync process",
-            header::getNumber,
-            () -> header.getHash().toHexString());
-        backwardChain.dropFirstHeader();
-      } else if (backwardChain.isTrusted(header.getHash())) {
-        debugLambda(
-            LOG,
-            "Block {} was added by consensus layer, we can trust it and should therefore import it.",
-            () -> header.getHash().toHexString());
-        saveBlock(backwardChain.getTrustedBlock(header.getHash()));
-      } else {
-        return backwardChain.getFirstNAncestorHeaders(context.getBatchSize());
-      }
-    }
-    return Collections.emptyList();
-  }
-
-  @VisibleForTesting
-  public CompletableFuture<Void> possibleRequestBlock(final BlockHeader blockHeader) {
-    if (blockHeader == null) {
-      return CompletableFuture.completedFuture(null);
-    } else {
-      debugLambda(
-          LOG,
-          "Requesting body for {} ({})",
-          blockHeader::getNumber,
-          () -> blockHeader.getHash().toHexString());
-      return requestBlock(blockHeader).thenApply(this::saveBlock);
-    }
+    return CompletableFuture.supplyAsync(
+            () -> backwardChain.getFirstNAncestorHeaders(context.getBatchSize()))
+        .thenCompose(this::possibleRequestBodies);
   }
 
   @VisibleForTesting
@@ -131,20 +62,6 @@ public class ForwardSyncStep {
           () -> blockHeaders.get(0).getHash().toHexString());
       return requestBodies(blockHeaders).thenApply(this::saveBlocks);
     }
-  }
-
-  @VisibleForTesting
-  protected CompletableFuture<Block> requestBlock(final BlockHeader blockHeader) {
-    final GetBlockFromPeerTask getBlockFromPeerTask =
-        GetBlockFromPeerTask.create(
-            context.getProtocolSchedule(),
-            context.getEthContext(),
-            Optional.of(blockHeader.getHash()),
-            blockHeader.getNumber(),
-            context.getMetricsSystem());
-    final CompletableFuture<AbstractPeerTask.PeerTaskResult<Block>> run =
-        getBlockFromPeerTask.run();
-    return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult);
   }
 
   @VisibleForTesting
@@ -167,30 +84,6 @@ public class ForwardSyncStep {
   }
 
   @VisibleForTesting
-  protected Void saveBlock(final Block block) {
-    traceLambda(LOG, "Going to validate block {}", () -> block.getHeader().getHash().toHexString());
-    var optResult =
-        context
-            .getBlockValidatorForBlock(block)
-            .validateAndProcessBlock(
-                context.getProtocolContext(),
-                block,
-                HeaderValidationMode.FULL,
-                HeaderValidationMode.NONE);
-
-    optResult.blockProcessingOutputs.ifPresent(
-        result -> {
-          traceLambda(
-              LOG,
-              "Block {} was validated, going to import it",
-              () -> block.getHeader().getHash().toHexString());
-          result.worldState.persist(block.getHeader());
-          context.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
-        });
-    return null;
-  }
-
-  @VisibleForTesting
   protected Void saveBlocks(final List<Block> blocks) {
     if (blocks.isEmpty()) {
       LOG.info("No blocks to save...");
@@ -208,7 +101,7 @@ public class ForwardSyncStep {
         context.halveBatchSize();
         return null;
       } else {
-        saveBlock(block);
+        context.saveBlock(block);
       }
     }
     infoLambda(

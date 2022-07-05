@@ -194,4 +194,19 @@ public class TransactionPendingResult implements TransactionResult {
   public String getS() {
     return s;
   }
+
+  @JsonGetter(value = "blockHash")
+  public String getBlockHash() {
+    return null;
+  }
+
+  @JsonGetter(value = "blockNumber")
+  public String getBlockNumber() {
+    return null;
+  }
+
+  @JsonGetter(value = "transactionIndex")
+  public String getTransactionIndex() {
+    return null;
+  }
 }

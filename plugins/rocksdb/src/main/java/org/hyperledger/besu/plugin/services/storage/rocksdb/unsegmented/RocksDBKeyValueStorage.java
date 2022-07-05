@@ -59,7 +59,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   private final TransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final RocksDBMetrics rocksDBMetrics;
-  private final WriteOptions tryDeleteOptions = new WriteOptions().setNoSlowdown(true);
+  private final WriteOptions tryDeleteOptions =
+      new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
 
   public RocksDBKeyValueStorage(
       final RocksDBConfiguration configuration,
@@ -151,6 +152,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   public KeyValueStorageTransaction startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions options = new WriteOptions();
+    options.setIgnoreMissingColumnFamilies(true);
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new RocksDBTransaction(db.beginTransaction(options), options, rocksDBMetrics));
   }
