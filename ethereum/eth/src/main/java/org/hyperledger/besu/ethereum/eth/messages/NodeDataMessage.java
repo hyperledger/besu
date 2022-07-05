@@ -47,6 +47,17 @@ public final class NodeDataMessage extends AbstractMessageData {
     return new NodeDataMessage(tmp.encoded());
   }
 
+  /**
+   * Create a message with raw, already encoded data. No checks are performed to validate the
+   * rlp-encoded data.
+   *
+   * @param data An rlp-encoded list of node data
+   * @return A new NodeDataMessage
+   */
+  public static NodeDataMessage createUnsafe(final Bytes data) {
+    return new NodeDataMessage(data);
+  }
+
   private NodeDataMessage(final Bytes data) {
     super(data);
   }

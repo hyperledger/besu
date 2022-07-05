@@ -246,7 +246,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (messageData.getSize() > maxMessageSize) {
       LOG.warn(
-          "Received message exceeding size limit of {} bytes: {} bytes. Disconnecting from {}",
+          "Received message (code: {}) exceeding size limit of {} bytes: {} bytes. Disconnecting from {}",
+          Integer.toString(code, 16),
           maxMessageSize,
           messageData.getSize(),
           ethPeer);

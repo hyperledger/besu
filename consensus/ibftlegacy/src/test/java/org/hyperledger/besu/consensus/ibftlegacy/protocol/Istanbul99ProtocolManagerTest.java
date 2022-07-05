@@ -107,7 +107,12 @@ public class Istanbul99ProtocolManagerTest {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
     EthPeers peers =
-        new EthPeers(Istanbul99Protocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
+        new EthPeers(
+            Istanbul99Protocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     EthMessages messages = new EthMessages();
 
     final BigInteger networkId = BigInteger.ONE;
