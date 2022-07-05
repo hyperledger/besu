@@ -47,6 +47,17 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     return new BlockBodiesMessage(tmp.encoded());
   }
 
+  /**
+   * Create a message with raw, already encoded body data. No checks are performed to validate the
+   * rlp-encoded data.
+   *
+   * @param data An rlp-encoded list of block bodies
+   * @return A new BlockBodiesMessage
+   */
+  public static BlockBodiesMessage createUnsafe(final Bytes data) {
+    return new BlockBodiesMessage(data);
+  }
+
   private BlockBodiesMessage(final Bytes data) {
     super(data);
   }
