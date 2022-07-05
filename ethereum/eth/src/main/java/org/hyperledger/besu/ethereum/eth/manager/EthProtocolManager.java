@@ -236,7 +236,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         "Unsupported capability passed to processMessage(): " + cap);
     final MessageData messageData = message.getData();
     final int code = messageData.getCode();
-    LOG.trace("Process message {}, {}", cap, code);
+    LOG.info("Process message {}, {}", cap, code);
 
     // Handle STATUS processing
     if (code == EthPV62.STATUS) {
@@ -346,9 +346,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (peer.isDisconnected()) {
         // although it isn't yet confirmed that the new connection is ready,
         // if the peer's existing connection is disconnected, optimistically replace it
-        peer.replaceConnection(connection);
+        peer.setConnection(connection);
       }
-      peer.send(status, getSupportedProtocol());
+      peer.send(status, getSupportedProtocol(), connection);
       if (connection.registerStatusSentAndCheckIfReady()) {
         ethPeers.maybeUseReadyConnection(connection);
       }
@@ -374,27 +374,32 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private void handleStatusMessage(final PeerConnection peerConnection, final MessageData data) {
+    LOG.info("Received a Status Message connection {}", System.identityHashCode(peerConnection));
     final StatusMessage status = StatusMessage.readFrom(data);
     try {
       if (!status.networkId().equals(networkId)) {
-        LOG.debug("{} has mismatched network id: {}", peerConnection, status.networkId());
+        LOG.info("{} has mismatched network id: {}", peerConnection, status.networkId());
         peerConnection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!forkIdManager.peerCheck(status.forkId()) && status.protocolVersion() > 63) {
-        LOG.debug(
+        LOG.info(
             "{} has matching network id ({}), but non-matching fork id: {}",
             System.identityHashCode(peerConnection),
             networkId,
             status.forkId());
         peerConnection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (forkIdManager.peerCheck(status.genesisHash())) {
-        LOG.debug(
+        LOG.info(
             "{} has matching network id ({}), but non-matching genesis hash: {}",
             peerConnection,
             networkId,
             status.genesisHash());
         peerConnection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else {
-        LOG.debug("Received status message from {}: {}", peerConnection, status);
+        LOG.info(
+            "Received status message from {}, connection {}: {}",
+            peerConnection.getPeer().getId(),
+            System.identityHashCode(peerConnection),
+            status);
         if (peerConnection.registerStatusReceivedAndCheckIfReady()) {
           final EthPeer peer = ethPeers.peer(peerConnection);
           peer.chainState().statusReceived(status.bestHash(), status.totalDifficulty());
@@ -403,7 +408,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         }
       }
     } catch (final RLPException e) {
-      LOG.debug("Unable to parse status message.", e);
+      LOG.info("Unable to parse status message.", e);
       // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peerConnection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);

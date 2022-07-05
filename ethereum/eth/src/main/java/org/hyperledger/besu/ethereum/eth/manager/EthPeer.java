@@ -214,17 +214,27 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public RequestManager.ResponseStream send(
       final MessageData messageData, final String protocolName) throws PeerNotConnected {
-    if (connection.getAgreedCapabilities().stream()
+    return send(messageData, protocolName, this.connection);
+  }
+
+  public RequestManager.ResponseStream send(
+      final MessageData messageData,
+      final String protocolName,
+      final PeerConnection connectionToUse)
+      throws PeerNotConnected {
+    // there are cases where we have two connections to the peer and we want to use a specific one
+    if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.debug("Protocol {} unavailable for this peer ", protocolName);
       return null;
     }
     if (permissioningProviders.stream()
-        .anyMatch(p -> !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode()))) {
+        .anyMatch(
+            p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
           "Permissioning blocked sending of message code {} to {}, Peer {}",
           messageData.getCode(),
-          connection.getRemoteEnode(),
+          connectionToUse.getRemoteEnode(),
           this);
       if (LOG.isDebugEnabled()) {
         LOG.debug(
@@ -232,7 +242,8 @@ public class EthPeer implements Comparable<EthPeer> {
             permissioningProviders.stream()
                 .filter(
                     p ->
-                        !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode())));
+                        !p.isMessagePermitted(
+                            connectionToUse.getRemoteEnode(), messageData.getCode())));
       }
       return null;
     }
@@ -244,7 +255,7 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
 
-    connection.sendForProtocol(protocolName, messageData);
+    connectionToUse.sendForProtocol(protocolName, messageData);
     return null;
   }
 
@@ -518,7 +529,7 @@ public class EthPeer implements Comparable<EthPeer> {
     return checkpointHeader;
   }
 
-  public void replaceConnection(final PeerConnection peerConnection) {
+  public void setConnection(final PeerConnection peerConnection) {
     connection = peerConnection;
   }
 

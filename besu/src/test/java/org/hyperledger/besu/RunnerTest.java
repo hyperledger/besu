@@ -321,7 +321,6 @@ public final class RunnerTest {
                                 .url(baseUrl)
                                 .build())
                         .execute()) {
-
                   assertThat(resp.code()).isEqualTo(200);
                   final Response syncingResp =
                       client

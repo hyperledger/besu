@@ -259,7 +259,7 @@ public class RlpxAgent {
     future.whenComplete(
         (conn, err) -> {
           if (err != null) {
-            LOG.info("Failed to establish connection with peer {}", peer.getId());
+            LOG.info("Failed to establish connection with peer {}, error {}", peer.getId(), err);
           } else {
             LOG.info(
                 "Established NettyPeerConnection with peer {}, connection {}",
@@ -431,13 +431,13 @@ public class RlpxAgent {
     if (!randomPeerPriority) {
       if (!peerPrivileges.canExceedConnectionLimits(peer)
           && getConnectionCount() >= maxConnections) {
-        LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
+        LOG.info("Too many peers. Disconnect incoming connection: {}", peerConnection);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
       // Disconnect if too many remotely-initiated connections
       if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
-        LOG.debug(
+        LOG.info(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}",
             peerConnection);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
@@ -461,7 +461,7 @@ public class RlpxAgent {
           }
           // We already have an existing connection, figure out which connection to keep
           if (compareDuplicateConnections(newConnection, existingConnection) < 0) {
-            // Keep the inbound connection
+            // Use the new connection
             LOG.info(
                 "Duplicate connection detected, disconnecting existing connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(existingConnection.getPeerConnection()),

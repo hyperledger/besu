@@ -133,7 +133,7 @@ public abstract class PeerDiscoveryAgent {
     this.forkIdSupplier = forkIdSupplier;
   }
 
-  protected abstract TimerUtil createTimer();
+  protected abstract TimerUtil createTimerUtil();
 
   protected abstract AsyncExecutor createWorkerExecutor();
 
@@ -262,7 +262,7 @@ public abstract class PeerDiscoveryAgent {
         .localPeer(localNode)
         .bootstrapNodes(bootstrapPeers)
         .outboundMessageHandler(this::handleOutgoingPacket)
-        .timerUtil(createTimer())
+        .timerUtil(createTimerUtil())
         .workerExecutor(createWorkerExecutor())
         .peerRequirement(PeerRequirement.combine(peerRequirements))
         .peerPermissions(peerPermissions)

@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -33,13 +35,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,14 +69,14 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+  private final TimerUtil timerUtil;
 
   public EthPeers(
       final String protocolName,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final int maxPeers) {
-    this(protocolName, clock, metricsSystem, maxPeers, Collections.emptyList());
+    this(protocolName, clock, metricsSystem, maxPeers, Collections.emptyList(), null);
   }
 
   public EthPeers(
@@ -84,11 +84,13 @@ public class EthPeers {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final int maxPeers,
-      final List<NodeMessagePermissioningProvider> permissioningProviders) {
+      final List<NodeMessagePermissioningProvider> permissioningProviders,
+      final Vertx vertx) {
     this.protocolName = protocolName;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxPeers = maxPeers;
+    timerUtil = new VertxTimerUtil(vertx);
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -98,7 +100,6 @@ public class EthPeers {
 
   public void registerConnection(
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
-    //  Put the new connection into a map (newConnection, existingEthPeer)
     synchronized (this) {
       final Bytes peerId = peerConnection.getPeer().getId();
       LOG.info(
@@ -116,6 +117,7 @@ public class EthPeers {
             "Found existing EthPeer in nonReadyConnections for peer {}, connection {}",
             optionalEthPeer.get(),
             System.identityHashCode(peerConnection));
+        setUpCleanUp(peerConnection);
       } else {
         connections.compute(
             peerId,
@@ -144,31 +146,43 @@ public class EthPeers {
 
               nonReadyConnections.put(peerConnection, peer);
 
-              // TODO: We might want to schedule using the ctx
-              // this makes sure that the content of the nonReadyConnections is cleaned up. The
-              // connection has 30s time to create a "ready" connection. If this doesn't happen
-              scheduler.schedule(
-                  () -> {
-                    try {
-                      final EthPeer removed = nonReadyConnections.remove(peerConnection);
-                      if (removed != null && removed.getConnection() != peerConnection) {
-                        peerConnection.disconnect(
-                            DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
-                      }
-                    } catch (final Throwable t) {
-                      LOG.info("Caught Throwable in ScheduledExecutorService {}", t);
-                    }
-                  },
-                  30,
-                  TimeUnit.SECONDS);
-              return p; // We do not add the new EthPeer here, because this can only happen when it
+              setUpCleanUp(peerConnection);
+              return p; // We do not add the new EthPeer here, because this should only happen when
+              // it
               // is "ready"
             });
       }
     }
   }
 
+  private void setUpCleanUp(final PeerConnection peerConnection) {
+    // this makes sure that the content of the nonReadyConnections is cleaned up. The
+    // connection has 20s time to create a "ready".
+    LOG.info(
+        "Setting timerUtil for connection {} at {}",
+        System.identityHashCode(peerConnection),
+        System.currentTimeMillis());
+    timerUtil.setTimer(
+        20000,
+        () -> {
+          try {
+            LOG.info(
+                "Calling TimerUtil for connection {}", System.identityHashCode(peerConnection));
+            final EthPeer removed = nonReadyConnections.remove(peerConnection);
+            if (removed != null && removed.getConnection() != peerConnection) {
+              peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
+            }
+          } catch (final Throwable t) {
+            LOG.info("Caught Throwable: trying to clean up nonReadyConnections {}", t);
+          }
+        });
+  }
+
   public void registerDisconnect(final PeerConnection connection) {
+    LOG.info(
+        "registeringDisconnect for connection {}, peer {}",
+        System.identityHashCode(connection),
+        connection.getPeer().getId());
     connections.compute(
         connection.getPeer().getId(),
         (id, existingPeer) -> {
@@ -190,7 +204,6 @@ public class EthPeers {
             return null;
           }
         });
-
     reattemptPendingPeerRequests();
   }
 
@@ -280,11 +293,12 @@ public class EthPeers {
           final boolean fullyValidated = p.isFullyValidated();
           final boolean hasEstimatedHeight = p.chainState().hasEstimatedHeight();
           LOG.info(
-              "Peer {} is fully validated: {}, hasEstimatedHeight: {}, connection: {}",
+              "Peer {} is fully validated: {}, hasEstimatedHeight: {}, connection: {}, number of entries {}",
               p.getConnection().getPeer().getId(),
               fullyValidated,
               hasEstimatedHeight,
-              System.identityHashCode(p.getConnection()));
+              System.identityHashCode(p.getConnection()),
+              nonReadyConnections.size());
           return fullyValidated && hasEstimatedHeight;
         });
   }
@@ -301,26 +315,28 @@ public class EthPeers {
     synchronized (this) {
       if (peerConnection
           .callOnConnectionReadyCallback()) { // returns true if we are to use this connection
+        LOG.info("The new connection is to be used: {}", System.identityHashCode(peerConnection));
         connections.compute(
             peerConnection.getPeer().getId(),
             (id, p) -> {
-              if (p != null) { // existing connection
-                // disconnect the old connection in 30 seconds, because it could have been used for
-                // requests
-                //            scheduler.schedule(() ->
-                // p.getConnection().disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED), 30, TimeUnit.SECONDS); // TODO: can we do the clean up without the scheduler?
-                p.replaceConnection(peerConnection);
+              if (p != null) { // existing EthPeer in connections -> just replace the connection
+                LOG.info(
+                    "Replacing connection for peer {}. Old connection {}, new connection {}",
+                    id,
+                    System.identityHashCode(p.getConnection()),
+                    System.identityHashCode(peerConnection));
+                p.setConnection(peerConnection);
                 return p;
-              } else {
-                invokeConnectionCallbacks(nonReadyConnections.get(peerConnection));
-                return nonReadyConnections.get(peerConnection);
+              } else { // add the EthPeer created for the connection
+                final EthPeer ethPeer = nonReadyConnections.get(peerConnection);
+                invokeConnectionCallbacks(ethPeer);
+                ethPeer.setConnection(peerConnection);
+                return ethPeer;
               }
             });
+      } else {
+        LOG.info("Do NOT use the new connection {}", System.identityHashCode(peerConnection));
       }
-      //      else { // connection has not been used, so it can be closed
-      //        nonReadyConnections.remove(peerConnection);
-      //        peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
-      //      }
     }
   }
 

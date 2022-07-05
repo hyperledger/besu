@@ -129,7 +129,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   }
 
   @Override
-  protected TimerUtil createTimer() {
+  protected TimerUtil createTimerUtil() {
     return new MockTimerUtil();
   }
 

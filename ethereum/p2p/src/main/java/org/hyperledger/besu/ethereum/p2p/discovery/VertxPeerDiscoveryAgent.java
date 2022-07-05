@@ -101,7 +101,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
   }
 
   @Override
-  protected TimerUtil createTimer() {
+  protected TimerUtil createTimerUtil() {
     return new VertxTimerUtil(vertx);
   }
 

@@ -98,6 +98,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
+import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,6 +139,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  private Vertx vertx;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -266,6 +268,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder vertx(final Vertx vertx) {
+    this.vertx = vertx;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -338,7 +345,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
     final EthPeers ethPeers =
         new EthPeers(
-            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
+            getSupportedProtocol(),
+            clock,
+            metricsSystem,
+            maxPeers,
+            messagePermissioningProviders,
+            vertx);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
