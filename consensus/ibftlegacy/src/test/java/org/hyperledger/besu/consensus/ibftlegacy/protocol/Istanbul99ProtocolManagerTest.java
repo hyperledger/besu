@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.vertx.core.Vertx;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -106,9 +107,10 @@ public class Istanbul99ProtocolManagerTest {
       throws ExecutionException, InterruptedException, TimeoutException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     final EthScheduler ethScheduler = new DeterministicEthScheduler(() -> false);
-    EthPeers peers =
-        new EthPeers(Istanbul99Protocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
-    EthMessages messages = new EthMessages();
+    final Vertx vertx = Vertx.vertx();
+    final EthPeers peers =
+        new EthPeers(Istanbul99Protocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25, Collections.emptyList(), vertx);
+    final EthMessages messages = new EthMessages();
 
     final BigInteger networkId = BigInteger.ONE;
     try (final EthProtocolManager ethManager =
