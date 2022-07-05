@@ -329,11 +329,11 @@ public class EthPeers {
                 return p;
               } else { // add the EthPeer created for the connection
                 final EthPeer ethPeer = nonReadyConnections.get(peerConnection);
-                invokeConnectionCallbacks(ethPeer);
                 ethPeer.setConnection(peerConnection);
                 return ethPeer;
               }
             });
+        invokeConnectionCallbacks(connections.get(peerConnection.getPeer().getId()));
       } else {
         LOG.info("Do NOT use the new connection {}", System.identityHashCode(peerConnection));
       }
