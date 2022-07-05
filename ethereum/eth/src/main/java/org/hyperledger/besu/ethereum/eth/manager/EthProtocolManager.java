@@ -343,6 +343,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           "Sending status message to {}, connection {}",
           peer.getConnection().getPeer().getId(),
           System.identityHashCode(connection));
+      if (peer.isDisconnected()) {
+        // although it isn't yet confirmed that the new connection is ready,
+        // if the peer's existing connection is disconnected, optimistically replace it
+        peer.replaceConnection(connection);
+      }
       peer.send(status, getSupportedProtocol());
       if (connection.registerStatusSentAndCheckIfReady()) {
         ethPeers.maybeUseReadyConnection(connection);
