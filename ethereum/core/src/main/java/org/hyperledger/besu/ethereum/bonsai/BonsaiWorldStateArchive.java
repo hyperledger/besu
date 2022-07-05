@@ -279,14 +279,14 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           for (final TrieLogLayer rollBack : rollBacks) {
             LOG.info("Attempting Rollback of {}", rollBack.getBlockHash());
             System.out.println("**********************************************");
-            System.out.println("trie log block hash " + rollBack);
+            System.out.println("trie log block hash " + rollBack.dump());
             System.out.println("**********************************************");
             bonsaiUpdater.rollBack(rollBack);
           }
           for (int i = rollForwards.size() - 1; i >= 0; i--) {
             LOG.info("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
             System.out.println("**********************************************");
-            System.out.println("trie log block hash " + rollForwards.get(i));
+            System.out.println("trie log block hash " + rollForwards.get(i).dump());
             System.out.println("**********************************************");
             bonsaiUpdater.rollForward(rollForwards.get(i));
           }
