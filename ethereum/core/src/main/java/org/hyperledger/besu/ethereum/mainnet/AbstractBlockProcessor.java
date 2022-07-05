@@ -180,11 +180,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         }
         return AbstractBlockProcessor.Result.failed();
       }
-
       worldStateUpdater.commit();
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
-
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
@@ -205,6 +203,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       LOG.error("failed persisting block", e);
       return AbstractBlockProcessor.Result.failed();
     }
+
     return AbstractBlockProcessor.Result.successful(receipts);
   }
 
