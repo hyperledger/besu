@@ -58,11 +58,9 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   CompletableFuture<Void> appendNewPayloadToSync(Block newPayload);
 
-  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash);
-
   boolean isMiningBeforeMerge();
 
-  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash, Hash finalizedBlockHash);
+  Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash);
 
   boolean isBadBlock(Hash blockHash);
 

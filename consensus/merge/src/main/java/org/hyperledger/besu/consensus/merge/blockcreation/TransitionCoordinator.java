@@ -184,12 +184,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(
-      final Hash blockHash, final Hash finalizedBlockHash) {
-    return mergeCoordinator.getOrSyncHeaderByHash(blockHash, finalizedBlockHash);
-  }
-
-  @Override
   public boolean isMiningBeforeMerge() {
     return mergeCoordinator.isMiningBeforeMerge();
   }

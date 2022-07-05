@@ -142,7 +142,11 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
     if (mergeCoordinator.isBadBlock(blockParam.getParentHash())) {
-      return respondWith(reqId, blockParam, Hash.ZERO, INVALID);
+      return respondWith(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(newBlockHeader).orElse(Hash.ZERO),
+          INVALID);
     }
 
     Optional<BlockHeader> parentHeader =
@@ -160,8 +164,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
-    if (mergeContext.isSyncing()
-        || mergeCoordinator.getOrSyncHeaderByHash(newBlockHeader.getParentHash()).isEmpty()) {
+    if (mergeContext.isSyncing() || parentHeader.isEmpty()) {
       mergeCoordinator.appendNewPayloadToSync(block);
       return respondWith(reqId, blockParam, null, SYNCING);
     }

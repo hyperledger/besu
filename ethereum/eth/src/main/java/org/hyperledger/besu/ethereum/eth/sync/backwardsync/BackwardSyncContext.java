@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -36,7 +35,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -57,7 +55,6 @@ public class BackwardSyncContext {
       new AtomicReference<>();
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
-  private Optional<Hash> maybeFinalized = Optional.empty();
   private Optional<Hash> maybeHead = Optional.empty();
 
   public BackwardSyncContext(
@@ -82,12 +79,7 @@ public class BackwardSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public synchronized void updateHeads(final Hash head, final Hash finalizedBlockHash) {
-    if (Hash.ZERO.equals(finalizedBlockHash)) {
-      this.maybeFinalized = Optional.empty();
-    } else {
-      this.maybeFinalized = Optional.ofNullable(finalizedBlockHash);
-    }
+  public synchronized void updateHeads(final Hash head) {
     if (Hash.ZERO.equals(head)) {
       this.maybeHead = Optional.empty();
     } else {
@@ -237,7 +229,6 @@ public class BackwardSyncContext {
 
   protected Void saveBlock(final Block block) {
     traceLambda(LOG, "Going to validate block {}", block::toLogString);
-    checkFinalizedSuccessionRuleBeforeSave(block);
     var optResult =
         this.getBlockValidatorForBlock(block)
             .validateAndProcessBlock(
@@ -271,63 +262,6 @@ public class BackwardSyncContext {
   }
 
   @VisibleForTesting
-  protected synchronized void checkFinalizedSuccessionRuleBeforeSave(final Block block) {
-    final Optional<Hash> finalized = findMaybeFinalized();
-    if (finalized.isPresent()) {
-      final Optional<BlockHeader> maybeFinalizedHeader =
-          protocolContext
-              .getBlockchain()
-              .getBlockByHash(finalized.get())
-              .map(Block::getHeader)
-              .or(() -> backwardChain.getHeader(finalized.get()));
-      if (maybeFinalizedHeader.isEmpty()) {
-        throw new BackwardSyncException(
-            "We know a block "
-                + finalized.get().toHexString()
-                + " was finalized, but we don't have it downloaded yet, cannot save new block",
-            true);
-      }
-      final BlockHeader finalizedHeader = maybeFinalizedHeader.get();
-      if (finalizedHeader.getHash().equals(block.getHash())) {
-        debugLambda(LOG, "Saving new finalized block {}", block::toLogString);
-        return;
-      }
-
-      if (finalizedHeader.getNumber() == block.getHeader().getNumber()) {
-        throw new BackwardSyncException(
-            "This block is not the target finalized block. Is "
-                + block.toLogString()
-                + " but was expecting "
-                + finalizedHeader.toLogString());
-      }
-      if (!getProtocolContext().getBlockchain().contains(finalizedHeader.getHash())) {
-        debugLambda(
-            LOG,
-            "Saving block {} before finalized {} reached",
-            block::toLogString,
-            finalizedHeader::toLogString); // todo: some check here??
-        return;
-      }
-      final Hash canonicalHash =
-          getProtocolContext()
-              .getBlockchain()
-              .getBlockByNumber(finalizedHeader.getNumber())
-              .orElseThrow()
-              .getHash();
-      if (finalizedHeader.getNumber() < block.getHeader().getNumber()
-          && !canonicalHash.equals(finalizedHeader.getHash())) {
-        throw new BackwardSyncException(
-            "Finalized block "
-                + finalizedHeader.toLogString()
-                + " is not on canonical chain. Canonical is"
-                + canonicalHash.toHexString()
-                + ". We need to reorg before saving this block.");
-      }
-    }
-    LOG.debug("Finalized block not known yet...");
-  }
-
-  @VisibleForTesting
   protected void possiblyMoveHead(final Block lastSavedBlock) {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
     if (maybeHead.isEmpty()) {
@@ -355,12 +289,5 @@ public class BackwardSyncContext {
 
   public synchronized BackwardChain getBackwardChain() {
     return backwardChain;
-  }
-
-  public Optional<Hash> findMaybeFinalized() {
-    return Stream.of(maybeFinalized, getProtocolContext().getBlockchain().getFinalized())
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .findFirst();
   }
 }

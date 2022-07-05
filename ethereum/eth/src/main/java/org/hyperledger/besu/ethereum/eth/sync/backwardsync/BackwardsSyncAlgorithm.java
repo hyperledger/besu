@@ -61,8 +61,6 @@ public class BackwardsSyncAlgorithm {
     if (!context.isReady()) {
       return waitForReady();
     }
-    runFinalizedSuccessionRule(
-        context.getProtocolContext().getBlockchain(), context.findMaybeFinalized());
     final Optional<BlockHeader> possibleFirstAncestorHeader =
         context.getBackwardChain().getFirstAncestorHeader();
     if (possibleFirstAncestorHeader.isEmpty()) {
