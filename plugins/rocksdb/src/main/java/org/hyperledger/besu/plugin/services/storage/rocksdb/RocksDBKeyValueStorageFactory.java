@@ -146,9 +146,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       databaseVersion = readDatabaseVersion(commonConfiguration);
     } catch (final IOException e) {
       final String message =
-          "Error: "
+          "Failed to retrieve the RocksDB database meta version: "
               + e.getMessage()
-              + " could not be found. You may not have the appropriate permission to access the item";
+              + " could not be found. You may not have the appropriate permission to access the item.";
       throw new StorageException(message, e);
     }
     isSegmentIsolationSupported = databaseVersion >= 1;
