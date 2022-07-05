@@ -7,6 +7,7 @@
 - When on PoS the head can be only be updated by ForkchoiceUpdate [#3994](https://github.com/hyperledger/besu/pull/3994)
 - Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
 - Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
+- Add terminal block hash and number to Ropsten genesis file [#4026](https://github.com/hyperledger/besu/pull/4026)
 - Return `type` with value `0x0` when serializing legacy transactions [#4027](https://github.com/hyperledger/besu/pull/4027)
 
 ### Bug Fixes

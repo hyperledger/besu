@@ -630,6 +630,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
     }
 
+    final Optional<Hash> terminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
+    if (terminalBlockHash.isPresent() && !terminalBlockHash.get().equals(Hash.ZERO)) {
+      final OptionalLong terminalBlockNumber = configOptionsSupplier.get().getTerminalBlockNumber();
+      if (terminalBlockNumber.isPresent()) {
+        validators.add(
+            new RequiredBlocksPeerValidator(
+                protocolSchedule,
+                metricsSystem,
+                terminalBlockNumber.getAsLong(),
+                terminalBlockHash.get()));
+      }
+    }
+
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
     if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())
