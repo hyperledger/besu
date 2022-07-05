@@ -20,6 +20,7 @@
 - Support free gas networks in the London fee market [#4003](https://github.com/hyperledger/besu/pull/4003)
 - Limit the size of outgoing eth subprotocol messages.  [#4034](https://github.com/hyperledger/besu/pull/4034)
 - Fixed a state root mismatch issue on bonsai that may appear occasionally [#4041](https://github.com/hyperledger/besu/pull/4041)
+- Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
 
 ## 22.4.3
 
