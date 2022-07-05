@@ -506,7 +506,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         }
       } else {
         if (address.equals(Bytes.fromHexString("0xa42925055e15355f50a3f1657b75b81b1d05003e"))) {
-          System.out.println("check " + accountValue.getUpdated() + " " + expectedValue);
+          System.out.println(
+              "check " + accountValue.getUpdated() + " " + expectedValue + " " + replacementValue);
         }
         BonsaiAccount.assertCloseEnoughForDiffing(
             accountValue.getUpdated(),

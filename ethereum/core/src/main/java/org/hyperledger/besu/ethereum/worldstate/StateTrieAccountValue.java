@@ -131,4 +131,18 @@ public class StateTrieAccountValue {
 
     return new StateTrieAccountValue(nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
   }
+
+  @Override
+  public String toString() {
+    return "StateTrieAccountValue{"
+        + "nonce="
+        + nonce
+        + ", balance="
+        + balance
+        + ", storageRoot="
+        + storageRoot
+        + ", codeHash="
+        + codeHash
+        + '}';
+  }
 }
