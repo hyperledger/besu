@@ -37,7 +37,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
 public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
-
   private Optional<BonsaiWorldView> nextWorldView;
   protected final long height;
   protected final TrieLogLayer trieLog;
