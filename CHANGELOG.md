@@ -1,5 +1,9 @@
 # Changelog
 
+## 22.7.0-RC2
+
+### Additions and Improvements
+
 ## 22.7.0-RC1
 
 ### Additions and Improvements
