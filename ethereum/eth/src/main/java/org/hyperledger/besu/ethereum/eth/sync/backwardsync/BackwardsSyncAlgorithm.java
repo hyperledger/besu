@@ -61,6 +61,8 @@ public class BackwardsSyncAlgorithm {
     if (!context.isReady()) {
       return waitForReady();
     }
+    runFinalizedSuccessionRule(
+        context.getProtocolContext().getBlockchain(), context.findMaybeFinalized());
     final Optional<BlockHeader> possibleFirstAncestorHeader =
         context.getBackwardChain().getFirstAncestorHeader();
     if (possibleFirstAncestorHeader.isEmpty()) {
@@ -142,5 +144,51 @@ public class BackwardsSyncAlgorithm {
     if (context.isReady()) {
       latch.countDown();
     }
+  }
+
+  @VisibleForTesting
+  protected void runFinalizedSuccessionRule(
+      final MutableBlockchain blockchain, final Optional<Hash> maybeFinalized) {
+    if (maybeFinalized.isEmpty()) {
+      LOG.debug("Nothing to validate yet, consensus layer did not provide a new finalized block");
+      return;
+    }
+    final Hash newFinalized = maybeFinalized.get();
+    if (!blockchain.contains(newFinalized)) {
+      LOG.debug("New finalized block {} is not imported yet", newFinalized);
+      return;
+    }
+
+    final Optional<Hash> maybeOldFinalized = blockchain.getFinalized();
+    if (maybeOldFinalized.isPresent()) {
+      final Hash oldFinalized = maybeOldFinalized.get();
+      if (newFinalized.equals(oldFinalized)) {
+        LOG.debug("We already have this block as finalized");
+        return;
+      }
+      BlockHeader newFinalizedHeader =
+          blockchain
+              .getBlockHeader(newFinalized)
+              .orElseThrow(
+                  () ->
+                      new BackwardSyncException(
+                          "The header " + newFinalized.toHexString() + "not found"));
+      BlockHeader oldFinalizedHeader =
+          blockchain
+              .getBlockHeader(oldFinalized)
+              .orElseThrow(
+                  () ->
+                      new BackwardSyncException(
+                          "The header " + oldFinalized.toHexString() + "not found"));
+      LOG.info(
+          "Updating finalized {} block to new finalized block {}",
+          oldFinalizedHeader.toLogString(),
+          newFinalizedHeader.toLogString());
+    } else {
+      // Todo: should TTD test be here?
+      LOG.info("Setting new finalized block to {}", newFinalized);
+    }
+
+    blockchain.setFinalized(newFinalized);
   }
 }

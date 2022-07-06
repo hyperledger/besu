@@ -210,11 +210,6 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
-
-    if (Hash.ZERO.equals(blockHash)) {
-      return Optional.empty();
-    }
-
     final var chain = protocolContext.getBlockchain();
     final var optHeader = chain.getBlockHeader(blockHash);
 
@@ -222,7 +217,22 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
       debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
-      backwardSyncContext.updateHeads(blockHash);
+      backwardSyncContext.syncBackwardsUntil(blockHash);
+    }
+    return optHeader;
+  }
+
+  @Override
+  public Optional<BlockHeader> getOrSyncHeaderByHash(
+      final Hash blockHash, final Hash finalizedBlockHash) {
+    final var chain = protocolContext.getBlockchain();
+    final var optHeader = chain.getBlockHeader(blockHash);
+
+    if (optHeader.isPresent()) {
+      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
+    } else {
+      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
+      backwardSyncContext.updateHeads(blockHash, finalizedBlockHash);
       backwardSyncContext.syncBackwardsUntil(blockHash);
     }
     return optHeader;
