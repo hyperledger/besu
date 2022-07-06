@@ -144,6 +144,7 @@ public class BackwardChain {
   }
 
   public synchronized void appendTrustedBlock(final Block newPivot) {
+    debugLambda(LOG, "appending trusted block {}", newPivot::toLogString);
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
     if (lastStoredPivot.isEmpty()) {
