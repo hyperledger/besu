@@ -85,22 +85,17 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           requestId,
           new EngineUpdateForkchoiceResult(
               INVALID,
-              Hash.ZERO,
+              mergeCoordinator
+                  .getLatestValidAncestor(forkChoice.getHeadBlockHash())
+                  .orElse(Hash.ZERO),
               null,
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
     Optional<BlockHeader> newHead =
-        protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
+        mergeCoordinator.getOrSyncHeaderByHash(forkChoice.getHeadBlockHash());
 
     if (newHead.isEmpty()) {
-      Optional.ofNullable(forkChoice.getHeadBlockHash())
-          .filter(hash -> !hash.equals(Hash.ZERO))
-          .ifPresent(
-              blockHash ->
-                  mergeCoordinator.getOrSyncHeaderByHash(
-                      blockHash, forkChoice.getFinalizedBlockHash()));
-
       return syncingResponse(requestId);
     }
 
