@@ -1,6 +1,10 @@
 # Changelog
 
-## 22.7.1
+## 22.7.0-RC2
+
+### Additions and Improvements
+
+## 22.7.0-RC1
 
 ### Additions and Improvements
 - Do not require a minimum block height when downloading headers or blocks [#3911](https://github.com/hyperledger/besu/pull/3911)
