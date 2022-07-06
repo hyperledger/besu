@@ -188,7 +188,7 @@ public class PrivacyReorgTest {
 
     besuController =
         new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.development())
+            .fromGenesisConfig(GenesisConfigFile.privateDev())
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())

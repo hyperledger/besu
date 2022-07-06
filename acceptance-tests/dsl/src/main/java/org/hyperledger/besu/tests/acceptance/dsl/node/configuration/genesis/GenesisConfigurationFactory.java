@@ -127,6 +127,13 @@ public class GenesisConfigurationFactory {
         validators, template, CliqueExtraData::createGenesisExtraDataString);
   }
 
+  public static Optional<String> createSimplePrivateDevGenesisConfig(
+      final Collection<? extends RunnableNode> validators) {
+    final String template = readGenesisFile("/dev/simple_dev_genesis.json");
+    return updateGenesisExtraData(
+        validators, template, CliqueExtraData::createGenesisExtraDataString);
+  }
+
   private static Optional<String> updateGenesisExtraData(
       final Collection<? extends RunnableNode> validators,
       final String genesisTemplate,

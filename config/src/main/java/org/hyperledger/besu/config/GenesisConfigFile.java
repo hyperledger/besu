@@ -62,6 +62,10 @@ public class GenesisConfigFile {
     return genesisFileFromResources("/dev.json");
   }
 
+  public static GenesisConfigFile privateDev() {
+    return genesisFileFromResources("/simple_dev.json");
+  }
+
   public static GenesisConfigFile ecip1049dev() {
     return genesisFileFromResources("/ecip1049_dev.json");
   }
