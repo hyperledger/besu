@@ -64,10 +64,12 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -190,7 +192,9 @@ public class RetestethContext {
 
     // mining support
 
-    final EthPeers ethPeers = new EthPeers("reteseth", retestethClock, metricsSystem, 0);
+    final EthPeers ethPeers =
+        new EthPeers(
+            "reteseth", retestethClock, metricsSystem, 0, Collections.emptyList(), Vertx.vertx());
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);

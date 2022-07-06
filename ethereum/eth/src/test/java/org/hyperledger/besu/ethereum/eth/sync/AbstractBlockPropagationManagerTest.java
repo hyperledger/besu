@@ -62,6 +62,7 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
+import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -606,7 +607,13 @@ public abstract class AbstractBlockPropagationManagerTest {
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem, 25),
+            new EthPeers(
+                "eth",
+                TestClock.fixed(),
+                metricsSystem,
+                25,
+                Collections.emptyList(),
+                Vertx.vertx()),
             new EthMessages(),
             ethScheduler);
     final BlockPropagationManager blockPropagationManager =
@@ -665,7 +672,13 @@ public abstract class AbstractBlockPropagationManagerTest {
             });
     final EthContext ethContext =
         new EthContext(
-            new EthPeers("eth", TestClock.fixed(), metricsSystem, 25),
+            new EthPeers(
+                "eth",
+                TestClock.fixed(),
+                metricsSystem,
+                25,
+                Collections.emptyList(),
+                Vertx.vertx()),
             new EthMessages(),
             ethScheduler);
     final BlockPropagationManager blockPropagationManager =
