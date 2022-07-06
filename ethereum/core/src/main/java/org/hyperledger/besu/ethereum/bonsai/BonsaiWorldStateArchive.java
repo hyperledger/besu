@@ -246,7 +246,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           while (persistedHeader.getNumber() > targetHeader.getNumber()) {
             LOG.info("Rollback {}", persistedBlockHash);
             if (persistedBlockHash.equals(
-                "0x38db894b85a6b58748b2ac278cca2f5968d10ad47719238da25559b241a877d6")) {
+                Hash.wrap(
+                    Bytes32.fromHexString(
+                        "0x38db894b85a6b58748b2ac278cca2f5968d10ad47719238da25559b241a877d6")))) {
               rollBacks.add(
                   getTrieLogLayer(
                           Hash.wrap(
