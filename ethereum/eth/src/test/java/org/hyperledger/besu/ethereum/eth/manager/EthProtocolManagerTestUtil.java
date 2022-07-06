@@ -42,6 +42,8 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.OptionalLong;
 
+import io.vertx.core.Vertx;
+
 public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
@@ -137,8 +139,15 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
-    EthMessages messages = new EthMessages();
+    final EthPeers peers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            Collections.emptyList(),
+            Vertx.vertx());
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -158,8 +167,15 @@ public class EthProtocolManagerTestUtil {
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration,
       final ForkIdManager forkIdManager) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
-    EthMessages messages = new EthMessages();
+    final EthPeers peers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            Collections.emptyList(),
+            Vertx.vertx());
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -175,8 +191,15 @@ public class EthProtocolManagerTestUtil {
 
   public static EthProtocolManager create(
       final Blockchain blockchain, final EthScheduler ethScheduler) {
-    EthPeers peers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), new NoOpMetricsSystem(), 25);
-    EthMessages messages = new EthMessages();
+    final EthPeers peers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            Collections.emptyList(),
+            Vertx.vertx());
+    final EthMessages messages = new EthMessages();
 
     return create(
         blockchain,

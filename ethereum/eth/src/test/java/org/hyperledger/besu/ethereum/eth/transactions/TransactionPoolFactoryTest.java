@@ -49,6 +49,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 
+import io.vertx.core.Vertx;
 import org.junit.Test;
 
 @SuppressWarnings("unchecked")
@@ -63,7 +64,14 @@ public class TransactionPoolFactoryTest {
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
     when(context.getBlockchain()).thenReturn(blockchain);
-    final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem(), 25);
+    final EthPeers ethPeers =
+        new EthPeers(
+            "ETH",
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            Collections.emptyList(),
+            Vertx.vertx());
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
