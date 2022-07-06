@@ -145,7 +145,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(
           reqId,
           blockParam,
-          mergeCoordinator.getLatestValidAncestor(newBlockHeader).orElse(Hash.ZERO),
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(Hash.ZERO),
           INVALID);
     }
 

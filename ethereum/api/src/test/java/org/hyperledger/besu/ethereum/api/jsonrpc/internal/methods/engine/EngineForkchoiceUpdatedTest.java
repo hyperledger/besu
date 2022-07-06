@@ -119,6 +119,23 @@ public class EngineForkchoiceUpdatedTest {
   }
 
   @Test
+  public void shouldReturnInvalidWithLatestValidHashOnBadBlock() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
+    when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
+    when(mergeCoordinator.getLatestValidAncestor(mockHeader.getHash()))
+        .thenReturn(Optional.of(latestValidHash));
+
+    assertSuccessWithPayloadForForkchoiceResult(
+        new EngineForkchoiceUpdatedParameter(
+            mockHeader.getHash(), Hash.ZERO, mockHeader.getParentHash()),
+        Optional.empty(),
+        mock(ForkchoiceResult.class),
+        INVALID,
+        Optional.of(latestValidHash));
+  }
+
+  @Test
   public void shouldReturnSyncingOnHeadNotFound() {
     assertSuccessWithPayloadForForkchoiceResult(
         mockFcuParam, Optional.empty(), mock(ForkchoiceResult.class), SYNCING);

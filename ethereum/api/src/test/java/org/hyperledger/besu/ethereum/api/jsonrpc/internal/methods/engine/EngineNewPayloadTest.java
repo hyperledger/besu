@@ -180,6 +180,23 @@ public class EngineNewPayloadTest {
   }
 
   @Test
+  public void shouldReturnInvalidWithLatestValidHashIfDescendingFromBadBlock() {
+    BlockHeader mockHeader = createBlockHeader();
+    Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
+
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(mergeCoordinator.isBadBlock(mockHeader.getParentHash())).thenReturn(true);
+    when(mergeCoordinator.getLatestValidAncestor(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(latestValidHash));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(latestValidHash));
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+  }
+
+  @Test
   public void shouldReturnInvalidBlockHashOnBadHashParameter() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
 
