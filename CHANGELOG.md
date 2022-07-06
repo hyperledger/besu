@@ -22,6 +22,10 @@
 - Fixed a state root mismatch issue on bonsai that may appear occasionally [#4041](https://github.com/hyperledger/besu/pull/4041)
 - Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
 
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC1/besu-22.7.0-RC1.tar.gz / sha256: `60ad8b53402beb62c24ad791799d9cfe444623a58f6f6cf1d0728459cb641e63`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC1/besu-22.7.0-RC1.zip / sha256: `7acfb3a73382bf70f6337e83cb7e9e472b4e5a9da88c5ed2fbd9e82fcf2046dc`
+
 ## 22.4.3
 
 ### Additions and Improvements
