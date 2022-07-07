@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.consensus.merge.NewForkchoiceMessageListener;
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -62,7 +62,7 @@ public class EthProtocolManager
     implements ProtocolManager,
         MinedBlockObserver,
         NewMergeStateCallback,
-        NewForkchoiceMessageListener {
+        ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
   private final EthScheduler scheduler;
@@ -286,6 +286,7 @@ public class EthProtocolManager
     if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
       LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
       ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       return;
     }
 
@@ -404,6 +405,7 @@ public class EthProtocolManager
                 "Disconnecting peer with difficulty {}, likely still on PoW chain",
                 status.totalDifficulty());
             peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+            handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
           }
         } finally {
           this.powTerminalDifficultyLock.unlockRead(lockStamp);
@@ -454,13 +456,15 @@ public class EthProtocolManager
         && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
       this.lastFinalized = maybeFinalizedBlockHash.get();
       this.numFinalizedSeen.getAndIncrement();
+      LOG.debug("have seen {} finalized blocks", this.numFinalizedSeen);
     }
   }
 
   @Override
   public void onCrossingMergeBoundary(
       final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
-    if (isPoS) {
+    if (isPoS && difficultyStoppedAt.isPresent()) {
+      LOG.debug("terminal difficulty set to {}", difficultyStoppedAt.get().getValue());
       long lockStamp = this.powTerminalDifficultyLock.writeLock();
       try {
         this.powTerminalDifficulty = difficultyStoppedAt;

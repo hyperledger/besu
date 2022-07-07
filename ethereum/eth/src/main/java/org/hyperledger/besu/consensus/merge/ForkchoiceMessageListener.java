@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
 
-public interface NewForkchoiceMessageListener {
+public interface ForkchoiceMessageListener {
 
   void onNewForkchoiceMessage(
       final Hash headBlockHash,

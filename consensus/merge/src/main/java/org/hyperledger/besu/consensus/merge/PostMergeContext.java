@@ -43,7 +43,7 @@ public class PostMergeContext implements MergeContext {
       new AtomicReference<>(Optional.empty());
   private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
       Subscribers.create();
-  private final Subscribers<NewForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
+  private final Subscribers<ForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
       Subscribers.create();
 
   private final EvictingQueue<PayloadTuple> blocksInProgress =
@@ -131,8 +131,8 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public long addNewForkchoiceMessageListener(
-      final NewForkchoiceMessageListener newForkchoiceMessageListener) {
-    return newForkchoiceMessageCallbackSubscribers.subscribe(newForkchoiceMessageListener);
+      final ForkchoiceMessageListener forkchoiceMessageListener) {
+    return newForkchoiceMessageCallbackSubscribers.subscribe(forkchoiceMessageListener);
   }
 
   @Override

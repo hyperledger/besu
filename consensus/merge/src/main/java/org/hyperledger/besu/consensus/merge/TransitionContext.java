@@ -74,8 +74,8 @@ public class TransitionContext implements MergeContext {
 
   @Override
   public long addNewForkchoiceMessageListener(
-      final NewForkchoiceMessageListener newForkchoiceMessageListener) {
-    return postMergeContext.addNewForkchoiceMessageListener(newForkchoiceMessageListener);
+      final ForkchoiceMessageListener forkchoiceMessageListener) {
+    return postMergeContext.addNewForkchoiceMessageListener(forkchoiceMessageListener);
   }
 
   @Override

@@ -38,8 +38,7 @@ public interface MergeContext extends ConsensusContext {
 
   void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback);
 
-  long addNewForkchoiceMessageListener(
-      final NewForkchoiceMessageListener newForkchoiceMessageListener);
+  long addNewForkchoiceMessageListener(final ForkchoiceMessageListener forkchoiceMessageListener);
 
   void removeNewForkchoiceMessageListener(final long subscriberId);
 

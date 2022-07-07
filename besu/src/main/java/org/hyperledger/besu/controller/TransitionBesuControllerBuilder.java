@@ -15,7 +15,6 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
@@ -32,12 +31,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -120,7 +114,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transactionPool,
                 transitionMiningParameters,
                 syncState,
-                ethProtocolManager,
                 transitionBackwardsSyncContext));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
@@ -149,43 +142,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new NoopPluginServiceFactory();
-  }
-
-  @Override
-  protected EthProtocolManager createEthProtocolManager(
-      final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthContext ethContext,
-      final EthMessages ethMessages,
-      final EthScheduler scheduler,
-      final List<PeerValidator> peerValidators) {
-
-    EthProtocolManager ethProtocolManager =
-        super.createEthProtocolManager(
-            protocolContext,
-            fastSyncEnabled,
-            transactionPool,
-            ethereumWireProtocolConfiguration,
-            ethPeers,
-            ethContext,
-            ethMessages,
-            scheduler,
-            peerValidators);
-
-    ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
-    if (cc instanceof MergeContext) {
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .observeNewIsPostMergeState(ethProtocolManager);
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(ethProtocolManager);
-    }
-
-    return ethProtocolManager;
   }
 
   private void initTransitionWatcher(
