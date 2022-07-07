@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Optional;
 
-public interface NewMergeStateCallback {
+public interface MergeStateHandler {
 
-  void onCrossingMergeBoundary(final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt);
+  void mergeStateChanged(final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt);
 }

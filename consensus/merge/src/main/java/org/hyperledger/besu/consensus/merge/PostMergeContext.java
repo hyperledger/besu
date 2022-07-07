@@ -41,7 +41,7 @@ public class PostMergeContext implements MergeContext {
   // initial postMerge state is indeterminate until it is set:
   private final AtomicReference<Optional<Boolean>> isPostMerge =
       new AtomicReference<>(Optional.empty());
-  private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
+  private final Subscribers<MergeStateHandler> newMergeStateCallbackSubscribers =
       Subscribers.create();
   private final Subscribers<ForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
       Subscribers.create();
@@ -100,7 +100,7 @@ public class PostMergeContext implements MergeContext {
     if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback ->
-              newMergeStateCallback.onCrossingMergeBoundary(
+              newMergeStateCallback.mergeStateChanged(
                   newState, Optional.of(totalDifficulty)));
     }
   }
@@ -125,8 +125,8 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
-    newMergeStateCallbackSubscribers.subscribe(newMergeStateCallback);
+  public void observeNewIsPostMergeState(final MergeStateHandler mergeStateHandler) {
+    newMergeStateCallbackSubscribers.subscribe(mergeStateHandler);
   }
 
   @Override

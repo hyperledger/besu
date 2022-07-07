@@ -36,7 +36,7 @@ public interface MergeContext extends ConsensusContext {
 
   boolean isSyncing();
 
-  void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback);
+  void observeNewIsPostMergeState(final MergeStateHandler mergeStateHandler);
 
   long addNewForkchoiceMessageListener(final ForkchoiceMessageListener forkchoiceMessageListener);
 

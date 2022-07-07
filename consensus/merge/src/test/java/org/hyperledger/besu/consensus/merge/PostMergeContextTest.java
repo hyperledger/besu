@@ -168,11 +168,11 @@ public class PostMergeContextTest {
     assertThat(postMergeContext.retrieveBlockById(evictedPayloadId)).isEmpty();
   }
 
-  private static class MergeStateChangeCollector implements NewMergeStateCallback {
+  private static class MergeStateChangeCollector implements MergeStateHandler {
     final List<Boolean> stateChanges = new ArrayList<>();
 
     @Override
-    public void onCrossingMergeBoundary(
+    public void mergeStateChanged(
         final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
       stateChanges.add(isPoS);
     }

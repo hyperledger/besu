@@ -252,7 +252,7 @@ public final class EthProtocolManagerTest {
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
 
-      ethManager.onCrossingMergeBoundary(
+      ethManager.mergeStateChanged(
           true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
       ethManager.onNewForkchoiceMessage(
           Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);

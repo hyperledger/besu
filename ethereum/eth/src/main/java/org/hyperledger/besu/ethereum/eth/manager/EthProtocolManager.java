@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
-import org.hyperledger.besu.consensus.merge.NewMergeStateCallback;
+import org.hyperledger.besu.consensus.merge.MergeStateHandler;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -61,7 +61,7 @@ import org.slf4j.LoggerFactory;
 public class EthProtocolManager
     implements ProtocolManager,
         MinedBlockObserver,
-        NewMergeStateCallback,
+    MergeStateHandler,
         ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
@@ -461,7 +461,7 @@ public class EthProtocolManager
   }
 
   @Override
-  public void onCrossingMergeBoundary(
+  public void mergeStateChanged(
       final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
     if (isPoS && difficultyStoppedAt.isPresent()) {
       LOG.debug("terminal difficulty set to {}", difficultyStoppedAt.get().getValue());

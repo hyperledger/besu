@@ -68,8 +68,8 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
-    postMergeContext.observeNewIsPostMergeState(newMergeStateCallback);
+  public void observeNewIsPostMergeState(final MergeStateHandler mergeStateHandler) {
+    postMergeContext.observeNewIsPostMergeState(mergeStateHandler);
   }
 
   @Override
