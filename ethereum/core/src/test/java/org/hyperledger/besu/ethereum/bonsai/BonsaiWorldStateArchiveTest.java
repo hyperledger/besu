@@ -229,16 +229,10 @@ public class BonsaiWorldStateArchiveTest {
     // initial persisted state hash key
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
     // fake trie log layer
-    final BytesValueRLPOutput rlpLogBlockA = new BytesValueRLPOutput();
-    final TrieLogLayer trieLogLayerBlockA = new TrieLogLayer();
-    trieLogLayerBlockA.setBlockHash(blockHeaderChainA.getHash());
-    trieLogLayerBlockA.writeTo(rlpLogBlockA);
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
     trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
     trieLogLayerBlockB.writeTo(rlpLogBlockB);
-    when(keyValueStorage.get(blockHeaderChainA.getHash().toArrayUnsafe()))
-        .thenReturn(Optional.of(rlpLogBlockA.encoded().toArrayUnsafe()));
     when(keyValueStorage.get(blockHeaderChainB.getHash().toArrayUnsafe()))
         .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
 
