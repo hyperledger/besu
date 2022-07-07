@@ -125,12 +125,11 @@ public class RespondingEthPeer {
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
     peerConnection.setOnConnectionReadyCallback(() -> true);
     ethPeers.registerConnection(peerConnection, peerValidators);
-    ethPeers.maybeUseReadyConnection(peerConnection);
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.chainState().getBestBlock().totalDifficulty = totalDifficulty;
     peer.chainState().getBestBlock().hash = chainHeadHash;
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
-    //    peer.registerStatusSent();
+    ethPeers.maybeUseReadyConnection(peerConnection);
 
     return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);
   }

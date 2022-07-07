@@ -75,14 +75,6 @@ public class EthPeers {
       final String protocolName,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final int maxPeers) {
-    this(protocolName, clock, metricsSystem, maxPeers, Collections.emptyList(), null);
-  }
-
-  public EthPeers(
-      final String protocolName,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
       final int maxPeers,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Vertx vertx) {

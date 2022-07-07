@@ -61,6 +61,7 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -105,8 +106,9 @@ public class P2PPlainNetworkTest {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
-
+      listener.subscribeConnect(pc -> pc.callOnConnectionReadyCallback());
       listener.start();
+
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();
@@ -118,12 +120,12 @@ public class P2PPlainNetworkTest {
           connector.connect(createPeer(listenId, listenPort));
 
       final PeerConnection firstConnection = firstFuture.get(30L, TimeUnit.SECONDS);
-      final PeerConnection secondConnection = secondFuture.get(30L, TimeUnit.SECONDS);
       Assertions.assertThat(firstConnection.getPeerInfo().getNodeId()).isEqualTo(listenId);
 
-      // Connections should reference the same instance - i.e. we shouldn't create 2 distinct
-      // connections
-      assertThat(firstConnection == secondConnection).isTrue();
+      assertThat(secondFuture.isCompletedExceptionally()).isTrue();
+      Thread.sleep(5000);
+      final CompletableFuture<PeerConnection> thirdFuture =
+              connector.connect(createPeer(listenId, listenPort));
     }
   }
 
@@ -151,6 +153,7 @@ public class P2PPlainNetworkTest {
         final P2PNetwork connector2 = builder("partner2client1").build()) {
 
       // Setup listener and first connection
+      listener.subscribeConnect(pc -> pc.callOnConnectionReadyCallback());
       listener.start();
       connector1.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();

@@ -50,6 +50,7 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -103,6 +104,7 @@ public class P2PNetworkTest {
 
       final CompletableFuture<PeerConnection> firstFuture =
           connector.connect(createPeer(listenId, listenPort));
+      Thread.sleep(5000);
       final CompletableFuture<PeerConnection> secondFuture =
           connector.connect(createPeer(listenId, listenPort));
 
