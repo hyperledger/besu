@@ -267,16 +267,12 @@ public class RlpxAgentTest {
     startAgent(localNodeId);
 
     final Peer peer = createPeer(remoteNodeId);
-    final CompletableFuture<PeerConnection> existingConnection = agent.connect(peer);
     final PeerConnection incomingConnection = connection(peer);
     connectionInitializer.simulateIncomingConnection(incomingConnection);
 
     // New connection should be kept
     Assertions.assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(incomingConnection);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
-    //    assertThat(existingConnection.get().isDisconnected()).isTrue();
-    //    assertThat(((MockPeerConnection) existingConnection.get()).getDisconnectReason())
-    //        .contains(DisconnectReason.ALREADY_CONNECTED);
   }
 
   @Test
