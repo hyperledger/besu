@@ -3,6 +3,7 @@
 ## 22.4.4
 
 ### Additions and Improvements
+
 - Do not require a minimum block height when downloading headers or blocks [#3911](https://github.com/hyperledger/besu/pull/3911)
 - When on PoS the head can be only be updated by ForkchoiceUpdate [#3994](https://github.com/hyperledger/besu/pull/3994)
 - Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
@@ -13,6 +14,7 @@
 - allow upgrade whether websockets enabled or not [#4019](https://github.com/hyperledger/besu/pull/4019)
 - jwt auth on websockets [#4039](https://github.com/hyperledger/besu/pull/4039)
 - Fixed a state root mismatch issue on bonsai that may appear occasionally [#4041](https://github.com/hyperledger/besu/pull/4041)
+- Fixed a trie log layer issue on bonsai during reorg [#4069](https://github.com/hyperledger/besu/pull/4069)
 
 ## 22.4.3
 
