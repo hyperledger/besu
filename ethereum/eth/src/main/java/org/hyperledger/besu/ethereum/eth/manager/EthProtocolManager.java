@@ -59,10 +59,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EthProtocolManager
-    implements ProtocolManager,
-        MinedBlockObserver,
-    MergeStateHandler,
-        ForkchoiceMessageListener {
+    implements ProtocolManager, MinedBlockObserver, MergeStateHandler, ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
   private final EthScheduler scheduler;
