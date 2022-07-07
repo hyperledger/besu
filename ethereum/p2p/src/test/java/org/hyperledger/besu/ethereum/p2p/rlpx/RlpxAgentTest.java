@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -69,7 +68,6 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class RlpxAgentTest {
@@ -228,7 +226,8 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void connect_doesNotCreateDuplicateConnections() throws ExecutionException, InterruptedException {
+  public void connect_doesNotCreateDuplicateConnections()
+      throws ExecutionException, InterruptedException {
     startAgent();
     final Peer peer = createPeer();
     final CompletableFuture<PeerConnection> connection1 = agent.connect(peer);
@@ -242,7 +241,8 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void incomingConnection_deduplicatedWhenAlreadyConnected_peerWithHigherValueNodeId() throws ExecutionException, InterruptedException {
+  public void incomingConnection_deduplicatedWhenAlreadyConnected_peerWithHigherValueNodeId()
+      throws ExecutionException, InterruptedException {
     final Bytes localNodeId = Bytes.fromHexString("0x01", EnodeURLImpl.NODE_ID_SIZE);
     final Bytes remoteNodeId = Bytes.fromHexString("0x02", EnodeURLImpl.NODE_ID_SIZE);
 
@@ -274,9 +274,9 @@ public class RlpxAgentTest {
     // New connection should be kept
     Assertions.assertThat(agent.getPeerConnection(peer).get().get()).isEqualTo(incomingConnection);
     assertThat(agent.getConnectionCount()).isEqualTo(1);
-//    assertThat(existingConnection.get().isDisconnected()).isTrue();
-//    assertThat(((MockPeerConnection) existingConnection.get()).getDisconnectReason())
-//        .contains(DisconnectReason.ALREADY_CONNECTED);
+    //    assertThat(existingConnection.get().isDisconnected()).isTrue();
+    //    assertThat(((MockPeerConnection) existingConnection.get()).getDisconnectReason())
+    //        .contains(DisconnectReason.ALREADY_CONNECTED);
   }
 
   @Test
@@ -391,7 +391,8 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void connect_afterMaxRemotelyInitiatedConnectionsHaveBeenEstablished() throws ExecutionException, InterruptedException {
+  public void connect_afterMaxRemotelyInitiatedConnectionsHaveBeenEstablished()
+      throws ExecutionException, InterruptedException {
     final int maxPeers = 10;
     final int maxRemotePeers = 8;
     final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
@@ -435,7 +436,8 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void connect_withMaxRemotelyInitiatedConnectionsAt100Percent() throws ExecutionException, InterruptedException {
+  public void connect_withMaxRemotelyInitiatedConnectionsAt100Percent()
+      throws ExecutionException, InterruptedException {
     final int maxPeers = 10;
     final float maxRemotePeersFraction = 1.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
@@ -468,7 +470,8 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void connect_withMaxRemotelyInitiatedConnectionsAtZeroPercent() throws ExecutionException, InterruptedException {
+  public void connect_withMaxRemotelyInitiatedConnectionsAtZeroPercent()
+      throws ExecutionException, InterruptedException {
     final int maxPeers = 10;
     final float maxRemotePeersFraction = 0.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
@@ -551,7 +554,8 @@ public class RlpxAgentTest {
   }
 
   @Test
-  public void connect_succeedsForExemptPeerWhenMaxExemptPeersConnected() throws ExecutionException, InterruptedException {
+  public void connect_succeedsForExemptPeerWhenMaxExemptPeersConnected()
+      throws ExecutionException, InterruptedException {
     // Turn off autocomplete so that each connection is established (completed) after it has been
     // successfully added to the internal connections set. This mimics async production behavior.
     connectionInitializer.setAutocompleteConnections(false);
@@ -1044,17 +1048,18 @@ public class RlpxAgentTest {
       final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
     config.setLimitRemoteWireConnectionsEnabled(true);
     rlpxConfigurationModifier.accept(config);
-    final RlpxAgent rlpxAgent = buildCustomization
+    final RlpxAgent rlpxAgent =
+        buildCustomization
             .apply(
-                    RlpxAgent.builder()
-                            .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
-                            .config(config)
-                            .peerPermissions(peerPermissions)
-                            .peerPrivileges(peerPrivileges)
-                            .localNode(localNode)
-                            .metricsSystem(metrics)
-                            .connectionInitializer(connectionInitializer)
-                            .connectionEvents(peerConnectionEvents))
+                RlpxAgent.builder()
+                    .nodeKey(NodeKeyUtils.createFrom(KEY_PAIR))
+                    .config(config)
+                    .peerPermissions(peerPermissions)
+                    .peerPrivileges(peerPrivileges)
+                    .localNode(localNode)
+                    .metricsSystem(metrics)
+                    .connectionInitializer(connectionInitializer)
+                    .connectionEvents(peerConnectionEvents))
             .build();
     rlpxAgent.subscribeConnect(pc -> pc.callOnConnectionReadyCallback());
     return rlpxAgent;
