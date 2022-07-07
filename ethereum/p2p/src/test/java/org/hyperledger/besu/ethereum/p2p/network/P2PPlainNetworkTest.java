@@ -123,8 +123,6 @@ public class P2PPlainNetworkTest {
 
       assertThat(secondFuture.isCompletedExceptionally()).isTrue();
       Thread.sleep(5000);
-      final CompletableFuture<PeerConnection> thirdFuture =
-          connector.connect(createPeer(listenId, listenPort));
     }
   }
 
