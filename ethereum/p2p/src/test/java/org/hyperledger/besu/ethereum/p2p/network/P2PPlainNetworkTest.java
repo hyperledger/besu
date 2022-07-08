@@ -105,9 +105,9 @@ public class P2PPlainNetworkTest {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+
       listener.subscribeConnect(pc -> pc.callOnConnectionReadyCallback());
       listener.start();
-
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
       final Bytes listenId = listenerEnode.getNodeId();

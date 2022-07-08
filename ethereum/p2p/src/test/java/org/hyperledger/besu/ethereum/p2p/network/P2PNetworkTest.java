@@ -95,6 +95,7 @@ public class P2PNetworkTest {
     try (final P2PNetwork listener = builder().nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder().build()) {
 
+      listener.subscribeConnect(pc -> pc.callOnConnectionReadyCallback());
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
@@ -140,6 +141,7 @@ public class P2PNetworkTest {
         final P2PNetwork connector2 = builder().build()) {
 
       // Setup listener and first connection
+      listener.subscribeConnect(pc -> pc.callOnConnectionReadyCallback());
       listener.start();
       connector1.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
