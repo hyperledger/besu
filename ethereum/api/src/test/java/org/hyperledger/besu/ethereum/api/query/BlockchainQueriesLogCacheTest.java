@@ -127,7 +127,7 @@ public class BlockchainQueriesLogCacheTest {
   }
 
   /**
-   * Tests fours sets of a three block range where the seam (where the segment changes) is in all
+   * Tests four sets of a three block range where the seam (where the segment changes) is in all
    * possible positions in the range.
    *
    * <p>For this test both sides of the seam are cached.
@@ -140,10 +140,11 @@ public class BlockchainQueriesLogCacheTest {
 
     // 4 ranges of 3 hits a piece = 12 calls - 97-99, 98-00, 99-01, 00-02
     verify(blockchain, times(12)).getBlockHashByNumber(anyLong());
-    verify(blockchain, times(12)).getBlockHeader(testHash);
-    verify(blockchain, times(12)).getTxReceipts(testHash);
-    verify(blockchain, times(12)).getBlockBody(testHash);
-    verify(blockchain, times(12)).blockIsOnCanonicalChain(testHash);
+    verify(blockchain, times(24)).getBlockHeader(testHash);
+    verify(blockchain, times(12)).getBlockHeader(anyLong());
+    verify(blockchain, times(24)).getTxReceipts(testHash);
+    verify(blockchain, times(24)).getBlockBody(testHash);
+    verify(blockchain, times(24)).blockIsOnCanonicalChain(testHash);
 
     verifyNoMoreInteractions(blockchain);
   }
@@ -163,14 +164,14 @@ public class BlockchainQueriesLogCacheTest {
     // 6 sets of calls on cache side of seam: 97-99, 98-99, 99, {}
     verify(blockchain, times(6)).getBlockHashByNumber(anyLong());
 
-    // 6 sets of calls on uncached side of seam: {}, 00, 00-01, 00-02
-    verify(blockchain, times(6)).getBlockHeader(anyLong());
+    // 12 sets of calls on uncached side of seam: {}, 00, 00-01, 00-02
+    verify(blockchain, times(12)).getBlockHeader(anyLong());
 
     // called on both halves of the seam
-    verify(blockchain, times(12)).getBlockHeader(testHash);
-    verify(blockchain, times(12)).getTxReceipts(testHash);
-    verify(blockchain, times(12)).getBlockBody(testHash);
-    verify(blockchain, times(12)).blockIsOnCanonicalChain(testHash);
+    verify(blockchain, times(18)).getBlockHeader(testHash);
+    verify(blockchain, times(18)).getTxReceipts(testHash);
+    verify(blockchain, times(18)).getBlockBody(testHash);
+    verify(blockchain, times(18)).blockIsOnCanonicalChain(testHash);
 
     verifyNoMoreInteractions(blockchain);
   }

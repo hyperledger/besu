@@ -666,13 +666,35 @@ public class BlockchainQueries {
                 .map(
                     cacheFile -> {
                       try {
-                        return matchingLogsCached(
-                            thisSegment * BLOCKS_PER_BLOOM_CACHE,
-                            thisStep % BLOCKS_PER_BLOOM_CACHE,
-                            Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
-                            query,
-                            cacheFile,
-                            isQueryAlive);
+                        List<LogWithMetadata> maybeLogs =
+                            matchingLogsCached(
+                                thisSegment * BLOCKS_PER_BLOOM_CACHE,
+                                thisStep % BLOCKS_PER_BLOOM_CACHE,
+                                Math.min(toBlockNumber, nextStep - 1) % BLOCKS_PER_BLOOM_CACHE,
+                                query,
+                                cacheFile,
+                                isQueryAlive);
+                        if (maybeLogs.isEmpty()) {
+                          LOG.debug(
+                              "cache miss for block range from {} to ",
+                              fromBlockNumber,
+                              toBlockNumber);
+                          maybeLogs =
+                              matchingLogsUncached(
+                                  thisStep,
+                                  Math.min(toBlockNumber, Math.min(toBlockNumber, nextStep - 1)),
+                                  query,
+                                  isQueryAlive);
+                          if (maybeLogs.isEmpty()) {
+                            LOG.debug(
+                                "uncached miss for block range from {} to ",
+                                fromBlockNumber,
+                                toBlockNumber);
+                          }
+                          return maybeLogs;
+                        } else {
+                          return maybeLogs;
+                        }
                       } catch (final Exception e) {
                         throw new RuntimeException(e);
                       }
@@ -699,7 +721,7 @@ public class BlockchainQueries {
       final Supplier<Boolean> isQueryAlive) {
     // rangeClosed handles the inverted from/to situations automatically with zero results.
     return LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
-        .mapToObj(blockchain::getBlockHeader)
+        .mapToObj((l) -> blockchain.getBlockHeader(l))
         // Use takeWhile instead of clamping on toBlockNumber/headBlockNumber because it may get an
         // extra block or two for a query that has a toBlockNumber past chain head.  Similarly this
         // handles the case when fromBlockNumber is past chain head.

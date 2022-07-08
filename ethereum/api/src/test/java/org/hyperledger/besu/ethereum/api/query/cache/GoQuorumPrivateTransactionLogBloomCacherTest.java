@@ -131,11 +131,11 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
     blockchainQueries.matchingLogs(NUMBER_3, 3, logsQuery, () -> true);
 
     verify(blockchain, times(1)).getBlockHashByNumber(NUMBER_3);
-    verify(blockchain, times(1)).getBlockHeader(NUMBER_3);
-    verify(blockchain, times(1)).getBlockHeader(testBlockHeaderHash);
-    verify(blockchain, times(1)).getTxReceipts(testBlockHeaderHash);
-    verify(blockchain, times(1)).getBlockBody(testBlockHeaderHash);
-    verify(blockchain, times(1)).blockIsOnCanonicalChain(testBlockHeaderHash);
+    verify(blockchain, times(2)).getBlockHeader(NUMBER_3);
+    verify(blockchain, times(2)).getBlockHeader(testBlockHeaderHash);
+    verify(blockchain, times(2)).getTxReceipts(testBlockHeaderHash);
+    verify(blockchain, times(2)).getBlockBody(testBlockHeaderHash);
+    verify(blockchain, times(2)).blockIsOnCanonicalChain(testBlockHeaderHash);
 
     verifyNoMoreInteractions(blockchain);
   }
