@@ -139,7 +139,7 @@ public class OpenTelemetryAcceptanceTest extends AcceptanceTestBase {
     MetricsConfiguration configuration =
         MetricsConfiguration.builder()
             .protocol(MetricsProtocol.OPENTELEMETRY)
-            .pushEnabled(true)
+            .enabled(true)
             .port(0)
             .hostsAllowlist(singletonList("*"))
             .build();

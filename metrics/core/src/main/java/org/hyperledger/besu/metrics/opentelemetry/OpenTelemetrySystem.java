@@ -31,12 +31,14 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
@@ -45,8 +47,10 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.LongCounter;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.trace.TracerProvider;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
+import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.data.DoublePointData;
 import io.opentelemetry.sdk.metrics.data.HistogramPointData;
@@ -56,6 +60,7 @@ import io.opentelemetry.sdk.metrics.data.MetricDataType;
 import io.opentelemetry.sdk.metrics.data.PointData;
 import io.opentelemetry.sdk.metrics.data.SummaryPointData;
 import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +86,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
       new ConcurrentHashMap<>();
   private final SdkMeterProvider sdkMeterProvider;
   private final DebugMetricReader debugMetricReader;
+  private final SdkTracerProvider sdkTracerProvider;
 
   public OpenTelemetrySystem(
       final Set<MetricCategory> enabledCategories,
@@ -106,6 +112,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
             .build();
     OpenTelemetrySdk sdk = autoSdk.getOpenTelemetrySdk();
     this.sdkMeterProvider = sdk.getSdkMeterProvider();
+    this.sdkTracerProvider = sdk.getSdkTracerProvider();
   }
 
   @Override
@@ -342,5 +349,17 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
                 resultLongObserver.record(poolUsage.getMax(), maxLabelSets.get(i));
               }
             });
+  }
+
+  /** Shuts down the OpenTelemetry exporters, blocking until they have completed orderly. */
+  public void shutdown() {
+    final CompletableResultCode result =
+        CompletableResultCode.ofAll(
+            Arrays.asList(this.sdkMeterProvider.shutdown(), this.sdkTracerProvider.shutdown()));
+    result.join(5000, TimeUnit.SECONDS);
+  }
+
+  public TracerProvider getTracerProvider() {
+    return sdkTracerProvider;
   }
 }
