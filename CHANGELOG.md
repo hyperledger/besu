@@ -6,6 +6,7 @@
 
 ### Bug Fixes
 - Fixed a trie log layer issue on bonsai during reorg [#4069](https://github.com/hyperledger/besu/pull/4069)
+- Fixed an issue getting logs when blooms cache misses [#3921](https://github.com/hyperledger/besu/issues/3921)
 
 ## 22.7.0-RC1
 
