@@ -7,6 +7,7 @@
 ### Bug Fixes
 - Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
 - Add a PoS block header rule to check that the current block is more recent than its parent [#4066](https://github.com/hyperledger/besu/pull/4066)
+- Fixed a trie log layer issue on bonsai during reorg [#4069](https://github.com/hyperledger/besu/pull/4069)
 
 ## 22.7.0-RC1
 
@@ -15,7 +16,6 @@
 - When on PoS the head can be only be updated by ForkchoiceUpdate [#3994](https://github.com/hyperledger/besu/pull/3994)
 - Version information available in metrics [#3997](https://github.com/hyperledger/besu/pull/3997)
 - Add TTD and DNS to Sepolia config [#4024](https://github.com/hyperledger/besu/pull/4024)
-- Add terminal block hash and number to Ropsten genesis file [#4026](https://github.com/hyperledger/besu/pull/4026)
 - Return `type` with value `0x0` when serializing legacy transactions [#4027](https://github.com/hyperledger/besu/pull/4027)
 - Ignore `ForkchoiceUpdate` if `newHead` is an ancestor of the chain head [#4055](https://github.com/hyperledger/besu/pull/4055)
 
