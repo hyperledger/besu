@@ -67,7 +67,7 @@ public class ExternalDBClientKeyValueStorageFactory implements KeyValueStorageFa
       throws StorageException {
     final HttpClient httpClient = HttpClient.newBuilder().build();
     final ExternalDBClientKeyValueStorage segmentedStorage =
-        new ExternalDBClientKeyValueStorage(httpClient, configuration.get());
+        new ExternalDBClientKeyValueStorage(httpClient, configuration.get(), metricsSystem);
     return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
   }
 

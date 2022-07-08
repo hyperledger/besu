@@ -36,6 +36,7 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation project(':config')
+  implementation project(':metrics:core')
   implementation project(':util')
   implementation project(':ethereum:api')
   implementation project(':services:kvstore')

@@ -16,7 +16,10 @@ package org.hyperledger.besu.plugin.services.storage.externaldb.client;
 
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.externaldb.configuration.ExternalDbConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
@@ -46,11 +49,22 @@ public class ExternalDBClientKeyValueStorage implements SegmentedKeyValueStorage
   private final ObjectMapper objectMapper = new ObjectMapper();
   // TODO get this from the config
   private final Duration timeout = Duration.of(30, ChronoUnit.SECONDS);
+  private final OperationTimer readLatency;
 
   public ExternalDBClientKeyValueStorage(
-      final HttpClient httpClient, final ExternalDbConfiguration configuration) {
+      final HttpClient httpClient,
+      final ExternalDbConfiguration configuration,
+      final MetricsSystem metricsSystem) {
     this.httpClient = httpClient;
     this.configuration = configuration;
+    this.readLatency =
+        metricsSystem
+            .createLabelledTimer(
+                BesuMetricCategory.KVSTORE_ROCKSDB,
+                "read_latency_seconds",
+                "Latency for read from RocksDB.",
+                "database")
+            .labels("blockchain");
   }
 
   @Override
@@ -60,7 +74,7 @@ public class ExternalDBClientKeyValueStorage implements SegmentedKeyValueStorage
 
   @Override
   public Optional<byte[]> get(final String segment, final byte[] key) throws StorageException {
-    try {
+    try (final OperationTimer.TimingContext ignored = readLatency.startTimer()) {
       final String dbKey = Bytes.of(key).toHexString();
       final JsonRpcRequest rpcRequest =
           new JsonRpcRequest("2.0", "database_getValue", new String[] {segment, dbKey});
