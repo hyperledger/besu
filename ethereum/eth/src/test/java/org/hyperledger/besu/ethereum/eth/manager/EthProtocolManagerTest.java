@@ -223,13 +223,14 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void disconnectNewPoWPeers() {
+    MergePeerFilter mergePeerFilter = new MergePeerFilter();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
-            () -> false,
             protocolContext.getWorldStateArchive(),
             transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
+            EthProtocolConfiguration.defaultConfig(),
+            Optional.of(mergePeerFilter))) {
 
       final MockPeerConnection workPeer = setupPeer(ethManager, (cap, msg, conn) -> {});
       final MockPeerConnection stakePeer = setupPeer(ethManager, (cap, msg, conn) -> {});
@@ -252,11 +253,11 @@ public final class EthProtocolManagerTest {
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
 
-      ethManager.mergeStateChanged(
+      mergePeerFilter.mergeStateChanged(
           true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
-      ethManager.onNewForkchoiceMessage(
+      mergePeerFilter.onNewForkchoiceMessage(
           Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
-      ethManager.onNewForkchoiceMessage(
+      mergePeerFilter.onNewForkchoiceMessage(
           Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(2))), Hash.EMPTY);
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));

@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
-import org.hyperledger.besu.consensus.merge.MergeStateHandler;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -49,8 +47,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.StampedLock;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -58,8 +54,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthProtocolManager
-    implements ProtocolManager, MinedBlockObserver, MergeStateHandler, ForkchoiceMessageListener {
+public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
 
   private final EthScheduler scheduler;
@@ -78,10 +73,7 @@ public class EthProtocolManager
   private final List<PeerValidator> peerValidators;
   // The max size of messages (in bytes)
   private final int maxMessageSize;
-  private Optional<Difficulty> powTerminalDifficulty;
-  private final StampedLock powTerminalDifficultyLock = new StampedLock();
-  private Hash lastFinalized = Hash.ZERO;
-  private final AtomicLong numFinalizedSeen = new AtomicLong(0);
+  private final Optional<MergePeerFilter> mergePeerFilter;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -93,6 +85,7 @@ public class EthProtocolManager
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
       final ForkIdManager forkIdManager) {
@@ -101,7 +94,7 @@ public class EthProtocolManager
     this.scheduler = scheduler;
     this.blockchain = blockchain;
     this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
-
+    this.mergePeerFilter = mergePeerFilter;
     this.shutdown = new CountDownLatch(1);
     this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO);
 
@@ -140,6 +133,7 @@ public class EthProtocolManager
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler) {
     this(
@@ -152,6 +146,7 @@ public class EthProtocolManager
         ethMessages,
         ethContext,
         peerValidators,
+        mergePeerFilter,
         fastSyncEnabled,
         scheduler,
         new ForkIdManager(
@@ -170,6 +165,7 @@ public class EthProtocolManager
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
       final List<Long> forks) {
@@ -183,6 +179,7 @@ public class EthProtocolManager
         ethMessages,
         ethContext,
         peerValidators,
+        mergePeerFilter,
         fastSyncEnabled,
         scheduler,
         new ForkIdManager(
@@ -280,11 +277,11 @@ public class EthProtocolManager
       return;
     }
 
-    if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
-      LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
-      ethPeer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
-      return;
+    if (this.mergePeerFilter.isPresent()) {
+      if (this.mergePeerFilter.get().disconnectIfGossipingBlocks(message, ethPeer)) {
+        handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
+        return;
+      }
     }
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
@@ -393,19 +390,10 @@ public class EthProtocolManager
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (isFinalized()) {
-        long lockStamp = this.powTerminalDifficultyLock.readLock();
-        try {
-          if (this.powTerminalDifficulty.isPresent()
-              && status.totalDifficulty().greaterThan(this.powTerminalDifficulty.get())) {
-            LOG.debug(
-                "Disconnecting peer with difficulty {}, likely still on PoW chain",
-                status.totalDifficulty());
-            peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-            handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
-          }
-        } finally {
-          this.powTerminalDifficultyLock.unlockRead(lockStamp);
+      } else if (mergePeerFilter.isPresent()) {
+        boolean disconnected = mergePeerFilter.get().disconnectIfPoW(status, peer);
+        if (disconnected) {
+          handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
         }
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
@@ -438,36 +426,5 @@ public class EthProtocolManager
     return chainHeadForkId == null
         ? Collections.emptyList()
         : chainHeadForkId.getForkIdAsBytesList();
-  }
-
-  private boolean isFinalized() {
-    return this.numFinalizedSeen.get() > 1;
-  }
-
-  @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
-      this.lastFinalized = maybeFinalizedBlockHash.get();
-      this.numFinalizedSeen.getAndIncrement();
-      LOG.debug("have seen {} finalized blocks", this.numFinalizedSeen);
-    }
-  }
-
-  @Override
-  public void mergeStateChanged(
-      final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
-    if (isPoS && difficultyStoppedAt.isPresent()) {
-      LOG.debug("terminal difficulty set to {}", difficultyStoppedAt.get().getValue());
-      long lockStamp = this.powTerminalDifficultyLock.writeLock();
-      try {
-        this.powTerminalDifficulty = difficultyStoppedAt;
-      } finally {
-        this.powTerminalDifficultyLock.unlockWrite(lockStamp);
-      }
-    }
   }
 }

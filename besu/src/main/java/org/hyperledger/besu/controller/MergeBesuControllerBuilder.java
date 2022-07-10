@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
@@ -88,7 +89,18 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final EthContext ethContext,
       final EthMessages ethMessages,
       final EthScheduler scheduler,
-      final List<PeerValidator> peerValidators) {
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter) {
+
+    ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
+    if (cc instanceof MergeContext && mergePeerFilter.isPresent()) {
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .observeNewIsPostMergeState(mergePeerFilter.get());
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .addNewForkchoiceMessageListener(mergePeerFilter.get());
+    }
 
     EthProtocolManager ethProtocolManager =
         super.createEthProtocolManager(
@@ -100,17 +112,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             ethContext,
             ethMessages,
             scheduler,
-            peerValidators);
-
-    ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
-    if (cc instanceof MergeContext) {
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .observeNewIsPostMergeState(ethProtocolManager);
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(ethProtocolManager);
-    }
+            peerValidators,
+            mergePeerFilter);
 
     return ethProtocolManager;
   }
