@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -92,8 +91,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter) {
 
-    ConsensusContext cc = protocolContext.getConsensusContext(ConsensusContext.class);
-    if (cc instanceof MergeContext && mergePeerFilter.isPresent()) {
+    if (mergePeerFilter.isPresent()) {
       protocolContext
           .getConsensusContext(MergeContext.class)
           .observeNewIsPostMergeState(mergePeerFilter.get());
