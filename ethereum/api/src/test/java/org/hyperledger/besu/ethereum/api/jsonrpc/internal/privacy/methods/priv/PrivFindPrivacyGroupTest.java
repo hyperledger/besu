@@ -54,7 +54,7 @@ public class PrivFindPrivacyGroupTest {
   private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private final User user =
-      new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY));
+      new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), new JsonObject());
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
   private JsonRpcRequestContext request;

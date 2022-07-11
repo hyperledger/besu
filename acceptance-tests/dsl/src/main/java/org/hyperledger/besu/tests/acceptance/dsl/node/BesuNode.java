@@ -18,6 +18,7 @@ import static java.util.Collections.unmodifiableList;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.datatypes.Address;
@@ -208,6 +209,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find plugin \"{}\" in resources", pluginName);
           }
         });
+    engineRpcConfiguration.ifPresent(
+        config -> MergeConfigOptions.setMergeEnabled(config.isEnabled()));
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
@@ -564,6 +567,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   JsonRpcConfiguration jsonRpcConfiguration() {
     return jsonRpcConfiguration;
+  }
+
+  Optional<JsonRpcConfiguration> engineRpcConfiguration() {
+    return engineRpcConfiguration;
   }
 
   Optional<String> jsonRpcListenHost() {

@@ -166,12 +166,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
           // Ask for count + 1 because we'll retrieve the previous header as well
           final AbstractGetHeadersFromPeerTask headersTask =
               GetHeadersFromPeerByHashTask.endingAtHash(
-                  protocolSchedule,
-                  ethContext,
-                  referenceHash,
-                  referenceHeaderForNextRequest.getNumber(),
-                  count + 1,
-                  metricsSystem);
+                  protocolSchedule, ethContext, referenceHash, count + 1, metricsSystem);
           assignedPeer.ifPresent(headersTask::assignPeer);
           return headersTask.run();
         });

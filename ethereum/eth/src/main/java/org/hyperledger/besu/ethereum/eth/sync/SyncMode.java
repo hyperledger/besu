@@ -28,15 +28,6 @@ public enum SyncMode {
   // Turn off syncing for light node
   X_NONE;
 
-  public static SyncMode fromString(final String str) {
-    for (final SyncMode mode : SyncMode.values()) {
-      if (mode.name().equalsIgnoreCase(str)) {
-        return mode;
-      }
-    }
-    return null;
-  }
-
   public static boolean isFullSync(final SyncMode syncMode) {
     return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
   }

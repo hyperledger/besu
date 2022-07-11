@@ -48,8 +48,8 @@ public class ContainerTestBase {
   //  private final String besuImage = "hyperledger/besu:21.7.0-SNAPSHOT";
   private final String besuImage = System.getProperty("containertest.imagename");
 
-  private final String goQuorumVersion = "21.1.0";
-  private final String tesseraVersion = "21.7.0";
+  private final String goQuorumVersion = "22.4.4";
+  private final String tesseraVersion = "22.1.3";
 
   protected final String goQuorumTesseraPubKey = "3XGBIf+x8IdVQOVfIsbRnHwTYOJP/Fx84G8gMmy8qDM=";
   protected final String besuTesseraPubKey = "8JJLEAbq6o9m4Kqm++v0Y1n9Z2ryAFtZTyhnxSKWgws=";

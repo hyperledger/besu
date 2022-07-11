@@ -336,9 +336,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     prunerConfiguration));
       }
     }
+    final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final EthPeers ethPeers =
         new EthPeers(
-            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
+            getSupportedProtocol(),
+            clock,
+            metricsSystem,
+            maxPeers,
+            maxMessageSize,
+            messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
@@ -379,7 +385,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             clock,
             metricsSystem,
-            syncState,
+            syncState::isInitialSyncPhaseDone,
             miningParameters,
             transactionPoolConfiguration);
 
@@ -622,6 +628,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       validators.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
+    }
+
+    final Optional<Hash> terminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
+    if (terminalBlockHash.isPresent() && !terminalBlockHash.get().equals(Hash.ZERO)) {
+      final OptionalLong terminalBlockNumber = configOptionsSupplier.get().getTerminalBlockNumber();
+      if (terminalBlockNumber.isPresent()) {
+        validators.add(
+            new RequiredBlocksPeerValidator(
+                protocolSchedule,
+                metricsSystem,
+                terminalBlockNumber.getAsLong(),
+                terminalBlockHash.get()));
+      }
     }
 
     final CheckpointConfigOptions checkpointConfigOptions =

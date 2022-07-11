@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -90,9 +91,10 @@ public abstract class AbstractGetHeadersFromPeerTask
       return Optional.empty();
     }
 
-    final List<BlockHeader> headersList = new ArrayList<>();
+    final List<BlockHeader> headersList = new ArrayList<>(headers.size());
     headersList.add(firstHeader);
     BlockHeader prevBlockHeader = firstHeader;
+    updatePeerChainState(peer, firstHeader);
     final int expectedDelta = reverse ? -(skip + 1) : (skip + 1);
     for (int i = 1; i < headers.size(); i++) {
       final BlockHeader header = headers.get(i);
@@ -114,10 +116,23 @@ public abstract class AbstractGetHeadersFromPeerTask
       }
       prevBlockHeader = header;
       headersList.add(header);
+      updatePeerChainState(peer, header);
     }
 
     LOG.debug("Received {} of {} headers requested from peer {}", headersList.size(), count, peer);
     return Optional.of(headersList);
+  }
+
+  private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
+    if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
+      traceLambda(
+          LOG,
+          "Updating chain state for peer {} to block header {}",
+          peer::getShortNodeId,
+          blockHeader::toLogString);
+      peer.chainState().update(blockHeader);
+    }
+    LOG.trace("Peer chain state {}", peer.chainState());
   }
 
   protected abstract boolean matchesFirstHeader(BlockHeader firstHeader);
