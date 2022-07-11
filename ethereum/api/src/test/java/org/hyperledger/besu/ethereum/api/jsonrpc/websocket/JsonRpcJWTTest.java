@@ -17,12 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -50,9 +45,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.Json;
@@ -222,6 +221,7 @@ public class JsonRpcJWTTest {
     wsOpts.setURI("/");
     wsOpts.addHeader(
         "Authorization", "Bearer " + ((EngineAuthService) jwtAuth.get()).createToken());
+    wsOpts.addHeader(HttpHeaders.HOST, "anything");
 
     final Async async = context.async();
     httpClient.webSocket(
@@ -255,19 +255,30 @@ public class JsonRpcJWTTest {
   @Test
   public void wsRequestFromBadHostAndValidJWTIsDenied(final TestContext context) {
 
+    JsonRpcConfiguration strictHost = JsonRpcConfiguration.createEngineDefault();
+    strictHost.setHostsAllowlist(List.of("localhost"));
+    strictHost.setPort(0);
+    try {
+      strictHost.setAuthenticationPublicKeyFile(
+          new File(this.getClass().getResource("jwt.hex").toURI()));
+    } catch (URISyntaxException e) {
+      fail("didn't parse jwt");
+    }
+
     JsonRpcService jsonRpcService =
-        spy(new JsonRpcService(
-            vertx,
-            bufferDir,
-            jsonRpcConfiguration,
-            new NoOpMetricsSystem(),
-            new NatService(Optional.empty(), true),
-            websocketMethods,
-            Optional.empty(),
-            scheduler,
-            jwtAuth,
-            healthy,
-            healthy));
+        spy(
+            new JsonRpcService(
+                vertx,
+                bufferDir,
+                strictHost,
+                new NoOpMetricsSystem(),
+                new NatService(Optional.empty(), true),
+                websocketMethods,
+                Optional.empty(),
+                scheduler,
+                jwtAuth,
+                healthy,
+                healthy));
 
     jsonRpcService.start().join();
 
@@ -276,7 +287,6 @@ public class JsonRpcJWTTest {
 
     final HttpClientOptions httpClientOptions =
         new HttpClientOptions().setDefaultHost(HOSTNAME).setDefaultPort(listenPort);
-
 
     httpClient = vertx.createHttpClient(httpClientOptions);
 
@@ -308,19 +318,30 @@ public class JsonRpcJWTTest {
   @Test
   public void httpRequestFromBadHostAndValidJWTIsDenied(final TestContext context) {
 
+    JsonRpcConfiguration strictHost = JsonRpcConfiguration.createEngineDefault();
+    strictHost.setHostsAllowlist(List.of("localhost"));
+    strictHost.setPort(0);
+    try {
+      strictHost.setAuthenticationPublicKeyFile(
+          new File(this.getClass().getResource("jwt.hex").toURI()));
+    } catch (URISyntaxException e) {
+      fail("didn't parse jwt");
+    }
+
     JsonRpcService jsonRpcService =
-        spy(new JsonRpcService(
-            vertx,
-            bufferDir,
-            jsonRpcConfiguration,
-            new NoOpMetricsSystem(),
-            new NatService(Optional.empty(), true),
-            websocketMethods,
-            Optional.empty(),
-            scheduler,
-            jwtAuth,
-            healthy,
-            healthy));
+        spy(
+            new JsonRpcService(
+                vertx,
+                bufferDir,
+                strictHost,
+                new NoOpMetricsSystem(),
+                new NatService(Optional.empty(), true),
+                websocketMethods,
+                Optional.empty(),
+                scheduler,
+                jwtAuth,
+                healthy,
+                healthy));
 
     jsonRpcService.start().join();
 
@@ -330,26 +351,29 @@ public class JsonRpcJWTTest {
     final HttpClientOptions httpClientOptions =
         new HttpClientOptions().setDefaultHost(HOSTNAME).setDefaultPort(listenPort);
 
-
     httpClient = vertx.createHttpClient(httpClientOptions);
 
-
-    MultiMap headers = HttpHeaders.set(
-        "Authorization", "Bearer " + ((EngineAuthService) jwtAuth.get()).createToken())
-        .set(HttpHeaders.HOST, "bogushost");
+    MultiMap headers =
+        HttpHeaders.set(
+                "Authorization", "Bearer " + ((EngineAuthService) jwtAuth.get()).createToken())
+            .set(HttpHeaders.HOST, "bogushost");
 
     final Async async = context.async();
-    httpClient.request(HttpMethod.GET, "/",
+    httpClient.request(
+        HttpMethod.GET,
+        "/",
         connected -> {
           if (connected.failed()) {
             connected.cause().printStackTrace();
           }
           HttpClientRequest request = connected.result();
           request.headers().addAll(headers);
-          request.send( response -> {
-            assertThat(response.result().statusCode()).isNotEqualTo(500);
-            async.complete();
-          });
+          request.send(
+              response -> {
+                assertThat(response.result().statusCode()).isNotEqualTo(500);
+                assertThat(response.result().statusCode()).isEqualTo(403);
+                async.complete();
+              });
         });
 
     async.awaitSuccess(10000);
