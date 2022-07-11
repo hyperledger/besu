@@ -25,7 +25,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
@@ -62,7 +68,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         transactionPool,
         miningParameters,
         syncState,
-        ethProtocolManager,
         new BackwardSyncContext(
             protocolContext,
             protocolSchedule,
@@ -73,13 +78,50 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                 storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))));
   }
 
+  @Override
+  protected EthProtocolManager createEthProtocolManager(
+      final ProtocolContext protocolContext,
+      final boolean fastSyncEnabled,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthContext ethContext,
+      final EthMessages ethMessages,
+      final EthScheduler scheduler,
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter) {
+
+    if (mergePeerFilter.isPresent()) {
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .observeNewIsPostMergeState(mergePeerFilter.get());
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .addNewForkchoiceMessageListener(mergePeerFilter.get());
+    }
+
+    EthProtocolManager ethProtocolManager =
+        super.createEthProtocolManager(
+            protocolContext,
+            fastSyncEnabled,
+            transactionPool,
+            ethereumWireProtocolConfiguration,
+            ethPeers,
+            ethContext,
+            ethMessages,
+            scheduler,
+            peerValidators,
+            mergePeerFilter);
+
+    return ethProtocolManager;
+  }
+
   protected MiningCoordinator createTransitionMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
-      final EthProtocolManager ethProtocolManager,
       final BackwardSyncContext backwardSyncContext) {
 
     this.syncState.set(syncState);

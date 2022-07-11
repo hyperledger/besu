@@ -65,6 +65,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -77,6 +78,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -220,6 +222,55 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
+  public void disconnectNewPoWPeers() {
+    MergePeerFilter mergePeerFilter = new MergePeerFilter();
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestUtil.create(
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            Optional.of(mergePeerFilter))) {
+
+      final MockPeerConnection workPeer = setupPeer(ethManager, (cap, msg, conn) -> {});
+      final MockPeerConnection stakePeer = setupPeer(ethManager, (cap, msg, conn) -> {});
+
+      final StatusMessage workPeerStatus =
+          StatusMessage.create(
+              EthProtocol.EthVersion.V63,
+              BigInteger.ONE,
+              blockchain.getChainHead().getTotalDifficulty().add(20),
+              blockchain.getChainHeadHash(),
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+
+      final StatusMessage stakePeerStatus =
+          StatusMessage.create(
+              EthProtocol.EthVersion.V63,
+              BigInteger.ONE,
+              blockchain.getChainHead().getTotalDifficulty(),
+              blockchain.getChainHeadHash(),
+              blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
+
+      mergePeerFilter.mergeStateChanged(
+          true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+      mergePeerFilter.onNewForkchoiceMessage(
+          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
+      mergePeerFilter.onNewForkchoiceMessage(
+          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(2))), Hash.EMPTY);
+
+      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
+      assertThat(workPeer.isDisconnected()).isTrue();
+      assertThat(workPeer.getDisconnectReason()).isPresent();
+      assertThat(workPeer.getDisconnectReason())
+          .get()
+          .isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      assertThat(stakePeer.isDisconnected()).isFalse();
+    }
+  }
+
+  @Test
   public void doNotDisconnectOnLargeMessageWithinLimits() {
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
@@ -311,7 +362,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(blockCount);
+            assertThat(headers).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i);
             }
@@ -350,7 +401,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(limit);
+            assertThat(headers).hasSize(limit);
             for (int i = 0; i < limit; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i);
             }
@@ -386,7 +437,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(blockCount);
+            assertThat(headers).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(endBlock - i);
             }
@@ -424,7 +475,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(blockCount);
+            assertThat(headers).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i * (skip + 1));
             }
@@ -463,7 +514,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(blockCount);
+            assertThat(headers).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(endBlock - i * (skip + 1));
             }
@@ -522,7 +573,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(2);
+            assertThat(headers).hasSize(2);
             for (int i = 0; i < 2; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(startBlock + i);
             }
@@ -559,7 +610,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(0);
+            assertThat(headers).isEmpty();
             done.complete(null);
           };
       final PeerConnection peer = setupPeer(ethManager, onSend);
@@ -603,7 +654,7 @@ public final class EthProtocolManagerTest {
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
-            assertThat(bodies.size()).isEqualTo(blockCount);
+            assertThat(bodies).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedBlocks[i].getBody()).isEqualTo(bodies.get(i));
             }
@@ -654,7 +705,7 @@ public final class EthProtocolManagerTest {
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
-            assertThat(bodies.size()).isEqualTo(limit);
+            assertThat(bodies).hasSize(limit);
             for (int i = 0; i < limit; i++) {
               assertThat(expectedBlocks[i].getBody()).isEqualTo(bodies.get(i));
             }
@@ -698,7 +749,7 @@ public final class EthProtocolManagerTest {
             final BlockBodiesMessage blocksMessage = BlockBodiesMessage.readFrom(message);
             final List<BlockBody> bodies =
                 Lists.newArrayList(blocksMessage.bodies(protocolSchedule));
-            assertThat(bodies.size()).isEqualTo(1);
+            assertThat(bodies).hasSize(1);
             assertThat(expectedBlock.getBody()).isEqualTo(bodies.get(0));
             done.complete(null);
           };
@@ -743,7 +794,7 @@ public final class EthProtocolManagerTest {
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
                 Lists.newArrayList(receiptsMessage.receipts());
-            assertThat(receipts.size()).isEqualTo(blockCount);
+            assertThat(receipts).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
             }
@@ -793,7 +844,7 @@ public final class EthProtocolManagerTest {
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
                 Lists.newArrayList(receiptsMessage.receipts());
-            assertThat(receipts.size()).isEqualTo(limit);
+            assertThat(receipts).hasSize(limit);
             for (int i = 0; i < limit; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
             }
@@ -837,7 +888,7 @@ public final class EthProtocolManagerTest {
             final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(message);
             final List<List<TransactionReceipt>> receipts =
                 Lists.newArrayList(receiptsMessage.receipts());
-            assertThat(receipts.size()).isEqualTo(1);
+            assertThat(receipts).hasSize(1);
             assertThat(expectedReceipts).isEqualTo(receipts.get(0));
             done.complete(null);
           };
@@ -885,7 +936,7 @@ public final class EthProtocolManagerTest {
             assertThat(message.getCode()).isEqualTo(EthPV63.NODE_DATA);
             final NodeDataMessage receiptsMessage = NodeDataMessage.readFrom(message);
             final List<Bytes> nodeData = receiptsMessage.nodeData();
-            assertThat(nodeData.size()).isEqualTo(blockCount);
+            assertThat(nodeData).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedResults.get(i)).isEqualTo(nodeData.get(i));
             }
@@ -952,7 +1003,7 @@ public final class EthProtocolManagerTest {
         assertThat(msg.totalDifficulty(protocolSchdeule)).isEqualTo(expectedTotalDifficulty);
       }
 
-      assertThat(receivingPeerCaptor.getAllValues().containsAll(peers)).isTrue();
+      assertThat(receivingPeerCaptor.getAllValues()).containsAll(peers);
     }
   }
 
@@ -994,7 +1045,7 @@ public final class EthProtocolManagerTest {
             final BlockHeadersMessage headersMsg = BlockHeadersMessage.readFrom(message);
             final List<BlockHeader> headers =
                 Lists.newArrayList(headersMsg.getHeaders(protocolSchedule));
-            assertThat(headers.size()).isEqualTo(receivedBlockCount);
+            assertThat(headers).hasSize(receivedBlockCount);
             for (int i = 0; i < receivedBlockCount; i++) {
               assertThat(headers.get(i).getNumber()).isEqualTo(receivedBlockCount - 1 - i);
             }
