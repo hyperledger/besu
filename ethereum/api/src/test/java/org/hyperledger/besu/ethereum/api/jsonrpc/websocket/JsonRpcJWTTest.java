@@ -16,7 +16,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -243,6 +249,112 @@ public class JsonRpcJWTTest {
 
     async.awaitSuccess(10000);
     jsonRpcService.stop();
+    httpClient.close();
+  }
+
+  @Test
+  public void wsRequestFromBadHostAndValidJWTIsDenied(final TestContext context) {
+
+    JsonRpcService jsonRpcService =
+        spy(new JsonRpcService(
+            vertx,
+            bufferDir,
+            jsonRpcConfiguration,
+            new NoOpMetricsSystem(),
+            new NatService(Optional.empty(), true),
+            websocketMethods,
+            Optional.empty(),
+            scheduler,
+            jwtAuth,
+            healthy,
+            healthy));
+
+    jsonRpcService.start().join();
+
+    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    int listenPort = inetSocketAddress.getPort();
+
+    final HttpClientOptions httpClientOptions =
+        new HttpClientOptions().setDefaultHost(HOSTNAME).setDefaultPort(listenPort);
+
+
+    httpClient = vertx.createHttpClient(httpClientOptions);
+
+    WebSocketConnectOptions wsOpts = new WebSocketConnectOptions();
+    wsOpts.setPort(listenPort);
+    wsOpts.setHost(HOSTNAME);
+    wsOpts.setURI("/");
+    wsOpts.addHeader(
+        "Authorization", "Bearer " + ((EngineAuthService) jwtAuth.get()).createToken());
+    wsOpts.addHeader(HttpHeaders.HOST, "bogushost");
+
+    final Async async = context.async();
+    httpClient.webSocket(
+        wsOpts,
+        connected -> {
+          if (connected.failed()) {
+            connected.cause().printStackTrace();
+          }
+          assertThat(connected.succeeded()).isFalse();
+          async.complete();
+        });
+
+    async.awaitSuccess(10000);
+    jsonRpcService.stop();
+
+    httpClient.close();
+  }
+
+  @Test
+  public void httpRequestFromBadHostAndValidJWTIsDenied(final TestContext context) {
+
+    JsonRpcService jsonRpcService =
+        spy(new JsonRpcService(
+            vertx,
+            bufferDir,
+            jsonRpcConfiguration,
+            new NoOpMetricsSystem(),
+            new NatService(Optional.empty(), true),
+            websocketMethods,
+            Optional.empty(),
+            scheduler,
+            jwtAuth,
+            healthy,
+            healthy));
+
+    jsonRpcService.start().join();
+
+    final InetSocketAddress inetSocketAddress = jsonRpcService.socketAddress();
+    int listenPort = inetSocketAddress.getPort();
+
+    final HttpClientOptions httpClientOptions =
+        new HttpClientOptions().setDefaultHost(HOSTNAME).setDefaultPort(listenPort);
+
+
+    httpClient = vertx.createHttpClient(httpClientOptions);
+
+
+    MultiMap headers = HttpHeaders.set(
+        "Authorization", "Bearer " + ((EngineAuthService) jwtAuth.get()).createToken())
+        .set(HttpHeaders.HOST, "bogushost");
+
+    final Async async = context.async();
+    httpClient.request(HttpMethod.GET, "/",
+        connected -> {
+          if (connected.failed()) {
+            connected.cause().printStackTrace();
+          }
+          HttpClientRequest request = connected.result();
+          request.headers().addAll(headers);
+          request.send( response -> {
+            assertThat(response.result().statusCode()).isNotEqualTo(500);
+            async.complete();
+          });
+        });
+
+    async.awaitSuccess(10000);
+    jsonRpcService.stop();
+
     httpClient.close();
   }
 
