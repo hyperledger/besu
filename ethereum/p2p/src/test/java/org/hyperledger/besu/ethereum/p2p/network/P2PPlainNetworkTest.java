@@ -122,7 +122,6 @@ public class P2PPlainNetworkTest {
       Assertions.assertThat(firstConnection.getPeerInfo().getNodeId()).isEqualTo(listenId);
 
       assertThat(secondFuture.isCompletedExceptionally()).isTrue();
-      Thread.sleep(5000);
     }
   }
 
