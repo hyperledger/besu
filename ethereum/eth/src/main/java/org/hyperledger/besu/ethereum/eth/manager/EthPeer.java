@@ -86,6 +86,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private Optional<BlockHeader> checkpointHeader = Optional.empty();
 
   private final String protocolName;
+  private final int maxMessageSize;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState = new ChainState();
@@ -124,10 +125,12 @@ public class EthPeer implements Comparable<EthPeer> {
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
       final List<PeerValidator> peerValidators,
+      final int maxMessageSize,
       final Clock clock,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.connection = connection;
     this.protocolName = protocolName;
+    this.maxMessageSize = maxMessageSize;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.onStatusesExchanged.set(onStatusesExchanged);
@@ -242,6 +245,17 @@ public class EthPeer implements Comparable<EthPeer> {
                         !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode())));
       }
       return null;
+    }
+    // Check message size is within limits
+    if (messageData.getSize() > maxMessageSize) {
+      // This is a bug or else a misconfiguration of the max message size.
+      LOG.error(
+          "Sending {} message to peer ({}) which exceeds local message size limit of {} bytes.  Message code: {}, Message Size: {}",
+          protocolName,
+          connection.getRemoteEnode(),
+          maxMessageSize,
+          messageData.getCode(),
+          messageData.getSize());
     }
 
     if (requestManagers.containsKey(protocolName)) {

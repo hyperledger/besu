@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.headervalidationrules.ConstantOmmersHashRule;
+import org.hyperledger.besu.consensus.merge.headervalidationrules.IncrementalTimestampRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.MergeUnfinalizedValidationRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.NoDifficultyRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.NoNonceRule;
@@ -59,7 +60,8 @@ public class MergeValidationRulesetFactory {
           .addRule(new MergeUnfinalizedValidationRule())
           .addRule(new ConstantOmmersHashRule())
           .addRule(new NoNonceRule())
-          .addRule(new NoDifficultyRule());
+          .addRule(new NoDifficultyRule())
+          .addRule(new IncrementalTimestampRule());
     }
   }
 }

@@ -11,6 +11,8 @@
     "berlinBlock": 9812189,
     "londonBlock": 10499401,
     "terminalTotalDifficulty": 50000000000000000,
+    "terminalBlockHash": "0x5010949c3acdf1d076c9e4ee8aedbb539aca48ebe19638330bc02c5b1bfb953d",
+    "terminalBlockNumber": 12350712,
     "ethash": {
     },
     "discovery": {
