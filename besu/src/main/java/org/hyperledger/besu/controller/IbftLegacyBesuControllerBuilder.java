@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -125,7 +126,8 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       final EthContext ethContext,
       final EthMessages ethMessages,
       final EthScheduler scheduler,
-      final List<PeerValidator> peerValidators) {
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter) {
     LOG.info("Operating on IBFT-1.0 network.");
     return new Istanbul99ProtocolManager(
         protocolContext.getBlockchain(),

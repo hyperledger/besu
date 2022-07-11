@@ -261,11 +261,10 @@ public class BackwardSyncContext {
       getBackwardChain().addBadChainToManager(badBlocksManager, block.getHash());
       throw new BackwardSyncException(
           "Cannot save block "
-              + block.getHash()
+              + block.toLogString()
               + " because of "
               + optResult.errorMessage.orElseThrow());
     }
-    optResult.blockProcessingOutputs.ifPresent(result -> {});
 
     return null;
   }

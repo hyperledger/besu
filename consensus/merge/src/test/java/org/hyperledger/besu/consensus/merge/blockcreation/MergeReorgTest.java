@@ -169,6 +169,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
                   0,
                   15000000))
           .gasLimit(newParent.getGasLimit())
+          .timestamp(newParent.getTimestamp() + 1)
           .stateRoot(newParent.getStateRoot());
       if (each.greaterOrEqualThan(Difficulty.ZERO)) {
         headerGenerator.difficulty(each);
@@ -194,6 +195,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
                     0,
                     15000000l))
             .gasLimit(parent.getGasLimit())
+            .timestamp(parent.getTimestamp() + 1)
             .stateRoot(parent.getStateRoot())
             .buildHeader();
     return terminal;

@@ -113,7 +113,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     }
 
     if (cause instanceof NoAvailablePeersException) {
-      LOG.info(
+      LOG.debug(
           "No useful peer found, checking remaining current peers for usefulness: {}",
           ethContext.getEthPeers().peerCount());
       // Wait for new peer to connect

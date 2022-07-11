@@ -252,9 +252,17 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
-        final TrieLogLayer trieLog =
-            prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
-        persistTrieLog(blockHeader, newWorldStateRootHash, trieLog, stateUpdater);
+        // do not overwrite a trielog layer that already exists in the database.
+        // if it's only in memory we need to save it
+        // for example, like that in case of reorg we don't replace a trielog layer
+        if (worldStateStorage.getTrieLog(blockHeader.getHash()).isEmpty()) {
+          final TrieLogLayer trieLog =
+              prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
+          persistTrieLog(blockHeader, newWorldStateRootHash, trieLog, stateUpdater);
+        }
+        stateUpdater
+            .getTrieBranchStorageTransaction()
+            .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
         stateUpdater.getTrieBranchStorageTransaction().remove(WORLD_BLOCK_HASH_KEY);
@@ -310,9 +318,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         "Persisting trie log for block hash {} and world state root {}",
         blockHeader::toLogString,
         worldStateRootHash::toHexString);
-    stateUpdater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
     final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
     trieLog.writeTo(rlpLog);
     stateUpdater

@@ -56,7 +56,7 @@ public abstract class MergeConsensusRule implements AttachedBlockHeaderValidatio
     if (parentChainTotalDifficulty
         .get()
         .add(header.getDifficulty() == null ? Difficulty.ZERO : header.getDifficulty())
-        .greaterThan(configuredTotalTerminalDifficulty)) {
+        .greaterOrEqualThan(configuredTotalTerminalDifficulty)) {
       return true;
     } else { // still PoWing
       return false;

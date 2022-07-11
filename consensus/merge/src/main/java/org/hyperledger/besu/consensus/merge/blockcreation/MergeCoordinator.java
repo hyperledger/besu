@@ -289,6 +289,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
+    if (newHead.getNumber() < blockchain.getChainHeadBlockNumber()
+        && isDescendantOf(newHead, blockchain.getChainHeadHeader())) {
+      LOG.info("Ignoring update to old head");
+      return ForkchoiceResult.withIgnoreUpdateToOldHead(newHead);
+    }
+
     final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
 
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
@@ -434,7 +440,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     boolean resp =
         parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
-    LOG.warn(
+    LOG.debug(
         "checking ancestor {} is valid terminal PoW for {}\n {}",
         parent.map(BlockHeader::toLogString).orElse("empty"),
         blockheader.toLogString(),
