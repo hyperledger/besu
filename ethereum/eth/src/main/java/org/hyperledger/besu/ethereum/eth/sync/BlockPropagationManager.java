@@ -266,28 +266,28 @@ public class BlockPropagationManager {
       // TODO this is a hack just for testing shared db when light client doesn't sync
       if (config.getSyncMode() == SyncMode.X_NONE) {
         blockchain.unsafeSetChainHead(block.getHeader(), totalDifficulty);
-      }
+      } else {
+        if (!shouldImportBlockAtHeight(
+            block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {
+          traceLambda(
+              LOG,
+              "Do not import new block from network {}, current chain heights are: local {}, best {}",
+              block::toLogString,
+              () -> localChainHeight,
+              () -> bestChainHeight);
+          return;
+        }
+        if (pendingBlocksManager.contains(block.getHash())) {
+          traceLambda(LOG, "New block from network {} is already pending", block::toLogString);
+          return;
+        }
+        if (blockchain.contains(block.getHash())) {
+          traceLambda(LOG, "New block from network {} is already present", block::toLogString);
+          return;
+        }
 
-      if (!shouldImportBlockAtHeight(
-          block.getHeader().getNumber(), localChainHeight, bestChainHeight)) {
-        traceLambda(
-            LOG,
-            "Do not import new block from network {}, current chain heights are: local {}, best {}",
-            block::toLogString,
-            () -> localChainHeight,
-            () -> bestChainHeight);
-        return;
+        importOrSavePendingBlock(block, message.getPeer().nodeId());
       }
-      if (pendingBlocksManager.contains(block.getHash())) {
-        traceLambda(LOG, "New block from network {} is already pending", block::toLogString);
-        return;
-      }
-      if (blockchain.contains(block.getHash())) {
-        traceLambda(LOG, "New block from network {} is already present", block::toLogString);
-        return;
-      }
-
-      importOrSavePendingBlock(block, message.getPeer().nodeId());
     } catch (final RLPException e) {
       LOG.debug(
           "Malformed NEW_BLOCK message received from peer, disconnecting: {}",
