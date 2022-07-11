@@ -21,8 +21,10 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -177,6 +179,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    verify(mergeCoordinator, atLeastOnce()).addBadBlock(any());
   }
 
   @Test

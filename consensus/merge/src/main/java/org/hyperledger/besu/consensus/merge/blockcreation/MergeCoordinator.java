@@ -260,12 +260,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 HeaderValidationMode.NONE,
                 false);
 
-    validationResult.errorMessage.ifPresent(
-        errMsg ->
-            protocolSchedule
-                .getByBlockNumber(chain.getChainHeadBlockNumber())
-                .getBadBlocksManager()
-                .addBadBlock(block));
+    validationResult.errorMessage.ifPresent(errMsg -> addBadBlock(block));
 
     return validationResult;
   }
@@ -544,6 +539,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   @FunctionalInterface
   interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
+  }
+
+  @Override
+  public void addBadBlock(final Block block) {
+    protocolSchedule
+        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getBadBlocksManager()
+        .addBadBlock(block);
   }
 
   @Override
