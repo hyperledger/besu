@@ -3,6 +3,7 @@
 ## 22.7.0-RC2
 
 ### Additions and Improvements
+- Add a block to the bad blocks if it did not descend from the terminal block [#4080](https://github.com/hyperledger/besu/pull/4080)
 
 ### Bug Fixes
 - Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
