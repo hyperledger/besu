@@ -41,9 +41,12 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExternalDBClientKeyValueStorage implements SegmentedKeyValueStorage<String> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ExternalDBClientKeyValueStorage.class);
   private final HttpClient httpClient;
   private final ExternalDbConfiguration configuration;
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -75,6 +78,7 @@ public class ExternalDBClientKeyValueStorage implements SegmentedKeyValueStorage
   @Override
   public Optional<byte[]> get(final String segment, final byte[] key) throws StorageException {
     try (final OperationTimer.TimingContext ignored = readLatency.startTimer()) {
+      final long start = System.nanoTime();
       final String dbKey = Bytes.of(key).toHexString();
       final JsonRpcRequest rpcRequest =
           new JsonRpcRequest("2.0", "database_getValue", new String[] {segment, dbKey});
@@ -89,7 +93,11 @@ public class ExternalDBClientKeyValueStorage implements SegmentedKeyValueStorage
       if (response.statusCode() == 200) {
         final ObjectNode rpcResponse = JsonUtil.objectNodeFromString(response.body());
         final Optional<String> result = JsonUtil.getString(rpcResponse, "result");
-        return result.map(v -> Bytes.fromHexString(v).toArrayUnsafe());
+        final Optional<byte[]> bytes = result.map(v -> Bytes.fromHexString(v).toArrayUnsafe());
+        final long end = System.nanoTime();
+        final Duration duration = Duration.of(end - start, ChronoUnit.NANOS);
+        LOG.info("Retrieved DB value for segment={} key={} in {}", segment, dbKey, duration);
+        return bytes;
       } else {
         throw new StorageException("Failed retrieving key " + dbKey + " from storage");
       }
