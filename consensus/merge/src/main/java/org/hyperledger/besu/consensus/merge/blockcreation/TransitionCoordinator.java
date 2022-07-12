@@ -200,6 +200,11 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
+  public void addBadBlock(final Block block) {
+    mergeCoordinator.addBadBlock(block);
+  }
+
+  @Override
   public boolean isBadBlock(final Hash blockHash) {
     return mergeCoordinator.isBadBlock(blockHash);
   }
