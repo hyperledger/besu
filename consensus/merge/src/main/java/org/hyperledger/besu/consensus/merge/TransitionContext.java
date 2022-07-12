@@ -68,14 +68,14 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
-    postMergeContext.observeNewIsPostMergeState(newMergeStateCallback);
+  public void observeNewIsPostMergeState(final MergeStateHandler mergeStateHandler) {
+    postMergeContext.observeNewIsPostMergeState(mergeStateHandler);
   }
 
   @Override
   public long addNewForkchoiceMessageListener(
-      final NewForkchoiceMessageListener newForkchoiceMessageListener) {
-    return postMergeContext.addNewForkchoiceMessageListener(newForkchoiceMessageListener);
+      final ForkchoiceMessageListener forkchoiceMessageListener) {
+    return postMergeContext.addNewForkchoiceMessageListener(forkchoiceMessageListener);
   }
 
   @Override

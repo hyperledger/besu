@@ -115,6 +115,7 @@ public class TransactionPoolFactoryTest {
             mock(EthMessages.class),
             ethContext,
             Collections.emptyList(),
+            Optional.empty(),
             true,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));

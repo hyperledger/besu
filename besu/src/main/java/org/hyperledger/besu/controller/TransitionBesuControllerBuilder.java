@@ -114,7 +114,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transactionPool,
                 transitionMiningParameters,
                 syncState,
-                ethProtocolManager,
                 transitionBackwardsSyncContext));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
@@ -150,8 +149,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
     postMergeContext.observeNewIsPostMergeState(
-        newIsPostMergeState -> {
-          if (newIsPostMergeState) {
+        (isPoS, difficultyStoppedAt) -> {
+          if (isPoS) {
             // if we transitioned to post-merge, stop and disable any mining
             composedCoordinator.getPreMergeObject().disable();
             composedCoordinator.getPreMergeObject().stop();

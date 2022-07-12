@@ -40,6 +40,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 public class EthProtocolManagerTestUtil {
@@ -56,6 +57,40 @@ public class EthProtocolManagerTestUtil {
         worldStateArchive,
         transactionPool,
         ethereumWireProtocolConfiguration);
+  }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final Optional<MergePeerFilter> mergePeerFilter) {
+
+    EthPeers peers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+    EthMessages messages = new EthMessages();
+    EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
+    EthContext ethContext = new EthContext(peers, messages, ethScheduler);
+
+    return new EthProtocolManager(
+        blockchain,
+        BigInteger.ONE,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        peers,
+        messages,
+        ethContext,
+        Collections.emptyList(),
+        mergePeerFilter,
+        false,
+        ethScheduler,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -101,6 +136,7 @@ public class EthProtocolManagerTestUtil {
         ethMessages,
         ethContext,
         Collections.emptyList(),
+        Optional.empty(),
         false,
         ethScheduler,
         forkIdManager);
