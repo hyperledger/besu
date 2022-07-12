@@ -25,9 +25,9 @@
       ]
     },
     "checkpoint": {
-      "hash": "0x43de216f876d897e59b9757dd24186e5b53be28bc425ca6a966335b48daaa50c",
-      "number": 12200000,
-      "totalDifficulty": "0x928D05243C1CF4"
+      "hash": "0xeefb1f70bf7bed6394ed7d6f812f422aa37bf7680e1b75fa551d40e849f10a87",
+      "number": 12269949,
+      "totalDifficulty": "0x94730AAE0106DC"
     }
   },
   "nonce": "0x0000000000000042",
