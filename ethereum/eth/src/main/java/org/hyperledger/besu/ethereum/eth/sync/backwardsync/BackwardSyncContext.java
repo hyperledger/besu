@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -96,27 +95,33 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (isTrusted(newBlockHash)) return future;
-    backwardChain.addNewHash(newBlockHash);
-    if (future != null) {
-      return future;
+    Optional<CompletableFuture<Void>> maybeFuture =
+        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+    if (isTrusted(newBlockHash)) {
+      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
-    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newBlockHash::toHexString);
-    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
-    return this.currentBackwardSyncFuture.get();
+    backwardChain.addNewHash(newBlockHash);
+    return maybeFuture.orElseGet(
+        () -> {
+          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
+          this.currentBackwardSyncFuture.set(future);
+          return future;
+        });
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (isTrusted(newPivot.getHash())) return future;
-    backwardChain.appendTrustedBlock(newPivot);
-    if (future != null) {
-      return future;
+    Optional<CompletableFuture<Void>> maybeFuture =
+        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+    if (isTrusted(newPivot.getHash())) {
+      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
-    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newPivot::toLogString);
-    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
-    return this.currentBackwardSyncFuture.get();
+    backwardChain.appendTrustedBlock(newPivot);
+    return maybeFuture.orElseGet(
+        () -> {
+          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
+          this.currentBackwardSyncFuture.set(future);
+          return future;
+        });
   }
 
   private boolean isTrusted(final Hash hash) {
@@ -149,7 +154,8 @@ public class BackwardSyncContext {
         (unused, throwable) -> {
           this.currentBackwardSyncFuture.set(null);
           if (throwable != null) {
-            throw new BackwardSyncException(throwable);
+            throw extractBackwardSyncException(throwable)
+                .orElse(new BackwardSyncException(throwable));
           }
           return null;
         });
@@ -157,25 +163,35 @@ public class BackwardSyncContext {
 
   @VisibleForTesting
   protected void processException(final Throwable throwable) {
+    extractBackwardSyncException(throwable)
+        .ifPresentOrElse(
+            backwardSyncException -> {
+              if (backwardSyncException.shouldRestart()) {
+                LOG.info(
+                    "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds...",
+                    backwardSyncException.getMessage(),
+                    ethContext.getEthPeers().peerCount());
+                return;
+              } else {
+                throw backwardSyncException;
+              }
+            },
+            () ->
+                LOG.warn(
+                    "There was an uncaught exception during Backwards Sync. Retrying in few seconds...",
+                    throwable));
+  }
+
+  private Optional<BackwardSyncException> extractBackwardSyncException(final Throwable throwable) {
     Throwable currentCause = throwable;
 
     while (currentCause != null) {
       if (currentCause instanceof BackwardSyncException) {
-        if (((BackwardSyncException) currentCause).shouldRestart()) {
-          LOG.info(
-              "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
-              currentCause.getMessage(),
-              ethContext.getEthPeers().peerCount());
-          return;
-        } else {
-          throw new BackwardSyncException(throwable);
-        }
+        return Optional.of((BackwardSyncException) currentCause);
       }
       currentCause = currentCause.getCause();
     }
-    LOG.warn(
-        "There was an uncaught exception during Backwards Sync... Retrying in few seconds...",
-        throwable);
+    return Optional.empty();
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture() {
