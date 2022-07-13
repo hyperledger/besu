@@ -99,11 +99,11 @@ public class TrieLogLayer {
         .put(slotHash, new BonsaiValue<>(oldValue, newValue));
   }
 
-  static TrieLogLayer fromBytes(final byte[] bytes) {
+  public static TrieLogLayer fromBytes(final byte[] bytes) {
     return readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
   }
 
-  static TrieLogLayer readFrom(final RLPInput input) {
+  public static TrieLogLayer readFrom(final RLPInput input) {
     final TrieLogLayer newLayer = new TrieLogLayer();
 
     input.enterList();
@@ -161,7 +161,7 @@ public class TrieLogLayer {
     return newLayer;
   }
 
-  void writeTo(final RLPOutput output) {
+  public void writeTo(final RLPOutput output) {
     freeze();
 
     final Set<Address> addresses = new TreeSet<>();
