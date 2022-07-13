@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
@@ -263,7 +264,8 @@ public class EngineNewPayloadTest {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-
+    when(mergeCoordinator.appendNewPayloadToSync(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
@@ -275,7 +277,8 @@ public class EngineNewPayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-
+    when(mergeCoordinator.appendNewPayloadToSync(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
