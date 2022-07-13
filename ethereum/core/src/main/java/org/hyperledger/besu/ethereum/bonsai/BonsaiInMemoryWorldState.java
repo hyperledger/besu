@@ -41,12 +41,16 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   @Override
   public void persist(final BlockHeader blockHeader) {
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
+    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
     try {
       final Hash newWorldStateRootHash = rootHash();
-      prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
+      final TrieLogLayer trieLogLayer =
+          prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
+      persistTrieLog(blockHeader, newWorldStateRootHash, trieLogLayer, stateUpdater);
       worldStateBlockHash = blockHeader.getHash();
       worldStateRootHash = newWorldStateRootHash;
     } finally {
+      stateUpdater.commit();
       localUpdater.reset();
     }
   }

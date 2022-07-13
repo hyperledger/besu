@@ -308,7 +308,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     return trieLog;
   }
 
-  private void persistTrieLog(
+  protected void persistTrieLog(
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
