@@ -97,19 +97,19 @@ public class BackwardChain {
     BlockHeader firstHeader = firstStoredAncestor.get();
     if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
       throw new BackwardSyncException(
-          "Wrong height of header "
-              + blockHeader.getHash().toHexString()
-              + " is "
-              + blockHeader.getNumber()
-              + " when we were expecting "
-              + (firstHeader.getNumber() - 1));
+          "Block "
+              + firstHeader.toLogString()
+              + " has a wrong height, we were expecting "
+              + (blockHeader.getNumber() + 1));
     }
     if (!firstHeader.getParentHash().equals(blockHeader.getHash())) {
       throw new BackwardSyncException(
-          "Hash of header does not match our expectations, was "
-              + blockHeader.toLogString()
-              + " when we expected "
-              + firstHeader.getParentHash().toHexString());
+          "For block "
+              + firstHeader.toLogString()
+              + " we were expecting the parent with hash "
+              + firstHeader.getParentHash().toHexString()
+              + " while as parent we found "
+              + blockHeader.toLogString());
     }
     headers.put(blockHeader.getHash(), blockHeader);
     chainStorage.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
@@ -117,7 +117,7 @@ public class BackwardChain {
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
-        () -> blockHeader.toLogString(),
+        blockHeader::toLogString,
         blockHeader::getNumber,
         () -> lastStoredPivot.orElseThrow().toLogString(),
         firstHeader::getNumber);
