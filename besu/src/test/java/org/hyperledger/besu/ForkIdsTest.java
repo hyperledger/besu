@@ -67,8 +67,8 @@ public class ForkIdsTest {
               new ForkId(Bytes.ofUnsignedInt(0x4bc66396L), 7117117L),
               new ForkId(Bytes.ofUnsignedInt(0x6727ef90L), 9812189L),
               new ForkId(Bytes.ofUnsignedInt(0xa157d377L), 10499401L),
-              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 12350712L),
-              new ForkId(Bytes.ofUnsignedInt(0xaae42f33L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x7119b6b3L), 0L))
         },
         new Object[] {
           NetworkName.RINKEBY,
