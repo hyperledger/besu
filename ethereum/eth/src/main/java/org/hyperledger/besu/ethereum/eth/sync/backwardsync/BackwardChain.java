@@ -96,10 +96,11 @@ public class BackwardChain {
     }
     BlockHeader firstHeader = firstStoredAncestor.get();
     if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
-      throw new BackwardSyncException("Block "
-          + firstHeader.toLogString()
-          + " has a wrong height, we were expecting "
-          + (blockHeader.getNumber() + 1));
+      throw new BackwardSyncException(
+          "Block "
+              + firstHeader.toLogString()
+              + " has a wrong height, we were expecting "
+              + (blockHeader.getNumber() + 1));
     }
     if (!firstHeader.getParentHash().equals(blockHeader.getHash())) {
       throw new BackwardSyncException(
