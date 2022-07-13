@@ -73,6 +73,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final List<PeerValidator> peerValidators;
   // The max size of messages (in bytes)
   private final int maxMessageSize;
+  private final Optional<MergePeerFilter> mergePeerFilter;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -84,6 +85,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
       final ForkIdManager forkIdManager) {
@@ -92,9 +94,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.scheduler = scheduler;
     this.blockchain = blockchain;
     this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
-
+    this.mergePeerFilter = mergePeerFilter;
     this.shutdown = new CountDownLatch(1);
-    genesisHash = blockchain.getBlockHashByNumber(0L).get();
+    this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO);
 
     this.forkIdManager = forkIdManager;
 
@@ -131,6 +133,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler) {
     this(
@@ -143,6 +146,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethMessages,
         ethContext,
         peerValidators,
+        mergePeerFilter,
         fastSyncEnabled,
         scheduler,
         new ForkIdManager(
@@ -161,6 +165,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter,
       final boolean fastSyncEnabled,
       final EthScheduler scheduler,
       final List<Long> forks) {
@@ -174,6 +179,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethMessages,
         ethContext,
         peerValidators,
+        mergePeerFilter,
         fastSyncEnabled,
         scheduler,
         new ForkIdManager(
@@ -240,13 +246,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.debug(
-          "Ignoring message received from unknown peer connection: " + message.getConnection());
+          "Ignoring message received from unknown peer connection: {}", message.getConnection());
       return;
     }
 
     if (messageData.getSize() > maxMessageSize) {
       LOG.warn(
-          "Received message exceeding size limit of {} bytes: {} bytes. Disconnecting from {}",
+          "Received message (code: {}) exceeding size limit of {} bytes: {} bytes. Disconnecting from {}",
+          Integer.toString(code, 16),
           maxMessageSize,
           messageData.getSize(),
           ethPeer);
@@ -268,6 +275,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
+    }
+
+    if (this.mergePeerFilter.isPresent()) {
+      if (this.mergePeerFilter.get().disconnectIfGossipingBlocks(message, ethPeer)) {
+        handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
+        return;
+      }
     }
 
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
@@ -376,6 +390,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      } else if (mergePeerFilter.isPresent()) {
+        boolean disconnected = mergePeerFilter.get().disconnectIfPoW(status, peer);
+        if (disconnected) {
+          handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
+        }
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(

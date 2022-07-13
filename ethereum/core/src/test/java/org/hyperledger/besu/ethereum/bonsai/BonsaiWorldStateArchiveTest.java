@@ -21,8 +21,10 @@ import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStora
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -123,10 +125,6 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
-    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-    final TrieLogLayer trieLogLayer = new TrieLogLayer();
-    trieLogLayer.setBlockHash(blockHeader.getHash());
-    trieLogLayer.writeTo(rlpLog);
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
 
@@ -145,12 +143,11 @@ public class BonsaiWorldStateArchiveTest {
     final Map layeredWorldStatesByHash = mock(HashMap.class);
 
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+    var updater = spy(bonsaiWorldStateArchive.getUpdater());
+    when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
+
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
-    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-    final TrieLogLayer trieLogLayer = new TrieLogLayer();
-    trieLogLayer.setBlockHash(blockHeader.getHash());
-    trieLogLayer.writeTo(rlpLog);
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeader));
@@ -160,7 +157,8 @@ public class BonsaiWorldStateArchiveTest {
 
     // verify is not trying to get the trie log layer to rollback when block is present
     verify(layeredWorldStatesByHash).entrySet();
-    verifyNoMoreInteractions(layeredWorldStatesByHash);
+    verify(updater, times(0)).rollBack(any());
+    verify(updater, times(0)).rollForward(any());
   }
 
   @SuppressWarnings({"unchecked"})
@@ -181,7 +179,9 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
 
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+    var updater = spy(bonsaiWorldStateArchive.getUpdater());
+    when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
@@ -198,6 +198,55 @@ public class BonsaiWorldStateArchiveTest {
     verify(layeredWorldStatesByHash).containsKey(eq(blockHeaderChainB.getHash()));
     verify(layeredWorldStatesByHash).get(eq(blockHeaderChainB.getHash()));
     verify(layeredWorldStatesByHash).entrySet();
-    verifyNoMoreInteractions(layeredWorldStatesByHash);
+    verify(updater, times(1)).rollBack(any());
+    verify(updater, times(1)).rollForward(any());
+  }
+
+  @SuppressWarnings({"unchecked"})
+  @Test
+  public void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
+    final KeyValueStorageTransaction keyValueStorageTransaction =
+        mock(KeyValueStorageTransaction.class);
+    when(keyValueStorage.startTransaction()).thenReturn(keyValueStorageTransaction);
+    final BlockHeader genesis = blockBuilder.number(0).buildHeader();
+    final BlockHeader blockHeaderChainA =
+        blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
+    final BlockHeader blockHeaderChainB =
+        blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
+
+    final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash = mock(HashMap.class);
+    when(layeredWorldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
+    when(layeredWorldStatesByHash.get(eq(blockHeaderChainA.getHash())))
+        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
+    when(layeredWorldStatesByHash.get(eq(blockHeaderChainB.getHash())))
+        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
+
+    bonsaiWorldStateArchive =
+        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+    var updater = spy(bonsaiWorldStateArchive.getUpdater());
+    when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
+
+    // initial persisted state hash key
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
+    // fake trie log layer
+    final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
+    final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
+    trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
+    trieLogLayerBlockB.writeTo(rlpLogBlockB);
+    when(keyValueStorage.get(blockHeaderChainB.getHash().toArrayUnsafe()))
+        .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
+
+    when(blockchain.getBlockHeader(eq(blockHeaderChainB.getHash())))
+        .thenReturn(Optional.of(blockHeaderChainB));
+    when(blockchain.getBlockHeader(eq(genesis.getHash()))).thenReturn(Optional.of(genesis));
+
+    assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeaderChainB.getHash()))
+        .containsInstanceOf(BonsaiPersistedWorldState.class);
+
+    // verify is not persisting if already present
+    verify(keyValueStorageTransaction, never())
+        .put(eq(blockHeaderChainA.getHash().toArrayUnsafe()), any());
+    verify(keyValueStorageTransaction, never())
+        .put(eq(blockHeaderChainB.getHash().toArrayUnsafe()), any());
   }
 }

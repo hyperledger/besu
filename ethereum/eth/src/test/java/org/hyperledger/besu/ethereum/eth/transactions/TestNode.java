@@ -67,6 +67,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
@@ -124,7 +125,13 @@ public class TestNode implements Closeable {
 
     final EthMessages ethMessages = new EthMessages();
 
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem, 25);
+    final EthPeers ethPeers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            metricsSystem,
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
@@ -136,7 +143,7 @@ public class TestNode implements Closeable {
             ethContext,
             TestClock.fixed(),
             metricsSystem,
-            syncState,
+            syncState::isInitialSyncPhaseDone,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT);
 
@@ -151,6 +158,7 @@ public class TestNode implements Closeable {
             ethMessages,
             ethContext,
             Collections.emptyList(),
+            Optional.empty(),
             false,
             scheduler);
 

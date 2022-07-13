@@ -17,9 +17,11 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -73,24 +75,23 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     this.layeredWorldStatesByHash = layeredWorldStatesByHash;
     this.maxLayersToLoad = maxLayersToLoad;
-    blockchain.observeBlockAdded(
-        event -> {
-          if (event.isNewCanonicalHead()) {
-            final BlockHeader eventBlockHeader = event.getBlock().getHeader();
-            layeredWorldStatesByHash.computeIfPresent(
-                eventBlockHeader.getParentHash(),
-                (hash, bonsaiLayeredWorldState) -> {
-                  if (layeredWorldStatesByHash.containsKey(
-                      fromPlugin(eventBlockHeader.getBlockHash()))) {
-                    bonsaiLayeredWorldState.setNextWorldView(
-                        Optional.of(
-                            layeredWorldStatesByHash.get(
-                                fromPlugin(eventBlockHeader.getBlockHash()))));
-                  }
-                  return bonsaiLayeredWorldState;
-                });
-          }
-        });
+    blockchain.observeBlockAdded(this::blockAddedHandler);
+  }
+
+  private void blockAddedHandler(final BlockAddedEvent event) {
+    LOG.debug("New block add event {}", event);
+    if (event.isNewCanonicalHead()) {
+      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
+      layeredWorldStatesByHash.computeIfPresent(
+          eventBlockHeader.getParentHash(),
+          (parentHash, bonsaiLayeredWorldState) -> {
+            if (layeredWorldStatesByHash.containsKey(eventBlockHeader.getHash())) {
+              bonsaiLayeredWorldState.setNextWorldView(
+                  Optional.of(layeredWorldStatesByHash.get(eventBlockHeader.getHash())));
+            }
+            return bonsaiLayeredWorldState;
+          });
+    }
   }
 
   @Override
@@ -117,7 +118,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             blockHeader.getNumber(),
             worldStateRootHash,
             trieLog);
-    layeredWorldStatesByHash.put(bonsaiLayeredWorldState.blockHash(), bonsaiLayeredWorldState);
+    debugLambda(
+        LOG,
+        "adding layered world state for block {}, state root hash {}",
+        blockHeader::toLogString,
+        worldStateRootHash::toHexString);
+    layeredWorldStatesByHash.put(blockHeader.getHash(), bonsaiLayeredWorldState);
   }
 
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
@@ -226,8 +232,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
 
         // attempt the state rolling
-        final BonsaiWorldStateUpdater bonsaiUpdater =
-            (BonsaiWorldStateUpdater) persistedState.updater();
+        final BonsaiWorldStateUpdater bonsaiUpdater = getUpdater();
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
@@ -253,6 +258,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         return Optional.empty();
       }
     }
+  }
+
+  BonsaiWorldStateUpdater getUpdater() {
+    return (BonsaiWorldStateUpdater) persistedState.updater();
   }
 
   @Override

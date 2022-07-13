@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.consensus.merge.MergeContext.NewForkchoiceMessageListener;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Optional;
@@ -24,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FinalizedBlockHashSupplier
-    implements Supplier<Optional<Hash>>, NewForkchoiceMessageListener {
+    implements Supplier<Optional<Hash>>, ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(FinalizedBlockHashSupplier.class);
 
   private volatile Optional<Hash> lastAnnouncedFinalizedBlockHash = Optional.empty();

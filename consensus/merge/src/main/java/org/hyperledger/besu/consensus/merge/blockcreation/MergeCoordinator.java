@@ -174,7 +174,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
 
-    Result result = executeBlock(emptyBlock);
+    Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
     } else {
@@ -193,7 +193,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
-                final var resultBest = executeBlock(bestBlock);
+                final var resultBest = validateBlock(bestBlock);
                 if (resultBest.blockProcessingOutputs.isPresent()) {
                   mergeContext.putPayloadById(payloadIdentifier, bestBlock);
                 } else {
@@ -239,7 +239,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @Override
-  public Result executeBlock(final Block block) {
+  public Result validateBlock(final Block block) {
 
     final var chain = protocolContext.getBlockchain();
     chain
@@ -254,16 +254,24 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .getByBlockNumber(block.getHeader().getNumber())
             .getBlockValidator()
             .validateAndProcessBlock(
-                protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE);
+                protocolContext,
+                block,
+                HeaderValidationMode.FULL,
+                HeaderValidationMode.NONE,
+                false);
 
-    validationResult.blockProcessingOutputs.ifPresentOrElse(
-        result -> chain.appendBlock(block, result.receipts),
-        () ->
-            protocolSchedule
-                .getByBlockNumber(chain.getChainHeadBlockNumber())
-                .getBadBlocksManager()
-                .addBadBlock(block));
+    validationResult.errorMessage.ifPresent(errMsg -> addBadBlock(block));
 
+    return validationResult;
+  }
+
+  @Override
+  public Result rememberBlock(final Block block) {
+    debugLambda(LOG, "Remember block {}", block::toLogString);
+    final var chain = protocolContext.getBlockchain();
+    final var validationResult = validateBlock(block);
+    validationResult.blockProcessingOutputs.ifPresent(
+        result -> chain.storeBlock(block, result.receipts));
     return validationResult;
   }
 
@@ -276,6 +284,12 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
+    if (newHead.getNumber() < blockchain.getChainHeadBlockNumber()
+        && isDescendantOf(newHead, blockchain.getChainHeadHeader())) {
+      LOG.info("Ignoring update to old head");
+      return ForkchoiceResult.withIgnoreUpdateToOldHead(newHead);
+    }
+
     final Optional<Hash> latestValid = getLatestValidAncestor(newHead);
 
     Optional<BlockHeader> parentOfNewHead = blockchain.getBlockHeader(newHead.getParentHash());
@@ -284,8 +298,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
       return ForkchoiceResult.withFailure(
           INVALID, "new head timestamp not greater than parent", latestValid);
     }
-    // set the new head
-    blockchain.rewindToBlock(newHead.getHash());
+
+    setNewHead(blockchain, newHead);
 
     // set and persist the new finalized block if it is present
     newFinalized.ifPresent(
@@ -308,6 +322,44 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     }
 
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
+  }
+
+  private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
+
+    if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
+      debugLambda(LOG, "Nothing to do new head {} is already chain head", newHead::toLogString);
+      return true;
+    }
+
+    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+      debugLambda(
+          LOG,
+          "Forwarding chain head to the block {} saved from a previous newPayload invocation",
+          newHead::toLogString);
+      forwardWorldStateTo(newHead);
+      return blockchain.forwardToBlock(newHead);
+    }
+
+    debugLambda(LOG, "New head {} is a chain reorg, rewind chain head to it", newHead::toLogString);
+    return blockchain.rewindToBlock(newHead.getHash());
+  }
+
+  private void forwardWorldStateTo(final BlockHeader newHead) {
+    protocolContext
+        .getWorldStateArchive()
+        .getMutable(newHead.getStateRoot(), newHead.getHash())
+        .ifPresentOrElse(
+            mutableWorldState ->
+                debugLambda(
+                    LOG,
+                    "World state for state root hash {} and block hash {} persisted successfully",
+                    mutableWorldState::rootHash,
+                    newHead::getHash),
+            () ->
+                LOG.error(
+                    "Could not persist world for root hash {} and block hash {}",
+                    newHead.getStateRoot(),
+                    newHead.getHash()));
   }
 
   @Override
@@ -383,7 +435,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
     boolean resp =
         parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
-    LOG.warn(
+    LOG.debug(
         "checking ancestor {} is valid terminal PoW for {}\n {}",
         parent.map(BlockHeader::toLogString).orElse("empty"),
         blockheader.toLogString(),
@@ -436,7 +488,15 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     // check chain first
     return chain
         .getBlockHeader(parentHash)
-        .map(BlockHeader::getHash)
+        .map(
+            header -> {
+              // if block is PoW, return ZERO hash
+              if (header.getDifficulty().greaterThan(Difficulty.ZERO)) {
+                return Hash.ZERO;
+              } else {
+                return header.getHash();
+              }
+            })
         .map(Optional::of)
         .orElseGet(
             () ->
@@ -479,6 +539,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   @FunctionalInterface
   interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
+  }
+
+  @Override
+  public void addBadBlock(final Block block) {
+    protocolSchedule
+        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getBadBlocksManager()
+        .addBadBlock(block);
   }
 
   @Override

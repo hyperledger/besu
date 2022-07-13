@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
@@ -336,9 +337,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                     prunerConfiguration));
       }
     }
+    final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final EthPeers ethPeers =
         new EthPeers(
-            getSupportedProtocol(), clock, metricsSystem, maxPeers, messagePermissioningProviders);
+            getSupportedProtocol(),
+            clock,
+            metricsSystem,
+            maxPeers,
+            maxMessageSize,
+            messagePermissioningProviders);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
@@ -379,7 +386,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             clock,
             metricsSystem,
-            syncState,
+            syncState::isInitialSyncPhaseDone,
             miningParameters,
             transactionPoolConfiguration);
 
@@ -395,7 +402,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             ethMessages,
             scheduler,
-            peerValidators);
+            peerValidators,
+            Optional.empty());
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
@@ -553,7 +561,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthContext ethContext,
       final EthMessages ethMessages,
       final EthScheduler scheduler,
-      final List<PeerValidator> peerValidators) {
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
@@ -564,6 +573,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethMessages,
         ethContext,
         peerValidators,
+        mergePeerFilter,
         fastSyncEnabled,
         scheduler,
         genesisConfig.getForks());
