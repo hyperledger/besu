@@ -27,6 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.ExecutionException;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -157,7 +158,9 @@ public class BackwardSyncContextTest {
                 metricsSystem,
                 ethContext,
                 syncState,
-                backwardChain));
+                backwardChain,
+                3,
+                60000));
     doReturn(true).when(context).isReady();
     doReturn(2).when(context).getBatchSize();
   }
@@ -344,5 +347,13 @@ public class BackwardSyncContextTest {
         .hasMessageContaining("custom error");
 
     Mockito.verify(manager).addBadBlock(block);
+  }
+
+  @Test
+  public void shouldFailAfterMaxNumberOfRetries() throws ExecutionException, InterruptedException {
+    final var syncFuture = context.syncBackwardsUntil(Hash.ZERO);
+    peer.respondWhileOtherThreadsWork(
+        RespondingEthPeer.emptyResponder(), () -> !syncFuture.isDone());
+    syncFuture.get();
   }
 }

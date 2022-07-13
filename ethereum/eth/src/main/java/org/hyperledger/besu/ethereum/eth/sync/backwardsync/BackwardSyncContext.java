@@ -45,7 +45,9 @@ import org.slf4j.LoggerFactory;
 public class BackwardSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncContext.class);
   public static final int BATCH_SIZE = 200;
-  private static final int MAX_RETRIES = 100;
+  private static final int DEFAULT_MAX_RETRIES = 100;
+
+  private static final long DEFAULT_MILLIS_BETWEEN_RETRIES = 5000;
 
   protected final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -60,6 +62,10 @@ public class BackwardSyncContext {
   private Optional<Hash> maybeFinalized = Optional.empty();
   private Optional<Hash> maybeHead = Optional.empty();
 
+  private final int maxRetries;
+
+  private final long millisBetweenRetries;
+
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -67,6 +73,26 @@ public class BackwardSyncContext {
       final EthContext ethContext,
       final SyncState syncState,
       final BackwardChain backwardChain) {
+    this(
+        protocolContext,
+        protocolSchedule,
+        metricsSystem,
+        ethContext,
+        syncState,
+        backwardChain,
+        DEFAULT_MAX_RETRIES,
+        DEFAULT_MILLIS_BETWEEN_RETRIES);
+  }
+
+  public BackwardSyncContext(
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MetricsSystem metricsSystem,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final BackwardChain backwardChain,
+      final int maxRetries,
+      final long millisBetweenRetries) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -74,6 +100,8 @@ public class BackwardSyncContext {
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
     this.backwardChain = backwardChain;
+    this.maxRetries = maxRetries;
+    this.millisBetweenRetries = millisBetweenRetries;
   }
 
   public synchronized boolean isSyncing() {
@@ -131,7 +159,7 @@ public class BackwardSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
-    return prepareBackwardSyncFutureWithRetry(MAX_RETRIES)
+    return prepareBackwardSyncFutureWithRetry(maxRetries)
         .handle(
             (unused, throwable) -> {
               this.currentBackwardSyncFuture.set(null);
@@ -143,10 +171,9 @@ public class BackwardSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(final int retries) {
-
     if (retries == 0) {
       return CompletableFuture.failedFuture(
-          new BackwardSyncException("Max number of retries " + MAX_RETRIES + " reached"));
+          new BackwardSyncException("Max number of retries " + DEFAULT_MAX_RETRIES + " reached"));
     }
 
     return exceptionallyCompose(
@@ -156,7 +183,8 @@ public class BackwardSyncContext {
           return ethContext
               .getScheduler()
               .scheduleFutureTask(
-                  () -> prepareBackwardSyncFutureWithRetry(retries - 1), Duration.ofSeconds(5));
+                  () -> prepareBackwardSyncFutureWithRetry(retries - 1),
+                  Duration.ofMillis(millisBetweenRetries));
         });
   }
 
