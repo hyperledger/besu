@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
@@ -35,7 +36,6 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -131,27 +131,32 @@ public class BackwardSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
+    return prepareBackwardSyncFutureWithRetry(MAX_RETRIES)
+        .handle(
+            (unused, throwable) -> {
+              this.currentBackwardSyncFuture.set(null);
+              if (throwable != null) {
+                throw new BackwardSyncException(throwable);
+              }
+              return null;
+            });
+  }
 
-    CompletableFuture<Void> f = prepareBackwardSyncFuture();
-    for (int i = 0; i < MAX_RETRIES; i++) {
-      f =
-          f.thenApply(CompletableFuture::completedFuture)
-              .exceptionally(
-                  ex -> {
-                    processException(ex);
-                    return ethContext
-                        .getScheduler()
-                        .scheduleFutureTask(this::prepareBackwardSyncFuture, Duration.ofSeconds(5));
-                  })
-              .thenCompose(Function.identity());
+  private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(final int retries) {
+
+    if (retries == 0) {
+      return CompletableFuture.failedFuture(
+          new BackwardSyncException("Max number of retries " + MAX_RETRIES + " reached"));
     }
-    return f.handle(
-        (unused, throwable) -> {
-          this.currentBackwardSyncFuture.set(null);
-          if (throwable != null) {
-            throw new BackwardSyncException(throwable);
-          }
-          return null;
+
+    return exceptionallyCompose(
+        prepareBackwardSyncFuture(),
+        throwable -> {
+          processException(throwable);
+          return ethContext
+              .getScheduler()
+              .scheduleFutureTask(
+                  () -> prepareBackwardSyncFutureWithRetry(retries - 1), Duration.ofSeconds(5));
         });
   }
 
@@ -168,6 +173,7 @@ public class BackwardSyncContext {
               ethContext.getEthPeers().peerCount());
           return;
         } else {
+          debugLambda(LOG, "Not recoverable backward sync exception {}", throwable::getMessage);
           throw new BackwardSyncException(throwable);
         }
       }
