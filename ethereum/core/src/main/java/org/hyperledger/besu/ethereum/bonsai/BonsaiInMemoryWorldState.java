@@ -47,10 +47,10 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
       final TrieLogLayer trieLogLayer =
           prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
       persistTrieLog(blockHeader, newWorldStateRootHash, trieLogLayer, stateUpdater);
+      stateUpdater.commit();
       worldStateBlockHash = blockHeader.getHash();
       worldStateRootHash = newWorldStateRootHash;
     } finally {
-      stateUpdater.commit();
       localUpdater.reset();
     }
   }
