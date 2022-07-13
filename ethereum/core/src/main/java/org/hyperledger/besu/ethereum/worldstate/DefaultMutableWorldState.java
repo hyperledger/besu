@@ -312,6 +312,11 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
+    public UInt256 getTransientStorageValue(final UInt256 key) {
+      throw new UnsupportedOperationException("Transient storage is not implemented in WorldStateAccount");
+    }
+
+    @Override
     public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
         final Bytes32 startKeyHash, final int limit) {
       final NavigableMap<Bytes32, AccountStorageEntry> storageEntries = new TreeMap<>();

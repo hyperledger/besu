@@ -14,6 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
+
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -26,14 +33,6 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-
-import java.math.BigInteger;
-import java.util.Optional;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
-
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class PoWBlockCreator extends AbstractBlockCreator {
 

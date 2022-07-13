@@ -240,6 +240,7 @@ public class MessageFrame {
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
   private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
+  private Optional<StorageEntry> maybeUpdatedTransientStorage = Optional.empty();
 
   public static Builder builder() {
     return new Builder();
@@ -722,6 +723,11 @@ public class MessageFrame {
   public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
     maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
+
+  public void transientStorageWasUpdated(final UInt256 storageAddress, final Bytes value) {
+    maybeUpdatedTransientStorage = Optional.of(new StorageEntry(storageAddress, value));
+  }
+
   /**
    * Accumulate a log.
    *
@@ -1093,9 +1099,14 @@ public class MessageFrame {
     return maybeUpdatedStorage;
   }
 
+  public Optional<StorageEntry> getMaybeUpdatedTransientStorage() {
+    return maybeUpdatedTransientStorage;
+  }
+
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
     maybeUpdatedStorage = Optional.empty();
+    maybeUpdatedTransientStorage = Optional.empty();
   }
 
   public static class Builder {

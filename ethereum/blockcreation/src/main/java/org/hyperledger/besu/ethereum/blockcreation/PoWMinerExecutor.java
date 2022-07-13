@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -26,10 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
-
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 

@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -22,11 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
-
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public interface MiningCoordinator {
 

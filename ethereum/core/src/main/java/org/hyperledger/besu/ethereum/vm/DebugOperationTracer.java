@@ -93,7 +93,8 @@ public class DebugOperationTracer implements OperationTracer {
             stackPostExecution,
             currentOperation.isVirtualOperation(),
             frame.getMaybeUpdatedMemory(),
-            frame.getMaybeUpdatedStorage());
+            frame.getMaybeUpdatedStorage(),
+            frame.getMaybeUpdatedTransientStorage());
     traceFrames.add(lastFrame);
     frame.reset();
   }
@@ -125,6 +126,7 @@ public class DebugOperationTracer implements OperationTracer {
               frame.getMaxStackSize(),
               Optional.empty(),
               true,
+              Optional.empty(),
               Optional.empty(),
               Optional.empty());
       traceFrames.add(traceFrame);
@@ -171,6 +173,7 @@ public class DebugOperationTracer implements OperationTracer {
                     frame.getMaxStackSize(),
                     Optional.empty(),
                     true,
+                    Optional.empty(),
                     Optional.empty(),
                     Optional.empty());
             traceFrames.add(traceFrame);

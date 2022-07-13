@@ -52,6 +52,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Bytes code;
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
+  private final Map<UInt256, UInt256> transientStorage = new HashMap<>();
 
   BonsaiAccount(
       final BonsaiWorldView context,
@@ -103,6 +104,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
+    transientStorage.putAll(toCopy.transientStorage);
 
     this.mutable = mutable;
   }
@@ -243,6 +245,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public void clearStorage() {
     updatedStorage.clear();
+    transientStorage.clear();
   }
 
   @Override
@@ -309,5 +312,22 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         throw new IllegalStateException(context + ": Storage Roots differ");
       }
     }
+  }
+
+  @Override
+  public UInt256 getTransientStorageValue(final UInt256 key) {
+    if (transientStorage.containsKey(key)) {
+      return transientStorage.get(key);
+    } else {
+      return UInt256.ZERO;
+    }
+  }
+
+  @Override
+  public void setTransientStorageValue(final UInt256 key, final UInt256 value) {
+    if (!mutable) {
+      throw new UnsupportedOperationException("Account is immutable");
+    }
+    transientStorage.put(key, value);
   }
 }

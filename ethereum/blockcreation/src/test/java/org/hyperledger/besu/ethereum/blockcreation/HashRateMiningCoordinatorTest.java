@@ -17,13 +17,12 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

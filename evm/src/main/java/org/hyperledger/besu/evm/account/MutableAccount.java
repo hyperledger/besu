@@ -96,6 +96,16 @@ public interface MutableAccount extends Account {
    */
   void setStorageValue(UInt256 key, UInt256 value);
 
+  /**
+   * Sets a particular key-value pair in the account transient storage.
+   *
+   * <p>Note that setting the value of an entry to 0 is basically equivalent to deleting that entry.
+   *
+   * @param key the key to set.
+   * @param value the value to set {@code key} to.
+   */
+  void setTransientStorageValue(UInt256 key, UInt256 value);
+
   /** Clears out an account's storage. */
   void clearStorage();
 

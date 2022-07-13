@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.crypto.SecureRandomProvider;
-
 import java.util.Iterator;
 import java.util.Random;
+
+import org.hyperledger.besu.crypto.SecureRandomProvider;
 
 /** Creates an everlasting random long value (for use in nonces). */
 public class RandomNonceGenerator implements Iterable<Long> {

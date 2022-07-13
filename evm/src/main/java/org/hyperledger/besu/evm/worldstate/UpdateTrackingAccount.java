@@ -42,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  *
  * <p>Note that in practice this only track the modified value of the nonce and balance, but doesn't
  * remind if those were modified or not (the reason being that any modification of an account imply
- * the underlying trie node will have to be updated, and so knowing if the nonce and balance where
+ * the underlying trie node will have to be updated, and so knowing if the nonce and balance were
  * updated or not doesn't matter, we just need their new value).
  */
 public class UpdateTrackingAccount<A extends Account> implements MutableAccount, EvmAccount {
@@ -62,6 +62,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
+  private final NavigableMap<UInt256, UInt256> updatedTransientStorage;
 
   UpdateTrackingAccount(final Address address) {
     checkNotNull(address);
@@ -74,6 +75,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     this.updatedCode = Bytes.EMPTY;
     this.updatedStorage = new TreeMap<>();
+    this.updatedTransientStorage = new TreeMap<>();
   }
 
   public UpdateTrackingAccount(final A account) {
@@ -90,6 +92,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.balance = account.getBalance();
 
     this.updatedStorage = new TreeMap<>();
+    this.updatedTransientStorage = new TreeMap<>();
   }
 
   /**
@@ -278,5 +281,19 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public MutableAccount getMutable() throws ModificationNotAllowedException {
     return this;
+  }
+
+  @Override
+  public UInt256 getTransientStorageValue(final UInt256 key) {
+    if (updatedTransientStorage.containsKey(key)) {
+      return updatedTransientStorage.get(key);
+    } else {
+      return UInt256.ZERO;
+    }
+  }
+
+  @Override
+  public void setTransientStorageValue(final UInt256 key, final UInt256 value) {
+    updatedTransientStorage.put(key, value);
   }
 }

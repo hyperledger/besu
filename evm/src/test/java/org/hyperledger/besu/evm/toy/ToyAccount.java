@@ -47,6 +47,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   private Supplier<Hash> codeHash =
       Suppliers.memoize(() -> code == null ? Hash.EMPTY : Hash.hash(code));
   private final Map<UInt256, UInt256> storage = new HashMap<>();
+  private final Map<UInt256, UInt256> transientStorage = new HashMap<>();
 
   public ToyAccount(final Address address, final long nonce, final Wei balance) {
     this(null, address, nonce, balance, Bytes.EMPTY);
@@ -148,10 +149,25 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   @Override
   public void clearStorage() {
     storage.clear();
+    transientStorage.clear();
   }
 
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return storage;
+  }
+
+  @Override
+  public UInt256 getTransientStorageValue(final UInt256 key) {
+    if (transientStorage.containsKey(key)) {
+      return transientStorage.get(key);
+    } else {
+      return UInt256.ZERO;
+    }
+  }
+
+  @Override
+  public void setTransientStorageValue(final UInt256 key, final UInt256 value) {
+    transientStorage.put(key, value);
   }
 }
