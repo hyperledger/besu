@@ -4,6 +4,8 @@
 
 ### Additions and Improvements
 - Add a block to the bad blocks if it did not descend from the terminal block [#4080](https://github.com/hyperledger/besu/pull/4080)
+- Backward sync exception improvements [#4092](https://github.com/hyperledger/besu/pull/4092)
+- Remove block header checks during backward sync, since they will be always performed during block import phase [#4098](https://github.com/hyperledger/besu/pull/4098)
 - Optimize the backward sync retry strategy [#4095](https://github.com/hyperledger/besu/pull/4095)
 
 ### Bug Fixes
