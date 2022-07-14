@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -326,9 +327,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
+    LOG.trace(
+        "handleNewConnection {} 6 disconnected? {}",
+        System.identityHashCode(connection),
+        connection.isDisconnected());
+
     ethPeers.registerConnection(connection, peerValidators);
+    traceLambda(LOG, "AFTER registering the connection {}", ethPeers::toString);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
+    if (peer.isDisconnected() || peer.statusHasBeenSentToPeer()) {
       return;
     }
 
@@ -346,13 +353,21 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {}.", peer);
+      LOG.debug(
+          "Sending status message to connection {} - {}.",
+          System.identityHashCode(connection),
+          peer);
       peer.send(status, getSupportedProtocol());
       peer.registerStatusSent();
     } catch (final PeerNotConnected peerNotConnected) {
+      traceLambda(
+          LOG,
+          "handleNewConnection BUT PeerNotConnected {}, {}",
+          peer::toString,
+          peerNotConnected::toString);
       // Nothing to do.
     }
-    LOG.trace("{}", ethPeers);
+    LOG.trace("on connect: {}", ethPeers);
   }
 
   @Override
@@ -362,12 +377,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final boolean initiatedByPeer) {
     ethPeers.registerDisconnect(connection);
     LOG.debug(
-        "Disconnect - {} - {} - {} - {} peers left",
+        "Disconnect - {} - {} - {} - {} - {} peers left",
+        System.identityHashCode(connection),
         initiatedByPeer ? "Inbound" : "Outbound",
         reason,
         connection.getPeerInfo(),
         ethPeers.peerCount());
-    LOG.trace("{}", ethPeers);
+    LOG.trace("on disconnect: {}", ethPeers);
   }
 
   private void handleStatusMessage(final EthPeer peer, final MessageData data) {

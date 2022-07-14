@@ -99,6 +99,11 @@ public class EthPeers {
             clock,
             permissioningProviders);
     connections.putIfAbsent(peerConnection, peer);
+    // it is common for the peer to be disconnected at this point
+    // if duplicate inbound and outbound connections are established at the same time
+    if (peer.isDisconnected()) {
+      connections.remove(peerConnection);
+    }
   }
 
   public void registerDisconnect(final PeerConnection connection) {

@@ -148,6 +148,8 @@ public abstract class RlpxConnection {
     public String toString() {
       return "RemotelyInitiatedRlpxConnection initiatedAt:"
           + getInitiatedAt()
+          + " on connection "
+          + System.identityHashCode(peerConnection)
           + " to "
           + peerConnection.getPeer().getId();
     }
@@ -226,6 +228,8 @@ public abstract class RlpxConnection {
     public String toString() {
       return "LocallyInitiatedRlpxConnection initiatedAt:"
           + getInitiatedAt()
+          + " on connection "
+          + System.identityHashCode(getPeerConnection())
           + " to "
           + getPeer().getId()
           + " disconnected? "

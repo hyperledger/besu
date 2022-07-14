@@ -394,7 +394,10 @@ public class RlpxAgent {
         (nodeId, existingConnection) -> {
           if (existingConnection == null) {
             // The new connection is unique, set it and return
-            LOG.debug("Inbound connection established with {}", peerConnection.getPeer().getId());
+            LOG.debug(
+                "Inbound connection {} established with {}",
+                System.identityHashCode(peerConnection),
+                peerConnection.getPeer().getId());
             newConnectionAccepted.set(true);
             return inboundConnection;
           }
@@ -402,7 +405,9 @@ public class RlpxAgent {
           if (compareDuplicateConnections(inboundConnection, existingConnection) < 0) {
             // Keep the inbound connection
             LOG.debug(
-                "Duplicate connection detected, disconnecting previously established connection in favor of new inbound connection for peer:  {}",
+                "Duplicate connection detected, disconnecting previously established connection {} in favor of new inbound connection {} for peer: {}",
+                System.identityHashCode(existingConnection.getPeerConnection()),
+                System.identityHashCode(peerConnection),
                 peerConnection.getPeer().getId());
             disconnectAction.set(
                 () -> existingConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));
@@ -411,7 +416,9 @@ public class RlpxAgent {
           } else {
             // Keep the existing connection
             LOG.debug(
-                "Duplicate connection detected, disconnecting inbound connection in favor of previously established connection for peer:  {}",
+                "Duplicate connection detected, disconnecting inbound connection {} in favor of previously established connection {} for peer: {}",
+                System.identityHashCode(peerConnection),
+                System.identityHashCode(existingConnection.getPeerConnection()),
                 peerConnection.getPeer().getId());
             disconnectAction.set(
                 () -> inboundConnection.disconnect(DisconnectReason.ALREADY_CONNECTED));

@@ -550,8 +550,12 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "Peer %s... %s, validated? %s, disconnected? %s",
-        getShortNodeId(), reputation, isFullyValidated(), isDisconnected());
+        "Peer %s %s... %s, validated? %s, disconnected? %s",
+        System.identityHashCode(connection),
+        getShortNodeId(),
+        reputation,
+        isFullyValidated(),
+        isDisconnected());
   }
 
   @Nonnull
