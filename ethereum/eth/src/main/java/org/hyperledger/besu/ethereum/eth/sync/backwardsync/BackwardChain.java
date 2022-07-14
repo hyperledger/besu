@@ -188,7 +188,13 @@ public class BackwardChain {
   }
 
   public synchronized Optional<Hash> getFirstHashToAppend() {
-    return Optional.ofNullable(hashesToAppend.poll());
+    return Optional.ofNullable(hashesToAppend.peek());
+  }
+
+  public synchronized void removeFromHashToAppend(final Hash hashToRemove) {
+    if (hashesToAppend.contains(hashToRemove)) {
+      hashesToAppend.remove(hashToRemove);
+    }
   }
 
   public void addBadChainToManager(final BadBlockManager badBlocksManager, final Hash hash) {
