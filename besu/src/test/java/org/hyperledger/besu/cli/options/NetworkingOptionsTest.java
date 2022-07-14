@@ -101,6 +101,30 @@ public class NetworkingOptionsTest
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void checkDiscoveryV5Enabled_isSet() {
+    final TestBesuCommand cmd = parseCommand("--Xv5-disc-enabled");
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDiscovery().isDiscoveryV5Enabled()).isTrue();
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkDiscoveryV5Enabled_isNotSet() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDiscovery().isDiscoveryV5Enabled()).isFalse();
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   NetworkingConfiguration createDefaultDomainObject() {
     return NetworkingConfiguration.create();
