@@ -117,7 +117,7 @@ public class BackwardChain {
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
-        () -> blockHeader.toLogString(),
+        blockHeader::toLogString,
         blockHeader::getNumber,
         () -> lastStoredPivot.orElseThrow().toLogString(),
         firstHeader::getNumber);
