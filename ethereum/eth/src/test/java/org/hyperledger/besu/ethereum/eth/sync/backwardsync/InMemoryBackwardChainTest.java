@@ -103,7 +103,7 @@ public class InMemoryBackwardChainTest {
     assertThatThrownBy(
             () -> backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 5).getHeader()))
         .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Wrong height of header");
+        .hasMessageContaining("has a wrong height");
     BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
   }
@@ -116,7 +116,7 @@ public class InMemoryBackwardChainTest {
     BlockHeader wrongHashHeader = prepareWrongParentHash(blocks.get(blocks.size() - 4).getHeader());
     assertThatThrownBy(() -> backwardChain.prependAncestorsHeader(wrongHashHeader))
         .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Hash of header does not match our expectations");
+        .hasMessageContaining("we were expecting the parent with hash");
     BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
     assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
   }
