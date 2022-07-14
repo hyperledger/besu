@@ -23,7 +23,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +49,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -280,10 +280,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void assertGetOrSyncForBlockNotPresent() {
     BlockHeader mockHeader =
         headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
+    when(backwardSyncContext.syncBackwardsUntil(mockHeader.getBlockHash()))
+        .thenReturn(CompletableFuture.completedFuture(null));
+
     var res = coordinator.getOrSyncHeaderByHash(mockHeader.getHash());
 
     assertThat(res).isNotPresent();
-    verify(backwardSyncContext, times(1)).syncBackwardsUntil(mockHeader.getHash());
   }
 
   @Test
