@@ -29,9 +29,13 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   @Override
   public Hash rootHash() {
+    return rootHash(updater.copy());
+  }
+
+  public Hash rootHash(final BonsaiWorldStateUpdater localUpdater) {
     final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
     try {
-      final Hash calculatedRootHash = calculateRootHash(updater);
+      final Hash calculatedRootHash = calculateRootHash(updater, localUpdater);
       return Hash.wrap(calculatedRootHash);
     } finally {
       updater.rollback();
@@ -40,25 +44,10 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    boolean success = false;
-    final Hash newWorldStateRootHash = rootHash();
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
-    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
-    try {
-      final TrieLogLayer trieLogLayer =
-          prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
-      persistTrieLog(blockHeader, newWorldStateRootHash, trieLogLayer, stateUpdater);
-      worldStateBlockHash = blockHeader.getHash();
-      worldStateRootHash = newWorldStateRootHash;
-      success = true;
-    } finally {
-      if (success) {
-        stateUpdater.commit();
-        localUpdater.reset();
-      } else {
-        stateUpdater.rollback();
-        localUpdater.reset();
-      }
-    }
+    final Hash newWorldStateRootHash = rootHash(localUpdater);
+    worldStateBlockHash = blockHeader.getHash();
+    worldStateRootHash = newWorldStateRootHash;
+    archive.getTrieLogManager().saveTrieLog(archive, localUpdater, worldStateRootHash, blockHeader);
   }
 }
