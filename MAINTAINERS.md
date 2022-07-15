@@ -30,7 +30,6 @@
 | Stefan Pingel    | pinges           | pinges           |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
-| Taccat Isid      | taccatisid       | taccatisid       |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
 
 
@@ -49,6 +48,7 @@
 | Rai Sur          | RatanRSur        | ratanraisur      |
 | Rob Dawson       | rojotek          | RobDawson        |
 | Sajida Zouarhi   | sajz             | SajidaZ          |
+| Taccat Isid      | taccatisid       | taccatisid       |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
 
