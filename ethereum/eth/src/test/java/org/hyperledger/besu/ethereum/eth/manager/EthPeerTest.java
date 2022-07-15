@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class EthPeerTest {
@@ -452,6 +454,9 @@ public class EthPeerTest {
 
   private EthPeer createPeerWithPeerInfo(final Bytes nodeId) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
+    final DefaultPeer peer = mock(DefaultPeer.class);
+    when(peer.getId()).thenReturn(Bytes32.random());
+    when(peerConnection.getPeer()).thenReturn(peer);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
@@ -469,6 +474,9 @@ public class EthPeerTest {
       final List<PeerValidator> peerValidators,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
+    final DefaultPeer peer = mock(DefaultPeer.class);
+    when(peer.getId()).thenReturn(Bytes32.random());
+    when(peerConnection.getPeer()).thenReturn(peer);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     return new EthPeer(

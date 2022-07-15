@@ -127,7 +127,7 @@ public class EthPeer implements Comparable<EthPeer> {
     this.maxMessageSize = maxMessageSize;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
-    this.nodeId = connection.getPeerInfo().getNodeId();
+    this.nodeId = connection.getPeer().getId();
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
