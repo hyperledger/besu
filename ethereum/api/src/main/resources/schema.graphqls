@@ -171,7 +171,7 @@ type Block {
   logs(filter: BlockFilterCriteria!): [Log!]!
 
   """Account fetches an Ethereum account at the current block's state."""
-  account(address: Address!): Account!
+  account(address: Address!): Account
 
   """Call executes a local call operation at the current block's state."""
   call(data: CallData!): CallResult
@@ -345,7 +345,7 @@ type Pending {
   transactions: [Transaction!]
 
   """Account fetches an Ethereum account for the pending state."""
-  account(address: Address!): Account!
+  account(address: Address!): Account
 
   """Call executes a local call operation for the pending state."""
   call(data: CallData!): CallResult
