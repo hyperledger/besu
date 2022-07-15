@@ -54,6 +54,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
@@ -71,6 +72,8 @@ public class BackwardSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
   public static final int UNCLE_HEIGHT = 25 - 3;
+
+  public static final int NUM_OF_RETRIES = 100;
 
   private BackwardSyncContext context;
 
@@ -157,7 +160,8 @@ public class BackwardSyncContextTest {
                 metricsSystem,
                 ethContext,
                 syncState,
-                backwardChain));
+                backwardChain,
+                NUM_OF_RETRIES));
     doReturn(true).when(context).isReady();
     doReturn(2).when(context).getBatchSize();
   }
@@ -287,5 +291,24 @@ public class BackwardSyncContextTest {
         .hasMessageContaining("custom error");
 
     Mockito.verify(manager).addBadBlock(block);
+  }
+
+  @Test
+  public void shouldFailAfterMaxNumberOfRetries() {
+    doReturn(CompletableFuture.failedFuture(new Exception()))
+        .when(context)
+        .prepareBackwardSyncFuture();
+
+    final var syncFuture = context.syncBackwardsUntil(Hash.ZERO);
+
+    try {
+      syncFuture.get();
+    } catch (final Throwable throwable) {
+      if (throwable instanceof ExecutionException) {
+        BackwardSyncException backwardSyncException = (BackwardSyncException) throwable.getCause();
+        assertThat(backwardSyncException.getMessage())
+            .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
+      }
+    }
   }
 }
