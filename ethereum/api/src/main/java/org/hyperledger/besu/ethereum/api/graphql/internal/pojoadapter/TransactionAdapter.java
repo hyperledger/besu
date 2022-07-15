@@ -231,11 +231,12 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Bytes> getRawReceipt(final DataFetchingEnvironment environment) {
-    return getReceipt(environment).map(receipt ->
-    {
-      final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-      receipt.getReceipt().writeTo(rlpOutput);
-      return rlpOutput.encoded();
-    });
+    return getReceipt(environment)
+        .map(
+            receipt -> {
+              final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+              receipt.getReceipt().writeTo(rlpOutput);
+              return rlpOutput.encoded();
+            });
   }
 }

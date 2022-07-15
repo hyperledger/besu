@@ -155,7 +155,7 @@ public class GraphQLDataFetchers {
   }
 
   public DataFetcher<Optional<Wei>> getMaxPriorityFeePerGasDataFetcher() {
-    //FIXME
+    // FIXME
     return dataFetchingEnvironment -> Optional.of(Wei.of(2_000_000_000L));
   }
 
