@@ -121,7 +121,6 @@ public class AdminPeersTest {
         new EthPeer(
             p,
             "eth",
-            c -> {},
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             TestClock.fixed(),
