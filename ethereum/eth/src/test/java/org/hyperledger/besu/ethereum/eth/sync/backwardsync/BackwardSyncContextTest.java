@@ -259,63 +259,6 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void testSuccessionRuleAfterUpdatingFinalized() {
-
-    backwardChain.appendTrustedBlock(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-    // null check
-    context.updateHeads(null, null);
-    context.checkFinalizedSuccessionRuleBeforeSave(null);
-    // zero check
-    context.updateHeads(null, Hash.ZERO);
-    context.checkFinalizedSuccessionRuleBeforeSave(null);
-
-    // cannot save if we don't know what is finalized
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 10).orElseThrow());
-    assertThatThrownBy(() -> context.checkFinalizedSuccessionRuleBeforeSave(null))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining(
-            "was finalized, but we don't have it downloaded yet, cannot save new block");
-
-    // updating with new finalized
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-    context.checkFinalizedSuccessionRuleBeforeSave(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-
-    // updating when we know finalized is in futre
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 4).orElseThrow());
-    context.checkFinalizedSuccessionRuleBeforeSave(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-
-    // updating with block that is not finalized when we expected finalized on this height
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-    assertThatThrownBy(
-            () ->
-                context.checkFinalizedSuccessionRuleBeforeSave(
-                    createUncle(LOCAL_HEIGHT + 1, localBlockchain.getChainHeadHash())))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("This block is not the target finalized block");
-
-    // updating with a block when finalized is not on canonical chain
-    context.updateHeads(null, uncle.getHash());
-    assertThatThrownBy(
-            () ->
-                context.checkFinalizedSuccessionRuleBeforeSave(
-                    remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow()))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("is not on canonical chain. Canonical is");
-
-    // updating when finalized is on canonical chain
-    context.updateHeads(null, localBlockchain.getBlockHashByNumber(UNCLE_HEIGHT).orElseThrow());
-    context.checkFinalizedSuccessionRuleBeforeSave(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-  }
-
-  @Test
   public void shouldProcessExceptionsCorrectly() {
     assertThatThrownBy(
             () ->

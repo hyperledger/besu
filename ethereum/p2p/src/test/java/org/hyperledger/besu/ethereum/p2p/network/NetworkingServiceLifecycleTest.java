@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.p2p.network;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
+import static org.junit.Assume.assumeThat;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -139,6 +141,10 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void startDiscoveryPortInUse() throws IOException {
+    assumeThat(
+        "Ignored if system language is not English",
+        System.getProperty("user.language"),
+        startsWith("en"));
     try (final P2PNetwork service1 = builder().config(config).build()) {
       service1.start();
       final NetworkingConfiguration config = configWithRandomPorts();

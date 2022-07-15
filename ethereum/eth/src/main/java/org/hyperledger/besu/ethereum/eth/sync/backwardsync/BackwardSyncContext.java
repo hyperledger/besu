@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -24,7 +23,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -96,27 +94,33 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (isTrusted(newBlockHash)) return future;
-    backwardChain.addNewHash(newBlockHash);
-    if (future != null) {
-      return future;
+    Optional<CompletableFuture<Void>> maybeFuture =
+        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+    if (isTrusted(newBlockHash)) {
+      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
-    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newBlockHash::toHexString);
-    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
-    return this.currentBackwardSyncFuture.get();
+    backwardChain.addNewHash(newBlockHash);
+    return maybeFuture.orElseGet(
+        () -> {
+          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
+          this.currentBackwardSyncFuture.set(future);
+          return future;
+        });
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (isTrusted(newPivot.getHash())) return future;
-    backwardChain.appendTrustedBlock(newPivot);
-    if (future != null) {
-      return future;
+    Optional<CompletableFuture<Void>> maybeFuture =
+        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+    if (isTrusted(newPivot.getHash())) {
+      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
-    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newPivot::toLogString);
-    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
-    return this.currentBackwardSyncFuture.get();
+    backwardChain.appendTrustedBlock(newPivot);
+    return maybeFuture.orElseGet(
+        () -> {
+          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
+          this.currentBackwardSyncFuture.set(future);
+          return future;
+        });
   }
 
   private boolean isTrusted(final Hash hash) {
@@ -149,7 +153,8 @@ public class BackwardSyncContext {
         (unused, throwable) -> {
           this.currentBackwardSyncFuture.set(null);
           if (throwable != null) {
-            throw new BackwardSyncException(throwable);
+            throw extractBackwardSyncException(throwable)
+                .orElse(new BackwardSyncException(throwable));
           }
           return null;
         });
@@ -157,25 +162,35 @@ public class BackwardSyncContext {
 
   @VisibleForTesting
   protected void processException(final Throwable throwable) {
+    extractBackwardSyncException(throwable)
+        .ifPresentOrElse(
+            backwardSyncException -> {
+              if (backwardSyncException.shouldRestart()) {
+                LOG.info(
+                    "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds...",
+                    backwardSyncException.getMessage(),
+                    ethContext.getEthPeers().peerCount());
+                return;
+              } else {
+                throw backwardSyncException;
+              }
+            },
+            () ->
+                LOG.warn(
+                    "There was an uncaught exception during Backwards Sync. Retrying in few seconds...",
+                    throwable));
+  }
+
+  private Optional<BackwardSyncException> extractBackwardSyncException(final Throwable throwable) {
     Throwable currentCause = throwable;
 
     while (currentCause != null) {
       if (currentCause instanceof BackwardSyncException) {
-        if (((BackwardSyncException) currentCause).shouldRestart()) {
-          LOG.info(
-              "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
-              currentCause.getMessage(),
-              ethContext.getEthPeers().peerCount());
-          return;
-        } else {
-          throw new BackwardSyncException(throwable);
-        }
+        return Optional.of((BackwardSyncException) currentCause);
       }
       currentCause = currentCause.getCause();
     }
-    LOG.warn(
-        "There was an uncaught exception during Backwards Sync... Retrying in few seconds...",
-        throwable);
+    return Optional.empty();
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFuture() {
@@ -237,7 +252,6 @@ public class BackwardSyncContext {
 
   protected Void saveBlock(final Block block) {
     traceLambda(LOG, "Going to validate block {}", block::toLogString);
-    checkFinalizedSuccessionRuleBeforeSave(block);
     var optResult =
         this.getBlockValidatorForBlock(block)
             .validateAndProcessBlock(
@@ -267,63 +281,6 @@ public class BackwardSyncContext {
     }
 
     return null;
-  }
-
-  @VisibleForTesting
-  protected synchronized void checkFinalizedSuccessionRuleBeforeSave(final Block block) {
-    final Optional<Hash> finalized = findMaybeFinalized();
-    if (finalized.isPresent()) {
-      final Optional<BlockHeader> maybeFinalizedHeader =
-          protocolContext
-              .getBlockchain()
-              .getBlockByHash(finalized.get())
-              .map(Block::getHeader)
-              .or(() -> backwardChain.getHeader(finalized.get()));
-      if (maybeFinalizedHeader.isEmpty()) {
-        throw new BackwardSyncException(
-            "We know a block "
-                + finalized.get().toHexString()
-                + " was finalized, but we don't have it downloaded yet, cannot save new block",
-            true);
-      }
-      final BlockHeader finalizedHeader = maybeFinalizedHeader.get();
-      if (finalizedHeader.getHash().equals(block.getHash())) {
-        debugLambda(LOG, "Saving new finalized block {}", block::toLogString);
-        return;
-      }
-
-      if (finalizedHeader.getNumber() == block.getHeader().getNumber()) {
-        throw new BackwardSyncException(
-            "This block is not the target finalized block. Is "
-                + block.toLogString()
-                + " but was expecting "
-                + finalizedHeader.toLogString());
-      }
-      if (!getProtocolContext().getBlockchain().contains(finalizedHeader.getHash())) {
-        debugLambda(
-            LOG,
-            "Saving block {} before finalized {} reached",
-            block::toLogString,
-            finalizedHeader::toLogString); // todo: some check here??
-        return;
-      }
-      final Hash canonicalHash =
-          getProtocolContext()
-              .getBlockchain()
-              .getBlockByNumber(finalizedHeader.getNumber())
-              .orElseThrow()
-              .getHash();
-      if (finalizedHeader.getNumber() < block.getHeader().getNumber()
-          && !canonicalHash.equals(finalizedHeader.getHash())) {
-        throw new BackwardSyncException(
-            "Finalized block "
-                + finalizedHeader.toLogString()
-                + " is not on canonical chain. Canonical is"
-                + canonicalHash.toHexString()
-                + ". We need to reorg before saving this block.");
-      }
-    }
-    LOG.debug("Finalized block not known yet...");
   }
 
   @VisibleForTesting

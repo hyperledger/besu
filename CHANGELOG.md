@@ -4,12 +4,15 @@
 
 ### Additions and Improvements
 - Add a block to the bad blocks if it did not descend from the terminal block [#4080](https://github.com/hyperledger/besu/pull/4080)
+- Backward sync exception improvements [#4092](https://github.com/hyperledger/besu/pull/4092)
+- Remove block header checks during backward sync, since they will be always performed during block import phase [#4098](https://github.com/hyperledger/besu/pull/4098)
 
 ### Bug Fixes
 - Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
 - Add a PoS block header rule to check that the current block is more recent than its parent [#4066](https://github.com/hyperledger/besu/pull/4066)
 - Fixed a trie log layer issue on bonsai during reorg [#4069](https://github.com/hyperledger/besu/pull/4069)
 - Fix transition protocol schedule to return the pre Merge schedule when reorg pre TTD [#4078](https://github.com/hyperledger/besu/pull/4078)
+- The build process runs successfully even though the system language is not English  [#4102](https://github.com/hyperledger/besu/pull/4102)
 
 ## 22.7.0-RC1
 
