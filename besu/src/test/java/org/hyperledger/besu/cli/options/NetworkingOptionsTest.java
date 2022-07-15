@@ -103,7 +103,7 @@ public class NetworkingOptionsTest
 
   @Test
   public void checkDiscoveryV5Enabled_isSet() {
-    final TestBesuCommand cmd = parseCommand("--Xv5-disc-enabled");
+    final TestBesuCommand cmd = parseCommand("--Xv5-discovery-enabled");
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();

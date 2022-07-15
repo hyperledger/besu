@@ -30,7 +30,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-check-maintained-connections-frequency";
   private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
-  private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-disc-enabled";
+  private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
