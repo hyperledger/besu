@@ -234,7 +234,8 @@ public class ProtocolScheduleBuilder {
                 create(
                     config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
                 create(config.getParisBlockNumber(), specFactory.parisDefinition(config)),
-                // Classic Milestones
+                create(config.getShanghaiBlockNumber(), specFactory.shanghaiDefinition(config)),
+                        // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
                 create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),

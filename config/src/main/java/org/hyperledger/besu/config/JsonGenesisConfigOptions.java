@@ -292,6 +292,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShanghaiBlockNumber() {
+    return getOptionalLong("shanghaiblock");
+  }
+
+  @Override
   public Optional<Wei> getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
         .map(Wei::fromHexString)
@@ -448,6 +453,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
+    getShanghaiBlockNumber().ifPresent(l -> builder.put("shanghaiBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
 
@@ -567,6 +573,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
             getParisBlockNumber(),
+            getShanghaiBlockNumber(),
             getTerminalBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),

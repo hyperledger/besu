@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -104,6 +105,8 @@ import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
+import org.hyperledger.besu.evm.operation.TLoadOperation;
+import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 
 import java.math.BigInteger;
@@ -393,5 +396,32 @@ public abstract class MainnetEVMs {
       final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
     registry.put(new PrevRanDaoOperation(gasCalculator));
+  }
+
+  public static EVM shanghai(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shanghai(new ShanghaiGasCalculator(), chainId, evmConfiguration);
+  }
+
+  public static EVM shanghai(
+          final GasCalculator gasCalculator,
+          final BigInteger chainId,
+          final EvmConfiguration evmConfiguration) {
+    return new EVM(shanghaiOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+  }
+
+  public static OperationRegistry shanghaiOperations(
+          final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerShanghaiOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerShanghaiOperations(
+          final OperationRegistry registry,
+          final GasCalculator gasCalculator,
+          final BigInteger chainID) {
+    registerParisOperations(registry, gasCalculator, chainID);
+    registry.put(new TStoreOperation(gasCalculator));
+    registry.put(new TLoadOperation(gasCalculator));
   }
 }

@@ -90,6 +90,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getParisBlockNumber();
 
+  OptionalLong getShanghaiBlockNumber();
+
   Optional<Wei> getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();

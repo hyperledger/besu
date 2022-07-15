@@ -34,15 +34,9 @@ public class TStoreOperation extends AbstractOperation {
       new OperationResult(
           OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
 
-  private final long minimumGasRemaining;
 
-  public TStoreOperation(final GasCalculator gasCalculator, final long minimumGasRemaining) {
+  public TStoreOperation(final GasCalculator gasCalculator) {
     super(0xb4, "TSTORE", 2, 0, 1, gasCalculator);
-    this.minimumGasRemaining = minimumGasRemaining;
-  }
-
-  public long getMinimumGasRemaining() {
-    return minimumGasRemaining;
   }
 
   @Override
@@ -66,14 +60,10 @@ public class TStoreOperation extends AbstractOperation {
     } else if (remainingGas < cost) {
       return new OperationResult(
           OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-    } else if (remainingGas <= minimumGasRemaining) {
-      return new OperationResult(
-          OptionalLong.of(minimumGasRemaining),
-          Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    } else {
+      account.setTransientStorageValue(key, value);
+      frame.transientStorageWasUpdated(key, value);
+      return new OperationResult(OptionalLong.of(cost), Optional.empty());
     }
-
-    account.setTransientStorageValue(key, value);
-    frame.transientStorageWasUpdated(key, value);
-    return new OperationResult(OptionalLong.of(cost), Optional.empty());
   }
 }

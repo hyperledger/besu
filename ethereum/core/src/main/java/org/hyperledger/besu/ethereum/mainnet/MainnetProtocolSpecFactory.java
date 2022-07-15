@@ -185,6 +185,17 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.shanghaiDefinition(
+            chainId,
+            contractSizeLimit,
+            evmStackSize,
+            isRevertReasonEnabled,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Classic Protocol Specs
