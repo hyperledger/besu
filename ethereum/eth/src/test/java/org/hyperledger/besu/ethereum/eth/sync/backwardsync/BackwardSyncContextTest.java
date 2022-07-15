@@ -54,6 +54,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
 import org.junit.Before;
@@ -71,6 +72,8 @@ public class BackwardSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int LOCAL_HEIGHT = 25;
   public static final int UNCLE_HEIGHT = 25 - 3;
+
+  public static final int NUM_OF_RETRIES = 100;
 
   private BackwardSyncContext context;
 
@@ -157,7 +160,8 @@ public class BackwardSyncContextTest {
                 metricsSystem,
                 ethContext,
                 syncState,
-                backwardChain));
+                backwardChain,
+                NUM_OF_RETRIES));
     doReturn(true).when(context).isReady();
     doReturn(2).when(context).getBatchSize();
   }
@@ -259,63 +263,6 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void testSuccessionRuleAfterUpdatingFinalized() {
-
-    backwardChain.appendTrustedBlock(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-    // null check
-    context.updateHeads(null, null);
-    context.checkFinalizedSuccessionRuleBeforeSave(null);
-    // zero check
-    context.updateHeads(null, Hash.ZERO);
-    context.checkFinalizedSuccessionRuleBeforeSave(null);
-
-    // cannot save if we don't know what is finalized
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 10).orElseThrow());
-    assertThatThrownBy(() -> context.checkFinalizedSuccessionRuleBeforeSave(null))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining(
-            "was finalized, but we don't have it downloaded yet, cannot save new block");
-
-    // updating with new finalized
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-    context.checkFinalizedSuccessionRuleBeforeSave(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-
-    // updating when we know finalized is in futre
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 4).orElseThrow());
-    context.checkFinalizedSuccessionRuleBeforeSave(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-
-    // updating with block that is not finalized when we expected finalized on this height
-    context.updateHeads(
-        null, remoteBlockchain.getBlockHashByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-    assertThatThrownBy(
-            () ->
-                context.checkFinalizedSuccessionRuleBeforeSave(
-                    createUncle(LOCAL_HEIGHT + 1, localBlockchain.getChainHeadHash())))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("This block is not the target finalized block");
-
-    // updating with a block when finalized is not on canonical chain
-    context.updateHeads(null, uncle.getHash());
-    assertThatThrownBy(
-            () ->
-                context.checkFinalizedSuccessionRuleBeforeSave(
-                    remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow()))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("is not on canonical chain. Canonical is");
-
-    // updating when finalized is on canonical chain
-    context.updateHeads(null, localBlockchain.getBlockHashByNumber(UNCLE_HEIGHT).orElseThrow());
-    context.checkFinalizedSuccessionRuleBeforeSave(
-        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 1).orElseThrow());
-  }
-
-  @Test
   public void shouldProcessExceptionsCorrectly() {
     assertThatThrownBy(
             () ->
@@ -344,5 +291,24 @@ public class BackwardSyncContextTest {
         .hasMessageContaining("custom error");
 
     Mockito.verify(manager).addBadBlock(block);
+  }
+
+  @Test
+  public void shouldFailAfterMaxNumberOfRetries() {
+    doReturn(CompletableFuture.failedFuture(new Exception()))
+        .when(context)
+        .prepareBackwardSyncFuture();
+
+    final var syncFuture = context.syncBackwardsUntil(Hash.ZERO);
+
+    try {
+      syncFuture.get();
+    } catch (final Throwable throwable) {
+      if (throwable instanceof ExecutionException) {
+        BackwardSyncException backwardSyncException = (BackwardSyncException) throwable.getCause();
+        assertThat(backwardSyncException.getMessage())
+            .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
+      }
+    }
   }
 }
