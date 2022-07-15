@@ -89,10 +89,8 @@ public class RocksDBMetricsFactory {
                 "database")
             .labels(rocksDbConfiguration.getLabel());
 
-    if (metricsSystem instanceof PrometheusMetricsSystem) {
-      RocksDBStats.registerRocksDBMetrics(
-          stats, (PrometheusMetricsSystem) metricsSystem, statsDbMetricCategory);
-    }
+    RocksDBStats.registerRocksDBMetrics(
+        stats, (PrometheusMetricsSystem) metricsSystem, statsDbMetricCategory);
 
     metricsSystem.createLongGauge(
         rocksDbMetricCategory,
