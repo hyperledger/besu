@@ -165,7 +165,13 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
     if (mergeContext.isSyncing() || parentHeader.isEmpty()) {
-      mergeCoordinator.appendNewPayloadToSync(block);
+      mergeCoordinator
+          .appendNewPayloadToSync(block)
+          .exceptionally(
+              exception -> {
+                LOG.warn("Sync to block " + block.toLogString() + " failed", exception);
+                return null;
+              });
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 

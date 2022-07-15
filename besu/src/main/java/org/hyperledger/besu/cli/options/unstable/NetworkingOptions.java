@@ -30,6 +30,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-check-maintained-connections-frequency";
   private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
+  private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
@@ -58,6 +59,13 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
           "DNS server host to use for doing DNS Discovery of peers, rather than the machine's configured DNS server")
   private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
 
+  @CommandLine.Option(
+      names = DISCOVERY_PROTOCOL_V5_ENABLED,
+      hidden = true,
+      defaultValue = "false",
+      description = "Whether to enable P2P Discovery Protocol v5 (default: ${DEFAULT-VALUE})")
+  private final Boolean isPeerDiscoveryV5Enabled = false;
+
   private NetworkingOptions() {}
 
   public static NetworkingOptions create() {
@@ -81,7 +89,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
-
+    config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
     return config;
   }
 
