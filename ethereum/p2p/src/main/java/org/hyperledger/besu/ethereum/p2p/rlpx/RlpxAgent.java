@@ -214,7 +214,6 @@ public class RlpxAgent {
    */
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
     if (checkAlreadyTrying(peer)) {
-      LOG.info("ALREADY trying to establish connection with peer {}", peer.getId());
       return CompletableFuture.failedFuture((new RuntimeException("Already trying to connect")));
     }
     LOG.info("Trying to establish connection with peer {}", peer.getId());
@@ -379,7 +378,7 @@ public class RlpxAgent {
     final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {
-      LOG.info("Node is not ready. Disconnect incoming connection: {}", peerConnection);
+      LOG.info("Local node is not ready. Disconnect incoming connection: {}", peerConnection);
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
@@ -598,13 +597,7 @@ public class RlpxAgent {
       }
     }
     // Otherwise, keep older connection
-    LOG.info(
-        "comparing timestamps (peer {}) for connection {} ({}) with connection {} ({}), keeping older connection",
-        a.getPeer().getId(),
-        System.identityHashCode(a.getPeerConnection()),
-        a.getInitiatedAt(),
-        System.identityHashCode(b.getPeerConnection()),
-        b.getInitiatedAt());
+    LOG.info("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
     return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 

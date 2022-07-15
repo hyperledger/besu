@@ -134,7 +134,7 @@ public interface PeerConnection {
   }
 
   @FunctionalInterface
-  public interface PeerConnectionReadyCallback {
+  interface PeerConnectionReadyCallback {
     boolean onPeerConnectionReady();
   }
 }

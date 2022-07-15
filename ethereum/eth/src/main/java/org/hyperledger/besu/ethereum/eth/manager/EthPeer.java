@@ -96,6 +96,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
+  private final Bytes nodeId;
 
   private static final Map<Integer, Integer> roundMessages;
 
@@ -126,11 +127,11 @@ public class EthPeer implements Comparable<EthPeer> {
     this.maxMessageSize = maxMessageSize;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
+    this.nodeId = connection.getPeerInfo().getNodeId();
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
     this.requestManagers = new HashMap<>();
-
     initEthRequestManagers();
     initSnapRequestManagers();
   }
@@ -360,8 +361,6 @@ public class EthPeer implements Comparable<EthPeer> {
   private RequestManager.ResponseStream sendRequest(
       final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
-    // LOG.info("sendRequest: Peer: {}, Connection: {}, sending request {}, {}", this,
-    // System.identityHashCode(connection), messageData, new RuntimeException().getStackTrace());
     return requestManager.dispatchRequest(
         msgData -> connection.sendForProtocol(requestManager.getProtocolName(), msgData),
         messageData);
@@ -411,15 +410,9 @@ public class EthPeer implements Comparable<EthPeer> {
       final Map<Integer, RequestManager> managers = requestManagers.get(protocolName);
       final Integer requestCode = roundMessages.getOrDefault(code, -1);
       if (managers.containsKey(requestCode)) {
-        LOG.info(
-            "EthPeer: {}, Returning Optional of {} with {} outstanding requests",
-            this,
-            managers.get(requestCode).getClass(),
-            managers.get(requestCode).outstandingRequests());
         return Optional.of(managers.get(requestCode));
       }
     }
-    LOG.info("EthPeer {} Returning Optional empty", this);
     return Optional.empty();
   }
 
@@ -432,8 +425,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   void handleDisconnect() {
-    traceLambda(
-        LOG, "handleDisconnect - peer... {}, {}", this::getShortNodeId, this::getReputation);
+    traceLambda(LOG, "handleDisconnect - peer... {}, {}", this::nodeId, this::getReputation);
 
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));
@@ -501,7 +493,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public Bytes nodeId() {
-    return connection.getPeerInfo().getNodeId();
+    return nodeId;
   }
 
   public boolean hasSupportForMessage(final int messageCode) {
@@ -512,13 +504,12 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "Peer %s... %s, validated? %s, disconnected? %s",
-        getShortNodeId(), System.identityHashCode(this), isFullyValidated(), isDisconnected());
-  }
-
-  @Nonnull
-  public String getShortNodeId() {
-    return nodeId().toString();
+        "Peer %s, connection %s, reputation %s, validated? %s, disconnected? %s",
+        nodeId,
+        System.identityHashCode(connection),
+        reputation,
+        isFullyValidated(),
+        isDisconnected());
   }
 
   @Override

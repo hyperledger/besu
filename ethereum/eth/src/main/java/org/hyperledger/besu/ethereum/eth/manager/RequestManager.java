@@ -63,14 +63,6 @@ public class RequestManager {
       throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
     final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
-    //    LOG.info(
-    //        "dispatching request protocol name {}, peer {}, connection {}, requestID {},
-    // outstanding requests {}",
-    //        protocolName,
-    //        peer.toString(),
-    //        System.identityHashCode(peer.getConnection()),
-    //        requestId,
-    //        outstandingRequests.get());
     final ResponseStream stream = createStream(requestId);
     sender.send(supportsRequestId ? messageData.wrapMessageData(requestId) : messageData);
     return stream;
@@ -83,13 +75,6 @@ public class RequestManager {
       // If there's a requestId, find the specific stream it belongs to
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           ethMessage.getData().unwrapMessageData();
-      LOG.info(
-          "dispatching response protocol name {}, peer {}, connection {}, requestID {}, outstanding requests {}",
-          protocolName,
-          peer.toString(),
-          System.identityHashCode(peer.getConnection()),
-          requestIdAndEthMessage.getKey(),
-          outstandingRequests.get());
       Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
           .ifPresentOrElse(
               responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),

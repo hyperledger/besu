@@ -97,9 +97,11 @@ public class EthPeers {
     synchronized (this) {
       final Bytes peerId = peerConnection.getPeer().getId();
       LOG.info(
-          "Registering a connection with peer {}, connection {}",
+          "Registering a connection with peer {}, connection {}, client {}, verion {}",
           peerId,
-          System.identityHashCode(peerConnection));
+          System.identityHashCode(peerConnection),
+          peerConnection.getPeerInfo().getClientId(),
+          peerConnection.getPeerInfo().getVersion());
       final Optional<EthPeer> optionalEthPeer =
           nonReadyConnections.entrySet().stream()
               .map(e -> e.getValue())
@@ -143,8 +145,7 @@ public class EthPeers {
 
               setUpCleanUp(peerConnection);
               return p; // We do not add the new EthPeer here, because this should only happen when
-              // it
-              // is "ready"
+              // it is "ready"
             });
       }
     }
@@ -174,10 +175,6 @@ public class EthPeers {
   }
 
   public void registerDisconnect(final PeerConnection connection) {
-    LOG.info(
-        "registeringDisconnect for connection {}, peer {}",
-        System.identityHashCode(connection),
-        connection.getPeer().getId());
     connections.compute(
         connection.getPeer().getId(),
         (id, existingPeer) -> {
@@ -215,7 +212,6 @@ public class EthPeers {
   }
 
   public EthPeer peer(final PeerConnection peerConnection) {
-    // potentially has to use the "new" connection
     return nonReadyConnections.getOrDefault(
         peerConnection, connections.get(peerConnection.getPeer().getId()));
   }
@@ -287,13 +283,6 @@ public class EthPeers {
         p -> {
           final boolean fullyValidated = p.isFullyValidated();
           final boolean hasEstimatedHeight = p.chainState().hasEstimatedHeight();
-          LOG.info(
-              "Peer {} is fully validated: {}, hasEstimatedHeight: {}, connection: {}, number of entries {}",
-              p.getConnection().getPeer().getId(),
-              fullyValidated,
-              hasEstimatedHeight,
-              System.identityHashCode(p.getConnection()),
-              nonReadyConnections.size());
           return fullyValidated && hasEstimatedHeight;
         });
   }
@@ -310,16 +299,10 @@ public class EthPeers {
     synchronized (this) {
       if (peerConnection
           .callOnConnectionReadyCallback()) { // returns true if we are to use this connection
-        LOG.info("The new connection is to be used: {}", System.identityHashCode(peerConnection));
         connections.compute(
             peerConnection.getPeer().getId(),
             (id, p) -> {
               if (p != null) { // existing EthPeer in connections -> just replace the connection
-                LOG.info(
-                    "Replacing connection for peer {}. Old connection {}, new connection {}",
-                    id,
-                    System.identityHashCode(p.getConnection()),
-                    System.identityHashCode(peerConnection));
                 p.setConnection(peerConnection);
                 return p;
               } else { // add the EthPeer created for the connection
@@ -329,8 +312,6 @@ public class EthPeers {
               }
             });
         invokeConnectionCallbacks(connections.get(peerConnection.getPeer().getId()));
-      } else {
-        LOG.info("Do NOT use the new connection {}", System.identityHashCode(peerConnection));
       }
     }
   }

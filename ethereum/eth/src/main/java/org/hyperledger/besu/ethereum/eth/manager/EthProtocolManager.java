@@ -353,10 +353,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.info(
-          "Sending status message to {}, connection {}",
-          peer.getConnection().getPeer().getId(),
-          System.identityHashCode(connection));
       if (peer.isDisconnected()) {
         // although it isn't yet confirmed that the new connection is ready,
         // if the peer's existing connection is disconnected, optimistically replace it
@@ -380,15 +376,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     ethPeers.registerDisconnect(connection);
     LOG.debug(
         "Disconnect - {} - {} - {} - {} peers left",
-        initiatedByPeer ? "Inbound" : "Outbound",
+        initiatedByPeer ? "Initiated by peer" : "Initiated by us",
         reason,
-        connection.getPeerInfo(),
+        System.identityHashCode(connection),
         ethPeers.peerCount());
     LOG.trace("{}", ethPeers);
   }
 
   private void handleStatusMessage(final PeerConnection peerConnection, final MessageData data) {
-    LOG.info("Received a Status Message connection {}", System.identityHashCode(peerConnection));
     final StatusMessage status = StatusMessage.readFrom(data);
     try {
       if (!status.networkId().equals(networkId)) {
@@ -415,11 +410,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           handleDisconnect(peerConnection, DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
         }
       } else {
-        LOG.info(
-            "Received status message from {}, connection {}: {}",
-            peerConnection.getPeer().getId(),
-            System.identityHashCode(peerConnection),
-            status);
+
         if (peerConnection.registerStatusReceivedAndCheckIfReady()) {
           final EthPeer peer = ethPeers.peer(peerConnection);
           peer.chainState().statusReceived(status.bestHash(), status.totalDifficulty());

@@ -197,17 +197,8 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   public boolean callOnConnectionReadyCallback() {
     if (onConnectionReadyCallback != null) {
       final boolean ret = onConnectionReadyCallback.onPeerConnectionReady();
-      LOG.info(
-          "Calling peer ready callback of connection {}, returning {}",
-          System.identityHashCode(this),
-          ret);
       return ret;
     }
-    LOG.info(
-        "No callback set for connection {} (Peer {}), returning {}",
-        System.identityHashCode(this),
-        getPeer().getId(),
-        true);
     return true;
   }
 

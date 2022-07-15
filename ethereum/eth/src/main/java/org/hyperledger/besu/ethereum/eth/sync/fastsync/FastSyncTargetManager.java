@@ -114,7 +114,7 @@ public class FastSyncTargetManager extends SyncTargetManager {
                 }
                 LOG.debug(
                     "Retrying best peer {} with new pivot block {}",
-                    bestPeer.getShortNodeId(),
+                    bestPeer.nodeId(),
                     pivotBlockHeader.toLogString());
                 return confirmPivotBlockHeader(bestPeer);
               } else {

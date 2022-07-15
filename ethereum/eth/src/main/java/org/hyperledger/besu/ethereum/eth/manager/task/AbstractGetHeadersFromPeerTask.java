@@ -128,7 +128,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       traceLambda(
           LOG,
           "Updating chain state for peer {} to block header {}",
-          peer::getShortNodeId,
+          peer::nodeId,
           blockHeader::toLogString);
       peer.chainState().update(blockHeader);
     }

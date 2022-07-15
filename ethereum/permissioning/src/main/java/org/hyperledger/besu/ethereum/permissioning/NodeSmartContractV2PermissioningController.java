@@ -77,7 +77,6 @@ public class NodeSmartContractV2PermissioningController
 
   @Nonnull
   private Boolean getCallResult(final EnodeURL enode) {
-    LOG.info("ENODE: {}", enode);
     return transactionSimulator
         .processAtHead(buildCallParameters(createPayload(enode)))
         .map(this::parseResult)
@@ -108,7 +107,6 @@ public class NodeSmartContractV2PermissioningController
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (final Exception e) {
-      LOG.info("Error building payload from enode {}", enodeUrl);
       throw new RuntimeException(
           "Error building payload to call node permissioning smart contract", e);
     }

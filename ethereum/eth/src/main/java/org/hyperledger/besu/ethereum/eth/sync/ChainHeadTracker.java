@@ -81,7 +81,6 @@ public class ChainHeadTracker implements ConnectCallback {
               if (peerResult != null && !peerResult.getResult().isEmpty()) {
                 final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
                 peer.chainState().update(chainHeadHeader);
-                System.out.println("Peer " + peer + " chainheader " + chainHeadHeader);
                 trailingPeerLimiter.enforceTrailingPeerLimit();
                 debugLambda(
                     LOG,
