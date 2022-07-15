@@ -56,7 +56,13 @@ public class BackwardsSyncAlgorithm {
   public CompletableFuture<Void> pickNextStep() {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
-      return executeSyncStep(firstHash.get());
+      return executeSyncStep(firstHash.get())
+          .whenComplete(
+              (result, throwable) -> {
+                if (throwable == null) {
+                  context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                }
+              });
     }
     if (!context.isReady()) {
       return waitForReady();
