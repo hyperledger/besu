@@ -65,6 +65,7 @@ public class EthPeers {
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final int maxPeers;
+  private final int maxMessageSize;
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
@@ -75,6 +76,7 @@ public class EthPeers {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final int maxPeers,
+      final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Vertx vertx) {
     this.protocolName = protocolName;
@@ -82,6 +84,7 @@ public class EthPeers {
     this.permissioningProviders = permissioningProviders;
     this.maxPeers = maxPeers;
     timerUtil = new VertxTimerUtil(vertx);
+    this.maxMessageSize = maxMessageSize;
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -120,6 +123,7 @@ public class EthPeers {
                         peerConnection,
                         protocolName,
                         peerValidators,
+                        maxMessageSize,
                         clock,
                         permissioningProviders);
                 LOG.info(

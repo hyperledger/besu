@@ -114,6 +114,7 @@ public class Istanbul99ProtocolManagerTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             vertx);
     final EthMessages messages = new EthMessages();

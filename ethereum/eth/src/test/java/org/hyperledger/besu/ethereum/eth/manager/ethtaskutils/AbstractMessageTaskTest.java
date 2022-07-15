@@ -94,6 +94,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 TestClock.fixed(),
                 metricsSystem,
                 25,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
                 Collections.emptyList(),
                 Vertx.vertx()));
     final EthMessages ethMessages = new EthMessages();

@@ -40,6 +40,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import io.vertx.core.Vertx;
@@ -58,6 +59,42 @@ public class EthProtocolManagerTestUtil {
         worldStateArchive,
         transactionPool,
         ethereumWireProtocolConfiguration);
+  }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final Optional<MergePeerFilter> mergePeerFilter) {
+
+    final EthPeers peers =
+        new EthPeers(
+            EthProtocol.NAME,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.emptyList(),
+            Vertx.vertx());
+    final EthMessages messages = new EthMessages();
+    final EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
+    final EthContext ethContext = new EthContext(peers, messages, ethScheduler);
+
+    return new EthProtocolManager(
+        blockchain,
+        BigInteger.ONE,
+        worldStateArchive,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        peers,
+        messages,
+        ethContext,
+        Collections.emptyList(),
+        mergePeerFilter,
+        false,
+        ethScheduler,
+        new ForkIdManager(blockchain, Collections.emptyList(), false));
   }
 
   public static EthProtocolManager create(
@@ -103,6 +140,7 @@ public class EthProtocolManagerTestUtil {
         ethMessages,
         ethContext,
         Collections.emptyList(),
+        Optional.empty(),
         false,
         ethScheduler,
         forkIdManager);
@@ -145,9 +183,10 @@ public class EthProtocolManagerTestUtil {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Vertx.vertx());
-    final EthMessages messages = new EthMessages();
+    EthMessages messages = new EthMessages();
 
     return create(
         blockchain,
@@ -173,7 +212,7 @@ public class EthProtocolManagerTestUtil {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
-            Collections.emptyList(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Vertx.vertx());
     final EthMessages messages = new EthMessages();
 
@@ -197,6 +236,7 @@ public class EthProtocolManagerTestUtil {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Vertx.vertx());
     final EthMessages messages = new EthMessages();

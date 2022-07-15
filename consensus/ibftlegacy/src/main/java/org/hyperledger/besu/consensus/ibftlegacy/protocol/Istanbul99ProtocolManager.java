@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 /** This allows for interoperability with Quorum, but shouldn't be used otherwise. */
 public class Istanbul99ProtocolManager extends EthProtocolManager {
@@ -56,6 +57,7 @@ public class Istanbul99ProtocolManager extends EthProtocolManager {
         ethMessages,
         ethContext,
         peerValidators,
+        Optional.empty(),
         fastSyncEnabled,
         scheduler);
   }

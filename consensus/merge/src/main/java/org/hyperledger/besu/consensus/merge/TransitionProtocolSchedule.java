@@ -86,8 +86,7 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
           () -> thisDifficulty);
 
       // if this block is pre-merge or a TTD block
-      if ((thisDifficulty.lessOrEqualThan(terminalDifficulty)
-              && thisDifficulty.greaterThan(parentDifficulty))
+      if (thisDifficulty.lessThan(terminalDifficulty)
           || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
         debugLambda(
             LOG,

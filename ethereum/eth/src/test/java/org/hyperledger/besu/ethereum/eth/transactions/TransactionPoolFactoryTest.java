@@ -70,6 +70,7 @@ public class TransactionPoolFactoryTest {
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Vertx.vertx());
     final EthContext ethContext = mock(EthContext.class);
@@ -117,6 +118,7 @@ public class TransactionPoolFactoryTest {
             mock(EthMessages.class),
             ethContext,
             Collections.emptyList(),
+            Optional.empty(),
             true,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));

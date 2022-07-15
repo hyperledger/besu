@@ -511,7 +511,8 @@ public class BlockPropagationManager {
   }
 
   private void reactToTTDReachedEvent(final boolean ttdReached) {
-    if (ttdReached) {
+    if (started.get() && ttdReached) {
+      LOG.info("Block propagation was running, then ttd reached, stopping");
       stop();
     } else if (!started.get()) {
       start();

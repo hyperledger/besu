@@ -95,29 +95,13 @@ public class BackwardChain {
       return;
     }
     BlockHeader firstHeader = firstStoredAncestor.get();
-    if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
-      throw new BackwardSyncException(
-          "Wrong height of header "
-              + blockHeader.getHash().toHexString()
-              + " is "
-              + blockHeader.getNumber()
-              + " when we were expecting "
-              + (firstHeader.getNumber() - 1));
-    }
-    if (!firstHeader.getParentHash().equals(blockHeader.getHash())) {
-      throw new BackwardSyncException(
-          "Hash of header does not match our expectations, was "
-              + blockHeader.toLogString()
-              + " when we expected "
-              + firstHeader.getParentHash().toHexString());
-    }
     headers.put(blockHeader.getHash(), blockHeader);
     chainStorage.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
     firstStoredAncestor = Optional.of(blockHeader);
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
-        () -> blockHeader.toLogString(),
+        blockHeader::toLogString,
         blockHeader::getNumber,
         () -> lastStoredPivot.orElseThrow().toLogString(),
         firstHeader::getNumber);
@@ -144,6 +128,7 @@ public class BackwardChain {
   }
 
   public synchronized void appendTrustedBlock(final Block newPivot) {
+    debugLambda(LOG, "appending trusted block {}", newPivot::toLogString);
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
     if (lastStoredPivot.isEmpty()) {

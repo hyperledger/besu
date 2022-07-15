@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
@@ -453,13 +454,18 @@ public class EthPeerTest {
   private EthPeer createPeerWithPeerInfo(final Bytes nodeId) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    System.out.println("opt" + onPeerReady);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
     return new EthPeer(
-        peerConnection, "foo", Collections.emptyList(), clock, Collections.emptyList());
+        peerConnection,
+        "foo",
+        onPeerReady,
+        Collections.emptyList(),
+        EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+        clock,
+        Collections.emptyList());
   }
 
   private EthPeer createPeer(
@@ -467,10 +473,15 @@ public class EthPeerTest {
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    System.out.println("opr" + onPeerReady);
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
-    return new EthPeer(peerConnection, "foo", peerValidators, clock, permissioningProviders);
+    return new EthPeer(
+        peerConnection,
+        "foo",
+        peerValidators,
+        EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+        clock,
+        permissioningProviders);
   }
 
   @FunctionalInterface

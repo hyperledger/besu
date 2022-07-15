@@ -67,6 +67,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
@@ -130,6 +131,7 @@ public class TestNode implements Closeable {
             TestClock.fixed(),
             metricsSystem,
             25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Vertx.vertx());
 
@@ -158,6 +160,7 @@ public class TestNode implements Closeable {
             ethMessages,
             ethContext,
             Collections.emptyList(),
+            Optional.empty(),
             false,
             scheduler);
 

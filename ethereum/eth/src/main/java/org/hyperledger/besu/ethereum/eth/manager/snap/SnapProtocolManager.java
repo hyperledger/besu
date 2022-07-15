@@ -136,24 +136,11 @@ public class SnapProtocolManager implements ProtocolManager {
   }
 
   @Override
-  public void handleNewConnection(final PeerConnection connection) {
-    // TODO: Talk to Karim about this
-    // Not sure that should be here. It is called EthPeers for a reason :-) not SnapPeers! Maybe we
-    // should have SnapPeers?
-    // ethPeers.preRegisterConnection(connection, peerValidators);
-  }
+  public void handleNewConnection(final PeerConnection connection) {}
 
   @Override
   public void handleDisconnect(
       final PeerConnection connection,
       final DisconnectReason reason,
-      final boolean initiatedByPeer) {
-    ethPeers.registerDisconnect(connection);
-    LOG.debug(
-        "Disconnect - {} - {} - {} - {} peers left",
-        initiatedByPeer ? "Inbound" : "Outbound",
-        reason,
-        connection.getPeerInfo(),
-        ethPeers.peerCount());
-  }
+      final boolean initiatedByPeer) {}
 }
