@@ -274,7 +274,7 @@ public class EthPeersTest {
             .getEthPeer();
     ethPeers.registerConnection(peerA.getConnection(), Collections.emptyList());
     assertThat(ethPeers.toString()).contains("1 EthPeers {");
-    assertThat(ethPeers.toString()).contains(peerA.getShortNodeId());
+    assertThat(ethPeers.toString()).contains(peerA.nodeId().toString());
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {

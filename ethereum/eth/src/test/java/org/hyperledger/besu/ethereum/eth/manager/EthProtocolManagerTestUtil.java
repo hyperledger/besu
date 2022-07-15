@@ -213,6 +213,7 @@ public class EthProtocolManagerTestUtil {
             new NoOpMetricsSystem(),
             25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.emptyList(),
             Vertx.vertx());
     final EthMessages messages = new EthMessages();
 

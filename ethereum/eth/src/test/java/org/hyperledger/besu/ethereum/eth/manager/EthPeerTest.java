@@ -45,7 +45,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -453,7 +452,6 @@ public class EthPeerTest {
 
   private EthPeer createPeerWithPeerInfo(final Bytes nodeId) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
-    final Consumer<EthPeer> onPeerReady = (peer) -> {};
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     final PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
@@ -461,7 +459,6 @@ public class EthPeerTest {
     return new EthPeer(
         peerConnection,
         "foo",
-        onPeerReady,
         Collections.emptyList(),
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         clock,
@@ -472,7 +469,6 @@ public class EthPeerTest {
       final List<PeerValidator> peerValidators,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     final PeerConnection peerConnection = mock(PeerConnection.class);
-    final Consumer<EthPeer> onPeerReady = (peer) -> {};
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     return new EthPeer(
