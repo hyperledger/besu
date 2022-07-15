@@ -78,7 +78,9 @@ public class ConstantinopleSStoreOperationGasCostTest {
 
   @Before
   public void setUp() {
-    codeExecutor = new TestCodeExecutor(protocolSchedule);
+    codeExecutor = new TestCodeExecutor(
+            protocolSchedule,
+            account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
   }
 
   @Test
@@ -87,8 +89,7 @@ public class ConstantinopleSStoreOperationGasCostTest {
     final MessageFrame frame =
         codeExecutor.executeCode(
             code,
-            gasLimit,
-            account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
+            gasLimit);
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
     assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - expectedGasUsed);
     assertThat(frame.getGasRefund()).isEqualTo(expectedGasRefund);

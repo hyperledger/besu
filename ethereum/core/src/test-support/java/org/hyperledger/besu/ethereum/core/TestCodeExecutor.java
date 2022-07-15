@@ -44,20 +44,24 @@ public class TestCodeExecutor {
   private final BlockHeader blockHeader = new BlockHeaderTestFixture().number(13).buildHeader();
   private static final Address SENDER_ADDRESS = AddressHelpers.ofValue(244259721);
 
-  public TestCodeExecutor(final ProtocolSchedule protocolSchedule) {
+  private final WorldUpdater worldUpdater;
+  private final EVM evm;
+
+  public TestCodeExecutor(
+          final ProtocolSchedule protocolSchedule,
+          final Consumer<MutableAccount> accountSetup) {
     fixture = ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
+    final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
+    worldUpdater =
+            createInitialWorldState(accountSetup, fixture.getStateArchive());
+    evm = protocolSpec.getEvm();
   }
 
   public MessageFrame executeCode(
       final String codeHexString,
-      final long gasLimit,
-      final Consumer<MutableAccount> accountSetup) {
-    final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
-    final WorldUpdater worldUpdater =
-        createInitialWorldState(accountSetup, fixture.getStateArchive());
+      final long gasLimit) {
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
-    final EVM evm = protocolSpec.getEvm();
     final MessageCallProcessor messageCallProcessor =
         new MessageCallProcessor(evm, new PrecompileContractRegistry());
     final Bytes codeBytes = Bytes.fromHexString(codeHexString);
@@ -100,6 +104,21 @@ public class TestCodeExecutor {
       messageCallProcessor.process(messageFrameStack.peekFirst(), OperationTracer.NO_TRACING);
     }
     return initialFrame;
+  }
+
+  public void deployContract(
+          final Address contractAddress,
+          final String codeHexString
+          ) {
+
+
+    final MutableAccount contract =
+            worldUpdater.getOrCreate(contractAddress).getMutable();
+
+    contract.setNonce(0);
+    contract.clearStorage();
+    contract.setCode(Bytes.fromHexStringLenient(codeHexString));
+    worldUpdater.updater().commit();
   }
 
   private WorldUpdater createInitialWorldState(
