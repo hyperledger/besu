@@ -49,6 +49,7 @@ import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -134,16 +135,28 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<Wei>> getGasPriceDataFetcher() {
     return dataFetchingEnvironment -> {
-      GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
-      BlockchainQueries blockchainQueries =
+      final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
+      final BlockchainQueries blockchainQueries =
           graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES);
-      MiningCoordinator miningCoordinator =
+      final MiningCoordinator miningCoordinator =
           graphQLContext.get(GraphQLContextType.MINING_COORDINATOR);
       return blockchainQueries
           .gasPrice()
           .map(Wei::of)
           .or(() -> Optional.of(miningCoordinator.getMinTransactionGasPrice()));
     };
+  }
+
+  public DataFetcher<Optional<BigInteger>> getChainIdDataFetcher() {
+    return dataFetchingEnvironment -> {
+      final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
+      return graphQLContext.get(GraphQLContextType.CHAIN_ID);
+    };
+  }
+
+  public DataFetcher<Optional<Wei>> getMaxPriorityFeePerGasDataFetcher() {
+    //FIXME
+    return dataFetchingEnvironment -> Optional.of(Wei.of(2_000_000_000L));
   }
 
   DataFetcher<List<NormalBlockAdapter>> getRangeBlockDataFetcher() {
@@ -225,7 +238,7 @@ public class GraphQLDataFetchers {
         final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
         return ows.flatMap(
             ws -> {
-              Account account = ws.get(addr);
+              final Account account = ws.get(addr);
               if (account == null) {
                 return Optional.of(new EmptyAccountAdapter(addr));
               }

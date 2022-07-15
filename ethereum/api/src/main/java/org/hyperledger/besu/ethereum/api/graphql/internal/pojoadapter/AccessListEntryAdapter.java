@@ -14,27 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.AccessListEntry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 @SuppressWarnings("unused") // reflected by GraphQL
-public class SyncStateAdapter {
-  private final SyncStatus syncStatus;
+public class AccessListEntryAdapter extends AdapterBase {
+  private final AccessListEntry accessListEntry;
 
-  public SyncStateAdapter(final SyncStatus syncStatus) {
-    this.syncStatus = syncStatus;
+  public AccessListEntryAdapter(final AccessListEntry accessListEntry) {
+    this.accessListEntry = accessListEntry;
   }
 
-  public Optional<Long> getStartingBlock() {
-    return Optional.of(syncStatus.getStartingBlock());
+  public List<Bytes32> getStorageKeys() {
+    final var storage = accessListEntry.getStorageKeys();
+    return new ArrayList<>(storage);
   }
 
-  public Optional<Long> getCurrentBlock() {
-    return Optional.of(syncStatus.getCurrentBlock());
-  }
-
-  public Optional<Long> getHighestBlock() {
-    return Optional.of(syncStatus.getHighestBlock());
+  public Optional<Address> getAddress() {
+    return Optional.of(accessListEntry.getAddress());
   }
 }
