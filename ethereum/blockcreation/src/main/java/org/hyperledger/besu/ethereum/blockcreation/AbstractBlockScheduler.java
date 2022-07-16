@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import java.time.Clock;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+
+import java.time.Clock;
 
 public abstract class AbstractBlockScheduler {
 

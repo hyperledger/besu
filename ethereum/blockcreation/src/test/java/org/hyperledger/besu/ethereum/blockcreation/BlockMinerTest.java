@@ -21,10 +21,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.math.BigInteger;
-import java.util.Optional;
-import java.util.function.Function;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -37,9 +33,13 @@ import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
-import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import org.junit.Test;
 
 public class BlockMinerTest {
 

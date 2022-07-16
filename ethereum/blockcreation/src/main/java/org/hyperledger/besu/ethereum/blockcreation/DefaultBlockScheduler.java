@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+
 import java.time.Clock;
 import java.util.concurrent.TimeUnit;
-
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import com.google.common.annotations.VisibleForTesting;
 

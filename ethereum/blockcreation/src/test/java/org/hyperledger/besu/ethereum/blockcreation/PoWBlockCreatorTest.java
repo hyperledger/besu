@@ -16,13 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.Function;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
@@ -48,9 +41,16 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
-import org.junit.Test;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.Test;
 
 public class PoWBlockCreatorTest {
 
