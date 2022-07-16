@@ -17,6 +17,7 @@ public class ByteCodeBuilder {
         ADD("01"),
         CALL("f1"),
         STATICCALL("fa"),
+        DELEGATECALL("f4"),
         MSTORE("52");
 
         private final String value;
@@ -95,10 +96,7 @@ public class ByteCodeBuilder {
     }
 
     public ByteCodeBuilder call(final Operation callType, final Address address, final UInt256 gasLimit) {
-        if (callType != Operation.CALL &&
-        callType != Operation.STATICCALL) {
-            throw new UnsupportedOperationException("callType not supported: " + callType);
-        }
+        callTypeCheck(callType);
         this.push(0);
         this.push(0);
         this.push(0);
@@ -110,10 +108,20 @@ public class ByteCodeBuilder {
         return this;
     }
 
-    public ByteCodeBuilder callWithInput(final Address address, final UInt256 gasLimit) {
-        return callWithInput(address, gasLimit, null);
+    private static void callTypeCheck(final Operation callType) {
+
+        if (callType != Operation.CALL &&
+                callType != Operation.STATICCALL &&
+                callType != Operation.DELEGATECALL) {
+            throw new UnsupportedOperationException("callType not supported: " + callType);
+        }
     }
-    public ByteCodeBuilder callWithInput(final Address address, final UInt256 gasLimit, final UInt256 input) {
+
+    public ByteCodeBuilder callWithInput(final Operation callType, final Address address, final UInt256 gasLimit) {
+        return callWithInput(callType, address, gasLimit, null);
+    }
+    public ByteCodeBuilder callWithInput(final Operation callType, final Address address, final UInt256 gasLimit, final UInt256 input) {
+        callTypeCheck(callType);
         if (input != null) {
             this.push(input);
             this.push(0);
@@ -131,7 +139,7 @@ public class ByteCodeBuilder {
         this.push(0);
         this.push(Bytes.fromHexString(address.toHexString()));
         this.push(gasLimit.toMinimalBytes());
-        this.op(Operation.CALL);
+        this.op(callType);
         return this;
     }
 

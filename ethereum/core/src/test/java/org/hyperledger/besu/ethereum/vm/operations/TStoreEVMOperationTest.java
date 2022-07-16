@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
@@ -39,7 +38,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(Parameterized.class)
 public class TStoreEVMOperationTest {
 
-  private static ProtocolSchedule protocolSchedule;
   private static final UInt256 gasLimit = UInt256.valueOf(50_000);
   private static final Address contractAddress = AddressHelpers.ofValue(28499200);
 
@@ -190,7 +188,7 @@ public class TStoreEVMOperationTest {
                       .op(Operation.MLOAD)
                       .push(1)
                       .op(Operation.ADD)
-                      .callWithInput(contractAddress, gasLimit)
+                      .callWithInput(Operation.CALL, contractAddress, gasLimit)
 
                     // TLOAD and return value
                     .tload(1)
@@ -207,7 +205,7 @@ public class TStoreEVMOperationTest {
                       .op(Operation.MLOAD)
                       .push(1)
                       .op(Operation.ADD)
-                      .callWithInput(contractAddress, gasLimit)
+                      .callWithInput(Operation.CALL, contractAddress, gasLimit)
 
                     .op(Operation.REVERT)
 
@@ -217,7 +215,7 @@ public class TStoreEVMOperationTest {
                     ,
                     new ByteCodeBuilder()
                             // Call with input 0
-                            .callWithInput(contractAddress, gasLimit, UInt256.valueOf(0))
+                            .callWithInput(Operation.CALL, contractAddress, gasLimit, UInt256.valueOf(0))
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
                     8},
@@ -232,12 +230,138 @@ public class TStoreEVMOperationTest {
                             .returnInnerCallResults(),
                     State.COMPLETED_FAILED,
                     0},
+            // Transient storage cannot be manipulated in a static context when calling self
+            {new ByteCodeBuilder()
+                    // Check if caller is self
+                    .callerIs(contractAddress)
+                    .conditionalJump(82)
+
+                    // Non-reentrant, call self after TSTORE 8
+                    .tstore(1, 8)
+                    .callWithInput(Operation.STATICCALL, contractAddress, gasLimit, UInt256.valueOf(0))
+                    // Return the TLOAD value
+                    // Should be 8 if call fails, 9 if success
+                    .tload(1)
+                    .dataOnStackToMemory(0)
+                    .returnValueAtMemory(32, 0)
+
+                    // Reentrant, TSTORE 9
+                    .op(Operation.JUMPDEST)
+                    .tstore(1, 9),
+                    new ByteCodeBuilder()
+                            .call(Operation.CALL, contractAddress, gasLimit)
+                            .returnInnerCallResults(),
+                    State.COMPLETED_SUCCESS,
+                    8},
+            // Transient storage cannot be manipulated in a nested static context
+            {new ByteCodeBuilder()
+                    // Check call depth
+                    .push(0)
+                    .op(Operation.CALLDATALOAD)
+                    // Store input in mem and reload it to stack
+                    .dataOnStackToMemory(5)
+                    .push(5)
+                    .op(Operation.MLOAD)
+
+                    // See if we're at call depth 1
+                    .push(1)
+                    .op(Operation.EQ)
+                    .conditionalJump(84)
+
+                    // See if we're at call depth 2
+                    .push(5)
+                    .op(Operation.MLOAD)
+                    .push(2)
+                    .op(Operation.EQ)
+                    .conditionalJump(140)
+
+                    // Call depth = 0, call self after TSTORE 8
+                    .tstore(1, 8)
+
+                    // Recursive call with input
+                        // Depth++
+                        .push(5)
+                        .op(Operation.MLOAD)
+                        .push(1)
+                        .op(Operation.ADD)
+                        .callWithInput(Operation.STATICCALL, contractAddress, gasLimit)
+
+                    // TLOAD and return value
+                    .tload(1)
+                    .dataOnStackToMemory(0)
+                    .returnValueAtMemory(32, 0)
+
+                    // Call depth 1, TSTORE 9 but REVERT after recursion
+                    .op(Operation.JUMPDEST) // 84
+
+                    // Recursive call with input
+                        // Depth++
+                        .push(5)
+                        .op(Operation.MLOAD)
+                        .push(1)
+                        .op(Operation.ADD)
+                        .callWithInput(Operation.CALL, contractAddress, gasLimit)
+
+                        // TLOAD and return value
+                        .tload(1)
+                        .dataOnStackToMemory(0)
+                        .returnValueAtMemory(32, 0)
+
+                    // Call depth 2, TSTORE 10 and complete
+                    .op(Operation.JUMPDEST) // 140
+                    .tstore(1, 10) // this call will fail
+                    ,
+                    new ByteCodeBuilder()
+                            // Call with input 0
+                            .callWithInput(Operation.CALL, contractAddress, gasLimit, UInt256.valueOf(0))
+                            .returnInnerCallResults(),
+                    State.COMPLETED_SUCCESS,
+                    8},
+            // Delegatecall manipulates transient storage in the context of the current address
+            {new ByteCodeBuilder()
+                    .tstore(1, 8),
+                    new ByteCodeBuilder()
+                            .tstore(1, 7)
+                            .call(Operation.DELEGATECALL, contractAddress, gasLimit)
+                            .tload(1)
+                            .dataOnStackToMemory(0)
+                            .returnValueAtMemory(32, 0),
+                    State.COMPLETED_SUCCESS,
+                    8},
+            // Zeroing out a transient storage slot does not result in gas refund
+            {null,
+                    new ByteCodeBuilder()
+                            .tstore(1, 7)
+                            .tstore(1, 0),
+                    State.COMPLETED_SUCCESS,
+                    0},
+            // Transient storage can be accessed in a static context when calling self
+            {new ByteCodeBuilder()
+                    // Check if caller is self
+                    .callerIs(contractAddress)
+                    .conditionalJump(78)
+
+                    // Non-reentrant, call self after TSTORE 8
+                    .tstore(1, 8)
+                    .call(Operation.STATICCALL, contractAddress, gasLimit)
+                    .returnInnerCallResults()
+
+                    // Reentrant, TLOAD and return
+                    .op(Operation.JUMPDEST)
+                    .tload(1)
+                    .dataOnStackToMemory(0)
+                    .returnValueAtMemory(32, 0),
+                    new ByteCodeBuilder()
+                            .call(Operation.CALL, contractAddress, gasLimit)
+                            .returnInnerCallResults(),
+                    State.COMPLETED_SUCCESS,
+                    8}
     };
   }
 
   private TestCodeExecutor codeExecutor;
 
-  @Parameter(value = 0)
+  @Parameter()
   public ByteCodeBuilder contractByteCodeBuilder;
 
   @Parameter(value = 1)
@@ -252,8 +376,7 @@ public class TStoreEVMOperationTest {
 
   @Before
   public void setUp() {
-    protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(
+    ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.fromConfig(
             new StubGenesisConfigOptions().shanghaiBlock(0), EvmConfiguration.DEFAULT);
     codeExecutor = new TestCodeExecutor(protocolSchedule,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(0)));
@@ -261,13 +384,8 @@ public class TStoreEVMOperationTest {
 
   @Test
   public void transientStorageExecutionTest() {
+    // Pre-deploy the contract if it's specified
     if (contractByteCodeBuilder != null) {
-
-      for (int i = 0; i < contractByteCodeBuilder.toBytes().toArray().length; i++) {
-        if (contractByteCodeBuilder.toBytes().toArray()[i] == (byte)91) {
-          System.out.println(i);
-        }
-      }
       codeExecutor.deployContract(
             contractAddress,
             contractByteCodeBuilder.toString());
@@ -278,7 +396,6 @@ public class TStoreEVMOperationTest {
             byteCodeBuilder.toString(),
             gasLimit.toLong());
     assertThat(frame.getState()).isEqualTo(expectedResultState);
-    // assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - byteCodeBuilder.gasCost);
     assertThat(frame.getGasRefund()).isEqualTo(0);
     assertThat(UInt256.fromBytes(frame.getOutputData()).toInt()).isEqualTo(expectedReturnValue);
   }

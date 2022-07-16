@@ -40,6 +40,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
@@ -169,5 +170,29 @@ public class TStoreOperationTest {
     assertThat(tloadResult.getHaltReason()).isEqualTo(Optional.empty());
     UInt256 tloadValue = UInt256.fromBytes(frame.popStackItem());
     assertThat(tloadValue).isEqualTo(UInt256.fromHexString("0x02"));
+  }
+
+  // Zeroing out a transient storage slot does not result in gas refund
+  @Test
+  public void noGasRefundFromTransientState() {
+    long initialGas = 10_000L;
+    long remainingGas = 10_000L;
+    final TStoreOperation tstore = new TStoreOperation(gasCalculator);
+    final MessageFrame frame =
+            createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
+    frame.pushStackItem(UInt256.ONE);
+    frame.pushStackItem(UInt256.fromHexString("0x01"));
+
+    OperationResult result = tstore.execute(frame, null);
+    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+
+    // Reset value to 0
+    frame.pushStackItem(UInt256.fromHexString("0x00"));
+    frame.pushStackItem(UInt256.fromHexString("0x01"));
+
+    result = tstore.execute(frame, null);
+    assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
+
+    assertThat(result.getGasCost()).isEqualTo(OptionalLong.of(100L));
   }
 }
