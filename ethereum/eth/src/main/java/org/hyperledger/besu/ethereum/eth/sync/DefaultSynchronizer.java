@@ -228,9 +228,13 @@ public class DefaultSynchronizer implements Synchronizer {
         result.getPivotBlockNumber().getAsLong());
     pivotBlockSelector.close();
     syncState.markInitialSyncPhaseAsDone();
-    return terminationCondition.shouldContinueDownload()
-        ? startFullSync()
-        : CompletableFuture.completedFuture(null);
+
+    if (terminationCondition.shouldContinueDownload()) {
+      return startFullSync();
+    } else {
+      syncState.setReachedTerminalDifficulty(true);
+      return CompletableFuture.completedFuture(null);
+    }
   }
 
   private CompletableFuture<Void> startFullSync() {
