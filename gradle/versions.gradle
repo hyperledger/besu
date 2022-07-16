@@ -180,6 +180,10 @@ dependencyManagement {
 
     dependency 'org.rocksdb:rocksdbjni:6.29.5'
 
+    dependency 'org.fusesource.leveldbjni:leveldbjni-win64:1.8'
+    dependency 'org.fusesource.leveldbjni:leveldbjni-win32:1.8'
+    dependency 'tech.pegasys:leveldb-native:0.2.0'
+
     dependency 'org.slf4j:slf4j-api:1.7.36'
 
     dependency 'org.springframework.security:spring-security-crypto:5.7.2'

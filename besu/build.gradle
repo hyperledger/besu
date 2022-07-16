@@ -56,6 +56,7 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':nat')
   implementation project(':plugin-api')
+  implementation project(':plugins:leveldb')
   implementation project(':plugins:rocksdb')
   implementation project(':services:kvstore')
   implementation project(':util')
