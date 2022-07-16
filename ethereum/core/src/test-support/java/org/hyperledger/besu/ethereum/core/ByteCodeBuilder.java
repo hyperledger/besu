@@ -8,17 +8,23 @@ import org.hyperledger.besu.datatypes.Address;
 public class ByteCodeBuilder {
 
     public enum Operation {
-        MLOAD("51"),
-        CALLDATALOAD("35"),
-        REVERT("fd"),
-        RETURN("f3"),
-        JUMPDEST("5b"),
-        EQ("14"),
         ADD("01"),
         CALL("f1"),
-        STATICCALL("fa"),
+        CALLDATALOAD("35"),
+        CALLER("33"),
         DELEGATECALL("f4"),
-        MSTORE("52");
+        EQ("14"),
+        JUMPDEST("5b"),
+        JUMPI("57"),
+        MLOAD("51"),
+        MSTORE("52"),
+        PUSH("60"),
+        RETURN("f3"),
+        RETURNDATACOPY("3e"),
+        REVERT("fd"),
+        STATICCALL("fa"),
+        TLOAD("b3"),
+        TSTORE("b4");
 
         private final String value;
 
@@ -26,12 +32,12 @@ public class ByteCodeBuilder {
             this.value = value;
         }
 
-        public String getHex() {
+        @Override
+        public String toString() {
             return value;
         }
     }
     StringBuilder byteCode = new StringBuilder("0x");
-    public long gasCost = 0L;
 
     @Override
     public String toString() {
@@ -53,8 +59,8 @@ public class ByteCodeBuilder {
     }
     public ByteCodeBuilder push(final UInt256 value) {
         String byteString = standardizeByteString(value);
-        byteCode.append("60").append(byteString);
-        gasCost += 3;
+        byteCode.append(Operation.PUSH);
+        byteCode.append(byteString);
         return this;
     }
 
@@ -69,22 +75,19 @@ public class ByteCodeBuilder {
     public ByteCodeBuilder tstore(final int key, final int value) {
         this.push(value);
         this.push(key);
-        byteCode.append("b4"); // TSTORE
-        gasCost += 100;
+        byteCode.append(Operation.TSTORE);
         return this;
     }
 
     public ByteCodeBuilder tload(final int key) {
         this.push(key);
-        byteCode.append("b3"); // TLOAD
-        gasCost += 100;
+        byteCode.append(Operation.TLOAD);
         return this;
     }
 
     public ByteCodeBuilder dataOnStackToMemory(final int key) {
         this.push(key);
         this.op(Operation.MSTORE);
-        gasCost += 3;
         return this;
     }
 
@@ -147,25 +150,25 @@ public class ByteCodeBuilder {
         this.push(32);
         this.push(0);
         this.push(0);
-        byteCode.append("3e"); // RETURNDATACOPY
+        byteCode.append(Operation.RETURNDATACOPY);
         this.returnValueAtMemory(32, 0);
         return this;
     }
 
     public ByteCodeBuilder callerIs(final Address caller) {
-        byteCode.append("33"); // CALLER
+        byteCode.append(Operation.CALLER);
         this.push(Bytes.fromHexString(caller.toHexString()));
-        byteCode.append("14"); // EQ
+        byteCode.append(Operation.EQ);
         return this;
     }
 
     public ByteCodeBuilder conditionalJump(final int dest) {
         this.push(dest);
-        byteCode.append("57"); // JUMPI
+        byteCode.append(Operation.JUMPI);
         return this;
     }
     public ByteCodeBuilder op(final Operation operation) {
-        byteCode.append(operation.getHex());
+        byteCode.append(operation.toString());
         return this;
     }
 }
