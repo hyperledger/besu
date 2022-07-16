@@ -110,8 +110,6 @@ public class TestCodeExecutor {
           final Address contractAddress,
           final String codeHexString
           ) {
-
-
     final MutableAccount contract =
             worldUpdater.getOrCreate(contractAddress).getMutable();
 
