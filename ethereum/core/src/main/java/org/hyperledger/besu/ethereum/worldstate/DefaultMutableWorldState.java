@@ -313,7 +313,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public UInt256 getTransientStorageValue(final UInt256 key) {
-      throw new UnsupportedOperationException("Transient storage is not implemented in WorldStateAccount");
+      // Transient state isn't persistent
+      return UInt256.ZERO;
     }
 
     @Override

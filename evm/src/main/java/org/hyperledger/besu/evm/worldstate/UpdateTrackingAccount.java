@@ -134,6 +134,17 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     return updatedStorage;
   }
 
+  /**
+   * A map of the transient storage entries that were modified.
+   *
+   * @return a map containing all entries that have been modified. This <b>may</b> contain entries
+   *     with a value of 0 to signify deletion.
+   */
+  @Override
+  public Map<UInt256, UInt256> getUpdatedTransientStorage() {
+    return updatedTransientStorage;
+  }
+
   @Override
   public Address getAddress() {
     return address;
@@ -257,6 +268,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   public void clearStorage() {
     storageWasCleared = true;
     updatedStorage.clear();
+    updatedTransientStorage.clear();
   }
 
   public boolean getStorageWasCleared() {
@@ -270,12 +282,14 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public String toString() {
     String storage = updatedStorage.isEmpty() ? "[not updated]" : updatedStorage.toString();
+    String transientStorage = updatedTransientStorage.isEmpty() ? "[not updated]" : updatedTransientStorage.toString();
     if (updatedStorage.isEmpty() && storageWasCleared) {
       storage = "[cleared]";
+      transientStorage = "[cleared]";
     }
     return String.format(
-        "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
-        address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
+        "%s -> {nonce: %s, balance:%s, code:%s, storage:%s, transientStorage:%s }",
+        address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage, transientStorage);
   }
 
   @Override
@@ -285,11 +299,17 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   @Override
   public UInt256 getTransientStorageValue(final UInt256 key) {
-    if (updatedTransientStorage.containsKey(key)) {
-      return updatedTransientStorage.get(key);
-    } else {
+    final UInt256 value = updatedTransientStorage.get(key);
+    if (value != null) {
+      return value;
+    }
+    if (storageWasCleared) {
       return UInt256.ZERO;
     }
+
+    // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
+    // key, or we should query the underlying storage for its existing value (which might be 0).
+    return account == null ? UInt256.ZERO : account.getTransientStorageValue(key);
   }
 
   @Override
