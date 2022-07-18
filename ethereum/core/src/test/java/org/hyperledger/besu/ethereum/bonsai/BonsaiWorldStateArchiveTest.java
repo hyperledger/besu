@@ -80,7 +80,11 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
     when(keyValueStorage.get(WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
-    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 1);
+    bonsaiWorldStateArchive =
+        new BonsaiWorldStateArchive(
+            new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 1),
+            storageProvider,
+            blockchain);
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -88,7 +92,12 @@ public class BonsaiWorldStateArchiveTest {
 
   @Test
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
-    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 512);
+    bonsaiWorldStateArchive =
+        new BonsaiWorldStateArchive(
+            new TrieLogManager(
+                blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
+            storageProvider,
+            blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -98,7 +107,12 @@ public class BonsaiWorldStateArchiveTest {
 
   @Test
   public void testGetMutableWhenLoadLessThanLimitLayersBack() {
-    bonsaiWorldStateArchive = new BonsaiWorldStateArchive(storageProvider, blockchain, 512);
+    bonsaiWorldStateArchive =
+        new BonsaiWorldStateArchive(
+            new TrieLogManager(
+                blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
+            storageProvider,
+            blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
 
@@ -123,7 +137,14 @@ public class BonsaiWorldStateArchiveTest {
     final Map layeredWorldStatesByHash = mock(HashMap.class);
 
     bonsaiWorldStateArchive =
-        new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash);
+        new BonsaiWorldStateArchive(
+            new TrieLogManager(
+                blockchain,
+                new BonsaiWorldStateKeyValueStorage(storageProvider),
+                12,
+                layeredWorldStatesByHash),
+            storageProvider,
+            blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -143,7 +164,15 @@ public class BonsaiWorldStateArchiveTest {
     final Map layeredWorldStatesByHash = mock(HashMap.class);
 
     bonsaiWorldStateArchive =
-        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+        spy(
+            new BonsaiWorldStateArchive(
+                new TrieLogManager(
+                    blockchain,
+                    new BonsaiWorldStateKeyValueStorage(storageProvider),
+                    12,
+                    layeredWorldStatesByHash),
+                storageProvider,
+                blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
@@ -179,7 +208,15 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
 
     bonsaiWorldStateArchive =
-        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+        spy(
+            new BonsaiWorldStateArchive(
+                new TrieLogManager(
+                    blockchain,
+                    new BonsaiWorldStateKeyValueStorage(storageProvider),
+                    12,
+                    layeredWorldStatesByHash),
+                storageProvider,
+                blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
@@ -222,7 +259,15 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
 
     bonsaiWorldStateArchive =
-        spy(new BonsaiWorldStateArchive(storageProvider, blockchain, 12, layeredWorldStatesByHash));
+        spy(
+            new BonsaiWorldStateArchive(
+                new TrieLogManager(
+                    blockchain,
+                    new BonsaiWorldStateKeyValueStorage(storageProvider),
+                    12,
+                    layeredWorldStatesByHash),
+                storageProvider,
+                blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
