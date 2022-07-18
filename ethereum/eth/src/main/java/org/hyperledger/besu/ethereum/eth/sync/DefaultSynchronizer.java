@@ -179,7 +179,12 @@ public class DefaultSynchronizer implements Synchronizer {
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
-      blockPropagationManager.ifPresent(BlockPropagationManager::start);
+      blockPropagationManager.ifPresent(
+          manager -> {
+            if (!manager.isRunning()) {
+              manager.start();
+            }
+          });
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
         future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
@@ -201,7 +206,12 @@ public class DefaultSynchronizer implements Synchronizer {
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
       fullSyncDownloader.ifPresent(FullSyncDownloader::stop);
       maybePruner.ifPresent(Pruner::stop);
-      blockPropagationManager.ifPresent(BlockPropagationManager::stop);
+      blockPropagationManager.ifPresent(
+          manager -> {
+            if (manager.isRunning()) {
+              manager.stop();
+            }
+          });
     }
   }
 
