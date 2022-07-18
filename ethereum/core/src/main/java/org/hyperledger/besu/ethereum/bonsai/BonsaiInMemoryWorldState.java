@@ -19,22 +19,19 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
-  private final AtomicBoolean isPersisted;
+  private boolean isPersisted = false;
 
   public BonsaiInMemoryWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     super(archive, worldStateStorage);
-    isPersisted = new AtomicBoolean();
   }
 
   @Override
   public Hash rootHash() {
-    if (isPersisted.get()) {
+    if (isPersisted) {
       return worldStateRootHash;
     }
     return rootHash(updater.copy());
@@ -52,14 +49,13 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    if (!isPersisted.getAndSet(true)) {
-      final BonsaiWorldStateUpdater localUpdater = updater.copy();
-      final Hash newWorldStateRootHash = rootHash(localUpdater);
-      archive
-          .getTrieLogManager()
-          .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
-      worldStateRootHash = newWorldStateRootHash;
-      worldStateBlockHash = blockHeader.getBlockHash();
-    }
+    final BonsaiWorldStateUpdater localUpdater = updater.copy();
+    final Hash newWorldStateRootHash = rootHash(localUpdater);
+    archive
+        .getTrieLogManager()
+        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+    worldStateRootHash = newWorldStateRootHash;
+    worldStateBlockHash = blockHeader.getBlockHash();
+    isPersisted = true;
   }
 }
