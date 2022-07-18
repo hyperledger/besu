@@ -182,4 +182,9 @@ APP_ARGS=`save "\$@"`
 # Collect all arguments for the java command, following the shell quoting and substitution rules
 eval set -- \$DEFAULT_JVM_OPTS \$JAVA_OPTS \$${optsEnvironmentVar} <% if ( appNameSystemProperty ) { %>"\"-D${appNameSystemProperty}=\$APP_BASE_NAME\"" <% } %>-classpath "\"\$CLASSPATH\"" <% if ( mainClassName.startsWith('--module ') ) { %>--module-path "\"\$MODULE_PATH\"" <% } %>${mainClassName} "\$APP_ARGS"
 
+# limit malloc to 2 arenas, and use jemalloc if available
+export MALLOC_ARENA_MAX=2
+export LD_PRELOAD=libjemalloc.so
+export DYLD_INSERT_LIBRARIES=libjemalloc.dylib
+
 exec "\$JAVACMD" "\$@"
