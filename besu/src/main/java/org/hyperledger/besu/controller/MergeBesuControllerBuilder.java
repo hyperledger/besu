@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
+import org.hyperledger.besu.consensus.merge.TransitionBestPeerComparator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -91,13 +92,22 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter) {
 
+    var mergeContext = protocolContext.getConsensusContext(MergeContext.class);
+
+    var mergeBestPeerComparator =
+        new TransitionBestPeerComparator(
+            configOptionsSupplier
+                .get()
+                .getTerminalTotalDifficulty()
+                .map(Difficulty::of)
+                .orElseThrow());
+    ethPeers.setBestChainComparator(mergeBestPeerComparator);
+    mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
+
     if (mergePeerFilter.isPresent()) {
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .observeNewIsPostMergeState(mergePeerFilter.get());
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(mergePeerFilter.get());
+
+      mergeContext.observeNewIsPostMergeState(mergePeerFilter.get());
+      mergeContext.addNewForkchoiceMessageListener(mergePeerFilter.get());
     }
 
     EthProtocolManager ethProtocolManager =

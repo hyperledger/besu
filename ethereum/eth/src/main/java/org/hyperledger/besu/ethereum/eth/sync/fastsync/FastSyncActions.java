@@ -176,6 +176,11 @@ public class FastSyncActions {
   }
 
   private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
+    LOG.debug(
+        "peer {} hasEstimatedHeight {} isFullyValidated? {}",
+        peer.getShortNodeId(),
+        peer.chainState().hasEstimatedHeight(),
+        peer.isFullyValidated());
     return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
   }
 
