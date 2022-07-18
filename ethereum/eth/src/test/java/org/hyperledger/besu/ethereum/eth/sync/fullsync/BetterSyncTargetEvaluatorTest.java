@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.Before;
 import org.junit.Test;
 
 public class BetterSyncTargetEvaluatorTest {
@@ -45,6 +46,11 @@ public class BetterSyncTargetEvaluatorTest {
               .downloaderChangeTargetThresholdByTd(UInt256.valueOf(TD_THRESHOLD))
               .build(),
           ethPeers);
+
+  @Before
+  public void setupMocks() {
+    when(ethPeers.getBestChainComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
+  }
 
   @Test
   public void shouldNotSwitchTargetsIfNoBestPeerIsAvailable() {
