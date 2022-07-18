@@ -69,10 +69,10 @@ public class EthPeersTest {
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
 
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerB)).isLessThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerA)).isGreaterThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerB)).isLessThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerA)).isGreaterThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
 
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
@@ -97,10 +97,10 @@ public class EthPeersTest {
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isEqualTo(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isGreaterThan(0);
 
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerB)).isGreaterThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerA)).isLessThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerB)).isGreaterThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerA)).isLessThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
 
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())

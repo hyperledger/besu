@@ -31,6 +31,7 @@ public class DiscoveryConfiguration {
   private int bucketSize = 16;
   private List<EnodeURL> bootnodes = new ArrayList<>();
   private String dnsDiscoveryURL;
+  private boolean discoveryV5Enabled = false;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -111,6 +112,14 @@ public class DiscoveryConfiguration {
   public DiscoveryConfiguration setDnsDiscoveryURL(final String dnsDiscoveryURL) {
     this.dnsDiscoveryURL = dnsDiscoveryURL;
     return this;
+  }
+
+  public boolean isDiscoveryV5Enabled() {
+    return discoveryV5Enabled;
+  }
+
+  public void setDiscoveryV5Enabled(final boolean discoveryV5Enabled) {
+    this.discoveryV5Enabled = discoveryV5Enabled;
   }
 
   @Override

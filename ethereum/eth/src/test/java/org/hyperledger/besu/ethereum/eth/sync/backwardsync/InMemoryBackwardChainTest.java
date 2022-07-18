@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.eth.sync.backwardsync.ChainForTestCreator.prepareChain;
-import static org.hyperledger.besu.ethereum.eth.sync.backwardsync.ChainForTestCreator.prepareWrongParentHash;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -96,32 +94,6 @@ public class InMemoryBackwardChainTest {
   }
 
   @Test
-  public void shouldNotSaveHeadersWhenWrongHeight() {
-    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
-    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
-    assertThatThrownBy(
-            () -> backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 5).getHeader()))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Wrong height of header");
-    BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
-    assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
-  }
-
-  @Test
-  public void shouldNotSaveHeadersWhenWrongHash() {
-    BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
-    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 2).getHeader());
-    backwardChain.prependAncestorsHeader(blocks.get(blocks.size() - 3).getHeader());
-    BlockHeader wrongHashHeader = prepareWrongParentHash(blocks.get(blocks.size() - 4).getHeader());
-    assertThatThrownBy(() -> backwardChain.prependAncestorsHeader(wrongHashHeader))
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Hash of header does not match our expectations");
-    BlockHeader firstHeader = backwardChain.getFirstAncestorHeader().orElseThrow();
-    assertThat(firstHeader).isEqualTo(blocks.get(blocks.size() - 3).getHeader());
-  }
-
-  @Test
   public void shouldDropFromTheEnd() {
 
     BackwardChain backwardChain = createChainFromBlock(blocks.get(blocks.size() - 1));
@@ -166,12 +138,15 @@ public class InMemoryBackwardChainTest {
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(7).getHash());
+    backwardChain.removeFromHashToAppend(firstHash.get());
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(9).getHash());
+    backwardChain.removeFromHashToAppend(firstHash.get());
     firstHash = backwardChain.getFirstHashToAppend();
     assertThat(firstHash).isPresent();
     assertThat(firstHash.orElseThrow()).isEqualTo(blocks.get(11).getHash());
+    backwardChain.removeFromHashToAppend(firstHash.get());
   }
 
   @Test

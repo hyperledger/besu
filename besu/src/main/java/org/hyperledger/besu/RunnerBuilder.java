@@ -419,6 +419,8 @@ public class RunnerBuilder {
       }
       discoveryConfiguration.setBootnodes(bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
+      discoveryConfiguration.setDiscoveryV5Enabled(
+          networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
     } else {
       discoveryConfiguration.setActive(false);
     }
