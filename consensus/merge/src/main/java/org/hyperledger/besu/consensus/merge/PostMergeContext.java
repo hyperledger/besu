@@ -84,7 +84,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
-    if (isPostMerge.get().orElse(Boolean.FALSE) && lastFinalized.get() != null) {
+    if (isPostMerge.get().orElse(Boolean.FALSE)) {
       // if we have finalized, we never switch back to a pre-merge once we have transitioned
       // post-TTD.
       return;

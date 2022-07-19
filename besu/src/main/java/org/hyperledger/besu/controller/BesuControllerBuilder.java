@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -602,7 +604,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(
-            storageProvider, blockchain, dataStorageConfiguration.getBonsaiMaxLayersToLoad());
+            new TrieLogManager(
+                blockchain,
+                (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+                dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            storageProvider,
+            blockchain);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =
@@ -632,19 +639,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       validators.add(
           new RequiredBlocksPeerValidator(
               protocolSchedule, metricsSystem, requiredBlock.getKey(), requiredBlock.getValue()));
-    }
-
-    final Optional<Hash> terminalBlockHash = configOptionsSupplier.get().getTerminalBlockHash();
-    if (terminalBlockHash.isPresent() && !terminalBlockHash.get().equals(Hash.ZERO)) {
-      final OptionalLong terminalBlockNumber = configOptionsSupplier.get().getTerminalBlockNumber();
-      if (terminalBlockNumber.isPresent()) {
-        validators.add(
-            new RequiredBlocksPeerValidator(
-                protocolSchedule,
-                metricsSystem,
-                terminalBlockNumber.getAsLong(),
-                terminalBlockHash.get()));
-      }
     }
 
     final CheckpointConfigOptions checkpointConfigOptions =

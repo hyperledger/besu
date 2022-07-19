@@ -604,10 +604,11 @@ public class JsonRpcService {
     final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
     // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-    if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-      return Optional.empty();
+    if (hostPieces > 1) {
+      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
+        return Optional.empty();
+      }
     }
-
     return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
   }
 

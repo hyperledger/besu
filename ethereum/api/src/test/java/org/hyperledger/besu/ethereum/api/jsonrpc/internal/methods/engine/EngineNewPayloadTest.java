@@ -21,8 +21,10 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -50,6 +52,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
@@ -177,6 +180,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    verify(mergeCoordinator, atLeastOnce()).addBadBlock(any());
   }
 
   @Test
@@ -260,7 +264,8 @@ public class EngineNewPayloadTest {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-
+    when(mergeCoordinator.appendNewPayloadToSync(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
@@ -272,7 +277,8 @@ public class EngineNewPayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-
+    when(mergeCoordinator.appendNewPayloadToSync(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);

@@ -204,6 +204,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
+    if (config.getDiscovery().isDiscoveryV5Enabled()) {
+      LOG.warn("Discovery Protocol v5 is not available");
+    }
+
     final String address = config.getDiscovery().getAdvertisedHost();
     final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
     final int configuredRlpxPort = config.getRlpx().getBindPort();
