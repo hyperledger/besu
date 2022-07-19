@@ -68,7 +68,6 @@ public class RocksDBColumnarKeyValueStorage
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
-  private static final long ROCKSDB_BLOCK_CACHE_SIZE = 134217728;
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -151,7 +150,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
-    final LRUCache cache = new LRUCache(ROCKSDB_BLOCK_CACHE_SIZE);
+    final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setBlockCache(cache)
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
