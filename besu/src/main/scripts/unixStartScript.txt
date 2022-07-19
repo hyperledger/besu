@@ -185,6 +185,5 @@ eval set -- \$DEFAULT_JVM_OPTS \$JAVA_OPTS \$${optsEnvironmentVar} <% if ( appNa
 # limit malloc to 2 arenas, and use jemalloc if available
 export MALLOC_ARENA_MAX=2
 export LD_PRELOAD=libjemalloc.so
-export DYLD_INSERT_LIBRARIES=libjemalloc.dylib
 
 exec "\$JAVACMD" "\$@"
