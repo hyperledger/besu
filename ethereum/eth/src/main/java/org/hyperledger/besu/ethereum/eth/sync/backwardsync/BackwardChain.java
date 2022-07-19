@@ -39,7 +39,7 @@ public class BackwardChain {
 
   private final GenericKeyValueStorageFacade<Hash, BlockHeader> headers;
   private final GenericKeyValueStorageFacade<Hash, Block> blocks;
-  private final GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
+  private final GenericKeyValueStorageFacade<Hash, Hash> descendantsChain;
   private Optional<BlockHeader> firstStoredAncestor = Optional.empty();
   private Optional<BlockHeader> lastStoredPivot = Optional.empty();
   private final Queue<Hash> hashesToAppend = new ArrayDeque<>();
@@ -47,10 +47,10 @@ public class BackwardChain {
   public BackwardChain(
       final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage,
       final GenericKeyValueStorageFacade<Hash, Block> blocksStorage,
-      final GenericKeyValueStorageFacade<Hash, Hash> chainStorage) {
+      final GenericKeyValueStorageFacade<Hash, Hash> descendantsChain) {
     this.headers = headersStorage;
     this.blocks = blocksStorage;
-    this.chainStorage = chainStorage;
+    this.descendantsChain = descendantsChain;
   }
 
   public static BackwardChain from(
@@ -70,7 +70,7 @@ public class BackwardChain {
             Hash::toArrayUnsafe,
             new HashConvertor(),
             storageProvider.getStorageBySegmentIdentifier(
-                KeyValueSegmentIdentifier.BACKWARD_SYNC_CHAIN)));
+                KeyValueSegmentIdentifier.BACKWARD_SYNC_DESCENDANTS)));
   }
 
   public synchronized Optional<BlockHeader> getFirstAncestorHeader() {
@@ -82,7 +82,7 @@ public class BackwardChain {
     Optional<BlockHeader> it = firstStoredAncestor;
     while (it.isPresent() && result.size() < size) {
       result.add(it.get());
-      it = chainStorage.get(it.get().getHash()).flatMap(headers::get);
+      it = descendantsChain.get(it.get().getHash()).flatMap(headers::get);
     }
     return result;
   }
@@ -96,7 +96,7 @@ public class BackwardChain {
     }
     BlockHeader firstHeader = firstStoredAncestor.get();
     headers.put(blockHeader.getHash(), blockHeader);
-    chainStorage.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
+    descendantsChain.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
     firstStoredAncestor = Optional.of(blockHeader);
     debugLambda(
         LOG,
@@ -119,8 +119,8 @@ public class BackwardChain {
       return;
     }
     headers.drop(firstStoredAncestor.get().getHash());
-    final Optional<Hash> hash = chainStorage.get(firstStoredAncestor.get().getHash());
-    chainStorage.drop(firstStoredAncestor.get().getHash());
+    final Optional<Hash> hash = descendantsChain.get(firstStoredAncestor.get().getHash());
+    descendantsChain.drop(firstStoredAncestor.get().getHash());
     firstStoredAncestor = hash.flatMap(headers::get);
     if (firstStoredAncestor.isEmpty()) {
       lastStoredPivot = Optional.empty();
@@ -135,7 +135,7 @@ public class BackwardChain {
       firstStoredAncestor = Optional.of(newPivot.getHeader());
     } else {
       if (newPivot.getHeader().getParentHash().equals(lastStoredPivot.get().getHash())) {
-        chainStorage.put(lastStoredPivot.get().getHash(), newPivot.getHash());
+        descendantsChain.put(lastStoredPivot.get().getHash(), newPivot.getHash());
       } else {
         firstStoredAncestor = Optional.of(newPivot.getHeader());
       }
@@ -154,7 +154,7 @@ public class BackwardChain {
   public synchronized void clear() {
     blocks.clear();
     headers.clear();
-    chainStorage.clear();
+    descendantsChain.clear();
     firstStoredAncestor = Optional.empty();
     lastStoredPivot = Optional.empty();
     hashesToAppend.clear();
@@ -181,16 +181,25 @@ public class BackwardChain {
     }
   }
 
-  public void addBadChainToManager(final BadBlockManager badBlocksManager, final Hash hash) {
-    final Optional<Hash> ancestor = chainStorage.get(hash);
-    while (ancestor.isPresent()) {
-      final Optional<Block> block = blocks.get(ancestor.get());
+  public void addDescendantsToBadBlocks(
+      final BadBlockManager badBlocksManager, final Hash hashOfBadBlock) {
+    LOG.trace("Adding all descendants of bad block {} to bad blocks", hashOfBadBlock);
+    Optional<Hash> descendant = descendantsChain.get(hashOfBadBlock);
+
+    while (descendant.isPresent()) {
+      final Optional<Block> block = blocks.get(descendant.get());
       if (block.isPresent()) {
+        LOG.trace("Add descendant block {} to bad blocks", block.get().getHash());
         badBlocksManager.addBadBlock(block.get());
       } else {
-        final Optional<BlockHeader> blockHeader = headers.get(ancestor.get());
-        blockHeader.ifPresent(badBlocksManager::addBadHeader);
+        final Optional<BlockHeader> blockHeader = headers.get(descendant.get());
+        if (blockHeader.isPresent()) {
+          LOG.trace("Add descendant header {} to bad blocks", blockHeader.get().getHash());
+          badBlocksManager.addBadHeader(blockHeader.get());
+        }
       }
+
+      descendant = descendantsChain.get(descendant.get());
     }
   }
 }

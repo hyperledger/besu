@@ -313,7 +313,7 @@ public class BackwardSyncContext {
               .getByBlockNumber(getProtocolContext().getBlockchain().getChainHeadBlockNumber())
               .getBadBlocksManager();
       badBlocksManager.addBadBlock(block);
-      getBackwardChain().addBadChainToManager(badBlocksManager, block.getHash());
+      getBackwardChain().addDescendantsToBadBlocks(badBlocksManager, block.getHash());
       throw new BackwardSyncException(
           "Cannot save block "
               + block.toLogString()
