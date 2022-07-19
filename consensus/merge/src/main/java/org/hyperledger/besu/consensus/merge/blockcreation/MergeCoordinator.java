@@ -53,17 +53,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MergeCoordinator implements MergeMiningCoordinator {
+
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
 
-  final AtomicLong targetGasLimit;
-  final MiningParameters miningParameters;
-  final MergeBlockCreatorFactory mergeBlockCreator;
-  final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
-  final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
-  private final MergeContext mergeContext;
-  private final ProtocolContext protocolContext;
-  private final BackwardSyncContext backwardSyncContext;
-  private final ProtocolSchedule protocolSchedule;
+  protected final AtomicLong targetGasLimit;
+  protected final MiningParameters miningParameters;
+  protected final MergeBlockCreatorFactory mergeBlockCreator;
+  protected final AtomicReference<Bytes> extraData =
+      new AtomicReference<>(Bytes.fromHexString("0x"));
+  protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
+  protected final MergeContext mergeContext;
+  protected final ProtocolContext protocolContext;
+  protected final BackwardSyncContext backwardSyncContext;
+  protected final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
@@ -83,10 +85,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreator =
-        (parentHeader, address) ->
+        (parentHeader, address, blockGasLimit) ->
             new MergeBlockCreator(
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                () -> Optional.of(targetGasLimit.longValue()),
+                () -> blockGasLimit.or(() -> Optional.of(targetGasLimit.longValue())),
                 parent -> extraData.get(),
                 pendingTransactions,
                 protocolContext,
@@ -168,11 +170,14 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
     final MergeBlockCreator mergeBlockCreator =
-        this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
+        this.mergeBlockCreator.forParams(
+            parentHeader, Optional.ofNullable(feeRecipient), Optional.empty());
 
     // put the empty block in first
     final Block emptyBlock =
-        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
+        mergeBlockCreator
+            .createBlock(Optional.of(Collections.emptyList()), random, timestamp)
+            .getBlock();
 
     Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
@@ -189,7 +194,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp))
         .orTimeout(12, TimeUnit.SECONDS)
         .whenComplete(
-            (bestBlock, throwable) -> {
+            (blockCreationResult, throwable) -> {
+              final var bestBlock = blockCreationResult.getBlock();
               if (throwable != null) {
                 LOG.warn("something went wrong creating block", throwable);
               } else {
@@ -546,8 +552,9 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @FunctionalInterface
-  interface MergeBlockCreatorFactory {
-    MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
+  protected interface MergeBlockCreatorFactory {
+    MergeBlockCreator forParams(
+        BlockHeader header, Optional<Address> feeRecipient, Optional<Long> blockGasLimit);
   }
 
   @Override

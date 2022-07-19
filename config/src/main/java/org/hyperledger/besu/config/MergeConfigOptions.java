@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MergeConfigOptions {
   private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
+  private static final AtomicBoolean rollupExtensionEnabled = new AtomicBoolean(false);
 
   public static void setMergeEnabled(final boolean bool) {
     mergeEnabled.set(bool);
@@ -25,5 +26,13 @@ public class MergeConfigOptions {
 
   public static boolean isMergeEnabled() {
     return mergeEnabled.get();
+  }
+
+  public static void setRollupExtensionEnabled(final boolean bool) {
+    rollupExtensionEnabled.set(bool);
+  }
+
+  public static boolean isRollupExtensionEnabled() {
+    return rollupExtensionEnabled.get();
   }
 }

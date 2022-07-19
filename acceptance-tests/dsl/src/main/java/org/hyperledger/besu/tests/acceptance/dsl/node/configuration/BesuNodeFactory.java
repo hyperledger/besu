@@ -521,6 +521,7 @@ public class BesuNodeFactory {
             .miningEnabled()
             .jsonRpcEnabled()
             .engineRpcEnabled(true)
+            .engineRollupExtensionRpcEnabled(true)
             .build());
   }
 

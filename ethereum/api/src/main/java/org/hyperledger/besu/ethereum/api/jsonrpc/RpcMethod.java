@@ -50,6 +50,8 @@ public enum RpcMethod {
   ENGINE_FORKCHOICE_UPDATED("engine_forkchoiceUpdatedV1"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
 
+  ROLLUP_CREATE_BLOCK("rollup_createBlockV1"),
+
   GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
   GOQUORUM_STORE_RAW("goquorum_storeRaw"),
   PRIV_CALL("priv_call"),

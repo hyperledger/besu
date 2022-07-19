@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -130,6 +131,14 @@ public class JsonRpcMethodsFactory {
       if (MergeConfigOptions.isMergeEnabled()) {
         enabled.putAll(
             new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext).create(rpcApis));
+
+        if (MergeConfigOptions.isRollupExtensionEnabled()) {
+          final TransitionCoordinator transitionCoordinator =
+              (TransitionCoordinator) miningCoordinator;
+          enabled.putAll(
+              new RollupJsonRpcMethods(transitionCoordinator.getMergeCoordinator(), protocolContext)
+                  .create(rpcApis));
+        }
       }
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {

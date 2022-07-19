@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class BesuNodeConfigurationBuilder {
 
@@ -149,6 +150,18 @@ public class BesuNodeConfigurationBuilder {
     this.engineRpcConfiguration.setHostsAllowlist(singletonList("*"));
     this.engineRpcConfiguration.setAuthenticationEnabled(false);
 
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder engineRollupExtensionRpcEnabled(final boolean enabled) {
+    if (enabled) {
+      this.engineRpcConfiguration.addRpcApi(RpcApis.ROLLUP.name());
+    } else {
+      this.engineRpcConfiguration.setRpcApis(
+          this.engineRpcConfiguration.getRpcApis().stream()
+              .filter(it -> !it.equals(RpcApis.ROLLUP.name()))
+              .collect(Collectors.toList()));
+    }
     return this;
   }
 
