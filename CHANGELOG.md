@@ -7,6 +7,7 @@
 - Backward sync exception improvements [#4092](https://github.com/hyperledger/besu/pull/4092)
 - Remove block header checks during backward sync, since they will be always performed during block import phase [#4098](https://github.com/hyperledger/besu/pull/4098)
 - Optimize the backward sync retry strategy [#4095](https://github.com/hyperledger/besu/pull/4095)
+- Add support for jemalloc library to better handle rocksdb memory consumption [#4126](https://github.com/hyperledger/besu/pull/4126)
 
 ### Bug Fixes
 - Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
