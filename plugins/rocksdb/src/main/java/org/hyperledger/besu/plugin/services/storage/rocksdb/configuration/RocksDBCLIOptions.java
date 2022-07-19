@@ -42,7 +42,7 @@ public class RocksDBCLIOptions {
   @CommandLine.Option(
       names = {CACHE_CAPACITY_FLAG},
       hidden = true,
-      defaultValue = "8388608",
+      defaultValue = "134217728",
       paramLabel = "<LONG>",
       description = "Cache capacity of RocksDB (default: ${DEFAULT-VALUE})")
   long cacheCapacity;
