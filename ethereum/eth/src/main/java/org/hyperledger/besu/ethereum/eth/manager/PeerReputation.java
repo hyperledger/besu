@@ -85,6 +85,10 @@ public class PeerReputation implements Comparable<PeerReputation> {
     }
   }
 
+  public void recordUsefulResposne() {
+    score += SMALL_ADJUSTMENT;
+  }
+
   private boolean shouldRemove(final Long timestamp, final long currentTimestamp) {
     return timestamp != null && timestamp + USELESS_RESPONSE_WINDOW_IN_MILLIS < currentTimestamp;
   }
