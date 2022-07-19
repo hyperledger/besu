@@ -12,34 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import java.util.Arrays;
-import java.util.List;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup;
 
-public enum RpcApis {
-  ETH,
-  DEBUG,
-  MINER,
-  NET,
-  PERM,
-  WEB3,
-  ADMIN,
-  EEA,
-  PRIV,
-  TXPOOL,
-  TRACE,
-  PLUGINS,
-  GOQUORUM,
-  CLIQUE,
-  IBFT,
-  ENGINE,
-  ROLLUP,
-  QBFT;
-
-  public static final List<String> DEFAULT_RPC_APIS = Arrays.asList("ETH", "NET", "WEB3");
-
-  @SuppressWarnings("unused")
-  public static final List<RpcApis> ALL_JSON_RPC_APIS =
-      Arrays.asList(ETH, DEBUG, MINER, NET, PERM, WEB3, ADMIN, EEA, PRIV, TXPOOL, TRACE, PLUGINS);
+public enum RollupCreateBlockStatus {
+  INVALID_TERMINAL_BLOCK,
+  INVALID_BLOCK,
+  BLOCK_GAS_LIMIT_EXCEEDED,
+  PROCESSED;
 }

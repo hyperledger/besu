@@ -145,7 +145,7 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader(),
             epochManager);
 
-    final Block createdBlock = blockCreator.createBlock(5L);
+    final Block createdBlock = blockCreator.createBlock(5L).getBlock();
 
     Java6Assertions.assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
@@ -180,7 +180,7 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader(),
             epochManager);
 
-    final Block createdBlock = blockCreator.createBlock(0L);
+    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
   }
@@ -217,7 +217,7 @@ public class CliqueBlockCreatorTest {
             blockchain.getChainHeadHeader(),
             epochManager);
 
-    final Block createdBlock = blockCreator.createBlock(0L);
+    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }

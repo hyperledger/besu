@@ -210,7 +210,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
           }
         });
     engineRpcConfiguration.ifPresent(
-        config -> MergeConfigOptions.setMergeEnabled(config.isEnabled()));
+        config -> {
+          MergeConfigOptions.setMergeEnabled(config.isEnabled());
+          MergeConfigOptions.setRollupExtensionEnabled(config.isEnabled());
+        });
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;

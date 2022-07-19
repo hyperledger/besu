@@ -605,6 +605,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         defaultValue = "localhost,127.0.0.1")
     private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
         new JsonRPCAllowlistHostsProperty();
+
+    @Option(
+        names = {"--engine-rollup-extension-enabled"},
+        description = "Enables Rollup extension Engine APIs (default: ${DEFAULT-VALUE})")
+    private final Boolean isEngineRollupExtensionEnabled = false;
   }
 
   // JSON-RPC HTTP Options
@@ -2124,8 +2129,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
       final Integer listenPort, final List<String> allowCallsFrom) {
-    JsonRpcConfiguration engineConfig =
-        jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
+
+    List<String> apiGroups = new ArrayList<>(List.of(RpcApis.ENGINE.name(), RpcApis.ETH.name()));
+    if (engineRPCOptionGroup.isEngineRollupExtensionEnabled) {
+      apiGroups.add(RpcApis.ROLLUP.name());
+    }
+
+    JsonRpcConfiguration engineConfig = jsonRpcConfiguration(listenPort, apiGroups, allowCallsFrom);
     if (engineRPCOptionGroup.deprecatedIsEngineRpcEnabled) {
       logger.warn(
           "--engine-api-enabled parameter has been deprecated and will be removed in a future release.  "
@@ -3213,6 +3223,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         .getConfigOptions(genesisConfigOverrides))
             .getTerminalTotalDifficulty()
             .isPresent());
+
+    MergeConfigOptions.setRollupExtensionEnabled(
+        engineRPCOptionGroup.isEngineRollupExtensionEnabled);
   }
 
   private boolean isMergeEnabled() {

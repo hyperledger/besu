@@ -145,7 +145,7 @@ public class BftBlockCreatorTest {
             bftExtraDataEncoder);
 
     final int secondsBetweenBlocks = 1;
-    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1);
+    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();
 
     final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(

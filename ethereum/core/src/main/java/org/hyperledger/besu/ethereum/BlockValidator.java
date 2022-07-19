@@ -27,15 +27,18 @@ public interface BlockValidator {
   class Result {
     public final Optional<BlockProcessingOutputs> blockProcessingOutputs;
     public final Optional<String> errorMessage;
+    public final boolean isValid;
 
     public Result(final BlockProcessingOutputs blockProcessingOutputs) {
       this.blockProcessingOutputs = Optional.of(blockProcessingOutputs);
       this.errorMessage = Optional.empty();
+      this.isValid = true;
     }
 
     public Result(final String errorMessage) {
       this.blockProcessingOutputs = Optional.empty();
       this.errorMessage = Optional.of(errorMessage);
+      this.isValid = false;
     }
   }
 

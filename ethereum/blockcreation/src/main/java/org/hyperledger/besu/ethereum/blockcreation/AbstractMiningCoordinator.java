@@ -72,13 +72,13 @@ public abstract class AbstractMiningCoordinator<
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
     final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
-    return Optional.of(miner.createBlock(parentHeader, transactions, ommers));
+    return Optional.of(miner.createBlock(parentHeader, transactions, ommers).getBlock());
   }
 
   @Override
   public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
     final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
-    return Optional.of(miner.createBlock(parentHeader, timestamp));
+    return Optional.of(miner.createBlock(parentHeader, timestamp).getBlock());
   }
 
   @Override
