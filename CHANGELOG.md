@@ -1,5 +1,11 @@
 # Changelog
 
+## 22.7.0
+
+### Additions and Improvements
+
+### Bug Fixes
+
 ## 22.7.0-RC2
 
 ### Additions and Improvements
@@ -26,6 +32,10 @@
 - Remove hash to sync from the queue only if the sync step succeeds [#4105](https://github.com/hyperledger/besu/pull/4105)
 - The build process runs successfully even though the system language is not English [#4102](https://github.com/hyperledger/besu/pull/4102)
 - Avoid starting or stopping the BlockPropagationManager more than once [#4122](https://github.com/hyperledger/besu/pull/4122)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.tar.gz / sha256: `//FIXME`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.zip / sha256: `//FIXME`
 
 ## 22.7.0-RC1
 
