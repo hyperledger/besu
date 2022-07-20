@@ -215,6 +215,10 @@ public class EthPeer implements Comparable<EthPeer> {
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
   }
 
+  public void recordUsefulResponse() {
+    reputation.recordUsefulResposne();
+  }
+
   public void disconnect(final DisconnectReason reason) {
     connection.disconnect(reason);
   }

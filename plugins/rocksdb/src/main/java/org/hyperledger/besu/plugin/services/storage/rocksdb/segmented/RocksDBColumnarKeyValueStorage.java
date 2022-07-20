@@ -66,6 +66,8 @@ public class RocksDBColumnarKeyValueStorage
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   private static final String DEFAULT_COLUMN = "default";
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
+  private static final int ROCKSDB_FORMAT_VERSION = 5;
+  private static final long ROCKSDB_BLOCK_SIZE = 32768;
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -151,10 +153,10 @@ public class RocksDBColumnarKeyValueStorage
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setBlockCache(cache)
-        .setFormatVersion(5)
+        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
         .setOptimizeFiltersForMemory(true)
         .setCacheIndexAndFilterBlocks(true)
-        .setBlockSize(32768);
+        .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
   @Override
