@@ -212,23 +212,23 @@ public class TrieLogLayer {
     output.endList(); // container
   }
 
-  Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
+  public Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
     return accounts.entrySet().stream();
   }
 
-  Stream<Map.Entry<Address, BonsaiValue<Bytes>>> streamCodeChanges() {
+  public Stream<Map.Entry<Address, BonsaiValue<Bytes>>> streamCodeChanges() {
     return code.entrySet().stream();
   }
 
-  Stream<Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>>> streamStorageChanges() {
+  public Stream<Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>>> streamStorageChanges() {
     return storage.entrySet().stream();
   }
 
-  boolean hasStorageChanges(final Address address) {
+  public boolean hasStorageChanges(final Address address) {
     return storage.containsKey(address);
   }
 
-  Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
+  public Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
     return storage.getOrDefault(address, Map.of()).entrySet().stream();
   }
 
