@@ -29,24 +29,28 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "errorMessage",
   "payloadId",
   "executionPayload",
-  "failedTransactions"
+  "failedTransactions",
+  "unprocessedTransactions"
 })
 public class RollupCreateBlockResult {
   private final RollupCreateBlockStatus status;
   private final PayloadIdentifier payloadId;
   private final EngineGetPayloadResult executionPayload;
   private final List<InvalidTransactionResult> invalidTransactions;
+  private final List<String> unprocessedTransactions;
   private final Optional<String> errorMessage;
 
   public RollupCreateBlockResult(
       final RollupCreateBlockStatus status,
       final PayloadIdentifier payloadId,
       final EngineGetPayloadResult executionPayload,
-      final List<InvalidTransactionResult> invalidTransactions) {
+      final List<InvalidTransactionResult> invalidTransactions,
+      final List<String> unprocessedTransactions) {
     this.status = status;
     this.payloadId = payloadId;
     this.executionPayload = executionPayload;
     this.invalidTransactions = invalidTransactions;
+    this.unprocessedTransactions = unprocessedTransactions;
     this.errorMessage = Optional.empty();
   }
 
@@ -57,6 +61,7 @@ public class RollupCreateBlockResult {
     this.payloadId = null;
     this.executionPayload = null;
     this.invalidTransactions = null;
+    this.unprocessedTransactions = null;
   }
 
   @JsonGetter(value = "status")
@@ -82,6 +87,11 @@ public class RollupCreateBlockResult {
   @JsonGetter(value = "invalidTransactions")
   public List<InvalidTransactionResult> getInvalidTransactions() {
     return invalidTransactions;
+  }
+
+  @JsonGetter(value = "unprocessedTransactions")
+  public List<String> getUnprocessedTransactions() {
+    return unprocessedTransactions;
   }
 
   public static class InvalidTransactionResult {

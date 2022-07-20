@@ -105,28 +105,32 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void canAddBlocksToTheCanonicalChain() throws Exception {
+  public void createsBlockAndReturnsInvalidAndUnprocessedTransactions() throws Exception {
     final EthBlock.Block finalizedBlock = getBlockByNumber(DefaultBlockParameterName.LATEST);
     final Transaction transaction1 =
-        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 0L);
+        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 0L, 23_000L);
     final Transaction transaction2 =
-        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 10L);
+        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 10L, 23_000L);
     final Transaction transaction3 =
         buildTransferTransaction(
-            RANDOM_ACCOUNT_ADDRESS, Wei.fromHexString("0xad78ebc5ac6200000"), 1L);
+            RANDOM_ACCOUNT_ADDRESS, Wei.fromHexString("0xad78ebc5ac6200000"), 1L, 23_000L);
     final Transaction transaction4 =
-        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 1L);
+        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 1L, 100_000_000L);
+    final Transaction transaction5 =
+        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(12), 1L, 23_000L);
     final String rlpEncodedTransaction1 = rlpEncodeTransaction(transaction1);
     final String rlpEncodedTransaction2 = rlpEncodeTransaction(transaction2);
     final String rlpEncodedTransaction3 = rlpEncodeTransaction(transaction3);
     final String rlpEncodedTransaction4 = rlpEncodeTransaction(transaction4);
+    final String rlpEncodedTransaction5 = rlpEncodeTransaction(transaction5);
     final JsonObject result =
         engineApiClient.rollup_createNewBlock(
             finalizedBlock.getHash(),
             rlpEncodedTransaction1,
             rlpEncodedTransaction2,
             rlpEncodedTransaction3,
-            rlpEncodedTransaction4);
+            rlpEncodedTransaction4,
+            rlpEncodedTransaction5);
 
     final JsonObject newBlock = result.getJsonObject("executionPayload");
     final String newBlockHash = newBlock.getString("blockHash");
@@ -135,7 +139,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     assertThat(newBlock.getJsonArray("transactions").getString(0))
         .isEqualTo(rlpEncodedTransaction1);
     assertThat(newBlock.getJsonArray("transactions").getString(1))
-        .isEqualTo(rlpEncodedTransaction4);
+        .isEqualTo(rlpEncodedTransaction5);
     assertThat(result.getJsonArray("invalidTransactions").size()).isEqualTo(2);
     var invalidTx1Result = result.getJsonArray("invalidTransactions").getJsonObject(0);
     var invalidTx2Result = result.getJsonArray("invalidTransactions").getJsonObject(1);
@@ -149,7 +153,12 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     assertThat(invalidTx2Result.getString("reason")).isEqualTo("UPFRONT_COST_EXCEEDS_BALANCE");
     assertThat(invalidTx2Result.getString("errorMessage"))
         .isEqualTo(
-            "transaction up-front cost 0x00000000000000000000000000000000000000000000000ad78ebc5ad637df80 exceeds transaction sender account balance 0x00000000000000000000000000000000000000000000000ad78ebc5ac25eb236");
+            "transaction up-front cost 0x00000000000000000000000000000000000000000000000ad78ebc5aca3cdb40 exceeds transaction sender account balance 0x00000000000000000000000000000000000000000000000ad78ebc5ac25eb236");
+
+    var unprocessedTransactions = result.getJsonArray("unprocessedTransactions");
+    assertThat(unprocessedTransactions).isNotNull();
+    assertThat(unprocessedTransactions.size()).isEqualTo(1);
+    assertThat(unprocessedTransactions.getString(0)).isEqualTo(rlpEncodedTransaction4);
 
     // add new payload to execution engine;
     engineApiClient.engine_newPayloadV1(newBlock);
@@ -254,13 +263,14 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     return web3j.ethGetBlockByHash(blockHash, false).send().getBlock();
   }
 
-  private Transaction buildTransferTransaction(final String to, final Wei value, final long nonce) {
+  private Transaction buildTransferTransaction(
+      final String to, final Wei value, final long nonce, final long gasLimit) {
     return Transaction.builder()
         .chainId(new BigInteger("1", 10))
         .nonce(nonce)
         .to(Address.fromHexString(to))
         .value(value)
-        .gasLimit(90000)
+        .gasLimit(gasLimit)
         .gasPrice(Wei.of(3000))
         .payload(Bytes.EMPTY)
         .type(TransactionType.FRONTIER)

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult.InvalidTransactionResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionValidationResult;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -79,17 +81,16 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
     final Address suggestedRecipient;
     final UnsignedLongParameter blockGasLimit;
     final long timestamp;
-    // final Boolean skipInvalidTransactions;
     final Bytes32 prevRandao;
+    final List<?> rawTransactions;
 
     try {
       parentBlockHash = requestContext.getRequiredParameter(0, Hash.class);
-      final List<?> rawTransactions = requestContext.getRequiredParameter(1, List.class);
+      rawTransactions = requestContext.getRequiredParameter(1, List.class);
       prevRandao = requestContext.getRequiredParameter(2, Hash.class);
       suggestedRecipient = requestContext.getRequiredParameter(3, Address.class);
       blockGasLimit = requestContext.getRequiredParameter(4, UnsignedLongParameter.class);
       timestamp = Long.decode(requestContext.getRequiredParameter(5, String.class));
-      // skipInvalidTransactions = requestContext.getRequiredParameter(4, Boolean.class);
       transactions =
           rawTransactions.stream()
               .map(Object::toString)
@@ -128,17 +129,47 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
       final EngineGetPayloadResult payloadResult =
           blockResultFactory.enginePayloadTransactionComplete(blockCreationResult.getBlock());
 
+      final List<RollupCreateBlockResult.InvalidTransactionResult> invalidTransactionResults =
+          invalidTransactionResults(blockCreationResult.getTransactionSelectionResults());
+      final List<String> unprocessedTransactions =
+          unprocessedTransactions(
+              rawTransactions,
+              payloadResult.getTransactions(),
+              invalidTransactionResults.stream()
+                  .map(InvalidTransactionResult::getTransaction)
+                  .collect(Collectors.toList()));
+
       return new JsonRpcSuccessResponse(
           requestId,
           new RollupCreateBlockResult(
               RollupCreateBlockStatus.PROCESSED,
               result.getPayloadId(),
               payloadResult,
-              invalidTransactionResults(blockCreationResult.getTransactionSelectionResults())));
+              invalidTransactionResults,
+              unprocessedTransactions));
     } catch (Exception e) {
       LOG.error("Failed to create block: ", e);
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INTERNAL_ERROR);
     }
+  }
+
+  private ArrayList<String> unprocessedTransactions(
+      final List<?> requestedTransactions,
+      final List<String> includedTransactions,
+      final List<String> invalidTransactions) {
+    final ArrayList<String> unprocessedTransactions =
+        new ArrayList<>(
+            requestedTransactions.size()
+                - includedTransactions.size()
+                - includedTransactions.size());
+
+    for (Object tx : requestedTransactions) {
+      if (!includedTransactions.contains(tx) && !invalidTransactions.contains(tx)) {
+        unprocessedTransactions.add((String) tx);
+      }
+    }
+
+    return unprocessedTransactions;
   }
 
   private List<RollupCreateBlockResult.InvalidTransactionResult> invalidTransactionResults(
@@ -147,20 +178,23 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
     return transactionSelectionResults.getInvalidTransactions().stream()
         .map(
             (TransactionValidationResult txValidation) -> {
-              var transactionRlp = new BytesValueRLPOutput();
-              txValidation.getTransaction().writeTo(transactionRlp);
-
               return new RollupCreateBlockResult.InvalidTransactionResult(
-                  transactionRlp.encoded().toHexString(),
+                  rlpEncode(txValidation.getTransaction()),
                   txValidation.getValidationResult().getInvalidReason(),
                   txValidation.getValidationResult().getErrorMessage());
             })
         .collect(Collectors.toList());
   }
 
+  private String rlpEncode(final Transaction transaction) {
+    var transactionRlp = new BytesValueRLPOutput();
+    transaction.writeTo(transactionRlp);
+    return transactionRlp.encoded().toHexString();
+  }
+
   private JsonRpcResponse replyWithStatus(
       final Object requestId, final RollupCreateBlockStatus status) {
     return new JsonRpcSuccessResponse(
-        requestId, new RollupCreateBlockResult(status, null, null, null));
+        requestId, new RollupCreateBlockResult(status, Optional.empty()));
   }
 }
