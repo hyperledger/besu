@@ -80,9 +80,9 @@ public class RequestManager {
               responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
               // disconnect on incorrect requestIds
               () -> {
-                LOG.info(
+                LOG.debug(
                     "Disconnecting because of incorrect request IDs, Peer {}, connection {}",
-                    ethMessage.getPeer().getConnection().getPeer().getId(),
+                    ethMessage.getPeer(),
                     System.identityHashCode(ethMessage.getPeer().getConnection()));
                 peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
               });

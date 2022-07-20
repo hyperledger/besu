@@ -37,10 +37,8 @@ public abstract class RlpxConnection {
   }
 
   public static RlpxConnection outboundConnection(
-      final Peer peer,
-      final CompletableFuture<PeerConnection>
-          future) { // TODO: we could get rid of the completable future for the
-    // RlpxConnection.outboundConnection
+      final Peer peer, final CompletableFuture<PeerConnection> future) {
+    // TODO: we could get rid of the completable future for the RlpxConnection.outboundConnection
     return new LocallyInitiatedRlpxConnection(peer, future);
   }
 

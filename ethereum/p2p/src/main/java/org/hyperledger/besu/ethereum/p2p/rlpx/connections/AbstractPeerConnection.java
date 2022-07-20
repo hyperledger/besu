@@ -145,7 +145,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
-    LOG.info(
+    LOG.debug(
         "Terminating connection {} with peer {}, reason {}, peer initiated: {}, connection: {}",
         System.identityHashCode(this),
         this.getPeer().getId(),
@@ -166,7 +166,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
 
   @Override
   public void disconnect(final DisconnectReason reason) {
-    LOG.info(
+    LOG.debug(
         "Disconnecting connection {} with peer {}, reason {}",
         System.identityHashCode(this),
         this.getPeer().getId(),

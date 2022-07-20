@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 public class SnapProtocolManager implements ProtocolManager {
   private static final Logger LOG = LoggerFactory.getLogger(SnapProtocolManager.class);
 
-  //  private final List<PeerValidator> peerValidators;
   private final List<Capability> supportedCapabilities;
   private final EthPeers ethPeers;
   private final EthMessages snapMessages;
@@ -52,7 +51,6 @@ public class SnapProtocolManager implements ProtocolManager {
       final EthPeers ethPeers,
       final EthMessages snapMessages,
       final WorldStateArchive worldStateArchive) {
-    //    this.peerValidators = peerValidators;
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
@@ -101,7 +99,7 @@ public class SnapProtocolManager implements ProtocolManager {
     }
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.info("Unsolicited message received from, disconnecting: {}", ethPeer);
+      LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
     }
@@ -119,7 +117,7 @@ public class SnapProtocolManager implements ProtocolManager {
               .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
               .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
     } catch (final RLPException e) {
-      LOG.info(
+      LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
     }

@@ -19,8 +19,8 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -80,15 +80,6 @@ public class EthPeers {
       final Clock clock,
       final MetricsSystem metricsSystem,
       final int maxPeers,
-      final int maxMessageSize) {
-    this(protocolName, clock, metricsSystem, maxPeers, maxMessageSize, Collections.emptyList());
-  }
-
-  public EthPeers(
-      final String protocolName,
-      final Clock clock,
-      final MetricsSystem metricsSystem,
-      final int maxPeers,
       final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Vertx vertx) {
@@ -110,7 +101,7 @@ public class EthPeers {
       final PeerConnection peerConnection, final List<PeerValidator> peerValidators) {
     synchronized (this) {
       final Bytes peerId = peerConnection.getPeer().getId();
-      LOG.info(
+      LOG.debug(
           "Registering a connection with peer {}, connection {}, client {}, verion {}",
           peerId,
           System.identityHashCode(peerConnection),
@@ -123,10 +114,6 @@ public class EthPeers {
               .findFirst();
       if (optionalEthPeer.isPresent()) {
         nonReadyConnections.put(peerConnection, optionalEthPeer.get());
-        LOG.info(
-            "Found existing EthPeer in nonReadyConnections for peer {}, connection {}",
-            optionalEthPeer.get(),
-            System.identityHashCode(peerConnection));
         setUpCleanUp(peerConnection);
       } else {
         connections.compute(
@@ -142,11 +129,6 @@ public class EthPeers {
                         maxMessageSize,
                         clock,
                         permissioningProviders);
-                LOG.info(
-                    "Created new EthPeer in connections for peer {}, connection {}",
-                    peer,
-                    System.identityHashCode(peerConnection));
-
               } else {
                 LOG.info(
                     "Found existing EthPeer in connections for peer {}, connection {}",
@@ -168,22 +150,12 @@ public class EthPeers {
   private void setUpCleanUp(final PeerConnection peerConnection) {
     // this makes sure that the content of the nonReadyConnections is cleaned up. The
     // connection has 20s time to create a "ready".
-    LOG.info(
-        "Setting timerUtil for connection {} at {}",
-        System.identityHashCode(peerConnection),
-        System.currentTimeMillis());
     timerUtil.setTimer(
         20000,
         () -> {
-          try {
-            LOG.info(
-                "Calling TimerUtil for connection {}", System.identityHashCode(peerConnection));
-            final EthPeer removed = nonReadyConnections.remove(peerConnection);
-            if (removed != null && removed.getConnection() != peerConnection) {
-              peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
-            }
-          } catch (final Throwable t) {
-            LOG.info("Caught Throwable: trying to clean up nonReadyConnections {}", t);
+          final EthPeer removed = nonReadyConnections.remove(peerConnection);
+          if (removed != null && removed.getConnection() != peerConnection) {
+            peerConnection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
           }
         });
   }
@@ -196,10 +168,10 @@ public class EthPeers {
             if (existingPeer.getConnection().equals(connection)) {
               final PeerInfo peerInfo = existingPeer.getConnection().getPeerInfo();
               LOG.debug(
-                      "Disconnected EthPeer {}, client ID: {}, {}",
-                      peerInfo.getNodeId(),
-                      peerInfo.getClientId(),
-                      peer.getReputation());
+                  "Disconnected EthPeer {}, client ID: {}, Reputation: {}",
+                  peerInfo.getNodeId(),
+                  peerInfo.getClientId(),
+                  existingPeer.getReputation());
               disconnectCallbacks.forEach(callback -> callback.onDisconnect(existingPeer));
               existingPeer.handleDisconnect();
               abortPendingRequestsAssignedToDisconnectedPeers();
@@ -296,16 +268,15 @@ public class EthPeers {
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
     return bestPeerMatchingCriteria(
-            p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight());
+        p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight());
   }
-
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
     return streamAllPeers().filter(matchesCriteria).max(getBestChainComparator());
   }
 
   public void setBestChainComparator(final Comparator<EthPeer> comparator) {
-    LOG.info("Updating the default best peer comparator");
+    LOG.debug("Updating the default best peer comparator");
     bestPeerComparator = comparator;
   }
 

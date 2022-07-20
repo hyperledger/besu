@@ -220,7 +220,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                           badBlockManager.addBadBlock(blockPeerTaskResult.getResult());
                         }
                         headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-                        LOG.info(
+                        LOG.debug(
                             "Received invalid headers from peer, disconnecting from: {}",
                             headersResult.getPeer());
                         future.completeExceptionally(

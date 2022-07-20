@@ -239,7 +239,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         "Unsupported capability passed to processMessage(): " + cap);
     final MessageData messageData = message.getData();
     final int code = messageData.getCode();
-    LOG.info("Process message {}, {}", cap, code);
+    LOG.trace("Process message {}, {}", cap, code);
 
     // Handle STATUS processing
     if (code == EthPV62.STATUS) {
@@ -256,7 +256,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (!message.getConnection().statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
-      LOG.info(
+      LOG.debug(
           "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
@@ -276,7 +276,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.info(
+      LOG.debug(
           "Unsolicited message received from peer {}, disconnecting connection: {}",
           message.getConnection().getPeer(),
           System.identityHashCode(message.getConnection()));
@@ -301,7 +301,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         maybeResponseData = ethMessages.dispatch(ethMessage);
       }
     } catch (final RLPException e) {
-      LOG.info(
+      LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
 
       ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
@@ -318,7 +318,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    LOG.info(
+    LOG.debug(
         "Handling new connection ({}) with peer {}. Sending status message",
         System.identityHashCode(connection),
         connection.getPeer().getId());
@@ -405,7 +405,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         }
       }
     } catch (final RLPException e) {
-      LOG.info("Unable to parse status message.", e);
+      LOG.debug("Unable to parse status message.", e);
       // Parsing errors can happen when clients broadcast network ids outside the int range,
       // So just disconnect with "subprotocol" error rather than "breach of protocol".
       peerConnection.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);

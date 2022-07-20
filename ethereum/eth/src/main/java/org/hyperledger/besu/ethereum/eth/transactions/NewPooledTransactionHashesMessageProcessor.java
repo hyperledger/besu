@@ -132,7 +132,7 @@ public class NewPooledTransactionHashesMessageProcessor {
       }
     } catch (final RLPException ex) {
       if (peer != null) {
-        LOG.info(
+        LOG.debug(
             "Malformed pooled transaction hashes message received, disconnecting: {}", peer, ex);
         peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       }

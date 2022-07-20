@@ -216,7 +216,6 @@ public class RlpxAgent {
     if (checkAlreadyTrying(peer)) {
       return CompletableFuture.failedFuture((new RuntimeException("Already trying to connect")));
     }
-    LOG.info("Trying to establish connection with peer {}", peer.getId());
     // Check if we're ready to establish connections
     if (!localNode.isReady()) {
       return CompletableFuture.failedFuture(
@@ -257,7 +256,7 @@ public class RlpxAgent {
     future.whenComplete(
         (conn, err) -> {
           if (err != null) {
-            LOG.info("Failed to establish connection with peer {}, error {}", peer.getId(), err);
+            LOG.debug("Failed to establish connection with peer {}, error {}", peer.getId(), err);
           } else {
             LOG.info(
                 "Established NettyPeerConnection with peer {}, connection {}",
@@ -344,7 +343,7 @@ public class RlpxAgent {
         connection -> {
           if (!peerPermissions.allowOngoingConnection(
               connection.getPeer(), connection.initiatedRemotely())) {
-            LOG.info(
+            LOG.debug(
                 "Disconnecting from peer that is not permitted to maintain ongoing connection: {}",
                 System.identityHashCode(connection.getPeerConnection()));
             connection.disconnect(DisconnectReason.REQUESTED);
@@ -371,14 +370,10 @@ public class RlpxAgent {
   }
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {
-    LOG.info(
-        "incoming connection {} with peer {}",
-        System.identityHashCode(peerConnection),
-        peerConnection.getPeer().getId());
     final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {
-      LOG.info("Local node is not ready. Disconnect incoming connection: {}", peerConnection);
+      LOG.debug("Local node is not ready. Disconnect incoming connection: {}", peerConnection);
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
       return;
     }
@@ -418,12 +413,6 @@ public class RlpxAgent {
     // Track this new connection, deduplicating existing connection if necessary
     final AtomicBoolean newConnectionAccepted = new AtomicBoolean(false);
     final Peer peer = peerConnection.getPeer();
-    final RlpxConnection newConnection =
-        isInboundConnection
-            ? RlpxConnection.inboundConnection(peerConnection)
-            : RlpxConnection.outboundConnection(
-                peer, CompletableFuture.completedFuture(peerConnection));
-
     // Disconnect if too many peers
 
     if (!randomPeerPriority) {
@@ -443,6 +432,12 @@ public class RlpxAgent {
       }
     }
 
+    final RlpxConnection newConnection =
+        isInboundConnection
+            ? RlpxConnection.inboundConnection(peerConnection)
+            : RlpxConnection.outboundConnection(
+                peer, CompletableFuture.completedFuture(peerConnection));
+
     // Our disconnect handler runs connectionsById.compute(), so don't actually execute the
     // disconnect command until we've returned from our compute() calculation
     connectionsById.compute(
@@ -450,17 +445,13 @@ public class RlpxAgent {
         (nodeId, existingConnection) -> {
           if (existingConnection == null) {
             // The new connection is unique, set it and return
-            LOG.info(
-                "Ready connection established with {}, connection {}",
-                peer.getId(),
-                System.identityHashCode(newConnection.getPeerConnection()));
             newConnectionAccepted.set(true);
             return newConnection;
           }
           // We already have an existing connection, figure out which connection to keep
           if (compareDuplicateConnections(newConnection, existingConnection) < 0) {
             // Use the new connection
-            LOG.info(
+            LOG.debug(
                 "Duplicate connection detected, disconnecting existing connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(existingConnection.getPeerConnection()),
                 System.identityHashCode(newConnection.getPeerConnection()),
@@ -469,7 +460,7 @@ public class RlpxAgent {
             return newConnection;
           } else {
             // Keep the existing connection
-            LOG.info(
+            LOG.debug(
                 "Duplicate connection detected, disconnecting connection {} in favor of connection {} for peer: {}",
                 System.identityHashCode(newConnection.getPeerConnection()),
                 System.identityHashCode(existingConnection.getPeerConnection()),
