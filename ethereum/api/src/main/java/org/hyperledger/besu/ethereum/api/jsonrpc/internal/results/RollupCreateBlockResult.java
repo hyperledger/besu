@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreateBlockStatus;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -32,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "failedTransactions",
   "unprocessedTransactions"
 })
+@JsonInclude(Include.NON_NULL)
 public class RollupCreateBlockResult {
   private final RollupCreateBlockStatus status;
   private final PayloadIdentifier payloadId;

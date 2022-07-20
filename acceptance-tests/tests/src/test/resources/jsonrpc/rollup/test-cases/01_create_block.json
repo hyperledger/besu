@@ -34,6 +34,7 @@
         "blockHash" : "0xed0f7c98bc0d0cf7f76755e1460968f2de115bbbee8670becd3a93f3f0840aee",
         "transactions" : [ ]
       },
+      "unprocessedTransactions": [],
       "invalidTransactions" : [ ]
     }
   },
