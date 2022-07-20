@@ -85,13 +85,11 @@ public class RollupMergeCoordinator extends MergeCoordinator implements MergeMin
       final Long timestamp,
       final Address feeRecipient,
       final List<Transaction> transactions,
-      final Bytes32 prevRandao,
-      final Optional<Long> optionalBlockGasLimit) {
+      final Bytes32 prevRandao) {
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
     final MergeBlockCreator mergeBlockCreator =
-        this.mergeBlockCreator.forParams(
-            parentHeader, Optional.ofNullable(feeRecipient), optionalBlockGasLimit);
+        this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     final BlockCreator.BlockCreationResult blockCreationResult =
         mergeBlockCreator.createBlock(Optional.of(transactions), prevRandao, timestamp);

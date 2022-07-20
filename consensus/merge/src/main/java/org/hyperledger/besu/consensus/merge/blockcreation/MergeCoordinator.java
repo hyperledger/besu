@@ -85,10 +85,10 @@ public class MergeCoordinator implements MergeMiningCoordinator {
             .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreator =
-        (parentHeader, address, blockGasLimit) ->
+        (parentHeader, address) ->
             new MergeBlockCreator(
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                () -> blockGasLimit.or(() -> Optional.of(targetGasLimit.longValue())),
+                () -> Optional.of(targetGasLimit.longValue()),
                 parent -> extraData.get(),
                 pendingTransactions,
                 protocolContext,
@@ -170,8 +170,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
     final MergeBlockCreator mergeBlockCreator =
-        this.mergeBlockCreator.forParams(
-            parentHeader, Optional.ofNullable(feeRecipient), Optional.empty());
+        this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
     final Block emptyBlock =
@@ -552,9 +551,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @FunctionalInterface
-  protected interface MergeBlockCreatorFactory {
-    MergeBlockCreator forParams(
-        BlockHeader header, Optional<Address> feeRecipient, Optional<Long> blockGasLimit);
+  public interface MergeBlockCreatorFactory {
+    MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
 
   @Override

@@ -107,12 +107,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
     try {
       final PayloadCreationResult result =
           mergeCoordinator.createBlock(
-              parentBlock.get(),
-              timestamp,
-              suggestedRecipient,
-              transactions,
-              prevRandao,
-              Optional.empty());
+              parentBlock.get(), timestamp, suggestedRecipient, transactions, prevRandao);
 
       if (result.getBlockValidationResult().errorMessage.isPresent()) {
         return new JsonRpcSuccessResponse(

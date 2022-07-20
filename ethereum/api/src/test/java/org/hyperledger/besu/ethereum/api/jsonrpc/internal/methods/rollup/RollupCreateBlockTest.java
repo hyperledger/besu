@@ -184,7 +184,7 @@ public class RollupCreateBlockTest {
             mockPayloadId,
             new BlockCreationResult(mockEmptyBlock, new TransactionSelectionResults()),
             new BlockValidator.Result(new BlockProcessingOutputs(null, Collections.emptyList())));
-    when(mergeCoordinator.createBlock(any(), any(), any(), any(), any(), any()))
+    when(mergeCoordinator.createBlock(any(), any(), any(), any(), any()))
         .thenReturn(blockCreationResult);
 
     final var result =
@@ -201,8 +201,7 @@ public class RollupCreateBlockTest {
             eq(mockBlockTimestamp),
             eq(feeRecipient),
             eq(List.of(transaction1, transaction2)),
-            eq(mockPrevRandao),
-            eq(Optional.of(blockGasLimit)));
+            eq(mockPrevRandao));
 
     assertThat(result.getInvalidTransactions()).isEmpty();
     assertThat(result.getPayloadId()).isNotNull();
