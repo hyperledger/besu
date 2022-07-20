@@ -29,14 +29,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult.InvalidTransactionResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionValidationResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.ArrayList;
@@ -122,13 +120,15 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
           blockResultFactory.enginePayloadTransactionComplete(blockCreationResult.getBlock());
 
       final List<RollupCreateBlockResult.InvalidTransactionResult> invalidTransactionResults =
-          invalidTransactionResults(blockCreationResult.getTransactionSelectionResults());
+          invalidTransactionResults(
+              rawTransactions, transactions, blockCreationResult.getTransactionSelectionResults());
       final List<String> unprocessedTransactions =
           unprocessedTransactions(
               rawTransactions,
-              payloadResult.getTransactions(),
-              invalidTransactionResults.stream()
-                  .map(InvalidTransactionResult::getTransaction)
+              transactions,
+              blockCreationResult.getBlock().getBody().getTransactions(),
+              blockCreationResult.getTransactionSelectionResults().getInvalidTransactions().stream()
+                  .map(TransactionValidationResult::getTransaction)
                   .collect(Collectors.toList()));
 
       return new JsonRpcSuccessResponse(
@@ -146,18 +146,20 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
   }
 
   private ArrayList<String> unprocessedTransactions(
-      final List<?> requestedTransactions,
-      final List<String> includedTransactions,
-      final List<String> invalidTransactions) {
+      final List<?> requestedTransactionsRaw,
+      final List<Transaction> requestedTransactions,
+      final List<Transaction> includedTransactions,
+      final List<Transaction> invalidTransactions) {
     final ArrayList<String> unprocessedTransactions =
         new ArrayList<>(
             requestedTransactions.size()
                 - includedTransactions.size()
                 - includedTransactions.size());
 
-    for (Object tx : requestedTransactions) {
+    for (int i = 0; i < requestedTransactionsRaw.size(); i++) {
+      Transaction tx = requestedTransactions.get(i);
       if (!includedTransactions.contains(tx) && !invalidTransactions.contains(tx)) {
-        unprocessedTransactions.add((String) tx);
+        unprocessedTransactions.add((String) requestedTransactionsRaw.get(i));
       }
     }
 
@@ -165,23 +167,23 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
   }
 
   private List<RollupCreateBlockResult.InvalidTransactionResult> invalidTransactionResults(
+      final List<?> requestedTransactionsRaw,
+      final List<Transaction> requestedTransactions,
       final TransactionSelectionResults transactionSelectionResults) {
 
     return transactionSelectionResults.getInvalidTransactions().stream()
         .map(
             (TransactionValidationResult txValidation) -> {
+              final var transactionRaw =
+                  (String)
+                      requestedTransactionsRaw.get(
+                          requestedTransactions.indexOf(txValidation.getTransaction()));
               return new RollupCreateBlockResult.InvalidTransactionResult(
-                  rlpEncode(txValidation.getTransaction()),
+                  transactionRaw,
                   txValidation.getValidationResult().getInvalidReason(),
                   txValidation.getValidationResult().getErrorMessage());
             })
         .collect(Collectors.toList());
-  }
-
-  private String rlpEncode(final Transaction transaction) {
-    var transactionRlp = new BytesValueRLPOutput();
-    transaction.writeTo(transactionRlp);
-    return transactionRlp.encoded().toHexString();
   }
 
   private JsonRpcResponse replyWithStatus(

@@ -22,7 +22,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
@@ -287,9 +287,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
   }
 
   private static String rlpEncodeTransaction(final Transaction transaction) {
-    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-    transaction.writeTo(rlp);
-    return rlp.encoded().toHexString();
+    return TransactionEncoder.encodeOpaqueBytes(transaction).toHexString();
   }
 
   private static KeyPair keyPair(final String privateKey) {

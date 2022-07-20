@@ -44,13 +44,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionValidationResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -66,7 +69,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -85,15 +87,6 @@ public class RollupCreateBlockTest {
   private static final Address feeRecipient = Address.fromHexString("0x00112233aabbccddeeff");
   private static final PayloadIdentifier mockPayloadId =
       PayloadIdentifier.forPayloadParams(Hash.ZERO, 1337L);
-  private static final BlockHeader mockHeader =
-      new BlockHeaderTestFixture()
-          .prevRandao(mockPrevRandao)
-          .gasLimit(blockGasLimit)
-          .timestamp(mockBlockTimestamp)
-          .coinbase(feeRecipient)
-          .buildHeader();
-  private static final Block mockEmptyBlock =
-      new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
 
   private static final KeyPair keyPair =
       keyPair("0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63");
@@ -129,14 +122,14 @@ public class RollupCreateBlockTest {
   final Transaction transaction3 =
       Transaction.builder()
           .chainId(new BigInteger("1", 10))
-          .nonce(1)
+          .nonce(2)
           .value(Wei.of(10))
           .gasLimit(30000)
           .maxPriorityFeePerGas(Wei.of(2))
           .payload(Bytes.EMPTY.trimLeadingZeros())
           .maxFeePerGas(Wei.of(new BigInteger("5000000000", 10)))
           .gasPrice(null)
-          .to(Address.fromHexString("0x000000000000000000000000000000000000aaaa"))
+          .to(Address.fromHexString("0x000000000000000000000000000000000000aaab"))
           .type(TransactionType.EIP1559)
           .signAndBuild(keyPair);
 
@@ -168,21 +161,33 @@ public class RollupCreateBlockTest {
     final var invalidParentHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
     assertStatus(
-        invalidParentHash,
-        Collections.emptyList(),
-        blockGasLimit,
-        false,
-        RollupCreateBlockStatus.INVALID_TERMINAL_BLOCK);
+        invalidParentHash, Collections.emptyList(), RollupCreateBlockStatus.INVALID_TERMINAL_BLOCK);
   }
 
-  // @Disabled("Need to fix NPE in mocks")
   @Test
-  public void shouldReturnProcessedIfAllTransactionsAreValid() {
+  public void shouldReturnPayloadWhenBlockIsValid() {
+    final BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .prevRandao(mockPrevRandao)
+            .gasLimit(blockGasLimit)
+            .timestamp(mockBlockTimestamp)
+            .coinbase(feeRecipient)
+            .buildHeader();
+    final Block mockEmptyBlock =
+        new Block(mockHeader, new BlockBody(List.of(transaction2), Collections.emptyList()));
+
     when(blockchain.getBlockHeader(mockHash)).thenReturn(Optional.of(mock(BlockHeader.class)));
+    final var mockTransactionSelectionResults = mock(TransactionSelectionResults.class);
+    when(mockTransactionSelectionResults.getInvalidTransactions())
+        .thenReturn(
+            List.of(
+                new TransactionValidationResult(
+                    transaction1,
+                    ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW))));
     var blockCreationResult =
         new PayloadCreationResult(
             mockPayloadId,
-            new BlockCreationResult(mockEmptyBlock, new TransactionSelectionResults()),
+            new BlockCreationResult(mockEmptyBlock, mockTransactionSelectionResults),
             new BlockValidator.Result(new BlockProcessingOutputs(null, Collections.emptyList())));
     when(mergeCoordinator.createBlock(any(), any(), any(), any(), any()))
         .thenReturn(blockCreationResult);
@@ -190,9 +195,7 @@ public class RollupCreateBlockTest {
     final var result =
         assertStatus(
             mockHash,
-            List.of(transaction1, transaction2),
-            blockGasLimit,
-            false,
+            List.of(transaction1, transaction2, transaction3),
             RollupCreateBlockStatus.PROCESSED);
 
     verify(mergeCoordinator)
@@ -200,10 +203,9 @@ public class RollupCreateBlockTest {
             any(),
             eq(mockBlockTimestamp),
             eq(feeRecipient),
-            eq(List.of(transaction1, transaction2)),
+            eq(List.of(transaction1, transaction2, transaction3)),
             eq(mockPrevRandao));
 
-    assertThat(result.getInvalidTransactions()).isEmpty();
     assertThat(result.getPayloadId()).isNotNull();
     assertThat(result.getPayloadId()).matches("0[xX][0-9a-fA-F]{16}");
     assertThat(result.getExecutionPayload()).isNotNull();
@@ -211,38 +213,20 @@ public class RollupCreateBlockTest {
         .isEqualTo(feeRecipient.toHexString());
     assertThat(result.getExecutionPayload().getPrevRandao())
         .isEqualTo(mockEmptyBlock.getHeader().getPrevRandao().get().toHexString());
-  }
-
-  @Disabled("Not supported yet")
-  public void shouldReturnGasLimitExceededIfGasLimitIsExceeded() {
-    final long lowBlockGasLimit = 22_000L;
-    final var result =
-        assertStatus(
-            mockHash,
-            List.of(transaction1, transaction2),
-            lowBlockGasLimit,
-            false,
-            RollupCreateBlockStatus.BLOCK_GAS_LIMIT_EXCEEDED);
-
-    assertThat(result.getExecutionPayload()).isNull();
-    assertThat(result.getInvalidTransactions()).isNull();
+    assertThat(result.getInvalidTransactions().size()).isEqualTo(1);
+    assertThat(result.getInvalidTransactions().get(0).getTransaction())
+        .isEqualTo(rlpEncode(transaction1));
+    assertThat(result.getInvalidTransactions().get(0).getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.NONCE_TOO_LOW);
+    assertThat(result.getUnprocessedTransactions()).isEqualTo(List.of(rlpEncode(transaction3)));
   }
 
   private RollupCreateBlockResult assertStatus(
       final Hash parentHash,
       final List<Transaction> transactions,
-      final long blockGasLimit,
-      final boolean skipInvalidTransactions,
       final RollupCreateBlockStatus expectedStatus) {
     final RollupCreateBlockResult result =
-        fromSuccessResp(
-            resp(
-                parentHash,
-                transactions,
-                feeRecipient,
-                blockGasLimit,
-                mockBlockTimestamp,
-                skipInvalidTransactions));
+        fromSuccessResp(resp(parentHash, transactions, feeRecipient, mockBlockTimestamp));
 
     assertThat(result.getStatus()).isEqualTo(expectedStatus);
     return result;
@@ -252,32 +236,19 @@ public class RollupCreateBlockTest {
       final Hash parentRootHash,
       final List<Transaction> transactions,
       final Address feeRecipient,
-      final long blockGasLimit,
-      final long timestamp,
-      final boolean skipInvalidTransactions) {
+      final long timestamp) {
     final var rawTxs =
-        transactions.stream()
-            .map(
-                tx -> {
-                  final BytesValueRLPOutput out = new BytesValueRLPOutput();
-                  tx.writeTo(out);
-                  return out.encoded().toHexString();
-                })
-            .collect(Collectors.toList());
-    System.out.println("\"" + String.join("\" , \"", rawTxs) + "\"");
+        transactions.stream().map(RollupCreateBlockTest::rlpEncode).collect(Collectors.toList());
     var params =
-        List.of(
-                parentRootHash,
-                rawTxs,
-                mockPrevRandao,
-                feeRecipient,
-                blockGasLimit,
-                String.valueOf(timestamp),
-                skipInvalidTransactions)
+        List.of(parentRootHash, rawTxs, mockPrevRandao, feeRecipient, String.valueOf(timestamp))
             .toArray();
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", RpcMethod.ROLLUP_CREATE_BLOCK.getMethodName(), params)));
+  }
+
+  static String rlpEncode(final Transaction transaction) {
+    return TransactionEncoder.encodeOpaqueBytes(transaction).toHexString();
   }
 
   private RollupCreateBlockResult fromSuccessResp(final JsonRpcResponse resp) {
