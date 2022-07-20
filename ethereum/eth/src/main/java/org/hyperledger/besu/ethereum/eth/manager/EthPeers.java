@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -53,7 +54,8 @@ public class EthPeers {
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedHeight()));
 
-  public static final Comparator<EthPeer> BEST_CHAIN = TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
+  public static final Comparator<EthPeer> HEAVIEST_CHAIN =
+      TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeer::outstandingRequests)
@@ -71,6 +73,17 @@ public class EthPeers {
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
   private final TimerUtil timerUtil;
 
+  private Comparator<EthPeer> bestPeerComparator;
+
+  public EthPeers(
+      final String protocolName,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final int maxPeers,
+      final int maxMessageSize) {
+    this(protocolName, clock, metricsSystem, maxPeers, maxMessageSize, Collections.emptyList());
+  }
+
   public EthPeers(
       final String protocolName,
       final Clock clock,
@@ -85,6 +98,7 @@ public class EthPeers {
     this.maxPeers = maxPeers;
     timerUtil = new VertxTimerUtil(vertx);
     this.maxMessageSize = maxMessageSize;
+    this.bestPeerComparator = HEAVIEST_CHAIN;
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -180,10 +194,12 @@ public class EthPeers {
         (id, existingPeer) -> {
           if (existingPeer != null) {
             if (existingPeer.getConnection().equals(connection)) {
-              LOG.info(
-                  "Removing peer {} with connection {} from EthPeers",
-                  connection.getPeer().getId(),
-                  System.identityHashCode(connection));
+              final PeerInfo peerInfo = existingPeer.getConnection().getPeerInfo();
+              LOG.debug(
+                      "Disconnected EthPeer {}, client ID: {}, {}",
+                      peerInfo.getNodeId(),
+                      peerInfo.getClientId(),
+                      peer.getReputation());
               disconnectCallbacks.forEach(callback -> callback.onDisconnect(existingPeer));
               existingPeer.handleDisconnect();
               abortPendingRequestsAssignedToDisconnectedPeers();
@@ -271,24 +287,30 @@ public class EthPeers {
   }
 
   public Stream<EthPeer> streamBestPeers() {
-    return streamAllPeers().sorted(BEST_CHAIN.reversed());
+    return streamAllPeers().sorted(getBestChainComparator().reversed());
   }
 
   public Optional<EthPeer> bestPeer() {
-    return streamAllPeers().max(BEST_CHAIN);
+    return streamAllPeers().max(getBestChainComparator());
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
     return bestPeerMatchingCriteria(
-        p -> {
-          final boolean fullyValidated = p.isFullyValidated();
-          final boolean hasEstimatedHeight = p.chainState().hasEstimatedHeight();
-          return fullyValidated && hasEstimatedHeight;
-        });
+            p -> p.isFullyValidated() && p.chainState().hasEstimatedHeight());
   }
 
+
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAllPeers().filter(matchesCriteria).max(BEST_CHAIN);
+    return streamAllPeers().filter(matchesCriteria).max(getBestChainComparator());
+  }
+
+  public void setBestChainComparator(final Comparator<EthPeer> comparator) {
+    LOG.info("Updating the default best peer comparator");
+    bestPeerComparator = comparator;
+  }
+
+  public Comparator<EthPeer> getBestChainComparator() {
+    return bestPeerComparator;
   }
 
   public void invokeConnectionCallbacks(final EthPeer peer) {

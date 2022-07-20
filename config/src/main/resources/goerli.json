@@ -22,9 +22,9 @@
       ]
     },
     "checkpoint": {
-      "hash": "0x2ae30061bdfc7f6dad5b07361dce436502eb0fde68645de12bae4929be619188",
-      "number": 6720000,
-      "totalDifficulty": "0x967F81",
+      "hash": "0x50e55c39a725f062af438c5332a5c5bec9a36d02c829ee6ac2cc27d1db719446",
+      "number": 4350000,
+      "totalDifficulty": "0x61DBBF",
       "_comment": "must be the beginning of an epoch"
     }
   },

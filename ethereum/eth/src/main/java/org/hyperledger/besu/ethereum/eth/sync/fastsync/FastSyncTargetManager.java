@@ -76,8 +76,10 @@ public class FastSyncTargetManager extends SyncTargetManager {
       final EthPeer bestPeer = maybeBestPeer.get();
       if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
         LOG.info(
-            "No sync target with sufficient chain height, waiting for peers: {}",
-            ethContext.getEthPeers().peerCount());
+            "Best peer {} has chain height {} below pivotBlock height {}",
+            maybeBestPeer.map(EthPeer::getShortNodeId).orElse("none"),
+            maybeBestPeer.map(p -> p.chainState().getEstimatedHeight()).orElse(-1L),
+            pivotBlockHeader.getNumber());
         return completedFuture(Optional.empty());
       } else {
         return confirmPivotBlockHeader(bestPeer);

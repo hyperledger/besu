@@ -25,7 +25,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
@@ -98,10 +97,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateStorage;
-  }
-
-  protected Hash calculateRootHash(final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
-    return calculateRootHash(stateUpdater, updater.copy());
   }
 
   protected Hash calculateRootHash(
@@ -252,14 +247,16 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
-        // do not overwrite a trielog layer that already exists in the database.
-        // if it's only in memory we need to save it
-        // for example, like that in case of reorg we don't replace a trielog layer
-        if (worldStateStorage.getTrieLog(blockHeader.getHash()).isEmpty()) {
-          final TrieLogLayer trieLog =
-              prepareTrieLog(blockHeader, localUpdater, newWorldStateRootHash);
-          persistTrieLog(blockHeader, newWorldStateRootHash, trieLog, stateUpdater);
+        if (!newWorldStateRootHash.equals(blockHeader.getStateRoot())) {
+          throw new RuntimeException(
+              "World State Root does not match expected value, header "
+                  + blockHeader.getStateRoot().toHexString()
+                  + " calculated "
+                  + newWorldStateRootHash.toHexString());
         }
+        archive
+            .getTrieLogManager()
+            .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
@@ -283,46 +280,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         updater.reset();
       }
     }
-    if (blockHeader != null) {
-      archive.scrubLayeredCache(blockHeader.getNumber());
-    }
-  }
-
-  protected TrieLogLayer prepareTrieLog(
-      final BlockHeader blockHeader,
-      final BonsaiWorldStateUpdater localUpdater,
-      final Hash currentWorldStateRootHash) {
-
-    if (!currentWorldStateRootHash.equals(blockHeader.getStateRoot())) {
-      throw new RuntimeException(
-          "World State Root does not match expected value, header "
-              + blockHeader.getStateRoot().toHexString()
-              + " calculated "
-              + currentWorldStateRootHash.toHexString());
-    }
-
-    debugLambda(LOG, "Adding layered world state for {}", blockHeader::toLogString);
-    final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
-    trieLog.freeze();
-    archive.addLayeredWorldState(this, blockHeader, currentWorldStateRootHash, trieLog);
-    return trieLog;
-  }
-
-  private void persistTrieLog(
-      final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
-      final TrieLogLayer trieLog,
-      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
-    debugLambda(
-        LOG,
-        "Persisting trie log for block hash {} and world state root {}",
-        blockHeader::toLogString,
-        worldStateRootHash::toHexString);
-    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-    trieLog.writeTo(rlpLog);
-    stateUpdater
-        .getTrieLogStorageTransaction()
-        .put(blockHeader.getHash().toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
   }
 
   @Override

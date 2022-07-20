@@ -105,7 +105,11 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     }
     try {
       final Optional<R> result = processResponse(streamClosed, message, peer);
-      result.ifPresent(promise::complete);
+      result.ifPresent(
+          r -> {
+            promise.complete(r);
+            peer.recordUsefulResponse();
+          });
     } catch (final RLPException e) {
       // Peer sent us malformed data - disconnect
       LOG.info("Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}", peer, e);
