@@ -14,11 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.leveldb;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -27,6 +22,13 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class LevelDbKeyValueStorageFactory implements KeyValueStorageFactory {
   private static final String NAME = "leveldb";

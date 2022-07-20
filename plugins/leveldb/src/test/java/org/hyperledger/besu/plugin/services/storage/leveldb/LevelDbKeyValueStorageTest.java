@@ -17,10 +17,12 @@ package org.hyperledger.besu.plugin.services.storage.leveldb;
 import static org.hyperledger.besu.plugin.services.storage.leveldb.LevelDbPlugin.isLevelDbSupported;
 import static org.junit.Assume.assumeTrue;
 
-import java.util.List;
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+
+import java.util.List;
+
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,9 +58,6 @@ public class LevelDbKeyValueStorageTest extends AbstractKeyValueStorageTest {
         .create(segment, folder.newFolder().toPath());
   }
 
-
-      @Test
-      public void shouldRunTests() {
-
-      }
+  @Test
+  public void shouldRunTests() {}
 }
