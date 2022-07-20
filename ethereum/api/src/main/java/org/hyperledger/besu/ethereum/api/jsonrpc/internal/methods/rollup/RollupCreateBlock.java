@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -79,7 +78,6 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
     final Hash parentBlockHash;
     final List<Transaction> transactions;
     final Address suggestedRecipient;
-    final UnsignedLongParameter blockGasLimit;
     final long timestamp;
     final Bytes32 prevRandao;
     final List<?> rawTransactions;
@@ -89,8 +87,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
       rawTransactions = requestContext.getRequiredParameter(1, List.class);
       prevRandao = requestContext.getRequiredParameter(2, Hash.class);
       suggestedRecipient = requestContext.getRequiredParameter(3, Address.class);
-      blockGasLimit = requestContext.getRequiredParameter(4, UnsignedLongParameter.class);
-      timestamp = Long.decode(requestContext.getRequiredParameter(5, String.class));
+      timestamp = Long.decode(requestContext.getRequiredParameter(4, String.class));
       transactions =
           rawTransactions.stream()
               .map(Object::toString)
@@ -115,7 +112,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
               suggestedRecipient,
               transactions,
               prevRandao,
-              Optional.of(blockGasLimit.getValue()));
+              Optional.empty());
 
       if (result.getBlockValidationResult().errorMessage.isPresent()) {
         return new JsonRpcSuccessResponse(

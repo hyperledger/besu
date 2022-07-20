@@ -334,7 +334,6 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
               transactions,
               Bytes32.random().toHexString(), // prevRandao
               Address.extract(Bytes32.random()).toHexString(), // feeRecipient
-              "0xa400", // blockGasLimit
               Numeric.toHexStringWithPrefix(BigInteger.valueOf(Instant.now().getEpochSecond()))
               // timestamp
               ));
