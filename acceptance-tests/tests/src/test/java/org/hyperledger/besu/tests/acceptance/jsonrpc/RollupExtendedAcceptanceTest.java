@@ -65,6 +65,8 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
   private static final String GENESIS_FILE = "/jsonrpc/rollup/genesis.json";
   private static final String RANDOM_ACCOUNT_ADDRESS =
       Address.extract(Bytes32.random()).toHexString();
+  private static final String RANDOM_FEE_RECIPIENT =
+      Address.extract(Bytes32.random()).toHexString();
   private static final KeyPair account1KeyPair = keyPair(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
   private BesuNode executionEngineNode;
@@ -175,6 +177,13 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
         .isEqualTo(newBlockHash);
     assertThat(getBlockByNumber(DefaultBlockParameterName.LATEST).getHash())
         .isEqualTo(newBlockHash);
+
+    assertThat(
+            web3j
+                .ethGetBalance(RANDOM_ACCOUNT_ADDRESS, DefaultBlockParameterName.LATEST)
+                .send()
+                .getBalance())
+        .isGreaterThan(BigInteger.ZERO);
   }
 
   @Test
@@ -333,7 +342,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
               parentBlockHash,
               transactions,
               Bytes32.random().toHexString(), // prevRandao
-              Address.extract(Bytes32.random()).toHexString(), // feeRecipient
+              RANDOM_FEE_RECIPIENT, // feeRecipient
               Numeric.toHexStringWithPrefix(BigInteger.valueOf(Instant.now().getEpochSecond()))
               // timestamp
               ));
