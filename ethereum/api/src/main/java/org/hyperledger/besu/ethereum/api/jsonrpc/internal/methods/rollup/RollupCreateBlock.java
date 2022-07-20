@@ -48,7 +48,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("UnusedVariable")
 public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(RollupCreateBlock.class);
