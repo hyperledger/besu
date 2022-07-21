@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreateBlockStatus;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreatePayloadStatus;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.List;
@@ -35,16 +35,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "unprocessedTransactions"
 })
 @JsonInclude(Include.NON_NULL)
-public class RollupCreateBlockResult {
-  private final RollupCreateBlockStatus status;
+public class RollupCreatePayloadResult {
+  private final RollupCreatePayloadStatus status;
   private final PayloadIdentifier payloadId;
   private final EngineGetPayloadResult executionPayload;
   private final List<InvalidTransactionResult> invalidTransactions;
   private final List<String> unprocessedTransactions;
   private final Optional<String> errorMessage;
 
-  public RollupCreateBlockResult(
-      final RollupCreateBlockStatus status,
+  public RollupCreatePayloadResult(
+      final RollupCreatePayloadStatus status,
       final PayloadIdentifier payloadId,
       final EngineGetPayloadResult executionPayload,
       final List<InvalidTransactionResult> invalidTransactions,
@@ -57,8 +57,8 @@ public class RollupCreateBlockResult {
     this.errorMessage = Optional.empty();
   }
 
-  public RollupCreateBlockResult(
-      final RollupCreateBlockStatus status, final Optional<String> errorMessage) {
+  public RollupCreatePayloadResult(
+      final RollupCreatePayloadStatus status, final Optional<String> errorMessage) {
     this.status = status;
     this.errorMessage = errorMessage;
     this.payloadId = null;
@@ -68,7 +68,7 @@ public class RollupCreateBlockResult {
   }
 
   @JsonGetter(value = "status")
-  public RollupCreateBlockStatus getStatus() {
+  public RollupCreatePayloadStatus getStatus() {
     return status;
   }
 

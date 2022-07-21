@@ -19,7 +19,7 @@ import org.hyperledger.besu.consensus.rollup.blockcreation.RollupMergeCoordinato
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreateBlock;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreatePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 
 import java.util.Map;
@@ -49,6 +49,6 @@ public class RollupJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new RollupCreateBlock(syncVertx, protocolContext, mergeCoordinator, blockResultFactory));
+        new RollupCreatePayload(syncVertx, protocolContext, mergeCoordinator, blockResultFactory));
   }
 }

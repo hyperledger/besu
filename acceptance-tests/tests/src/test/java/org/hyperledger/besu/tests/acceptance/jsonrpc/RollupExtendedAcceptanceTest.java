@@ -337,7 +337,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
         final String parentBlockHash, final String... transactions) throws Exception {
       return makeRequestAndGetResult(
           rpcRequest(
-              "rollup_createBlockV1",
+              "rollup_createPayloadV1",
               parentBlockHash,
               transactions,
               Bytes32.random().toHexString(), // prevRandao

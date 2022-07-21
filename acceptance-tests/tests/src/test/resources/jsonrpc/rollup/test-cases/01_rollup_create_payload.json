@@ -1,7 +1,7 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "rollup_createBlockV1",
+    "method": "rollup_createPayloadV1",
     "params": [
       "0xa326af38b7ad1ba192c00b89675c450ffd8e30d83c128ef37a62da26b9f58b9d",
       [],

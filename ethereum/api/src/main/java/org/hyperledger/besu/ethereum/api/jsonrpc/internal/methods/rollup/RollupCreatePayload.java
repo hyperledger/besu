@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreatePayloadResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionValidationResult;
@@ -48,13 +48,13 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
+public class RollupCreatePayload extends ExecutionEngineJsonRpcMethod {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RollupCreateBlock.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RollupCreatePayload.class);
   private final RollupMergeCoordinator mergeCoordinator;
   private final BlockResultFactory blockResultFactory;
 
-  public RollupCreateBlock(
+  public RollupCreatePayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final RollupMergeCoordinator mergeCoordinator,
@@ -66,7 +66,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ROLLUP_CREATE_BLOCK.getMethodName();
+    return RpcMethod.ROLLUP_CREATE_PAYLOAD.getMethodName();
   }
 
   @Override
@@ -98,7 +98,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
     final Optional<BlockHeader> parentBlock =
         protocolContext.getBlockchain().getBlockHeader(parentBlockHash);
     if (parentBlock.isEmpty()) {
-      return replyWithStatus(requestId, RollupCreateBlockStatus.INVALID_TERMINAL_BLOCK);
+      return replyWithStatus(requestId, RollupCreatePayloadStatus.INVALID_TERMINAL_BLOCK);
     }
 
     try {
@@ -109,8 +109,8 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
       if (result.getBlockValidationResult().errorMessage.isPresent()) {
         return new JsonRpcSuccessResponse(
             requestId,
-            new RollupCreateBlockResult(
-                RollupCreateBlockStatus.INVALID_BLOCK,
+            new RollupCreatePayloadResult(
+                RollupCreatePayloadStatus.INVALID_BLOCK,
                 result.getBlockValidationResult().errorMessage));
       }
 
@@ -118,7 +118,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
       final EngineGetPayloadResult payloadResult =
           blockResultFactory.enginePayloadTransactionComplete(blockCreationResult.getBlock());
 
-      final List<RollupCreateBlockResult.InvalidTransactionResult> invalidTransactionResults =
+      final List<RollupCreatePayloadResult.InvalidTransactionResult> invalidTransactionResults =
           invalidTransactionResults(
               rawTransactions, transactions, blockCreationResult.getTransactionSelectionResults());
       final List<String> unprocessedTransactions =
@@ -132,8 +132,8 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
 
       return new JsonRpcSuccessResponse(
           requestId,
-          new RollupCreateBlockResult(
-              RollupCreateBlockStatus.PROCESSED,
+          new RollupCreatePayloadResult(
+              RollupCreatePayloadStatus.PROCESSED,
               result.getPayloadId(),
               payloadResult,
               invalidTransactionResults,
@@ -165,7 +165,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
     return unprocessedTransactions;
   }
 
-  private List<RollupCreateBlockResult.InvalidTransactionResult> invalidTransactionResults(
+  private List<RollupCreatePayloadResult.InvalidTransactionResult> invalidTransactionResults(
       final List<?> requestedTransactionsRaw,
       final List<Transaction> requestedTransactions,
       final TransactionSelectionResults transactionSelectionResults) {
@@ -181,7 +181,7 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
                   (String)
                       requestedTransactionsRaw.get(
                           requestedTransactions.indexOf(txValidation.getTransaction()));
-              return new RollupCreateBlockResult.InvalidTransactionResult(
+              return new RollupCreatePayloadResult.InvalidTransactionResult(
                   transactionRaw,
                   txValidation.getValidationResult().getInvalidReason(),
                   txValidation.getValidationResult().getErrorMessage());
@@ -190,8 +190,8 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
   }
 
   private JsonRpcResponse replyWithStatus(
-      final Object requestId, final RollupCreateBlockStatus status) {
+      final Object requestId, final RollupCreatePayloadStatus status) {
     return new JsonRpcSuccessResponse(
-        requestId, new RollupCreateBlockResult(status, Optional.empty()));
+        requestId, new RollupCreatePayloadResult(status, Optional.empty()));
   }
 }

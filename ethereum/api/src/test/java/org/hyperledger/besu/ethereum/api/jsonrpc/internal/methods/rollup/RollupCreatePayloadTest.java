@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreateBlockResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.RollupCreatePayloadResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionValidationResult;
@@ -75,7 +75,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RollupCreateBlockTest {
+public class RollupCreatePayloadTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -133,7 +133,7 @@ public class RollupCreateBlockTest {
           .type(TransactionType.EIP1559)
           .signAndBuild(keyPair);
 
-  private RollupCreateBlock method;
+  private RollupCreatePayload method;
 
   @Mock private ProtocolContext protocolContext;
 
@@ -148,7 +148,7 @@ public class RollupCreateBlockTest {
     when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =
-        new RollupCreateBlock(vertx, protocolContext, mergeCoordinator, new BlockResultFactory());
+        new RollupCreatePayload(vertx, protocolContext, mergeCoordinator, new BlockResultFactory());
   }
 
   @Test
@@ -161,7 +161,9 @@ public class RollupCreateBlockTest {
     final var invalidParentHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
     assertStatus(
-        invalidParentHash, Collections.emptyList(), RollupCreateBlockStatus.INVALID_TERMINAL_BLOCK);
+        invalidParentHash,
+        Collections.emptyList(),
+        RollupCreatePayloadStatus.INVALID_TERMINAL_BLOCK);
   }
 
   @Test
@@ -196,7 +198,7 @@ public class RollupCreateBlockTest {
         assertStatus(
             mockHash,
             List.of(transaction1, transaction2, transaction3),
-            RollupCreateBlockStatus.PROCESSED);
+            RollupCreatePayloadStatus.PROCESSED);
 
     verify(mergeCoordinator)
         .createBlock(
@@ -221,11 +223,11 @@ public class RollupCreateBlockTest {
     assertThat(result.getUnprocessedTransactions()).isEqualTo(List.of(rlpEncode(transaction3)));
   }
 
-  private RollupCreateBlockResult assertStatus(
+  private RollupCreatePayloadResult assertStatus(
       final Hash parentHash,
       final List<Transaction> transactions,
-      final RollupCreateBlockStatus expectedStatus) {
-    final RollupCreateBlockResult result =
+      final RollupCreatePayloadStatus expectedStatus) {
+    final RollupCreatePayloadResult result =
         fromSuccessResp(resp(parentHash, transactions, feeRecipient, mockBlockTimestamp));
 
     assertThat(result.getStatus()).isEqualTo(expectedStatus);
@@ -238,25 +240,25 @@ public class RollupCreateBlockTest {
       final Address feeRecipient,
       final long timestamp) {
     final var rawTxs =
-        transactions.stream().map(RollupCreateBlockTest::rlpEncode).collect(Collectors.toList());
+        transactions.stream().map(RollupCreatePayloadTest::rlpEncode).collect(Collectors.toList());
     var params =
         List.of(parentRootHash, rawTxs, mockPrevRandao, feeRecipient, String.valueOf(timestamp))
             .toArray();
     return method.response(
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", RpcMethod.ROLLUP_CREATE_BLOCK.getMethodName(), params)));
+            new JsonRpcRequest("2.0", RpcMethod.ROLLUP_CREATE_PAYLOAD.getMethodName(), params)));
   }
 
   static String rlpEncode(final Transaction transaction) {
     return TransactionEncoder.encodeOpaqueBytes(transaction).toHexString();
   }
 
-  private RollupCreateBlockResult fromSuccessResp(final JsonRpcResponse resp) {
+  private RollupCreatePayloadResult fromSuccessResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
     return Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .map(JsonRpcSuccessResponse::getResult)
-        .map(RollupCreateBlockResult.class::cast)
+        .map(RollupCreatePayloadResult.class::cast)
         .get();
   }
 
