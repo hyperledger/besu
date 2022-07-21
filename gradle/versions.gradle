@@ -186,12 +186,11 @@ dependencyManagement {
 
     dependency 'org.testcontainers:testcontainers:1.17.2'
 
-    dependency 'org.web3j:abi:4.8.9'
-    dependency 'org.web3j:besu:4.8.9'
-    dependency 'org.web3j:core:4.8.9'
-    dependency 'org.web3j:crypto:4.8.9'
-    dependency 'org.web3j:eea:4.9.3'
-    dependency 'org.web3j:quorum:4.8.4'
+    dependency 'org.web3j:abi:4.9.4'
+    dependency 'org.web3j:besu:4.9.4'
+    dependency 'org.web3j:core:4.9.4'
+    dependency 'org.web3j:crypto:4.9.4'
+    dependency 'org.web3j:quorum:4.9.0'
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
 

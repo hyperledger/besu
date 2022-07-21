@@ -12,8 +12,17 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.8.9'
+  id 'org.web3j' version '4.9.2'
   id 'org.web3j.solidity' version '0.3.5'
+}
+
+configurations.all {
+  resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+    if (details.requested.group == 'org.web3j' && details.requested.version == '4.9.2') {
+      details.useVersion '4.9.4'
+      details.because 'web3-gradle-plugin is not updated yet'
+    }
+  }
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
