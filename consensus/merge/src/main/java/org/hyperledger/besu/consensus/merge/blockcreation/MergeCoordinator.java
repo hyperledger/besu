@@ -551,7 +551,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   @FunctionalInterface
-  public interface MergeBlockCreatorFactory {
+  protected interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
 
