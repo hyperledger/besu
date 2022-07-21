@@ -187,7 +187,7 @@ dependencyManagement {
     dependency 'org.testcontainers:testcontainers:1.17.2'
 
     dependency 'org.web3j:quorum:4.9.0'
-    dependencySet(group: 'org.web3j', version: '4.9.3') {
+    dependencySet(group: 'org.web3j', version: '4.9.4') {
       entry 'abi'
       entry 'besu'
       entry 'core'

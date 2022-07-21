@@ -25,7 +25,7 @@ dependencies {
   testImplementation 'org.web3j:core'
   testImplementation('org.web3j:quorum') {
     constraints {
-      implementation('org.web3j:core:4.9.3') { because 'quorum 4.9.3 hasn\'t been released yet' }
+      implementation('org.web3j:core:4.9.4') { because 'quorum 4.9.4 hasn\'t been released yet' }
     }
   }
 
