@@ -239,7 +239,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         "Unsupported capability passed to processMessage(): " + cap);
     final MessageData messageData = message.getData();
     final int code = messageData.getCode();
-    LOG.trace("Process message {}, {}", cap, code);
+    EthProtocolLogger.logProcessMessage(cap, code);
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.debug(

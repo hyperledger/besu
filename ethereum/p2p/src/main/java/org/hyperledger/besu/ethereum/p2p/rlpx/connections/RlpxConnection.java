@@ -149,7 +149,9 @@ public abstract class RlpxConnection {
       return "RemotelyInitiatedRlpxConnection initiatedAt:"
           + getInitiatedAt()
           + " to "
-          + peerConnection.getPeer().getId();
+          + peerConnection.getPeer().getId()
+          + " disconnected? "
+          + isFailedOrDisconnected();
     }
   }
 

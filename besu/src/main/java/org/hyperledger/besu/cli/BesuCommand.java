@@ -1190,7 +1190,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
     @SuppressWarnings("unused")
-    private final Integer pooledTransactionHashesSize = null; // NOSONAR
+    private final Integer pooledTransactionHashesSize = null;
 
     @Option(
         names = {"--tx-pool-retention-hours"},
@@ -1906,7 +1906,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-flexible-groups-enabled");
     }
 
-    if (txPoolOptionGroup.pooledTransactionHashesSize != null) { // NOSONAR
+    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
       logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
   }
@@ -2136,7 +2136,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
-          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
+          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) {
         engineConfig.setAuthenticationPublicKeyFile(engineRPCOptionGroup.engineJwtKeyFile.toFile());
       } else {
         logger.info(
