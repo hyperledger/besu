@@ -170,7 +170,11 @@ public class RollupCreateBlock extends ExecutionEngineJsonRpcMethod {
       final List<Transaction> requestedTransactions,
       final TransactionSelectionResults transactionSelectionResults) {
 
+    final var executedTransactions = transactionSelectionResults.getTransactions();
     return transactionSelectionResults.getInvalidTransactions().stream()
+        .filter(
+            (TransactionValidationResult txValidation) ->
+                !executedTransactions.contains(txValidation.getTransaction()))
         .map(
             (TransactionValidationResult txValidation) -> {
               final var transactionRaw =

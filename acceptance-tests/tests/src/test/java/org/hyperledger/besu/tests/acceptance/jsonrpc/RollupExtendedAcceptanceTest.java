@@ -132,7 +132,8 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
             rlpEncodedTransaction2,
             rlpEncodedTransaction3,
             rlpEncodedTransaction4,
-            rlpEncodedTransaction5);
+            rlpEncodedTransaction5,
+            rlpEncodedTransaction1);
 
     final JsonObject newBlock = result.getJsonObject("executionPayload");
     final String newBlockHash = newBlock.getString("blockHash");
