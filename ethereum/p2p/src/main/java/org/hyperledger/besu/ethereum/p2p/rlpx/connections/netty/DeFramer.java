@@ -241,7 +241,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
       connectFuture
           .get()
-          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, true);
+          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     } else {
       connectFuture.completeExceptionally(throwable);
       ctx.close();
