@@ -84,7 +84,8 @@ public class RecursivePeerRefreshState {
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     currentRound = 0;
     oneTrueMap.clear();
-    addInitialPeers(initialPeers);
+    this.initialPeers = initialPeers;
+    addPeers(initialPeers);
     bondingInitiateRound();
   }
 
@@ -92,9 +93,8 @@ public class RecursivePeerRefreshState {
     return currentRound >= maxRounds;
   }
 
-  private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
-    this.initialPeers = initialPeers;
-    for (final DiscoveryPeer peer : initialPeers) {
+  public void addPeers(final List<DiscoveryPeer> peers) {
+    for (final DiscoveryPeer peer : peers) {
       final MetadataPeer iterationParticipant =
           new MetadataPeer(peer, PeerDistanceCalculator.distance(target, peer.getId()));
       oneTrueMap.put(peer.getId(), iterationParticipant);

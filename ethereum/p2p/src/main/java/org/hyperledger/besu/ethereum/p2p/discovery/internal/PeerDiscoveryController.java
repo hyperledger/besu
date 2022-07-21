@@ -251,6 +251,11 @@ public class PeerDiscoveryController {
     return CompletableFuture.completedFuture(null);
   }
 
+  public void addPeers(final List<DiscoveryPeer> peers) {
+    System.out.println("addpeers " + peers.size());
+    recursivePeerRefreshState.addPeers(peers);
+  }
+
   private void handlePermissionsUpdate(
       final boolean addRestrictions, final Optional<List<Peer>> affectedPeers) {
     if (!addRestrictions) {

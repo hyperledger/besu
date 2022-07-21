@@ -335,6 +335,10 @@ public abstract class PeerDiscoveryAgent {
     return id;
   }
 
+  public Optional<PeerDiscoveryController> getController() {
+    return controller;
+  }
+
   /**
    * Adds an observer that will get called when a new peer is bonded with and added to the peer
    * table.

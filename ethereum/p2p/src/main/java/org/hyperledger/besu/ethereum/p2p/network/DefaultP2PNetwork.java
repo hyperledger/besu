@@ -352,6 +352,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
       // only replace dnsPeers if the lookup was successful:
       if (!peers.isEmpty()) {
         dnsPeers.set(peers);
+        peerDiscoveryAgent
+            .getController()
+            .ifPresent(peerDiscoveryController -> peerDiscoveryController.addPeers(dnsPeers.get()));
       }
     };
   }
