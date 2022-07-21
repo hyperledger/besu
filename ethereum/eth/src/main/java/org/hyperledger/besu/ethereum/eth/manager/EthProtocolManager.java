@@ -360,7 +360,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final StatusMessage status = StatusMessage.readFrom(data);
     try {
       if (!status.networkId().equals(networkId)) {
-        LOG.debug("Mismatched network id: {}, EthPeer ", status.networkId(), peer);
+        LOG.debug("Mismatched network id: {}, EthPeer {}", status.networkId(), peer);
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (!forkIdManager.peerCheck(status.forkId()) && status.protocolVersion() > 63) {
         LOG.debug(
