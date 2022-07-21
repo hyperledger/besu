@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -36,14 +37,19 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class EthPeers {
+  private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
   public static final Comparator<EthPeer> TOTAL_DIFFICULTY =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedTotalDifficulty()));
 
   public static final Comparator<EthPeer> CHAIN_HEIGHT =
       Comparator.comparing(((final EthPeer p) -> p.chainState().getEstimatedHeight()));
 
-  public static final Comparator<EthPeer> BEST_CHAIN = TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
+  public static final Comparator<EthPeer> HEAVIEST_CHAIN =
+      TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeer::outstandingRequests)
@@ -58,6 +64,8 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
+
+  private Comparator<EthPeer> bestPeerComparator;
 
   public EthPeers(
       final String protocolName,
@@ -80,6 +88,7 @@ public class EthPeers {
     this.permissioningProviders = permissioningProviders;
     this.maxPeers = maxPeers;
     this.maxMessageSize = maxMessageSize;
+    this.bestPeerComparator = HEAVIEST_CHAIN;
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.PEERS,
         "pending_peer_requests_current",
@@ -107,6 +116,12 @@ public class EthPeers {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
       abortPendingRequestsAssignedToDisconnectedPeers();
+      final PeerInfo peerInfo = peer.getConnection().getPeerInfo();
+      LOG.debug(
+          "Disconnected EthPeer {}, client ID: {}, {}",
+          peerInfo.getNodeId(),
+          peerInfo.getClientId(),
+          peer.getReputation());
     }
     reattemptPendingPeerRequests();
   }
@@ -186,11 +201,11 @@ public class EthPeers {
   }
 
   public Stream<EthPeer> streamBestPeers() {
-    return streamAvailablePeers().sorted(BEST_CHAIN.reversed());
+    return streamAvailablePeers().sorted(getBestChainComparator().reversed());
   }
 
   public Optional<EthPeer> bestPeer() {
-    return streamAvailablePeers().max(BEST_CHAIN);
+    return streamAvailablePeers().max(getBestChainComparator());
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
@@ -199,7 +214,16 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAvailablePeers().filter(matchesCriteria).max(BEST_CHAIN);
+    return streamAvailablePeers().filter(matchesCriteria).max(getBestChainComparator());
+  }
+
+  public void setBestChainComparator(final Comparator<EthPeer> comparator) {
+    LOG.info("Updating the default best peer comparator");
+    bestPeerComparator = comparator;
+  }
+
+  public Comparator<EthPeer> getBestChainComparator() {
+    return bestPeerComparator;
   }
 
   @FunctionalInterface

@@ -31,7 +31,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -117,6 +123,31 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionBackwardsSyncContext));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
+  }
+
+  @Override
+  protected EthProtocolManager createEthProtocolManager(
+      final ProtocolContext protocolContext,
+      final boolean fastSyncEnabled,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthContext ethContext,
+      final EthMessages ethMessages,
+      final EthScheduler scheduler,
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter) {
+    return mergeBesuControllerBuilder.createEthProtocolManager(
+        protocolContext,
+        fastSyncEnabled,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethContext,
+        ethMessages,
+        scheduler,
+        peerValidators,
+        mergePeerFilter);
   }
 
   @Override
