@@ -126,7 +126,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     final String rlpEncodedTransaction4 = rlpEncodeTransaction(transaction4);
     final String rlpEncodedTransaction5 = rlpEncodeTransaction(transaction5);
     final JsonObject result =
-        engineApiClient.rollup_createNewBlock(
+        engineApiClient.rollup_createPayload(
             finalizedBlock.getHash(),
             rlpEncodedTransaction1,
             rlpEncodedTransaction2,
@@ -192,20 +192,20 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     final EthBlock.Block finalizedBlock = getBlockByNumber(DefaultBlockParameterName.LATEST);
     final JsonObject block1 =
         engineApiClient
-            .rollup_createNewBlock(finalizedBlock.getHash())
+            .rollup_createPayload(finalizedBlock.getHash())
             .getJsonObject("executionPayload");
     final String block1Hash = block1.getString("blockHash");
     engineApiClient.engine_newPayloadV1(block1);
 
     Thread.sleep(1000);
     final JsonObject block2 =
-        engineApiClient.rollup_createNewBlock(block1Hash).getJsonObject("executionPayload");
+        engineApiClient.rollup_createPayload(block1Hash).getJsonObject("executionPayload");
     final String block2Hash = block2.getString("blockHash");
     engineApiClient.engine_newPayloadV1(block2);
 
     Thread.sleep(1000);
     final JsonObject block3 =
-        engineApiClient.rollup_createNewBlock(block2Hash).getJsonObject("executionPayload");
+        engineApiClient.rollup_createPayload(block2Hash).getJsonObject("executionPayload");
     final String block3Hash = block3.getString("blockHash");
     engineApiClient.engine_newPayloadV1(block3);
 
@@ -228,20 +228,20 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     final EthBlock.Block finalizedBlock = getBlockByNumber(DefaultBlockParameterName.LATEST);
     final JsonObject block1 =
         engineApiClient
-            .rollup_createNewBlock(finalizedBlock.getHash())
+            .rollup_createPayload(finalizedBlock.getHash())
             .getJsonObject("executionPayload");
     final String block1Hash = block1.getString("blockHash");
     engineApiClient.engine_newPayloadV1(block1);
 
     final JsonObject block2 =
         engineApiClient
-            .rollup_createNewBlock(finalizedBlock.getHash())
+            .rollup_createPayload(finalizedBlock.getHash())
             .getJsonObject("executionPayload");
     engineApiClient.engine_newPayloadV1(block2);
 
     Thread.sleep(1000);
     final JsonObject block3 =
-        engineApiClient.rollup_createNewBlock(block1Hash).getJsonObject("executionPayload");
+        engineApiClient.rollup_createPayload(block1Hash).getJsonObject("executionPayload");
     final String block3Hash = block3.getString("blockHash");
     engineApiClient.engine_newPayloadV1(block3);
 
@@ -333,7 +333,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
       return makeRequestAndGetResult(rpcRequest("engine_getPayloadV1", payloadId));
     }
 
-    private JsonObject rollup_createNewBlock(
+    private JsonObject rollup_createPayload(
         final String parentBlockHash, final String... transactions) throws Exception {
       return makeRequestAndGetResult(
           rpcRequest(

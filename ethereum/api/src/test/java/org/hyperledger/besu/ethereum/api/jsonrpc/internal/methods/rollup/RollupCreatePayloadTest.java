@@ -153,7 +153,7 @@ public class RollupCreatePayloadTest {
 
   @Test
   public void shouldReturnExpectedMethodName() {
-    assertThat(method.getName()).isEqualTo("rollup_createBlockV1");
+    assertThat(method.getName()).isEqualTo("rollup_createPayloadV1");
   }
 
   @Test
