@@ -14,17 +14,15 @@
  */
 package org.hyperledger.besu.plugin.services.storage.externaldb.configuration;
 
-import java.net.URL;
-
 public class ExternalDbConfiguration {
 
-  private final URL endpoint;
+  private final String endpoint;
 
-  public ExternalDbConfiguration(final URL endpoint) {
+  public ExternalDbConfiguration(final String endpoint) {
     this.endpoint = endpoint;
   }
 
-  public URL getEndpoint() {
+  public String getEndpoint() {
     return endpoint;
   }
 }

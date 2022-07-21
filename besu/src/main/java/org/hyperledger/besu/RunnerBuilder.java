@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
+import org.hyperledger.besu.ethereum.api.grpc.GrpcServer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcService;
@@ -626,6 +627,15 @@ public class RunnerBuilder {
                   nonEngineMethods,
                   new HealthService(new LivenessCheck()),
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
+
+      if (jsonRpcConfiguration.getRpcApis().contains("DATABASE")) {
+        final GrpcServer grpcServer = new GrpcServer(6000, storageProvider);
+        try {
+          grpcServer.start();
+        } catch (IOException e) {
+          throw new IllegalStateException(e);
+        }
+      }
     }
 
     final SubscriptionManager subscriptionManager =

@@ -29,6 +29,9 @@ plugins {
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
   id 'org.sonarqube' version '3.4.0.2513'
+  id 'com.google.protobuf' version '0.8.18'
+  id 'idea'
+  id 'java'
 }
 
 sonarqube {
@@ -130,7 +133,7 @@ allprojects {
     java {
       // This path needs to be relative to each project
       target '**/*.java'
-      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**', '**/generated/**'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
       importOrder 'org.hyperledger', 'java', ''

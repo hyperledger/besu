@@ -31,6 +31,8 @@ publishing {
   }
 }
 
+def grpcVersion = '1.47.0' // CURRENT_GRPC_VERSION
+
 dependencies {
   api project(':plugin-api')
   api 'org.slf4j:slf4j-api'
@@ -42,6 +44,8 @@ dependencies {
   implementation project(':services:kvstore')
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'info.picocli:picocli'
+  implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+  implementation "io.grpc:grpc-stub:${grpcVersion}"
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

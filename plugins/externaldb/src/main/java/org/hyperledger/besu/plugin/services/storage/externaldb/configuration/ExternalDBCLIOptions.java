@@ -14,22 +14,17 @@
  */
 package org.hyperledger.besu.plugin.services.storage.externaldb.configuration;
 
-import org.hyperledger.besu.util.InvalidConfigurationException;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import picocli.CommandLine;
 
 public class ExternalDBCLIOptions {
 
-  private static final String EXTERNALDB_URL = "--plugin-externaldb-url";
+  private static final String EXTERNALDB_ENDPOINT = "--plugin-externaldb-endpoint";
 
   @CommandLine.Option(
-      names = {EXTERNALDB_URL},
+      names = {EXTERNALDB_ENDPOINT},
       description =
           "URL for the external database service. This cannot be used with the external db server.")
-  String externalDbUrl;
+  String endpoint;
 
   private ExternalDBCLIOptions() {}
 
@@ -38,12 +33,6 @@ public class ExternalDBCLIOptions {
   }
 
   public ExternalDbConfiguration toDomainObject() {
-    try {
-      final URL url = new URL(externalDbUrl);
-      return new ExternalDbConfiguration(url);
-    } catch (MalformedURLException e) {
-      throw new InvalidConfigurationException(
-          "Invalid configuration. External DB URL has invalid syntax");
-    }
+    return new ExternalDbConfiguration(endpoint);
   }
 }

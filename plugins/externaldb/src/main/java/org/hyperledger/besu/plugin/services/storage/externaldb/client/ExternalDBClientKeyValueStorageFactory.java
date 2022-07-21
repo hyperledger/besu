@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.externaldb.client;
 
+import org.hyperledger.besu.ethereum.api.grpc.ExternalDbGrpc;
+import org.hyperledger.besu.ethereum.api.grpc.ExternalDbGrpc.ExternalDbBlockingStub;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -23,9 +25,12 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.externaldb.configuration.ExternalDbConfiguration;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
-import java.net.http.HttpClient;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 
 public class ExternalDBClientKeyValueStorageFactory implements KeyValueStorageFactory {
 
@@ -35,6 +40,8 @@ public class ExternalDBClientKeyValueStorageFactory implements KeyValueStorageFa
   private final int defaultVersion;
 
   private final Supplier<ExternalDbConfiguration> configuration;
+  private final AtomicReference<ExternalDbBlockingStub> externalDbBlockingStub =
+      new AtomicReference<>();
 
   ExternalDBClientKeyValueStorageFactory(
       final Supplier<ExternalDbConfiguration> configuration,
@@ -65,9 +72,16 @@ public class ExternalDBClientKeyValueStorageFactory implements KeyValueStorageFa
       final BesuConfiguration commonConfiguration,
       final MetricsSystem metricsSystem)
       throws StorageException {
-    final HttpClient httpClient = HttpClient.newBuilder().build();
+    if (externalDbBlockingStub.get() == null) {
+      final String target = configuration.get().getEndpoint();
+      final ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+      final ExternalDbBlockingStub externalDbBlockingStub = ExternalDbGrpc.newBlockingStub(channel);
+      this.externalDbBlockingStub.set(externalDbBlockingStub);
+    }
+
     final ExternalDBClientKeyValueStorage segmentedStorage =
-        new ExternalDBClientKeyValueStorage(httpClient, configuration.get(), metricsSystem);
+        new ExternalDBClientKeyValueStorage(
+            externalDbBlockingStub.get(), configuration.get(), metricsSystem);
     return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
   }
 

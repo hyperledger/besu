@@ -13,7 +13,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-apply plugin: 'java-library'
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'idea'
 
 jar {
   archiveBaseName = 'besu-api'
@@ -26,6 +28,10 @@ jar {
       )
   }
 }
+
+def grpcVersion = '1.47.0' // CURRENT_GRPC_VERSION
+def protobufVersion = '3.19.2'
+def protocVersion = protobufVersion
 
 configurations { testResourceGeneration.extendsFrom testImplementation }
 
@@ -69,6 +75,9 @@ dependencies {
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
+  implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+  implementation "io.grpc:grpc-stub:${grpcVersion}"
+  compileOnly "org.apache.tomcat:annotations-api:6.0.53"
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
@@ -119,6 +128,26 @@ dependencies {
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
+
+protobuf {
+  protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
+  plugins {
+    grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+  }
+  generateProtoTasks {
+    all()*.plugins { grpc {} }
+  }
+  generatedFilesBaseDir = "$projectDir/generated/sources"
+}
+
+idea {
+  module {
+    sourceDirs += file("${projectDir}/generated/sources/grpc")
+    sourceDirs += file("${projectDir}/generated/sources/java")
+  }
+}
+
+clean { delete protobuf.generatedFilesBaseDir }
 
 artifacts { testSupportArtifacts testSupportJar }
 

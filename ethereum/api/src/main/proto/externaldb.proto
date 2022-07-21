@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.hyperledger.besu.ethereum.api.grpc";
+option java_outer_classname = "ExternalDbProto";
+option objc_class_prefix = "HLW";
+
+package ExternalDb;
+
+service ExternalDb {
+  rpc GetValue (GetRequest) returns (GetResponse) {}
+}
+
+message GetRequest {
+  enum Segment {
+    BLOCKCHAIN = 0;
+    WORLD_STATE = 1;
+    PRIVATE_TRANSACTIONS = 2;
+    PRIVATE_STATE = 3;
+    PRUNING_STATE = 4;
+    ACCOUNT_INFO_STATE = 5;
+    CODE_STORAGE = 6;
+    ACCOUNT_STORAGE_STORAGE = 7;
+    TRIE_BRANCH_STORAGE = 8;
+    TRIE_LOG_STORAGE = 9;
+    GOQUORUM_PRIVATE_WORLD_STATE = 10;
+    GOQUORUM_PRIVATE_STORAGE = 11;
+    BACKWARD_SYNC_HEADERS = 12;
+    BACKWARD_SYNC_BLOCKS = 13;
+    BACKWARD_SYNC_CHAIN = 14;
+  }
+  Segment segment = 1;
+  bytes key = 2;
+}
+
+message GetResponse {
+  optional bytes value = 1;
+}
+

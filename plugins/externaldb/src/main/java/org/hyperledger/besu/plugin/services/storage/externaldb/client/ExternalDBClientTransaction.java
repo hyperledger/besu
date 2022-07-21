@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.plugin.services.storage.externaldb.client;
 
+import org.hyperledger.besu.ethereum.api.grpc.GetRequest.Segment;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
 
-public class ExternalDBClientTransaction implements Transaction<String> {
+public class ExternalDBClientTransaction implements Transaction<Segment> {
 
   @Override
-  public void put(final String segment, final byte[] key, final byte[] value) {}
+  public void put(final Segment segment, final byte[] key, final byte[] value) {}
 
   @Override
-  public void remove(final String segment, final byte[] key) {}
+  public void remove(final Segment segment, final byte[] key) {}
 
   @Override
   public void commit() throws StorageException {}
