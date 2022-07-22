@@ -11,10 +11,15 @@
  * specific language governing permissions and limitations under the License.
  */
 
+buildscript {
+  configurations.classpath { resolutionStrategy { force 'org.web3j:core:4.9.4' } }
+}
+
 plugins {
   id 'org.web3j' version '4.9.2'
   id 'org.web3j.solidity' version '0.3.5'
 }
+
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
 
@@ -71,6 +76,7 @@ dependencies {
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
+  testImplementation 'org.web3j:core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
