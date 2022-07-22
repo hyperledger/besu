@@ -86,7 +86,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           new EngineUpdateForkchoiceResult(
               INVALID,
               mergeCoordinator
-                  .getLatestValidAncestor(forkChoice.getHeadBlockHash())
+                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
                   .orElse(Hash.ZERO),
               null,
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
