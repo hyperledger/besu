@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -56,7 +55,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -372,11 +370,21 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @VisibleForTesting
   void attemptPeerConnections() {
-    LOG.trace("Initiating connections to discovered peers.");
-    rlpxAgent.connect(
-        streamDiscoveredPeers()
-            .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
-            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection)));
+    LOG.info("Initiating connections to discovered peers.");
+    streamDiscoveredPeers()
+        // .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
+        .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection))
+        .forEach(
+            discoveryPeer -> {
+              rlpxAgent
+                  .connect(discoveryPeer)
+                  .whenComplete(
+                      (peerConnection, throwable) -> {
+                        if (throwable == null)
+                          System.out.println(
+                              "found " + peerConnection.getPeer().getEnodeURLString());
+                      });
+            });
   }
 
   @Override
@@ -386,11 +394,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    final List<DiscoveryPeer> peers = dnsPeers.get();
-    if (peers != null) {
-      Collections.shuffle(peers);
-      return Stream.concat(peerDiscoveryAgent.streamDiscoveredPeers(), peers.stream());
-    }
     return peerDiscoveryAgent.streamDiscoveredPeers();
   }
 

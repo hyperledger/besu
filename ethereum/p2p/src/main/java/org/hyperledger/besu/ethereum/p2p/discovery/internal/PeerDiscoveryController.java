@@ -103,6 +103,7 @@ import org.slf4j.LoggerFactory;
  * <p>If an expectation to receive a message was unmet, following the evaluation of a failure
  * condition, the peer will be physically dropped (eliminated) from the table.
  */
+@SuppressWarnings("unused")
 public class PeerDiscoveryController {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryController.class);
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
@@ -144,7 +145,7 @@ public class PeerDiscoveryController {
   // Observers for "peer bonded" discovery events.
   private final Subscribers<PeerBondedObserver> peerBondedObservers;
 
-  private RecursivePeerRefreshState recursivePeerRefreshState;
+  private NodeFinder recursivePeerRefreshState;
 
   private PeerDiscoveryController(
       final NodeKey nodeKey,
@@ -211,16 +212,7 @@ public class PeerDiscoveryController {
             .collect(Collectors.toList());
     initialDiscoveryPeers.forEach(peerTable::tryAdd);
 
-    recursivePeerRefreshState =
-        new RecursivePeerRefreshState(
-            this::bond,
-            this::findNodes,
-            timerUtil,
-            localPeer,
-            peerTable,
-            peerPermissions,
-            PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS,
-            100);
+    recursivePeerRefreshState = new NodeFinder(this::bond, timerUtil, this::findNodes);
 
     peerPermissions.subscribeUpdate(this::handlePermissionsUpdate);
 
@@ -442,7 +434,7 @@ public class PeerDiscoveryController {
   }
 
   @VisibleForTesting
-  RecursivePeerRefreshState getRecursivePeerRefreshState() {
+  NodeFinder getRecursivePeerRefreshState() {
     return recursivePeerRefreshState;
   }
 
@@ -619,7 +611,12 @@ public class PeerDiscoveryController {
    * @return List of peers.
    */
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return peerTable.streamAllPeers().filter(peerPermissions::isAllowedInPeerTable);
+    List<DiscoveryPeer> discoveryPeerStream =
+        recursivePeerRefreshState.connect.values().stream()
+            .map(NodeFinder.MetadataPeer::getPeer)
+            .collect(Collectors.toList());
+    recursivePeerRefreshState.connect.clear();
+    return discoveryPeerStream.stream();
   }
 
   public void setRetryDelayFunction(final RetryDelayFunction retryDelayFunction) {
