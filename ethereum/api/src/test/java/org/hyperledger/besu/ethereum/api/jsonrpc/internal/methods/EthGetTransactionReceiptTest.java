@@ -82,10 +82,10 @@ public class EthGetTransactionReceiptTest {
 
   private final TransactionReceiptWithMetadata statusReceiptWithMetadata =
       TransactionReceiptWithMetadata.create(
-          statusReceipt, transaction, hash, 1, 2, Optional.empty(), blockHash, 4);
+          statusReceipt, transaction, hash, 1, 2, 0, Optional.empty(), blockHash, 4);
   private final TransactionReceiptWithMetadata rootReceiptWithMetaData =
       TransactionReceiptWithMetadata.create(
-          rootReceipt, transaction, hash, 1, 2, Optional.empty(), blockHash, 4);
+          rootReceipt, transaction, hash, 1, 2, 34, Optional.empty(), blockHash, 4);
 
   private final ProtocolSpec rootTransactionTypeSpec =
       new ProtocolSpec(
@@ -189,7 +189,7 @@ public class EthGetTransactionReceiptTest {
     final Wei baseFee = Wei.ONE;
     final TransactionReceiptWithMetadata transactionReceiptWithMetadata =
         TransactionReceiptWithMetadata.create(
-            statusReceipt, transaction1559, hash, 1, 2, Optional.of(baseFee), blockHash, 4);
+            statusReceipt, transaction1559, hash, 1, 2, 0, Optional.of(baseFee), blockHash, 4);
     when(blockchain.transactionReceiptByTransactionHash(receiptHash))
         .thenReturn(Optional.of(transactionReceiptWithMetadata));
     when(protocolSchedule.getByBlockNumber(1)).thenReturn(rootTransactionTypeSpec);

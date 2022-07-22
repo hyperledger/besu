@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.LogIndexOffsets;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -620,12 +621,18 @@ public class BlockchainQueries {
               - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
     }
 
+    int logIndexStart = 0;
+    for (int i = 0; i < location.getTransactionIndex(); ++i) {
+      logIndexStart += transactionReceipts.get(i).getLogsList().size();
+    }
+
     return Optional.of(
         TransactionReceiptWithMetadata.create(
             transactionReceipt,
             transaction,
             transactionHash,
             location.getTransactionIndex(),
+            logIndexStart,
             gasUsed,
             header.getBaseFee(),
             blockhash,
@@ -777,6 +784,8 @@ public class BlockchainQueries {
               "matchingLogs - blockIsOnCanonicalChain",
               () -> !blockchain.blockIsOnCanonicalChain(blockHash),
               isQueryAlive);
+
+      final LogIndexOffsets logIndexOffsets = new LogIndexOffsets();
       return IntStream.range(0, receipts.size())
           .mapToObj(
               i -> {
@@ -788,7 +797,8 @@ public class BlockchainQueries {
                       blockHash,
                       transactions.get(i).getHash(),
                       i,
-                      removed);
+                      removed,
+                      logIndexOffsets.next(receipts.get(i).getLogsList().size()));
                 } catch (final Exception e) {
                   throw new RuntimeException(e);
                 }

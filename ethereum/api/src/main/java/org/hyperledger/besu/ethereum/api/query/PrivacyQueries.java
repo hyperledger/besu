@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.query;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.LogIndexOffsets;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
@@ -83,6 +84,8 @@ public class PrivacyQueries {
     final long blockNumber = blockHeader.get().getNumber();
     final boolean removed = !blockchainQueries.blockIsOnCanonicalChain(blockHash);
 
+    final LogIndexOffsets logIndexOffsets = new LogIndexOffsets();
+
     return IntStream.range(0, privateTransactionReceiptList.size())
         .mapToObj(
             i ->
@@ -92,7 +95,8 @@ public class PrivacyQueries {
                     blockHash,
                     privateTransactionMetadataList.get(i).getPrivateMarkerTransactionHash(),
                     findPMTIndex(pmtHashList.get(i)),
-                    removed))
+                    removed,
+                    logIndexOffsets.next(privateTransactionReceiptList.get(i).getLogs().size())))
         .flatMap(Collection::stream)
         .filter(query::matches)
         .collect(Collectors.toList());

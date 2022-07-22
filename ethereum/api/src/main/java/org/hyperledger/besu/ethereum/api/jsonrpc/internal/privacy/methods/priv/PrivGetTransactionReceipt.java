@@ -101,8 +101,22 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
     LOG.trace("Processed private transaction receipt");
 
+    int logIndexStart = 0;
+    //  TODO:  Fetch all PrivateTransactionReceipt's in block, use to compute logIndex
+    //    final List<PrivateTransactionReceipt> privateTransactionReceipts =
+    //        privateStateStorage
+    //            .getTransactionReceipts(blockHash);
+    //
+    //    for (int i=0; i < privateTransactionReceipts.size(); ++i) {
+    //        if ( privateTransactionReceipts.get(i).equals(privateTransactionReceipt)) {
+    //            break;
+    //        }
+    //        logIndexStart += privateTransactionReceipts.get(i).getLogs().size();
+    //    }
+
     final PrivateTransactionReceiptResult result =
-        buildPrivateTransactionReceiptResult(privateTransaction, privateTransactionReceipt);
+        buildPrivateTransactionReceiptResult(
+            privateTransaction, privateTransactionReceipt, logIndexStart);
 
     LOG.trace(
         "Created Private Transaction Receipt Result from given Transaction Hash {}",
@@ -113,7 +127,9 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private PrivateTransactionReceiptResult buildPrivateTransactionReceiptResult(
       final ExecutedPrivateTransaction privateTransaction,
-      final PrivateTransactionReceipt privateTransactionReceipt) {
+      final PrivateTransactionReceipt privateTransactionReceipt,
+      final int logIndexStart) {
+    // TODO:  read block from somewhere, count logs in earlier tx's?
     return new PrivateTransactionReceiptResult(
         calculateContractAddress(privateTransaction),
         privateTransaction.getSender().toString(),
@@ -122,6 +138,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
         privateTransactionReceipt.getOutput(),
         privateTransaction.getBlockHash(),
         privateTransaction.getBlockNumber(),
+        logIndexStart,
         privateTransaction.getPmtIndex(),
         privateTransaction.getPmtHash(),
         privateTransaction.getPrivateFrom(),

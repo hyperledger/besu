@@ -75,6 +75,7 @@ public class PrivateTransactionReceiptResult {
       final Bytes output,
       final Hash blockHash,
       final long blockNumber,
+      final int logIndexStart,
       final int txIndex,
       final Hash commitmentHash,
       final Bytes privateFrom,
@@ -98,7 +99,7 @@ public class PrivateTransactionReceiptResult {
             : PrivacyGroupUtil.calculateEeaPrivacyGroupId(privateFrom, privateFor).toBase64String();
     this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
-    this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);
+    this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex, logIndexStart);
     this.logsBloom = LogsBloomFilter.builder().insertLogs(logs).build().toHexString();
     this.blockHash = blockHash.toHexString();
     this.blockNumber = Quantity.create(blockNumber);
@@ -185,14 +186,15 @@ public class PrivateTransactionReceiptResult {
       final long blockNumber,
       final Hash transactionHash,
       final Hash blockHash,
-      final int transactionIndex) {
+      final int transactionIndex,
+      final int logIndexStart) {
     final List<TransactionReceiptLogResult> logResults = new ArrayList<>(logs.size());
 
     for (int i = 0; i < logs.size(); i++) {
       final Log log = logs.get(i);
       logResults.add(
           new TransactionReceiptLogResult(
-              log, blockNumber, transactionHash, blockHash, transactionIndex, i));
+              log, blockNumber, transactionHash, blockHash, transactionIndex, logIndexStart));
     }
 
     return logResults;

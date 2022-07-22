@@ -25,6 +25,7 @@ public class TransactionReceiptWithMetadata {
   private final TransactionReceipt receipt;
   private final Hash transactionHash;
   private final int transactionIndex;
+  private final int logIndexStart;
   private final long gasUsed;
   private final Optional<Wei> baseFee;
   private final long blockNumber;
@@ -36,6 +37,7 @@ public class TransactionReceiptWithMetadata {
       final Transaction transaction,
       final Hash transactionHash,
       final int transactionIndex,
+      final int logIndexStart,
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
@@ -43,6 +45,7 @@ public class TransactionReceiptWithMetadata {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
+    this.logIndexStart = logIndexStart;
     this.gasUsed = gasUsed;
     this.baseFee = baseFee;
     this.blockHash = blockHash;
@@ -55,6 +58,7 @@ public class TransactionReceiptWithMetadata {
       final Transaction transaction,
       final Hash transactionHash,
       final int transactionIndex,
+      final int logIndexStart,
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
@@ -64,6 +68,7 @@ public class TransactionReceiptWithMetadata {
         transaction,
         transactionHash,
         transactionIndex,
+        logIndexStart,
         gasUsed,
         baseFee,
         blockHash,
@@ -84,6 +89,10 @@ public class TransactionReceiptWithMetadata {
 
   public int getTransactionIndex() {
     return transactionIndex;
+  }
+
+  public int getLogIndexStart() {
+    return logIndexStart;
   }
 
   public Hash getBlockHash() {

@@ -6,6 +6,8 @@
 
 ### Bug Fixes
 
+- Fix logIndex to conform to Ethereum json-rpc spec (counts log position from start of block instead of start of tx)
+
 ## 22.7.0-RC2
 
 ### Additions and Improvements

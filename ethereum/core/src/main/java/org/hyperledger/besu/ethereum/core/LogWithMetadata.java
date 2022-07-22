@@ -64,15 +64,24 @@ public class LogWithMetadata extends Log
       final Hash blockHash,
       final Hash transactionHash,
       final int transactionIndex,
-      final boolean removed) {
+      final boolean removed,
+      final int logIndexStart) {
     return generate(
-        receipt.getLogsList(), number, blockHash, transactionHash, transactionIndex, removed);
+        receipt.getLogsList(),
+        number,
+        blockHash,
+        transactionHash,
+        transactionIndex,
+        removed,
+        logIndexStart);
   }
 
   public static List<LogWithMetadata> generate(
       final Block block, final List<TransactionReceipt> receipts, final boolean removed) {
     final List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    int logIndexStart = 0;
     for (int txi = 0; txi < receipts.size(); ++txi) {
+      final TransactionReceipt receipt = receipts.get(txi);
       logsWithMetadata.addAll(
           generate(
               receipts.get(txi),
@@ -80,7 +89,9 @@ public class LogWithMetadata extends Log
               block.getHash(),
               block.getBody().getTransactions().get(txi).getHash(),
               txi,
-              removed));
+              removed,
+              logIndexStart));
+      logIndexStart += receipt.getLogsList().size();
     }
     return logsWithMetadata;
   }
@@ -91,9 +102,16 @@ public class LogWithMetadata extends Log
       final Hash blockHash,
       final Hash transactionHash,
       final int transactionIndex,
-      final boolean removed) {
+      final boolean removed,
+      final int logIndexStart) {
     return generate(
-        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
+        receipt.getLogs(),
+        number,
+        blockHash,
+        transactionHash,
+        transactionIndex,
+        removed,
+        logIndexStart);
   }
 
   private static List<LogWithMetadata> generate(
@@ -102,20 +120,21 @@ public class LogWithMetadata extends Log
       final Hash blockHash,
       final Hash transactionHash,
       final int transactionIndex,
-      final boolean removed) {
+      final boolean removed,
+      final int logIndexStart) {
 
     final List<LogWithMetadata> logs = new ArrayList<>();
-    for (int logIndex = 0; logIndex < receiptLogs.size(); ++logIndex) {
+    for (int i = 0; i < receiptLogs.size(); ++i) {
       logs.add(
           new LogWithMetadata(
-              logIndex,
+              logIndexStart + i,
               number,
               blockHash,
               transactionHash,
               transactionIndex,
-              receiptLogs.get(logIndex).getLogger(),
-              receiptLogs.get(logIndex).getData(),
-              receiptLogs.get(logIndex).getTopics(),
+              receiptLogs.get(i).getLogger(),
+              receiptLogs.get(i).getData(),
+              receiptLogs.get(i).getTopics(),
               removed));
     }
 

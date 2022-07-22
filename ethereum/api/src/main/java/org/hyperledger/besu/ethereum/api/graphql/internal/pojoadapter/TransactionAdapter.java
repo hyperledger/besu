@@ -179,7 +179,8 @@ public class TransactionAdapter extends AdapterBase {
               transactionWithMetadata.getBlockHash().get(),
               hash,
               transactionWithMetadata.getTransactionIndex().get(),
-              false);
+              false,
+              maybeTransactionReceiptWithMetadata.get().getLogIndexStart());
       for (final LogWithMetadata log : logs) {
         results.add(new LogAdapter(log));
       }
