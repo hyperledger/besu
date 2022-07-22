@@ -66,6 +66,7 @@ import org.slf4j.LoggerFactory;
  * Once "used" this class must be discarded and another created. This class contains state which is
  * not cleared between executions of buildTransactionListForBlock().
  */
+@SuppressWarnings("UnusedMethod")
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
 
@@ -213,7 +214,7 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
     pendingTransactions.selectTransactions(
-        pendingTransaction -> evaluateTransaction(pendingTransaction, true));
+        pendingTransaction -> evaluateTransaction(pendingTransaction, false));
     return transactionSelectionResult;
   }
 
@@ -224,7 +225,7 @@ public class BlockTransactionSelector {
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
-    transactions.forEach(transaction -> evaluateTransaction(transaction, false));
+    transactions.forEach(transaction -> evaluateTransaction(transaction, true));
     return transactionSelectionResult;
   }
 
@@ -238,7 +239,7 @@ public class BlockTransactionSelector {
    *
    */
   private TransactionSelectionResult evaluateTransaction(
-      final Transaction transaction, final boolean skipFutureNonceTransactions) {
+      final Transaction transaction, final boolean reportFutureNonceTransactionsAsInvalid) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
     }
@@ -302,11 +303,16 @@ public class BlockTransactionSelector {
               TransactionValidationParams.mining());
     }
 
-    updateTransactionResultTracking(transaction, effectiveResult, skipFutureNonceTransactions);
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
       LOG.trace("Selected {} for block creation", transaction);
+      updateTransactionResultTracking(transaction, effectiveResult);
     } else {
+      if (reportFutureNonceTransactionsAsInvalid
+          && isIncorrectNonce(effectiveResult.getValidationResult())) {
+        transactionSelectionResult.updateWithInvalidTransaction(
+            transaction, effectiveResult.getValidationResult());
+      }
       return transactionSelectionResultForInvalidResult(effectiveResult.getValidationResult());
     }
     return TransactionSelectionResult.CONTINUE;
@@ -351,35 +357,22 @@ public class BlockTransactionSelector {
   cumulative gas, world state root hash.).
    */
   private void updateTransactionResultTracking(
-      final Transaction transaction,
-      final TransactionProcessingResult result,
-      final boolean skipFutureNonceTransactions) {
-    if (result.isInvalid()) {
-      if (skipFutureNonceTransactions && isIncorrectNonce(result.getValidationResult())) {
-        // it's a Future Nonce transaction that will remain in TxPool for later processing
-        // so won't be considered invalid
-        return;
-      }
+      final Transaction transaction, final TransactionProcessingResult result) {
+    final boolean isGoQuorumPrivateTransaction =
+        transaction.isGoQuorumPrivateTransaction(
+            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-      transactionSelectionResult.updateWithInvalidTransaction(
-          transaction, result.getValidationResult());
-    } else {
-      final boolean isGoQuorumPrivateTransaction =
-          transaction.isGoQuorumPrivateTransaction(
-              transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
+    final long gasUsedByTransaction =
+        isGoQuorumPrivateTransaction ? 0 : transaction.getGasLimit() - result.getGasRemaining();
 
-      final long gasUsedByTransaction =
-          isGoQuorumPrivateTransaction ? 0 : transaction.getGasLimit() - result.getGasRemaining();
+    final long cumulativeGasUsed =
+        transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
 
-      final long cumulativeGasUsed =
-          transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
-
-      transactionSelectionResult.update(
-          transaction,
-          transactionReceiptFactory.create(
-              transaction.getType(), result, worldState, cumulativeGasUsed),
-          gasUsedByTransaction);
-    }
+    transactionSelectionResult.update(
+        transaction,
+        transactionReceiptFactory.create(
+            transaction.getType(), result, worldState, cumulativeGasUsed),
+        gasUsedByTransaction);
   }
 
   private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
