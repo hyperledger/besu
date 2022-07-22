@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -107,7 +106,8 @@ public class EthPeers {
             maxMessageSize,
             clock,
             permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
+    final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
+    LOG.debug("Adding new EthPeer {}", ethPeer);
   }
 
   public void registerDisconnect(final PeerConnection connection) {
@@ -116,12 +116,7 @@ public class EthPeers {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
       abortPendingRequestsAssignedToDisconnectedPeers();
-      final PeerInfo peerInfo = peer.getConnection().getPeerInfo();
-      LOG.debug(
-          "Disconnected EthPeer {}, client ID: {}, {}",
-          peerInfo.getNodeId(),
-          peerInfo.getClientId(),
-          peer.getReputation());
+      LOG.debug("Disconnected EthPeer {}", peer);
     }
     reattemptPendingPeerRequests();
   }
