@@ -54,12 +54,14 @@ public class NodeFinder {
   List<DiscoveryPeer> initialPeers;
 
   NodeFinder(
+      final List<DiscoveryPeer> initialPeers,
       final BondingAgent bondingAgent,
       final TimerUtil timerUtil,
       final FindNeighbourDispatcher neighborFinder) {
     this.bondingAgent = bondingAgent;
     this.timerUtil = timerUtil;
     this.findNeighbourDispatcher = neighborFinder;
+    this.initialPeers = initialPeers;
   }
 
   void start(final List<DiscoveryPeer> initialPeers, final Bytes target) {
@@ -100,6 +102,7 @@ public class NodeFinder {
     currentRoundTimeout.ifPresent(RoundTimeout::cancelTimeout);
     List<MetadataPeer> candidates = bondingRoundCandidates();
     if (candidates.isEmpty()) {
+      addPeers(initialPeers);
       known.putAll(neighbours);
       neighbours.clear();
     }

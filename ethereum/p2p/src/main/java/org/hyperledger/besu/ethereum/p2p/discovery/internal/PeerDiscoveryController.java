@@ -212,7 +212,8 @@ public class PeerDiscoveryController {
             .collect(Collectors.toList());
     initialDiscoveryPeers.forEach(peerTable::tryAdd);
 
-    recursivePeerRefreshState = new NodeFinder(this::bond, timerUtil, this::findNodes);
+    recursivePeerRefreshState =
+        new NodeFinder(initialDiscoveryPeers, this::bond, timerUtil, this::findNodes);
 
     peerPermissions.subscribeUpdate(this::handlePermissionsUpdate);
 

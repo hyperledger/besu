@@ -55,6 +55,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -350,9 +351,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
       // only replace dnsPeers if the lookup was successful:
       if (!peers.isEmpty()) {
         dnsPeers.set(peers);
-        peerDiscoveryAgent
-            .getController()
-            .ifPresent(peerDiscoveryController -> peerDiscoveryController.addPeers(dnsPeers.get()));
       }
     };
   }
@@ -371,6 +369,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   void attemptPeerConnections() {
     LOG.info("Initiating connections to discovered peers.");
+
     streamDiscoveredPeers()
         // .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
         .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection))
@@ -394,6 +393,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+    final List<DiscoveryPeer> peers = dnsPeers.get();
+    if (peers != null) {
+      Collections.shuffle(peers);
+      return Stream.concat(peerDiscoveryAgent.streamDiscoveredPeers(), peers.stream());
+    }
     return peerDiscoveryAgent.streamDiscoveredPeers();
   }
 
