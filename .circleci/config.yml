@@ -137,24 +137,6 @@ jobs:
           destination: distributions
           when: always
 
-  dco:
-    executor: besu_executor_small
-    steps:
-      - checkout
-      - restore_gradle_cache
-      - run:
-          name: DCO check
-          command: |
-            ./scripts/dco_check.sh
-  spotless:
-    executor: besu_executor_small
-    steps:
-      - checkout
-      - restore_gradle_cache
-      - run:
-          name: Spotless
-          command: |
-            ./gradlew --no-daemon --parallel clean spotlessCheck
   testWindows:
     executor: win/default
     steps:
@@ -404,12 +386,7 @@ workflows:
   version: 2
   default:
     jobs:
-      - dco
-      - spotless
-      - assemble:
-          requires:
-            - dco
-            - spotless
+      - assemble
       - unitTests:
 # Temporarily disabled
 #          context: SonarCloud

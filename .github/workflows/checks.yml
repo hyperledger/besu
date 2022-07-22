@@ -1,0 +1,34 @@
+name: checks
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  spotless:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: gradle
+      - name: spotless
+        run: ./gradlew --no-daemon --parallel clean spotlessCheck
+  dco:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Get PR Commits
+        id: 'get-pr-commits'
+        uses: tim-actions/get-pr-commits@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: DCO Check
+        uses: tim-actions/dco@v1.1.0
+        with:
+          commits: ${{ steps.get-pr-commits.outputs.commits }}
