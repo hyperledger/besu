@@ -38,10 +38,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
 public class ExecutionEngineAbstractJsonRpcTest {
   private static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
