@@ -236,7 +236,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       final EnginePayloadParameter param,
       final Hash latestValidHash,
       final String validationError) {
-    if (lastInvalidWarn + 60000 < System.currentTimeMillis()) {
+    if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastInvalidWarn = System.currentTimeMillis();
       warnLambda(
           LOG,

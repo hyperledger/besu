@@ -269,7 +269,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private void logForkchoiceUpdatedCall(
       final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
     // cheaply limit the noise of fcU during consensus client syncing to once a minute:
-    if (lastFcuInfoLog + 60000 < System.currentTimeMillis()) {
+    if (lastFcuInfoLog + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastFcuInfoLog = System.currentTimeMillis();
       LOG.info(
           "{} for fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",

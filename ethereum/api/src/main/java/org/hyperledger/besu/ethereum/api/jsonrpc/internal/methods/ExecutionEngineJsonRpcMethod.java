@@ -37,6 +37,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     INVALID_BLOCK_HASH;
   }
 
+  public static final long ENGINE_API_LOGGING_THRESHOLD = 60000L;
   private final Vertx syncVertx;
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
   protected final MergeContext mergeContext;
