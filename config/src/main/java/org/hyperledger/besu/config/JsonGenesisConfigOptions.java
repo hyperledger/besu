@@ -283,12 +283,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getParisBlockNumber() {
     var parisBlock = getOptionalLong("parisblock");
-    var preMergeAlias = getOptionalLong("premergeforkblock");
-    if (parisBlock.isPresent() && preMergeAlias.isPresent()) {
+    var mergeNetSplitBlock = getOptionalLong("mergenetsplitblock");
+    if (parisBlock.isPresent() && mergeNetSplitBlock.isPresent()) {
       throw new RuntimeException(
-          "Found both paris and preMergeFork blocks.  Should have one or the other");
+          "Found both paris and MergeNetSplit blocks.  Should have one or the other");
     }
-    return Streams.concat(parisBlock.stream(), preMergeAlias.stream()).findFirst();
+    return Streams.concat(parisBlock.stream(), mergeNetSplitBlock.stream()).findFirst();
   }
 
   @Override
@@ -567,7 +567,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
             getParisBlockNumber(),
-            getTerminalBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

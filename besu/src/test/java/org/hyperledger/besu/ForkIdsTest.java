@@ -57,6 +57,13 @@ public class ForkIdsTest {
   public static Collection<Object[]> parameters() {
     return List.of(
         new Object[] {
+          NetworkName.SEPOLIA,
+          List.of(
+              new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L),
+              new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0xb96cbd13L), 0L))
+        },
+        new Object[] {
           NetworkName.ROPSTEN,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0x30c7ddbcL), 10L),
