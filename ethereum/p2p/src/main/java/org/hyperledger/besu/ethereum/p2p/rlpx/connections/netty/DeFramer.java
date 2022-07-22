@@ -205,7 +205,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (remoteAddress == null) {
       return Optional.empty();
     }
-    int port = peerInfo.getPort();
+    final int port = peerInfo.getPort();
     return Optional.of(
         DefaultPeer.fromEnodeURL(
             EnodeURLImpl.builder()
