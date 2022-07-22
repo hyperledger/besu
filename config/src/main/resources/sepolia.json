@@ -11,10 +11,8 @@
     "istanbulBlock":0,
     "berlinBlock":0,
     "londonBlock":0,
-    "parisBlock": 1735371,
+    "mergeNetSplitBlock": 1735371,
     "terminalTotalDifficulty": 17000000000000000,
-    "terminalBlockHash": "0xd07cce9785d39c0dd2409b7d8e69d6bff26a69a0fa5308ac781c63ffe2a37bc1",
-    "terminalBlockNumber": 1450408,
     "ethash":{},
     "discovery": {
       "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.sepolia.ethdisco.net",

@@ -355,7 +355,7 @@ public class EIP2124Test {
           },
           // Sepolia test cases
           {
-            "Sepolia // paris block",
+            "Sepolia // mergenetsplit block",
             Network.SEPOLIA,
             0L,
             ForkIdTestUtil.wantForkId("0xfe3366e7", 1735371L),

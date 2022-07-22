@@ -68,7 +68,8 @@ public class ReferenceTestProtocolSchedules {
     builder.put(
         "ArrowGlacier", createSchedule(new StubGenesisConfigOptions().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(new StubGenesisConfigOptions().grayGlacierBlock(0)));
-    builder.put("Paris", createSchedule(new StubGenesisConfigOptions().parisBlock(0)));
+    builder.put(
+        "MergeNetSplit", createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
