@@ -66,7 +66,7 @@ commands:
           name: Install Packages - LibSodium, nssdb
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
+            sudo apt-get install -y libsodium23 libsodium-dev libjemalloc-dev apt-transport-https haveged libnss3-tools
             sudo service haveged restart
       - restore_gradle_cache
   restore_gradle_cache:
@@ -212,11 +212,6 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
-# Temporarily disabled
-#      - run:
-#          name: SonarQube
-#          no_output_timeout: 30m
-#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: xl_machine_executor
@@ -411,9 +406,7 @@ workflows:
             - dco
             - spotless
       - unitTests:
-# Temporarily disabled
-#          context: SonarCloud
-          requires:
+           requires:
             - assemble
       - testWindows:
           requires:

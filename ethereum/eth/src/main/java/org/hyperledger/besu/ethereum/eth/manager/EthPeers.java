@@ -106,7 +106,8 @@ public class EthPeers {
             maxMessageSize,
             clock,
             permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
+    final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
+    LOG.debug("Adding new EthPeer {}", ethPeer);
   }
 
   public void registerDisconnect(final PeerConnection connection) {
@@ -115,6 +116,7 @@ public class EthPeers {
       disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
       peer.handleDisconnect();
       abortPendingRequestsAssignedToDisconnectedPeers();
+      LOG.debug("Disconnected EthPeer {}", peer);
     }
     reattemptPendingPeerRequests();
   }

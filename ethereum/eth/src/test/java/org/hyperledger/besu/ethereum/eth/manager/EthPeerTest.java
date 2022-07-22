@@ -362,6 +362,14 @@ public class EthPeerTest {
     assertThat(peer2.compareTo(peer1)).isEqualTo(-1);
   }
 
+  @Test
+  public void recordUsefullResponse() {
+    final EthPeer peer = createPeer();
+    final EthPeer peer2 = createPeer();
+    peer.recordUsefulResponse();
+    assertThat(peer.getReputation().compareTo(peer2.getReputation())).isGreaterThan(0);
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,

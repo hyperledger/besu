@@ -167,6 +167,11 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
     if (mergeContext.isSyncing() || parentHeader.isEmpty()) {
+      LOG.info(
+          "isSyncing: {} parentHeaderMissing: {}, adding {} to backwardsync",
+          mergeContext.isSyncing(),
+          parentHeader.isEmpty(),
+          block.getHash());
       mergeCoordinator
           .appendNewPayloadToSync(block)
           .exceptionally(
@@ -180,6 +185,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
+      LOG.warn("payload did not descend from terminal: {}", newBlockHeader.toLogString());
       mergeCoordinator.addBadBlock(block);
       return respondWithInvalid(
           reqId,
