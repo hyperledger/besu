@@ -308,8 +308,8 @@ public class BlockTransactionSelector {
       LOG.trace("Selected {} for block creation", transaction);
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
-      if (reportFutureNonceTransactionsAsInvalid
-          && isIncorrectNonce(effectiveResult.getValidationResult())) {
+      final var isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
+      if (!isIncorrectNonce || reportFutureNonceTransactionsAsInvalid) {
         transactionSelectionResult.updateWithInvalidTransaction(
             transaction, effectiveResult.getValidationResult());
       }

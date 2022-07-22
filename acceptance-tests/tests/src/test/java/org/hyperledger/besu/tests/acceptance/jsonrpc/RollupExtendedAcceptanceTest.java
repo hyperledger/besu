@@ -80,7 +80,7 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
     cluster.start(executionEngineNode);
 
     engineApiClient =
-        new EngineApiClient(httpClient(false), executionEngineNode.engineRpcUrl().orElseThrow());
+        new EngineApiClient(httpClient(true), executionEngineNode.engineRpcUrl().orElseThrow());
 
     final String jsonRpcApiUrl =
         "http://"
@@ -109,59 +109,69 @@ public class RollupExtendedAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void createsBlockAndReturnsInvalidAndUnprocessedTransactions() throws Exception {
     final EthBlock.Block finalizedBlock = getBlockByNumber(DefaultBlockParameterName.LATEST);
-    final Transaction transaction1 =
+    final Transaction txValid1 =
         buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 0L, 23_000L);
-    final Transaction transaction2 =
-        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 10L, 23_000L);
-    final Transaction transaction3 =
+    final Transaction txInvalidNonce1 =
+        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 10, 23_000L);
+    final Transaction txInvalidNonceTooHigh1 =
+        buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(13), 10_000_000L, 23_000L);
+    final Transaction txInvalidNoBalance =
         buildTransferTransaction(
             RANDOM_ACCOUNT_ADDRESS, Wei.fromHexString("0xad78ebc5ac6200000"), 1L, 23_000L);
-    final Transaction transaction4 =
+    final Transaction txValid2GasLimitOverBlockSize =
         buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(10), 1L, 100_000_000L);
-    final Transaction transaction5 =
+    final Transaction txValid3 =
         buildTransferTransaction(RANDOM_ACCOUNT_ADDRESS, Wei.of(12), 1L, 23_000L);
-    final String rlpEncodedTransaction1 = rlpEncodeTransaction(transaction1);
-    final String rlpEncodedTransaction2 = rlpEncodeTransaction(transaction2);
-    final String rlpEncodedTransaction3 = rlpEncodeTransaction(transaction3);
-    final String rlpEncodedTransaction4 = rlpEncodeTransaction(transaction4);
-    final String rlpEncodedTransaction5 = rlpEncodeTransaction(transaction5);
+    final String rlpTxValid1 = rlpEncodeTransaction(txValid1);
+    final String rlpTxInvalidNonce1 = rlpEncodeTransaction(txInvalidNonce1);
+    final String rlpTxInvalidNonceTooHigh1 = rlpEncodeTransaction(txInvalidNonceTooHigh1);
+    final String rlpTxInvalidNoBalance = rlpEncodeTransaction(txInvalidNoBalance);
+    final String rlpTxValid2GasLimitOverBlockSize =
+        rlpEncodeTransaction(txValid2GasLimitOverBlockSize);
+    final String rlpTxValid3 = rlpEncodeTransaction(txValid3);
     final JsonObject result =
         engineApiClient.rollup_createPayload(
             finalizedBlock.getHash(),
-            rlpEncodedTransaction1,
-            rlpEncodedTransaction2,
-            rlpEncodedTransaction3,
-            rlpEncodedTransaction4,
-            rlpEncodedTransaction5,
-            rlpEncodedTransaction1);
+            rlpTxValid1,
+            rlpTxInvalidNonce1,
+            rlpTxInvalidNonceTooHigh1,
+            rlpTxInvalidNoBalance,
+            rlpTxValid2GasLimitOverBlockSize,
+            rlpTxValid3,
+            rlpTxValid1 // repeated, should be ignored
+            );
 
     final JsonObject newBlock = result.getJsonObject("executionPayload");
     final String newBlockHash = newBlock.getString("blockHash");
     assertThat(newBlock.getJsonArray("transactions")).isNotNull();
     assertThat(newBlock.getJsonArray("transactions").size()).isEqualTo(2);
-    assertThat(newBlock.getJsonArray("transactions").getString(0))
-        .isEqualTo(rlpEncodedTransaction1);
-    assertThat(newBlock.getJsonArray("transactions").getString(1))
-        .isEqualTo(rlpEncodedTransaction5);
-    assertThat(result.getJsonArray("invalidTransactions").size()).isEqualTo(2);
+    assertThat(newBlock.getJsonArray("transactions").getString(0)).isEqualTo(rlpTxValid1);
+    assertThat(newBlock.getJsonArray("transactions").getString(1)).isEqualTo(rlpTxValid3);
+    assertThat(result.getJsonArray("invalidTransactions").size()).isEqualTo(3);
     var invalidTx1Result = result.getJsonArray("invalidTransactions").getJsonObject(0);
     var invalidTx2Result = result.getJsonArray("invalidTransactions").getJsonObject(1);
+    var invalidTx3Result = result.getJsonArray("invalidTransactions").getJsonObject(2);
 
-    assertThat(invalidTx1Result.getString("transaction")).isEqualTo(rlpEncodedTransaction2);
+    assertThat(invalidTx1Result.getString("transaction")).isEqualTo(rlpTxInvalidNonce1);
     assertThat(invalidTx1Result.getString("reason")).isEqualTo("INCORRECT_NONCE");
     assertThat(invalidTx1Result.getString("errorMessage"))
         .isEqualTo("transaction nonce 10 does not match sender account nonce 1.");
 
-    assertThat(invalidTx2Result.getString("transaction")).isEqualTo(rlpEncodedTransaction3);
-    assertThat(invalidTx2Result.getString("reason")).isEqualTo("UPFRONT_COST_EXCEEDS_BALANCE");
+    assertThat(invalidTx2Result.getString("transaction")).isEqualTo(rlpTxInvalidNonceTooHigh1);
+    assertThat(invalidTx2Result.getString("reason")).isEqualTo("INCORRECT_NONCE");
     assertThat(invalidTx2Result.getString("errorMessage"))
+        .isEqualTo("transaction nonce 10000000 does not match sender account nonce 1.");
+
+    assertThat(invalidTx3Result.getString("transaction")).isEqualTo(rlpTxInvalidNoBalance);
+    assertThat(invalidTx3Result.getString("reason")).isEqualTo("UPFRONT_COST_EXCEEDS_BALANCE");
+    assertThat(invalidTx3Result.getString("errorMessage"))
         .isEqualTo(
             "transaction up-front cost 0x00000000000000000000000000000000000000000000000ad78ebc5aca3cdb40 exceeds transaction sender account balance 0x00000000000000000000000000000000000000000000000ad78ebc5ac25eb236");
 
     var unprocessedTransactions = result.getJsonArray("unprocessedTransactions");
     assertThat(unprocessedTransactions).isNotNull();
     assertThat(unprocessedTransactions.size()).isEqualTo(1);
-    assertThat(unprocessedTransactions.getString(0)).isEqualTo(rlpEncodedTransaction4);
+    assertThat(unprocessedTransactions.getString(0)).isEqualTo(rlpTxValid2GasLimitOverBlockSize);
 
     // add new payload to execution engine;
     engineApiClient.engine_newPayloadV1(newBlock);
