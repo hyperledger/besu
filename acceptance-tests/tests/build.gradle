@@ -20,7 +20,7 @@ configurations.all {
   resolutionStrategy.eachDependency { DependencyResolveDetails details ->
     if (details.requested.group == 'org.web3j' && details.requested.version == '4.9.2') {
       details.useVersion '4.9.4'
-      details.because 'web3-gradle-plugin is not updated yet'
+      details.because 'web3-gradle-plugin has not been updated yet'
     }
   }
 }
