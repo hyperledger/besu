@@ -239,7 +239,7 @@ public class GenesisConfigFileTest {
     assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber().getAsLong())
         .isEqualTo(11L);
 
-    // assert empty if neither are present:
+    // assert empty if not present:
     GenesisConfigFile londonGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
     assertThat(londonGenesis.getForks()).hasSize(1);
