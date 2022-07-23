@@ -1,0 +1,39 @@
+name: docker
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: gradle
+      - name: hadoLint_openjdk_11
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+      - name: hadoLint_openjdk_11_debug
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-11-debug/Dockerfile
+      - name: hadoLint_openjdk_latest
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - name: hadoLint_graalvm
+        run: docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - name: distDocker
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: distDocker
+      - name: test image
+        run: |
+          mkdir -p docker/reports
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
+      - name: distDocker
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: testDocker

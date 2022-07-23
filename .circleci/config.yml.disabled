@@ -113,50 +113,6 @@ commands:
           path: acceptance-tests/tests/build/jvmErrorLogs
 
 jobs:
-  assemble:
-    executor: besu_executor_xl
-    steps:
-      - prepare
-      - run:
-          name: Assemble
-          command: |
-            ./gradlew --no-daemon clean compileJava compileTestJava assemble
-      - save_cache:
-          name: Caching gradle dependencies
-          key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
-          paths:
-            - .gradle
-            - ~/.gradle
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - ./
-      - store_artifacts:
-          name: Distribution artifacts
-          path: build/distributions
-          destination: distributions
-          when: always
-
-  testWindows:
-    executor: win/default
-    steps:
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Unzip Windows build
-          no_output_timeout: 20m
-          command: |
-            cd build/distributions
-            unzip besu-*.zip -d besu-tmp
-            cd besu-tmp
-            mv besu-* ../besu
-      - run:
-          name: Test Besu Windows executable
-          no_output_timeout: 10m
-          command: |
-            build\distributions\besu\bin\besu.bat --help
-            build\distributions\besu\bin\besu.bat --version
-
   dockerScan:
     executor: trivy_executor
     steps:
@@ -182,52 +138,11 @@ jobs:
               trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
             done
 
-  unitTests:
-    executor: besu_executor_xl
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Build
-          no_output_timeout: 20m
-          command: |
-            ./gradlew --no-daemon build
-      - capture_test_results
-
-  integrationTests:
-    executor: xl_machine_executor
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: IntegrationTests
-          command: |
-            ./gradlew --no-daemon integrationTest
-      - run:
-          name: Javadoc
-          command: |
-            ./gradlew --no-daemon javadoc
-      - run:
-          name: CompileJmh
-          command: |
-            ./gradlew --no-daemon compileJmh
-      - capture_test_results
-
-  referenceTests:
-    executor: besu_executor_xl
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: ReferenceTests
-          no_output_timeout: 30m
-          command: |
-            git submodule update --init --recursive
-            ./gradlew --no-daemon referenceTest
-      - capture_test_results
+# Temporarily disabled
+#      - run:
+#          name: SonarQube
+#          no_output_timeout: 30m
+#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   acceptanceTests:
     parallelism: 6
@@ -269,40 +184,6 @@ jobs:
           destination: quorum-at-artifacts
       - store_test_results:
           path: build/quorum-at/openjdk-latest/reports/xml-report
-
-  buildDocker:
-    executor: besu_executor_med
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - setup_remote_docker
-      - run:
-          name: hadoLint_openjdk_11
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
-      - run:
-          name: hadoLint_openjdk_11_debug
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11-debug/Dockerfile
-      - run:
-          name: hadoLint_openjdk_latest
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
-      - run:
-          name: hadoLint_graalvm
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
-      - run:
-          name: build image
-          command: |
-            ./gradlew --no-daemon distDocker
-      - run:
-          name: test image
-          command: |
-            mkdir -p docker/reports
-            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
-            ./gradlew --no-daemon testDocker
 
   buildArm64Docker:
     executor: besu_arm64_executor_med
@@ -383,28 +264,9 @@ workflows:
   version: 2
   default:
     jobs:
-      - assemble
-      - unitTests:
-           requires:
-            - assemble
-      - testWindows:
-          requires:
-            - assemble
-      - referenceTests:
-          requires:
-            - assemble
-      - integrationTests:
-          requires:
-            - assemble
-      - acceptanceTests:
-          requires:
-            - assemble
-      - buildDocker:
-          requires:
-            - assemble
-      - buildArm64Docker:
-          requires:
-            - assemble
+      - acceptanceTests
+      - buildDocker
+      - buildArm64Docker
       - publish:
           filters:
             branches:
@@ -412,11 +274,7 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - assemble
-            - integrationTests
-            - unitTests
             - acceptanceTests
-            - referenceTests
             - buildDocker
       - publishDocker:
           filters:
@@ -425,11 +283,7 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - assemble
-            - integrationTests
-            - unitTests
             - acceptanceTests
-            - referenceTests
             - buildDocker
           context:
             - besu-dockerhub-rw
@@ -440,10 +294,7 @@ workflows:
                 - main
                 - /^release-.*/
           requires:
-            - integrationTests
-            - unitTests
             - acceptanceTests
-            - referenceTests
             - buildArm64Docker
           context:
             - besu-dockerhub-rw
@@ -468,8 +319,5 @@ workflows:
               only:
                 - main
     jobs:
-      - assemble
-      - acceptanceTestsQuorum:
-          requires:
-            - assemble
+      - acceptanceTestsQuorum
       - dockerScan
