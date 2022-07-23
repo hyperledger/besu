@@ -185,35 +185,6 @@ jobs:
       - store_test_results:
           path: build/quorum-at/openjdk-latest/reports/xml-report
 
-  buildArm64Docker:
-    executor: besu_arm64_executor_med
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: hadoLint_openjdk_11
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
-      - run:
-          name: hadoLint_openjdk_latest
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
-      - run:
-          name: hadoLint_graalvm
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
-      - run:
-          name: build image
-          command: |
-            ./gradlew --no-daemon distDocker
-      - run:
-          name: test image
-          command: |
-            mkdir -p docker/reports
-            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
-            ./gradlew --no-daemon testDocker
-
   publish:
     executor: besu_executor_med
     steps:
@@ -225,30 +196,6 @@ jobs:
           command: |
             ./gradlew --no-daemon artifactoryPublish
 
-  publishDocker:
-    executor: besu_executor_med
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - setup_remote_docker
-      - run:
-          name: Publish Docker
-          command: |
-            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
-
-  publishArm64Docker:
-    executor: besu_arm64_executor_med
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: Publish Docker
-          command: |
-            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
   manifestDocker:
     executor: besu_executor_med
     steps:
