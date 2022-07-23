@@ -4,6 +4,10 @@ on:
     branches: [ main ]
   pull_request:
 
+env:
+  GRADLE_OPTS: "-Xmx4g"
+  total-runners: 5
+
 jobs:
   assemble:
     runs-on: ubuntu-latest
@@ -21,7 +25,7 @@ jobs:
       - name: Assemble
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: compileJava compileTestJava assemble
+          arguments: compileJava compileTestJava assemble --scan -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       - name: Cache classes
         uses: actions/cache@v3
         with:
@@ -42,24 +46,45 @@ jobs:
     timeout-minutes: 10
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
       - name: Download zip
-        uses: actions/download-artifact@v3.1.0
+        uses: actions/download-artifact@v3
         with:
           name: besu-zip
       - name: test Besu
         run: |
-          cd build/distributions
           unzip besu-*.zip -d besu-tmp
           cd besu-tmp
           mv besu-* ../besu
           cd ..
           besu\bin\besu.bat --help
           besu\bin\besu.bat --version
-  test:
+  runner-indexes:
     runs-on: ubuntu-latest
-    needs: assemble
-    container: tmio/besu-build:1.0
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Generate runner indexes
+    outputs:
+      json: ${{ steps.generate-index-list.outputs.json }}
+    steps:
+      - id: generate-index-list
+        run: |
+          MAX_INDEX=$((${{ env.total-runners }}-1))
+          INDEX_LIST=$(seq 0 ${MAX_INDEX})
+          INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
+          echo "::set-output name=json::${INDEX_JSON}"
+
+  run-parallel-tests:
+    runs-on: ubuntu-latest
+    name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
+    needs:
+      - runner-indexes
+      - assemble
+    strategy:
+      matrix:
+        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -73,16 +98,21 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: Split tests
+        id: split-tests
+        uses: chaosaffe/split-tests@v1-alpha.1
+        with:
+            glob: '**/src/test/java'
+            split-total: ${{ env.total-runners }}
+            split-index: ${{ matrix.runner-index }}
+      - name: extract module names
+        id: set-modules
+        run: echo "::set-output name=tests::$(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's:src/test/java:test:g' -e 's|/|:|g')"
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: test
-      - name: Upload build reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: unit-test-reports
-          path: build/reports/
+          arguments: ${{ steps.set-modules.outputs.tests }} --scan
   integration-test:
     runs-on: ubuntu-latest
     needs: assemble
@@ -101,16 +131,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: integrationTest
-      - name: Upload build reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: integration-test-reports
-          path: build/reports/
+          arguments: integrationTest --scan
   javadoc:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
@@ -129,16 +154,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: javadoc
-      - name: Upload build reports
-        uses: actions/upload-artifact@v3
-        with:
-          name: javadoc-reports
-          path: build/reports/
+          arguments: javadoc --scan
   compileJmh:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
@@ -157,12 +177,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+          key: ${{ runner.os }}-build-${{ github.sha }}
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: compileJmh
-  referenceTest:
+          arguments: compileJmh --scan
+  referenceTestEthereum:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
     needs: integration-test
@@ -171,7 +191,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
-          submodules: true
+          submodules: recursive
       - name: Set up Java
         uses: actions/setup-java@v2
         with:
@@ -182,8 +202,57 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "**/*.class"
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-      - name: test
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: ethereum reference tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: referenceTest
+          arguments: ethereum:referencetests:referencetests --scan
+  referenceTestQbft:
+    runs-on: ubuntu-latest
+    container: tmio/besu-build:1.0
+    needs: integration-test
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: gradle
+      - name: Cache classes
+        uses: actions/cache@v3
+        with:
+          path: "**/*.class"
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: qbft reference tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: consensus:qbft:referencetests --scan
+  acceptanceTests:
+    runs-on: ubuntu-latest
+    needs: integration-test
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: gradle
+      - name: Cache classes
+        uses: actions/cache@v3
+        with:
+          path: "**/*.class"
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: ethereum reference tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: acceptanceTests --scan
