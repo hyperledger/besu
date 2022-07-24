@@ -80,9 +80,14 @@ public final class DisconnectMessage extends AbstractMessageData {
     }
 
     public static Data readFrom(final RLPInput in) {
-      in.enterList();
-      Bytes reasonData = in.readBytes();
-      in.leaveList();
+      Bytes reasonData = Bytes.EMPTY;
+      if (in.nextIsList()) {
+        in.enterList();
+        reasonData = in.readBytes();
+        in.leaveList();
+      } else if (in.nextSize() == 1) {
+        reasonData = in.readBytes();
+      }
 
       // Disconnect reason should be at most 1 byte, otherwise, just return UNKNOWN
       final DisconnectReason reason =

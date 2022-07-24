@@ -205,7 +205,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (remoteAddress == null) {
       return Optional.empty();
     }
-    int port = peerInfo.getPort();
+    final int port = peerInfo.getPort();
     return Optional.of(
         DefaultPeer.fromEnodeURL(
             EnodeURLImpl.builder()
@@ -241,7 +241,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
       connectFuture
           .get()
-          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, true);
+          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     } else {
       connectFuture.completeExceptionally(throwable);
       ctx.close();
