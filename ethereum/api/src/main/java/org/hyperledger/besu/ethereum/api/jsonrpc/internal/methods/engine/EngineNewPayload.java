@@ -141,11 +141,13 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       LOG.debug("block already present");
       return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
-    if (mergeCoordinator.isBadBlock(blockParam.getParentHash())) {
+    if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
       return respondWith(
           reqId,
           blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(Hash.ZERO),
+          mergeCoordinator
+              .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
+              .orElse(Hash.ZERO),
           INVALID);
     }
 
@@ -174,7 +176,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           .appendNewPayloadToSync(block)
           .exceptionally(
               exception -> {
-                LOG.warn("Sync to block " + block.toLogString() + " failed", exception);
+                LOG.warn(
+                    "Sync to block " + block.toLogString() + " failed", exception.getMessage());
                 return null;
               });
       return respondWith(reqId, blockParam, null, SYNCING);
