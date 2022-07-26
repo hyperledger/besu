@@ -534,7 +534,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     Optional<BlockHeader> parentOf = Optional.of(newBlock);
 
     while (parentOf.isPresent()
-        && !parentOf.get().getBlockHash().equals(ancestorBlock.getBlockHash())) {
+        && !parentOf.get().getBlockHash().equals(ancestorBlock.getBlockHash())
+        && parentOf.get().getNumber()
+            > ancestorBlock.getNumber()) { // if on a fork, don't go further back than ancestor
       parentOf = protocolContext.getBlockchain().getBlockHeader(parentOf.get().getParentHash());
     }
 
