@@ -23,11 +23,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'org.web3j:core'
-  testImplementation('org.web3j:quorum') {
-    constraints {
-      implementation('org.web3j:core:4.9.4') { because 'quorum 4.9.4 hasn\'t been released yet' }
-    }
-  }
+  testImplementation 'org.web3j:quorum'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
