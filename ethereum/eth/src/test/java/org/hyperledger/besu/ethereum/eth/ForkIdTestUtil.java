@@ -52,6 +52,8 @@ public class ForkIdTestUtil {
         "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
     public static final String ROPSTEN =
         "0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d";
+    public static final String SEPOLIA =
+        "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
     public static final String RINKEBY =
         "0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177";
     public static final String GOERLI =
@@ -67,6 +69,8 @@ public class ForkIdTestUtil {
             9069000L, 9200000L, 12244000L, 12965000L, 13773000L, 15050000L);
     public static final List<Long> ROPSTEN =
         Arrays.asList(0L, 0L, 10L, 1700000L, 4230000L, 4939394L, 6485846L, 7117117L);
+    public static final List<Long> SEPOLIA =
+        Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 1735371L);
     public static final List<Long> RINKEBY =
         Arrays.asList(1L, 2L, 3L, 3L, 1035301L, 3660663L, 4321234L, 5435345L);
     public static final List<Long> GOERLI = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 1561651L);
@@ -99,6 +103,10 @@ public class ForkIdTestUtil {
             new ForkId(Bytes.fromHexString("0xd6e2149b"), 6485846L),
             new ForkId(Bytes.fromHexString("0x4bc66396"), 7117117L),
             new ForkId(Bytes.fromHexString("0x6727ef90"), 0L));
+    public static final List<ForkId> SEPOLIA =
+        Arrays.asList(
+            new ForkId(Bytes.fromHexString("0xfe3366e7"), 1735371L),
+            new ForkId(Bytes.fromHexString("0xb96cbd13"), 0L));
     public static final List<ForkId> RINKEBY =
         Arrays.asList(
             new ForkId(Bytes.fromHexString("0x3b8e0691"), 1L),
@@ -118,6 +126,7 @@ public class ForkIdTestUtil {
   public static class Network {
     public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET);
     public static final Network ROPSTEN = network(GenesisHash.ROPSTEN, Forks.ROPSTEN);
+    public static final Network SEPOLIA = network(GenesisHash.SEPOLIA, Forks.SEPOLIA);
     public static final Network RINKEBY = network(GenesisHash.RINKEBY, Forks.RINKEBY);
     public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI);
     public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE);
