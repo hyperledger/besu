@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
+- Deprecation warning for Ropsten, Rinkeby, Kiln [#4173](https://github.com/hyperledger/besu/pull/4173)
 
 ### Bug Fixes
 
