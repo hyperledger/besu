@@ -44,6 +44,8 @@ import org.slf4j.LoggerFactory;
 public class EngineAuthService implements AuthenticationService {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineAuthService.class);
+  private static final int JWT_EXPIRATION_TIME = 60;
+
   private final JWTAuth jwtAuthProvider;
 
   public EngineAuthService(final Vertx vertx, final Optional<File> signingKey, final Path datadir) {
@@ -167,6 +169,6 @@ public class EngineAuthService implements AuthenticationService {
   private boolean issuedRecently(final long iat) {
     long iatSecondsSinceEpoch = iat;
     long nowSecondsSinceEpoch = System.currentTimeMillis() / 1000;
-    return (Math.abs((nowSecondsSinceEpoch - iatSecondsSinceEpoch)) <= 5);
+    return (Math.abs((nowSecondsSinceEpoch - iatSecondsSinceEpoch)) <= JWT_EXPIRATION_TIME);
   }
 }
