@@ -209,6 +209,16 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void assertSepoliaTerminalTotalDifficulty() {
+    GenesisConfigOptions sepoliaOptions =
+        GenesisConfigFile.genesisFileFromResources("/sepolia.json").getConfigOptions();
+
+    assertThat(sepoliaOptions.getTerminalTotalDifficulty()).isPresent();
+    assertThat(sepoliaOptions.getTerminalTotalDifficulty().get())
+        .isEqualTo(UInt256.valueOf(new BigInteger("17000000000000000")));
+  }
+
+  @Test
   public void assertGoerliTerminalTotalDifficulty() {
     GenesisConfigOptions goerliOptions =
         GenesisConfigFile.genesisFileFromResources("/goerli.json").getConfigOptions();
@@ -230,34 +240,20 @@ public class GenesisConfigFileTest {
   }
 
   @Test
-  public void shouldFindParisForkAndAlias() {
-    GenesisConfigFile parisGenesis =
-        GenesisConfigFile.fromConfig("{\"config\":{\"parisBlock\":10},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(parisGenesis.getForks()).hasSize(1);
-    assertThat(parisGenesis.getConfigOptions().getParisBlockNumber()).isPresent();
-    assertThat(parisGenesis.getConfigOptions().getParisBlockNumber().getAsLong()).isEqualTo(10L);
-
-    GenesisConfigFile premergeForkGenesis =
+  public void shouldFindMergeNetSplitForkAndAlias() {
+    GenesisConfigFile mergeNetSplitGenesis =
         GenesisConfigFile.fromConfig(
-            "{\"config\":{\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}");
-    assertThat(premergeForkGenesis.getForks()).hasSize(1);
-    assertThat(premergeForkGenesis.getConfigOptions().getParisBlockNumber()).isPresent();
-    assertThat(premergeForkGenesis.getConfigOptions().getParisBlockNumber().getAsLong())
+            "{\"config\":{\"mergeNetsplitBlock\":11},\"baseFeePerGas\":\"0xa\"}");
+    assertThat(mergeNetSplitGenesis.getForks()).hasSize(1);
+    assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isPresent();
+    assertThat(mergeNetSplitGenesis.getConfigOptions().getMergeNetSplitBlockNumber().getAsLong())
         .isEqualTo(11L);
 
-    // assert fail if both paris and alias are present
-    var dupeOptions =
-        GenesisConfigFile.fromConfig(
-                "{\"config\":{\"parisBlock\":10,\"preMergeForkBlock\":11},\"baseFeePerGas\":\"0xa\"}")
-            .getConfigOptions();
-    assertThatThrownBy(() -> dupeOptions.getParisBlockNumber())
-        .isInstanceOf(RuntimeException.class);
-
-    // assert empty if neither are present:
+    // assert empty if not present:
     GenesisConfigFile londonGenesis =
         GenesisConfigFile.fromConfig("{\"config\":{\"londonBlock\":11},\"baseFeePerGas\":\"0xa\"}");
     assertThat(londonGenesis.getForks()).hasSize(1);
-    assertThat(londonGenesis.getConfigOptions().getParisBlockNumber()).isEmpty();
+    assertThat(londonGenesis.getConfigOptions().getMergeNetSplitBlockNumber()).isEmpty();
   }
 
   @Test
