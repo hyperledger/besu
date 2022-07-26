@@ -39,7 +39,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Test;
 
-public class ExecutionEngineAbstractJsonRpcTest {
+abstract class ExecutionEngineAbstractJsonRpcTest {
   private static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
