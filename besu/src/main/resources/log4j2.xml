@@ -39,6 +39,9 @@
     </Appenders>
     <Loggers>
         <Logger name="org.apache.logging.log4j.status.StatusLogger" level="OFF"/>
+        <Logger name="org.apache.tuweni.discovery.DNSTimerTask">
+            <RegexFilter regex="Refreshing DNS records with .*" onMatch="DENY" onMismatch="NEUTRAL" />
+        </Logger>
         <Root level="${sys:root.log.level}">
             <AppenderRef ref="Router" />
         </Root>
