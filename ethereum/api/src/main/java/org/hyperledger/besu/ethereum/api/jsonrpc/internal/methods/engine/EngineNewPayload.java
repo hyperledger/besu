@@ -19,8 +19,9 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
@@ -155,7 +156,6 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (parentHeader.isPresent()
         && (blockParam.getTimestamp() <= parentHeader.get().getTimestamp())) {
-      LOG.info("method parameter timestamp not greater than parent");
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -167,7 +167,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
     if (mergeContext.isSyncing() || parentHeader.isEmpty()) {
-      LOG.info(
+      LOG.debug(
           "isSyncing: {} parentHeaderMissing: {}, adding {} to backwardsync",
           mergeContext.isSyncing(),
           parentHeader.isEmpty(),
@@ -185,7 +185,6 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      LOG.warn("payload did not descend from terminal: {}", newBlockHeader.toLogString());
       mergeCoordinator.addBadBlock(block);
       return respondWithInvalid(
           reqId,
@@ -217,7 +216,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       final EnginePayloadParameter param,
       final Hash latestValidHash,
       final EngineStatus status) {
-    infoLambda(
+    debugLambda(
         LOG,
         "New payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}",
         () -> param.getBlockNumber(),
@@ -229,20 +228,26 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
         requestId, new EnginePayloadStatusResult(status, latestValidHash, Optional.empty()));
   }
 
+  // engine api calls are synchronous, no need for volatile
+  private long lastInvalidWarn = System.currentTimeMillis();
+
   JsonRpcResponse respondWithInvalid(
       final Object requestId,
       final EnginePayloadParameter param,
       final Hash latestValidHash,
       final String validationError) {
-    infoLambda(
-        LOG,
-        "Invalid new payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}, validationError: {}",
-        () -> param.getBlockNumber(),
-        () -> param.getBlockHash(),
-        () -> param.getParentHash(),
-        () -> latestValidHash == null ? null : latestValidHash.toHexString(),
-        INVALID::name,
-        () -> validationError);
+    if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
+      lastInvalidWarn = System.currentTimeMillis();
+      warnLambda(
+          LOG,
+          "Invalid new payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}, validationError: {}",
+          () -> param.getBlockNumber(),
+          () -> param.getBlockHash(),
+          () -> param.getParentHash(),
+          () -> latestValidHash == null ? null : latestValidHash.toHexString(),
+          INVALID::name,
+          () -> validationError);
+    }
     return new JsonRpcSuccessResponse(
         requestId,
         new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
