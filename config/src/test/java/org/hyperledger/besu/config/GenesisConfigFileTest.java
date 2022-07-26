@@ -448,7 +448,7 @@ public class GenesisConfigFileTest {
 
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
