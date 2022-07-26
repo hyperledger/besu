@@ -219,6 +219,16 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void assertGoerliTerminalTotalDifficulty() {
+    GenesisConfigOptions goerliOptions =
+        GenesisConfigFile.genesisFileFromResources("/goerli.json").getConfigOptions();
+
+    assertThat(goerliOptions.getTerminalTotalDifficulty()).isPresent();
+    assertThat(goerliOptions.getTerminalTotalDifficulty().get())
+        .isEqualTo(UInt256.valueOf(new BigInteger("10790000")));
+  }
+
+  @Test
   public void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions ropstenOverrideOptions =
         GenesisConfigFile.genesisFileFromResources("/ropsten.json")
