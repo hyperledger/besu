@@ -153,7 +153,7 @@ public class RollupCreatePayload extends ExecutionEngineJsonRpcMethod {
         new ArrayList<>(
             requestedTransactions.size()
                 - includedTransactions.size()
-                - includedTransactions.size());
+                - invalidTransactions.size());
 
     for (int i = 0; i < requestedTransactionsRaw.size(); i++) {
       Transaction tx = requestedTransactions.get(i);
