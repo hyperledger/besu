@@ -123,7 +123,7 @@ public class EngineForkchoiceUpdatedTest {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
     when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
-    when(mergeCoordinator.getLatestValidAncestor(mockHeader.getHash()))
+    when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
         .thenReturn(Optional.of(latestValidHash));
 
     assertSuccessWithPayloadForForkchoiceResult(

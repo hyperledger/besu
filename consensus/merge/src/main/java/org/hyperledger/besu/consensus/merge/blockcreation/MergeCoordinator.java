@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
+import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -52,8 +53,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MergeCoordinator implements MergeMiningCoordinator {
-
+public class MergeCoordinator implements MergeMiningCoordinator, BadChainListener {
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
 
   protected final AtomicLong targetGasLimit;
@@ -97,6 +97,8 @@ public class MergeCoordinator implements MergeMiningCoordinator {
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
+
+    this.backwardSyncContext.subscribeBadChainListener(this);
   }
 
   @Override
@@ -248,7 +250,7 @@ public class MergeCoordinator implements MergeMiningCoordinator {
   }
 
   private Void logSyncException(final Hash blockHash, final Throwable exception) {
-    LOG.warn("Sync to block hash " + blockHash.toHexString() + " failed", exception);
+    LOG.warn("Sync to block hash " + blockHash.toHexString() + " failed", exception.getMessage());
     return null;
   }
 
@@ -550,6 +552,42 @@ public class MergeCoordinator implements MergeMiningCoordinator {
     return payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
   }
 
+  @Override
+  public void onBadChain(
+      final Block badBlock,
+      final List<Block> badBlockDescendants,
+      final List<BlockHeader> badBlockHeaderDescendants) {
+    LOG.trace("Adding bad block {} and all its descendants", badBlock.getHash());
+    final BadBlockManager badBlockManager = getBadBlockManager();
+
+    final Optional<BlockHeader> parentHeader =
+        protocolContext.getBlockchain().getBlockHeader(badBlock.getHeader().getParentHash());
+    final Optional<Hash> maybeLatestValidHash =
+        parentHeader.isPresent() && isPoSHeader(parentHeader.get())
+            ? Optional.of(parentHeader.get().getHash())
+            : Optional.empty();
+
+    badBlockManager.addBadBlock(badBlock);
+
+    badBlockDescendants.forEach(
+        block -> {
+          LOG.trace("Add descendant block {} to bad blocks", block.getHash());
+          badBlockManager.addBadBlock(block);
+          maybeLatestValidHash.ifPresent(
+              latestValidHash ->
+                  badBlockManager.addLatestValidHash(block.getHash(), latestValidHash));
+        });
+
+    badBlockHeaderDescendants.forEach(
+        header -> {
+          LOG.trace("Add descendant header {} to bad blocks", header.getHash());
+          badBlockManager.addBadHeader(header);
+          maybeLatestValidHash.ifPresent(
+              latestValidHash ->
+                  badBlockManager.addLatestValidHash(header.getHash(), latestValidHash));
+        });
+  }
+
   @FunctionalInterface
   protected interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
@@ -565,11 +603,28 @@ public class MergeCoordinator implements MergeMiningCoordinator {
 
   @Override
   public boolean isBadBlock(final Hash blockHash) {
+    final BadBlockManager badBlocksManager = getBadBlockManager();
+    return badBlocksManager.getBadBlock(blockHash).isPresent()
+        || badBlocksManager.getBadHash(blockHash).isPresent();
+  }
+
+  private BadBlockManager getBadBlockManager() {
     final BadBlockManager badBlocksManager =
         protocolSchedule
             .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
             .getBadBlocksManager();
-    return badBlocksManager.getBadBlock(blockHash).isPresent()
-        || badBlocksManager.getBadHash(blockHash).isPresent();
+    return badBlocksManager;
+  }
+
+  @Override
+  public Optional<Hash> getLatestValidHashOfBadBlock(Hash blockHash) {
+    return protocolSchedule
+        .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
+        .getBadBlocksManager()
+        .getLatestValidHash(blockHash);
+  }
+
+  private boolean isPoSHeader(final BlockHeader header) {
+    return header.getDifficulty().equals(Difficulty.ZERO);
   }
 }
