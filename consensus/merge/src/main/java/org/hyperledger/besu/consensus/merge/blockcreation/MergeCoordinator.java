@@ -530,16 +530,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         newBlock.getNumber(),
         newBlock.getBlockHash());
 
-    Optional<BlockHeader> parentOf = protocolContext.getBlockchain().getBlockHeader(newBlock.getParentHash());
+    Optional<BlockHeader> parentOf =
+        protocolContext.getBlockchain().getBlockHeader(newBlock.getParentHash());
 
-    while(parentOf.isPresent() && !parentOf.get().getBlockHash().equals(ancestorBlock.getBlockHash())) {
+    while (parentOf.isPresent()
+        && !parentOf.get().getBlockHash().equals(ancestorBlock.getBlockHash())) {
       parentOf = protocolContext.getBlockchain().getBlockHeader(parentOf.get().getParentHash());
     }
 
-    if (parentOf.isPresent() && ancestorBlock.getBlockHash().equals(parentOf.get().getBlockHash())) {
+    if (parentOf.isPresent()
+        && ancestorBlock.getBlockHash().equals(parentOf.get().getBlockHash())) {
       return true;
     } else {
-      LOG.debug("looped all the way back, did not find ancestor {} of child {}",
+      LOG.debug(
+          "looped all the way back, did not find ancestor {} of child {}",
           ancestorBlock.getBlockHash(),
           newBlock.getBlockHash());
       return false;
