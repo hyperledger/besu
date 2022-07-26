@@ -15,6 +15,7 @@
 - Optimize the backward sync retry strategy [#4095](https://github.com/hyperledger/besu/pull/4095)
 - Add support for jemalloc library to better handle rocksdb memory consumption [#4126](https://github.com/hyperledger/besu/pull/4126)
 - RocksDB configuration changes to improve performance. [#4132](https://github.com/hyperledger/besu/pull/4132)
+- Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
 
 ### Bug Fixes
 - Changed max message size in the p2p layer to 16.7MB from 10MB to improve peering performance [#4120](https://github.com/hyperledger/besu/pull/4120)
