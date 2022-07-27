@@ -111,6 +111,8 @@ public class PeerDiscoveryController {
   private final PeerTable peerTable;
   private final Cache<Bytes, DiscoveryPeer> bondingPeers =
       CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
+  private final Cache<Bytes, Packet> cachedEnrRequests =
+      CacheBuilder.newBuilder().maximumSize(25).expireAfterWrite(1, TimeUnit.MINUTES).build();
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
@@ -317,6 +319,9 @@ public class PeerDiscoveryController {
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
+                  System.out.println("ENR_REQUEST bonding complete " + peer.getId());
+                  Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
+                      .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                 });
         break;
       case NEIGHBORS:
@@ -337,12 +342,11 @@ public class PeerDiscoveryController {
         break;
       case ENR_REQUEST:
         if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())) {
-          LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
-          packet
-              .getPacketData(ENRRequestPacketData.class)
-              .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
+          processEnrRequest(peer, packet);
+        } else if (PeerDiscoveryStatus.BONDING.equals(peer.getStatus())) {
+          LOG.trace("ENR_REQUEST cached for bonding peer Id: {}", peer.getId());
+          cachedEnrRequests.put(peer.getId(), packet);
         }
-
         break;
       case ENR_RESPONSE:
         // Currently there is no use case where an ENRResponse will be sent otherwise
@@ -354,6 +358,13 @@ public class PeerDiscoveryController {
 
         break;
     }
+  }
+
+  private void processEnrRequest(final DiscoveryPeer peer, final Packet packet) {
+    LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
+    packet
+        .getPacketData(ENRRequestPacketData.class)
+        .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
   }
 
   private List<DiscoveryPeer> getPeersFromNeighborsPacket(final Packet packet) {
