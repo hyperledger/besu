@@ -32,7 +32,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
       GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
-  private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(7L);
+  private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(1L);
   private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
 
   private final Wei baseFeeInitialValue;
