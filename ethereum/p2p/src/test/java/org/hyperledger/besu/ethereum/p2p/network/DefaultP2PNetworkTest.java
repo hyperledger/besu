@@ -410,35 +410,6 @@ public final class DefaultP2PNetworkTest {
     verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
   }
 
-  @Test
-  public void shouldNotDropDnsHostsOnEmptyLookup() {
-    DefaultP2PNetwork network = network();
-    DNSDaemonListener listenerUnderTest = network.createDaemonListener();
-
-    // assert no entries prior to lookup
-    assertThat(network.dnsPeers.get()).isNull();
-
-    // simulate successful lookup of 1 peer
-    listenerUnderTest.newRecords(
-        1,
-        List.of(
-            EthereumNodeRecord.create(
-                SECP256K1.KeyPair.fromSecretKey(mockKey),
-                1L,
-                null,
-                null,
-                InetAddress.getLoopbackAddress(),
-                30303,
-                30303)));
-    assertThat(network.dnsPeers.get()).isNotEmpty();
-    assertThat(network.dnsPeers.get().size()).isEqualTo(1);
-
-    // simulate failed lookup empty list
-    listenerUnderTest.newRecords(2, Collections.emptyList());
-    assertThat(network.dnsPeers.get()).isNotEmpty();
-    assertThat(network.dnsPeers.get().size()).isEqualTo(1);
-  }
-
   private DefaultP2PNetwork network() {
     return (DefaultP2PNetwork) builder().build();
   }
