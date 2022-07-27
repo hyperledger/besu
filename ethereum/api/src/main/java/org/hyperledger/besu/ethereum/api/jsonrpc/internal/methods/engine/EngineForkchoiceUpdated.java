@@ -87,7 +87,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           new EngineUpdateForkchoiceResult(
               INVALID,
               mergeCoordinator
-                  .getLatestValidAncestor(forkChoice.getHeadBlockHash())
+                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
                   .orElse(Hash.ZERO),
               null,
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
@@ -257,18 +257,26 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   private JsonRpcResponse syncingResponse(
       final Object requestId, final EngineForkchoiceUpdatedParameter forkChoice) {
+
     logForkchoiceUpdatedCall(SYNCING, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
   }
 
+  // fcU calls are synchronous, no need to make volatile
+  private long lastFcuInfoLog = System.currentTimeMillis();
+
   private void logForkchoiceUpdatedCall(
       final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
-    LOG.info(
-        "{} for fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
-        status.name(),
-        forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash(),
-        forkChoice.getSafeBlockHash());
+    // cheaply limit the noise of fcU during consensus client syncing to once a minute:
+    if (lastFcuInfoLog + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
+      lastFcuInfoLog = System.currentTimeMillis();
+      LOG.info(
+          "{} for fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
+          status.name(),
+          forkChoice.getHeadBlockHash(),
+          forkChoice.getFinalizedBlockHash(),
+          forkChoice.getSafeBlockHash());
+    }
   }
 }
