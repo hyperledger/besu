@@ -815,6 +815,8 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockPropagationManager.start();
     syncState.setReachedTerminalDifficulty(true);
     assertThat(blockPropagationManager.isRunning()).isFalse();
+    assertThat(ethProtocolManager.ethContext().getEthMessages().messageCodesHandled())
+        .doesNotContain(1, 7);
   }
 
   @Test
