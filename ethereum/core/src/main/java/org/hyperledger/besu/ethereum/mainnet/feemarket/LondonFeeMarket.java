@@ -39,7 +39,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
   private final Wei baseFeeInitialValue;
   private final long londonForkBlockNumber;
   private final TransactionPriceCalculator txPriceCalculator;
-  private Wei baseFeeFloor = DEFAULT_BASEFEE_FLOOR;
+  private final Wei baseFeeFloor;
 
   public LondonFeeMarket(final long londonForkBlockNumber) {
     this(londonForkBlockNumber, Optional.empty());
@@ -50,14 +50,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
     this.txPriceCalculator = TransactionPriceCalculator.eip1559();
     this.londonForkBlockNumber = londonForkBlockNumber;
     this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
-    if (baseFeeInitialValue.isZero()) {
-      baseFeeFloor = Wei.ZERO;
-    } else if (baseFeeInitialValue.lessThan(DEFAULT_BASEFEE_FLOOR)) {
-      throw new IllegalStateException(
-          String.format(
-              "baseFee must be either 0 or > %s wei to avoid integer arithmetic issues",
-              DEFAULT_BASEFEE_FLOOR));
-    }
+    this.baseFeeFloor = baseFeeInitialValue.isZero() ? Wei.ZERO : DEFAULT_BASEFEE_FLOOR;
   }
 
   @Override
