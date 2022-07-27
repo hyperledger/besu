@@ -6,6 +6,9 @@
 - Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
 
 ### Bug Fixes
+- Allow to set any value for baseFeePerGas in the genesis file [#4177](https://github.com/hyperledger/besu/pull/4177)
+
+### Bug Fixes
 
 ## 22.7.0-RC2
 
