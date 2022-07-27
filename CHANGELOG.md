@@ -4,7 +4,10 @@
 
 ### Additions and Improvements
 
-### Bug Fixes
+### Bug Fixes 
+
+Fixes previous known issue [#3890](https://github.com/hyperledger/besu/issues/3890)
+from RC3 requiring a restart post-merge to continue correct transaction handling.
 
 
 ## 22.7.0-RC3
