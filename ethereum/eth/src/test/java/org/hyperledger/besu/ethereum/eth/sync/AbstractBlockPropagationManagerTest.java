@@ -637,14 +637,10 @@ public abstract class AbstractBlockPropagationManagerTest {
 
   @Test
   public void shouldRequestLowestAnnouncedPendingBlockParent() {
-    // test if block propagation manager can recover if one block is missed and
-    // cache size >= config
+    // test if block propagation manager can recover if one block is missed
 
     blockchainUtil.importFirstBlocks(2);
-    final List<Block> blocks =
-        blockchainUtil
-            .getBlocks()
-            .subList(2, 3 + BlockPropagationManager.DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY);
+    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 4);
 
     blockPropagationManager.start();
 
@@ -667,41 +663,6 @@ public abstract class AbstractBlockPropagationManagerTest {
     blocks.forEach(
         block -> {
           assertThat(blockchain.contains(block.getHash())).isTrue();
-        });
-  }
-
-  @Test
-  public void shouldNotRequestLowestAnnouncedPendingBlockParent() {
-    // test if block propagation manager will not recover if cache size
-    // is less than config
-
-    blockchainUtil.importFirstBlocks(2);
-    final List<Block> blocks =
-        blockchainUtil
-            .getBlocks()
-            .subList(2, 2 + BlockPropagationManager.DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY);
-
-    blockPropagationManager.start();
-
-    // Create peer and responder
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
-
-    // skip first block then create messages from blocklist
-    blocks.stream()
-        .skip(1)
-        .map(this::createNewBlockHashMessage)
-        .forEach(
-            message -> { // Broadcast new block hash message
-              EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, message);
-            });
-
-    peer.respondWhile(responder, peer::hasOutstandingRequests);
-
-    // assert all blocks were NOT imported
-    blocks.forEach(
-        block -> {
-          assertThat(blockchain.contains(block.getHash())).isFalse();
         });
   }
 

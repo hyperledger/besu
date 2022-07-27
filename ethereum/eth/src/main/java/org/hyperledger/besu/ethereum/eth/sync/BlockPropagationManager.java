@@ -66,7 +66,6 @@ import org.slf4j.LoggerFactory;
 
 public class BlockPropagationManager {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
-  public static final int DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY = 3;
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -441,10 +440,9 @@ public class BlockPropagationManager {
           LOG.info("Saving announced block {} for future import", block.toLogString());
         }
 
-        // Request parent of the lowest announced block when cache is too big
-        if (shouldRequestLowestPendingBlockParent()) {
-          pendingBlocksManager.lowestAnnouncedBlock().ifPresent(this::requestParentBlock);
-        }
+        // Request parent of the lowest announced block
+        pendingBlocksManager.lowestAnnouncedBlock().ifPresent(this::requestParentBlock);
+
         return CompletableFuture.completedFuture(block);
       }
     }
@@ -526,10 +524,6 @@ public class BlockPropagationManager {
     final Range<Long> importRange = config.getBlockPropagationRange();
     return importRange.contains(distanceFromLocalHead)
         && importRange.contains(distanceFromBestPeer);
-  }
-
-  private boolean shouldRequestLowestPendingBlockParent() {
-    return pendingBlocksManager.size() >= DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY;
   }
 
   private String toLogString(final Collection<NewBlockHash> newBlockHashs) {
