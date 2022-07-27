@@ -353,6 +353,23 @@ public class EIP2124Test {
             Optional.of(ForkIds.ROPSTEN),
             empty()
           },
+          // Sepolia test cases
+          {
+            "Sepolia // mergenetsplit block",
+            Network.SEPOLIA,
+            0L,
+            ForkIdTestUtil.wantForkId("0xfe3366e7", 1735371L),
+            Optional.of(ForkIds.SEPOLIA),
+            empty()
+          },
+          {
+            "Sepolia // Future",
+            Network.SEPOLIA,
+            1735371L,
+            ForkIdTestUtil.wantForkId("0xb96cbd13", 0L),
+            Optional.of(ForkIds.SEPOLIA),
+            empty()
+          },
           // Rinkeby test cases
           {
             "Rinkeby // Unsynced, last Frontier block",

@@ -68,6 +68,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   boolean isBadBlock(Hash blockHash);
 
+  Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash);
+
   class ForkchoiceResult {
     public enum Status {
       VALID,
