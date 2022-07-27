@@ -59,6 +59,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -632,6 +633,44 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockPropagationManager.importOrSavePendingBlock(nextBlock, NODE_ID_1);
 
     verify(ethScheduler, times(1)).scheduleSyncWorkerTask(any(Supplier.class));
+  }
+
+  @Test
+  public void shouldRequestLowestAnnouncedPendingBlockParent() {
+    // test if block propagation manager can recover if one block is missed
+
+    blockchainUtil.importFirstBlocks(2);
+    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 4);
+
+    blockPropagationManager.start();
+
+    // Create peer and responder
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    // skip first block then create messages from blocklist
+    blocks.stream()
+        .skip(1)
+        .map(this::createNewBlockHashMessage)
+        .forEach(
+            message -> { // Broadcast new block hash message
+              EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, message);
+            });
+
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    // assert all blocks were imported
+    blocks.forEach(
+        block -> {
+          assertThat(blockchain.contains(block.getHash())).isTrue();
+        });
+  }
+
+  private NewBlockHashesMessage createNewBlockHashMessage(final Block block) {
+    return NewBlockHashesMessage.create(
+        Collections.singletonList(
+            new NewBlockHashesMessage.NewBlockHash(
+                block.getHash(), block.getHeader().getNumber())));
   }
 
   @Test
