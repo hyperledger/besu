@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ZeroBaseFeeMarket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,12 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
           parent.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       final Wei currentBaseFee =
           header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
+
+      if (baseFeeMarket instanceof ZeroBaseFeeMarket) {
+        // skip check to allow sync when a zero baseFee chain has historical baseFees
+        return true;
+      }
+
       final long targetGasUsed = baseFeeMarket.targetGasUsed(parent);
       final Wei expectedBaseFee =
           baseFeeMarket.computeBaseFee(
