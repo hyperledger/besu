@@ -591,7 +591,7 @@ public class PeerDiscoveryController {
     // 16 + 4 + 4 + 64 = 88 bytes
     // 88 * 13 = 1144 bytes
     // To fit under 1280 bytes, we must return just 13 peers maximum.
-    final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 13);
+    final List<DiscoveryPeer> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
     final PacketData data = NeighborsPacketData.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
