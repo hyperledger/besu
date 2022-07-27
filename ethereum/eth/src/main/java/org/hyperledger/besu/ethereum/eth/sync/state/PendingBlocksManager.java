@@ -127,6 +127,10 @@ public class PendingBlocksManager {
         .min(Comparator.comparing(BlockHeader::getNumber));
   }
 
+  public int Size() {
+    return pendingBlocks.size();
+  }
+
   @Override
   public String toString() {
     return "PendingBlocksManager{"

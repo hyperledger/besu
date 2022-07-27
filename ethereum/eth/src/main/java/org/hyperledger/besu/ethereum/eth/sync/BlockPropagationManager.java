@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
 
 public class BlockPropagationManager {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
-
+  public static final int DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY = 3;
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -364,6 +364,25 @@ public class BlockPropagationManager {
     return getBlockFromPeers(Optional.of(peer), blockHash.number(), Optional.of(blockHash.hash()));
   }
 
+  private void requestParentBlock(final BlockHeader blockHeader) {
+    if (requestedBlocks.add(blockHeader.getParentHash())) {
+      retrieveParentBlock(blockHeader);
+    } else {
+      LOG.trace("Parent block with hash {} was already requested", blockHeader.getParentHash());
+    }
+  }
+
+  private CompletableFuture<Block> retrieveParentBlock(final BlockHeader blockHeader) {
+    final long targetParentBlockNumber = blockHeader.getNumber() - 1L;
+    final Hash targetParentBlockHash = blockHeader.getParentHash();
+    LOG.info(
+        "Retrieving parent {} of block #{} from peers",
+        targetParentBlockHash,
+        blockHeader.getNumber());
+    return getBlockFromPeers(
+        Optional.empty(), targetParentBlockNumber, Optional.of(targetParentBlockHash));
+  }
+
   private CompletableFuture<Block> getBlockFromPeers(
       final Optional<EthPeer> preferredPeer,
       final long blockNumber,
@@ -420,6 +439,11 @@ public class BlockPropagationManager {
         // Block isn't connected to local chain, save it to pending blocks collection
         if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
           LOG.info("Saving announced block {} for future import", block.toLogString());
+        }
+
+        // Request parent of the lowest announced block when cache is too big
+        if (shouldRequestLowestPendingBlockParent()) {
+          pendingBlocksManager.lowestAnnouncedBlock().ifPresent(this::requestParentBlock);
         }
         return CompletableFuture.completedFuture(block);
       }
@@ -502,6 +526,10 @@ public class BlockPropagationManager {
     final Range<Long> importRange = config.getBlockPropagationRange();
     return importRange.contains(distanceFromLocalHead)
         && importRange.contains(distanceFromBestPeer);
+  }
+
+  private boolean shouldRequestLowestPendingBlockParent() {
+    return pendingBlocksManager.Size() >= DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY;
   }
 
   private String toLogString(final Collection<NewBlockHash> newBlockHashs) {
