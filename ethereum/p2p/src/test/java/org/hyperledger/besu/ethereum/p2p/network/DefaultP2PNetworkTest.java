@@ -53,7 +53,6 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,8 +64,6 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
-import org.apache.tuweni.devp2p.EthereumNodeRecord;
-import org.apache.tuweni.discovery.DNSDaemonListener;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;

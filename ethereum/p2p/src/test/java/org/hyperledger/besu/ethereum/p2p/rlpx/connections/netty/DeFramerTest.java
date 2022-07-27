@@ -326,7 +326,8 @@ public class DeFramerTest {
 
   @Test
   public void decode_shouldHandleImmediateDisconnectMessage() {
-    final DisconnectMessage disconnectMessage = DisconnectMessage.create(DisconnectReason.TOO_MANY_PEERS);
+    final DisconnectMessage disconnectMessage =
+        DisconnectMessage.create(DisconnectReason.TOO_MANY_PEERS);
     final ByteBuf disconnectData = Unpooled.wrappedBuffer(disconnectMessage.getData().toArray());
     when(framer.deframe(eq(disconnectData)))
         .thenReturn(new RawMessage(disconnectMessage.getCode(), disconnectMessage.getData()))
@@ -380,7 +381,8 @@ public class DeFramerTest {
     final ArgumentCaptor<Object> outboundMessageArgumentCaptor =
         ArgumentCaptor.forClass(OutboundMessage.class);
     verify(ctx, times(1)).writeAndFlush(outboundMessageArgumentCaptor.capture());
-    final OutboundMessage outboundMessage = (OutboundMessage) outboundMessageArgumentCaptor.getValue();
+    final OutboundMessage outboundMessage =
+        (OutboundMessage) outboundMessageArgumentCaptor.getValue();
     assertThat(outboundMessage.getCapability()).isNull();
     final MessageData outboundMessageData = outboundMessage.getData();
     assertThat(outboundMessageData.getCode()).isEqualTo(WireMessageCodes.DISCONNECT);
