@@ -319,7 +319,6 @@ public class PeerDiscoveryController {
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
-                  System.out.println("ENR_REQUEST bonding complete " + peer.getId());
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                 });
