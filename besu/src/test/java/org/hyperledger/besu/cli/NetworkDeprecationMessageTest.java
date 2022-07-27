@@ -39,6 +39,7 @@ class NetworkDeprecationMessageTest {
       names = {"RINKEBY", "ROPSTEN", "KILN"},
       mode = EnumSource.Mode.EXCLUDE)
   void shouldThrowErrorForNonDeprecatedNetworks(final NetworkName network) {
-    assertThatThrownBy(() -> NetworkDeprecationMessage.generate(network)).isInstanceOf(AssertionError.class);
+    assertThatThrownBy(() -> NetworkDeprecationMessage.generate(network))
+        .isInstanceOf(AssertionError.class);
   }
 }
