@@ -1,11 +1,19 @@
 # Changelog
 
 ## 22.7.0
+Known/Outstanding issues:
+Besu requires a restart post-merge to re-enable remote transaction processing [#3890](https://github.com/hyperledger/besu/issues/3890)
+
 
 ### Additions and Improvements
 - Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
+- Sepolia mergeNetSplit block [#4158](https://github.com/hyperledger/besu/pull/4158)
+- Goerli TTD [#4160](https://github.com/hyperledger/besu/pull/4160) 
+- Several logging improvements 
 
 ### Bug Fixes
+- fix for stack overflow when searching for TTD block [#4169](https://github.com/hyperledger/besu/pull/4169)
+- fix for chain stuck issue [#4175](https://github.com/hyperledger/besu/pull/4175)
 
 ## 22.7.0-RC2
 
