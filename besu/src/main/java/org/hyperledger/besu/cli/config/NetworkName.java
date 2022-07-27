@@ -17,6 +17,8 @@ package org.hyperledger.besu.cli.config;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+
 public enum NetworkName {
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
   RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
@@ -71,6 +73,11 @@ public enum NetworkName {
 
   public boolean canFastSync() {
     return canFastSync;
+  }
+
+  public String humanReadableNetworkName() {
+    return StringUtils.capitalize(
+        StringUtils.substringAfter(StringUtils.substringBefore(genesisFile, ".json"), "/"));
   }
 
   public boolean isDeprecated() {

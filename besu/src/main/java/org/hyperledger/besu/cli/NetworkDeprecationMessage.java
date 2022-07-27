@@ -17,14 +17,11 @@ package org.hyperledger.besu.cli;
 import org.hyperledger.besu.cli.config.NetworkName;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class NetworkDeprecationPrinter {
-  private static final Logger LOG = LoggerFactory.getLogger(NetworkDeprecationPrinter.class);
+public class NetworkDeprecationMessage {
   private static final int MAX_LINE_LENGTH = 80;
 
-  public static void print(final NetworkName network) {
+  public static String generate(final NetworkName network) {
     if (network.getDeprecationDate().isEmpty()) {
       throw new AssertionError("Deprecation date is not set. Cannot print a deprecation message");
     }
@@ -38,7 +35,7 @@ public class NetworkDeprecationPrinter {
                 "#%s#",
                 StringUtils.center(
                     deprecationDetails(
-                        humanReadableNetworkName(network), network.getDeprecationDate().get()),
+                        network.humanReadableNetworkName(), network.getDeprecationDate().get()),
                     MAX_LINE_LENGTH - 2)))
         .append(emptyLine())
         .append(
@@ -53,13 +50,7 @@ public class NetworkDeprecationPrinter {
         .append(emptyLine())
         .append("#".repeat(MAX_LINE_LENGTH));
 
-    LOG.warn(messageBuilder.toString());
-  }
-
-  private static String humanReadableNetworkName(final NetworkName network) {
-    return StringUtils.capitalize(
-        StringUtils.substringAfter(
-            StringUtils.substringBefore(network.getGenesisFile(), ".json"), "/"));
+    return messageBuilder.toString();
   }
 
   private static String deprecationDetails(final String networkName, final String deprecationDate) {
