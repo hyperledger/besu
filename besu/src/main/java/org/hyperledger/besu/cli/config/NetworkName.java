@@ -76,8 +76,7 @@ public enum NetworkName {
   }
 
   public String humanReadableNetworkName() {
-    return StringUtils.capitalize(
-        StringUtils.substringAfter(StringUtils.substringBefore(genesisFile, ".json"), "/"));
+    return StringUtils.capitalize(name().toLowerCase());
   }
 
   public boolean isDeprecated() {
