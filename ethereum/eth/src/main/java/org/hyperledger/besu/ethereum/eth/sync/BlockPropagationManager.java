@@ -529,7 +529,7 @@ public class BlockPropagationManager {
   }
 
   private boolean shouldRequestLowestPendingBlockParent() {
-    return pendingBlocksManager.Size() >= DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY;
+    return pendingBlocksManager.size() >= DEFAULT_MAX_PENDING_BLOCKS_BEFORE_RETRY;
   }
 
   private String toLogString(final Collection<NewBlockHash> newBlockHashs) {
