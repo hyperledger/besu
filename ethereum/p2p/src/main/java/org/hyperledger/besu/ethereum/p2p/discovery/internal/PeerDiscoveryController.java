@@ -205,6 +205,7 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
+    LOG.debug("BOOTSTRAP NODES {}", bootstrapNodes.size());
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
@@ -224,6 +225,7 @@ public class PeerDiscoveryController {
 
     peerPermissions.subscribeUpdate(this::handlePermissionsUpdate);
 
+    LOG.debug("Initial discovery peers {}", initialDiscoveryPeers);
     recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
 
     final long refreshTimerId =
@@ -315,7 +317,7 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  addToPeerTable(peer);
+                  addBondedPeerToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
                 });
         break;
@@ -369,13 +371,8 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private boolean addToPeerTable(final DiscoveryPeer peer) {
+  private boolean addBondedPeerToPeerTable(final DiscoveryPeer peer) {
     if (!peerPermissions.isAllowedInPeerTable(peer)) {
-      return false;
-    }
-
-    final PeerTable.AddResult result = peerTable.tryAdd(peer);
-    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
       return false;
     }
 
@@ -389,6 +386,16 @@ public class PeerDiscoveryController {
     if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
       peer.setStatus(PeerDiscoveryStatus.BONDED);
       notifyPeerBonded(peer, now);
+    }
+
+    return addToPeerTable(peer);
+  }
+
+  public boolean addToPeerTable(final DiscoveryPeer peer) {
+    final PeerTable.AddResult result = peerTable.tryAdd(peer);
+
+    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
+      return false;
     }
 
     if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
@@ -636,7 +643,7 @@ public class PeerDiscoveryController {
         peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer));
     DiscoveryPeer resolvedPeer = maybeKnownPeer.orElse(peer);
     if (maybeKnownPeer.isEmpty()) {
-      DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
+      final DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
       if (bondingPeer != null) {
         resolvedPeer = bondingPeer;
       }

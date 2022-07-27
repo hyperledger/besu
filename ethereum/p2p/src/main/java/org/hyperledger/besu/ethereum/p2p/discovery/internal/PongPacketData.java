@@ -63,9 +63,9 @@ public class PongPacketData implements PacketData {
     if (!in.isEndOfCurrentList()) {
       try {
         enrSeq = UInt64.valueOf(in.readBigIntegerScalar());
-        LOG.debug("read PONG enr from scalar");
-      } catch (MalformedRLPInputException malformed) {
-        LOG.debug("failed to read PONG enr from scalar, trying as byte array");
+        LOG.trace("read PONG enr from scalar");
+      } catch (final MalformedRLPInputException malformed) {
+        LOG.trace("failed to read PONG enr from scalar, trying as byte array");
         enrSeq = UInt64.fromBytes(in.readBytes());
       }
     }
