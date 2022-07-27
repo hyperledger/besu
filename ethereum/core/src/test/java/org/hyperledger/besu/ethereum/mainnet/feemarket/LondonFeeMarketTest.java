@@ -49,7 +49,7 @@ public class LondonFeeMarketTest {
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
-            .maxFeePerGas(Optional.of(Wei.of(6)))
+            .maxFeePerGas(Optional.of(Wei.of(0)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(0)))
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
