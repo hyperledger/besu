@@ -1,6 +1,13 @@
 # Changelog
 
 ## 22.7.0
+
+### Additions and Improvements
+
+### Bug Fixes
+
+
+## 22.7.0-RC3
 Known/Outstanding issues:
 Besu requires a restart post-merge to re-enable remote transaction processing [#3890](https://github.com/hyperledger/besu/issues/3890)
 
