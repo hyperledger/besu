@@ -233,7 +233,7 @@ public class ProtocolScheduleBuilder {
                     specFactory.arrowGlacierDefinition(config)),
                 create(
                     config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
-                create(config.getParisBlockNumber(), specFactory.parisDefinition(config)),
+                create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),

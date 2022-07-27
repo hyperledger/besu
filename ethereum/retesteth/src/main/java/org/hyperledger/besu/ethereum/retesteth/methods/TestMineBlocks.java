@@ -64,7 +64,7 @@ public class TestMineBlocks implements JsonRpcMethod {
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             context.getCoinbase(),
-            () -> Optional.of(10_000_000L),
+            () -> Optional.of(blockchain.getChainHeadHeader().getGasLimit()),
             header -> context.getExtraData(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
