@@ -14,16 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.range;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RangeHeaders {
 
