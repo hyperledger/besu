@@ -1933,9 +1933,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration =
         jsonRpcConfiguration(
             jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
-    engineJsonRpcConfiguration =
-        createEngineJsonRpcConfiguration(
-            engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
+    if (isEngineApiEnabled()) {
+      engineJsonRpcConfiguration =
+          createEngineJsonRpcConfiguration(
+              engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
+    }
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration =

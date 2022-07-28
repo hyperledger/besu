@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration.FALLBACK_TTD_DEFAULT;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -110,6 +111,21 @@ public class EngineExchangeTransitionConfigurationTest {
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
+    assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
+    assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
+  }
+
+  @Test
+  public void shouldReturnDefaultOnNoTerminalTotalDifficultyConfigured() {
+    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
+
+    var response =
+        resp(
+            new EngineExchangeTransitionConfigurationParameter(
+                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
+
+    var result = fromSuccessResp(response);
+    assertThat(result.getTerminalTotalDifficulty()).isEqualTo(FALLBACK_TTD_DEFAULT);
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
     assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
   }

@@ -117,4 +117,8 @@ public interface MiningCoordinator {
   default void addEthHashObserver(final PoWObserver observer) {}
 
   void changeTargetGasLimit(final Long targetGasLimit);
+
+  default boolean isCompatibleWithEngineApi() {
+    return false;
+  }
 }

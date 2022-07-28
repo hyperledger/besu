@@ -166,10 +166,10 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
 
-    if (mergeContext.isSyncing() || parentHeader.isEmpty()) {
+    if (mergeContext.map(c -> c.isSyncing()).orElse(Boolean.TRUE) || parentHeader.isEmpty()) {
       LOG.debug(
           "isSyncing: {} parentHeaderMissing: {}, adding {} to backwardsync",
-          mergeContext.isSyncing(),
+          mergeContext.map(c -> c.isSyncing()).orElse(null),
           parentHeader.isEmpty(),
           block.getHash());
       mergeCoordinator

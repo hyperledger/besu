@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -40,13 +41,13 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   public static final long ENGINE_API_LOGGING_THRESHOLD = 60000L;
   private final Vertx syncVertx;
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
-  protected final MergeContext mergeContext;
+  protected final Optional<MergeContext> mergeContext;
   protected final ProtocolContext protocolContext;
 
   protected ExecutionEngineJsonRpcMethod(final Vertx vertx, final ProtocolContext protocolContext) {
     this.syncVertx = vertx;
     this.protocolContext = protocolContext;
-    this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
+    this.mergeContext = protocolContext.safeConsensusContext(MergeContext.class);
   }
 
   @Override
