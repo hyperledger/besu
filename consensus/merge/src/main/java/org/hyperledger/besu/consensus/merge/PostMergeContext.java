@@ -57,7 +57,12 @@ public class PostMergeContext implements MergeContext {
 
   @VisibleForTesting
   PostMergeContext() {
-    this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
+    this(Difficulty.ZERO);
+  }
+
+  @VisibleForTesting
+  PostMergeContext(final Difficulty difficulty) {
+    this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
   }
 
@@ -101,6 +106,11 @@ public class PostMergeContext implements MergeContext {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback ->
               newMergeStateCallback.mergeStateChanged(newState, Optional.of(totalDifficulty)));
+    }
+
+    // only print if we changed state from pre-TTD to post-TTD, not at startup/init:
+    if (newState && oldState.filter(old -> old != newState).isPresent()) {
+      PandaPrinter.printOnFirstCrossing();
     }
   }
 

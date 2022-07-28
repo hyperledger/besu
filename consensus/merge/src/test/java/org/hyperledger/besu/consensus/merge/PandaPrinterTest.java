@@ -16,13 +16,38 @@
 
 package org.hyperledger.besu.consensus.merge;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.ethereum.core.Difficulty;
+
 import org.junit.Test;
 
 public class PandaPrinterTest {
 
   @Test
   public void printsPanda() {
-    PandaPrinter panda = new PandaPrinter();
-    panda.onTTDReached(true);
+    PandaPrinter.resetForTesting();
+    assertThat(PandaPrinter.printOnFirstCrossing()).isTrue();
+    assertThat(PandaPrinter.printOnFirstCrossing()).isFalse();
+  }
+
+  @Test
+  public void doesNotPrintAtInit() {
+    PandaPrinter.resetForTesting();
+    var mergeContext = new PostMergeContext(Difficulty.ONE);
+    assertThat(PandaPrinter.hasDisplayed()).isFalse();
+    mergeContext.setIsPostMerge(Difficulty.ONE);
+    assertThat(PandaPrinter.hasDisplayed()).isFalse();
+  }
+
+  @Test
+  public void printsWhenCrossingOnly() {
+    PandaPrinter.resetForTesting();
+    var mergeContext = new PostMergeContext(Difficulty.ONE);
+    assertThat(PandaPrinter.hasDisplayed()).isFalse();
+    mergeContext.setIsPostMerge(Difficulty.ZERO);
+    assertThat(PandaPrinter.hasDisplayed()).isFalse();
+    mergeContext.setIsPostMerge(Difficulty.ONE);
+    assertThat(PandaPrinter.hasDisplayed()).isTrue();
   }
 }
