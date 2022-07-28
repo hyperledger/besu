@@ -6,6 +6,7 @@
 - Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
 
 ### Bug Fixes
+- Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
 
 ## 22.7.0-RC2
 
