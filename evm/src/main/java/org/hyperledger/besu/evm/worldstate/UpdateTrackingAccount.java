@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -62,7 +63,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
-  private final NavigableMap<UInt256, UInt256> updatedTransientStorage;
+  private final Map<UInt256, UInt256> updatedTransientStorage;
 
   UpdateTrackingAccount(final Address address) {
     checkNotNull(address);
@@ -75,7 +76,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     this.updatedCode = Bytes.EMPTY;
     this.updatedStorage = new TreeMap<>();
-    this.updatedTransientStorage = new TreeMap<>();
+    this.updatedTransientStorage = new HashMap<>();
   }
 
   public UpdateTrackingAccount(final A account) {
@@ -92,7 +93,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.balance = account.getBalance();
 
     this.updatedStorage = new TreeMap<>();
-    this.updatedTransientStorage = new TreeMap<>();
+    this.updatedTransientStorage = new HashMap<>();
   }
 
   /**
