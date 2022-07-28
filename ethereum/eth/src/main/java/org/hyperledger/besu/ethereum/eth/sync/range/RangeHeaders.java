@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
@@ -40,8 +41,8 @@ public class RangeHeaders {
     return headersToImport;
   }
 
-  public BlockHeader getFirstHeaderToImport() {
-    return headersToImport.size() > 0 ? headersToImport.get(0) : null;
+  public Optional<BlockHeader> getFirstHeaderToImport() {
+    return headersToImport.size() > 0 ? Optional.of(headersToImport.get(0)) : Optional.empty();
   }
 
   @Override
