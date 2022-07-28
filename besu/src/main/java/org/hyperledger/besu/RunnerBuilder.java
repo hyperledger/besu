@@ -165,6 +165,7 @@ public class RunnerBuilder {
   private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
   private int maxPeers;
+  private int peerLowerBound;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
@@ -268,6 +269,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder maxPeers(final int maxPeers) {
     this.maxPeers = maxPeers;
+    return this;
+  }
+
+  public RunnerBuilder peerLowerBound(final int peerLowerBound) {
+    this.peerLowerBound = peerLowerBound;
     return this;
   }
 
@@ -445,6 +451,7 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setPeerUpperBound(maxPeers)
+            .setPeerLowerBound(peerLowerBound)
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString))
             .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
