@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,14 +27,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class TStoreOperation extends AbstractOperation {
 
-  public static final long FRONTIER_MINIMUM = 0L;
-  public static final long EIP_1706_MINIMUM = 2300L;
-
-  protected static final OperationResult ILLEGAL_STATE_CHANGE =
-      new OperationResult(
-          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-
-
   public TStoreOperation(final GasCalculator gasCalculator) {
     super(0xb4, "TSTORE", 2, 0, 1, gasCalculator);
   }
@@ -51,7 +43,7 @@ public class TStoreOperation extends AbstractOperation {
       return ILLEGAL_STATE_CHANGE;
     }
 
-    final long cost = gasCalculator().getTstoreOperationGasCost();
+    final long cost = gasCalculator().getTransientStoreOperationGasCost();
 
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {

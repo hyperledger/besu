@@ -479,7 +479,7 @@ public interface GasCalculator {
    *
    * @return the cost of a TLOAD from a storage slot
    */
-  default long getTloadOperationGasCost() {
+  default long getTransientLoadOperationGasCost() {
     return 0L;
   }
   
@@ -488,7 +488,7 @@ public interface GasCalculator {
    *
    * @return the cost of a TSTORE to a storage slot
    */
-  default long getTstoreOperationGasCost() {
+  default long getTransientStoreOperationGasCost() {
     return 0L;
   }
 }

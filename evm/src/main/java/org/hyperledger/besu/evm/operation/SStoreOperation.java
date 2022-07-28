@@ -31,10 +31,6 @@ public class SStoreOperation extends AbstractOperation {
   public static final long FRONTIER_MINIMUM = 0L;
   public static final long EIP_1706_MINIMUM = 2300L;
 
-  protected static final OperationResult ILLEGAL_STATE_CHANGE =
-      new OperationResult(
-          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
-
   private final long minimumGasRemaining;
 
   public SStoreOperation(final GasCalculator gasCalculator, final long minimumGasRemaining) {

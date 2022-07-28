@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,12 +23,12 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   // EIP-1153
   @Override
-  public long getTloadOperationGasCost() {
+  public long getTransientLoadOperationGasCost() {
     return TLOAD_GAS;
   }
   
   @Override
-  public long getTstoreOperationGasCost() {
+  public long getTransientStoreOperationGasCost() {
     return TSTORE_GAS;
   }
 }

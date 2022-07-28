@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,7 +37,7 @@ public class TLoadOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long cost = gasCalculator().getTloadOperationGasCost();
+    final long cost = gasCalculator().getTransientLoadOperationGasCost();
     try {
       final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
       final Bytes32 key = UInt256.fromBytes(frame.popStackItem());

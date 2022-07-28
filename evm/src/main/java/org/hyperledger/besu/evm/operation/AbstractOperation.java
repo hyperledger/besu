@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some
@@ -28,6 +32,10 @@ public abstract class AbstractOperation implements Operation {
   private final int stackItemsProduced;
   private final int opSize;
   private final GasCalculator gasCalculator;
+
+  protected static final OperationResult ILLEGAL_STATE_CHANGE =
+          new OperationResult(
+                  OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
 
   protected AbstractOperation(
       final int opcode,
