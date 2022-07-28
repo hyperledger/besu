@@ -1371,6 +1371,45 @@ public class PeerDiscoveryControllerTest {
         .send(eq(peers.get(0)), matchPacketOfType(PacketType.ENR_REQUEST));
   }
 
+  @Test
+  public void shouldNotRespondAndCacheENRRequestForBondingPeer() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    controller =
+        getControllerBuilder()
+            .peers(peers.get(0))
+            .outboundMessageHandler(outboundMessageHandler)
+            .build();
+
+    // Mock the creation of the PING packet, so that we can control the hash, which gets validated
+    // when receiving the PONG.
+    final PingPacketData mockPing =
+        PingPacketData.create(
+            Optional.ofNullable(localPeer.getEndpoint()), peers.get(0).getEndpoint(), UInt64.ONE);
+    final Packet mockPacket = Packet.create(PacketType.PING, mockPing, nodeKeys.get(0));
+    mockPingPacketCreation(mockPacket);
+
+    controller.start();
+
+    final PongPacketData pongRequestPacketData =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash(), UInt64.ONE);
+
+    final ENRRequestPacketData enrRequestPacketData = ENRRequestPacketData.create();
+
+    final Packet enrPacket =
+        Packet.create(PacketType.ENR_REQUEST, enrRequestPacketData, nodeKeys.get(0));
+    final Packet pongPacket =
+        Packet.create(PacketType.PONG, pongRequestPacketData, nodeKeys.get(0));
+
+    controller.onMessage(enrPacket, peers.get(0));
+
+    controller.onMessage(pongPacket, peers.get(0));
+
+    verify(outboundMessageHandler, times(1))
+        .send(any(), matchPacketOfType(PacketType.ENR_RESPONSE));
+  }
+
   private static Packet mockPingPacket(final DiscoveryPeer from, final DiscoveryPeer to) {
     final Packet packet = mock(Packet.class);
 

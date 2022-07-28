@@ -112,7 +112,7 @@ public class PeerDiscoveryController {
   private final Cache<Bytes, DiscoveryPeer> bondingPeers =
       CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
   private final Cache<Bytes, Packet> cachedEnrRequests =
-      CacheBuilder.newBuilder().maximumSize(25).expireAfterWrite(1, TimeUnit.MINUTES).build();
+      CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(30, SECONDS).build();
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
@@ -316,6 +316,7 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
+                  System.out.println("ici");
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
@@ -344,6 +345,10 @@ public class PeerDiscoveryController {
           processEnrRequest(peer, packet);
         } else if (PeerDiscoveryStatus.BONDING.equals(peer.getStatus())) {
           LOG.trace("ENR_REQUEST cached for bonding peer Id: {}", peer.getId());
+          // it may happen that we receive the ENR_REQUEST just before the PONG.
+          // Because peers want to send the ENR_REQUEST directly after the pong.
+          // If this happens we don't want to ignore the request but process when bonded.
+          // this cache allows to keep the request and to respond after having processed the PONG
           cachedEnrRequests.put(peer.getId(), packet);
         }
         break;
