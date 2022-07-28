@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.Before;
@@ -106,5 +107,22 @@ public class RangeHeadersValidationStepTest {
                 + " ("
                 + firstHeader.getHash()
                 + ")");
+  }
+
+  @Test
+  public void acceptResponseWithNoHeaders() {
+    var emptyRangeHeaders =
+        new RangeHeaders(new SyncTargetRange(syncTarget, rangeStart, rangeEnd), List.of());
+
+    final Stream<BlockHeader> result = validationStep.apply(emptyRangeHeaders);
+    assertThat(result).isEmpty();
+
+    verifyNoMoreInteractions(
+        protocolSchedule,
+        protocolSpec,
+        protocolContext,
+        headerValidator,
+        validationPolicy,
+        syncTarget);
   }
 }

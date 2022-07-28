@@ -45,7 +45,9 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
     final BlockHeader rangeStart = rangeHeaders.getRange().getStart();
     final BlockHeader firstHeaderToImport = rangeHeaders.getFirstHeaderToImport();
 
-    if (isValid(rangeStart, firstHeaderToImport)) {
+    if (firstHeaderToImport == null) {
+      return Stream.empty();
+    } else if (isValid(rangeStart, firstHeaderToImport)) {
       return rangeHeaders.getHeadersToImport().stream();
     } else {
       final String rangeEndDescription;

@@ -26,17 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RangeHeaders {
-  private static final Logger LOG = LoggerFactory.getLogger(RangeHeaders.class);
 
   private final SyncTargetRange range;
   private final List<BlockHeader> headersToImport;
 
   public RangeHeaders(
       final SyncTargetRange checkpointRange, final List<BlockHeader> headersToImport) {
-    if (headersToImport.isEmpty()) {
-      LOG.debug(String.format("Headers list empty. Range: %s", checkpointRange.toString()));
-    }
-    checkArgument(!headersToImport.isEmpty(), "Must have at least one header to import");
     this.range = checkpointRange;
     this.headersToImport = headersToImport;
   }
@@ -50,7 +45,7 @@ public class RangeHeaders {
   }
 
   public BlockHeader getFirstHeaderToImport() {
-    return headersToImport.get(0);
+    return headersToImport.size() > 0 ? headersToImport.get(0) : null;
   }
 
   @Override
