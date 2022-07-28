@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -75,9 +74,6 @@ public class MergeProtocolSchedule {
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
-    if (!feeMarket.implementsBaseFee()) {
-      throw new RuntimeException("Invalid configuration: missing BaseFeeMarket for merge net");
-    }
-    return MergeValidationRulesetFactory.mergeBlockHeaderValidator((BaseFeeMarket) feeMarket);
+    return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
 }
