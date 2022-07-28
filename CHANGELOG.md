@@ -20,12 +20,14 @@ Besu requires a restart post-merge to re-enable remote transaction processing [#
 - Several logging improvements 
 
 ### Bug Fixes
-- fix for stack overflow when searching for TTD block [#4169](https://github.com/hyperledger/besu/pull/4169)
-- fix for chain stuck issue [#4175](https://github.com/hyperledger/besu/pull/4175)
+- Allow to set any value for baseFeePerGas in the genesis file [#4177](https://github.com/hyperledger/besu/pull/4177)
+- Fix for stack overflow when searching for TTD block [#4169](https://github.com/hyperledger/besu/pull/4169)
+- Fix for chain stuck issue [#4175](https://github.com/hyperledger/besu/pull/4175)
 
 ### Download links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC3/besu-22.7.0-RC3.tar.gz / sha256: `6a1ee89c82db9fa782d34733d8a8c726670378bcb71befe013da48d7928490a6`
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC3/besu-22.7.0-RC3.zip / sha256: `5de22445ab2a270cf33e1850cd28f1946442b7104738f0d1ac253a009c53414e`
+
 
 ## 22.7.0-RC2
 
