@@ -85,7 +85,7 @@ public class RlpxAgentTest {
   public void setup() {
     // Set basic defaults
     when(peerPrivileges.canExceedConnectionLimits(any())).thenReturn(false);
-    config.setMaxPeers(5);
+    config.setPeerUpperBound(5);
   }
 
   @Test
@@ -1028,7 +1028,7 @@ public class RlpxAgentTest {
       final int maxPeers,
       final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
       final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
-    config.setMaxPeers(maxPeers);
+    config.setPeerUpperBound(maxPeers);
     agent = agent(buildCustomization, rlpxConfigurationModifier);
     startAgent();
   }

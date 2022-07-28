@@ -70,6 +70,7 @@ public class RlpxAgent {
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
   private final int maxConnections;
+  private final int targetMaxConnections;
   private final boolean randomPeerPriority;
   private final int maxRemotelyInitiatedConnections;
   // xor'ing with this mask will allow us to randomly let new peers connect
@@ -99,6 +100,8 @@ public class RlpxAgent {
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
     this.maxConnections = maxConnections;
+    // TODO set or compute a sensible default
+    this.targetMaxConnections = maxConnections > 30 ? maxConnections - 10 : maxConnections;
     this.randomPeerPriority = randomPeerPriority;
     this.maxRemotelyInitiatedConnections =
         Math.min(maxConnections, maxRemotelyInitiatedConnections);
@@ -174,7 +177,7 @@ public class RlpxAgent {
       return;
     }
     peerStream
-        .takeWhile(peer -> Math.max(0, maxConnections - getConnectionCount()) > 0)
+        .takeWhile(peer -> Math.max(0, targetMaxConnections - getConnectionCount()) > 0)
         .filter(peer -> !connectionsById.containsKey(peer.getId()))
         .filter(peer -> peer.getEnodeURL().isListening())
         .filter(peerPermissions::allowNewOutboundConnectionTo)
@@ -362,15 +365,20 @@ public class RlpxAgent {
       // Disconnect if too many peers
       if (!peerPrivileges.canExceedConnectionLimits(peer)
           && getConnectionCount() >= maxConnections) {
-        LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
+        LOG.debug(
+            "Too many peers. Disconnect incoming connection: {} currentCount {} > max {}",
+            peerConnection,
+            getConnectionCount(),
+            maxConnections);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return;
       }
       // Disconnect if too many remotely-initiated connections
       if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
         LOG.debug(
-            "Too many remotely-initiated connections. Disconnect incoming connection: {}",
-            peerConnection);
+            "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
+            peerConnection,
+            maxRemotelyInitiatedConnections);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return;
       }
@@ -462,8 +470,9 @@ public class RlpxAgent {
         .forEach(
             conn -> {
               LOG.debug(
-                  "Too many remotely initiated connections. Disconnect low-priority connection: {}",
-                  conn);
+                  "Too many remotely initiated connections. Disconnect low-priority connection: {}, maxRemote={}",
+                  conn,
+                  maxRemotelyInitiatedConnections);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
             });
   }
@@ -479,7 +488,10 @@ public class RlpxAgent {
         .filter(c -> !peerPrivileges.canExceedConnectionLimits(c.getPeer()))
         .forEach(
             conn -> {
-              LOG.debug("Too many connections. Disconnect low-priority connection: {}", conn);
+              LOG.debug(
+                  "Too many connections. Disconnect low-priority connection: {}, maxConnections={}",
+                  conn,
+                  maxConnections);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
             });
   }
@@ -610,7 +622,7 @@ public class RlpxAgent {
           connectionInitializer,
           rlpxPermissions,
           peerPrivileges,
-          config.getMaxPeers(),
+          config.getPeerUpperBound(),
           config.getMaxRemotelyInitiatedConnections(),
           randomPeerPriority,
           metricsSystem);

@@ -188,8 +188,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerPermissions = peerPermissions;
 
-    final int maxPeers = config.getRlpx().getMaxPeers();
-    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
+    final int peerLowerBound = config.getRlpx().getPeerLowerBound();
+    LOG.info("setting peerLowerBound {}", peerLowerBound);
+    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
   }
 
