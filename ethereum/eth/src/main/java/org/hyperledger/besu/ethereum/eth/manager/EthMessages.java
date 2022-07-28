@@ -54,7 +54,9 @@ public class EthMessages {
   public void unsubscribe(final long subscriptionId, final int messageCode) {
     if (listenersByCode.containsKey(messageCode)) {
       listenersByCode.get(messageCode).unsubscribe(subscriptionId);
-      listenersByCode.remove(messageCode);
+      if (listenersByCode.get(messageCode).getSubscriberCount() < 1) {
+        listenersByCode.remove(messageCode);
+      }
     }
   }
 
