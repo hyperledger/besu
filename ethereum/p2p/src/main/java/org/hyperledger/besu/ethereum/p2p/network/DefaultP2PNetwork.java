@@ -353,6 +353,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           final PeerDiscoveryController controller = peerDiscoveryController.get();
           LOG.debug("adding {} peers to PeerTable", peers.size());
           peers.forEach(controller::addToPeerTable);
+          peers.forEach(rlpxAgent::connect);
         }
       }
     };

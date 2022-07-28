@@ -225,7 +225,6 @@ public class PeerDiscoveryController {
 
     peerPermissions.subscribeUpdate(this::handlePermissionsUpdate);
 
-    LOG.debug("Initial discovery peers {}", initialDiscoveryPeers);
     recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
 
     final long refreshTimerId =
