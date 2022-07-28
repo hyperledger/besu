@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
