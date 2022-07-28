@@ -14,24 +14,27 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator.MIN_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S;
+
 import org.hyperledger.besu.consensus.merge.headervalidationrules.ConstantOmmersHashRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.IncrementalTimestampRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.MergeUnfinalizedValidationRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.NoDifficultyRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.NoNonceRule;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
-import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 
 import java.util.Optional;
 
 public class MergeValidationRulesetFactory {
-
-  private static final EpochCalculator preMergeCalculator =
-      new EpochCalculator.DefaultEpochCalculator();
 
   /**
    * Creates a set of rules which when executed will determine if a given block header is valid with
@@ -40,28 +43,25 @@ public class MergeValidationRulesetFactory {
    * <p>Specifically the set of rules provided by this function are to be used for a Mainnet Merge
    * chain.
    *
-   * @param feeMarket the applicable {@link FeeMarket}, either PGA or BaseFee.
+   * @param baseFeeMarket the applicable {@link BaseFeeMarket}
    * @return the header validator.
    */
-  public static BlockHeaderValidator.Builder mergeBlockHeaderValidator(final FeeMarket feeMarket) {
+  public static BlockHeaderValidator.Builder mergeBlockHeaderValidator(
+      final BaseFeeMarket baseFeeMarket) {
 
-    if (!feeMarket.implementsBaseFee()) {
-      return MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
-          preMergeCalculator, PoWHasher.ETHASH_LIGHT);
-    } else {
-      return MainnetBlockHeaderValidator.createBaseFeeMarketValidator(
-              Optional.of(feeMarket)
-                  .filter(FeeMarket::implementsBaseFee)
-                  .map(BaseFeeMarket.class::cast)
-                  .orElseThrow(
-                      () ->
-                          new RuntimeException(
-                              "Invalid configuration: missing BaseFeeMarket for merge net")))
-          .addRule(new MergeUnfinalizedValidationRule())
-          .addRule(new ConstantOmmersHashRule())
-          .addRule(new NoNonceRule())
-          .addRule(new NoDifficultyRule())
-          .addRule(new IncrementalTimestampRule());
-    }
+    return new BlockHeaderValidator.Builder()
+        .addRule(new AncestryValidationRule())
+        .addRule(new GasUsageValidationRule())
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
+        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)))
+        .addRule(new MergeUnfinalizedValidationRule())
+        .addRule(new ConstantOmmersHashRule())
+        .addRule(new NoNonceRule())
+        .addRule(new NoDifficultyRule())
+        .addRule(new IncrementalTimestampRule());
   }
 }
