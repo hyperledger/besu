@@ -3,6 +3,7 @@
 ## 22.7.0
 
 ### Additions and Improvements
+- Deprecation warning for Ropsten, Rinkeby, Kiln [#4173](https://github.com/hyperledger/besu/pull/4173)
 
 ### Bug Fixes
 - Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
