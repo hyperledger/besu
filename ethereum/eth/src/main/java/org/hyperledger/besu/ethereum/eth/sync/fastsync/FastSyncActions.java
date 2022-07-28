@@ -262,7 +262,7 @@ public class FastSyncActions {
         .getHeader()
         .thenApply(
             blockHeader -> {
-              LOG.info(
+              LOG.trace(
                   "Successfully downloaded pivot block header by hash: {}",
                   blockHeader.toLogString());
               return new FastSyncState(blockHeader);
