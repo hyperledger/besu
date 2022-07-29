@@ -377,7 +377,7 @@ public class TStoreEVMOperationTest {
   @Before
   public void setUp() {
     ProtocolSchedule protocolSchedule = MainnetProtocolSchedule.fromConfig(
-            new StubGenesisConfigOptions().shanghaiBlock(0), EvmConfiguration.DEFAULT);
+            new StubGenesisConfigOptions().eip1153Block(0), EvmConfiguration.DEFAULT);
     codeExecutor = new TestCodeExecutor(protocolSchedule,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(0)));
   }

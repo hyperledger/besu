@@ -90,7 +90,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getParisBlockNumber();
 
-  OptionalLong getShanghaiBlockNumber();
+  OptionalLong getEIP1153BlockNumber();
 
   Optional<Wei> getBaseFeePerGas();
 

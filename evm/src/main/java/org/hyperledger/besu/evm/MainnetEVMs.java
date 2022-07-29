@@ -17,12 +17,12 @@ package org.hyperledger.besu.evm;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.EIP1153GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -398,25 +398,26 @@ public abstract class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
-  public static EVM shanghai(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return shanghai(new ShanghaiGasCalculator(), chainId, evmConfiguration);
+  // TODO EIP-1153 change for the actual fork name when known
+  public static EVM eip1153(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return eip1153(new EIP1153GasCalculator(), chainId, evmConfiguration);
   }
 
-  public static EVM shanghai(
+  public static EVM eip1153(
           final GasCalculator gasCalculator,
           final BigInteger chainId,
           final EvmConfiguration evmConfiguration) {
-    return new EVM(shanghaiOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+    return new EVM(eip1153Operations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
-  public static OperationRegistry shanghaiOperations(
+  public static OperationRegistry eip1153Operations(
           final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
-    registerShanghaiOperations(operationRegistry, gasCalculator, chainId);
+    registerEIP1153Operations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
-  public static void registerShanghaiOperations(
+  public static void registerEIP1153Operations(
           final OperationRegistry registry,
           final GasCalculator gasCalculator,
           final BigInteger chainID) {

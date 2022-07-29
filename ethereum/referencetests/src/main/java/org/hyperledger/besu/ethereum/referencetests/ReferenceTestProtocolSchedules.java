@@ -68,7 +68,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put(
         "ArrowGlacier", createSchedule(new StubGenesisConfigOptions().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(new StubGenesisConfigOptions().grayGlacierBlock(0)));
-    builder.put("Shanghai", createSchedule(new StubGenesisConfigOptions().shanghaiBlock(0)));
+    builder.put("EIP1153", createSchedule(new StubGenesisConfigOptions().eip1153Block(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

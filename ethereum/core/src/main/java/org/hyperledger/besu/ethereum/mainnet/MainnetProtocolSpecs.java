@@ -50,7 +50,7 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.EIP1153GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
@@ -633,7 +633,8 @@ public abstract class MainnetProtocolSpecs {
         .name("ParisFork");
   }
 
-  static ProtocolSpecBuilder shanghaiDefinition(
+  // TODO EIP-1153 change for the actual fork name when known
+  static ProtocolSpecBuilder eip1153Definition(
           final Optional<BigInteger> chainId,
           final OptionalInt configContractSizeLimit,
           final OptionalInt configStackSizeLimit,
@@ -652,9 +653,9 @@ public abstract class MainnetProtocolSpecs {
             evmConfiguration)
             .evmBuilder(
                     (gasCalculator, jdCacheConfig) ->
-                            MainnetEVMs.shanghai(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-            .gasCalculator(ShanghaiGasCalculator::new)
-            .name("ShanghaiFork");
+                            MainnetEVMs.eip1153(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+            .gasCalculator(EIP1153GasCalculator::new)
+            .name("EIP-1153");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

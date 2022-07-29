@@ -44,7 +44,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong parisBlockNumber = OptionalLong.empty();
-  private OptionalLong shanghaiBlockNumber = OptionalLong.empty();
+  private OptionalLong eip1153BlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
@@ -218,8 +218,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getShanghaiBlockNumber() {
-    return shanghaiBlockNumber;
+  public OptionalLong getEIP1153BlockNumber() {
+    return eip1153BlockNumber;
   }
 
   @Override
@@ -350,7 +350,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
-    getShanghaiBlockNumber().ifPresent(l -> builder.put("shanghaiBlock", l));
+    getEIP1153BlockNumber().ifPresent(l -> builder.put("eip1153Block", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
     // classic fork blocks
@@ -489,8 +489,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions shanghaiBlock(final long blockNumber) {
-    shanghaiBlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions eip1153Block(final long blockNumber) {
+    eip1153BlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-public class ShanghaiGasCalculator extends LondonGasCalculator {
+public class EIP1153GasCalculator extends LondonGasCalculator {
 
   private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
 
-  public ShanghaiGasCalculator() {}
+  public EIP1153GasCalculator() {}
 
   // EIP-1153
   @Override
