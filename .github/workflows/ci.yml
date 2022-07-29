@@ -94,7 +94,6 @@ jobs:
           INDEX_LIST=$(seq 0 ${MAX_INDEX})
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
-
   run-parallel-tests:
     runs-on: ubuntu-latest
     name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
@@ -233,6 +232,18 @@ jobs:
         with:
           path: "ethereum/referencetests/build/generated/sources/reference-test/**"
           key: ${{ runner.os }}-reftests-${{ github.sha }}
+  reference-runner-indexes:
+    runs-on: ubuntu-latest
+    name: Generate runner indexes
+    outputs:
+      json: ${{ steps.generate-index-list.outputs.json }}
+    steps:
+      - id: generate-index-list
+        run: |
+          MAX_INDEX=$((${{ env.total-runners }}-1))
+          INDEX_LIST=$(seq 0 ${MAX_INDEX})
+          INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
+          echo "::set-output name=json::${INDEX_JSON}"
   referenceTestEthereum:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
@@ -240,7 +251,7 @@ jobs:
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       matrix:
-        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
+        runner-index: ${{ fromjson(needs.reference-runner-indexes.outputs.json) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
