@@ -282,7 +282,7 @@ jobs:
           split-index: ${{ matrix.runner-index }}
       - name: collect tests
         id: collect-tests
-        run: echo "::set-output name=tests::$(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /')"
+        run: echo "::set-output name=tests::$(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' | xargs echo)"
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
