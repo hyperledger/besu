@@ -57,10 +57,10 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: 11
           cache: gradle
-          architecture: armv7
+          architecture: arm64
       - uses: pguyot/arm-runner-action@v2
         id: build_image
         with:
