@@ -32,10 +32,6 @@ jobs:
         with:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-      - uses: actions/upload-artifact@v3.1.0
-        with:
-          name: besu-zip
-          path: build/distributions/*.zip
   assemble:
     runs-on: ubuntu-latest
     needs: compile
@@ -240,8 +236,7 @@ jobs:
   referenceTestEthereum:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
-    needs:
-      - prepareReferenceTestEthereum
+    needs: prepareReferenceTestEthereum
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       matrix:
@@ -328,7 +323,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: pull test image
         run: docker pull quorumengineering/acctests:latest
-      - name: ethereum reference tests
+      - name: ethereum acceptance tests
         uses: gradle/gradle-build-action@v2
         with:
           arguments: acceptanceTests --scan
