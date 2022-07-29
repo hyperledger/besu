@@ -275,6 +275,13 @@ jobs:
         with:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
+      - name: pull test image
+        run: docker pull quorumengineering/acctests:latest
       - name: ethereum reference tests
         uses: gradle/gradle-build-action@v2
         with:
