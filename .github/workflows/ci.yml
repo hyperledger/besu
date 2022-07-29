@@ -267,16 +267,16 @@ jobs:
         with:
           path: "ethereum/referencetests/build/generated/sources/reference-test/**"
           key: ${{ runner.os }}-reftests-${{ github.sha }}
-      - name: collect tests
-        id: collect-tests
-        run: echo "::set-output name=tests::$(find ethereum/referencetests/build/generated/sources/reference-test -name '*.java' | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' | xargs echo)"
       - name: Split tests
         id: split-tests
         uses: chaosaffe/split-tests@v1-alpha.1
         with:
-          glob: '**/src/test/java'
+          glob: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
           split-total: ${{ env.total-runners }}
           split-index: ${{ matrix.runner-index }}
+      - name: collect tests
+        id: collect-tests
+        run: echo "::set-output name=tests::$(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /')"
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
