@@ -7,7 +7,8 @@
 
 ### Bug Fixes
 - Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
-- Upgrade Gradle to 6.8.0 [#4195](https://github.com/hyperledger/besu/pull/4195)
+- Upgrade Spotless to 6.8.0 [#4195](https://github.com/hyperledger/besu/pull/4195)
+- Upgrade Gradle to 7.5 [#4196](https://github.com/hyperledger/besu/pull/4196)
 
 ## 22.7.0-RC3
 
