@@ -203,9 +203,7 @@ jobs:
   prepareReferenceTestEthereum:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
-    needs:
-      - compile
-      - runner-indexes
+    needs: compile
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -234,7 +232,7 @@ jobs:
           key: ${{ runner.os }}-reftests-${{ github.sha }}
   reference-runner-indexes:
     runs-on: ubuntu-latest
-    name: Generate runner indexes
+    name: Generate reference tests runner indexes
     outputs:
       json: ${{ steps.generate-index-list.outputs.json }}
     steps:
@@ -247,7 +245,9 @@ jobs:
   referenceTestEthereum:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
-    needs: prepareReferenceTestEthereum
+    needs:
+     - prepareReferenceTestEthereum
+     - reference-runner-indexes
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       matrix:
