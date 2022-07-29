@@ -280,13 +280,8 @@ jobs:
           glob: 'ethereum/referencetests/build/generated/sources/reference-test/**/*.java'
           split-total: ${{ env.total-runners }}
           split-index: ${{ matrix.runner-index }}
-      - name: collect tests
-        id: collect-tests
-        run: echo "::set-output name=tests::$(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' | xargs echo)"
-      - name: test
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: ethereum:referenceTests:referenceTests ${{ steps.collect-tests.outputs.tests }} --scan
+      - name: run reference tests
+        run: ./gradlew ethereum:referenceTests:referenceTests $(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /') --scan
   referenceTestQbft:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
