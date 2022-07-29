@@ -56,7 +56,9 @@ public class TransitionBestPeerComparator implements Comparator<EthPeer>, MergeS
 
   @Override
   public void mergeStateChanged(
-      final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+      final boolean isPoS,
+      final Optional<Boolean> oldState,
+      final Optional<Difficulty> difficultyStoppedAt) {
     if (isPoS && difficultyStoppedAt.isPresent()) {
       terminalTotalDifficulty.set(difficultyStoppedAt.get());
     }

@@ -177,8 +177,6 @@ public class SyncState {
   }
 
   public void setReachedTerminalDifficulty(final boolean stoppedAtTerminalDifficulty) {
-    // TODO: this is an inexpensive way to stop sync when we reach TTD,
-    //      we should revisit when merge sync is better defined
     this.reachedTerminalDifficulty = Optional.of(stoppedAtTerminalDifficulty);
     ttdReachedListeners.forEach(listener -> listener.onTTDReached(stoppedAtTerminalDifficulty));
   }
