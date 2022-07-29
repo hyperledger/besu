@@ -237,7 +237,7 @@ jobs:
           arguments: ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests --scan
       - name: collect tests
         id: collect-tests
-        run: echo "::set-output name=tests::$(find ethereum/referencetests/build/generated/sources/reference-test -name '*.java' | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//')"
+        run: echo "::set-output name=tests::$(find ethereum/referencetests/build/generated/sources/reference-test -name '*.java' | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' | xargs echo)"
       - name: Split tests
         id: split-tests
         uses: chaosaffe/split-tests@v1-alpha.1
@@ -248,7 +248,7 @@ jobs:
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: ethereum:referenceTests:referenceTests --tests ${{ steps.collect-tests.outputs.tests }} --scan
+          arguments: ethereum:referenceTests:referenceTests ${{ steps.collect-tests.outputs.tests }} --scan
   referenceTestQbft:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
