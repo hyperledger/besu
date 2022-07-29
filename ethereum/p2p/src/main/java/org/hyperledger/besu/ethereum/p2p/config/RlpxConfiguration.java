@@ -73,6 +73,7 @@ public class RlpxConfiguration {
 
   public RlpxConfiguration setPeerUpperBound(final int peers) {
     peerUpperBound = peers;
+    // TODO if lower bound not explicitly set what is a sensible default
     return this;
   }
 
