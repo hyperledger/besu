@@ -109,9 +109,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     if (mergePeerFilter.isPresent()) {
       filterToUse = mergePeerFilter;
     }
-      mergeContext.observeNewIsPostMergeState(filterToUse.get());
-      mergeContext.addNewForkchoiceMessageListener(filterToUse.get());
-
+    mergeContext.observeNewIsPostMergeState(filterToUse.get());
+    mergeContext.addNewForkchoiceMessageListener(filterToUse.get());
 
     EthProtocolManager ethProtocolManager =
         super.createEthProtocolManager(
