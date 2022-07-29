@@ -105,12 +105,8 @@ public class PostMergeContext implements MergeContext {
     if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback ->
-              newMergeStateCallback.mergeStateChanged(newState, Optional.of(totalDifficulty)));
-    }
-
-    // only print if we changed state from pre-TTD to post-TTD, not at startup/init:
-    if (newState && oldState.filter(old -> old != newState).isPresent()) {
-      PandaPrinter.printOnFirstCrossing();
+              newMergeStateCallback.mergeStateChanged(
+                  newState, oldState, Optional.of(totalDifficulty)));
     }
   }
 

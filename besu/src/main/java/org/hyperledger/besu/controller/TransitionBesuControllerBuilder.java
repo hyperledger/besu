@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
@@ -180,7 +181,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
     postMergeContext.observeNewIsPostMergeState(
-        (isPoS, difficultyStoppedAt) -> {
+        (isPoS, priorState, difficultyStoppedAt) -> {
           if (isPoS) {
             // if we transitioned to post-merge, stop and disable any mining
             composedCoordinator.getPreMergeObject().disable();
@@ -189,6 +190,11 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext
                 .getBlockchain()
                 .setBlockChoiceRule((newBlockHeader, currentBlockHeader) -> -1);
+
+            if (priorState.filter(prior -> !prior).isPresent()) {
+              // only print pandas if we had a prior merge state, and it was false
+              PandaPrinter.printOnFirstCrossing();
+            }
 
           } else if (composedCoordinator.isMiningBeforeMerge()) {
             // if our merge state is set to mine pre-merge and we are mining, start mining

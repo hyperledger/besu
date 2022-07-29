@@ -24,6 +24,12 @@ import org.junit.Test;
 
 public class PandaPrinterTest {
 
+  final MergeStateHandler fauxTransitionHandler =
+      (isPoS, priorState, ttd) -> {
+        if (isPoS && priorState.filter(prior -> !prior).isPresent())
+          PandaPrinter.printOnFirstCrossing();
+      };
+
   @Test
   public void printsPanda() {
     PandaPrinter.resetForTesting();
@@ -35,6 +41,8 @@ public class PandaPrinterTest {
   public void doesNotPrintAtInit() {
     PandaPrinter.resetForTesting();
     var mergeContext = new PostMergeContext(Difficulty.ONE);
+    mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
+
     assertThat(PandaPrinter.hasDisplayed()).isFalse();
     mergeContext.setIsPostMerge(Difficulty.ONE);
     assertThat(PandaPrinter.hasDisplayed()).isFalse();
@@ -44,6 +52,8 @@ public class PandaPrinterTest {
   public void printsWhenCrossingOnly() {
     PandaPrinter.resetForTesting();
     var mergeContext = new PostMergeContext(Difficulty.ONE);
+    mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
+
     assertThat(PandaPrinter.hasDisplayed()).isFalse();
     mergeContext.setIsPostMerge(Difficulty.ZERO);
     assertThat(PandaPrinter.hasDisplayed()).isFalse();
