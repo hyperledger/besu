@@ -71,6 +71,7 @@ public class EngineExchangeTransitionConfigurationTest {
   @Before
   public void setUp() {
     when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
 
     this.method = new EngineExchangeTransitionConfiguration(vertx, protocolContext);
   }
