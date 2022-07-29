@@ -16,8 +16,6 @@
 
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,11 +26,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter implements TTDReachedListener {
+public class PandaPrinter {
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
   private static final String pandaBanner = PandaPrinter.loadBanner();
-  private final AtomicBoolean beenDisplayed = new AtomicBoolean();
+  private static final AtomicBoolean beenDisplayed = new AtomicBoolean();
 
   private static String loadBanner() {
     Class<PandaPrinter> c = PandaPrinter.class;
@@ -50,10 +48,19 @@ public class PandaPrinter implements TTDReachedListener {
     return resultStringBuilder.toString();
   }
 
-  @Override
-  public void onTTDReached(final boolean reached) {
-    if (reached && beenDisplayed.compareAndSet(false, true)) {
+  public static boolean printOnFirstCrossing() {
+    boolean shouldPrint = beenDisplayed.compareAndSet(false, true);
+    if (shouldPrint) {
       LOG.info("\n" + pandaBanner);
     }
+    return shouldPrint;
+  }
+
+  static boolean hasDisplayed() {
+    return beenDisplayed.get();
+  }
+
+  static void resetForTesting() {
+    beenDisplayed.set(false);
   }
 }
