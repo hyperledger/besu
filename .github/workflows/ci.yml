@@ -205,12 +205,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: compileJmh --scan
-  referenceTestEthereum:
+  prepareReferenceTestEthereum:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
     needs:
-     - integration-test
-     - runner-indexes
+      - integration-test
+      - runner-indexes
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       matrix:
@@ -235,6 +235,41 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests --scan
+      - name: Cache reference tests
+        uses: actions/cache@v3
+        with:
+          path: "ethereum/referencetests/build/generated/sources/reference-test/**"
+          key: ${{ runner.os }}-reftests-${{ github.sha }}
+  referenceTestEthereum:
+    runs-on: ubuntu-latest
+    container: tmio/besu-build:1.0
+    needs:
+      - prepareReferenceTestEthereum
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    strategy:
+      matrix:
+        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: gradle
+      - name: Cache classes
+        uses: actions/cache@v3
+        with:
+          path: "**/*.class"
+          key: ${{ runner.os }}-build-${{ github.sha }}
+      - name: Cache reference tests
+        uses: actions/cache@v3
+        with:
+          path: "ethereum/referencetests/build/generated/sources/reference-test/**"
+          key: ${{ runner.os }}-reftests-${{ github.sha }}
       - name: collect tests
         id: collect-tests
         run: echo "::set-output name=tests::$(find ethereum/referencetests/build/generated/sources/reference-test -name '*.java' | sed -e 's/^.*java\///' -e 's@/@.@g' -e 's/\.java//' -e 's/^/--tests /' | xargs echo)"
@@ -294,11 +329,6 @@ jobs:
         with:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ github.sha }}
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USER_RW }}
-          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: pull test image
         run: docker pull quorumengineering/acctests:latest
       - name: ethereum reference tests
