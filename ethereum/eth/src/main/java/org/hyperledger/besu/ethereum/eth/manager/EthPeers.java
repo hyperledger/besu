@@ -107,7 +107,7 @@ public class EthPeers {
             clock,
             permissioningProviders);
     final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
-    LOG.debug("Adding new EthPeer {}", ethPeer);
+    LOG.debug("Adding new EthPeer {} {}", peer.getShortNodeId(), ethPeer == null ? "for the first time" : "");
   }
 
   public void registerDisconnect(final PeerConnection connection) {
