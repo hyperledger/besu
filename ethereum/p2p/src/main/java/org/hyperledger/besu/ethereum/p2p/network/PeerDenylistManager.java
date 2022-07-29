@@ -29,10 +29,14 @@ public class PeerDenylistManager implements DisconnectCallback {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDenylistManager.class);
   private static final Set<DisconnectReason> locallyTriggeredDisconnectReasons =
       ImmutableSet.of(
-          DisconnectReason.BREACH_OF_PROTOCOL, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
+          DisconnectReason.BREACH_OF_PROTOCOL,
+          DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION,
+          DisconnectReason.SUBPROTOCOL_TRIGGERED);
 
   private static final Set<DisconnectReason> remotelyTriggeredDisconnectReasons =
-      ImmutableSet.of(DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION);
+      ImmutableSet.of(
+          DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION,
+          DisconnectReason.SUBPROTOCOL_TRIGGERED);
 
   private final PeerPermissionsDenylist denylist;
 

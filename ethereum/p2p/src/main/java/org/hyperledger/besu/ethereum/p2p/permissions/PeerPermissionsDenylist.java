@@ -28,7 +28,7 @@ import io.vertx.core.impl.ConcurrentHashSet;
 import org.apache.tuweni.bytes.Bytes;
 
 public class PeerPermissionsDenylist extends PeerPermissions {
-  private static final int DEFAULT_INITIAL_CAPACITY = 20;
+  private static final int DEFAULT_INITIAL_CAPACITY = 500;
 
   private final Set<Bytes> denylist;
 
