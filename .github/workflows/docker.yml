@@ -75,6 +75,7 @@ jobs:
         with:
           commands: |
             export architecture=arm64
+            export JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-arm64
             ./gradlew testDocker
       - name: Login to DockerHub
         uses: docker/login-action@v2
@@ -84,4 +85,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
         if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
-        run: ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
+        uses: pguyot/arm-runner-action@v2
+        with:
+          commands: |
+            export JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-arm64
+             ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
