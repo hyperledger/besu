@@ -9,6 +9,33 @@ env:
   total-runners: 5
 
 jobs:
+  compile:
+    runs-on: ubuntu-latest
+    container: tmio/besu-build:1.0
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: gradle
+      - name: Compile
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+          arguments: compileJava compileTestJava --scan -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
+      - name: Cache classes
+        uses: actions/cache@v3
+        with:
+          path: "**/*.class"
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: besu-zip
+          path: build/distributions/*.zip
   assemble:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
@@ -22,20 +49,15 @@ jobs:
           distribution: adopt
           java-version: 11
           cache: gradle
-      - name: Assemble
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: compileJava compileTestJava assemble --scan -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       - name: Cache classes
         uses: actions/cache@v3
         with:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
-      - name: Upload build reports
-        uses: actions/upload-artifact@v3
+      - name: Assemble
+        uses: gradle/gradle-build-action@v2
         with:
-          name: build-reports
-          path: build/reports/
+          arguments: assemble --scan -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
       - uses: actions/upload-artifact@v3.1.0
         with:
           name: besu-zip
@@ -81,7 +103,7 @@ jobs:
     name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
     needs:
       - runner-indexes
-      - assemble
+      - compile
     strategy:
       matrix:
         runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
@@ -115,7 +137,7 @@ jobs:
           arguments: ${{ steps.set-modules.outputs.tests }} --scan
   integration-test:
     runs-on: ubuntu-latest
-    needs: assemble
+    needs: compile
     container: tmio/besu-build:1.0
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
