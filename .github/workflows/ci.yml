@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  GRADLE_OPTS: "-Xmx4g"
+  GRADLE_OPTS: "-Xmx4g -Porg.gradle.daemon=false"
   total-runners: 8
 
 jobs:
