@@ -19,7 +19,6 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -160,6 +159,14 @@ public class BackwardChain {
     hashesToAppend.clear();
   }
 
+  public synchronized Optional<Hash> getDescendant(final Hash blockHash) {
+    return chainStorage.get(blockHash);
+  }
+
+  public synchronized Optional<Block> getBlock(final Hash hash) {
+    return blocks.get(hash);
+  }
+
   public synchronized Optional<BlockHeader> getHeader(final Hash hash) {
     return headers.get(hash);
   }
@@ -172,25 +179,12 @@ public class BackwardChain {
   }
 
   public synchronized Optional<Hash> getFirstHashToAppend() {
-    return Optional.ofNullable(hashesToAppend.peek());
+    return Optional.ofNullable(hashesToAppend.poll());
   }
 
   public synchronized void removeFromHashToAppend(final Hash hashToRemove) {
     if (hashesToAppend.contains(hashToRemove)) {
       hashesToAppend.remove(hashToRemove);
-    }
-  }
-
-  public void addBadChainToManager(final BadBlockManager badBlocksManager, final Hash hash) {
-    final Optional<Hash> ancestor = chainStorage.get(hash);
-    while (ancestor.isPresent()) {
-      final Optional<Block> block = blocks.get(ancestor.get());
-      if (block.isPresent()) {
-        badBlocksManager.addBadBlock(block.get());
-      } else {
-        final Optional<BlockHeader> blockHeader = headers.get(ancestor.get());
-        blockHeader.ifPresent(badBlocksManager::addBadHeader);
-      }
     }
   }
 }

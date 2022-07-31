@@ -36,6 +36,11 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient);
 
+  @Override
+  default boolean isCompatibleWithEngineApi() {
+    return true;
+  }
+
   Result rememberBlock(final Block block);
 
   Result validateBlock(final Block block);
@@ -67,6 +72,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   void addBadBlock(final Block block);
 
   boolean isBadBlock(Hash blockHash);
+
+  Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash);
 
   class ForkchoiceResult {
     public enum Status {

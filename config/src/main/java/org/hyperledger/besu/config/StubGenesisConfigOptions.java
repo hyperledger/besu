@@ -43,7 +43,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong londonBlockNumber = OptionalLong.empty();
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
-  private OptionalLong parisBlockNumber = OptionalLong.empty();
+  private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong eip1153BlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
@@ -213,12 +213,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getParisBlockNumber() {
-    return parisBlockNumber;
+  public OptionalLong getMergeNetSplitBlockNumber() {
+    return mergeNetSplitBlockNumber;
   }
 
   @Override
-  public OptionalLong getEIP1153BlockNumber() {
+  public OptionalLong getEip1153BlockNumber() {
     return eip1153BlockNumber;
   }
 
@@ -349,7 +349,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     getLondonBlockNumber().ifPresent(l -> builder.put("londonBlock", l));
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
-    getParisBlockNumber().ifPresent(l -> builder.put("parisBlock", l));
+    getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getEIP1153BlockNumber().ifPresent(l -> builder.put("eip1153Block", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
@@ -484,8 +484,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
     return this;
   }
 
-  public StubGenesisConfigOptions parisBlock(final long blockNumber) {
-    parisBlockNumber = OptionalLong.of(blockNumber);
+  public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
+    mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

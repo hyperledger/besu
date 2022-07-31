@@ -66,7 +66,7 @@ commands:
           name: Install Packages - LibSodium, nssdb
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https haveged libnss3-tools
+            sudo apt-get install -y libsodium23 libsodium-dev libjemalloc-dev apt-transport-https haveged libnss3-tools
             sudo service haveged restart
       - restore_gradle_cache
   restore_gradle_cache:
@@ -137,24 +137,6 @@ jobs:
           destination: distributions
           when: always
 
-  dco:
-    executor: besu_executor_small
-    steps:
-      - checkout
-      - restore_gradle_cache
-      - run:
-          name: DCO check
-          command: |
-            ./scripts/dco_check.sh
-  spotless:
-    executor: besu_executor_small
-    steps:
-      - checkout
-      - restore_gradle_cache
-      - run:
-          name: Spotless
-          command: |
-            ./gradlew --no-daemon --parallel clean spotlessCheck
   testWindows:
     executor: win/default
     steps:
@@ -212,11 +194,6 @@ jobs:
           command: |
             ./gradlew --no-daemon build
       - capture_test_results
-# Temporarily disabled
-#      - run:
-#          name: SonarQube
-#          no_output_timeout: 30m
-#          command: ./gradlew --no-daemon jacocoRootReport sonarqube -Dsonar.login=$SONAR_TOKEN
 
   integrationTests:
     executor: xl_machine_executor
@@ -404,16 +381,9 @@ workflows:
   version: 2
   default:
     jobs:
-      - dco
-      - spotless
-      - assemble:
-          requires:
-            - dco
-            - spotless
+      - assemble
       - unitTests:
-# Temporarily disabled
-#          context: SonarCloud
-          requires:
+           requires:
             - assemble
       - testWindows:
           requires:

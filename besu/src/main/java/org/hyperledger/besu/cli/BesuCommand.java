@@ -568,9 +568,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   static class EngineRPCOptionGroup {
     @Option(
         names = {"--engine-rpc-enabled"},
-        description = "deprectaed parameter, do not use.",
-        hidden = true)
-    private final Boolean deprecatedIsEngineRpcEnabled = false;
+        description =
+            "enable the engine api, even in the absence of merge-specific configurations.")
+    private final Boolean overrideEngineRpcEnabled = false;
 
     @Option(
         names = {"--engine-rpc-port", "--engine-rpc-http-port"},
@@ -1190,7 +1190,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
     @SuppressWarnings("unused")
-    private final Integer pooledTransactionHashesSize = null; // NOSONAR
+    private final Integer pooledTransactionHashesSize = null;
 
     @Option(
         names = {"--tx-pool-retention-hours"},
@@ -1393,6 +1393,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Override
   public void run() {
+    if (network != null && network.isDeprecated()) {
+      logger.warn(NetworkDeprecationMessage.generate(network));
+    }
 
     try {
       configureLogging(true);
@@ -1906,7 +1909,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-flexible-groups-enabled");
     }
 
-    if (txPoolOptionGroup.pooledTransactionHashesSize != null) { // NOSONAR
+    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
       logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
   }
@@ -1930,9 +1933,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration =
         jsonRpcConfiguration(
             jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
-    engineJsonRpcConfiguration =
-        createEngineJsonRpcConfiguration(
-            engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
+    if (isEngineApiEnabled()) {
+      engineJsonRpcConfiguration =
+          createEngineJsonRpcConfiguration(
+              engineRPCOptionGroup.engineRpcPort, engineRPCOptionGroup.engineHostsAllowlist);
+    }
     p2pTLSConfiguration = p2pTLSConfigOptions.p2pTLSConfiguration(commandLine);
     graphQLConfiguration = graphQLConfiguration();
     webSocketConfiguration =
@@ -2126,17 +2131,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Integer listenPort, final List<String> allowCallsFrom) {
     JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
-    if (engineRPCOptionGroup.deprecatedIsEngineRpcEnabled) {
-      logger.warn(
-          "--engine-api-enabled parameter has been deprecated and will be removed in a future release.  "
-              + "Merge support is implicitly enabled by the presence of terminalTotalDifficulty in the genesis config.");
-    }
-    engineConfig.setEnabled(isMergeEnabled());
+    engineConfig.setEnabled(isEngineApiEnabled());
     if (!engineRPCOptionGroup.isEngineAuthDisabled) {
       engineConfig.setAuthenticationEnabled(true);
       engineConfig.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
       if (Objects.nonNull(engineRPCOptionGroup.engineJwtKeyFile)
-          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) { // NOSONAR
+          && java.nio.file.Files.exists(engineRPCOptionGroup.engineJwtKeyFile)) {
         engineConfig.setAuthenticationPublicKeyFile(engineRPCOptionGroup.engineJwtKeyFile.toFile());
       } else {
         logger.info(
@@ -3095,7 +3095,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts,
         jsonRPCWebsocketOptionGroup.rpcWsPort,
         jsonRPCWebsocketOptionGroup.isRpcWsEnabled);
-    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isMergeEnabled());
+    addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isEngineApiEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
@@ -3217,6 +3217,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private boolean isMergeEnabled() {
     return MergeConfigOptions.isMergeEnabled();
+  }
+
+  private boolean isEngineApiEnabled() {
+    return engineRPCOptionGroup.overrideEngineRpcEnabled || isMergeEnabled();
   }
 
   public static List<String> getJDKEnabledCypherSuites() {

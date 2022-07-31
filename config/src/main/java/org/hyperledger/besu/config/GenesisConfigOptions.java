@@ -88,7 +88,7 @@ public interface GenesisConfigOptions {
 
   OptionalLong getGrayGlacierBlockNumber();
 
-  OptionalLong getParisBlockNumber();
+  OptionalLong getMergeNetSplitBlockNumber();
 
   OptionalLong getEIP1153BlockNumber();
 

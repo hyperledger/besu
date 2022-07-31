@@ -21,16 +21,19 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,6 +66,8 @@ public class BackwardSyncContext {
   private final int maxRetries;
 
   private final long millisBetweenRetries = DEFAULT_MILLIS_BETWEEN_RETRIES;
+
+  private final Subscribers<BadChainListener> badChainListeners = Subscribers.create();
 
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
@@ -265,12 +270,20 @@ public class BackwardSyncContext {
   }
 
   public boolean isReady() {
+    LOG.debug(
+        "checking if BWS is ready: ttd reached {}, initial sync done {}",
+        syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE),
+        syncState.isInitialSyncPhaseDone());
     return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)
         && syncState.isInitialSyncPhaseDone();
   }
 
   public CompletableFuture<Void> stop() {
     return currentBackwardSyncFuture.get();
+  }
+
+  public void subscribeBadChainListener(final BadChainListener badChainListener) {
+    badChainListeners.subscribe(badChainListener);
   }
 
   // In rare case when we request too many headers/blocks we get response that does not contain all
@@ -304,12 +317,7 @@ public class BackwardSyncContext {
           .appendBlock(block, optResult.blockProcessingOutputs.get().receipts);
       possiblyMoveHead(block);
     } else {
-      final BadBlockManager badBlocksManager =
-          protocolSchedule
-              .getByBlockNumber(getProtocolContext().getBlockchain().getChainHeadBlockNumber())
-              .getBadBlocksManager();
-      badBlocksManager.addBadBlock(block);
-      getBackwardChain().addBadChainToManager(badBlocksManager, block.getHash());
+      emitBadChainEvent(block);
       throw new BackwardSyncException(
           "Cannot save block "
               + block.toLogString()
@@ -355,5 +363,26 @@ public class BackwardSyncContext {
         .filter(Optional::isPresent)
         .map(Optional::get)
         .findFirst();
+  }
+
+  private void emitBadChainEvent(final Block badBlock) {
+    final List<Block> badBlockDescendants = new ArrayList<>();
+    final List<BlockHeader> badBlockHeaderDescendants = new ArrayList<>();
+
+    Optional<Hash> descendant = backwardChain.getDescendant(badBlock.getHash());
+
+    while (descendant.isPresent()) {
+      final Optional<Block> block = backwardChain.getBlock(descendant.get());
+      if (block.isPresent()) {
+        badBlockDescendants.add(block.get());
+      } else {
+        backwardChain.getHeader(descendant.get()).ifPresent(badBlockHeaderDescendants::add);
+      }
+
+      descendant = backwardChain.getDescendant(descendant.get());
+    }
+
+    badChainListeners.forEach(
+        listener -> listener.onBadChain(badBlock, badBlockDescendants, badBlockHeaderDescendants));
   }
 }

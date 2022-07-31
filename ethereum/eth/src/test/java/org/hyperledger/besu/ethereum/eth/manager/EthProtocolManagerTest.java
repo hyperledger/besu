@@ -203,27 +203,8 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
-  public void disconnectOnVeryLargeMessage() {
-    try (final EthProtocolManager ethManager =
-        EthProtocolManagerTestUtil.create(
-            blockchain,
-            () -> false,
-            protocolContext.getWorldStateArchive(),
-            transactionPool,
-            EthProtocolConfiguration.defaultConfig())) {
-      final MessageData messageData = mock(MessageData.class);
-      when(messageData.getSize()).thenReturn(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE + 1);
-      when(messageData.getCode()).thenReturn(EthPV62.TRANSACTIONS);
-      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
-
-      ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, messageData));
-      assertThat(peer.isDisconnected()).isTrue();
-    }
-  }
-
-  @Test
   public void disconnectNewPoWPeers() {
-    MergePeerFilter mergePeerFilter = new MergePeerFilter();
+    final MergePeerFilter mergePeerFilter = new MergePeerFilter();
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,
@@ -254,7 +235,7 @@ public final class EthProtocolManagerTest {
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
 
       mergePeerFilter.mergeStateChanged(
-          true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+          true, Optional.empty(), Optional.of(blockchain.getChainHead().getTotalDifficulty()));
       mergePeerFilter.onNewForkchoiceMessage(
           Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
       mergePeerFilter.onNewForkchoiceMessage(
@@ -1119,7 +1100,7 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void forkIdForChainHeadMayBeNull() {
-    EthScheduler ethScheduler = mock(EthScheduler.class);
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
             blockchain,

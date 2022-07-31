@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
@@ -31,7 +32,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -120,6 +127,31 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
+  protected EthProtocolManager createEthProtocolManager(
+      final ProtocolContext protocolContext,
+      final boolean fastSyncEnabled,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
+      final EthPeers ethPeers,
+      final EthContext ethContext,
+      final EthMessages ethMessages,
+      final EthScheduler scheduler,
+      final List<PeerValidator> peerValidators,
+      final Optional<MergePeerFilter> mergePeerFilter) {
+    return mergeBesuControllerBuilder.createEthProtocolManager(
+        protocolContext,
+        fastSyncEnabled,
+        transactionPool,
+        ethereumWireProtocolConfiguration,
+        ethPeers,
+        ethContext,
+        ethMessages,
+        scheduler,
+        peerValidators,
+        mergePeerFilter);
+  }
+
+  @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return new TransitionProtocolSchedule(
         preMergeBesuControllerBuilder.createProtocolSchedule(),
@@ -149,7 +181,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     PostMergeContext postMergeContext = protocolContext.getConsensusContext(PostMergeContext.class);
     postMergeContext.observeNewIsPostMergeState(
-        (isPoS, difficultyStoppedAt) -> {
+        (isPoS, priorState, difficultyStoppedAt) -> {
           if (isPoS) {
             // if we transitioned to post-merge, stop and disable any mining
             composedCoordinator.getPreMergeObject().disable();
@@ -158,6 +190,11 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext
                 .getBlockchain()
                 .setBlockChoiceRule((newBlockHeader, currentBlockHeader) -> -1);
+
+            if (priorState.filter(prior -> !prior).isPresent()) {
+              // only print pandas if we had a prior merge state, and it was false
+              PandaPrinter.printOnFirstCrossing();
+            }
 
           } else if (composedCoordinator.isMiningBeforeMerge()) {
             // if our merge state is set to mine pre-merge and we are mining, start mining
