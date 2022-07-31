@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -41,13 +42,15 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   public static final long ENGINE_API_LOGGING_THRESHOLD = 60000L;
   private final Vertx syncVertx;
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
-  protected final Optional<MergeContext> mergeContext;
+  protected final Optional<MergeContext> mergeContextOptional;
+  protected final Supplier<MergeContext> mergeContext;
   protected final ProtocolContext protocolContext;
 
   protected ExecutionEngineJsonRpcMethod(final Vertx vertx, final ProtocolContext protocolContext) {
     this.syncVertx = vertx;
     this.protocolContext = protocolContext;
-    this.mergeContext = protocolContext.safeConsensusContext(MergeContext.class);
+    this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
+    this.mergeContext = mergeContextOptional::orElseThrow;
   }
 
   @Override

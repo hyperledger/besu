@@ -82,11 +82,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         () -> Json.encodePrettily(remoteTransitionConfiguration));
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader =
-        mergeContext.flatMap(c -> c.getTerminalPoWBlock());
+        mergeContextOptional.get().getTerminalPoWBlock();
 
     final EngineExchangeTransitionConfigurationResult localTransitionConfiguration =
         new EngineExchangeTransitionConfigurationResult(
-            mergeContext.map(c -> c.getTerminalTotalDifficulty()).orElse(FALLBACK_TTD_DEFAULT),
+            mergeContextOptional
+                .map(c -> c.getTerminalTotalDifficulty())
+                .orElse(FALLBACK_TTD_DEFAULT),
             maybeTerminalPoWBlockHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
             maybeTerminalPoWBlockHeader.map(BlockHeader::getNumber).orElse(0L));
 
