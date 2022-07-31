@@ -9,6 +9,7 @@ jobs:
   spotless:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo

@@ -12,6 +12,7 @@ jobs:
   compile:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -36,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: compile
     container: tmio/besu-build:1.0
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -96,6 +98,7 @@ jobs:
           echo "::set-output name=json::${INDEX_JSON}"
   run-parallel-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
     needs:
       - runner-indexes
@@ -141,6 +144,7 @@ jobs:
   integration-test:
     runs-on: ubuntu-latest
     needs: compile
+    timeout-minutes: 30
     container: tmio/besu-build:1.0
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
@@ -172,6 +176,7 @@ jobs:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
     needs: compile
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -195,6 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
     needs: compile
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -218,6 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
     needs: compile
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -250,6 +257,7 @@ jobs:
     needs:
      - prepareReferenceTestEthereum
      - runner-indexes
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     strategy:
       matrix:
@@ -295,6 +303,7 @@ jobs:
     runs-on: ubuntu-latest
     container: tmio/besu-build:1.0
     needs: compile
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -326,6 +335,7 @@ jobs:
   acceptanceTests:
     runs-on: ubuntu-latest
     needs: compile
+    timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo

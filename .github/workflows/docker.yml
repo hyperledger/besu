@@ -49,7 +49,7 @@ jobs:
         if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         run: ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
   buildArm64Docker:
-    runs-on: ubuntu-latest
+    runs-on: besu
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -57,27 +57,26 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: zulu
+          architecture: arm64
           java-version: 11
           cache: gradle
+      - name: buildDocker
+        uses: gradle/gradle-build-action@v2
+        env:
           architecture: arm64
-      - uses: pguyot/arm-runner-action@v2
-        id: build_image
         with:
-          commands: |
-            export JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-arm64
-            ./gradlew distDocker
+          arguments: distDocker
       - name: download image test binary
         run: |
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
-      - name: test image
-        uses: pguyot/arm-runner-action@v2
+      - name: testDocker
+        uses: gradle/gradle-build-action@v2
+        env:
+          architecture: arm64
         with:
-          commands: |
-            export architecture=arm64
-            export JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-arm64
-            ./gradlew testDocker
+          arguments: testDocker
       - name: Login to DockerHub
         uses: docker/login-action@v2
         if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
@@ -86,8 +85,8 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: publish
         if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
-        uses: pguyot/arm-runner-action@v2
+        uses: gradle/gradle-build-action@v2
+        env:
+          architecture: arm64
         with:
-          commands: |
-            export JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-arm64
-             ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
+          arguments: "-Pbranch=${{ github.head_ref || github.ref_name }} dockerUpload"
