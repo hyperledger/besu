@@ -166,7 +166,7 @@ jobs:
         if: always() # always run even if the previous step fails
         with:
           name: junit-integration-test-results
-          path: '**/build/test-results/test/TEST-*.xml'
+          path: '**/build/test-results/integrationTest/TEST-*.xml'
           retention-days: 1
   javadoc:
     runs-on: ubuntu-latest
@@ -321,7 +321,7 @@ jobs:
         if: always() # always run even if the previous step fails
         with:
           name: junit-qbft-reference-test-results
-          path: '**/build/test-results/test/TEST-*.xml'
+          path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
   acceptanceTests:
     runs-on: ubuntu-latest
@@ -354,5 +354,5 @@ jobs:
         if: always() # always run even if the previous step fails
         with:
           name: junit-acceptance-test-results
-          path: '**/build/test-results/test/TEST-*.xml'
+          path: '**/build/test-results/acceptanceTest/TEST-*.xml'
           retention-days: 1
