@@ -311,7 +311,7 @@ public class RunnerBuilder {
 
   public RunnerBuilder engineJsonRpcConfiguration(
       final JsonRpcConfiguration engineJsonRpcConfiguration) {
-    this.engineJsonRpcConfiguration = Optional.of(engineJsonRpcConfiguration);
+    this.engineJsonRpcConfiguration = Optional.ofNullable(engineJsonRpcConfiguration);
     return this;
   }
 

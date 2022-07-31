@@ -57,7 +57,7 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
     final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
 
-    final Optional<Block> block = mergeContext.retrieveBlockById(payloadId);
+    final Optional<Block> block = mergeContext.get().retrieveBlockById(payloadId);
     if (block.isPresent()) {
       var proposal = block.get();
       var proposalHeader = proposal.getHeader();
