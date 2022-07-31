@@ -65,6 +65,7 @@ jobs:
         id: build_image
         with:
           commands: |
+            export JAVA_HOME=/usr/lib/jvm/temurin-11-jdk-arm64
             ./gradlew distDocker
       - name: download image test binary
         run: |
