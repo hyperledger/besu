@@ -431,7 +431,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // TODO make this a hidden experimental option
     @Option(
-        names = {"--p2p-peer-lower-bound"},
+            hidden = true,
+        names = {"--Xp2p-peer-lower-bound"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
             "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
