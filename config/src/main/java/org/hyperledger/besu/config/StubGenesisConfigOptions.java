@@ -218,7 +218,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEIP1153BlockNumber() { return eip1153BlockNumber; }
+  public OptionalLong getEIP1153BlockNumber() {
+    return eip1153BlockNumber;
+  }
 
   @Override
   public Optional<Wei> getBaseFeePerGas() {
