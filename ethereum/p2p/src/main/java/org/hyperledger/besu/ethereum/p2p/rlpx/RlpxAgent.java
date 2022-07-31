@@ -237,7 +237,8 @@ public class RlpxAgent {
       return peerConnection.get();
     }
     // Check max peers
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= upperBoundConnections) {
+    if (!peerPrivileges.canExceedConnectionLimits(peer)
+        && getConnectionCount() >= upperBoundConnections) {
       final String errorMsg =
           "Max peer connections established ("
               + upperBoundConnections
@@ -369,7 +370,7 @@ public class RlpxAgent {
             "Too many peers. Disconnect incoming connection: {} currentCount {} > max {}",
             peerConnection,
             getConnectionCount(),
-                upperBoundConnections);
+            upperBoundConnections);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return;
       }
@@ -491,7 +492,7 @@ public class RlpxAgent {
               LOG.debug(
                   "Too many connections. Disconnect low-priority connection: {}, maxConnections={}",
                   conn,
-                      upperBoundConnections);
+                  upperBoundConnections);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
             });
   }

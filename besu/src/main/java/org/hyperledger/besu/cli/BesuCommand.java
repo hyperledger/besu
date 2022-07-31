@@ -431,7 +431,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // TODO make this a hidden experimental option
     @Option(
-            hidden = true,
+        hidden = true,
         names = {"--Xp2p-peer-lower-bound"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
