@@ -310,8 +310,8 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldFailAfterMaxNumberOfRetries() {
     doReturn(CompletableFuture.failedFuture(new Exception()))
-        .when(context)
-        .prepareBackwardSyncFuture();
+            .when(context)
+            .prepareBackwardSyncFuture();
 
     final var syncFuture = context.syncBackwardsUntil(Hash.ZERO);
 
@@ -321,26 +321,7 @@ public class BackwardSyncContextTest {
       if (throwable instanceof ExecutionException) {
         BackwardSyncException backwardSyncException = (BackwardSyncException) throwable.getCause();
         assertThat(backwardSyncException.getMessage())
-            .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
-      }
-    }
-  }
-
-  @Test
-  public void shouldFailAfterMaxNumberOfRetries() {
-    doReturn(CompletableFuture.failedFuture(new Exception()))
-        .when(context)
-        .prepareBackwardSyncFuture();
-
-    final var syncFuture = context.syncBackwardsUntil(Hash.ZERO);
-
-    try {
-      syncFuture.get();
-    } catch (final Throwable throwable) {
-      if (throwable instanceof ExecutionException) {
-        BackwardSyncException backwardSyncException = (BackwardSyncException) throwable.getCause();
-        assertThat(backwardSyncException.getMessage())
-            .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
+                .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
       }
     }
   }

@@ -158,6 +158,11 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
+  public Map<UInt256, UInt256> getUpdatedTransientStorage() {
+    return transientStorage;
+  }
+
+  @Override
   public UInt256 getTransientStorageValue(final UInt256 key) {
     if (transientStorage.containsKey(key)) {
       return transientStorage.get(key);
