@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 22.7.1
+
+### Additions and Improvements
+- Experimental CLI option for --Xp2p-peer-lower-bound [#4200](https://github.com/hyperledger/besu/pull/4200)
+
 ## 22.7.0
 
 ### Additions and Improvements

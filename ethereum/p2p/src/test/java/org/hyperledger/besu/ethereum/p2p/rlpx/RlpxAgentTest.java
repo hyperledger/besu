@@ -1040,7 +1040,6 @@ public class RlpxAgentTest {
   }
 
   private void startAgentWithLowerBoundPeers(final int lowerBound) {
-    // TODO add upperBound param
     startAgentWithLowerBoundPeers(lowerBound, lowerBound, Function.identity(), __ -> {});
   }
 
