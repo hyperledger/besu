@@ -154,7 +154,6 @@ public class NetworkRunner implements AutoCloseable {
                 connection.getAgreedCapabilities(), protocolManager.getSupportedCapabilities())) {
               return;
             }
-            LOG.info("network runner - disconnect peerInitiated? {}", initiatedByPeer);
             protocolManager.handleDisconnect(connection, disconnectReason, initiatedByPeer);
           });
     }
