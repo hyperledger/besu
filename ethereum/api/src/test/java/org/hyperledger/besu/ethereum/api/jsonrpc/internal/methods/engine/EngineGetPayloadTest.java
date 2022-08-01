@@ -66,7 +66,7 @@ public class EngineGetPayloadTest {
   @Before
   public void before() {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlock));
-    when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method = new EngineGetPayload(vertx, protocolContext, factory);
   }
 
