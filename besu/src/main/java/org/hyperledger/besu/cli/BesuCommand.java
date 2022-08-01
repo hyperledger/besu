@@ -429,15 +429,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
     private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
-    // TODO make this a hidden experimental option
-    @Option(
-        hidden = true,
-        names = {"--Xp2p-peer-lower-bound"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        description =
-            "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
-    private final Integer peerLowerBound = DEFAULT_PEER_LOWER_BOUND;
-
     @Option(
         names = {"--remote-connections-limit-enabled"},
         description =
@@ -1611,7 +1602,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
         p2PDiscoveryOptionGroup.maxPeers,
-        p2PDiscoveryOptionGroup.peerLowerBound,
         p2PDiscoveryOptionGroup.p2pHost,
         p2PDiscoveryOptionGroup.p2pInterface,
         p2PDiscoveryOptionGroup.p2pPort,
@@ -2784,7 +2774,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final int maxPeers,
-      final int peerLowerBound,
       final String p2pAdvertisedHost,
       final String p2pListenInterface,
       final int p2pListenPort,
@@ -2819,7 +2808,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
-            .peerLowerBound(peerLowerBound)
             .limitRemoteWireConnectionsEnabled(
                 p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
