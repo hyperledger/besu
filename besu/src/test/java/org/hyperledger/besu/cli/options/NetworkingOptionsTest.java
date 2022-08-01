@@ -145,7 +145,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getRlpx().getPeerLowerBound()).isEqualTo(DEFAULT_P2P_PEER_LOWER_BOUND);
+    assertThat(networkingConfig.getRlpx().getPeerLowerBound())
+        .isEqualTo(DEFAULT_P2P_PEER_LOWER_BOUND);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
