@@ -2760,6 +2760,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--rpc-http-enabled",
+        "--engine-rpc-enabled",
         "--rpc-http-host",
         host,
         "--rpc-http-port",

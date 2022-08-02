@@ -235,7 +235,7 @@ public final class EthProtocolManagerTest {
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(stakePeer, stakePeerStatus));
 
       mergePeerFilter.mergeStateChanged(
-          true, Optional.of(blockchain.getChainHead().getTotalDifficulty()));
+          true, Optional.empty(), Optional.of(blockchain.getChainHead().getTotalDifficulty()));
       mergePeerFilter.onNewForkchoiceMessage(
           Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
       mergePeerFilter.onNewForkchoiceMessage(
