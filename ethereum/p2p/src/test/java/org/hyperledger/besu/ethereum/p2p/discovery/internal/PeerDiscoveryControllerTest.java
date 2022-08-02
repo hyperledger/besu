@@ -57,6 +57,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Ticker;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -1372,7 +1375,7 @@ public class PeerDiscoveryControllerTest {
   }
 
   @Test
-  public void shouldNotRespondAndCacheENRRequestForBondingPeer() {
+  public void shouldRespondToRecentENRRequestAfterBonding() {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
@@ -1403,11 +1406,67 @@ public class PeerDiscoveryControllerTest {
         Packet.create(PacketType.PONG, pongRequestPacketData, nodeKeys.get(0));
 
     controller.onMessage(enrPacket, peers.get(0));
-
+    verify(outboundMessageHandler, never()).send(any(), matchPacketOfType(PacketType.ENR_RESPONSE));
     controller.onMessage(pongPacket, peers.get(0));
 
     verify(outboundMessageHandler, times(1))
         .send(any(), matchPacketOfType(PacketType.ENR_RESPONSE));
+  }
+
+  @Test
+  public void shouldNotRespondENRPriorToPong() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
+    final Cache<Bytes, Packet> enrs =
+        CacheBuilder.newBuilder()
+            .maximumSize(50)
+            .expireAfterWrite(1, TimeUnit.NANOSECONDS)
+            .ticker(
+                new Ticker() {
+                  int tickCount = 1;
+
+                  @Override
+                  public long read() {
+                    return tickCount += 10;
+                  }
+                })
+            .build();
+    controller =
+        getControllerBuilder()
+            .peers(peers.get(0))
+            .outboundMessageHandler(outboundMessageHandler)
+            .enrCache(enrs)
+            .build();
+
+    // Mock the creation of the PING packet, so that we can control the hash, which gets validated
+    // when receiving the PONG.
+    final PingPacketData mockPing =
+        PingPacketData.create(
+            Optional.ofNullable(localPeer.getEndpoint()), peers.get(0).getEndpoint(), UInt64.ONE);
+    final Packet mockPacket = Packet.create(PacketType.PING, mockPing, nodeKeys.get(0));
+    mockPingPacketCreation(mockPacket);
+
+    controller.start();
+
+    final PongPacketData pongRequestPacketData =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash(), UInt64.ONE);
+
+    final ENRRequestPacketData enrRequestPacketData = ENRRequestPacketData.create();
+
+    final Packet enrPacket =
+        Packet.create(PacketType.ENR_REQUEST, enrRequestPacketData, nodeKeys.get(0));
+    final Packet pongPacket =
+        Packet.create(PacketType.PONG, pongRequestPacketData, nodeKeys.get(0));
+
+    controller.onMessage(enrPacket, peers.get(0));
+    enrs.cleanUp();
+    controller.onMessage(pongPacket, peers.get(0));
+
+    verify(outboundMessageHandler, never())
+        .send(
+            argThat((DiscoveryPeer peer) -> peer.equals(peers.get(0))),
+            matchPacketOfType(PacketType.ENR_RESPONSE));
   }
 
   private static Packet mockPingPacket(final DiscoveryPeer from, final DiscoveryPeer to) {
@@ -1480,8 +1539,16 @@ public class PeerDiscoveryControllerTest {
     private final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
+    private Cache<Bytes, Packet> enrs =
+        CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.SECONDS).build();
+
     public static ControllerBuilder create() {
       return new ControllerBuilder();
+    }
+
+    ControllerBuilder enrCache(final Cache<Bytes, Packet> cacheToUse) {
+      this.enrs = cacheToUse;
+      return this;
     }
 
     ControllerBuilder peers(final Collection<DiscoveryPeer> discoPeers) {
@@ -1546,6 +1613,7 @@ public class PeerDiscoveryControllerTest {
               .peerPermissions(peerPermissions)
               .peerBondedObservers(peerBondedObservers)
               .metricsSystem(new NoOpMetricsSystem())
+              .cacheForEnrRequests(enrs)
               .build());
     }
   }

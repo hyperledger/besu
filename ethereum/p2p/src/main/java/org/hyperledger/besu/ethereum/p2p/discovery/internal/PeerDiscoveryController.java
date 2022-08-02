@@ -111,8 +111,7 @@ public class PeerDiscoveryController {
   private final PeerTable peerTable;
   private final Cache<Bytes, DiscoveryPeer> bondingPeers =
       CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
-  private final Cache<Bytes, Packet> cachedEnrRequests =
-      CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(30, SECONDS).build();
+  private final Cache<Bytes, Packet> cachedEnrRequests;
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
@@ -161,7 +160,8 @@ public class PeerDiscoveryController {
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
       final Subscribers<PeerBondedObserver> peerBondedObservers,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -196,6 +196,9 @@ public class PeerDiscoveryController {
             "discovery_interaction_retry_count",
             "Total number of interaction retries performed",
             "type");
+    this.cachedEnrRequests =
+        maybeCacheForEnrRequests.orElse(
+            CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
   }
 
   public static Builder builder() {
@@ -344,7 +347,7 @@ public class PeerDiscoveryController {
           processEnrRequest(peer, packet);
         } else if (PeerDiscoveryStatus.BONDING.equals(peer.getStatus())) {
           LOG.trace("ENR_REQUEST cached for bonding peer Id: {}", peer.getId());
-          // it may happen that we receive the ENR_REQUEST just before the PONG.
+          // Due to UDP, it may happen that we receive the ENR_REQUEST just before the PONG.
           // Because peers want to send the ENR_REQUEST directly after the pong.
           // If this happens we don't want to ignore the request but process when bonded.
           // this cache allows to keep the request and to respond after having processed the PONG
@@ -757,6 +760,9 @@ public class PeerDiscoveryController {
     private AsyncExecutor workerExecutor;
     private MetricsSystem metricsSystem;
 
+    private Cache<Bytes, Packet> cachedEnrRequests =
+        CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
+
     private Builder() {}
 
     public PeerDiscoveryController build() {
@@ -779,7 +785,8 @@ public class PeerDiscoveryController {
           peerRequirement,
           peerPermissions,
           peerBondedObservers,
-          metricsSystem);
+          metricsSystem,
+          Optional.of(cachedEnrRequests));
     }
 
     private void validate() {
@@ -869,6 +876,12 @@ public class PeerDiscoveryController {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder cacheForEnrRequests(final Cache<Bytes, Packet> cacheToUse) {
+      checkNotNull(cacheToUse);
+      this.cachedEnrRequests = cacheToUse;
       return this;
     }
   }
