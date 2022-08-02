@@ -149,6 +149,11 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   @Override
   public void clearStorage() {
     storage.clear();
+    clearTransientStorage();
+  }
+
+  @Override
+  public void clearTransientStorage() {
     transientStorage.clear();
   }
 

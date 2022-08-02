@@ -46,27 +46,27 @@ public class TStoreEVMOperationTest {
     // Tests specified in EIP-1153.
     return new Object[][] {
             // Can tstore
-            {null, new ByteCodeBuilder().tstore(1, 1), State.COMPLETED_SUCCESS, 0},
+            {null, new ByteCodeBuilder().tstore(1, 1), State.COMPLETED_SUCCESS, 0, 1},
             // Can tload uninitialized
             {null,
                     new ByteCodeBuilder()
                     .tload(1)
                     .dataOnStackToMemory(0)
-                    .returnValueAtMemory(32, 0), State.COMPLETED_SUCCESS, 0},
+                    .returnValueAtMemory(32, 0), State.COMPLETED_SUCCESS, 0, 1},
             // Can tload after tstore
             {null,
                     new ByteCodeBuilder()
                     .tstore(1, 2)
                     .tload(1)
                     .dataOnStackToMemory(0)
-                    .returnValueAtMemory(32, 0), State.COMPLETED_SUCCESS, 2},
+                    .returnValueAtMemory(32, 0), State.COMPLETED_SUCCESS, 2, 1},
             // Can tload after tstore from different location
             {null,
                     new ByteCodeBuilder()
                     .tstore(1, 2)
                     .tload(2)
                     .dataOnStackToMemory(0)
-                    .returnValueAtMemory(32, 0), State.COMPLETED_SUCCESS, 0},
+                    .returnValueAtMemory(32, 0), State.COMPLETED_SUCCESS, 0, 1},
             // Contracts have separate transient storage
             {new ByteCodeBuilder()
                     .tload(1)
@@ -77,7 +77,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    0},
+                    0,
+                    1},
             // Reentrant calls access the same transient storage
             {new ByteCodeBuilder()
                     // check if caller is self
@@ -96,7 +97,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Successfully returned calls do not revert transient storage writes
             {new ByteCodeBuilder()
                     // check if caller is self
@@ -115,7 +117,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    9},
+                    9,
+                    1},
             // Revert undoes the transient storage write from the failed call
             {new ByteCodeBuilder()
                     // check if caller is self
@@ -135,7 +138,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Revert undoes all the transient storage writes to the same key from the failed call
             {new ByteCodeBuilder()
                     // check if caller is self
@@ -156,7 +160,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Revert undoes transient storage writes from inner calls that successfully returned
             {new ByteCodeBuilder()
                     // Check call depth
@@ -218,7 +223,8 @@ public class TStoreEVMOperationTest {
                             .callWithInput(Operation.CALL, contractAddress, gasLimit, UInt256.valueOf(0))
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Transient storage cannot be manipulated in a static context
             {new ByteCodeBuilder()
                     .tstore(1, 8)
@@ -229,7 +235,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.STATICCALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_FAILED,
-                    0},
+                    0,
+                    1},
             // Transient storage cannot be manipulated in a static context when calling self
             {new ByteCodeBuilder()
                     // Check if caller is self
@@ -252,7 +259,8 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Transient storage cannot be manipulated in a nested static context
             {new ByteCodeBuilder()
                     // Check call depth
@@ -316,7 +324,8 @@ public class TStoreEVMOperationTest {
                             .callWithInput(Operation.CALL, contractAddress, gasLimit, UInt256.valueOf(0))
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Delegatecall manipulates transient storage in the context of the current address
             {new ByteCodeBuilder()
                     .tstore(1, 8),
@@ -327,14 +336,16 @@ public class TStoreEVMOperationTest {
                             .dataOnStackToMemory(0)
                             .returnValueAtMemory(32, 0),
                     State.COMPLETED_SUCCESS,
-                    8},
+                    8,
+                    1},
             // Zeroing out a transient storage slot does not result in gas refund
             {null,
                     new ByteCodeBuilder()
                             .tstore(1, 7)
                             .tstore(1, 0),
                     State.COMPLETED_SUCCESS,
-                    0},
+                    0,
+                    1},
             // Transient storage can be accessed in a static context when calling self
             {new ByteCodeBuilder()
                     // Check if caller is self
@@ -355,7 +366,21 @@ public class TStoreEVMOperationTest {
                             .call(Operation.CALL, contractAddress, gasLimit)
                             .returnInnerCallResults(),
                     State.COMPLETED_SUCCESS,
-                    8}
+                    8,
+                    1},
+            // Transient storage does not persist beyond a single transaction
+            // The tstore should not have any impact on the second call
+            {new ByteCodeBuilder()
+                    .tload(1)
+                    .tstore(1, 1)
+                    .dataOnStackToMemory(0)
+                    .returnValueAtMemory(32, 0),
+                    new ByteCodeBuilder()
+                            .call(Operation.CALL, contractAddress, gasLimit)
+                            .returnInnerCallResults(),
+                    State.COMPLETED_SUCCESS,
+                    0,
+                    2},
     };
   }
 
@@ -372,6 +397,9 @@ public class TStoreEVMOperationTest {
 
   @Parameter(value = 3)
   public int expectedReturnValue;
+
+  @Parameter(value = 4)
+  public int numberOfIterations;
 
 
   @Before
@@ -390,13 +418,14 @@ public class TStoreEVMOperationTest {
             contractAddress,
             contractByteCodeBuilder.toString());
     }
-
-    final MessageFrame frame =
-        codeExecutor.executeCode(
-            byteCodeBuilder.toString(),
-            gasLimit.toLong());
-    assertThat(frame.getState()).isEqualTo(expectedResultState);
-    assertThat(frame.getGasRefund()).isEqualTo(0);
-    assertThat(UInt256.fromBytes(frame.getOutputData()).toInt()).isEqualTo(expectedReturnValue);
+    for (int i = 0; i < numberOfIterations; i++) {
+      final MessageFrame frame =
+              codeExecutor.executeCode(
+                      byteCodeBuilder.toString(),
+                      gasLimit.toLong());
+      assertThat(frame.getState()).isEqualTo(expectedResultState);
+      assertThat(frame.getGasRefund()).isEqualTo(0);
+      assertThat(UInt256.fromBytes(frame.getOutputData()).toInt()).isEqualTo(expectedReturnValue);
+    }
   }
 }

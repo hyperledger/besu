@@ -150,6 +150,12 @@ public class SimpleAccount implements EvmAccount, MutableAccount {
   @Override
   public void clearStorage() {
     storage.clear();
+    clearTransientStorage();
+  }
+
+  @Override
+  public void clearTransientStorage() {
+    transientStorage.clear();
   }
 
   @Override

@@ -99,7 +99,11 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public void commit() {
-    parent.accounts.putAll(accounts);
+    for (Address address: accounts.keySet()) {
+      SimpleAccount account = accounts.get(address);
+      account.clearTransientStorage();
+      parent.accounts.put(address, account);
+    };
   }
 
   @Override

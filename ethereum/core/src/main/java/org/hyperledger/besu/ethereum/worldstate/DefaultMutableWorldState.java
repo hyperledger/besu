@@ -441,6 +441,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
             serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
+        updated.clearTransientStorage();
       }
     }
   }

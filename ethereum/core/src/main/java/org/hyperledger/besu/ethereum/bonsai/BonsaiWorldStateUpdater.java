@@ -280,6 +280,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         tracked.setStorageWasCleared(false); // storage already cleared for this transaction
       }
 
+      tracked.clearTransientStorage();
+
       // TODO maybe add address preimage?
     }
   }

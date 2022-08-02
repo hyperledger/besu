@@ -109,6 +109,9 @@ public interface MutableAccount extends Account {
   /** Clears out an account's storage. */
   void clearStorage();
 
+  /** Clears out an account's transient storage. */
+  void clearTransientStorage();
+
   /**
    * Returns the storage entries that have been set through the updater this instance came from.
    *

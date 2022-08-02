@@ -269,6 +269,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   public void clearStorage() {
     storageWasCleared = true;
     updatedStorage.clear();
+    clearTransientStorage();
+  }
+
+  @Override
+  public void clearTransientStorage() {
     updatedTransientStorage.clear();
   }
 

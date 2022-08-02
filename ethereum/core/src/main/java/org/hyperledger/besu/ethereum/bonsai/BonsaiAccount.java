@@ -245,6 +245,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   @Override
   public void clearStorage() {
     updatedStorage.clear();
+    clearTransientStorage();
+  }
+
+  @Override
+  public void clearTransientStorage() {
     updatedTransientStorage.clear();
   }
 
