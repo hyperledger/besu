@@ -212,6 +212,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     Optional.ofNullable(config.getDiscovery().getDNSDiscoveryURL())
         .ifPresent(
             disco -> {
+              // These lists are updated every 12h
+              // We retrieve the list every 30 minutes (1800000 msec)
               LOG.info("Starting DNS discovery with URL {}", disco);
               config
                   .getDnsDiscoveryServerOverride()
@@ -345,13 +347,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
         final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
         peers.add(peer);
       }
-      // only replace dnsPeers if the lookup was successful:
       if (!peers.isEmpty()) {
         final Optional<PeerDiscoveryController> peerDiscoveryController =
             peerDiscoveryAgent.getPeerDiscoveryController();
         if (peerDiscoveryController.isPresent()) {
           final PeerDiscoveryController controller = peerDiscoveryController.get();
-          LOG.debug("adding {} peers to PeerTable", peers.size());
+          LOG.debug("Adding {} DNS peers to PeerTable", peers.size());
           peers.forEach(controller::addToPeerTable);
           peers.forEach(rlpxAgent::connect);
         }

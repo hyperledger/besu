@@ -205,7 +205,6 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
-    LOG.debug("BOOTSTRAP NODES {}", bootstrapNodes.size());
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
