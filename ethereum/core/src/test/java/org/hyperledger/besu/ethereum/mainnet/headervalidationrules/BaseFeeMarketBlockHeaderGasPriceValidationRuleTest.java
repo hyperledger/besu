@@ -113,4 +113,19 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRuleTest {
                 blockHeader(FORK_BLOCK + 1, 0, Optional.of(feeMarket.getInitialBasefee()), 2)))
         .isTrue();
   }
+
+  @Test
+  public void shouldReturnTrueIfUsingZeroBaseFeeMarketOnNonZeroLondonForkBlock() {
+    // syncing across a london fork where baseFee wasn't zeroed,
+    // but is now using a ZeroBaseFeeMarket
+    final BaseFeeMarket zeroBaseFeeMarket = FeeMarket.zeroBaseFee(FORK_BLOCK);
+    final var validationRule =
+        new BaseFeeMarketBlockHeaderGasPriceValidationRule(zeroBaseFeeMarket);
+    final Wei londonFeeMarketBaseFee = feeMarket.getInitialBasefee();
+    assertThat(
+            validationRule.validate(
+                blockHeader(FORK_BLOCK, 0, Optional.of(londonFeeMarketBaseFee)),
+                blockHeader(FORK_BLOCK - 1, 0, Optional.of(londonFeeMarketBaseFee))))
+        .isTrue();
+  }
 }

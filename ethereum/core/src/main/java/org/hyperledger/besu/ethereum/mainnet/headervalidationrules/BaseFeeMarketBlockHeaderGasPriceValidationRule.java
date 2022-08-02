@@ -40,6 +40,11 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     try {
 
+      if (baseFeeMarket instanceof ZeroBaseFeeMarket) {
+        // skip check to allow sync when a zero baseFee chain has historical baseFees
+        return true;
+      }
+
       // if this is the fork block, baseFee should be the initial baseFee
       if (baseFeeMarket.isForkBlock(header.getNumber())) {
         return baseFeeMarket
@@ -51,11 +56,6 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
           parent.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
       final Wei currentBaseFee =
           header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader());
-
-      if (baseFeeMarket instanceof ZeroBaseFeeMarket) {
-        // skip check to allow sync when a zero baseFee chain has historical baseFees
-        return true;
-      }
 
       final long targetGasUsed = baseFeeMarket.targetGasUsed(parent);
       final Wei expectedBaseFee =
