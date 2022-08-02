@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod.ENGINE_EXCHANGE_TRANSITION_CONFIGURATION;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -27,11 +28,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchangeTransitionConfigurationResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +42,9 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
 
+  // use (2^256 - 2^10) if engine is enabled in the absence of a TTD configuration
+  static final Difficulty FALLBACK_TTD_DEFAULT =
+      Difficulty.MAX_VALUE.subtract(UInt256.valueOf(1024L));
   static final long QOS_TIMEOUT_MILLIS = 120000L;
 
   private final QosTimer qosTimer;
@@ -76,11 +82,14 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
         "received transitionConfiguration: {}",
         () -> Json.encodePrettily(remoteTransitionConfiguration));
 
-    final Optional<BlockHeader> maybeTerminalPoWBlockHeader = mergeContext.getTerminalPoWBlock();
+    final Optional<BlockHeader> maybeTerminalPoWBlockHeader =
+        mergeContextOptional.flatMap(MergeContext::getTerminalPoWBlock);
 
     final EngineExchangeTransitionConfigurationResult localTransitionConfiguration =
         new EngineExchangeTransitionConfigurationResult(
-            mergeContext.getTerminalTotalDifficulty(),
+            mergeContextOptional
+                .map(c -> c.getTerminalTotalDifficulty())
+                .orElse(FALLBACK_TTD_DEFAULT),
             maybeTerminalPoWBlockHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
             maybeTerminalPoWBlockHeader.map(BlockHeader::getNumber).orElse(0L));
 

@@ -34,8 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 public final class MainnetBlockHeaderValidator {
 
   public static final Bytes DAO_EXTRA_DATA = Bytes.fromHexString("0x64616f2d686172642d666f726b");
-  private static final int MIN_GAS_LIMIT = 5000;
-  private static final long MAX_GAS_LIMIT = 0x7fffffffffffffffL;
+  public static final int MIN_GAS_LIMIT = 5000;
+  public static final long MAX_GAS_LIMIT = 0x7fffffffffffffffL;
   public static final int TIMESTAMP_TOLERANCE_S = 15;
   public static final int MINIMUM_SECONDS_SINCE_PARENT = 1;
   public static final Bytes CLASSIC_FORK_BLOCK_HEADER =

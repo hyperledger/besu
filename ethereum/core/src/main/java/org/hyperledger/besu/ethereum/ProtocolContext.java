@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+import java.util.Optional;
+
 /**
  * Holds the mutable state used to track the current context of the protocol. This is primarily the
  * blockchain and world state archive, but can also hold arbitrary context required by a particular
@@ -58,5 +60,11 @@ public class ProtocolContext {
 
   public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
     return consensusContext.as(klass);
+  }
+
+  public <C extends ConsensusContext> Optional<C> safeConsensusContext(final Class<C> klass) {
+    return Optional.ofNullable(consensusContext)
+        .filter(c -> klass.isAssignableFrom(c.getClass()))
+        .map(klass::cast);
   }
 }

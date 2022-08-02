@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
@@ -36,9 +35,6 @@ public class TimestampMoreRecentThanParent implements DetachedBlockHeaderValidat
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    if (MergeConfigOptions.isMergeEnabled()) {
-      return true;
-    }
     return validateTimestamp(header.getTimestamp(), parent.getTimestamp());
   }
 
