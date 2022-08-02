@@ -265,7 +265,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
-    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.X_SNAP);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(miningArg.getValue().getCoinbase()).isEqualTo(Optional.empty());
     assertThat(miningArg.getValue().getMinTransactionGasPrice()).isEqualTo(Wei.of(1000));
@@ -877,7 +877,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.X_SNAP);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4401,7 +4401,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--sync-mode=FAST", "--privacy-enabled");
 
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Fast sync cannot be enabled with privacy.");
+        .contains("FAST sync cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 

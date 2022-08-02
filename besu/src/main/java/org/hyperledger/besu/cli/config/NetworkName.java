@@ -14,19 +14,21 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+
 import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
 public enum NetworkName {
-  MAINNET("/mainnet.json", BigInteger.valueOf(1)),
-  RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
-  ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
-  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
-  GOERLI("/goerli.json", BigInteger.valueOf(5)),
-  KILN("/kiln.json", BigInteger.valueOf(1337802), false),
-  DEV("/dev.json", BigInteger.valueOf(2018), false),
+  MAINNET("/mainnet.json", BigInteger.valueOf(1), SyncMode.X_SNAP),
+  RINKEBY("/rinkeby.json", BigInteger.valueOf(4), SyncMode.X_SNAP),
+  ROPSTEN("/ropsten.json", BigInteger.valueOf(3), SyncMode.X_SNAP),
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111), SyncMode.X_SNAP),
+  GOERLI("/goerli.json", BigInteger.valueOf(5), SyncMode.X_SNAP),
+  KILN("/kiln.json", BigInteger.valueOf(1337802), SyncMode.X_SNAP),
+  DEV("/dev.json", BigInteger.valueOf(2018), SyncMode.FULL),
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
@@ -35,17 +37,18 @@ public enum NetworkName {
 
   private final String genesisFile;
   private final BigInteger networkId;
-  private final boolean canFastSync;
+  private final SyncMode defaultSyncMode;
   private final String deprecationDate;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
-    this(genesisFile, networkId, true);
+    this(genesisFile, networkId, SyncMode.FAST);
   }
 
-  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canFastSync) {
+  NetworkName(
+      final String genesisFile, final BigInteger networkId, final SyncMode defaultSyncMode) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
-    this.canFastSync = canFastSync;
+    this.defaultSyncMode = defaultSyncMode;
 
     // https://blog.ethereum.org/2022/06/21/testnet-deprecation/
     switch (networkId.intValue()) {
@@ -71,8 +74,8 @@ public enum NetworkName {
     return networkId;
   }
 
-  public boolean canFastSync() {
-    return canFastSync;
+  public SyncMode defaultSyncMode() {
+    return defaultSyncMode;
   }
 
   public String humanReadableNetworkName() {

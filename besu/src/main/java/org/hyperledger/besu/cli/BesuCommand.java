@@ -1919,12 +1919,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     syncMode =
         Optional.ofNullable(syncMode)
-            .orElse(
-                genesisFile == null
-                        && !privacyOptionGroup.isPrivacyEnabled
-                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                    ? SyncMode.FAST
-                    : SyncMode.FULL);
+            .or(
+                () ->
+                    Optional.ofNullable(network)
+                        .map(NetworkName::defaultSyncMode)
+                        .filter(z -> genesisFile == null && !privacyOptionGroup.isPrivacyEnabled))
+            .orElse(SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -2592,8 +2592,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyEnabled)) {
       final String errorSuffix = "cannot be enabled with privacy.";
-      if (syncMode == SyncMode.FAST) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
+      if (syncMode != SyncMode.FULL) {
+        throw new ParameterException(
+            commandLine, String.format("%s sync %s", syncMode.name(), errorSuffix));
       }
       if (isPruningEnabled()) {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
