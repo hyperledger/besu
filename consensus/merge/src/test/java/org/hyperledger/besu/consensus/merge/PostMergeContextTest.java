@@ -173,7 +173,9 @@ public class PostMergeContextTest {
 
     @Override
     public void mergeStateChanged(
-        final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+        final boolean isPoS,
+        final Optional<Boolean> oldState,
+        final Optional<Difficulty> difficultyStoppedAt) {
       stateChanges.add(isPoS);
     }
 

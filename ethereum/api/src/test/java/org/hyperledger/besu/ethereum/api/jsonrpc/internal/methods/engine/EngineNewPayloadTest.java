@@ -79,7 +79,7 @@ public class EngineNewPayloadTest {
 
   @Before
   public void before() {
-    when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator);
   }

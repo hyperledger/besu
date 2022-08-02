@@ -15,6 +15,9 @@
 package org.hyperledger.besu.cli.config;
 
 import java.math.BigInteger;
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
 
 public enum NetworkName {
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
@@ -33,17 +36,31 @@ public enum NetworkName {
   private final String genesisFile;
   private final BigInteger networkId;
   private final boolean canFastSync;
+  private final String deprecationDate;
 
   NetworkName(final String genesisFile, final BigInteger networkId) {
-    this.genesisFile = genesisFile;
-    this.networkId = networkId;
-    this.canFastSync = true;
+    this(genesisFile, networkId, true);
   }
 
   NetworkName(final String genesisFile, final BigInteger networkId, final boolean canFastSync) {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canFastSync = canFastSync;
+
+    // https://blog.ethereum.org/2022/06/21/testnet-deprecation/
+    switch (networkId.intValue()) {
+      case 3:
+        deprecationDate = "in Q4 2022";
+        break;
+      case 4:
+        deprecationDate = "in Q2/Q3 2023";
+        break;
+      case 1337802:
+        deprecationDate = "after the Mainnet Merge";
+        break;
+      default:
+        deprecationDate = null;
+    }
   }
 
   public String getGenesisFile() {
@@ -56,5 +73,17 @@ public enum NetworkName {
 
   public boolean canFastSync() {
     return canFastSync;
+  }
+
+  public String humanReadableNetworkName() {
+    return StringUtils.capitalize(name().toLowerCase());
+  }
+
+  public boolean isDeprecated() {
+    return deprecationDate != null;
+  }
+
+  public Optional<String> getDeprecationDate() {
+    return Optional.ofNullable(deprecationDate);
   }
 }

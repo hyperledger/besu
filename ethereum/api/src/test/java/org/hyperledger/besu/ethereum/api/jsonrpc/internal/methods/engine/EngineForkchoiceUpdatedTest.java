@@ -79,7 +79,7 @@ public class EngineForkchoiceUpdatedTest {
 
   @Before
   public void before() {
-    when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method = new EngineForkchoiceUpdated(vertx, protocolContext, mergeCoordinator);
   }

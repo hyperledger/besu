@@ -53,7 +53,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   }
 
   private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
-    LOG.info("Returning finalized block hash as pivot: {}", finalizedHash);
+    LOG.trace("Returning finalized block hash as pivot: {}", finalizedHash);
     return new FastSyncState(finalizedHash);
   }
 

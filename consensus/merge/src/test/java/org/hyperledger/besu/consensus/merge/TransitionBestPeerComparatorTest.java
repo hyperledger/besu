@@ -60,7 +60,7 @@ public class TransitionBestPeerComparatorTest {
     assertThat(comparator.compare(a, b)).isEqualTo(-1);
 
     // update TTD with actual value
-    comparator.mergeStateChanged(true, Optional.of(Difficulty.of(5002)));
+    comparator.mergeStateChanged(true, Optional.empty(), Optional.of(Difficulty.of(5002)));
     assertThat(comparator.compare(a, b)).isEqualTo(1);
   }
 }

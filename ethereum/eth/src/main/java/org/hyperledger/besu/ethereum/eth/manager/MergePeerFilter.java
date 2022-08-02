@@ -88,7 +88,9 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
 
   @Override
   public void mergeStateChanged(
-      final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt) {
+      final boolean isPoS,
+      final Optional<Boolean> oldState,
+      final Optional<Difficulty> difficultyStoppedAt) {
     if (isPoS && difficultyStoppedAt.isPresent()) {
       LOG.debug("terminal difficulty set to {}", difficultyStoppedAt.get().getValue());
       long lockStamp = this.powTerminalDifficultyLock.writeLock();

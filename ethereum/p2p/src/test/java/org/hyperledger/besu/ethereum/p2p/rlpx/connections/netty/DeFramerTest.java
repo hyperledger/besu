@@ -167,26 +167,26 @@ public class DeFramerTest {
 
   @Test
   public void decode_handlesHello() throws ExecutionException, InterruptedException {
-    ChannelFuture future = NettyMocks.channelFuture(false);
+    final ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
 
     final Peer peer = createRemotePeer();
     final PeerInfo remotePeerInfo = createPeerInfo(peer);
 
-    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    final HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    final ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, data, out);
 
     assertThat(connectFuture).isDone();
     assertThat(connectFuture).isNotCompletedExceptionally();
-    PeerConnection peerConnection = connectFuture.get();
+    final PeerConnection peerConnection = connectFuture.get();
     assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
 
-    EnodeURL expectedEnode =
+    final EnodeURL expectedEnode =
         EnodeURLImpl.builder()
             .configureFromEnode(peer.getEnodeURL())
             // Discovery information is not available from peer info
@@ -199,8 +199,8 @@ public class DeFramerTest {
     verify(pipeline, times(1)).addLast(any());
 
     // Next message should be pushed out
-    PingMessage nextMessage = PingMessage.get();
-    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
+    final PingMessage nextMessage = PingMessage.get();
+    final ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
     when(framer.deframe(eq(nextData)))
         .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
         .thenReturn(null);
@@ -212,7 +212,7 @@ public class DeFramerTest {
   @Test
   public void decode_handlesHelloFromPeerWithAdvertisedPortOf0()
       throws ExecutionException, InterruptedException {
-    ChannelFuture future = NettyMocks.channelFuture(false);
+    final ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
 
     final Peer peer = createRemotePeer();
@@ -220,17 +220,17 @@ public class DeFramerTest {
         new PeerInfo(p2pVersion, clientId, capabilities, 0, peer.getId());
     final DeFramer deFramer = createDeFramer(null);
 
-    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    final HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    final ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, data, out);
 
     assertThat(connectFuture).isDone();
     assertThat(connectFuture).isNotCompletedExceptionally();
-    PeerConnection peerConnection = connectFuture.get();
+    final PeerConnection peerConnection = connectFuture.get();
     assertThat(peerConnection.getPeerInfo()).isEqualTo(remotePeerInfo);
     assertThat(out).isEmpty();
 
@@ -249,8 +249,8 @@ public class DeFramerTest {
     verify(pipeline, times(1)).addLast(any());
 
     // Next message should be pushed out
-    PingMessage nextMessage = PingMessage.get();
-    ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
+    final PingMessage nextMessage = PingMessage.get();
+    final ByteBuf nextData = Unpooled.wrappedBuffer(nextMessage.getData().toArray());
     when(framer.deframe(eq(nextData)))
         .thenReturn(new RawMessage(nextMessage.getCode(), nextMessage.getData()))
         .thenReturn(null);
@@ -261,7 +261,7 @@ public class DeFramerTest {
 
   @Test
   public void decode_handlesUnexpectedPeerId() {
-    ChannelFuture future = NettyMocks.channelFuture(false);
+    final ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
 
     final Peer peer = createRemotePeer();
@@ -275,12 +275,12 @@ public class DeFramerTest {
             mismatchedId);
     final DeFramer deFramer = createDeFramer(peer);
 
-    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    final HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    final ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, data, out);
 
     assertThat(connectFuture).isDone();
@@ -297,22 +297,22 @@ public class DeFramerTest {
 
   @Test
   public void decode_handlesNoSharedCaps() {
-    ChannelFuture future = NettyMocks.channelFuture(false);
+    final ChannelFuture future = NettyMocks.channelFuture(false);
     when(channel.closeFuture()).thenReturn(future);
 
-    PeerInfo remotePeerInfo =
+    final PeerInfo remotePeerInfo =
         new PeerInfo(
             p2pVersion,
             "bla",
             Arrays.asList(Capability.create("eth", 254)),
             30303,
             Peer.randomId());
-    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    final HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    final ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, data, out);
 
     assertThat(connectFuture).isDone();
@@ -326,12 +326,13 @@ public class DeFramerTest {
 
   @Test
   public void decode_shouldHandleImmediateDisconnectMessage() {
-    DisconnectMessage disconnectMessage = DisconnectMessage.create(DisconnectReason.TOO_MANY_PEERS);
-    ByteBuf disconnectData = Unpooled.wrappedBuffer(disconnectMessage.getData().toArray());
+    final DisconnectMessage disconnectMessage =
+        DisconnectMessage.create(DisconnectReason.TOO_MANY_PEERS);
+    final ByteBuf disconnectData = Unpooled.wrappedBuffer(disconnectMessage.getData().toArray());
     when(framer.deframe(eq(disconnectData)))
         .thenReturn(new RawMessage(disconnectMessage.getCode(), disconnectMessage.getData()))
         .thenReturn(null);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, disconnectData, out);
 
     assertThat(connectFuture).isDone();
@@ -347,15 +348,15 @@ public class DeFramerTest {
     final Peer peer = createRemotePeer();
     final PeerInfo remotePeerInfo =
         new PeerInfo(p2pVersion, clientId, capabilities, 0, peer.getId());
-    HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
-    ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
+    final HelloMessage helloMessage = HelloMessage.create(remotePeerInfo);
+    final ByteBuf data = Unpooled.wrappedBuffer(helloMessage.getData().toArray());
     when(framer.deframe(any()))
         .thenReturn(new RawMessage(helloMessage.getCode(), helloMessage.getData()))
         .thenReturn(null);
     when(ctx.channel().remoteAddress()).thenReturn(null);
-    ChannelFuture future = NettyMocks.channelFuture(true);
+    final ChannelFuture future = NettyMocks.channelFuture(true);
     when(ctx.writeAndFlush(any())).thenReturn(future);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, data, out);
 
     assertThat(connectFuture).isDone();
@@ -367,22 +368,23 @@ public class DeFramerTest {
 
   @Test
   public void decode_shouldHandleInvalidMessage() {
-    MessageData messageData = PingMessage.get();
-    ByteBuf data = Unpooled.wrappedBuffer(messageData.getData().toArray());
+    final MessageData messageData = PingMessage.get();
+    final ByteBuf data = Unpooled.wrappedBuffer(messageData.getData().toArray());
     when(framer.deframe(eq(data)))
         .thenReturn(new RawMessage(messageData.getCode(), messageData.getData()))
         .thenReturn(null);
-    ChannelFuture future = NettyMocks.channelFuture(true);
+    final ChannelFuture future = NettyMocks.channelFuture(true);
     when(ctx.writeAndFlush(any())).thenReturn(future);
-    List<Object> out = new ArrayList<>();
+    final List<Object> out = new ArrayList<>();
     deFramer.decode(ctx, data, out);
 
-    ArgumentCaptor<Object> outboundMessageArgumentCaptor =
+    final ArgumentCaptor<Object> outboundMessageArgumentCaptor =
         ArgumentCaptor.forClass(OutboundMessage.class);
     verify(ctx, times(1)).writeAndFlush(outboundMessageArgumentCaptor.capture());
-    OutboundMessage outboundMessage = (OutboundMessage) outboundMessageArgumentCaptor.getValue();
+    final OutboundMessage outboundMessage =
+        (OutboundMessage) outboundMessageArgumentCaptor.getValue();
     assertThat(outboundMessage.getCapability()).isNull();
-    MessageData outboundMessageData = outboundMessage.getData();
+    final MessageData outboundMessageData = outboundMessage.getData();
     assertThat(outboundMessageData.getCode()).isEqualTo(WireMessageCodes.DISCONNECT);
     assertThat(DisconnectMessage.readFrom(outboundMessageData).getReason())
         .isEqualTo(DisconnectReason.BREACH_OF_PROTOCOL);

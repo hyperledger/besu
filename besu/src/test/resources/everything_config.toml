@@ -44,6 +44,7 @@ random-peer-priority-enabled=false
 host-whitelist=["all"]
 host-allowlist=["all"]
 engine-host-allowlist=["all"]
+engine-rpc-enabled=true
 engine-jwt-disabled=true
 engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
