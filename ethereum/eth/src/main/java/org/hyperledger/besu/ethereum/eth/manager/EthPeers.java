@@ -26,6 +26,7 @@ import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,9 +166,14 @@ public class EthPeers {
     dispatchMessage(peer, ethMessage, protocolName);
   }
 
-  private void reattemptPendingPeerRequests() {
+  @VisibleForTesting
+  void reattemptPendingPeerRequests() {
     synchronized (this) {
-      pendingRequests.removeIf(PendingPeerRequest::attemptExecution);
+      try {
+        pendingRequests.removeIf(PendingPeerRequest::attemptExecution);
+      } catch (ConcurrentModificationException ex) {
+        LOG.warn("Failed execution of pending requests: {}", ex.getClass().getName());
+      }
     }
   }
 
