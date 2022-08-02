@@ -367,7 +367,7 @@ public class RlpxAgent {
       if (!peerPrivileges.canExceedConnectionLimits(peer)
           && getConnectionCount() >= upperBoundConnections) {
         LOG.debug(
-            "Too many peers. Disconnect incoming connection: {} currentCount {} > max {}",
+            "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
             peerConnection,
             getConnectionCount(),
             upperBoundConnections);
