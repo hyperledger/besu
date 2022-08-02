@@ -57,13 +57,14 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
     return getPostMergeObject();
   }
 
+  @Override
   public ProtocolSpec getByBlockHeader(
       final ProtocolContext protocolContext, final BlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (mergeContext.getFinalized().isEmpty()) {
 
       // if head is not post-merge, return pre-merge schedule:
-      if (!mergeContext.isPostMerge()) {
+      if (blockHeader.getDifficulty().greaterThan(Difficulty.ZERO) && !mergeContext.isPostMerge()) {
         debugLambda(
             LOG,
             "for {} returning a pre-merge schedule because we are not post-merge",

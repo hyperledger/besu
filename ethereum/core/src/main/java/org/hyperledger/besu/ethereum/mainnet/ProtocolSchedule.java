@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -24,6 +26,11 @@ import java.util.stream.Stream;
 public interface ProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
+
+  default ProtocolSpec getByBlockHeader(
+      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+    return getByBlockNumber(blockHeader.getNumber());
+  }
 
   Stream<Long> streamMilestoneBlocks();
 

@@ -252,7 +252,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       return false;
     }
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(protocolContext, child);
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(
         child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());
