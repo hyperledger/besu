@@ -93,6 +93,7 @@ public class RecursivePeerRefreshState {
   }
 
   private void addInitialPeers(final List<DiscoveryPeer> initialPeers) {
+    LOG.debug("INITIAL PEERS: {}", initialPeers);
     this.initialPeers = initialPeers;
     for (final DiscoveryPeer peer : initialPeers) {
       final MetadataPeer iterationParticipant =
