@@ -15,15 +15,14 @@
 
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
-import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IncrementalTimestampRule extends MergeConsensusRule {
+public class IncrementalTimestampRule implements AttachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(IncrementalTimestampRule.class);
 
@@ -31,21 +30,16 @@ public class IncrementalTimestampRule extends MergeConsensusRule {
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
 
-    if (super.shouldUsePostMergeRules(header, protocolContext)
-        && !isTerminalProofOfWorkBlock(header, protocolContext)) {
-      final long blockTimestamp = header.getTimestamp();
-      final long parentTimestamp = parent.getTimestamp();
-      final boolean isMoreRecent = blockTimestamp > parentTimestamp;
+    final long blockTimestamp = header.getTimestamp();
+    final long parentTimestamp = parent.getTimestamp();
+    final boolean isMoreRecent = blockTimestamp > parentTimestamp;
 
-      LOG.trace(
-          "Is block timestamp more recent that its parent? {}, [block timestamp {}, parent timestamp {}]",
-          isMoreRecent,
-          blockTimestamp,
-          parentTimestamp);
+    LOG.trace(
+        "Is block timestamp more recent that its parent? {}, [block timestamp {}, parent timestamp {}]",
+        isMoreRecent,
+        blockTimestamp,
+        parentTimestamp);
 
-      return isMoreRecent;
-    } else {
-      return true;
-    }
+    return isMoreRecent;
   }
 }
