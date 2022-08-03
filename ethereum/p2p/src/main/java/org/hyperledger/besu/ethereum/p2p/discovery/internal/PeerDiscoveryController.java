@@ -111,6 +111,7 @@ public class PeerDiscoveryController {
   private final PeerTable peerTable;
   private final Cache<Bytes, DiscoveryPeer> bondingPeers =
       CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
+  private final Cache<Bytes, Packet> cachedEnrRequests;
 
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
@@ -159,7 +160,8 @@ public class PeerDiscoveryController {
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
       final Subscribers<PeerBondedObserver> peerBondedObservers,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -194,6 +196,9 @@ public class PeerDiscoveryController {
             "discovery_interaction_retry_count",
             "Total number of interaction retries performed",
             "type");
+    this.cachedEnrRequests =
+        maybeCacheForEnrRequests.orElse(
+            CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
   }
 
   public static Builder builder() {
@@ -315,8 +320,10 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  addToPeerTable(peer);
+                  addBondedPeerToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
+                  Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
+                      .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                 });
         break;
       case NEIGHBORS:
@@ -337,12 +344,15 @@ public class PeerDiscoveryController {
         break;
       case ENR_REQUEST:
         if (PeerDiscoveryStatus.BONDED.equals(peer.getStatus())) {
-          LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
-          packet
-              .getPacketData(ENRRequestPacketData.class)
-              .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
+          processEnrRequest(peer, packet);
+        } else if (PeerDiscoveryStatus.BONDING.equals(peer.getStatus())) {
+          LOG.trace("ENR_REQUEST cached for bonding peer Id: {}", peer.getId());
+          // Due to UDP, it may happen that we receive the ENR_REQUEST just before the PONG.
+          // Because peers want to send the ENR_REQUEST directly after the pong.
+          // If this happens we don't want to ignore the request but process when bonded.
+          // this cache allows to keep the request and to respond after having processed the PONG
+          cachedEnrRequests.put(peer.getId(), packet);
         }
-
         break;
       case ENR_RESPONSE:
         // Currently there is no use case where an ENRResponse will be sent otherwise
@@ -354,6 +364,13 @@ public class PeerDiscoveryController {
 
         break;
     }
+  }
+
+  private void processEnrRequest(final DiscoveryPeer peer, final Packet packet) {
+    LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
+    packet
+        .getPacketData(ENRRequestPacketData.class)
+        .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
   }
 
   private List<DiscoveryPeer> getPeersFromNeighborsPacket(final Packet packet) {
@@ -369,13 +386,8 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private boolean addToPeerTable(final DiscoveryPeer peer) {
+  private boolean addBondedPeerToPeerTable(final DiscoveryPeer peer) {
     if (!peerPermissions.isAllowedInPeerTable(peer)) {
-      return false;
-    }
-
-    final PeerTable.AddResult result = peerTable.tryAdd(peer);
-    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
       return false;
     }
 
@@ -389,6 +401,16 @@ public class PeerDiscoveryController {
     if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
       peer.setStatus(PeerDiscoveryStatus.BONDED);
       notifyPeerBonded(peer, now);
+    }
+
+    return addToPeerTable(peer);
+  }
+
+  public boolean addToPeerTable(final DiscoveryPeer peer) {
+    final PeerTable.AddResult result = peerTable.tryAdd(peer);
+
+    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
+      return false;
     }
 
     if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
@@ -584,7 +606,7 @@ public class PeerDiscoveryController {
     // 16 + 4 + 4 + 64 = 88 bytes
     // 88 * 13 = 1144 bytes
     // To fit under 1280 bytes, we must return just 13 peers maximum.
-    final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 13);
+    final List<DiscoveryPeer> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
     final PacketData data = NeighborsPacketData.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
@@ -636,7 +658,7 @@ public class PeerDiscoveryController {
         peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer));
     DiscoveryPeer resolvedPeer = maybeKnownPeer.orElse(peer);
     if (maybeKnownPeer.isEmpty()) {
-      DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
+      final DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
       if (bondingPeer != null) {
         resolvedPeer = bondingPeer;
       }
@@ -743,6 +765,9 @@ public class PeerDiscoveryController {
     private AsyncExecutor workerExecutor;
     private MetricsSystem metricsSystem;
 
+    private Cache<Bytes, Packet> cachedEnrRequests =
+        CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
+
     private Builder() {}
 
     public PeerDiscoveryController build() {
@@ -765,7 +790,8 @@ public class PeerDiscoveryController {
           peerRequirement,
           peerPermissions,
           peerBondedObservers,
-          metricsSystem);
+          metricsSystem,
+          Optional.of(cachedEnrRequests));
     }
 
     private void validate() {
@@ -855,6 +881,12 @@ public class PeerDiscoveryController {
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
+      return this;
+    }
+
+    public Builder cacheForEnrRequests(final Cache<Bytes, Packet> cacheToUse) {
+      checkNotNull(cacheToUse);
+      this.cachedEnrRequests = cacheToUse;
       return this;
     }
   }

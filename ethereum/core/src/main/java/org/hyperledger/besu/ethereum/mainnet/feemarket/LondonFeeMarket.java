@@ -32,14 +32,13 @@ public class LondonFeeMarket implements BaseFeeMarket {
       GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
-  // required for integer arithmetic to work when baseFee > 0
   private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(7L);
   private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
 
   private final Wei baseFeeInitialValue;
   private final long londonForkBlockNumber;
   private final TransactionPriceCalculator txPriceCalculator;
-  private Wei baseFeeFloor = DEFAULT_BASEFEE_FLOOR;
+  private final Wei baseFeeFloor;
 
   public LondonFeeMarket(final long londonForkBlockNumber) {
     this(londonForkBlockNumber, Optional.empty());
@@ -50,14 +49,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
     this.txPriceCalculator = TransactionPriceCalculator.eip1559();
     this.londonForkBlockNumber = londonForkBlockNumber;
     this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
-    if (baseFeeInitialValue.isZero()) {
-      baseFeeFloor = Wei.ZERO;
-    } else if (baseFeeInitialValue.lessThan(DEFAULT_BASEFEE_FLOOR)) {
-      throw new IllegalStateException(
-          String.format(
-              "baseFee must be either 0 or > %s wei to avoid integer arithmetic issues",
-              DEFAULT_BASEFEE_FLOOR));
-    }
+    this.baseFeeFloor = baseFeeInitialValue.isZero() ? Wei.ZERO : DEFAULT_BASEFEE_FLOOR;
   }
 
   @Override

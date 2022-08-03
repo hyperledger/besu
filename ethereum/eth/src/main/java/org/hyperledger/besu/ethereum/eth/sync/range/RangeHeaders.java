@@ -14,29 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.range;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RangeHeaders {
-  private static final Logger LOG = LoggerFactory.getLogger(RangeHeaders.class);
 
   private final SyncTargetRange range;
   private final List<BlockHeader> headersToImport;
 
   public RangeHeaders(
       final SyncTargetRange checkpointRange, final List<BlockHeader> headersToImport) {
-    if (headersToImport.isEmpty()) {
-      LOG.debug(String.format("Headers list empty. Range: %s", checkpointRange.toString()));
-    }
-    checkArgument(!headersToImport.isEmpty(), "Must have at least one header to import");
     this.range = checkpointRange;
     this.headersToImport = headersToImport;
   }
@@ -49,8 +41,8 @@ public class RangeHeaders {
     return headersToImport;
   }
 
-  public BlockHeader getFirstHeaderToImport() {
-    return headersToImport.get(0);
+  public Optional<BlockHeader> getFirstHeaderToImport() {
+    return headersToImport.size() > 0 ? Optional.of(headersToImport.get(0)) : Optional.empty();
   }
 
   @Override

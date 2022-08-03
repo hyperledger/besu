@@ -43,30 +43,35 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
   @Override
   public Stream<BlockHeader> apply(final RangeHeaders rangeHeaders) {
     final BlockHeader rangeStart = rangeHeaders.getRange().getStart();
-    final BlockHeader firstHeaderToImport = rangeHeaders.getFirstHeaderToImport();
 
-    if (isValid(rangeStart, firstHeaderToImport)) {
-      return rangeHeaders.getHeadersToImport().stream();
-    } else {
-      final String rangeEndDescription;
-      if (rangeHeaders.getRange().hasEnd()) {
-        final BlockHeader rangeEnd = rangeHeaders.getRange().getEnd();
-        rangeEndDescription =
-            String.format("#%d (%s)", rangeEnd.getNumber(), rangeEnd.getBlockHash());
-      } else {
-        rangeEndDescription = "chain head";
-      }
-      final String errorMessage =
-          String.format(
-              "Invalid range headers.  Headers downloaded between #%d (%s) and %s do not connect at #%d (%s)",
-              rangeStart.getNumber(),
-              rangeStart.getHash(),
-              rangeEndDescription,
-              firstHeaderToImport.getNumber(),
-              firstHeaderToImport.getHash());
-      throw new InvalidBlockException(
-          errorMessage, firstHeaderToImport.getNumber(), firstHeaderToImport.getHash());
-    }
+    return rangeHeaders
+        .getFirstHeaderToImport()
+        .map(
+            firstHeader -> {
+              if (isValid(rangeStart, firstHeader)) {
+                return rangeHeaders.getHeadersToImport().stream();
+              } else {
+                final String rangeEndDescription;
+                if (rangeHeaders.getRange().hasEnd()) {
+                  final BlockHeader rangeEnd = rangeHeaders.getRange().getEnd();
+                  rangeEndDescription =
+                      String.format("#%d (%s)", rangeEnd.getNumber(), rangeEnd.getBlockHash());
+                } else {
+                  rangeEndDescription = "chain head";
+                }
+                final String errorMessage =
+                    String.format(
+                        "Invalid range headers.  Headers downloaded between #%d (%s) and %s do not connect at #%d (%s)",
+                        rangeStart.getNumber(),
+                        rangeStart.getHash(),
+                        rangeEndDescription,
+                        firstHeader.getNumber(),
+                        firstHeader.getHash());
+                throw new InvalidBlockException(
+                    errorMessage, firstHeader.getNumber(), firstHeader.getHash());
+              }
+            })
+        .orElse(Stream.empty());
   }
 
   private boolean isValid(final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
