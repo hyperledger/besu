@@ -6,6 +6,7 @@
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
+ [![gitpoap badge](https://public-api.gitpoap.io/v1/repo/hyperledger/besu/badge)](https://www.gitpoap.io/gh/hyperledger/besu)
 
 [Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
 
