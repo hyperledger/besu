@@ -222,8 +222,7 @@ public class RlpxAgent {
     // Check peer is valid
     final EnodeURL enode = peer.getEnodeURL();
     if (!enode.isListening()) {
-      final String errorMsg =
-          "Attempt to connect to peer with no listening port: " + enode.toString();
+      final String errorMsg = "Attempt to connect to peer with no listening port: " + enode;
       LOG.warn(errorMsg);
       return CompletableFuture.failedFuture((new IllegalArgumentException(errorMsg)));
     }
