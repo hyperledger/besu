@@ -72,6 +72,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
+  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -100,6 +101,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
     this.ethContext = ethContext;
+
+    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
@@ -276,6 +279,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       LOG.debug("Unsolicited message received, disconnecting from EthPeer: {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
+    }
+
+    if (messageData.getSize() > this.maxMessageSize) {
+      LOG.debug(
+          "Peer {} sent a message with size {}, larger than the max message size {}",
+          ethPeer,
+          messageData.getSize(),
+          this.maxMessageSize);
     }
 
     // This will handle responses
