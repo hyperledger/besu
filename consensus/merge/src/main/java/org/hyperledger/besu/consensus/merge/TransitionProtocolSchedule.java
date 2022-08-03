@@ -14,10 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
@@ -29,12 +26,8 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule>
     implements ProtocolSchedule {
-  private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
@@ -60,45 +53,16 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
   @Override
   public ProtocolSpec getByBlockHeader(
       final ProtocolContext protocolContext, final BlockHeader blockHeader) {
-    // if we do not have a finalized block we might return pre or post merge protocol schedule:
-    if (mergeContext.getFinalized().isEmpty()) {
 
-      // if head is not post-merge, return pre-merge schedule:
-      if (blockHeader.getDifficulty().greaterThan(Difficulty.ZERO) && !mergeContext.isPostMerge()) {
-        debugLambda(
-            LOG,
-            "for {} returning a pre-merge schedule because we are not post-merge",
-            blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
-      }
-
-      // otherwise check to see if this block represents a re-org TTD block:
-      MutableBlockchain blockchain = protocolContext.getBlockchain();
-      Difficulty parentDifficulty =
-          blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
-      Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
-      Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
-      debugLambda(
-          LOG,
-          " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
-          blockHeader::toLogString,
-          () -> terminalDifficulty,
-          () -> parentDifficulty,
-          () -> thisDifficulty);
-
-      // if this block is pre-merge or a TTD block
-      if (thisDifficulty.lessThan(terminalDifficulty)
-          || TransitionUtils.isTerminalProofOfWorkBlock(blockHeader, protocolContext)) {
-        debugLambda(
-            LOG,
-            "returning a pre-merge schedule because block {} is pre-merge or TTD",
-            blockHeader::toLogString);
-        return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
-      }
+    // if chain head is >= TTD and our block has zero difficulty:
+    Difficulty headDifficulty = protocolContext.getBlockchain().getChainHead().getTotalDifficulty();
+    if (blockHeader.getDifficulty().equals(Difficulty.ZERO)
+        && headDifficulty.greaterOrEqualThan(mergeContext.getTerminalTotalDifficulty())) {
+      return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
     }
-    // else return post-merge schedule
-    debugLambda(LOG, " for {} returning a post-merge schedule", blockHeader::toLogString);
-    return getPostMergeSchedule().getByBlockNumber(blockHeader.getNumber());
+
+    // otherwise return pre-merge schedule
+    return getPreMergeSchedule().getByBlockNumber(blockHeader.getNumber());
   }
 
   @Override
