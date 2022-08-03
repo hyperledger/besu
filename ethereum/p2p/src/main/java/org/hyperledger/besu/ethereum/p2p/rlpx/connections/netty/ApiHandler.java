@@ -63,7 +63,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
     if (demultiplexed.getCapability() == null) {
       switch (message.getCode()) {
         case WireMessageCodes.PING:
-          LOG.debug("Received Wire PING");
+          LOG.trace("Received Wire PING");
           try {
             connection.send(null, PongMessage.get());
           } catch (final PeerConnection.PeerNotConnected peerNotConnected) {
@@ -71,7 +71,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           }
           break;
         case WireMessageCodes.PONG:
-          LOG.debug("Received Wire PONG");
+          LOG.trace("Received Wire PONG");
           waitingForPong.set(false);
           break;
         case WireMessageCodes.DISCONNECT:
