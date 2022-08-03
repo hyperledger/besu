@@ -179,6 +179,10 @@ public abstract class PeerDiscoveryAgent {
     }
   }
 
+  public Optional<PeerDiscoveryController> getPeerDiscoveryController() {
+    return controller;
+  }
+
   public void updateNodeRecord() {
     if (!config.isActive()) {
       return;

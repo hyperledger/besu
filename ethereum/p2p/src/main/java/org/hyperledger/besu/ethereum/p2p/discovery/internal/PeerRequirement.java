@@ -25,7 +25,7 @@ public interface PeerRequirement {
 
   static PeerRequirement combine(final Collection<PeerRequirement> peerRequirements) {
     return () -> {
-      for (PeerRequirement peerRequirement : peerRequirements) {
+      for (final PeerRequirement peerRequirement : peerRequirements) {
         if (!peerRequirement.hasSufficientPeers()) {
           return false;
         }
