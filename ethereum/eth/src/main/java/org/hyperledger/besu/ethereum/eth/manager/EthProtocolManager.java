@@ -268,8 +268,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (this.mergePeerFilter.isPresent()) {
       if (this.mergePeerFilter.get().disconnectIfGossipingBlocks(message, ethPeer)) {
-        LOG.info(
-            "Post-merge disconnect: peer still gossiping blocks {}", ethPeer);
+        LOG.info("Post-merge disconnect: peer still gossiping blocks {}", ethPeer);
         handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
         return;
       }
@@ -390,9 +389,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (mergePeerFilter.isPresent()
-              && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
-          LOG.info("Post-merge disconnect: peer still PoW {}", peer);
-          handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
+          && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
+        LOG.info("Post-merge disconnect: peer still PoW {}", peer);
+        handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(
