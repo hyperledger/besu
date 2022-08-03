@@ -1543,36 +1543,21 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void
-      p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetDefaultLowerBoundLessThanMaxPeers() {
+  public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetLowerBoundEqualToUpperBound() {
 
     final int maxPeers = 23;
     parseCommand("--p2p-peer-upper-bound", String.valueOf(maxPeers));
 
-    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
-
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
 
-  @Test
-  public void p2pPeerUpperBound_lessThan_p2pPeerLowerBound_givesError() {
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
-    final int maxPeers = 23;
-    parseCommand(
-        "--p2p-peer-upper-bound",
-        String.valueOf(maxPeers),
-        "--Xp2p-peer-lower-bound",
-        String.valueOf(maxPeers * 2));
+    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("lower bound must not exceed max-peers.");
+    verify(mockRunnerBuilder).build();
   }
 
   @Test
@@ -1587,9 +1572,12 @@ public class BesuCommandTest extends CommandTestAbstract {
         String.valueOf(minPeers));
 
     verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
-
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(minPeers);
+
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

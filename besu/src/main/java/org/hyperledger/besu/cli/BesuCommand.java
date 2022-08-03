@@ -429,6 +429,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
     private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
+    private int minPeers;
+
     @Option(
         names = {"--remote-connections-limit-enabled"},
         description =
@@ -1602,6 +1604,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
         p2PDiscoveryOptionGroup.maxPeers,
+        p2PDiscoveryOptionGroup.minPeers,
         p2PDiscoveryOptionGroup.p2pHost,
         p2PDiscoveryOptionGroup.p2pInterface,
         p2PDiscoveryOptionGroup.p2pPort,
@@ -1724,7 +1727,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
-    validatePeerBoundParams();
+    ensureValidPeerBoundParams();
     validateRpcOptionsParams();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
@@ -1797,11 +1800,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void validatePeerBoundParams() {
-    if (unstableNetworkingOptions.toDomainObject().getRlpx().getPeerLowerBound()
-        > p2PDiscoveryOptionGroup.maxPeers) {
-      throw new ParameterException(
-          this.commandLine, "The `--Xp2p-peer-lower-bound` must not exceed --max-peers ");
+  private void ensureValidPeerBoundParams() {
+    final int min = unstableNetworkingOptions.toDomainObject().getRlpx().getPeerLowerBound();
+    final int max = p2PDiscoveryOptionGroup.maxPeers;
+    if (min > max) {
+      logger.warn("`--Xp2p-peer-lower-bound` " + min + " must not exceed --max-peers " + max);
+      // modify the --X lower-bound value if it's not valid, we don't want unstable defaults
+      // breaking things
+      unstableNetworkingOptions.toDomainObject().getRlpx().setPeerLowerBound(max);
+      p2PDiscoveryOptionGroup.minPeers = max;
+    } else {
+      p2PDiscoveryOptionGroup.minPeers = min;
     }
   }
 
@@ -2783,6 +2792,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
       final int maxPeers,
+      final int minPeers,
       final String p2pAdvertisedHost,
       final String p2pListenInterface,
       final int p2pListenPort,
@@ -2817,6 +2827,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
             .maxPeers(maxPeers)
+            .minPeers(minPeers)
             .limitRemoteWireConnectionsEnabled(
                 p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
             .fractionRemoteConnectionsAllowed(
