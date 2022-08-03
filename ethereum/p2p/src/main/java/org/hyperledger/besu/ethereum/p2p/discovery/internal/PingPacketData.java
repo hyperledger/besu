@@ -98,9 +98,9 @@ public class PingPacketData implements PacketData {
     if (!in.isEndOfCurrentList()) {
       try {
         enrSeq = UInt64.valueOf(in.readBigIntegerScalar());
-        LOG.debug("read PING enr as long scalar");
+        LOG.trace("read PING enr as long scalar");
       } catch (MalformedRLPInputException malformed) {
-        LOG.debug("failed to read PING enr as scalar, trying to read bytes instead");
+        LOG.trace("failed to read PING enr as scalar, trying to read bytes instead");
         enrSeq = UInt64.fromBytes(in.readBytes());
       }
     }

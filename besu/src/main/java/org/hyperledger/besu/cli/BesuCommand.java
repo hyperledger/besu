@@ -1796,6 +1796,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
+  private void validatePeerBoundParams() {
+    if (unstableNetworkingOptions.toDomainObject().getRlpx().getPeerLowerBound() > p2PDiscoveryOptionGroup.maxPeers) {
+      throw new ParameterException(
+              this.commandLine,
+              "The `--Xp2p-peer-lower-bound` must not exceed --max-peers ");
+    }
+  }
+
   public void validateRpcOptionsParams() {
     Predicate<String> configuredApis =
         apiName ->

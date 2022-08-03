@@ -94,7 +94,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
 
   @Override
   public NetworkingConfiguration toDomainObject() {
-    NetworkingConfiguration config = NetworkingConfiguration.create();
+    final NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
@@ -105,7 +105,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
 
   @Override
   public List<String> getCLIOptions() {
-    List<String> retval =
+    final List<String> retval =
         Arrays.asList(
             CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
             OptionParser.format(checkMaintainedConnectionsFrequencySec),

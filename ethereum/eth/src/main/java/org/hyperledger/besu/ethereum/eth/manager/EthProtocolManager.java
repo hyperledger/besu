@@ -72,6 +72,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
+  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -100,6 +101,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
     this.ethContext = ethContext;
+
+    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
@@ -266,7 +269,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     if (this.mergePeerFilter.isPresent()) {
       if (this.mergePeerFilter.get().disconnectIfGossipingBlocks(message, ethPeer)) {
         LOG.info(
-            "here we are disconnecting at request from mergePeerFilter disconnectIfGossipingBlocks");
+            "Post-merge disconnect: peer still gossiping blocks {}", ethPeer);
         handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
         return;
       }
@@ -278,6 +281,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       LOG.debug("Unsolicited message received, disconnecting from EthPeer: {}", ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
+    }
+
+    if (messageData.getSize() > this.maxMessageSize) {
+      LOG.debug(
+          "Peer {} sent a message with size {}, larger than the max message size {}",
+          ethPeer,
+          messageData.getSize(),
+          this.maxMessageSize);
     }
 
     // This will handle responses
@@ -378,12 +389,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (mergePeerFilter.isPresent()) {
-        final boolean disconnected = mergePeerFilter.get().disconnectIfPoW(status, peer);
-        if (disconnected) {
-          LOG.info("here we are disconnecting at request from mergePeerFilter disconnectIfPoW");
+      } else if (mergePeerFilter.isPresent()
+              && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
+          LOG.info("Post-merge disconnect: peer still PoW {}", peer);
           handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
-        }
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(

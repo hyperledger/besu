@@ -315,7 +315,7 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  addToPeerTable(peer);
+                  addBondedPeerToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
                 });
         break;
@@ -369,13 +369,8 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private boolean addToPeerTable(final DiscoveryPeer peer) {
+  private boolean addBondedPeerToPeerTable(final DiscoveryPeer peer) {
     if (!peerPermissions.isAllowedInPeerTable(peer)) {
-      return false;
-    }
-
-    final PeerTable.AddResult result = peerTable.tryAdd(peer);
-    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
       return false;
     }
 
@@ -389,6 +384,16 @@ public class PeerDiscoveryController {
     if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
       peer.setStatus(PeerDiscoveryStatus.BONDED);
       notifyPeerBonded(peer, now);
+    }
+
+    return addToPeerTable(peer);
+  }
+
+  public boolean addToPeerTable(final DiscoveryPeer peer) {
+    final PeerTable.AddResult result = peerTable.tryAdd(peer);
+
+    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
+      return false;
     }
 
     if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
@@ -584,7 +589,7 @@ public class PeerDiscoveryController {
     // 16 + 4 + 4 + 64 = 88 bytes
     // 88 * 13 = 1144 bytes
     // To fit under 1280 bytes, we must return just 13 peers maximum.
-    final List<DiscoveryPeer> peers = peerTable.nearestPeers(packetData.getTarget(), 13);
+    final List<DiscoveryPeer> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
     final PacketData data = NeighborsPacketData.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
@@ -636,7 +641,7 @@ public class PeerDiscoveryController {
         peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer));
     DiscoveryPeer resolvedPeer = maybeKnownPeer.orElse(peer);
     if (maybeKnownPeer.isEmpty()) {
-      DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
+      final DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
       if (bondingPeer != null) {
         resolvedPeer = bondingPeer;
       }
