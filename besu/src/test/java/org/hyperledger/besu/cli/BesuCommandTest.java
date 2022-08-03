@@ -1543,6 +1543,50 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetDefaultLowerBoundLessThanMaxPeers() {
+
+    final int maxPeers = 23;
+    parseCommand("--p2p-peer-upper-bound", String.valueOf(maxPeers));
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void p2pPeerUpperBound_lessThan_p2pPeerLowerBound_givesError() {
+
+    final int maxPeers = 23;
+    parseCommand("--p2p-peer-upper-bound", String.valueOf(maxPeers), "--Xp2p-peer-lower-bound", String.valueOf(maxPeers * 2));
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+            .contains("lower bound must not exceed max-peers.");
+  }
+
+  @Test
+  public void maxpeersSet_p2pPeerLowerBoundSet() {
+
+    final int maxPeers = 123;
+    final int minPeers = 66;
+    parseCommand("--max-peers", String.valueOf(maxPeers), "--Xp2p-peer-lower-bound", String.valueOf(minPeers));
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void remoteConnectionsPercentageOptionMustBeUsed() {
 
     final int remoteConnectionsPercentage = 12;

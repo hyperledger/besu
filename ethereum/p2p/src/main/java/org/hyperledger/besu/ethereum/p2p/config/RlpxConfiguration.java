@@ -29,7 +29,7 @@ public class RlpxConfiguration {
   private String clientId = "TestClient/1.0.0";
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
-  private int peerUpperBound = 100; // TODO copied Teku's defaults
+  private int peerUpperBound = 100;
   private int peerLowerBound = 64;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteWireConnectionsAllowed = DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
