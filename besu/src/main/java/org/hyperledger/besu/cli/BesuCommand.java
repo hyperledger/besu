@@ -1807,6 +1807,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn("`--Xp2p-peer-lower-bound` " + min + " must not exceed --max-peers " + max);
       // modify the --X lower-bound value if it's not valid, we don't want unstable defaults
       // breaking things
+      logger.warn("setting --Xp2p-peer-lower-bound=" + max);
       unstableNetworkingOptions.toDomainObject().getRlpx().setPeerLowerBound(max);
       p2PDiscoveryOptionGroup.minPeers = max;
     } else {
