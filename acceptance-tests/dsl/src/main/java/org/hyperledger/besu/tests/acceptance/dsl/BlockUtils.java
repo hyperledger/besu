@@ -36,7 +36,6 @@ public class BlockUtils {
         block.getMixHash() == null
             ? Hash.fromHexStringLenient("0x0")
             : fromHexString(block.getMixHash());
-
     return new BlockHeader(
         fromHexString(block.getParentHash()),
         fromHexString(block.getSha3Uncles()),
