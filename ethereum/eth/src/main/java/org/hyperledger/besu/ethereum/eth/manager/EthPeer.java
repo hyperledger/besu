@@ -215,7 +215,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordUsefulResponse() {
-    reputation.recordUsefulResposne();
+    reputation.recordUsefulResponse();
   }
 
   public void disconnect(final DisconnectReason reason) {
