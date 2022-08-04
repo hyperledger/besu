@@ -20,7 +20,7 @@ configurations.all {
   resolutionStrategy.eachDependency { DependencyResolveDetails details ->
     if (details.requested.group == 'org.web3j' && details.requested.version == '4.9.2') {
       details.useVersion '4.9.4'
-      details.because 'web3-gradle-plugin has not been updated yet'
+      details.because 'Plugin version is 4.9.2 (latest), but we want it to use web3j libs version 4.9.4'
     }
   }
 }
@@ -81,9 +81,6 @@ dependencies {
   testImplementation 'org.web3j:abi'
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
-  constraints {
-    implementation('jnr-posix:3.1.15') { because '3.0.47 from web3j has issues' }
-  }
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
