@@ -72,6 +72,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
+  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -100,6 +101,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
     this.ethContext = ethContext;
+
+    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
@@ -278,6 +281,14 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
+    if (messageData.getSize() > this.maxMessageSize) {
+      LOG.debug(
+          "Peer {} sent a message with size {}, larger than the max message size {}",
+          ethPeer,
+          messageData.getSize(),
+          this.maxMessageSize);
+    }
+
     // This will handle responses
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 
@@ -376,11 +387,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             networkId,
             status.genesisHash());
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (mergePeerFilter.isPresent()) {
-        final boolean disconnected = mergePeerFilter.get().disconnectIfPoW(status, peer);
-        if (disconnected) {
-          handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
-        }
+      } else if (mergePeerFilter.isPresent()
+          && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
+        handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);
         peer.registerStatusReceived(

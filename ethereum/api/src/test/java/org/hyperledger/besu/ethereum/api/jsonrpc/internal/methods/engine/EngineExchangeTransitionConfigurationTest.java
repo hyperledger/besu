@@ -118,7 +118,7 @@ public class EngineExchangeTransitionConfigurationTest {
 
   @Test
   public void shouldReturnDefaultOnNoTerminalTotalDifficultyConfigured() {
-    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.empty());
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.empty());
 
     var response =
         resp(
