@@ -83,7 +83,7 @@ public class PeerReputationTest {
 
   @Test
   public void shouldIncreaseScore() {
-    reputation.recordUsefulResposne();
+    reputation.recordUsefulResponse();
     assertThat(reputation.compareTo(new PeerReputation())).isGreaterThan(0);
   }
 }
