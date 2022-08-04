@@ -37,12 +37,6 @@ public class BlockUtils {
             ? Hash.fromHexStringLenient("0x0")
             : fromHexString(block.getMixHash());
 
-    // The commented-out part here
-    // (https://github.com/web3j/web3j/blob/619be4a370002f2bd197974534c127dcae2dee18/utils/src/main/java/org/web3j/utils/Numeric.java#L66) has been uncommented in web3j v4.9.4
-    if ("0x0000000000000000".equals(block.getNonceRaw())) {
-      block.setNonce("0x0");
-    }
-
     return new BlockHeader(
         fromHexString(block.getParentHash()),
         fromHexString(block.getSha3Uncles()),
