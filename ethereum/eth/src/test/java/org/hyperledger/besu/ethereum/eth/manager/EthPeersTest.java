@@ -290,7 +290,7 @@ public class EthPeersTest {
                   return true;
                 });
 
-    // Sent Pending Requests - should cause a ConcurrentModificationException
+    // Sent Pending Requests
     ethPeers.reattemptPendingPeerRequests();
 
     // Request should be aborted.
@@ -327,7 +327,7 @@ public class EthPeersTest {
                   return true;
                 });
 
-    // Sent Pending Requests - should cause a ConcurrentModificationException
+    // Sent Pending Requests
     ethPeers.reattemptPendingPeerRequests();
 
     // Request Should Execute

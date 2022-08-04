@@ -26,7 +26,6 @@ import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -169,10 +168,12 @@ public class EthPeers {
   @VisibleForTesting
   void reattemptPendingPeerRequests() {
     synchronized (this) {
-      try {
-        pendingRequests.removeIf(PendingPeerRequest::attemptExecution);
-      } catch (ConcurrentModificationException ex) {
-        LOG.warn("Failed execution of pending requests: {}", ex.getClass().getName());
+      final Iterator<PendingPeerRequest> iterator = pendingRequests.iterator();
+      while (iterator.hasNext()) {
+        final PendingPeerRequest request = iterator.next();
+        if (request.attemptExecution()) {
+          pendingRequests.remove(request);
+        }
       }
     }
   }
