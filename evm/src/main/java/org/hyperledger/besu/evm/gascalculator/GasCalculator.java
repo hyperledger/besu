@@ -473,7 +473,7 @@ public interface GasCalculator {
    */
   // what would be the gas for a PMT with hash of all non-zeros
   long getMaximumTransactionCost(int size);
-  
+
   /**
    * Returns the cost of a loading from Transient Storage
    *
@@ -482,7 +482,7 @@ public interface GasCalculator {
   default long getTransientLoadOperationGasCost() {
     return 0L;
   }
-  
+
   /**
    * Returns the cost of a storing to Transient Storage
    *

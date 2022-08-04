@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -43,7 +42,7 @@ public class TLoadOperation extends AbstractOperation {
       final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+            OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
         frame.pushStackItem(account.getTransientStorageValue(UInt256.fromBytes(key)));
 
@@ -51,9 +50,10 @@ public class TLoadOperation extends AbstractOperation {
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(
-        OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
     } catch (final OverflowException ofe) {
-      return new OperationResult(OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+      return new OperationResult(
+          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
     }
   }
 }

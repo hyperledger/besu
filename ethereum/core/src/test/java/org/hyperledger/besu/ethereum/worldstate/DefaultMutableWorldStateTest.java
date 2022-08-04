@@ -683,6 +683,7 @@ public class DefaultMutableWorldStateTest {
     account.setBalance(Wei.of(100000));
     account.setTransientStorageValue(UInt256.ZERO, UInt256.ZERO);
     updater.commit();
-    assertThat(worldState.get(ADDRESS).getTransientStorageValue(UInt256.ZERO)).isEqualTo(UInt256.ZERO);
+    assertThat(worldState.get(ADDRESS).getTransientStorageValue(UInt256.ZERO))
+        .isEqualTo(UInt256.ZERO);
   }
 }

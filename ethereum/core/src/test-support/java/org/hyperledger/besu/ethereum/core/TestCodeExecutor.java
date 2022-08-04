@@ -48,18 +48,14 @@ public class TestCodeExecutor {
   private final EVM evm;
 
   public TestCodeExecutor(
-          final ProtocolSchedule protocolSchedule,
-          final Consumer<MutableAccount> accountSetup) {
+      final ProtocolSchedule protocolSchedule, final Consumer<MutableAccount> accountSetup) {
     fixture = ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
     final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
-    worldUpdater =
-            createInitialWorldState(accountSetup, fixture.getStateArchive());
+    worldUpdater = createInitialWorldState(accountSetup, fixture.getStateArchive());
     evm = protocolSpec.getEvm();
   }
 
-  public MessageFrame executeCode(
-      final String codeHexString,
-      final long gasLimit) {
+  public MessageFrame executeCode(final String codeHexString, final long gasLimit) {
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
 
     final MessageCallProcessor messageCallProcessor =
@@ -106,12 +102,8 @@ public class TestCodeExecutor {
     return initialFrame;
   }
 
-  public void deployContract(
-          final Address contractAddress,
-          final String codeHexString
-          ) {
-    final MutableAccount contract =
-            worldUpdater.getOrCreate(contractAddress).getMutable();
+  public void deployContract(final Address contractAddress, final String codeHexString) {
+    final MutableAccount contract = worldUpdater.getOrCreate(contractAddress).getMutable();
 
     contract.setNonce(0);
     contract.clearStorage();

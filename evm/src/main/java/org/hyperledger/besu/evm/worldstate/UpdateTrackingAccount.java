@@ -288,14 +288,20 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public String toString() {
     String storage = updatedStorage.isEmpty() ? "[not updated]" : updatedStorage.toString();
-    String transientStorage = updatedTransientStorage.isEmpty() ? "[not updated]" : updatedTransientStorage.toString();
+    String transientStorage =
+        updatedTransientStorage.isEmpty() ? "[not updated]" : updatedTransientStorage.toString();
     if (updatedStorage.isEmpty() && storageWasCleared) {
       storage = "[cleared]";
       transientStorage = "[cleared]";
     }
     return String.format(
         "%s -> {nonce: %s, balance:%s, code:%s, storage:%s, transientStorage:%s }",
-        address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage, transientStorage);
+        address,
+        nonce,
+        balance,
+        updatedCode == null ? "[not updated]" : updatedCode,
+        storage,
+        transientStorage);
   }
 
   @Override

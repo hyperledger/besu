@@ -104,9 +104,9 @@ import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
-import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
+import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 
 import java.math.BigInteger;
@@ -404,23 +404,23 @@ public abstract class MainnetEVMs {
   }
 
   public static EVM eip1153(
-          final GasCalculator gasCalculator,
-          final BigInteger chainId,
-          final EvmConfiguration evmConfiguration) {
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
     return new EVM(eip1153Operations(gasCalculator, chainId), gasCalculator, evmConfiguration);
   }
 
   public static OperationRegistry eip1153Operations(
-          final GasCalculator gasCalculator, final BigInteger chainId) {
+      final GasCalculator gasCalculator, final BigInteger chainId) {
     OperationRegistry operationRegistry = new OperationRegistry();
     registerEIP1153Operations(operationRegistry, gasCalculator, chainId);
     return operationRegistry;
   }
 
   public static void registerEIP1153Operations(
-          final OperationRegistry registry,
-          final GasCalculator gasCalculator,
-          final BigInteger chainID) {
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
     registerParisOperations(registry, gasCalculator, chainID);
     registry.put(new TStoreOperation(gasCalculator));
     registry.put(new TLoadOperation(gasCalculator));

@@ -14,7 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INSUFFICIENT_GAS;
+import static org.mockito.Mockito.mock;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -29,18 +33,12 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INSUFFICIENT_GAS;
-import static org.mockito.Mockito.mock;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.Test;
 
 public class TStoreOperationTest {
 
@@ -74,7 +72,7 @@ public class TStoreOperationTest {
     long remainingGas = 99L; // TSTORE cost should be 100
     final TStoreOperation operation = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
-            createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
+        createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
     frame.pushStackItem(UInt256.ZERO);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
@@ -101,7 +99,7 @@ public class TStoreOperationTest {
     long initialGas = 10_000L;
     long remainingGas = 10_000L;
     final MessageFrame frame =
-            createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
+        createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
 
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
@@ -117,7 +115,7 @@ public class TStoreOperationTest {
     long remainingGas = 10_000L;
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
-            createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
+        createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
     frame.pushStackItem(UInt256.ONE);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
@@ -145,7 +143,7 @@ public class TStoreOperationTest {
     long remainingGas = 10_000L;
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
-            createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
+        createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
     frame.pushStackItem(UInt256.ONE);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 
@@ -174,7 +172,7 @@ public class TStoreOperationTest {
     long remainingGas = 10_000L;
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
-            createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
+        createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
     frame.pushStackItem(UInt256.ONE);
     frame.pushStackItem(UInt256.fromHexString("0x01"));
 

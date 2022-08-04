@@ -79,7 +79,8 @@ public class LondonSStoreOperationGasCostTest {
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
             new StubGenesisConfigOptions().londonBlock(0), EvmConfiguration.DEFAULT);
-    codeExecutor = new TestCodeExecutor(
+    codeExecutor =
+        new TestCodeExecutor(
             protocolSchedule,
             account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
   }
@@ -87,10 +88,7 @@ public class LondonSStoreOperationGasCostTest {
   @Test
   public void shouldCalculateGasAccordingToEip3529() {
     final long gasLimit = 1_000_000;
-    final MessageFrame frame =
-        codeExecutor.executeCode(
-            code,
-            gasLimit);
+    final MessageFrame frame = codeExecutor.executeCode(code, gasLimit);
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
     assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - (expectedGasUsed + 2100));
     assertThat(frame.getGasRefund()).isEqualTo(expectedGasRefund);

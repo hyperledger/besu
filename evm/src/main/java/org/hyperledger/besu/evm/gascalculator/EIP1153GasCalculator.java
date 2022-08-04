@@ -26,7 +26,7 @@ public class EIP1153GasCalculator extends LondonGasCalculator {
   public long getTransientLoadOperationGasCost() {
     return TLOAD_GAS;
   }
-  
+
   @Override
   public long getTransientStoreOperationGasCost() {
     return TSTORE_GAS;

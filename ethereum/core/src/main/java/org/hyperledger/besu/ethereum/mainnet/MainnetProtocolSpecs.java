@@ -43,6 +43,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.EIP1153GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -50,7 +51,6 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.EIP1153GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
@@ -635,13 +635,13 @@ public abstract class MainnetProtocolSpecs {
 
   // TODO EIP-1153 change for the actual fork name when known
   static ProtocolSpecBuilder eip1153Definition(
-          final Optional<BigInteger> chainId,
-          final OptionalInt configContractSizeLimit,
-          final OptionalInt configStackSizeLimit,
-          final boolean enableRevertReason,
-          final GenesisConfigOptions genesisConfigOptions,
-          final boolean quorumCompatibilityMode,
-          final EvmConfiguration evmConfiguration) {
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
 
     return parisDefinition(
             chainId,
@@ -651,11 +651,12 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
-            .evmBuilder(
-                    (gasCalculator, jdCacheConfig) ->
-                            MainnetEVMs.eip1153(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-            .gasCalculator(EIP1153GasCalculator::new)
-            .name("EIP-1153");
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.eip1153(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .gasCalculator(EIP1153GasCalculator::new)
+        .name("EIP-1153");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

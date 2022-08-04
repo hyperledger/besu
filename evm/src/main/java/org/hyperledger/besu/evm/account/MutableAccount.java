@@ -120,7 +120,8 @@ public interface MutableAccount extends Account {
   Map<UInt256, UInt256> getUpdatedStorage();
 
   /**
-   * Returns the transient storage entries that have been set through the updater this instance came from.
+   * Returns the transient storage entries that have been set through the updater this instance came
+   * from.
    *
    * @return a map of transient storage that has been modified.
    */

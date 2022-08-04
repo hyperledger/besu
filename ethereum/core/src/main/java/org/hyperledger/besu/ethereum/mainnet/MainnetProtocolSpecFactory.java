@@ -187,13 +187,13 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder eip1153Definition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.eip1153Definition(
-            chainId,
-            contractSizeLimit,
-            evmStackSize,
-            isRevertReasonEnabled,
-            genesisConfigOptions,
-            quorumCompatibilityMode,
-            evmConfiguration);
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        quorumCompatibilityMode,
+        evmConfiguration);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
