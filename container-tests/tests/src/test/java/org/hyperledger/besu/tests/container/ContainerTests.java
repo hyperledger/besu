@@ -91,10 +91,10 @@ public class ContainerTests extends ContainerTestBase {
     final QuorumTransactionManager qtm =
         new QuorumTransactionManager(
             goQuorumWeb3j,
+            goQuorumEnclave,
             credentials,
             goQuorumTesseraPubKey,
-            Arrays.asList(goQuorumTesseraPubKey, besuTesseraPubKey),
-            goQuorumEnclave);
+            Arrays.asList(goQuorumTesseraPubKey, besuTesseraPubKey));
 
     // Get the deployed contract address
     final String contractAddress =
@@ -156,10 +156,10 @@ public class ContainerTests extends ContainerTestBase {
     final QuorumTransactionManager qtm =
         new QuorumTransactionManager(
             goQuorumWeb3j,
+            goQuorumEnclave,
             credentials,
             goQuorumTesseraPubKey,
-            List.of(goQuorumTesseraPubKey),
-            goQuorumEnclave);
+            List.of(goQuorumTesseraPubKey));
 
     // Get the deployed contract address
     final String contractAddress =
@@ -207,7 +207,7 @@ public class ContainerTests extends ContainerTestBase {
     // create a GoQuorum transaction manager
     final QuorumTransactionManager qtm =
         new QuorumTransactionManager(
-            besuWeb3j, credentials, besuTesseraPubKey, List.of(besuTesseraPubKey), besuEnclave);
+            besuWeb3j, besuEnclave, credentials, besuTesseraPubKey, List.of(besuTesseraPubKey));
 
     // Get the deployed contract address
     final String contractAddress =
