@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.math.BigInteger;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
@@ -50,7 +52,7 @@ public class BlockUtils {
         Bytes.fromHexString(block.getExtraData()),
         null,
         mixHash,
-        block.getNonce().longValue(),
+        new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
         blockHeaderFunctions);
   }
 }
