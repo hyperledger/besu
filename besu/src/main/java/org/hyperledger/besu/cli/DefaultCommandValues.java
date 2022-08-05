@@ -57,7 +57,7 @@ public interface DefaultCommandValues {
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
   JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
   int FAST_SYNC_MIN_PEER_COUNT = 5;
-  int DEFAULT_MAX_PEERS = 30;
+  int DEFAULT_MAX_PEERS = 25;
   int DEFAULT_P2P_PEER_LOWER_BOUND = 25;
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
   int DEFAULT_WS_MAX_CONNECTIONS = 80;
