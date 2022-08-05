@@ -34,7 +34,6 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,9 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   // use (2^256 - 2^10) if engine is enabled in the absence of a TTD configuration
   static final Difficulty FALLBACK_TTD_DEFAULT =
-      Difficulty.MAX_VALUE.subtract(UInt256.valueOf(1024L));
+      Difficulty.fromHexString(
+          "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc00");
+
   static final long QOS_TIMEOUT_MILLIS = 120000L;
 
   private final QosTimer qosTimer;
