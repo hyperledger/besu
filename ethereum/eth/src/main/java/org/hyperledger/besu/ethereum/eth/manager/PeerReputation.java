@@ -85,7 +85,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
     }
   }
 
-  public void recordUsefulResposne() {
+  public void recordUsefulResponse() {
     score += SMALL_ADJUSTMENT;
   }
 
