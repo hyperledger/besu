@@ -82,8 +82,10 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     try {
       return cf.get();
     } catch (InterruptedException e) {
+      LOG.error("Failed to get execution engine response", e);
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.TIMEOUT_ERROR);
     } catch (ExecutionException e) {
+      LOG.error("Failed to get execution engine response", e);
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
     }
   }
