@@ -73,43 +73,47 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         Optional.ofNullable(forkChoice.getFinalizedBlockHash())
             .filter(finalized -> !finalized.isZero());
 
-    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
-        forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
+    mergeContext
+        .get()
+        .fireNewUnverifiedForkchoiceMessageEvent(
+            forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
 
-    if (mergeContext.isSyncing()) {
-      return syncingResponse(requestId);
+    if (mergeContext.get().isSyncing()) {
+      return syncingResponse(requestId, forkChoice);
+    }
+
+    if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())) {
+      logForkchoiceUpdatedCall(INVALID, forkChoice);
+      return new JsonRpcSuccessResponse(
+          requestId,
+          new EngineUpdateForkchoiceResult(
+              INVALID,
+              mergeCoordinator
+                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
+                  .orElse(Hash.ZERO),
+              null,
+              Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
     Optional<BlockHeader> newHead =
-        protocolContext.getBlockchain().getBlockHeader(forkChoice.getHeadBlockHash());
+        mergeCoordinator.getOrSyncHeaderByHash(forkChoice.getHeadBlockHash());
 
     if (newHead.isEmpty()) {
-      Optional.ofNullable(forkChoice.getHeadBlockHash())
-          .filter(hash -> !hash.equals(Hash.ZERO))
-          .ifPresent(
-              blockhash ->
-                  mergeCoordinator.getOrSyncHeaderByHash(
-                      blockhash, forkChoice.getFinalizedBlockHash()));
-
-      return syncingResponse(requestId);
+      return syncingResponse(requestId, forkChoice);
     }
-
-    LOG.info(
-        "Consensus fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
-        forkChoice.getHeadBlockHash(),
-        forkChoice.getFinalizedBlockHash(),
-        forkChoice.getSafeBlockHash());
 
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
+      logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
+      logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcSuccessResponse(
           requestId,
           new EngineUpdateForkchoiceResult(
@@ -132,7 +136,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                         payloadAttributes.getSuggestedFeeRecipient())));
 
     if (!result.isValid()) {
-      return handleForkchoiceError(requestId, result);
+      logForkchoiceUpdatedCall(INVALID, forkChoice);
+      return handleNonValidForkchoiceUpdate(requestId, result);
     }
 
     // begin preparing a block if we have a non-empty payload attributes param
@@ -153,6 +158,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                 pid::toHexString,
                 () -> maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
 
+    logForkchoiceUpdatedCall(VALID, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId,
         new EngineUpdateForkchoiceResult(
@@ -162,7 +168,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             Optional.empty()));
   }
 
-  private JsonRpcResponse handleForkchoiceError(
+  private JsonRpcResponse handleNonValidForkchoiceUpdate(
       final Object requestId, final ForkchoiceResult result) {
     JsonRpcResponse response;
 
@@ -174,13 +180,17 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
             new JsonRpcSuccessResponse(
                 requestId,
                 new EngineUpdateForkchoiceResult(
-                    INVALID,
-                    latestValid.isPresent() ? latestValid.get() : null,
-                    null,
-                    result.getErrorMessage()));
+                    INVALID, latestValid.orElse(null), null, result.getErrorMessage()));
         break;
       case INVALID_PAYLOAD_ATTRIBUTES:
         response = new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+        break;
+      case IGNORE_UPDATE_TO_OLD_HEAD:
+        response =
+            new JsonRpcSuccessResponse(
+                requestId,
+                new EngineUpdateForkchoiceResult(
+                    VALID, latestValid.orElse(null), null, result.getErrorMessage()));
         break;
       default:
         throw new AssertionError(
@@ -247,8 +257,28 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     return mergeCoordinator.isDescendantOf(maybeSafeBlock.get(), newBlock);
   }
 
-  private JsonRpcResponse syncingResponse(final Object requestId) {
+  private JsonRpcResponse syncingResponse(
+      final Object requestId, final EngineForkchoiceUpdatedParameter forkChoice) {
+
+    logForkchoiceUpdatedCall(SYNCING, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
+  }
+
+  // fcU calls are synchronous, no need to make volatile
+  private long lastFcuInfoLog = System.currentTimeMillis();
+
+  private void logForkchoiceUpdatedCall(
+      final EngineStatus status, final EngineForkchoiceUpdatedParameter forkChoice) {
+    // cheaply limit the noise of fcU during consensus client syncing to once a minute:
+    if (lastFcuInfoLog + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
+      lastFcuInfoLog = System.currentTimeMillis();
+      LOG.info(
+          "{} for fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
+          status.name(),
+          forkChoice.getHeadBlockHash(),
+          forkChoice.getFinalizedBlockHash(),
+          forkChoice.getSafeBlockHash());
+    }
   }
 }

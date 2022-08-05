@@ -66,7 +66,6 @@ import org.slf4j.LoggerFactory;
 
 public class BlockPropagationManager {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
-
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -145,8 +144,9 @@ public class BlockPropagationManager {
 
   private void clearListeners() {
     onBlockAddedSId.ifPresent(id -> protocolContext.getBlockchain().removeObserver(id));
-    newBlockSId.ifPresent(id -> ethContext.getEthMessages().unsubsribe(id));
-    newBlockHashesSId.ifPresent(id -> ethContext.getEthMessages().unsubsribe(id));
+    newBlockSId.ifPresent(id -> ethContext.getEthMessages().unsubscribe(id, EthPV62.NEW_BLOCK));
+    newBlockHashesSId.ifPresent(
+        id -> ethContext.getEthMessages().unsubscribe(id, EthPV62.NEW_BLOCK_HASHES));
     onBlockAddedSId = Optional.empty();
     newBlockSId = Optional.empty();
     newBlockHashesSId = Optional.empty();
@@ -364,6 +364,25 @@ public class BlockPropagationManager {
     return getBlockFromPeers(Optional.of(peer), blockHash.number(), Optional.of(blockHash.hash()));
   }
 
+  private void requestParentBlock(final BlockHeader blockHeader) {
+    if (requestedBlocks.add(blockHeader.getParentHash())) {
+      retrieveParentBlock(blockHeader);
+    } else {
+      LOG.trace("Parent block with hash {} was already requested", blockHeader.getParentHash());
+    }
+  }
+
+  private CompletableFuture<Block> retrieveParentBlock(final BlockHeader blockHeader) {
+    final long targetParentBlockNumber = blockHeader.getNumber() - 1L;
+    final Hash targetParentBlockHash = blockHeader.getParentHash();
+    LOG.info(
+        "Retrieving parent {} of block #{} from peers",
+        targetParentBlockHash,
+        blockHeader.getNumber());
+    return getBlockFromPeers(
+        Optional.empty(), targetParentBlockNumber, Optional.of(targetParentBlockHash));
+  }
+
   private CompletableFuture<Block> getBlockFromPeers(
       final Optional<EthPeer> preferredPeer,
       final long blockNumber,
@@ -421,6 +440,10 @@ public class BlockPropagationManager {
         if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
           LOG.info("Saving announced block {} for future import", block.toLogString());
         }
+
+        // Request parent of the lowest announced block
+        pendingBlocksManager.lowestAnnouncedBlock().ifPresent(this::requestParentBlock);
+
         return CompletableFuture.completedFuture(block);
       }
     }
@@ -511,7 +534,8 @@ public class BlockPropagationManager {
   }
 
   private void reactToTTDReachedEvent(final boolean ttdReached) {
-    if (ttdReached) {
+    if (started.get() && ttdReached) {
+      LOG.info("Block propagation was running, then ttd reached, stopping");
       stop();
     } else if (!started.get()) {
       start();

@@ -32,11 +32,13 @@ public class LondonFeeMarket implements BaseFeeMarket {
       GenesisConfigFile.BASEFEE_AT_GENESIS_DEFAULT_VALUE;
   static final long DEFAULT_BASEFEE_MAX_CHANGE_DENOMINATOR = 8L;
   static final long DEFAULT_SLACK_COEFFICIENT = 2L;
+  private static final Wei DEFAULT_BASEFEE_FLOOR = Wei.of(7L);
   private static final Logger LOG = LoggerFactory.getLogger(LondonFeeMarket.class);
 
   private final Wei baseFeeInitialValue;
   private final long londonForkBlockNumber;
   private final TransactionPriceCalculator txPriceCalculator;
+  private final Wei baseFeeFloor;
 
   public LondonFeeMarket(final long londonForkBlockNumber) {
     this(londonForkBlockNumber, Optional.empty());
@@ -47,6 +49,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
     this.txPriceCalculator = TransactionPriceCalculator.eip1559();
     this.londonForkBlockNumber = londonForkBlockNumber;
     this.baseFeeInitialValue = baseFeePerGasOverride.orElse(DEFAULT_BASEFEE_INITIAL_VALUE);
+    this.baseFeeFloor = baseFeeInitialValue.isZero() ? Wei.ZERO : DEFAULT_BASEFEE_FLOOR;
   }
 
   @Override
@@ -81,12 +84,11 @@ public class LondonFeeMarket implements BaseFeeMarket {
 
   @Override
   public boolean satisfiesFloorTxCost(final Transaction txn) {
-    // London fee market arithmetic never allows for a base fee below 7 wei
-    // ensure effective baseFee is at least 7 wei
+    // ensure effective baseFee is at least above floor
     return txn.getGasPrice()
         .map(Optional::of)
         .orElse(txn.getMaxFeePerGas())
-        .filter(fee -> fee.greaterOrEqualThan(Wei.of(7L)))
+        .filter(fee -> fee.greaterOrEqualThan(baseFeeFloor))
         .isPresent();
   }
 

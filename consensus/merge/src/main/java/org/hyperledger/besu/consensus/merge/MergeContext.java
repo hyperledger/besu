@@ -36,10 +36,9 @@ public interface MergeContext extends ConsensusContext {
 
   boolean isSyncing();
 
-  void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback);
+  void observeNewIsPostMergeState(final MergeStateHandler mergeStateHandler);
 
-  long addNewForkchoiceMessageListener(
-      final NewForkchoiceMessageListener newForkchoiceMessageListener);
+  long addNewForkchoiceMessageListener(final ForkchoiceMessageListener forkchoiceMessageListener);
 
   void removeNewForkchoiceMessageListener(final long subscriberId);
 
@@ -67,15 +66,4 @@ public interface MergeContext extends ConsensusContext {
       final Hash headBlockHash,
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash);
-
-  interface NewMergeStateCallback {
-    void onNewIsPostMergeState(final boolean newIsPostMergeState);
-  }
-
-  interface NewForkchoiceMessageListener {
-    void onNewForkchoiceMessage(
-        final Hash headBlockHash,
-        final Optional<Hash> maybeFinalizedBlockHash,
-        final Hash safeBlockHash);
-  }
 }

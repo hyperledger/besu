@@ -56,39 +56,46 @@ public class BackwardsSyncAlgorithm {
   public CompletableFuture<Void> pickNextStep() {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
-      return executeSyncStep(firstHash.get());
+      return executeSyncStep(firstHash.get())
+          .whenComplete(
+              (result, throwable) -> {
+                if (throwable == null) {
+                  context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                }
+              });
     }
     if (!context.isReady()) {
       return waitForReady();
     }
     runFinalizedSuccessionRule(
         context.getProtocolContext().getBlockchain(), context.findMaybeFinalized());
-    final Optional<BlockHeader> firstAncestorHeader =
+    final Optional<BlockHeader> possibleFirstAncestorHeader =
         context.getBackwardChain().getFirstAncestorHeader();
-    if (firstAncestorHeader.isEmpty()) {
+    if (possibleFirstAncestorHeader.isEmpty()) {
       this.finished = true;
       LOG.info("The Backward sync is done...");
       context.getBackwardChain().clear();
       return CompletableFuture.completedFuture(null);
     }
     final MutableBlockchain blockchain = context.getProtocolContext().getBlockchain();
-    if (blockchain.contains(firstAncestorHeader.get().getHash())) {
+    final BlockHeader firstAncestorHeader = possibleFirstAncestorHeader.get();
+    if (blockchain.contains(firstAncestorHeader.getHash())) {
       return executeProcessKnownAncestors();
     }
-    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.get().getNumber()) {
+    if (blockchain.getChainHead().getHeight() > firstAncestorHeader.getNumber()) {
       debugLambda(
           LOG,
           "Backward reached below previous head {} : {}",
           () -> blockchain.getChainHead().toLogString(),
-          () -> firstAncestorHeader.get().toLogString());
+          firstAncestorHeader::toLogString);
     }
 
-    if (finalBlockConfirmation.finalHeaderReached(firstAncestorHeader.get())) {
-      LOG.info("Backward sync reached final header, starting Forward sync");
+    if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)) {
+      LOG.info("Backward sync reached ancestor header, starting Forward sync");
       return executeForwardAsync();
     }
 
-    return executeBackwardAsync(firstAncestorHeader.get());
+    return executeBackwardAsync(firstAncestorHeader);
   }
 
   @VisibleForTesting
@@ -179,9 +186,6 @@ public class BackwardsSyncAlgorithm {
                   () ->
                       new BackwardSyncException(
                           "The header " + oldFinalized.toHexString() + "not found"));
-      if (newFinalizedHeader.getNumber() < oldFinalizedHeader.getNumber()) {
-        throw new BackwardSyncException("Cannot finalize below already finalized...");
-      }
       LOG.info(
           "Updating finalized {} block to new finalized block {}",
           oldFinalizedHeader.toLogString(),

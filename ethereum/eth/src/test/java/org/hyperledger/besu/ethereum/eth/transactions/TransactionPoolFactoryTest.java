@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -64,13 +63,18 @@ public class TransactionPoolFactoryTest {
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
     when(context.getBlockchain()).thenReturn(blockchain);
-    final EthPeers ethPeers = new EthPeers("ETH", TestClock.fixed(), new NoOpMetricsSystem(), 25);
+    final EthPeers ethPeers =
+        new EthPeers(
+            "ETH",
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            25,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     final EthContext ethContext = mock(EthContext.class);
     when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    final SyncState state = mock(SyncState.class);
     final GasPricePendingTransactionsSorter pendingTransactions =
         mock(GasPricePendingTransactionsSorter.class);
     final PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
@@ -85,7 +89,7 @@ public class TransactionPoolFactoryTest {
             context,
             ethContext,
             new NoOpMetricsSystem(),
-            state,
+            () -> true,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.of(
                 1,
@@ -106,11 +110,12 @@ public class TransactionPoolFactoryTest {
             BigInteger.ONE,
             mock(WorldStateArchive.class),
             pool,
-            new EthProtocolConfiguration(5, 5, 5, 5, 5, false),
+            EthProtocolConfiguration.defaultConfig(),
             ethPeers,
             mock(EthMessages.class),
             ethContext,
             Collections.emptyList(),
+            Optional.empty(),
             true,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -86,6 +85,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private Optional<BlockHeader> checkpointHeader = Optional.empty();
 
   private final String protocolName;
+  private final int maxMessageSize;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
   private final ChainState chainHeadState = new ChainState();
@@ -124,10 +124,12 @@ public class EthPeer implements Comparable<EthPeer> {
       final String protocolName,
       final Consumer<EthPeer> onStatusesExchanged,
       final List<PeerValidator> peerValidators,
+      final int maxMessageSize,
       final Clock clock,
       final List<NodeMessagePermissioningProvider> permissioningProviders) {
     this.connection = connection;
     this.protocolName = protocolName;
+    this.maxMessageSize = maxMessageSize;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.onStatusesExchanged.set(onStatusesExchanged);
@@ -208,8 +210,12 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordUselessResponse(final String requestType) {
-    LOG.debug("Received useless response for {} from peer {}", requestType, this);
+    LOG.debug("Received useless response for request type {} from peer {}", requestType, this);
     reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
+  }
+
+  public void recordUsefulResponse() {
+    reputation.recordUsefulResponse();
   }
 
   public void disconnect(final DisconnectReason reason) {
@@ -224,15 +230,13 @@ public class EthPeer implements Comparable<EthPeer> {
       final MessageData messageData, final String protocolName) throws PeerNotConnected {
     if (connection.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
-      LOG.debug("Protocol {} unavailable for this peer ", protocolName);
+      LOG.debug("Protocol {} unavailable for this peer {}", protocolName, this);
       return null;
     }
     if (permissioningProviders.stream()
         .anyMatch(p -> !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}",
-          messageData.getCode(),
-          connection.getRemoteEnode());
+          "Permissioning blocked sending of message code {} to {}", messageData.getCode(), this);
       if (LOG.isDebugEnabled()) {
         LOG.debug(
             "Permissioning blocked by providers {}",
@@ -242,6 +246,17 @@ public class EthPeer implements Comparable<EthPeer> {
                         !p.isMessagePermitted(connection.getRemoteEnode(), messageData.getCode())));
       }
       return null;
+    }
+    // Check message size is within limits
+    if (messageData.getSize() > maxMessageSize) {
+      // This is a bug or else a misconfiguration of the max message size.
+      LOG.error(
+          "Sending {} message to peer ({}) which exceeds local message size limit of {} bytes.  Message code: {}, Message Size: {}",
+          protocolName,
+          this,
+          maxMessageSize,
+          messageData.getCode(),
+          messageData.getSize());
     }
 
     if (requestManagers.containsKey(protocolName)) {
@@ -371,9 +386,10 @@ public class EthPeer implements Comparable<EthPeer> {
             requestManager -> requestManager.dispatchResponse(ethMessage),
             () -> {
               LOG.trace(
-                  "Message {} not expected has just been received for {} ",
+                  "Message {} not expected has just been received for protocol {}, peer {} ",
                   messageCode,
-                  protocolName);
+                  protocolName,
+                  this);
             });
   }
 
@@ -406,8 +422,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   void handleDisconnect() {
-    traceLambda(
-        LOG, "handleDisconnect - peer... {}, {}", this::getShortNodeId, this::getReputation);
+    LOG.debug("handleDisconnect - EthPeer {}", this);
 
     requestManagers.forEach(
         (protocolName, map) -> map.forEach((code, requestManager) -> requestManager.close()));
@@ -536,8 +551,14 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "Peer %s... %s, validated? %s, disconnected? %s",
-        getShortNodeId(), reputation, isFullyValidated(), isDisconnected());
+        "PeerId %s, reputation %s, validated? %s, disconnected? %s, client: %s, connection %s, enode %s",
+        nodeId(),
+        reputation,
+        isFullyValidated(),
+        isDisconnected(),
+        connection.getPeerInfo().getClientId(),
+        System.identityHashCode(connection),
+        connection.getPeer().getEnodeURLString());
   }
 
   @Nonnull
@@ -547,10 +568,10 @@ public class EthPeer implements Comparable<EthPeer> {
 
   @Override
   public int compareTo(final @Nonnull EthPeer ethPeer) {
-    int repCompare = this.reputation.compareTo(ethPeer.reputation);
+    final int repCompare = this.reputation.compareTo(ethPeer.reputation);
     if (repCompare != 0) return repCompare;
 
-    int headStateCompare =
+    final int headStateCompare =
         Long.compare(
             this.chainHeadState.getBestBlock().getNumber(),
             ethPeer.chainHeadState.getBestBlock().getNumber());

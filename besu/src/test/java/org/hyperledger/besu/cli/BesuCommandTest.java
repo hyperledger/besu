@@ -17,14 +17,17 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
+import static org.hyperledger.besu.cli.config.NetworkName.KILN;
 import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
+import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
@@ -41,12 +44,15 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
+import static org.junit.Assume.assumeThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -994,6 +1000,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1));
+
+    verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
   }
 
   @Test
@@ -1618,6 +1626,17 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void syncMode_invalid() {
+    parseCommand("--sync-mode", "bogus");
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, X_SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
   }
 
   @Test
@@ -2741,6 +2760,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--rpc-http-enabled",
+        "--engine-rpc-enabled",
         "--rpc-http-host",
         host,
         "--rpc-http-port",
@@ -3632,7 +3652,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         createTempFile(
             "toml",
             "miner-coinbase=\""
-                + requestedCoinbase.toString()
+                + requestedCoinbase
                 + "\"\n"
                 + "min-gas-price=42\n"
                 + "miner-extra-data=\"0x1122334455667788990011223344556677889900112233445566778899001122\"\n");
@@ -3816,7 +3836,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rinkebyValuesAreUsed() throws Exception {
+  public void rinkebyValuesAreUsed() {
     parseCommand("--network", "rinkeby");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -3829,10 +3849,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, times(1)).warn(contains("Rinkeby is deprecated and will be shutdown"));
   }
 
   @Test
-  public void ropstenValuesAreUsed() throws Exception {
+  public void ropstenValuesAreUsed() {
     parseCommand("--network", "ropsten");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -3845,10 +3867,30 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, times(1)).warn(contains("Ropsten is deprecated and will be shutdown"));
   }
 
   @Test
-  public void goerliValuesAreUsed() throws Exception {
+  public void kilnValuesAreUsed() {
+    parseCommand("--network", "kiln");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(KILN));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, times(1)).warn(contains("Kiln is deprecated and will be shutdown"));
+  }
+
+  @Test
+  public void goerliValuesAreUsed() {
     parseCommand("--network", "goerli");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -3861,6 +3903,26 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Goerli is deprecated and will be shutdown"));
+  }
+
+  @Test
+  public void sepoliaValuesAreUsed() {
+    parseCommand("--network", "sepolia");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(SEPOLIA));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Sepolia is deprecated and will be shutdown"));
   }
 
   @Test
@@ -4744,6 +4806,10 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void privEnclaveKeyFileDoesNotExist() {
+    assumeThat(
+        "Ignored if system language is not English",
+        System.getProperty("user.language"),
+        startsWith("en"));
     parseCommand("--privacy-enabled=true", "--privacy-public-key-file", "/non/existent/file");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

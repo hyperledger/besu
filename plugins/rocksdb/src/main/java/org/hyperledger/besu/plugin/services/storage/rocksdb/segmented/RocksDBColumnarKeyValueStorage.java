@@ -47,6 +47,7 @@ import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
+import org.rocksdb.CompressionType;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
@@ -66,6 +67,8 @@ public class RocksDBColumnarKeyValueStorage
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   private static final String DEFAULT_COLUMN = "default";
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
+  private static final int ROCKSDB_FORMAT_VERSION = 5;
+  private static final long ROCKSDB_BLOCK_SIZE = 32768;
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -96,6 +99,7 @@ public class RocksDBColumnarKeyValueStorage
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setTtl(0)
+                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
                               .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
       columnDescriptors.add(
@@ -103,6 +107,7 @@ public class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
+                  .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
@@ -151,10 +156,10 @@ public class RocksDBColumnarKeyValueStorage
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setBlockCache(cache)
-        .setFormatVersion(5)
+        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
         .setOptimizeFiltersForMemory(true)
         .setCacheIndexAndFilterBlocks(true)
-        .setBlockSize(32768);
+        .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
   @Override

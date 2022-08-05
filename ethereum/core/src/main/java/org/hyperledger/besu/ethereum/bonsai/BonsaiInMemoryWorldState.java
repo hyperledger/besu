@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
+  private boolean isPersisted = false;
+
   public BonsaiInMemoryWorldState(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
@@ -29,14 +31,31 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   @Override
   public Hash rootHash() {
+    if (isPersisted) {
+      return worldStateRootHash;
+    }
+    return rootHash(updater.copy());
+  }
+
+  public Hash rootHash(final BonsaiWorldStateUpdater localUpdater) {
     final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
-    final Hash calculatedRootHash = calculateRootHash(updater);
-    updater.rollback();
-    return Hash.wrap(calculatedRootHash);
+    try {
+      final Hash calculatedRootHash = calculateRootHash(updater, localUpdater);
+      return Hash.wrap(calculatedRootHash);
+    } finally {
+      updater.rollback();
+    }
   }
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    throw new UnsupportedOperationException("In Memory worldState can not be persisted.");
+    final BonsaiWorldStateUpdater localUpdater = updater.copy();
+    final Hash newWorldStateRootHash = rootHash(localUpdater);
+    archive
+        .getTrieLogManager()
+        .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+    worldStateRootHash = newWorldStateRootHash;
+    worldStateBlockHash = blockHeader.getBlockHash();
+    isPersisted = true;
   }
 }

@@ -305,7 +305,7 @@ public class RunnerBuilder {
 
   public RunnerBuilder engineJsonRpcConfiguration(
       final JsonRpcConfiguration engineJsonRpcConfiguration) {
-    this.engineJsonRpcConfiguration = Optional.of(engineJsonRpcConfiguration);
+    this.engineJsonRpcConfiguration = Optional.ofNullable(engineJsonRpcConfiguration);
     return this;
   }
 
@@ -419,6 +419,8 @@ public class RunnerBuilder {
       }
       discoveryConfiguration.setBootnodes(bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
+      discoveryConfiguration.setDiscoveryV5Enabled(
+          networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
     } else {
       discoveryConfiguration.setActive(false);
     }
@@ -627,6 +629,9 @@ public class RunnerBuilder {
                   new HealthService(new ReadinessCheck(peerNetwork, synchronizer))));
     }
 
+    final SubscriptionManager subscriptionManager =
+        createSubscriptionManager(vertx, transactionPool, blockchainQueries);
+
     Optional<JsonRpcService> engineJsonRpcService = Optional.empty();
     if (engineJsonRpcConfiguration.isPresent() && engineJsonRpcConfiguration.get().isEnabled()) {
       final Map<String, JsonRpcMethod> engineMethods =
@@ -669,6 +674,9 @@ public class RunnerBuilder {
               ? webSocketConfiguration
               : WebSocketConfiguration.createEngineDefault();
 
+      final WebSocketMethodsFactory websocketMethodsFactory =
+          new WebSocketMethodsFactory(subscriptionManager, engineMethods);
+
       engineJsonRpcService =
           Optional.of(
               new JsonRpcService(
@@ -677,7 +685,7 @@ public class RunnerBuilder {
                   engineJsonRpcConfiguration.orElse(JsonRpcConfiguration.createEngineDefault()),
                   metricsSystem,
                   natService,
-                  engineMethods,
+                  websocketMethodsFactory.methods(),
                   Optional.ofNullable(engineSocketConfig),
                   besuController.getProtocolManager().ethContext().getScheduler(),
                   authToUse,
@@ -742,9 +750,6 @@ public class RunnerBuilder {
               besuPluginContext.getNamedPlugins(),
               dataDir,
               rpcEndpointServiceImpl);
-
-      final SubscriptionManager subscriptionManager =
-          createSubscriptionManager(vertx, transactionPool, blockchainQueries);
 
       createLogsSubscriptionService(
           context.getBlockchain(),

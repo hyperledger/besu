@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -29,12 +29,14 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,7 +46,9 @@ import org.slf4j.LoggerFactory;
 public class BackwardSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncContext.class);
   public static final int BATCH_SIZE = 200;
-  private static final int MAX_RETRIES = 100;
+  private static final int DEFAULT_MAX_RETRIES = 20;
+
+  private static final long DEFAULT_MILLIS_BETWEEN_RETRIES = 5000;
 
   protected final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -59,6 +63,12 @@ public class BackwardSyncContext {
   private Optional<Hash> maybeFinalized = Optional.empty();
   private Optional<Hash> maybeHead = Optional.empty();
 
+  private final int maxRetries;
+
+  private final long millisBetweenRetries = DEFAULT_MILLIS_BETWEEN_RETRIES;
+
+  private final Subscribers<BadChainListener> badChainListeners = Subscribers.create();
+
   public BackwardSyncContext(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -66,6 +76,24 @@ public class BackwardSyncContext {
       final EthContext ethContext,
       final SyncState syncState,
       final BackwardChain backwardChain) {
+    this(
+        protocolContext,
+        protocolSchedule,
+        metricsSystem,
+        ethContext,
+        syncState,
+        backwardChain,
+        DEFAULT_MAX_RETRIES);
+  }
+
+  public BackwardSyncContext(
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MetricsSystem metricsSystem,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final BackwardChain backwardChain,
+      final int maxRetries) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -73,6 +101,7 @@ public class BackwardSyncContext {
     this.metricsSystem = metricsSystem;
     this.syncState = syncState;
     this.backwardChain = backwardChain;
+    this.maxRetries = maxRetries;
   }
 
   public synchronized boolean isSyncing() {
@@ -95,27 +124,33 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (isTrusted(newBlockHash)) return future;
-    backwardChain.addNewHash(newBlockHash);
-    if (future != null) {
-      return future;
+    Optional<CompletableFuture<Void>> maybeFuture =
+        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+    if (isTrusted(newBlockHash)) {
+      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
-    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newBlockHash::toHexString);
-    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
-    return this.currentBackwardSyncFuture.get();
+    backwardChain.addNewHash(newBlockHash);
+    return maybeFuture.orElseGet(
+        () -> {
+          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
+          this.currentBackwardSyncFuture.set(future);
+          return future;
+        });
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    final CompletableFuture<Void> future = this.currentBackwardSyncFuture.get();
-    if (isTrusted(newPivot.getHash())) return future;
-    backwardChain.appendTrustedBlock(newPivot);
-    if (future != null) {
-      return future;
+    Optional<CompletableFuture<Void>> maybeFuture =
+        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+    if (isTrusted(newPivot.getHash())) {
+      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
-    infoLambda(LOG, "Starting new backward sync towards a pivot {}", newPivot::toLogString);
-    this.currentBackwardSyncFuture.set(prepareBackwardSyncFutureWithRetry());
-    return this.currentBackwardSyncFuture.get();
+    backwardChain.appendTrustedBlock(newPivot);
+    return maybeFuture.orElseGet(
+        () -> {
+          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
+          this.currentBackwardSyncFuture.set(future);
+          return future;
+        });
   }
 
   private boolean isTrusted(final Hash hash) {
@@ -130,60 +165,83 @@ public class BackwardSyncContext {
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
+    return prepareBackwardSyncFutureWithRetry(maxRetries)
+        .handle(
+            (unused, throwable) -> {
+              this.currentBackwardSyncFuture.set(null);
+              if (throwable != null) {
+                throw extractBackwardSyncException(throwable)
+                    .orElse(new BackwardSyncException(throwable));
+              }
+              return null;
+            });
+  }
 
-    CompletableFuture<Void> f = prepareBackwardSyncFuture();
-    for (int i = 0; i < MAX_RETRIES; i++) {
-      f =
-          f.thenApply(CompletableFuture::completedFuture)
-              .exceptionally(
-                  ex -> {
-                    processException(ex);
-                    return ethContext
-                        .getScheduler()
-                        .scheduleFutureTask(this::prepareBackwardSyncFuture, Duration.ofSeconds(5));
-                  })
-              .thenCompose(Function.identity());
+  private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(final int retries) {
+    if (retries == 0) {
+      return CompletableFuture.failedFuture(
+          new BackwardSyncException("Max number of retries " + maxRetries + " reached"));
     }
-    return f.handle(
-        (unused, throwable) -> {
-          this.currentBackwardSyncFuture.set(null);
-          if (throwable != null) {
-            throw new BackwardSyncException(throwable);
-          }
-          return null;
+
+    return exceptionallyCompose(
+        prepareBackwardSyncFuture(),
+        throwable -> {
+          processException(throwable);
+          return ethContext
+              .getScheduler()
+              .scheduleFutureTask(
+                  () -> prepareBackwardSyncFutureWithRetry(retries - 1),
+                  Duration.ofMillis(millisBetweenRetries));
         });
   }
 
   @VisibleForTesting
   protected void processException(final Throwable throwable) {
+    extractBackwardSyncException(throwable)
+        .ifPresentOrElse(
+            backwardSyncException -> {
+              if (backwardSyncException.shouldRestart()) {
+                LOG.info(
+                    "Backward sync failed ({}). Current Peers: {}. Retrying in "
+                        + millisBetweenRetries
+                        + " milliseconds...",
+                    backwardSyncException.getMessage(),
+                    ethContext.getEthPeers().peerCount());
+                return;
+              } else {
+                debugLambda(
+                    LOG, "Not recoverable backward sync exception {}", throwable::getMessage);
+                throw backwardSyncException;
+              }
+            },
+            () ->
+                LOG.warn(
+                    "There was an uncaught exception during Backwards Sync. Retrying in "
+                        + millisBetweenRetries
+                        + " milliseconds...",
+                    throwable));
+  }
+
+  private Optional<BackwardSyncException> extractBackwardSyncException(final Throwable throwable) {
     Throwable currentCause = throwable;
 
     while (currentCause != null) {
       if (currentCause instanceof BackwardSyncException) {
-        if (((BackwardSyncException) currentCause).shouldRestart()) {
-          LOG.info(
-              "Backward sync failed ({}). Current Peers: {}. Retrying in few seconds... ",
-              currentCause.getMessage(),
-              ethContext.getEthPeers().peerCount());
-          return;
-        } else {
-          throw new BackwardSyncException(throwable);
-        }
+        return Optional.of((BackwardSyncException) currentCause);
       }
       currentCause = currentCause.getCause();
     }
-    LOG.warn(
-        "There was an uncaught exception during Backwards Sync... Retrying in few seconds...",
-        throwable);
+    return Optional.empty();
   }
 
-  private CompletableFuture<Void> prepareBackwardSyncFuture() {
+  @VisibleForTesting
+  CompletableFuture<Void> prepareBackwardSyncFuture() {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
     return new BackwardsSyncAlgorithm(
             this,
             FinalBlockConfirmation.confirmationChain(
                 FinalBlockConfirmation.genesisConfirmation(blockchain),
-                FinalBlockConfirmation.finalizedConfirmation(blockchain)))
+                FinalBlockConfirmation.ancestorConfirmation(blockchain)))
         .executeBackwardsSync(null);
   }
 
@@ -212,12 +270,20 @@ public class BackwardSyncContext {
   }
 
   public boolean isReady() {
+    LOG.debug(
+        "checking if BWS is ready: ttd reached {}, initial sync done {}",
+        syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE),
+        syncState.isInitialSyncPhaseDone());
     return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)
         && syncState.isInitialSyncPhaseDone();
   }
 
   public CompletableFuture<Void> stop() {
     return currentBackwardSyncFuture.get();
+  }
+
+  public void subscribeBadChainListener(final BadChainListener badChainListener) {
+    badChainListeners.subscribe(badChainListener);
   }
 
   // In rare case when we request too many headers/blocks we get response that does not contain all
@@ -236,7 +302,6 @@ public class BackwardSyncContext {
 
   protected Void saveBlock(final Block block) {
     traceLambda(LOG, "Going to validate block {}", block::toLogString);
-    checkFinalizedSuccessionRuleBeforeSave(block);
     var optResult =
         this.getBlockValidatorForBlock(block)
             .validateAndProcessBlock(
@@ -244,71 +309,23 @@ public class BackwardSyncContext {
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
-    optResult.blockProcessingOutputs.ifPresent(
-        result -> {
-          traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
-          result.worldState.persist(block.getHeader());
-          this.getProtocolContext().getBlockchain().appendBlock(block, result.receipts);
-          possiblyMoveHead(block);
-        });
-    return null;
-  }
-
-  @VisibleForTesting
-  protected synchronized void checkFinalizedSuccessionRuleBeforeSave(final Block block) {
-    final Optional<Hash> finalized = findMaybeFinalized();
-    if (finalized.isPresent()) {
-      final Optional<BlockHeader> maybeFinalizedHeader =
-          protocolContext
-              .getBlockchain()
-              .getBlockByHash(finalized.get())
-              .map(Block::getHeader)
-              .or(() -> backwardChain.getHeader(finalized.get()));
-      if (maybeFinalizedHeader.isEmpty()) {
-        throw new BackwardSyncException(
-            "We know a block "
-                + finalized.get().toHexString()
-                + " was finalized, but we don't have it downloaded yet, cannot save new block",
-            true);
-      }
-      final BlockHeader finalizedHeader = maybeFinalizedHeader.get();
-      if (finalizedHeader.getHash().equals(block.getHash())) {
-        debugLambda(LOG, "Saving new finalized block {}", block::toLogString);
-        return;
-      }
-
-      if (finalizedHeader.getNumber() == block.getHeader().getNumber()) {
-        throw new BackwardSyncException(
-            "This block is not the target finalized block. Is "
-                + block.toLogString()
-                + " but was expecting "
-                + finalizedHeader.toLogString());
-      }
-      if (!getProtocolContext().getBlockchain().contains(finalizedHeader.getHash())) {
-        debugLambda(
-            LOG,
-            "Saving block {} before finalized {} reached",
-            block::toLogString,
-            finalizedHeader::toLogString); // todo: some check here??
-        return;
-      }
-      final Hash canonicalHash =
-          getProtocolContext()
-              .getBlockchain()
-              .getBlockByNumber(finalizedHeader.getNumber())
-              .orElseThrow()
-              .getHash();
-      if (finalizedHeader.getNumber() < block.getHeader().getNumber()
-          && !canonicalHash.equals(finalizedHeader.getHash())) {
-        throw new BackwardSyncException(
-            "Finalized block "
-                + finalizedHeader.toLogString()
-                + " is not on canonical chain. Canonical is"
-                + canonicalHash.toHexString()
-                + ". We need to reorg before saving this block.");
-      }
+    if (optResult.blockProcessingOutputs.isPresent()) {
+      traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
+      optResult.blockProcessingOutputs.get().worldState.persist(block.getHeader());
+      this.getProtocolContext()
+          .getBlockchain()
+          .appendBlock(block, optResult.blockProcessingOutputs.get().receipts);
+      possiblyMoveHead(block);
+    } else {
+      emitBadChainEvent(block);
+      throw new BackwardSyncException(
+          "Cannot save block "
+              + block.toLogString()
+              + " because of "
+              + optResult.errorMessage.orElseThrow());
     }
-    LOG.debug("Finalized block not known yet...");
+
+    return null;
   }
 
   @VisibleForTesting
@@ -346,5 +363,26 @@ public class BackwardSyncContext {
         .filter(Optional::isPresent)
         .map(Optional::get)
         .findFirst();
+  }
+
+  private void emitBadChainEvent(final Block badBlock) {
+    final List<Block> badBlockDescendants = new ArrayList<>();
+    final List<BlockHeader> badBlockHeaderDescendants = new ArrayList<>();
+
+    Optional<Hash> descendant = backwardChain.getDescendant(badBlock.getHash());
+
+    while (descendant.isPresent()) {
+      final Optional<Block> block = backwardChain.getBlock(descendant.get());
+      if (block.isPresent()) {
+        badBlockDescendants.add(block.get());
+      } else {
+        backwardChain.getHeader(descendant.get()).ifPresent(badBlockHeaderDescendants::add);
+      }
+
+      descendant = backwardChain.getDescendant(descendant.get());
+    }
+
+    badChainListeners.forEach(
+        listener -> listener.onBadChain(badBlock, badBlockDescendants, badBlockHeaderDescendants));
   }
 }

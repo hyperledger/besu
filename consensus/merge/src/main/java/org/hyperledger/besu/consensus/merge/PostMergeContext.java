@@ -41,9 +41,9 @@ public class PostMergeContext implements MergeContext {
   // initial postMerge state is indeterminate until it is set:
   private final AtomicReference<Optional<Boolean>> isPostMerge =
       new AtomicReference<>(Optional.empty());
-  private final Subscribers<NewMergeStateCallback> newMergeStateCallbackSubscribers =
+  private final Subscribers<MergeStateHandler> newMergeStateCallbackSubscribers =
       Subscribers.create();
-  private final Subscribers<NewForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
+  private final Subscribers<ForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
       Subscribers.create();
 
   private final EvictingQueue<PayloadTuple> blocksInProgress =
@@ -57,7 +57,12 @@ public class PostMergeContext implements MergeContext {
 
   @VisibleForTesting
   PostMergeContext() {
-    this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
+    this(Difficulty.ZERO);
+  }
+
+  @VisibleForTesting
+  PostMergeContext(final Difficulty difficulty) {
+    this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
   }
 
@@ -84,7 +89,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
-    if (isPostMerge.get().orElse(Boolean.FALSE) && lastFinalized.get() != null) {
+    if (isPostMerge.get().orElse(Boolean.FALSE)) {
       // if we have finalized, we never switch back to a pre-merge once we have transitioned
       // post-TTD.
       return;
@@ -99,7 +104,9 @@ public class PostMergeContext implements MergeContext {
 
     if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
-          newMergeStateCallback -> newMergeStateCallback.onNewIsPostMergeState(newState));
+          newMergeStateCallback ->
+              newMergeStateCallback.mergeStateChanged(
+                  newState, oldState, Optional.of(totalDifficulty)));
     }
   }
 
@@ -123,14 +130,14 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void observeNewIsPostMergeState(final NewMergeStateCallback newMergeStateCallback) {
-    newMergeStateCallbackSubscribers.subscribe(newMergeStateCallback);
+  public void observeNewIsPostMergeState(final MergeStateHandler mergeStateHandler) {
+    newMergeStateCallbackSubscribers.subscribe(mergeStateHandler);
   }
 
   @Override
   public long addNewForkchoiceMessageListener(
-      final NewForkchoiceMessageListener newForkchoiceMessageListener) {
-    return newForkchoiceMessageCallbackSubscribers.subscribe(newForkchoiceMessageListener);
+      final ForkchoiceMessageListener forkchoiceMessageListener) {
+    return newForkchoiceMessageCallbackSubscribers.subscribe(forkchoiceMessageListener);
   }
 
   @Override

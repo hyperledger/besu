@@ -85,7 +85,14 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem, 25));
+    ethPeers =
+        spy(
+            new EthPeers(
+                EthProtocol.NAME,
+                TestClock.fixed(),
+                metricsSystem,
+                25,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
@@ -99,7 +106,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             ethContext,
             TestClock.fixed(),
             metricsSystem,
-            syncState,
+            syncState::isInitialSyncPhaseDone,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT);
     ethProtocolManager =

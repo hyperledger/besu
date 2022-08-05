@@ -44,7 +44,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
   private static final int SMALL_ADJUSTMENT = 1;
   private static final int LARGE_ADJUSTMENT = 10;
 
-  private int score = DEFAULT_SCORE;
+  private long score = DEFAULT_SCORE;
 
   public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
@@ -85,6 +85,10 @@ public class PeerReputation implements Comparable<PeerReputation> {
     }
   }
 
+  public void recordUsefulResponse() {
+    score += SMALL_ADJUSTMENT;
+  }
+
   private boolean shouldRemove(final Long timestamp, final long currentTimestamp) {
     return timestamp != null && timestamp + USELESS_RESPONSE_WINDOW_IN_MILLIS < currentTimestamp;
   }
@@ -96,6 +100,6 @@ public class PeerReputation implements Comparable<PeerReputation> {
 
   @Override
   public int compareTo(final @Nonnull PeerReputation otherReputation) {
-    return Integer.compare(this.score, otherReputation.score);
+    return Long.compare(this.score, otherReputation.score);
   }
 }

@@ -94,29 +94,13 @@ public class BackwardChain {
       return;
     }
     BlockHeader firstHeader = firstStoredAncestor.get();
-    if (firstHeader.getNumber() != blockHeader.getNumber() + 1) {
-      throw new BackwardSyncException(
-          "Wrong height of header "
-              + blockHeader.getHash().toHexString()
-              + " is "
-              + blockHeader.getNumber()
-              + " when we were expecting "
-              + (firstHeader.getNumber() - 1));
-    }
-    if (!firstHeader.getParentHash().equals(blockHeader.getHash())) {
-      throw new BackwardSyncException(
-          "Hash of header does not match our expectations, was "
-              + blockHeader.toLogString()
-              + " when we expected "
-              + firstHeader.getParentHash().toHexString());
-    }
     headers.put(blockHeader.getHash(), blockHeader);
     chainStorage.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
     firstStoredAncestor = Optional.of(blockHeader);
     debugLambda(
         LOG,
         "Added header {} on height {} to backward chain led by pivot {} on height {}",
-        () -> blockHeader.toLogString(),
+        blockHeader::toLogString,
         blockHeader::getNumber,
         () -> lastStoredPivot.orElseThrow().toLogString(),
         firstHeader::getNumber);
@@ -143,6 +127,7 @@ public class BackwardChain {
   }
 
   public synchronized void appendTrustedBlock(final Block newPivot) {
+    debugLambda(LOG, "appending trusted block {}", newPivot::toLogString);
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
     if (lastStoredPivot.isEmpty()) {
@@ -174,6 +159,14 @@ public class BackwardChain {
     hashesToAppend.clear();
   }
 
+  public synchronized Optional<Hash> getDescendant(final Hash blockHash) {
+    return chainStorage.get(blockHash);
+  }
+
+  public synchronized Optional<Block> getBlock(final Hash hash) {
+    return blocks.get(hash);
+  }
+
   public synchronized Optional<BlockHeader> getHeader(final Hash hash) {
     return headers.get(hash);
   }
@@ -186,6 +179,12 @@ public class BackwardChain {
   }
 
   public synchronized Optional<Hash> getFirstHashToAppend() {
-    return Optional.ofNullable(hashesToAppend.poll());
+    return Optional.ofNullable(hashesToAppend.peek());
+  }
+
+  public synchronized void removeFromHashToAppend(final Hash hashToRemove) {
+    if (hashesToAppend.contains(hashToRemove)) {
+      hashesToAppend.remove(hashToRemove);
+    }
   }
 }

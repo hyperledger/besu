@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
@@ -361,6 +362,14 @@ public class EthPeerTest {
     assertThat(peer2.compareTo(peer1)).isEqualTo(-1);
   }
 
+  @Test
+  public void recordUsefullResponse() {
+    final EthPeer peer = createPeer();
+    final EthPeer peer2 = createPeer();
+    peer.recordUsefulResponse();
+    assertThat(peer.getReputation().compareTo(peer2.getReputation())).isGreaterThan(0);
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,
@@ -462,6 +471,7 @@ public class EthPeerTest {
         "foo",
         onPeerReady,
         Collections.emptyList(),
+        EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         clock,
         Collections.emptyList());
   }
@@ -474,7 +484,13 @@ public class EthPeerTest {
     // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
     // that extend the sub-protocol work correctly
     return new EthPeer(
-        peerConnection, "foo", onPeerReady, peerValidators, clock, permissioningProviders);
+        peerConnection,
+        "foo",
+        onPeerReady,
+        peerValidators,
+        EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+        clock,
+        permissioningProviders);
   }
 
   @FunctionalInterface

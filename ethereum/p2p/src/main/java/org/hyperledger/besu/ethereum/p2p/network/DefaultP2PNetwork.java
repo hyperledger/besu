@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -56,7 +57,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +67,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -149,8 +148,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final Duration shutdownTimeout = Duration.ofMinutes(1);
   private DNSDaemon dnsDaemon;
 
-  @VisibleForTesting final AtomicReference<List<DiscoveryPeer>> dnsPeers = new AtomicReference<>();
-
   /**
    * Creates a peer networking service for production purposes.
    *
@@ -204,6 +201,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
+    if (config.getDiscovery().isDiscoveryV5Enabled()) {
+      LOG.warn("Discovery Protocol v5 is not available");
+    }
+
     final String address = config.getDiscovery().getAdvertisedHost();
     final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
     final int configuredRlpxPort = config.getRlpx().getBindPort();
@@ -211,6 +212,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     Optional.ofNullable(config.getDiscovery().getDNSDiscoveryURL())
         .ifPresent(
             disco -> {
+              // These lists are updated every 12h
+              // We retrieve the list every 30 minutes (1800000 msec)
               LOG.info("Starting DNS discovery with URL {}", disco);
               config
                   .getDnsDiscoveryServerOverride()
@@ -224,7 +227,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       disco,
                       createDaemonListener(),
                       0L,
-                      60000L,
+                      1800000L,
                       config.getDnsDiscoveryServerOverride().orElse(null));
               dnsDaemon.start();
             });
@@ -343,11 +346,16 @@ public class DefaultP2PNetwork implements P2PNetwork {
                 .build();
         final DiscoveryPeer peer = DiscoveryPeer.fromEnode(enodeURL);
         peers.add(peer);
-        rlpxAgent.connect(peer);
       }
-      // only replace dnsPeers if the lookup was successful:
       if (!peers.isEmpty()) {
-        dnsPeers.set(peers);
+        final Optional<PeerDiscoveryController> peerDiscoveryController =
+            peerDiscoveryAgent.getPeerDiscoveryController();
+        if (peerDiscoveryController.isPresent()) {
+          final PeerDiscoveryController controller = peerDiscoveryController.get();
+          LOG.debug("Adding {} DNS peers to PeerTable", peers.size());
+          peers.forEach(controller::addToPeerTable);
+          peers.forEach(rlpxAgent::connect);
+        }
       }
     };
   }
@@ -379,11 +387,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    final List<DiscoveryPeer> peers = dnsPeers.get();
-    if (peers != null) {
-      Collections.shuffle(peers);
-      return Stream.concat(peerDiscoveryAgent.streamDiscoveredPeers(), peers.stream());
-    }
     return peerDiscoveryAgent.streamDiscoveredPeers();
   }
 

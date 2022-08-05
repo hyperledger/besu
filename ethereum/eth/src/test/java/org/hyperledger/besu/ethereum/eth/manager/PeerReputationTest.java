@@ -80,4 +80,10 @@ public class PeerReputationTest {
                 1001 + PeerReputation.USELESS_RESPONSE_WINDOW_IN_MILLIS + 1))
         .isEmpty();
   }
+
+  @Test
+  public void shouldIncreaseScore() {
+    reputation.recordUsefulResponse();
+    assertThat(reputation.compareTo(new PeerReputation())).isGreaterThan(0);
+  }
 }

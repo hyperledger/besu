@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
@@ -117,7 +118,14 @@ public class AdminPeersTest {
             new InetSocketAddress("1.2.3.4", 9876),
             new InetSocketAddress("4.3.2.1", 6789));
     final EthPeer ethPeer =
-        new EthPeer(p, "eth", c -> {}, List.of(), TestClock.fixed(), Collections.emptyList());
+        new EthPeer(
+            p,
+            "eth",
+            c -> {},
+            List.of(),
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            TestClock.fixed(),
+            Collections.emptyList());
     return Lists.newArrayList(ethPeer);
   }
 

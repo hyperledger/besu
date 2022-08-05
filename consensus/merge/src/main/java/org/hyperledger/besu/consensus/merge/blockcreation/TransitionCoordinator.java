@@ -133,8 +133,13 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Result executeBlock(final Block block) {
-    return mergeCoordinator.executeBlock(block);
+  public Result rememberBlock(final Block block) {
+    return mergeCoordinator.rememberBlock(block);
+  }
+
+  @Override
+  public Result validateBlock(final Block block) {
+    return mergeCoordinator.validateBlock(block);
   }
 
   @Override
@@ -192,5 +197,20 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock) {
     return mergeCoordinator.isDescendantOf(ancestorBlock, newBlock);
+  }
+
+  @Override
+  public void addBadBlock(final Block block) {
+    mergeCoordinator.addBadBlock(block);
+  }
+
+  @Override
+  public boolean isBadBlock(final Hash blockHash) {
+    return mergeCoordinator.isBadBlock(blockHash);
+  }
+
+  @Override
+  public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
+    return mergeCoordinator.getLatestValidHashOfBadBlock(blockHash);
   }
 }

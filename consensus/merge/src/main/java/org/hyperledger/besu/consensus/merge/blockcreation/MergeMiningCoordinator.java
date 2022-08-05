@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.VALID;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -35,7 +36,14 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 random,
       final Address feeRecipient);
 
-  Result executeBlock(final Block block);
+  @Override
+  default boolean isCompatibleWithEngineApi() {
+    return true;
+  }
+
+  Result rememberBlock(final Block block);
+
+  Result validateBlock(final Block block);
 
   ForkchoiceResult updateForkChoice(
       final BlockHeader newHead,
@@ -61,11 +69,18 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash, Hash finalizedBlockHash);
 
+  void addBadBlock(final Block block);
+
+  boolean isBadBlock(Hash blockHash);
+
+  Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash);
+
   class ForkchoiceResult {
     public enum Status {
       VALID,
       INVALID,
-      INVALID_PAYLOAD_ATTRIBUTES
+      INVALID_PAYLOAD_ATTRIBUTES,
+      IGNORE_UPDATE_TO_OLD_HEAD
     }
 
     private final Status status;
@@ -95,6 +110,15 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
           Optional.empty(),
           Optional.empty(),
           latestValid);
+    }
+
+    public static ForkchoiceResult withIgnoreUpdateToOldHead(final BlockHeader oldHead) {
+      return new ForkchoiceResult(
+          IGNORE_UPDATE_TO_OLD_HEAD,
+          Optional.empty(),
+          Optional.empty(),
+          Optional.empty(),
+          Optional.of(oldHead.getHash()));
     }
 
     public static ForkchoiceResult withResult(
