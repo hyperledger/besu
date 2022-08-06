@@ -244,6 +244,7 @@ public class ByteCodeBuilder {
 
   /**
    * Operations to return the results of the nested call
+   *
    * @return this
    */
   public ByteCodeBuilder returnInnerCallResults() {
