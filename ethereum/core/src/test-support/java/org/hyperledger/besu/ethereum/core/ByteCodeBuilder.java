@@ -113,7 +113,7 @@ public class ByteCodeBuilder {
   /**
    * Operation to store the value in transient storage
    *
-   * @key location in the contract's storage
+   * @param key location in the contract's storage
    * @param value value to store
    * @return this
    */
@@ -140,7 +140,7 @@ public class ByteCodeBuilder {
    * Operation to store the current stack value to memory
    *
    * @param key location in the contract's memory
-   * @return
+   * @return this
    */
   public ByteCodeBuilder dataOnStackToMemory(final int key) {
     this.push(key);
@@ -244,7 +244,6 @@ public class ByteCodeBuilder {
 
   /**
    * Operations to return the results of the nested call
-   *
    * @return this
    */
   public ByteCodeBuilder returnInnerCallResults() {
