@@ -179,7 +179,7 @@ public class BackwardChain {
   }
 
   public synchronized Optional<Hash> getFirstHashToAppend() {
-    return Optional.ofNullable(hashesToAppend.poll());
+    return Optional.ofNullable(hashesToAppend.peek());
   }
 
   public synchronized void removeFromHashToAppend(final Hash hashToRemove) {

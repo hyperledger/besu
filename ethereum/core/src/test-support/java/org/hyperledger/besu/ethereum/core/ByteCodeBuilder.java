@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** ByteCodeBuilder is a helper class to aid in construction of EVM bytecode for tests */
 public class ByteCodeBuilder {
 
   public enum Operation {
@@ -59,14 +60,27 @@ public class ByteCodeBuilder {
     return byteCode.toString();
   }
 
+  /** @return Bytecode as Bytes */
   public Bytes toBytes() {
     return Bytes.fromHexString(byteCode.toString());
   }
 
+  /**
+   * Operation to push the value to the EVM stack
+   *
+   * @param value Integer value to push
+   * @return this
+   */
   public ByteCodeBuilder push(final int value) {
     return this.push(UInt256.valueOf(value));
   }
 
+  /**
+   * Operation to push the value to the EVM stack
+   *
+   * @param value Bytes value to push
+   * @return this
+   */
   public ByteCodeBuilder push(final Bytes value) {
     UInt256 pushSize = UInt256.valueOf(Bytes.fromHexString("0x60").toInt() + value.size() - 1);
     String byteString = standardizeByteString(pushSize);
@@ -75,6 +89,12 @@ public class ByteCodeBuilder {
     return this;
   }
 
+  /**
+   * Operation to push the value to the EVM stack
+   *
+   * @param value UInt256 value to push
+   * @return this
+   */
   public ByteCodeBuilder push(final UInt256 value) {
     String byteString = standardizeByteString(value);
     byteCode.append(Operation.PUSH);
@@ -90,6 +110,13 @@ public class ByteCodeBuilder {
     return byteString;
   }
 
+  /**
+   * Operation to store the value in transient storage
+   *
+   * @key location in the contract's storage
+   * @param value value to store
+   * @return this
+   */
   public ByteCodeBuilder tstore(final int key, final int value) {
     this.push(value);
     this.push(key);
@@ -97,18 +124,37 @@ public class ByteCodeBuilder {
     return this;
   }
 
+  /**
+   * Operation to load a value from transient storage
+   *
+   * @param key location in the contract's storage
+   * @return this
+   */
   public ByteCodeBuilder tload(final int key) {
     this.push(key);
     byteCode.append(Operation.TLOAD);
     return this;
   }
 
+  /**
+   * Operation to store the current stack value to memory
+   *
+   * @param key location in the contract's memory
+   * @return
+   */
   public ByteCodeBuilder dataOnStackToMemory(final int key) {
     this.push(key);
     this.op(Operation.MSTORE);
     return this;
   }
 
+  /**
+   * Operations to return the value at a given memory position
+   *
+   * @param size size of the returned value
+   * @param key location in memory of the returned value
+   * @return this
+   */
   public ByteCodeBuilder returnValueAtMemory(final int size, final int key) {
     this.push(size);
     this.push(key);
@@ -116,6 +162,14 @@ public class ByteCodeBuilder {
     return this;
   }
 
+  /**
+   * Operation to call another smart contract
+   *
+   * @param callType CALL, STATICCALL, DELEGATECALL
+   * @param address contract's address
+   * @param gasLimit gas limit for the nested call
+   * @return this
+   */
   public ByteCodeBuilder call(
       final Operation callType, final Address address, final UInt256 gasLimit) {
     callTypeCheck(callType);
@@ -139,11 +193,29 @@ public class ByteCodeBuilder {
     }
   }
 
+  /**
+   * Operation to call another smart contract with input Assumes input data is 32 bytes, already in
+   * memory at position 0
+   *
+   * @param callType CALL, STATICCALL, DELEGATECALL
+   * @param address contract's address
+   * @param gasLimit gas limit for the nested call
+   * @return this
+   */
   public ByteCodeBuilder callWithInput(
       final Operation callType, final Address address, final UInt256 gasLimit) {
     return callWithInput(callType, address, gasLimit, null);
   }
 
+  /**
+   * Operation to call another smart contract with input Assumes input data is 32 bytes
+   *
+   * @param callType CALL, STATICCALL, DELEGATECALL
+   * @param address contract's address
+   * @param gasLimit gas limit for the nested call
+   * @param input input to the nested call, if null pulls from memory at pos 0
+   * @return this
+   */
   public ByteCodeBuilder callWithInput(
       final Operation callType,
       final Address address,
@@ -170,6 +242,11 @@ public class ByteCodeBuilder {
     return this;
   }
 
+  /**
+   * Operations to return the results of the nested call
+   *
+   * @return this
+   */
   public ByteCodeBuilder returnInnerCallResults() {
     this.push(32);
     this.push(0);
@@ -179,6 +256,12 @@ public class ByteCodeBuilder {
     return this;
   }
 
+  /**
+   * Operations to check if the current caller is the address provided
+   *
+   * @param caller address of the expected caller
+   * @return this
+   */
   public ByteCodeBuilder callerIs(final Address caller) {
     byteCode.append(Operation.CALLER);
     this.push(Bytes.fromHexString(caller.toHexString()));
@@ -186,12 +269,24 @@ public class ByteCodeBuilder {
     return this;
   }
 
+  /**
+   * Operations for a conditional jump
+   *
+   * @param dest location to jump to if true
+   * @return this
+   */
   public ByteCodeBuilder conditionalJump(final int dest) {
     this.push(dest);
     byteCode.append(Operation.JUMPI);
     return this;
   }
 
+  /**
+   * Adds the specified operation to the set
+   *
+   * @param operation operation to add
+   * @return this
+   */
   public ByteCodeBuilder op(final Operation operation) {
     byteCode.append(operation.toString());
     return this;
