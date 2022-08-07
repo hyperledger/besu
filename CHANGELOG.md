@@ -5,6 +5,8 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
+
 
 ## 22.7.0
 
