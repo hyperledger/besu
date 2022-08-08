@@ -24,7 +24,8 @@ import org.junit.Test;
 
 public class PeerReputationTest {
 
-  private final PeerReputation reputation = new PeerReputation();
+  private static final int MAX_SCORE = 50;
+  private final PeerReputation reputation = new PeerReputation(MAX_SCORE);
 
   @Test
   public void shouldOnlyDisconnectWhenTimeoutLimitReached() {
@@ -83,7 +84,15 @@ public class PeerReputationTest {
 
   @Test
   public void shouldIncreaseScore() {
+    reputation.recordUselessResponse(1001);
+    final int scoreDecreased = reputation.getScore();
     reputation.recordUsefulResponse();
-    assertThat(reputation.compareTo(new PeerReputation())).isGreaterThan(0);
+    assertThat(reputation.getScore()).isGreaterThan(scoreDecreased);
+  }
+
+  @Test
+  public void shouldNotIncreaseScoreOverMax() {
+    reputation.recordUsefulResponse();
+    assertThat(reputation.getScore()).isEqualTo(MAX_SCORE);
   }
 }
