@@ -121,7 +121,8 @@ public class OperationBenchmarkHelper {
         .isStatic(messageFrame.isStatic())
         .completer(messageFrame -> {})
         .miningBeneficiary(messageFrame.getMiningBeneficiary())
-        .maxStackSize(messageFrame.getMaxStackSize());
+        .maxStackSize(messageFrame.getMaxStackSize())
+        .blockHashLookup(messageFrame.getBlockHashLookup());
   }
 
   public void cleanUp() throws IOException {

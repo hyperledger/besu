@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TStoreOperationTest {
@@ -188,33 +187,5 @@ public class TStoreOperationTest {
     assertThat(result.getHaltReason()).isEqualTo(Optional.empty());
 
     assertThat(result.getGasCost()).isEqualTo(OptionalLong.of(100L));
-  }
-
-  @Ignore
-  @Test
-  public void transientStoragePerformanceTest() {
-    long initialGas = 30_000_000L;
-    long remainingGas = initialGas;
-    long numOfOps =
-        (long) (initialGas * .95)
-            / (gasCalculator.getTransientStoreOperationGasCost()
-                + gasCalculator.getTransientLoadOperationGasCost()
-                + gasCalculator.getVeryLowTierGasCost() * 4);
-    final TStoreOperation tstore = new TStoreOperation(gasCalculator);
-    final TLoadOperation tload = new TLoadOperation(gasCalculator);
-    final MessageFrame frame =
-        createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-
-    long startTime = System.nanoTime();
-    for (int i = 0; i < numOfOps; i++) {
-      frame.pushStackItem(UInt256.ONE);
-      frame.pushStackItem(UInt256.fromHexString("0x01"));
-      tstore.execute(frame, null);
-      frame.pushStackItem(UInt256.fromHexString("0x01"));
-      tload.execute(frame, null);
-      frame.popStackItem();
-    }
-    long endTime = System.nanoTime();
-    assertThat((endTime - startTime) / 1e6).isLessThan(5000);
   }
 }
