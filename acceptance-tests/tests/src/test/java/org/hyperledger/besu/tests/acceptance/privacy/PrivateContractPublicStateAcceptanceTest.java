@@ -21,10 +21,12 @@ import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.CrossContractReader;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
 import org.hyperledger.besu.tests.web3j.generated.RemoteSimpleStorage;
 import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -45,14 +47,17 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
   private final PrivacyNode transactionNode;
 
   public PrivateContractPublicStateAcceptanceTest(
-      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
-    super(restriction, enclaveType);
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws IOException {
+    super(restriction, enclaveType, enclaveEncryptorType);
     final Network containerNetwork = Network.newNetwork();
 
     final PrivacyNode minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-miner-node",
-            privacyAccountResolver.resolve(0),
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
@@ -62,7 +67,7 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
     transactionNode =
         privacyBesu.createPrivateTransactionEnabledNode(
             restriction + "-transaction-node",
-            privacyAccountResolver.resolve(1),
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.of(containerNetwork),
             false,
