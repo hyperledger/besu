@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import java.util.Map;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 
 public class RollupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -33,11 +32,15 @@ public class RollupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final RollupMergeCoordinator mergeCoordinator;
   private final ProtocolContext protocolContext;
+  private final Vertx vertx;
 
   RollupJsonRpcMethods(
-      final MergeMiningCoordinator miningCoordinator, final ProtocolContext protocolContext) {
+      final MergeMiningCoordinator miningCoordinator,
+      final ProtocolContext protocolContext,
+      final Vertx vertx) {
     this.mergeCoordinator = (RollupMergeCoordinator) miningCoordinator;
     this.protocolContext = protocolContext;
+    this.vertx = vertx;
   }
 
   @Override
@@ -47,8 +50,7 @@ public class RollupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     return mapOf(
-        new RollupCreatePayload(syncVertx, protocolContext, mergeCoordinator, blockResultFactory));
+        new RollupCreatePayload(vertx, protocolContext, mergeCoordinator, blockResultFactory));
   }
 }
