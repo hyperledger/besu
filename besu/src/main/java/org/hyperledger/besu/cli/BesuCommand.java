@@ -607,7 +607,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new JsonRPCAllowlistHostsProperty();
 
     @Option(
-        names = {"--engine-rollup-extension-enabled"},
+        names = {"--Xengine-rollup-extension-enabled"},
         description = "Enables Rollup extension Engine APIs (default: ${DEFAULT-VALUE})")
     private final Boolean isEngineRollupExtensionEnabled = false;
   }
