@@ -3,6 +3,7 @@
 ## 22.7.1
 
 ### Additions and Improvements
+- Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
 
 ### Bug Fixes
 - Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
