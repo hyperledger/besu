@@ -72,7 +72,6 @@ public class TransientStorageOperationBenchmark {
     tstore = new TStoreOperation(gasCalculator);
     tload = new TLoadOperation(gasCalculator);
     frame = createMessageFrame(Address.fromHexString("0x18675309"));
-    // frame = operationBenchmarkHelper.createMessageFrame();
   }
 
   @TearDown
