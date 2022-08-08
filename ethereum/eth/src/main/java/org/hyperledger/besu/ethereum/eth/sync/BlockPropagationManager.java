@@ -193,7 +193,10 @@ public class BlockPropagationManager {
           .whenComplete(
               (r, t) -> {
                 if (r != null) {
-                  LOG.info("Imported {} pending blocks", r.size());
+                  LOG.info(
+                      "Imported {} pending blocks: {}",
+                      r.size(),
+                      r.stream().map(b -> b.getHeader().getNumber()).collect(Collectors.toList()));
                 }
                 if (t != null) {
                   LOG.error("Error importing pending blocks", t);
@@ -368,17 +371,14 @@ public class BlockPropagationManager {
     if (requestedBlocks.add(blockHeader.getParentHash())) {
       retrieveParentBlock(blockHeader);
     } else {
-      LOG.trace("Parent block with hash {} was already requested", blockHeader.getParentHash());
+      LOG.info("Parent block with hash {} was already requested", blockHeader.getParentHash());
     }
   }
 
   private CompletableFuture<Block> retrieveParentBlock(final BlockHeader blockHeader) {
     final long targetParentBlockNumber = blockHeader.getNumber() - 1L;
     final Hash targetParentBlockHash = blockHeader.getParentHash();
-    LOG.info(
-        "Retrieving parent {} of block #{} from peers",
-        targetParentBlockHash,
-        blockHeader.getNumber());
+    LOG.info("Retrieving parent {} of block {}", targetParentBlockHash, blockHeader.toLogString());
     return getBlockFromPeers(
         Optional.empty(), targetParentBlockNumber, Optional.of(targetParentBlockHash));
   }
@@ -438,7 +438,11 @@ public class BlockPropagationManager {
       if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
         // Block isn't connected to local chain, save it to pending blocks collection
         if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
-          LOG.info("Saving announced block {} for future import", block.toLogString());
+          LOG.info(
+              "Saved announced block for future import {} - ({}/{})",
+              block.toLogString(),
+              pendingBlocksManager.getPendingBlocks().size(),
+              pendingBlocksManager.getPendingBlocks().getCacheSizePerPeer());
         }
 
         // Request parent of the lowest announced block

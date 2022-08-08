@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public class PendingBlocksManager {
@@ -42,11 +43,10 @@ public class PendingBlocksManager {
   private final Map<Hash, Set<Hash>> pendingBlocksByParentHash = new ConcurrentHashMap<>();
 
   public PendingBlocksManager(final SynchronizerConfiguration synchronizerConfiguration) {
+    long cacheSize = Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
+        + Math.abs(synchronizerConfiguration.getBlockPropagationRange().upperEndpoint());
 
-    pendingBlocks =
-        new PendingBlockCache(
-            (Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
-                + Math.abs(synchronizerConfiguration.getBlockPropagationRange().upperEndpoint())));
+    pendingBlocks = new PendingBlockCache(cacheSize);
   }
 
   /**
@@ -106,6 +106,11 @@ public class PendingBlocksManager {
 
   public boolean contains(final Hash blockHash) {
     return pendingBlocks.containsKey(blockHash);
+  }
+
+  @VisibleForTesting
+  public PendingBlockCache getPendingBlocks() {
+    return pendingBlocks;
   }
 
   public List<Block> childrenOf(final Hash parentBlock) {

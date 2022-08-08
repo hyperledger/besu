@@ -333,6 +333,6 @@ public class BlockHeader extends SealableBlockHeader
   }
 
   public String toLogString() {
-    return getNumber() + " (" + getHash() + ")";
+    return String.format("#%d (%s)", getNumber(), getHash());
   }
 }

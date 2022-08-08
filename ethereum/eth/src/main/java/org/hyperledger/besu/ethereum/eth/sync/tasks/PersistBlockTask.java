@@ -217,13 +217,12 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
       final double timeInS = getTaskTimeInSec();
       LOG.info(
           String.format(
-              "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
-              block.getHeader().getNumber(),
+              "Imported %s / %d tx / %d om / %,d (%01.1f%%) gas in %01.3fs. Peers: %d",
+              block.getHeader().toLogString(),
               block.getBody().getTransactions().size(),
               block.getBody().getOmmers().size(),
               block.getHeader().getGasUsed(),
               (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-              block.getHash().toHexString(),
               timeInS,
               ethContext.getEthPeers().peerCount()));
     }
