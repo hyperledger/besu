@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration.FALLBACK_TTD_DEFAULT;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -44,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,6 +56,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -126,7 +127,12 @@ public class EngineExchangeTransitionConfigurationTest {
                 "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
-    assertThat(result.getTerminalTotalDifficulty()).isEqualTo(FALLBACK_TTD_DEFAULT);
+    assertThat(result.getTerminalTotalDifficulty())
+        .isEqualTo(
+            UInt256.valueOf(
+                new BigInteger(
+                    "115792089237316195423570985008687907853269984665640564039457584007913129638912",
+                    10)));
     assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
     assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
   }
