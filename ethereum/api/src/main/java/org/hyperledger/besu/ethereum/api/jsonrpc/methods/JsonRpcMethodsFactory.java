@@ -46,6 +46,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+
 public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
@@ -78,6 +81,7 @@ public class JsonRpcMethodsFactory {
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
       enabled.put(modules.getName(), modules);
+      Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
 
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
@@ -94,7 +98,7 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
-              new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext),
+              new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext, syncVertx),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(

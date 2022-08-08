@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 
 public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -37,15 +36,19 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
   private final ProtocolContext protocolContext;
+  private final Vertx syncVertx;
 
   ExecutionEngineJsonRpcMethods(
-      final MiningCoordinator miningCoordinator, final ProtocolContext protocolContext) {
+      final MiningCoordinator miningCoordinator,
+      final ProtocolContext protocolContext,
+      final Vertx vertx) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
             .map(MergeMiningCoordinator.class::cast);
 
     this.protocolContext = protocolContext;
+    this.syncVertx = vertx;
   }
 
   @Override
@@ -55,7 +58,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
     if (mergeCoordinator.isPresent()) {
       return mapOf(
           new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
