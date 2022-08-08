@@ -21,8 +21,10 @@ import static org.junit.runners.Parameterized.Parameters;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
@@ -80,21 +82,21 @@ public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTest
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "node1",
-            privacyAccountResolver.resolve(0),
+            PrivacyAccountResolver.ALICE.resolve(EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     bob =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "node2",
-            privacyAccountResolver.resolve(1),
+            PrivacyAccountResolver.BOB.resolve(EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
     charlie =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "node3",
-            privacyAccountResolver.resolve(2),
+            PrivacyAccountResolver.CHARLIE.resolve(EnclaveEncryptorType.NACL),
             false,
             enclaveType,
             Optional.of(containerNetwork));
