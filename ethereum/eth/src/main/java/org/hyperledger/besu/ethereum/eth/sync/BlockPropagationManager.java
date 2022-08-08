@@ -144,8 +144,9 @@ public class BlockPropagationManager {
 
   private void clearListeners() {
     onBlockAddedSId.ifPresent(id -> protocolContext.getBlockchain().removeObserver(id));
-    newBlockSId.ifPresent(id -> ethContext.getEthMessages().unsubsribe(id));
-    newBlockHashesSId.ifPresent(id -> ethContext.getEthMessages().unsubsribe(id));
+    newBlockSId.ifPresent(id -> ethContext.getEthMessages().unsubscribe(id, EthPV62.NEW_BLOCK));
+    newBlockHashesSId.ifPresent(
+        id -> ethContext.getEthMessages().unsubscribe(id, EthPV62.NEW_BLOCK_HASHES));
     onBlockAddedSId = Optional.empty();
     newBlockSId = Optional.empty();
     newBlockHashesSId = Optional.empty();

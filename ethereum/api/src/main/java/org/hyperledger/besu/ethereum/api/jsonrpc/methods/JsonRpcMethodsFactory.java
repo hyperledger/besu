@@ -96,6 +96,7 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
+              new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(
@@ -128,17 +129,12 @@ public class JsonRpcMethodsFactory {
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 
-      if (MergeConfigOptions.isMergeEnabled()) {
+      if (MergeConfigOptions.isRollupExtensionEnabled()) {
+        final TransitionCoordinator transitionCoordinator =
+            (TransitionCoordinator) miningCoordinator;
         enabled.putAll(
-            new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext).create(rpcApis));
-
-        if (MergeConfigOptions.isRollupExtensionEnabled()) {
-          final TransitionCoordinator transitionCoordinator =
-              (TransitionCoordinator) miningCoordinator;
-          enabled.putAll(
-              new RollupJsonRpcMethods(transitionCoordinator.getMergeCoordinator(), protocolContext)
-                  .create(rpcApis));
-        }
+            new RollupJsonRpcMethods(transitionCoordinator.getMergeCoordinator(), protocolContext)
+                .create(rpcApis));
       }
 
       for (final JsonRpcMethods apiGroup : availableApiGroups) {

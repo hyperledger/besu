@@ -106,11 +106,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     ethPeers.setBestChainComparator(mergeBestPeerComparator);
     mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
 
-    if (mergePeerFilter.isPresent()) {
+    Optional<MergePeerFilter> filterToUse = Optional.of(new MergePeerFilter());
 
-      mergeContext.observeNewIsPostMergeState(mergePeerFilter.get());
-      mergeContext.addNewForkchoiceMessageListener(mergePeerFilter.get());
+    if (mergePeerFilter.isPresent()) {
+      filterToUse = mergePeerFilter;
     }
+    mergeContext.observeNewIsPostMergeState(filterToUse.get());
+    mergeContext.addNewForkchoiceMessageListener(filterToUse.get());
 
     EthProtocolManager ethProtocolManager =
         super.createEthProtocolManager(
@@ -123,7 +125,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             ethMessages,
             scheduler,
             peerValidators,
-            mergePeerFilter);
+            filterToUse);
 
     return ethProtocolManager;
   }

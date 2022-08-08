@@ -22,5 +22,8 @@ import java.util.Optional;
 
 public interface MergeStateHandler {
 
-  void mergeStateChanged(final boolean isPoS, final Optional<Difficulty> difficultyStoppedAt);
+  void mergeStateChanged(
+      final boolean isPoS,
+      final Optional<Boolean> priorState,
+      final Optional<Difficulty> difficultyStoppedAt);
 }

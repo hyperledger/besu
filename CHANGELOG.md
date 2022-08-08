@@ -1,11 +1,48 @@
 # Changelog
 
+## 22.7.1
+
+### Additions and Improvements
+
+### Bug Fixes
+- Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
+
+
 ## 22.7.0
 
 ### Additions and Improvements
+- Deprecation warning for Ropsten, Rinkeby, Kiln [#4173](https://github.com/hyperledger/besu/pull/4173)
+
+### Bug Fixes 
+
+- Fixes previous known issue [#3890](https://github.com/hyperledger/besu/issues/3890)from RC3 requiring a restart post-merge to continue correct transaction handling.
+- Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
+- Upgrade Spotless to 6.8.0 [#4195](https://github.com/hyperledger/besu/pull/4195)
+- Upgrade Gradle to 7.5 [#4196](https://github.com/hyperledger/besu/pull/4196)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0/besu-22.7.0.tar.gz / sha256: `af21104a880c37706b660aa816e1c38b2b3f603a97420ddcbc889324b71aa50e`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0/besu-22.7.0.zip / sha256: `5b1586362e6e739c206c25224bb753a372bad70c0b22dbe091f9253024ebdc45`
+
+## 22.7.0-RC3
+
+### Known/Outstanding issues:
+- Besu requires a restart post-merge to re-enable remote transaction processing [#3890](https://github.com/hyperledger/besu/issues/3890)
+
+### Additions and Improvements
 - Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
+- Sepolia mergeNetSplit block [#4158](https://github.com/hyperledger/besu/pull/4158)
+- Goerli TTD [#4160](https://github.com/hyperledger/besu/pull/4160) 
+- Several logging improvements 
 
 ### Bug Fixes
+- Allow to set any value for baseFeePerGas in the genesis file [#4177](https://github.com/hyperledger/besu/pull/4177)
+- Fix for stack overflow when searching for TTD block [#4169](https://github.com/hyperledger/besu/pull/4169)
+- Fix for chain stuck issue [#4175](https://github.com/hyperledger/besu/pull/4175)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC3/besu-22.7.0-RC3.tar.gz / sha256: `6a1ee89c82db9fa782d34733d8a8c726670378bcb71befe013da48d7928490a6`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC3/besu-22.7.0-RC3.zip / sha256: `5de22445ab2a270cf33e1850cd28f1946442b7104738f0d1ac253a009c53414e`
 
 ## 22.7.0-RC2
 
@@ -35,8 +72,8 @@
 - Avoid starting or stopping the BlockPropagationManager more than once [#4122](https://github.com/hyperledger/besu/pull/4122)
 
 ### Download links
-- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.tar.gz / sha256: `//FIXME`
-- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.zip / sha256: `//FIXME`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.tar.gz / sha256: `befe15b893820c9c6451a74fd87b41f555ff28561494b3bebadd5da5c7ce25d3`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.zip / sha256: `d56c340f5982b882fbecca2697ca72a5bbefe0e978d2d4504211f012e2242a81`
 
 ## 22.7.0-RC1
 

@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
+import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
@@ -815,6 +816,8 @@ public abstract class AbstractBlockPropagationManagerTest {
     blockPropagationManager.start();
     syncState.setReachedTerminalDifficulty(true);
     assertThat(blockPropagationManager.isRunning()).isFalse();
+    assertThat(ethProtocolManager.ethContext().getEthMessages().messageCodesHandled())
+        .doesNotContain(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
   }
 
   @Test
