@@ -211,4 +211,4 @@ Xp2p-tls-crl-file="none.file"
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
 
-engine-rollup-extension-enabled=false
+Xengine-rollup-extension-enabled=false

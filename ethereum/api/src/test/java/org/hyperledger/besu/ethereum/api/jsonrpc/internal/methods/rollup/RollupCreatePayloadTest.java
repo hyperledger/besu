@@ -21,7 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.consensus.rollup.blockcreation.RollupMergeCoordinator;
 import org.hyperledger.besu.consensus.rollup.blockcreation.RollupMergeCoordinator.PayloadCreationResult;
@@ -71,7 +70,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -137,15 +135,12 @@ public class RollupCreatePayloadTest {
 
   @Mock private ProtocolContext protocolContext;
 
-  @Mock private MergeContext mergeContext;
-
   @Mock private RollupMergeCoordinator mergeCoordinator;
 
   @Mock private MutableBlockchain blockchain;
 
   @Before
   public void before() {
-    when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =
         new RollupCreatePayload(vertx, protocolContext, mergeCoordinator, new BlockResultFactory());
