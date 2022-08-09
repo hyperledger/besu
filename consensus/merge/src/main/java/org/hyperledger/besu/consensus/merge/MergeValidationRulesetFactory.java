@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator.
 
 import org.hyperledger.besu.consensus.merge.headervalidationrules.ConstantOmmersHashRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.IncrementalTimestampRule;
-import org.hyperledger.besu.consensus.merge.headervalidationrules.MergeUnfinalizedValidationRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.NoDifficultyRule;
 import org.hyperledger.besu.consensus.merge.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -70,7 +69,6 @@ public class MergeValidationRulesetFactory {
           .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
           .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
           .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)))
-          .addRule(new MergeUnfinalizedValidationRule())
           .addRule(new ConstantOmmersHashRule())
           .addRule(new NoNonceRule())
           .addRule(new NoDifficultyRule())
