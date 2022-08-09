@@ -69,7 +69,8 @@ public class BetterSyncTargetEvaluator {
             });
   }
 
-  boolean maybeApplyStabilityFilter(final EthPeer currentSyncTarget, final EthPeer bestPeer) {
+  private boolean maybeApplyStabilityFilter(
+      final EthPeer currentSyncTarget, final EthPeer bestPeer) {
     final ChainState currentPeerChainState = currentSyncTarget.chainState();
     final ChainHead localChainHead = protocolContext.getBlockchain().getChainHead();
 

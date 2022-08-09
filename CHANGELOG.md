@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
+- Always switch full sync target when local chain is close to chain head [#4236](https://github.com/hyperledger/besu/pull/4236)
 
 ### Bug Fixes
 - Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
