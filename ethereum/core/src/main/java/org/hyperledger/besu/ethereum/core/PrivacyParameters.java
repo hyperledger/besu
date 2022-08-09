@@ -339,7 +339,8 @@ public class PrivacyParameters {
     public Builder setPrivacyUserIdUsingFile(final File publicKeyFile) throws IOException {
       this.enclavePublicKeyFile = publicKeyFile;
       this.privacyUserId = Files.asCharSource(publicKeyFile, UTF_8).read();
-      validatePublicKey(publicKeyFile);
+      // throws exception if invalid base 64
+      Base64.getDecoder().decode(this.privacyUserId);
       return this;
     }
 
@@ -399,15 +400,6 @@ public class PrivacyParameters {
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
       config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;
-    }
-
-    private void validatePublicKey(final File publicKeyFile) {
-      if (publicKeyFile.length() != 44) {
-        throw new IllegalArgumentException(
-            "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
-      }
-      // throws exception if invalid base 64
-      Base64.getDecoder().decode(this.privacyUserId);
     }
   }
 }

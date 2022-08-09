@@ -29,7 +29,8 @@ public class RlpxConfiguration {
   private String clientId = "TestClient/1.0.0";
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
-  private int maxPeers = 25;
+  private int peerUpperBound = 100;
+  private int peerLowerBound = 64;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteWireConnectionsAllowed = DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
@@ -70,13 +71,13 @@ public class RlpxConfiguration {
     return this;
   }
 
-  public RlpxConfiguration setMaxPeers(final int peers) {
-    maxPeers = peers;
+  public RlpxConfiguration setPeerUpperBound(final int peers) {
+    peerUpperBound = peers;
     return this;
   }
 
-  public int getMaxPeers() {
-    return maxPeers;
+  public int getPeerUpperBound() {
+    return peerUpperBound;
   }
 
   public String getClientId() {
@@ -105,10 +106,10 @@ public class RlpxConfiguration {
 
   public int getMaxRemotelyInitiatedConnections() {
     if (!limitRemoteWireConnectionsEnabled) {
-      return maxPeers;
+      return peerUpperBound;
     }
 
-    return (int) Math.floor(maxPeers * fractionRemoteWireConnectionsAllowed);
+    return (int) Math.floor(peerUpperBound * fractionRemoteWireConnectionsAllowed);
   }
 
   @Override
@@ -135,5 +136,14 @@ public class RlpxConfiguration {
     sb.append(", bindPort=").append(bindPort);
     sb.append('}');
     return sb.toString();
+  }
+
+  public RlpxConfiguration setPeerLowerBound(final int peers) {
+    peerLowerBound = peers;
+    return this;
+  }
+
+  public int getPeerLowerBound() {
+    return peerLowerBound;
   }
 }
