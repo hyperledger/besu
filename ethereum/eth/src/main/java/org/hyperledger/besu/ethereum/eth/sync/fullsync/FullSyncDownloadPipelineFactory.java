@@ -111,6 +111,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new FullImportBlockStep(
             protocolSchedule, protocolContext, ethContext, fullSyncTerminationCondition);
 
+    LOG.debug("Returning new full sync pipeline");
+
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
             checkpointRangeSource,

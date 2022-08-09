@@ -159,10 +159,9 @@ public class PipelineChainDownloader implements ChainDownloader {
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
     debugLambda(
         LOG,
-        "Starting download pipeline for sync target {}, common ancestor {} ({})",
-        () -> target,
-        () -> target.commonAncestor().getNumber(),
-        () -> target.commonAncestor().getBlockHash());
+        "Starting download pipeline for sync target {}, common ancestor {}",
+        target::toString,
+        target.commonAncestor()::toLogString);
     currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
     return downloadPipelineFactory.startPipeline(
         scheduler, syncState, target, currentDownloadPipeline);

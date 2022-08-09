@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,10 +65,9 @@ class FullSyncTargetManager extends SyncTargetManager {
       return Optional.of(syncTarget);
     } else {
       LOG.warn(
-          "Disconnecting {} because world state is not available at common ancestor at block {} ({})",
+          "Disconnecting {} because world state is not available at common ancestor at block {}",
           syncTarget.peer(),
-          commonAncestor.getNumber(),
-          commonAncestor.getHash());
+          commonAncestor.toLogString());
       syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER);
       return Optional.empty();
     }
@@ -79,6 +80,7 @@ class FullSyncTargetManager extends SyncTargetManager {
       LOG.info(
           "No sync target, waiting for peers. Current peers: {}",
           ethContext.getEthPeers().peerCount());
+      fullLogPeers();
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
@@ -98,6 +100,18 @@ class FullSyncTargetManager extends SyncTargetManager {
           ethContext.getEthPeers().peerCount());
       return completedFuture(maybeBestPeer);
     }
+  }
+
+  private void fullLogPeers() {
+    traceLambda(
+        LOG,
+        "Current peers {}",
+        () ->
+            ethContext
+                .getEthPeers()
+                .streamAllPeers()
+                .map(EthPeer::toLogChainStateString)
+                .collect(Collectors.joining()));
   }
 
   private boolean isSyncTargetReached(final EthPeer peer) {

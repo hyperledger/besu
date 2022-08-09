@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -61,6 +63,7 @@ public abstract class SyncTargetManager {
             maybeBestPeer -> {
               if (maybeBestPeer.isPresent()) {
                 final EthPeer bestPeer = maybeBestPeer.get();
+                traceLambda(LOG, "Found sync target {}", bestPeer::toLogChainStateString);
                 return DetermineCommonAncestorTask.create(
                         protocolSchedule,
                         protocolContext,
@@ -79,13 +82,16 @@ public abstract class SyncTargetManager {
                     .thenCompose(
                         (target) -> {
                           if (target == null) {
+                            debugLambda(
+                                LOG, "Common ancestor not found with peer {}", bestPeer::toString);
                             return waitForPeerAndThenSetSyncTarget();
                           }
                           final SyncTarget syncTarget = new SyncTarget(bestPeer, target);
-                          LOG.debug(
+                          debugLambda(
+                              LOG,
                               "Found common ancestor with peer {} at block {}",
-                              bestPeer,
-                              target.getNumber());
+                              bestPeer::toString,
+                              target::toLogString);
                           return completedFuture(syncTarget);
                         })
                     .thenCompose(
@@ -106,10 +112,21 @@ public abstract class SyncTargetManager {
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
-    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> findSyncTarget());
+    return waitForNewPeer()
+        .handle(
+            (r, t) -> {
+              if (t != null) {
+                LOG.debug("Error while waiting for peers", t);
+              } else {
+                LOG.debug("Done waiting for peers {}", r);
+              }
+              return r;
+            })
+        .thenCompose(r -> findSyncTarget());
   }
 
   private CompletableFuture<?> waitForNewPeer() {
+    debugLambda(LOG, "Waiting 5 seconds at max for new peers before setting the sync target");
     return ethContext
         .getScheduler()
         .timeout(WaitForPeerTask.create(ethContext, metricsSystem), Duration.ofSeconds(5));
