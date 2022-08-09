@@ -19,6 +19,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -38,9 +41,12 @@ public class BetterSyncTargetEvaluatorTest {
   private static final int HEIGHT_THRESHOLD = 100;
   private static final int TD_THRESHOLD = 5;
   private final EthPeers ethPeers = mock(EthPeers.class);
+  private final ProtocolContext protocolContext = mock(ProtocolContext.class);
+  private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final EthPeer currentTarget = peer(CURRENT_TARGET_HEIGHT, CURRENT_TARGET_TD);
   private final BetterSyncTargetEvaluator evaluator =
       new BetterSyncTargetEvaluator(
+          protocolContext,
           SynchronizerConfiguration.builder()
               .downloaderChangeTargetThresholdByHeight(HEIGHT_THRESHOLD)
               .downloaderChangeTargetThresholdByTd(UInt256.valueOf(TD_THRESHOLD))
@@ -49,6 +55,7 @@ public class BetterSyncTargetEvaluatorTest {
 
   @Before
   public void setupMocks() {
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(ethPeers.getBestChainComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
   }
 
@@ -61,91 +68,125 @@ public class BetterSyncTargetEvaluatorTest {
 
   @Test
   public void shouldNotSwitchTargetWhenBestPeerHasLowerHeightAndDifficulty() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(-1, -1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldNotSwitchTargetWhenBestPeerHasSameHeightAndLowerDifficulty() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(0, -1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldNotSwitchTargetWhenBestPeerHasLowerHeightAndSameDifficulty() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(-1, 0);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldNotSwitchTargetWhenBestPeerHasGreaterHeightAndLowerDifficulty() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD + 1, -1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldNotSwitchTargetWhenBestPeerHasEqualHeightAndDifficulty() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(0, 0);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldNotSwitchWhenHeightAndTdHigherWithinThreshold() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD - 1, TD_THRESHOLD - 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldNotSwitchWhenHeightAndTdHigherEqualToThreshold() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD, TD_THRESHOLD);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldSwitchWhenHeightExceedsThresholdAndDifficultyEqual() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD + 1, 0);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
   @Test
   public void shouldSwitchWhenHeightExceedsThresholdAndDifficultyWithinThreshold() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD + 1, TD_THRESHOLD - 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
   @Test
   public void shouldSwitchWhenHeightAndDifficultyExceedThreshold() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD + 1, TD_THRESHOLD + 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
   @Test
   public void shouldNotSwitchWhenHeightExceedsThresholdButDifficultyIsLower() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD + 1, -1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isFalse();
   }
 
   @Test
   public void shouldSwitchWhenDifficultyExceedsThresholdAndHeightIsEqual() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(0, TD_THRESHOLD + 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
   @Test
   public void shouldSwitchWhenDifficultyExceedsThresholdAndHeightIsLower() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(-1, TD_THRESHOLD + 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
   @Test
   public void shouldSwitchWhenDifficultyExceedsThresholdAndHeightIsWithinThreshold() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD - 1, TD_THRESHOLD + 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
   @Test
   public void shouldSwitchWhenHeightAndDifficultyExceedsThreshold() {
+    setChainHead(0, Difficulty.ZERO);
     bestPeerWithDelta(HEIGHT_THRESHOLD + 1, TD_THRESHOLD + 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldAlwaysSwitchToBestPeerWhenHeightCloseToHead() {
+    final ChainState targetChainState = currentTarget.chainState();
+    setChainHead(
+        targetChainState.getEstimatedHeight() - 1, targetChainState.getEstimatedTotalDifficulty());
+    bestPeerWithDelta(1, 1);
+    assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
+  }
+
+  @Test
+  public void shouldAlwaysSwitchToBestPeerWhenTotalDifficultyCloseToHead() {
+    final ChainState targetChainState = currentTarget.chainState();
+    setChainHead(
+        targetChainState.getEstimatedHeight(),
+        targetChainState.getEstimatedTotalDifficulty().subtract(1));
+    bestPeerWithDelta(1, 1);
     assertThat(evaluator.shouldSwitchSyncTarget(currentTarget)).isTrue();
   }
 
@@ -162,5 +203,10 @@ public class BetterSyncTargetEvaluatorTest {
     chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
     return peer;
+  }
+
+  private void setChainHead(final long height, final Difficulty totalDofficulty) {
+    final ChainHead chainHead = new ChainHead(Hash.ZERO, totalDofficulty, height);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
   }
 }

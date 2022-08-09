@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -22,43 +27,108 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
 import java.util.Optional;
 
-public class BetterSyncTargetEvaluator {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class BetterSyncTargetEvaluator {
+  private static final Logger LOG = LoggerFactory.getLogger(BetterSyncTargetEvaluator.class);
+  private final ProtocolContext protocolContext;
   private final SynchronizerConfiguration config;
   private final EthPeers ethPeers;
 
   public BetterSyncTargetEvaluator(
-      final SynchronizerConfiguration config, final EthPeers ethPeers) {
+      final ProtocolContext protocolContext,
+      final SynchronizerConfiguration config,
+      final EthPeers ethPeers) {
+    this.protocolContext = protocolContext;
     this.config = config;
     this.ethPeers = ethPeers;
   }
 
   public boolean shouldSwitchSyncTarget(final EthPeer currentSyncTarget) {
-    final ChainState currentPeerChainState = currentSyncTarget.chainState();
     final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeer();
 
     return maybeBestPeer
         .map(
             bestPeer -> {
               if (ethPeers.getBestChainComparator().compare(bestPeer, currentSyncTarget) <= 0) {
-                // Our current target is better or equal to the best peer
+                debugLambda(
+                    LOG,
+                    "Our current target {} is better or equal to the best peer {}",
+                    currentSyncTarget::toLogChainStateString,
+                    bestPeer::toLogChainStateString);
                 return false;
               }
-              // Require some threshold to be exceeded before switching targets to keep some
-              // stability when multiple peers are in range of each other
-              final ChainState bestPeerChainState = bestPeer.chainState();
-              final Difficulty tdDifference =
-                  bestPeerChainState
-                      .getEstimatedTotalDifficulty()
-                      .subtract(currentPeerChainState.getBestBlock().getTotalDifficulty());
-              if (tdDifference.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0) {
-                return true;
-              }
-              final long heightDifference =
-                  bestPeerChainState.getEstimatedHeight()
-                      - currentPeerChainState.getEstimatedHeight();
-              return heightDifference > config.getDownloaderChangeTargetThresholdByHeight();
+
+              return maybeApplyStabilityFilter(currentSyncTarget, bestPeer);
             })
-        .orElse(false);
+        .orElseGet(
+            () -> {
+              LOG.debug("No best peer found");
+              return false;
+            });
+  }
+
+  boolean maybeApplyStabilityFilter(final EthPeer currentSyncTarget, final EthPeer bestPeer) {
+    final ChainState currentPeerChainState = currentSyncTarget.chainState();
+    final ChainHead localChainHead = protocolContext.getBlockchain().getChainHead();
+
+    // Only if far from target, require some threshold to be exceeded before switching
+    // targets to keep some stability when multiple peers are in range of each other
+    final ChainState bestPeerChainState = bestPeer.chainState();
+
+    final Difficulty tdGapFromChainHead =
+        bestPeerChainState
+            .getEstimatedTotalDifficulty()
+            .subtract(localChainHead.getTotalDifficulty());
+    final long heightGapFromChainHead =
+        bestPeerChainState.getEstimatedHeight() - localChainHead.getHeight();
+
+    traceLambda(
+        LOG,
+        "Distance from best peer {} is height {} total difficulty {}",
+        bestPeer::toLogChainStateString,
+        () -> heightGapFromChainHead,
+        tdGapFromChainHead::toShortHexString);
+
+    if (tdGapFromChainHead.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0
+        || heightGapFromChainHead > config.getDownloaderChangeTargetThresholdByHeight()) {
+      debugLambda(LOG, "We are far from chain head so apply the stability filter before switching");
+
+      final Difficulty tdDifference =
+          bestPeerChainState
+              .getEstimatedTotalDifficulty()
+              .subtract(currentPeerChainState.getBestBlock().getTotalDifficulty());
+
+      if (tdDifference.compareTo(config.getDownloaderChangeTargetThresholdByTd()) > 0) {
+        debugLambda(
+            LOG,
+            "Switch to best peer {}, since total difficulty difference {} is greather than threshold {}",
+            bestPeer::toLogChainStateString,
+            tdDifference::toShortHexString,
+            config.getDownloaderChangeTargetThresholdByTd()::toShortHexString);
+        return true;
+      }
+      final long heightDifference =
+          bestPeerChainState.getEstimatedHeight() - currentPeerChainState.getEstimatedHeight();
+      if (heightDifference > config.getDownloaderChangeTargetThresholdByHeight()) {
+        debugLambda(
+            LOG,
+            "Switch to best peer {}, since height difference {} is greather than threshold {}",
+            bestPeer::toLogChainStateString,
+            () -> heightDifference,
+            config::getDownloaderChangeTargetThresholdByHeight);
+        return true;
+      } else {
+        return false;
+      }
+
+    } else {
+      debugLambda(
+          LOG,
+          "We are close to chain head so switch the sync target to best peer {}",
+          bestPeer::toLogChainStateString);
+      return true;
+    }
   }
 }

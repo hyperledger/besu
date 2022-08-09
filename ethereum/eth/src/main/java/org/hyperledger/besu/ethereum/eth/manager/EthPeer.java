@@ -561,6 +561,10 @@ public class EthPeer implements Comparable<EthPeer> {
         connection.getPeer().getEnodeURLString());
   }
 
+  public String toLogChainStateString() {
+    return getShortNodeId() + " (" + chainState().toString() + ")";
+  }
+
   @Nonnull
   public String getShortNodeId() {
     return nodeId().toString().substring(0, 20);

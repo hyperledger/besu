@@ -67,7 +67,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
     this.fullSyncTerminationCondition = syncTerminationCondition;
-    betterSyncTargetEvaluator = new BetterSyncTargetEvaluator(syncConfig, ethContext.getEthPeers());
+    betterSyncTargetEvaluator =
+        new BetterSyncTargetEvaluator(protocolContext, syncConfig, ethContext.getEthPeers());
   }
 
   @Override
@@ -137,10 +138,10 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         peer.chainState().getEstimatedHeight() <= lastCheckpointHeader.getNumber();
     final boolean isDisconnected = peer.isDisconnected();
     final boolean shouldSwitchSyncTarget = betterSyncTargetEvaluator.shouldSwitchSyncTarget(peer);
-    LOG.debug(
-        "shouldTerminate {}, shouldContinueDownloadingFromPeer? {}, disconnected {}, caughtUp {}, shouldSwitchSyncTarget {}",
-        shouldTerminate,
+    LOG.trace(
+        "shouldContinueDownloadingFromPeer? {}, shouldTerminate {}, disconnected {}, caughtUp {}, shouldSwitchSyncTarget {}",
         peer,
+        shouldTerminate,
         isDisconnected,
         caughtUpToPeer,
         shouldSwitchSyncTarget);
