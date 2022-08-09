@@ -161,6 +161,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .build();
 
     final int maxPeers = 25;
+    final int minPeers = 25;
 
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
@@ -198,6 +199,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .p2pAdvertisedHost(node.getHostName())
         .p2pListenPort(0)
         .maxPeers(maxPeers)
+        .minPeers(minPeers)
         .networkingConfiguration(node.getNetworkingConfiguration())
         .jsonRpcConfiguration(node.jsonRpcConfiguration())
         .webSocketConfiguration(node.webSocketConfiguration())

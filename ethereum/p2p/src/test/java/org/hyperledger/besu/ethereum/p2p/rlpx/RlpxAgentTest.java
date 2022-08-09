@@ -85,7 +85,7 @@ public class RlpxAgentTest {
   public void setup() {
     // Set basic defaults
     when(peerPrivileges.canExceedConnectionLimits(any())).thenReturn(false);
-    config.setMaxPeers(5);
+    config.setPeerUpperBound(5);
   }
 
   @Test
@@ -283,7 +283,7 @@ public class RlpxAgentTest {
   @Test
   public void connect_failsWhenMaxPeersConnected() {
     // Saturate connections
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
     agent.connect(createPeer());
 
     final Peer peer = createPeer();
@@ -303,7 +303,7 @@ public class RlpxAgentTest {
   public void incomingConnection_maxPeersExceeded()
       throws ExecutionException, InterruptedException {
     // Saturate connections
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
     final Peer existingPeer = createPeer();
     final PeerConnection existingConnection = agent.connect(existingPeer).get();
     // Sanity check
@@ -329,7 +329,8 @@ public class RlpxAgentTest {
   public void incomingConnection_succeedsEventuallyWithRandomPeerPrioritization() {
     // Saturate connections with one local and one remote
     final int maxPeers = 25;
-    startAgentWithMaxPeers(
+    startAgentWithLowerBoundPeers(
+        maxPeers,
         maxPeers,
         builder -> builder.randomPeerPriority(true),
         rlpxConfiguration -> rlpxConfiguration.setLimitRemoteWireConnectionsEnabled(false));
@@ -374,7 +375,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // Connect max remote peers
     for (int i = 0; i < maxRemotePeers; i++) {
@@ -398,7 +399,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // Connect max remote peers
     for (int i = 0; i < maxRemotePeers; i++) {
@@ -424,7 +425,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = 1.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // Connect max remote peers
     for (int i = 0; i < maxPeers; i++) {
@@ -441,7 +442,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = 1.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // Connect max peers locally
     for (int i = 0; i < maxPeers; i++) {
@@ -459,7 +460,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = 0.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // First remote connection should be rejected
     final Peer remotelyInitiatedPeer = createPeer();
@@ -474,7 +475,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = 0.0f;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // Connect max local peers
     for (int i = 0; i < maxPeers; i++) {
@@ -493,7 +494,7 @@ public class RlpxAgentTest {
     final float maxRemotePeersFraction = (float) maxRemotePeers / (float) maxPeers;
     config.setLimitRemoteWireConnectionsEnabled(true);
     config.setFractionRemoteWireConnectionsAllowed(maxRemotePeersFraction);
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
 
     // Connect max remote peers
     for (int i = 0; i < maxRemotePeers; i++) {
@@ -530,7 +531,7 @@ public class RlpxAgentTest {
     connectionInitializer.setAutocompleteConnections(false);
 
     // Saturate connections
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
     final CompletableFuture<PeerConnection> existingConnectionFuture = agent.connect(createPeer());
     connectionInitializer.completePendingFutures();
     final MockPeerConnection existingConnection =
@@ -557,7 +558,7 @@ public class RlpxAgentTest {
     // successfully added to the internal connections set. This mimics async production behavior.
     connectionInitializer.setAutocompleteConnections(false);
 
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
     final Peer peerA = createPeer();
     final Peer peerB = createPeer();
     when(peerPrivileges.canExceedConnectionLimits(peerA)).thenReturn(true);
@@ -588,7 +589,7 @@ public class RlpxAgentTest {
     when(peerPrivileges.canExceedConnectionLimits(peerB)).thenReturn(true);
 
     // Saturate connections
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
 
     // Add existing peer
     final MockPeerConnection existingConnection = (MockPeerConnection) agent.connect(peerA).get();
@@ -615,7 +616,7 @@ public class RlpxAgentTest {
     when(peerPrivileges.canExceedConnectionLimits(peerA)).thenReturn(true);
 
     // Saturate connections
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
 
     // Add existing peer
     final PeerConnection existingConnection = agent.connect(peerA).get();
@@ -643,7 +644,7 @@ public class RlpxAgentTest {
     when(peerPrivileges.canExceedConnectionLimits(peerB)).thenReturn(true);
 
     // Saturate connections
-    startAgentWithMaxPeers(1);
+    startAgentWithLowerBoundPeers(1);
 
     // Add existing peer
     final CompletableFuture<PeerConnection> existingConnection = agent.connect(peerA);
@@ -702,7 +703,7 @@ public class RlpxAgentTest {
     final int maxPeers = 5;
     final Stream<Peer> peerStream = Stream.generate(PeerTestHelper::createPeer).limit(20);
 
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
     agent = spy(agent);
     agent.connect(peerStream);
 
@@ -712,13 +713,27 @@ public class RlpxAgentTest {
   }
 
   @Test
+  public void connect_largeStreamOfPeersWithMinAndMaxPeers() {
+    final int minPeers = 5;
+    final Stream<Peer> peerStream = Stream.generate(PeerTestHelper::createPeer).limit(20);
+
+    startAgentWithLowerBoundPeers(minPeers, minPeers + 5);
+    agent = spy(agent);
+    agent.connect(peerStream);
+
+    assertThat(agent.getConnectionCount()).isEqualTo(minPeers);
+    // Check that stream was not fully iterated
+    verify(agent, times(minPeers)).connect(any(Peer.class));
+  }
+
+  @Test
   public void connect_largeStreamOfPeersFirstFewImpostors() {
     final int maxPeers = 5;
     final int impostorsCount = 5;
     connectionInitializer.setAutoDisconnectCounter(impostorsCount);
     final Stream<Peer> peerStream = Stream.generate(PeerTestHelper::createPeer).limit(20);
 
-    startAgentWithMaxPeers(maxPeers);
+    startAgentWithLowerBoundPeers(maxPeers);
     agent = spy(agent);
     agent.connect(peerStream);
 
@@ -1020,15 +1035,21 @@ public class RlpxAgentTest {
     startAgent(Peer.randomId());
   }
 
-  private void startAgentWithMaxPeers(final int maxPeers) {
-    startAgentWithMaxPeers(maxPeers, Function.identity(), __ -> {});
+  private void startAgentWithLowerBoundPeers(final int lowerBound, final int upperBound) {
+    startAgentWithLowerBoundPeers(lowerBound, upperBound, Function.identity(), __ -> {});
   }
 
-  private void startAgentWithMaxPeers(
-      final int maxPeers,
+  private void startAgentWithLowerBoundPeers(final int lowerBound) {
+    startAgentWithLowerBoundPeers(lowerBound, lowerBound, Function.identity(), __ -> {});
+  }
+
+  private void startAgentWithLowerBoundPeers(
+      final int lowerBound,
+      final int upperBound,
       final Function<RlpxAgent.Builder, RlpxAgent.Builder> buildCustomization,
       final Consumer<RlpxConfiguration> rlpxConfigurationModifier) {
-    config.setMaxPeers(maxPeers);
+    config.setPeerLowerBound(lowerBound);
+    config.setPeerUpperBound(upperBound);
     agent = agent(buildCustomization, rlpxConfigurationModifier);
     startAgent();
   }
