@@ -133,6 +133,16 @@ public class PendingBlocksManager {
         .min(Comparator.comparing(BlockHeader::getNumber));
   }
 
+  public Optional<Block> pendingAncestorBlockOf(final Block block) {
+    if (block == null) {
+      return Optional.empty();
+    }
+    if (pendingBlocks.containsKey(block.getHeader().getParentHash())) {
+      return pendingAncestorBlockOf(pendingBlocks.get(block.getHeader().getParentHash()).block());
+    }
+    return Optional.of(block);
+  }
+
   @Override
   public String toString() {
     return "PendingBlocksManager{"
