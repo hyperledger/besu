@@ -287,6 +287,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
+  private final RollupOptions unstableRollupOptions = RollupOptions.create();
 
   // stable CLI options
   private final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -606,8 +607,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         defaultValue = "localhost,127.0.0.1")
     private final JsonRPCAllowlistHostsProperty engineHostsAllowlist =
         new JsonRPCAllowlistHostsProperty();
-
-    private final RollupOptions unstableRollupOptions = RollupOptions.create();
   }
 
   // JSON-RPC HTTP Options
@@ -756,6 +755,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   JsonRPCWebsocketOptionGroup jsonRPCWebsocketOptionGroup = new JsonRPCWebsocketOptionGroup();
 
   static class JsonRPCWebsocketOptionGroup {
+
     @Option(
         names = {"--rpc-ws-authentication-jwt-algorithm"},
         description =
@@ -1520,7 +1520,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
-            .put("Rollup Options", engineRPCOptionGroup.unstableRollupOptions)
+            .put("Rollup Options", unstableRollupOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -2134,7 +2134,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
       final Integer listenPort, final List<String> allowCallsFrom) {
     List<String> apiGroups = new ArrayList<>(List.of(RpcApis.ENGINE.name(), RpcApis.ETH.name()));
-    if (engineRPCOptionGroup.unstableRollupOptions.isEngineRollupExtensionEnabled()) {
+    if (unstableRollupOptions.isEngineRollupExtensionEnabled()) {
       apiGroups.add(RpcApis.ROLLUP.name());
     }
     JsonRpcConfiguration engineConfig = jsonRpcConfiguration(listenPort, apiGroups, allowCallsFrom);
@@ -3222,7 +3222,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .isPresent());
 
     MergeConfigOptions.setRollupExtensionEnabled(
-        engineRPCOptionGroup.unstableRollupOptions.isEngineRollupExtensionEnabled());
+        unstableRollupOptions.isEngineRollupExtensionEnabled());
   }
 
   private boolean isMergeEnabled() {
