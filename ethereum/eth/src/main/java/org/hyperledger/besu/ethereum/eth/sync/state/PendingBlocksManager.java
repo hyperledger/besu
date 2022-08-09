@@ -131,6 +131,12 @@ public class PendingBlocksManager {
         .min(Comparator.comparing(BlockHeader::getNumber));
   }
 
+  /**
+   * Get the lowest pending ancestor block saved for a block
+   *
+   * @param block target block
+   * @return An optional with the lowest ancestor pending block
+   */
   public Optional<Block> pendingAncestorBlockOf(final Block block) {
     if (block == null) {
       return Optional.empty();
