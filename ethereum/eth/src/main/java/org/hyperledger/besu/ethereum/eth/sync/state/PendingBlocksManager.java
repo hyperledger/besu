@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public class PendingBlocksManager {
@@ -109,9 +108,8 @@ public class PendingBlocksManager {
     return pendingBlocks.containsKey(blockHash);
   }
 
-  @VisibleForTesting
-  public PendingBlockCache getPendingBlocks() {
-    return pendingBlocks;
+  public int size() {
+    return pendingBlocks.size();
   }
 
   public List<Block> childrenOf(final Hash parentBlock) {

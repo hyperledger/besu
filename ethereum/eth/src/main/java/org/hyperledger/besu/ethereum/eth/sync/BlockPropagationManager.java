@@ -489,10 +489,9 @@ public class BlockPropagationManager {
       // Save pending block
       if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
         LOG.info(
-            "Saved announced block for future import {} - ({}/{})",
+            "Saved announced block for future import {} -  {} saved block(s)",
             block.toLogString(),
-            pendingBlocksManager.getPendingBlocks().size(),
-            pendingBlocksManager.getPendingBlocks().getCacheSizePerPeer());
+            pendingBlocksManager.size());
       }
 
       // Try to get the lowest ancestor pending for this block, so we can import it
