@@ -24,12 +24,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class RollupAcceptanceTest extends ExecutionEngineAbstractJsonRpcTest {
+public class RollupAcceptanceTest extends AbstractJsonRpcTest {
 
   private static final String GENESIS_FILE = "/jsonrpc/rollup/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/rollup/test-cases/";
 
-  private static ExecutionEngineJsonTestsContext testsContext;
+  private static JsonRpcTestsContext testsContext;
 
   public RollupAcceptanceTest(final String ignored, final URI testCaseFileURI) {
     super(ignored, testsContext, testCaseFileURI);
@@ -37,12 +37,12 @@ public class RollupAcceptanceTest extends ExecutionEngineAbstractJsonRpcTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    testsContext = new ExecutionEngineJsonTestsContext(GENESIS_FILE);
+    testsContext = new JsonRpcTestsContext(GENESIS_FILE);
   }
 
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> testCases() throws URISyntaxException {
-    return ExecutionEngineAbstractJsonRpcTest.testCases(TEST_CASE_PATH);
+    return AbstractJsonRpcTest.testCases(TEST_CASE_PATH);
   }
 
   @AfterClass

@@ -39,17 +39,17 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Test;
 
-abstract class ExecutionEngineAbstractJsonRpcTest {
+abstract class AbstractJsonRpcTest {
   private static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
-  static class ExecutionEngineJsonTestsContext {
+  static class JsonRpcTestsContext {
     final Cluster cluster;
     final BesuNode executionEngine;
     final OkHttpClient consensusClient;
     final ObjectMapper mapper;
 
-    public ExecutionEngineJsonTestsContext(final String genesisFile) throws IOException {
+    public JsonRpcTestsContext(final String genesisFile) throws IOException {
       cluster = new Cluster(new NetConditions(new NetTransactions()));
       executionEngine =
           new BesuNodeFactory().createExecutionEngineGenesisNode("executionEngine", genesisFile);
@@ -64,13 +64,11 @@ abstract class ExecutionEngineAbstractJsonRpcTest {
     }
   }
 
-  private final ExecutionEngineJsonTestsContext testsContext;
+  private final JsonRpcTestsContext testsContext;
   private final URI testCaseFileURI;
 
-  public ExecutionEngineAbstractJsonRpcTest(
-      final String ignored,
-      final ExecutionEngineJsonTestsContext testsContext,
-      final URI testCaseFileURI) {
+  public AbstractJsonRpcTest(
+      final String ignored, final JsonRpcTestsContext testsContext, final URI testCaseFileURI) {
     this.testCaseFileURI = testCaseFileURI;
     this.testsContext = testsContext;
   }
@@ -95,8 +93,7 @@ abstract class ExecutionEngineAbstractJsonRpcTest {
   public static Iterable<Object[]> testCases(final String testCasesPath) throws URISyntaxException {
 
     final File[] testCasesList =
-        new File(ExecutionEngineAbstractJsonRpcTest.class.getResource(testCasesPath).toURI())
-            .listFiles();
+        new File(AbstractJsonRpcTest.class.getResource(testCasesPath).toURI()).listFiles();
 
     return Arrays.stream(testCasesList)
         .sorted()
