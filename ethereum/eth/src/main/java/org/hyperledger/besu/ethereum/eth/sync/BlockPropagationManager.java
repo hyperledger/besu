@@ -489,7 +489,7 @@ public class BlockPropagationManager {
       // Save pending block
       if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
         LOG.info(
-            "Saved announced block for future import {} -  {} saved block(s)",
+            "Saved announced block for future import {} - {} saved block(s)",
             block.toLogString(),
             pendingBlocksManager.size());
       }
