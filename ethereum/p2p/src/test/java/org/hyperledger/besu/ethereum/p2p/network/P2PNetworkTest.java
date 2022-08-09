@@ -132,7 +132,7 @@ public class P2PNetworkTest {
             .setRlpx(
                 RlpxConfiguration.create()
                     .setBindPort(0)
-                    .setMaxPeers(maxPeers)
+                    .setPeerUpperBound(maxPeers)
                     .setSupportedProtocols(subProtocol()));
     try (final P2PNetwork listener = builder().nodeKey(nodeKey).config(listenerConfig).build();
         final P2PNetwork connector1 = builder().build();

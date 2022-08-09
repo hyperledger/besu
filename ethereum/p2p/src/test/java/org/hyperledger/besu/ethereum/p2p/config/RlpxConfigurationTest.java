@@ -26,7 +26,7 @@ public class RlpxConfigurationTest {
         RlpxConfiguration.create()
             .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(false)
-            .setMaxPeers(20);
+            .setPeerUpperBound(20);
 
     assertThat(config.getMaxRemotelyInitiatedConnections()).isEqualTo(20);
   }
@@ -37,7 +37,7 @@ public class RlpxConfigurationTest {
         RlpxConfiguration.create()
             .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(true)
-            .setMaxPeers(20);
+            .setPeerUpperBound(20);
 
     assertThat(config.getMaxRemotelyInitiatedConnections()).isEqualTo(10);
   }
@@ -48,7 +48,7 @@ public class RlpxConfigurationTest {
         RlpxConfiguration.create()
             .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(true)
-            .setMaxPeers(25);
+            .setPeerUpperBound(25);
 
     assertThat(config.getMaxRemotelyInitiatedConnections()).isEqualTo(12);
   }
@@ -59,7 +59,7 @@ public class RlpxConfigurationTest {
         RlpxConfiguration.create()
             .setFractionRemoteWireConnectionsAllowed(.5f)
             .setLimitRemoteWireConnectionsEnabled(true)
-            .setMaxPeers(1);
+            .setPeerUpperBound(1);
 
     assertThat(config.getMaxRemotelyInitiatedConnections()).isEqualTo(0);
   }
