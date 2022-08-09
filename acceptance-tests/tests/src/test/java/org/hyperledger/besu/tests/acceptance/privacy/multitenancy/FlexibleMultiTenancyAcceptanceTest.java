@@ -28,6 +28,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningT
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.acceptance.privacy.FlexiblePrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.math.BigInteger;
@@ -73,7 +74,11 @@ public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanc
   public void setUp() throws Exception {
     alice =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
-            "node1", PrivacyAccountResolver.MULTI_TENANCY, true, enclaveType, Optional.empty());
+            "node1",
+            PrivacyAccountResolver.MULTI_TENANCY.resolve(EnclaveEncryptorType.NACL),
+            true,
+            enclaveType,
+            Optional.empty());
     final BesuNode aliceBesu = alice.getBesu();
     privacyCluster.startNodes(alice);
     final String alice1Token =
