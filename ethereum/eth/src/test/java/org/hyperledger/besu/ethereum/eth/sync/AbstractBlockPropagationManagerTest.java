@@ -641,7 +641,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     // test if block propagation manager can recover if one block is missed
 
     blockchainUtil.importFirstBlocks(2);
-    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 4);
+    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 6);
 
     blockPropagationManager.start();
 
@@ -649,14 +649,8 @@ public abstract class AbstractBlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
-    // skip first block then create messages from blocklist
-    blocks.stream()
-        .skip(1)
-        .map(this::createNewBlockHashMessage)
-        .forEach(
-            message -> { // Broadcast new block hash message
-              EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, message);
-            });
+    EthProtocolManagerTestUtil.broadcastMessage(
+        ethProtocolManager, peer, createNewBlockHashMessage(blocks.get(3)));
 
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 

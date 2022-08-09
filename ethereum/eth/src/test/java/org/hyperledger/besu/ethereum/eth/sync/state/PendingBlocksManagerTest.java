@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -258,5 +259,39 @@ public class PendingBlocksManagerTest {
     pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
 
     assertThat(pendingBlocksManager.lowestAnnouncedBlock()).contains(parentBlock.getHeader());
+  }
+
+  @Test
+  public void shouldReturnLowestAncestorPendingBlock() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block parentBlock = gen.block();
+
+    final Block childBlock = gen.nextBlock(parentBlock);
+    final Block childBlock2 = gen.nextBlock(childBlock);
+    final Block childBlock3 = gen.nextBlock(childBlock2);
+
+    pendingBlocksManager.registerPendingBlock(parentBlock, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(childBlock3, NODE_ID_1);
+
+    Optional<Block> block = pendingBlocksManager.pendingAncestorBlockOf(childBlock3);
+    assertThat(block.isPresent()).isTrue();
+    assertThat(block.get().getHeader().getHash()).isEqualTo(childBlock2.getHeader().getHash());
+    assertThat(block.get().getHeader().getParentHash()).isEqualTo(childBlock.getHeader().getHash());
+  }
+
+  @Test
+  public void shouldReturnLowestAncestorPendingBlock_sameBlock() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block block = gen.block();
+    pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
+    Optional<Block> b = pendingBlocksManager.pendingAncestorBlockOf(block);
+    assertThat(b).contains(block);
+  }
+
+  @Test
+  public void shouldReturnLowestAncestorPendingBlock_null() {
+    Optional<Block> block = pendingBlocksManager.pendingAncestorBlockOf(null);
+    assertThat(block).isEmpty();
   }
 }
