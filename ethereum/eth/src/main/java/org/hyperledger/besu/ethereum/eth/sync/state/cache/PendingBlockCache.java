@@ -72,8 +72,4 @@ public class PendingBlockCache extends ConcurrentHashMap<Hash, ImmutablePendingB
   private Comparator<ImmutablePendingBlock> getComparatorByTimeStamp() {
     return Comparator.comparing(s -> s.block().getHeader().getTimestamp());
   }
-
-  public long getCacheSizePerPeer() {
-    return cacheSizePerPeer;
-  }
 }
