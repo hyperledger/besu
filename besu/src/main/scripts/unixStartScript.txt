@@ -188,7 +188,6 @@ if [ "\$darwin" = "false" -a "\$msys" = "false" ]; then
 
   # if jemalloc is available the output is empty, otherwise the output has an error line
   if [ -z "\$TEST_JEMALLOC" ]; then
-    echo "INFO: Enabling jemalloc."
     export LD_PRELOAD=libjemalloc.so
   else
     echo "INFO: jemalloc not found, you could improve memory usage installing it."

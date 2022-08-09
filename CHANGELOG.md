@@ -7,6 +7,7 @@
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
 - Improve pending blocks retrieval mechanism [#4227](https://github.com/hyperledger/besu/pull/4227)
 - set mainnet terminal total difficulty [#4260](https://github.com/hyperledger/besu/pull/4260)
+- Better management of jemalloc presence/absence in startup script [#4237](https://github.com/hyperledger/besu/pull/4237)
 
 ### Bug Fixes
 - Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
