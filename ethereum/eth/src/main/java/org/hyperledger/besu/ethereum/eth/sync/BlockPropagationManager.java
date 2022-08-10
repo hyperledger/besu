@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
+import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -22,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -29,7 +32,9 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -45,6 +50,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,8 +58,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -396,7 +404,119 @@ public class BlockPropagationManager {
   private CompletableFuture<Block> getBlockFromPeers(
       final Optional<EthPeer> preferredPeer,
       final long blockNumber,
-      final Optional<Hash> blockHash) {
+      final Optional<Hash> maybeBlockHash) {
+    return repeatableGetBlockFromPeer(preferredPeer, blockNumber, maybeBlockHash)
+        .whenComplete(
+            (block, throwable) -> {
+              if (throwable != null) {
+                LOG.warn(
+                    "Failed to retrieve block "
+                        + blockNumber
+                        + maybeBlockHash.map(h -> " (" + h + ")").orElse(""),
+                    throwable);
+              }
+              requestedNonAnnouncedBlocks.remove(blockNumber);
+              if (block != null) {
+                debugLambda(LOG, "Successfully retrieved block {}", block::toLogString);
+                maybeBlockHash.ifPresentOrElse(
+                    requestedBlocks::remove,
+                    () ->
+                        // in case we successfully retrieved only by block number, when can remove
+                        // the request by hash too
+                        requestedBlocks.remove(block.getHash()));
+              } else {
+                // this could happen if we give up at some point since we find that it make no sense
+                // to retry
+                debugLambda(LOG, "Block {} not retrieved", block::toLogString);
+              }
+            });
+  }
+
+  private CompletableFuture<Block> repeatableGetBlockFromPeer(
+      final Optional<EthPeer> preferredPeer,
+      final long blockNumber,
+      final Optional<Hash> maybeBlockHash) {
+    return exceptionallyCompose(
+            scheduleGetBlockFromPeers(preferredPeer, blockNumber, maybeBlockHash),
+            handleGetBlockErrors(blockNumber, maybeBlockHash))
+        .thenCompose(r -> maybeRepeatGetBlock(blockNumber, maybeBlockHash));
+  }
+
+  private Function<Throwable, CompletionStage<Block>> handleGetBlockErrors(
+      final long blockNumber, final Optional<Hash> maybeBlockHash) {
+    return throwable -> {
+      debugLambda(
+          LOG,
+          "Temporary failure retrieving block {} from peers with error {}",
+          () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
+          throwable::toString);
+      return CompletableFuture.completedFuture(null);
+    };
+  }
+
+  private CompletableFuture<Block> maybeRepeatGetBlock(
+      final long blockNumber, final Optional<Hash> maybeBlockHash) {
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final Optional<Block> maybeBlock =
+        maybeBlockHash
+            .map(hash -> blockchain.getBlockByHash(hash))
+            .orElseGet(() -> blockchain.getBlockByNumber(blockNumber));
+
+    // check if we got this block by other means
+    if (maybeBlock.isPresent()) {
+      final Block block = maybeBlock.get();
+      debugLambda(
+          LOG, "No need to retry to get block {} since it is already present", block::toLogString);
+      return CompletableFuture.completedFuture(block);
+    }
+
+    long distanceFromChainHead = blockNumber - blockchain.getChainHeadBlockNumber();
+    if (!config.getBlockPropagationRange().contains(distanceFromChainHead)) {
+      debugLambda(
+          LOG,
+          "Not retrying to get block {} since we are too far from local chain head {}",
+          () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
+          blockchain.getChainHead()::toLogString);
+      return CompletableFuture.completedFuture(null);
+    }
+
+    debugLambda(
+        LOG,
+        "Retrying to get block {}",
+        () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
+
+    EthPeers peers = ethContext.getEthPeers();
+    // If we are at max connections, then refresh peers disconnecting the least useful
+    if (peers.peerCount() >= peers.getMaxPeers()) {
+      peers
+          .streamAvailablePeers()
+          .sorted(peers.getBestChainComparator())
+          .findFirst()
+          .ifPresent(
+              peer -> {
+                debugLambda(
+                    LOG, "Refresh peers disconnecting least useful peer {}", peer::toString);
+                peer.disconnect(DisconnectReason.USELESS_PEER);
+              });
+
+      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
+      return ethContext
+          .getScheduler()
+          .timeout(waitTask, Duration.ofSeconds(5))
+          .thenCompose(
+              r -> scheduleGetBlockFromPeers(Optional.empty(), blockNumber, maybeBlockHash));
+    }
+
+    return ethContext
+        .getScheduler()
+        .scheduleSyncWorkerTask(
+            () -> scheduleGetBlockFromPeers(Optional.empty(), blockNumber, maybeBlockHash));
+  }
+
+  private CompletableFuture<Block> scheduleGetBlockFromPeers(
+      final Optional<EthPeer> maybePreferredPeer,
+      final long blockNumber,
+      final Optional<Hash> maybeBlockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
             protocolContext,
@@ -404,27 +524,14 @@ public class BlockPropagationManager {
             ethContext,
             metricsSystem,
             ethContext.getEthPeers().getMaxPeers(),
-            blockHash,
+            maybeBlockHash,
             blockNumber);
-    preferredPeer.ifPresent(getBlockTask::assignPeer);
+    maybePreferredPeer.ifPresent(getBlockTask::assignPeer);
 
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(getBlockTask::run)
-        .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()))
-        .whenComplete(
-            (r, t) -> {
-              requestedNonAnnouncedBlocks.remove(blockNumber);
-              blockHash.ifPresentOrElse(
-                  requestedBlocks::remove,
-                  () -> {
-                    if (r != null) {
-                      // in case we successfully retrieved only by block number, when can remove
-                      // the request by hash too
-                      requestedBlocks.remove(r.getHash());
-                    }
-                  });
-            });
+        .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -601,5 +708,10 @@ public class BlockPropagationManager {
         + ", pendingBlocksManager="
         + pendingBlocksManager
         + '}';
+  }
+
+  private String logBlockNumberMaybeHash(
+      final long blockNumber, final Optional<Hash> maybeBlockHash) {
+    return blockNumber + maybeBlockHash.map(h -> " (" + h + ")").orElse("");
   }
 }
