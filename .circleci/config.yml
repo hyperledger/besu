@@ -295,13 +295,12 @@ jobs:
 
   buildArm64Docker:
     executor: besu_executor_med
-    environment:
-      architecture: "arm64"
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: hadoLint_openjdk_11
           command: |
@@ -317,10 +316,12 @@ jobs:
       - run:
           name: build image
           command: |
+            export architecture="arm64"
             ./gradlew --no-daemon distDocker
       - run:
           name: test image
           command: |
+            export architecture="arm64"
             mkdir -p docker/reports
             curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
             ./gradlew --no-daemon testDocker

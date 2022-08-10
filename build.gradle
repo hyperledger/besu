@@ -622,6 +622,7 @@ tasks.register("dockerDistUntar") {
 task distDocker {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
+  def architecture = System.getenv('architecture')
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerBuildDir = "build/docker-besu/"
   def imageName = "hyperledger/besu"
@@ -636,7 +637,11 @@ task distDocker {
         def image = "${imageName}:${dockerBuildVersion}-${variant}"
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        def platform = ""
+        if (architecture == "arm64") {
+          platform = "--platform linux/arm64"
+        }
+        args "-c", "docker buildx build ${platform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
     // tag the "default" (which is the variant in the zero position)
