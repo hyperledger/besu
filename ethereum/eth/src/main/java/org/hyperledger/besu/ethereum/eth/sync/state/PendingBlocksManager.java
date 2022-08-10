@@ -141,10 +141,11 @@ public class PendingBlocksManager {
     if (block == null) {
       return Optional.empty();
     }
-    if (pendingBlocks.containsKey(block.getHeader().getParentHash())) {
-      return pendingAncestorBlockOf(pendingBlocks.get(block.getHeader().getParentHash()).block());
+    Block ancestor = block;
+    while (pendingBlocks.containsKey(ancestor.getHeader().getParentHash())) {
+      ancestor = pendingBlocks.get(block.getHeader().getParentHash()).block();
     }
-    return Optional.of(block);
+    return Optional.of(ancestor);
   }
 
   @Override
