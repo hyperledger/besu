@@ -381,7 +381,7 @@ public class BlockPropagationManager {
     if (requestedBlocks.add(blockHeader.getParentHash())) {
       retrieveParentBlock(blockHeader);
     } else {
-      LOG.info("Parent block with hash {} is already requested", blockHeader.getParentHash());
+      LOG.debug("Parent block with hash {} is already requested", blockHeader.getParentHash());
     }
   }
 
