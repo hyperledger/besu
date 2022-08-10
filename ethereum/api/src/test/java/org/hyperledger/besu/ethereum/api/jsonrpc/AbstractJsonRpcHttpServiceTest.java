@@ -84,6 +84,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
           RpcApis.TRACE.name());
 
   protected final Vertx vertx = Vertx.vertx();
+  protected final Vertx syncVertx = Vertx.vertx();
   protected JsonRpcHttpService service;
   protected OkHttpClient client;
   protected String baseUrl;
@@ -188,7 +189,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             natService,
             new HashMap<>(),
             folder.getRoot().toPath(),
-            mock(EthPeers.class));
+            mock(EthPeers.class),
+            syncVertx);
   }
 
   protected void startService() throws Exception {
@@ -224,5 +226,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     client.connectionPool().evictAll();
     service.stop().join();
     vertx.close();
+    syncVertx.close();
   }
 }

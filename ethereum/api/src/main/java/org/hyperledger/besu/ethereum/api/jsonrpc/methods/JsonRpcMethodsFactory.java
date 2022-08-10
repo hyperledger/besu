@@ -49,7 +49,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 
 public class JsonRpcMethodsFactory {
 
@@ -77,13 +76,13 @@ public class JsonRpcMethodsFactory {
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
-      final EthPeers ethPeers) {
+      final EthPeers ethPeers,
+      final Vertx syncVertx) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
       enabled.put(modules.getName(), modules);
-      Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
 
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
