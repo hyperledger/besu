@@ -16,8 +16,10 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
+import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -41,14 +43,17 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   public static class BftPrivacyType {
     private final EnclaveType enclaveType;
+    private final EnclaveEncryptorType enclaveEncryptorType;
     private final ConsensusType consensusType;
     private final Restriction restriction;
 
     public BftPrivacyType(
         final EnclaveType enclaveType,
+        final EnclaveEncryptorType enclaveEncryptorType,
         final ConsensusType consensusType,
         final Restriction restriction) {
       this.enclaveType = enclaveType;
+      this.enclaveEncryptorType = enclaveEncryptorType;
       this.consensusType = consensusType;
       this.restriction = restriction;
     }
@@ -56,7 +61,11 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     @Override
     public String toString() {
       return String.join(
-          ",", enclaveType.toString(), consensusType.toString(), restriction.toString());
+          ",",
+          enclaveType.toString(),
+          enclaveEncryptorType.toString(),
+          consensusType.toString(),
+          restriction.toString());
     }
   }
 
@@ -69,13 +78,21 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     final List<BftPrivacyType> bftPrivacyTypes = new ArrayList<>();
     for (EnclaveType x : EnclaveType.valuesForTests()) {
       for (ConsensusType consensusType : ConsensusType.values()) {
-        bftPrivacyTypes.add(new BftPrivacyType(x, consensusType, Restriction.RESTRICTED));
+        bftPrivacyTypes.add(
+            new BftPrivacyType(
+                x, EnclaveEncryptorType.NACL, consensusType, Restriction.RESTRICTED));
+        bftPrivacyTypes.add(
+            new BftPrivacyType(x, EnclaveEncryptorType.EC, consensusType, Restriction.RESTRICTED));
       }
     }
 
     for (ConsensusType consensusType : ConsensusType.values()) {
       bftPrivacyTypes.add(
-          new BftPrivacyType(EnclaveType.NOOP, consensusType, Restriction.UNRESTRICTED));
+          new BftPrivacyType(
+              EnclaveType.NOOP,
+              EnclaveEncryptorType.NOOP,
+              consensusType,
+              Restriction.UNRESTRICTED));
     }
 
     return bftPrivacyTypes;
@@ -102,7 +119,8 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     if (bftPrivacyType.consensusType == ConsensusType.IBFT2) {
       return privacyBesu.createIbft2NodePrivacyEnabled(
           nodeName,
-          privacyAccountResolver.resolve(privacyAccount),
+          PrivacyAccountResolver.values()[privacyAccount].resolve(
+              bftPrivacyType.enclaveEncryptorType),
           true,
           bftPrivacyType.enclaveType,
           Optional.of(containerNetwork),
@@ -113,7 +131,8 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
     } else if (bftPrivacyType.consensusType == ConsensusType.QBFT) {
       return privacyBesu.createQbftNodePrivacyEnabled(
           nodeName,
-          privacyAccountResolver.resolve(privacyAccount),
+          PrivacyAccountResolver.values()[privacyAccount].resolve(
+              bftPrivacyType.enclaveEncryptorType),
           bftPrivacyType.enclaveType,
           Optional.of(containerNetwork),
           false,
@@ -128,7 +147,10 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void onlyAliceAndBobCanExecuteContract() {
     // Contract address is generated from sender address and transaction nonce
-    final String contractAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String contractAddress =
+        EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     final EventEmitter eventEmitter =
         alice.execute(
@@ -166,7 +188,10 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   @Test
   public void aliceCanDeployMultipleTimesInSingleGroup() {
-    final String firstDeployedAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String firstDeployedAddress =
+        EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     privacyCluster.stopNode(charlie);
 
@@ -182,7 +207,10 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         .validPrivateContractDeployed(firstDeployedAddress, alice.getAddress().toString())
         .verify(firstEventEmitter);
 
-    final String secondDeployedAddress = "0x10f807f8a905da5bd319196da7523c6bd768690f";
+    final String secondDeployedAddress =
+        EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
+            ? "0x5194e214fae257530710d18c868df7a295d9d53b"
+            : "0x10f807f8a905da5bd319196da7523c6bd768690f";
 
     final EventEmitter secondEventEmitter =
         alice.execute(
@@ -200,7 +228,10 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   @Test
   public void canInteractWithMultiplePrivacyGroups() {
     // alice deploys contract
-    final String firstDeployedAddress = "0xff206d21150a8da5b83629d8a722f3135ed532b1";
+    final String firstDeployedAddress =
+        EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
+            ? "0x760359bc605b3848f5199829bde6b382d90fb8eb"
+            : "0xff206d21150a8da5b83629d8a722f3135ed532b1";
 
     final EventEmitter firstEventEmitter =
         alice.execute(
@@ -240,7 +271,10 @@ public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             firstTransactionHash, aliceReceipt));
 
     // alice deploys second contract
-    final String secondDeployedAddress = "0xebf56429e6500e84442467292183d4d621359838";
+    final String secondDeployedAddress =
+        EnclaveEncryptorType.EC.equals(bftPrivacyType.enclaveEncryptorType)
+            ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
+            : "0xebf56429e6500e84442467292183d4d621359838";
 
     final EventEmitter secondEventEmitter =
         alice.execute(

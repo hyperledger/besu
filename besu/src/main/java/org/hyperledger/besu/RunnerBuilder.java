@@ -166,6 +166,7 @@ public class RunnerBuilder {
   private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
   private int maxPeers;
+  private int minPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
@@ -445,7 +446,8 @@ public class RunnerBuilder {
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
-            .setMaxPeers(maxPeers)
+            .setPeerUpperBound(maxPeers)
+            .setPeerLowerBound(minPeers)
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString))
             .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
@@ -1161,5 +1163,14 @@ public class RunnerBuilder {
   private Optional<MetricsService> createMetricsService(
       final Vertx vertx, final MetricsConfiguration configuration) {
     return MetricsService.create(vertx, configuration, metricsSystem);
+  }
+
+  public int getMinPeers() {
+    return minPeers;
+  }
+
+  public RunnerBuilder minPeers(final int minPeers) {
+    this.minPeers = minPeers;
+    return this;
   }
 }

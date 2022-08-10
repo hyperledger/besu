@@ -1543,6 +1543,47 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetLowerBoundEqualToUpperBound() {
+
+    final int maxPeers = 23;
+    parseCommand("--p2p-peer-upper-bound", String.valueOf(maxPeers));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).build();
+  }
+
+  @Test
+  public void maxpeersSet_p2pPeerLowerBoundSet() {
+
+    final int maxPeers = 123;
+    final int minPeers = 66;
+    parseCommand(
+        "--max-peers",
+        String.valueOf(maxPeers),
+        "--Xp2p-peer-lower-bound",
+        String.valueOf(minPeers));
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(minPeers);
+
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void remoteConnectionsPercentageOptionMustBeUsed() {
 
     final int remoteConnectionsPercentage = 12;
@@ -4826,7 +4867,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("needs to be 44 characters long");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Last unit does not have enough valid bits");
   }
 
   @Test

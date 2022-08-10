@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTes
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -33,13 +34,16 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
   private final PrivacyNode minerNode;
 
   public DeployPrivateSmartContractAcceptanceTest(
-      final Restriction restriction, final EnclaveType enclaveType) throws IOException {
-    super(restriction, enclaveType);
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
+      throws IOException {
+    super(restriction, enclaveType, enclaveEncryptorType);
 
     minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-node",
-            PrivacyAccountResolver.ALICE,
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.empty(),
             false,
@@ -51,7 +55,10 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
 
   @Test
   public void deployingMustGiveValidReceiptAndCode() throws Exception {
-    final String contractAddress = "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
+    final String contractAddress =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "0xfeeb2367e77e28f75fc3bcc55b70a535752db058"
+            : "0x89ce396d0f9f937ddfa71113e29b2081c4869555";
 
     final EventEmitter eventEmitter =
         minerNode.execute(

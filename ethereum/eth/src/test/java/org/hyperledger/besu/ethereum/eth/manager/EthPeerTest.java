@@ -365,7 +365,9 @@ public class EthPeerTest {
   @Test
   public void recordUsefullResponse() {
     final EthPeer peer = createPeer();
+    peer.recordUselessResponse("bodies");
     final EthPeer peer2 = createPeer();
+    peer2.recordUselessResponse("bodies");
     peer.recordUsefulResponse();
     assertThat(peer.getReputation().compareTo(peer2.getReputation())).isGreaterThan(0);
   }
