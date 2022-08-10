@@ -92,7 +92,9 @@ public class DynamicPivotBlockManager {
         blockHeader -> {
           if (syncState.getPivotBlockHeader().filter(blockHeader::equals).isEmpty()) {
             LOG.debug(
-                "Select new pivot block {} {}", blockHeader.getNumber(), blockHeader.getStateRoot());
+                "Select new pivot block {} {}",
+                blockHeader.getNumber(),
+                blockHeader.getStateRoot());
             syncState.setCurrentHeader(blockHeader);
             lastPivotBlockFound = Optional.empty();
           }
