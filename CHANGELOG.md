@@ -3,6 +3,7 @@
 ## 22.7.1
 
 ### Additions and Improvements
+- Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
 
 ### Bug Fixes
