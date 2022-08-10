@@ -16,10 +16,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreatePayloadStatus;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionValidationResult;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -36,6 +40,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 })
 @JsonInclude(Include.NON_NULL)
 public class RollupCreatePayloadResult {
+
   private final RollupCreatePayloadStatus status;
   private final PayloadIdentifier payloadId;
   private final EngineGetPayloadResult executionPayload;
@@ -47,13 +52,28 @@ public class RollupCreatePayloadResult {
       final RollupCreatePayloadStatus status,
       final PayloadIdentifier payloadId,
       final EngineGetPayloadResult executionPayload,
-      final List<InvalidTransactionResult> invalidTransactions,
-      final List<String> unprocessedTransactions) {
+      final List<String> requestedTransactionsRaw,
+      final List<Transaction> requestedTransactions,
+      final List<Transaction> executedTransactions,
+      final List<TransactionValidationResult> invalidTransactions) {
+
     this.status = status;
     this.payloadId = payloadId;
     this.executionPayload = executionPayload;
-    this.invalidTransactions = invalidTransactions;
-    this.unprocessedTransactions = unprocessedTransactions;
+    this.invalidTransactions =
+        invalidTransactionResults(
+            requestedTransactionsRaw,
+            requestedTransactions,
+            executedTransactions,
+            invalidTransactions);
+    this.unprocessedTransactions =
+        unprocessedTransactions(
+            requestedTransactionsRaw,
+            requestedTransactions,
+            executedTransactions,
+            invalidTransactions.stream()
+                .map(TransactionValidationResult::getTransaction)
+                .collect(Collectors.toList()));
     this.errorMessage = Optional.empty();
   }
 
@@ -98,6 +118,7 @@ public class RollupCreatePayloadResult {
   }
 
   public static class InvalidTransactionResult {
+
     private final String transaction;
     private final TransactionInvalidReason invalidReason;
     private final String errorMessage;
@@ -125,5 +146,50 @@ public class RollupCreatePayloadResult {
     public String getErrorMessage() {
       return errorMessage;
     }
+  }
+
+  static List<InvalidTransactionResult> invalidTransactionResults(
+      final List<?> requestedTransactionsRaw,
+      final List<Transaction> requestedTransactions,
+      final List<Transaction> executedTransactions,
+      final List<TransactionValidationResult> invalidTransactions) {
+
+    return invalidTransactions.stream()
+        .filter(
+            (TransactionValidationResult txValidation) ->
+                !executedTransactions.contains(txValidation.getTransaction()))
+        .map(
+            (TransactionValidationResult txValidation) -> {
+              final var transactionRaw =
+                  (String)
+                      requestedTransactionsRaw.get(
+                          requestedTransactions.indexOf(txValidation.getTransaction()));
+              return new RollupCreatePayloadResult.InvalidTransactionResult(
+                  transactionRaw,
+                  txValidation.getValidationResult().getInvalidReason(),
+                  txValidation.getValidationResult().getErrorMessage());
+            })
+        .collect(Collectors.toList());
+  }
+
+  static ArrayList<String> unprocessedTransactions(
+      final List<?> requestedTransactionsRaw,
+      final List<Transaction> requestedTransactions,
+      final List<Transaction> executedTransactions,
+      final List<Transaction> invalidTransactions) {
+    final ArrayList<String> unprocessedTransactions =
+        new ArrayList<>(
+            requestedTransactions.size()
+                - executedTransactions.size()
+                - invalidTransactions.size());
+
+    for (int i = 0; i < requestedTransactionsRaw.size(); i++) {
+      Transaction tx = requestedTransactions.get(i);
+      if (!executedTransactions.contains(tx) && !invalidTransactions.contains(tx)) {
+        unprocessedTransactions.add((String) requestedTransactionsRaw.get(i));
+      }
+    }
+
+    return unprocessedTransactions;
   }
 }
