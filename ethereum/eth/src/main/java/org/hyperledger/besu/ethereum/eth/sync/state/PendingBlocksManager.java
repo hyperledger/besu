@@ -42,11 +42,11 @@ public class PendingBlocksManager {
   private final Map<Hash, Set<Hash>> pendingBlocksByParentHash = new ConcurrentHashMap<>();
 
   public PendingBlocksManager(final SynchronizerConfiguration synchronizerConfiguration) {
-    long cacheSize =
-        Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
-            + Math.abs(synchronizerConfiguration.getBlockPropagationRange().upperEndpoint());
 
-    pendingBlocks = new PendingBlockCache(cacheSize);
+    pendingBlocks =
+        new PendingBlockCache(
+            (Math.abs(synchronizerConfiguration.getBlockPropagationRange().lowerEndpoint())
+                + Math.abs(synchronizerConfiguration.getBlockPropagationRange().upperEndpoint())));
   }
 
   /**
