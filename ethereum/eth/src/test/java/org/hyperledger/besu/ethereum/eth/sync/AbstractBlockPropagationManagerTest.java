@@ -641,7 +641,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     // test if block propagation manager can recover if one block is missed
 
     blockchainUtil.importFirstBlocks(2);
-    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 6);
+    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 4);
 
     blockPropagationManager.start();
 
