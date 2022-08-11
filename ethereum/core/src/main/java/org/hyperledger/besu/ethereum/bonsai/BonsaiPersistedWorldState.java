@@ -84,6 +84,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.codeStorage,
             worldStateStorage.storageStorage,
             worldStateStorage.trieBranchStorage,
+            worldStateStorage.snapshotTrieBranchStorage,
             worldStateStorage.trieLogStorage));
   }
 
@@ -195,6 +196,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                     final Bytes previousLocation,
                     final Bytes32 previousHash,
                     final Bytes previousValue) {
+                  System.out.println(
+                      "previous " + previousLocation + " " + previousHash + " " + previousValue);
                   maybeBlockNumber.ifPresent(
                       number ->
                           stateUpdater.putSnapshotTrieNode(number, previousHash, previousValue));
@@ -202,6 +205,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
                 @Override
                 public void store(final Bytes location, final Bytes32 hash, final Bytes value) {
+                  System.out.println("after " + location + " " + hash + " " + value);
                   writeStorageTrieNode(stateUpdater, updatedAddressHash, location, hash, value);
                 }
               });

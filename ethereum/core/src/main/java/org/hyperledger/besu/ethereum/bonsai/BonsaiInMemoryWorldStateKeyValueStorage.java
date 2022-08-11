@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import kotlin.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +33,15 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
+      final Pair<KeyValueStorage, KeyValueStorage> snapshotTrieBranchStorage,
       final KeyValueStorage trieLogStorage) {
-    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+    super(
+        accountStorage,
+        codeStorage,
+        storageStorage,
+        trieBranchStorage,
+        snapshotTrieBranchStorage,
+        trieLogStorage);
   }
 
   @Override
@@ -43,6 +51,9 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         codeStorage.startTransaction(),
         storageStorage.startTransaction(),
         trieBranchStorage.startTransaction(),
+        new Pair<>(
+            snapshotTrieBranchStorage.getFirst().startTransaction(),
+            snapshotTrieBranchStorage.getSecond().startTransaction()),
         trieLogStorage.startTransaction());
   }
 
@@ -54,12 +65,15 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
         final KeyValueStorageTransaction codeStorageTransaction,
         final KeyValueStorageTransaction storageStorageTransaction,
         final KeyValueStorageTransaction trieBranchStorageTransaction,
+        final Pair<KeyValueStorageTransaction, KeyValueStorageTransaction>
+            snapshotTrieBranchStorageTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction) {
       super(
           accountStorageTransaction,
           codeStorageTransaction,
           storageStorageTransaction,
           trieBranchStorageTransaction,
+          snapshotTrieBranchStorageTransaction,
           trieLogStorageTransaction);
     }
 

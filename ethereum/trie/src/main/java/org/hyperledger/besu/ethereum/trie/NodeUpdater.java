@@ -19,7 +19,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public interface NodeUpdater {
 
-  default void priorToStore(Bytes previousLocation, Bytes32 previousHash, Bytes previousValue) {}
+  default void priorToStore(
+      final Bytes previousLocation, final Bytes32 previousHash, final Bytes previousValue) {}
 
   void store(Bytes location, Bytes32 hash, Bytes value);
 }
