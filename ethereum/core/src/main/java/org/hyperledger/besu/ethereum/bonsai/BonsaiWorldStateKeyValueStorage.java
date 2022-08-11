@@ -214,6 +214,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     storageStorage.clear();
   }
 
+  public boolean isSnapshotAvailable(final Hash worldstateRootHash) {
+    return snapshotTrieBranchStorage
+        .getFirst()
+        .get(worldstateRootHash.toArrayUnsafe())
+        .or(() -> snapshotTrieBranchStorage.getSecond().get(worldstateRootHash.toArrayUnsafe()))
+        .isPresent();
+  }
+
   public void clearSnapshot(final long blockNumber) {
     final int bucketNumber = (int) ((blockNumber / BUCKET_SIZE) % 2);
     final int cleanBucketCounter = BUCKET_SIZE - (int) (blockNumber % BUCKET_SIZE);

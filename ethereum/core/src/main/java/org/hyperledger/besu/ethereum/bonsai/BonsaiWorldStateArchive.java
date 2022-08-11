@@ -138,9 +138,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
     if (blockHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
+    } else if (worldStateStorage.isSnapshotAvailable(rootHash)) {
+      return Optional.of(persistedState.snapshot(rootHash));
     } else {
       try {
-
         final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(persistedState.blockHash()).map(BlockHeader.class::cast);
 
