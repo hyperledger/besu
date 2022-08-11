@@ -33,7 +33,9 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   GOQUORUM_PRIVATE_STORAGE(new byte[] {12}),
   BACKWARD_SYNC_HEADERS(new byte[] {13}),
   BACKWARD_SYNC_BLOCKS(new byte[] {14}),
-  BACKWARD_SYNC_CHAIN(new byte[] {15});
+  BACKWARD_SYNC_CHAIN(new byte[] {15}),
+  SNAPSHOT_TRIE_BRANCH_STORAGE_LEFT(new byte[] {16}, new int[] {2}),
+  SNAPSHOT_TRIE_BRANCH_STORAGE_RIGHT(new byte[] {17}, new int[] {2});
 
   private final byte[] id;
   private final int[] versionList;

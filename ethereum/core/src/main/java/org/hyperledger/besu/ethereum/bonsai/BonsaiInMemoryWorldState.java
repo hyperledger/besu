@@ -19,6 +19,8 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Optional;
+
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   private boolean isPersisted = false;
@@ -40,7 +42,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   public Hash rootHash(final BonsaiWorldStateUpdater localUpdater) {
     final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
     try {
-      final Hash calculatedRootHash = calculateRootHash(updater, localUpdater);
+      final Hash calculatedRootHash = calculateRootHash(Optional.empty(), updater, localUpdater);
       return Hash.wrap(calculatedRootHash);
     } finally {
       updater.rollback();

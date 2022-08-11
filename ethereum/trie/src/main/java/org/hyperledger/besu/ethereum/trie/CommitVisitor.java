@@ -29,7 +29,10 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
     if (!extensionNode.isDirty()) {
       return;
     }
-
+    nodeUpdater.priorToStore(
+        extensionNode.getLocation().orElse(Bytes.EMPTY),
+        extensionNode.getHash(),
+        extensionNode.getRlpRef());
     final Node<V> child = extensionNode.getChild();
     if (child.isDirty()) {
       child.accept(Bytes.concatenate(location, extensionNode.getPath()), this);
@@ -43,7 +46,8 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
     if (!branchNode.isDirty()) {
       return;
     }
-
+    nodeUpdater.priorToStore(
+        branchNode.getLocation().orElse(Bytes.EMPTY), branchNode.getHash(), branchNode.getRlpRef());
     for (byte i = 0; i < BranchNode.RADIX; ++i) {
       final Node<V> child = branchNode.child(i);
       if (child.isDirty()) {
@@ -59,7 +63,8 @@ public class CommitVisitor<V> implements LocationNodeVisitor<V> {
     if (!leafNode.isDirty()) {
       return;
     }
-
+    nodeUpdater.priorToStore(
+        leafNode.getLocation().orElse(Bytes.EMPTY), leafNode.getHash(), leafNode.getRlpRef());
     maybeStoreNode(location, leafNode);
   }
 
