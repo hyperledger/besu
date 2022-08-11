@@ -649,8 +649,44 @@ public abstract class AbstractBlockPropagationManagerTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
-    EthProtocolManagerTestUtil.broadcastMessage(
-        ethProtocolManager, peer, createNewBlockHashMessage(blocks.get(3)));
+    // skip first block then create messages from blocklist
+    blocks.stream()
+        .skip(1)
+        .map(this::createNewBlockHashMessage)
+        .forEach(
+            message -> { // Broadcast new block hash message
+              EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, message);
+            });
+
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    // assert all blocks were imported
+    blocks.forEach(
+        block -> {
+          assertThat(blockchain.contains(block.getHash())).isTrue();
+        });
+  }
+
+  @Test
+  public void shouldRequestLowestAnnouncedPendingBlockParent_twoMissingBlocks() {
+    // test if block propagation manager can recover if one block is missed
+    blockchainUtil.importFirstBlocks(2);
+    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 6);
+
+    blockPropagationManager.start();
+
+    // Create peer and responder
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    // skip two block then create messages from blocklist
+    blocks.stream()
+        .skip(2)
+        .map(this::createNewBlockHashMessage)
+        .forEach(
+            message -> { // Broadcast new block hash message
+              EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, message);
+            });
 
     peer.respondWhile(responder, peer::hasOutstandingRequests);
 
