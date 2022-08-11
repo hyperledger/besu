@@ -96,7 +96,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    Optional<Bytes> response = Optional.empty();
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
@@ -123,7 +123,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return Optional.empty();
+      return trieBranchStorage
+          .get(location.toArrayUnsafe())
+          .or(() -> snapshotTrieBranchStorage.getFirst().get(nodeHash.toArrayUnsafe()))
+          .or(() -> snapshotTrieBranchStorage.getSecond().get(nodeHash.toArrayUnsafe()))
+          .map(Bytes::wrap);
     }
   }
 
@@ -199,6 +203,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         || trieLogStorage.containsKey(blockHash.toArrayUnsafe());
   }
 
+  public boolean isSnapshotAvailable(final Hash worldstateRootHash) {
+    return snapshotTrieBranchStorage
+        .getFirst()
+        .get(worldstateRootHash.toArrayUnsafe())
+        .or(() -> snapshotTrieBranchStorage.getSecond().get(worldstateRootHash.toArrayUnsafe()))
+        .isPresent();
+  }
+
   @Override
   public void clear() {
     accountStorage.clear();
@@ -212,14 +224,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public void clearFlatDatabase() {
     accountStorage.clear();
     storageStorage.clear();
-  }
-
-  public boolean isSnapshotAvailable(final Hash worldstateRootHash) {
-    return snapshotTrieBranchStorage
-        .getFirst()
-        .get(worldstateRootHash.toArrayUnsafe())
-        .or(() -> snapshotTrieBranchStorage.getSecond().get(worldstateRootHash.toArrayUnsafe()))
-        .isPresent();
   }
 
   public void clearSnapshot(final long blockNumber) {
