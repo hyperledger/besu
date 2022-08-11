@@ -21,12 +21,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RollingImport {
@@ -56,6 +58,12 @@ public class RollingImport {
     final InMemoryKeyValueStorage trieBranchStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+    final Pair<KeyValueStorage, KeyValueStorage> snapshotTrieBranchStorage =
+        new Pair<>(
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.SNAPSHOT_TRIE_BRANCH_STORAGE_LEFT),
+            provider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.SNAPSHOT_TRIE_BRANCH_STORAGE_RIGHT));
     final InMemoryKeyValueStorage trieLogStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
@@ -63,7 +71,12 @@ public class RollingImport {
         new BonsaiPersistedWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                snapshotTrieBranchStorage,
+                trieLogStorage));
 
     int count = 0;
     while (!reader.isDone()) {
