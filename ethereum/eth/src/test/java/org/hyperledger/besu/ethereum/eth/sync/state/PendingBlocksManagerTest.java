@@ -288,10 +288,4 @@ public class PendingBlocksManagerTest {
     Optional<Block> b = pendingBlocksManager.pendingAncestorBlockOf(block);
     assertThat(b).contains(block);
   }
-
-  @Test
-  public void shouldReturnLowestAncestorPendingBlock_null() {
-    Optional<Block> block = pendingBlocksManager.pendingAncestorBlockOf(null);
-    assertThat(block).isEmpty();
-  }
 }

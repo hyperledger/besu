@@ -138,12 +138,9 @@ public class PendingBlocksManager {
    * @return An optional with the lowest ancestor pending block
    */
   public Optional<Block> pendingAncestorBlockOf(final Block block) {
-    if (block == null) {
-      return Optional.empty();
-    }
     Block ancestor = block;
     while (pendingBlocks.containsKey(ancestor.getHeader().getParentHash())) {
-      ancestor = pendingBlocks.get(block.getHeader().getParentHash()).block();
+      ancestor = pendingBlocks.get(ancestor.getHeader().getParentHash()).block();
     }
     return Optional.of(ancestor);
   }
