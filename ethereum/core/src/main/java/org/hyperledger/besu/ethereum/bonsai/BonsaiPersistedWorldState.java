@@ -288,7 +288,10 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
     try {
       final Hash newWorldStateRootHash =
-          calculateRootHash(Optional.of(blockHeader.getNumber()), stateUpdater, localUpdater);
+          calculateRootHash(
+              Optional.ofNullable(blockHeader).map(BlockHeader::getNumber),
+              stateUpdater,
+              localUpdater);
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
