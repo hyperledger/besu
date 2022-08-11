@@ -60,6 +60,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     this.worldStateRootHash = worldStateRootHash;
   }
 
+  @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
             new StoredNodeFactory<>(
@@ -68,6 +69,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         .get(accountHash);
   }
 
+  @Override
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
     // after a snapsync/fastsync we only have the trie branches.
     final Optional<Bytes> account = getAccount(accountHash);
