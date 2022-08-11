@@ -504,13 +504,13 @@ public class BlockPropagationManager {
           .getScheduler()
           .timeout(waitTask, Duration.ofSeconds(5))
           .thenCompose(
-              r -> scheduleGetBlockFromPeers(Optional.empty(), blockNumber, maybeBlockHash));
+              r -> repeatableGetBlockFromPeer(Optional.empty(), blockNumber, maybeBlockHash));
     }
 
     return ethContext
         .getScheduler()
         .scheduleSyncWorkerTask(
-            () -> scheduleGetBlockFromPeers(Optional.empty(), blockNumber, maybeBlockHash));
+            () -> repeatableGetBlockFromPeer(Optional.empty(), blockNumber, maybeBlockHash));
   }
 
   private CompletableFuture<Block> scheduleGetBlockFromPeers(

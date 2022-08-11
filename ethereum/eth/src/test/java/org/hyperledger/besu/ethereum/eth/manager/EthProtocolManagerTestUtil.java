@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 public class EthProtocolManagerTestUtil {
+  private static final int DEFAULT_MAX_PEERS = 25;
 
   public static EthProtocolManager create(
       final Blockchain blockchain,
@@ -56,7 +57,8 @@ public class EthProtocolManagerTestUtil {
         new DeterministicEthScheduler(timeoutPolicy),
         worldStateArchive,
         transactionPool,
-        ethereumWireProtocolConfiguration);
+        ethereumWireProtocolConfiguration,
+        DEFAULT_MAX_PEERS);
   }
 
   public static EthProtocolManager create(
@@ -71,7 +73,7 @@ public class EthProtocolManagerTestUtil {
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
-            25,
+            DEFAULT_MAX_PEERS,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     EthMessages messages = new EthMessages();
     EthScheduler ethScheduler = new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT);
@@ -150,13 +152,29 @@ public class EthProtocolManagerTestUtil {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
+      final EthProtocolConfiguration ethProtocolConfiguration,
+      final int maxPeers) {
+    return create(
+        blockchain,
+        new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
+        worldStateArchive,
+        transactionPool,
+        ethProtocolConfiguration,
+        maxPeers);
+  }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
       final EthProtocolConfiguration ethProtocolConfiguration) {
     return create(
         blockchain,
         new DeterministicEthScheduler(TimeoutPolicy.NEVER_TIMEOUT),
         worldStateArchive,
         transactionPool,
-        ethProtocolConfiguration);
+        ethProtocolConfiguration,
+        DEFAULT_MAX_PEERS);
   }
 
   public static EthProtocolManager create(final EthScheduler ethScheduler) {
@@ -173,12 +191,28 @@ public class EthProtocolManagerTestUtil {
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration configuration) {
+    return create(
+        blockchain,
+        ethScheduler,
+        worldStateArchive,
+        transactionPool,
+        configuration,
+        DEFAULT_MAX_PEERS);
+  }
+
+  public static EthProtocolManager create(
+      final Blockchain blockchain,
+      final EthScheduler ethScheduler,
+      final WorldStateArchive worldStateArchive,
+      final TransactionPool transactionPool,
+      final EthProtocolConfiguration configuration,
+      final int maxPeers) {
     EthPeers peers =
         new EthPeers(
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
-            25,
+            maxPeers,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     EthMessages messages = new EthMessages();
 
@@ -205,7 +239,7 @@ public class EthProtocolManagerTestUtil {
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
-            25,
+            DEFAULT_MAX_PEERS,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     EthMessages messages = new EthMessages();
 
@@ -228,7 +262,7 @@ public class EthProtocolManagerTestUtil {
             EthProtocol.NAME,
             TestClock.fixed(),
             new NoOpMetricsSystem(),
-            25,
+            DEFAULT_MAX_PEERS,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
     EthMessages messages = new EthMessages();
 
