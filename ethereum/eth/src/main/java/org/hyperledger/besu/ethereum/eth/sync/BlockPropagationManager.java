@@ -446,7 +446,10 @@ public class BlockPropagationManager {
 
     if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
       // Block isn't connected to local chain, save it to pending blocks collection
-      savePendingBlock(block, nodeId);
+      if (savePendingBlock(block, nodeId)) {
+        // if block is saved as pending, try to resolve it
+        maybeProcessPendingBlocks(block);
+      }
       return CompletableFuture.completedFuture(block);
     }
 
@@ -482,22 +485,30 @@ public class BlockPropagationManager {
                     blockHeaderValidator, block, parent, badBlockManager));
   }
 
-  private void savePendingBlock(final Block block, final Bytes nodeId) {
-
-    boolean blockSaved;
+  /**
+   * Save the given block.
+   *
+   * @param block the block to track
+   * @param nodeId node that sent the block
+   * @return true if the block was added (was not previously present)
+   */
+  private boolean savePendingBlock(final Block block, final Bytes nodeId) {
     synchronized (pendingBlocksManager) {
-      blockSaved = pendingBlocksManager.registerPendingBlock(block, nodeId);
-    }
-    if (blockSaved) {
-      LOG.info(
-          "Saved announced block for future import {} - {} saved block(s)",
-          block.toLogString(),
-          pendingBlocksManager.size());
-      // try to process pending blocks
-      maybeProcessPendingBlocks(block);
+      if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
+        LOG.info(
+            "Saved announced block for future import {} - {} saved block(s)",
+            block.toLogString(),
+            pendingBlocksManager.size());
+        return true;
+      }
+      return false;
     }
   }
 
+  /**
+   * Try to request the lowest ancestor for the given pending block or process the descendants if
+   * the ancestor is already in the chain
+   */
   private void maybeProcessPendingBlocks(final Block block) {
     // Try to get the lowest ancestor pending for this block, so we can import it
     Optional<Block> lowestPending = pendingBlocksManager.pendingAncestorBlockOf(block);
