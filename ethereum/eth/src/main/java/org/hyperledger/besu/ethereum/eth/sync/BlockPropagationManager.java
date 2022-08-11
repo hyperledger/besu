@@ -444,12 +444,10 @@ public class BlockPropagationManager {
     // invoked for the parent of this block before we are able to register it.
     traceLambda(LOG, "Import or save pending block {}", block::toLogString);
 
-    synchronized (pendingBlocksManager) {
-      if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
-        // Block isn't connected to local chain, save it to pending blocks collection
-        savePendingBlock(block, nodeId);
-        return CompletableFuture.completedFuture(block);
-      }
+    if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
+      // Block isn't connected to local chain, save it to pending blocks collection
+      savePendingBlock(block, nodeId);
+      return CompletableFuture.completedFuture(block);
     }
 
     if (!importingBlocks.add(block.getHash())) {
@@ -485,29 +483,35 @@ public class BlockPropagationManager {
   }
 
   private void savePendingBlock(final Block block, final Bytes nodeId) {
-    synchronized (pendingBlocksManager) {
-      // Save pending block
-      if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
-        LOG.info(
-            "Saved announced block for future import {} - {} saved block(s)",
-            block.toLogString(),
-            pendingBlocksManager.size());
-      }
 
-      // Try to get the lowest ancestor pending for this block, so we can import it
-      Optional<Block> lowestPending = pendingBlocksManager.pendingAncestorBlockOf(block);
-      if (lowestPending.isPresent()) {
-        Block lowestPendingBlock = lowestPending.get();
-        // If the parent of the lowest ancestor is not in the chain, request it.
-        if (!protocolContext
-            .getBlockchain()
-            .contains(lowestPendingBlock.getHeader().getParentHash())) {
-          requestParentBlock(lowestPendingBlock);
-        } else {
-          LOG.trace("Parent block is already in the chain");
-          // if the parent is already imported, process its children
-          maybeProcessPendingChildrenBlocks(lowestPendingBlock);
-        }
+    boolean blockSaved;
+    synchronized (pendingBlocksManager) {
+      blockSaved = pendingBlocksManager.registerPendingBlock(block, nodeId);
+    }
+    if (blockSaved) {
+      LOG.info(
+          "Saved announced block for future import {} - {} saved block(s)",
+          block.toLogString(),
+          pendingBlocksManager.size());
+      // try to process pending blocks
+      maybeProcessPendingBlocks(block);
+    }
+  }
+
+  private void maybeProcessPendingBlocks(final Block block) {
+    // Try to get the lowest ancestor pending for this block, so we can import it
+    Optional<Block> lowestPending = pendingBlocksManager.pendingAncestorBlockOf(block);
+    if (lowestPending.isPresent()) {
+      Block lowestPendingBlock = lowestPending.get();
+      // If the parent of the lowest ancestor is not in the chain, request it.
+      if (!protocolContext
+          .getBlockchain()
+          .contains(lowestPendingBlock.getHeader().getParentHash())) {
+        requestParentBlock(lowestPendingBlock);
+      } else {
+        LOG.trace("Parent block is already in the chain");
+        // if the parent is already imported, process its children
+        maybeProcessPendingChildrenBlocks(lowestPendingBlock);
       }
     }
   }
