@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.rocksdb.Checkpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private RocksDBColumnarKeyValueStorage segmentedStorage;
   private KeyValueStorage unsegmentedStorage;
   private RocksDBConfiguration rocksDBConfiguration;
+  private Checkpoint checkpoint;
 
   private final Supplier<RocksDBFactoryConfiguration> configuration;
   private final List<SegmentIdentifier> segments;
@@ -125,10 +127,14 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                 new RocksDBColumnarKeyValueStorage(
                     rocksDBConfiguration, segmentsForVersion, metricsSystem, rocksDBMetricsFactory);
           }
+
           final RocksDbSegmentIdentifier rocksSegment =
               segmentedStorage.getSegmentIdentifierByName(segment);
           return new SegmentedKeyValueStorageAdapter<>(
-              segment, segmentedStorage, () -> segmentedStorage.takeSnapshot(rocksSegment));
+              segment,
+              segmentedStorage,
+              () -> segmentedStorage.takeSnapshot(rocksSegment),
+              () -> segmentedStorage.takeCheckpoint());
         }
       default:
         {

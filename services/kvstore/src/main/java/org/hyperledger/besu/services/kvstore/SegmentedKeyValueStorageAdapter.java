@@ -18,7 +18,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -27,10 +26,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
+import org.rocksdb.Checkpoint;
+
+public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
   private final Supplier<? extends KeyValueStorage> snapshotSupplier;
+  private final Supplier<Checkpoint> checkpointSupplier;
 
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
@@ -39,16 +41,21 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
         storage,
         () -> {
           throw new UnsupportedOperationException("Snapshot not supported");
+        },
+        () -> {
+          throw new UnsupportedOperationException("Checkpoint not supported");
         });
   }
 
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment,
       final SegmentedKeyValueStorage<S> storage,
-      final Supplier<? extends KeyValueStorage> snapshotSupplier) {
+      final Supplier<? extends KeyValueStorage> snapshotSupplier,
+      final Supplier<Checkpoint> checkpointSupplier) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
     this.snapshotSupplier = snapshotSupplier;
+    this.checkpointSupplier = checkpointSupplier;
   }
 
   @Override
@@ -116,5 +123,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   @Override
   public KeyValueStorage takeSnapshot() {
     return snapshotSupplier.get();
+  }
+
+  @Override
+  public void takeCheckpoint() {
+    Checkpoint checkpoint = checkpointSupplier.get();
+    // TODO create checkpoint with checkpoint.createCheckpoint();
   }
 }

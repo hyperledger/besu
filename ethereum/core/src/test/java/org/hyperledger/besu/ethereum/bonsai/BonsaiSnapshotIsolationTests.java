@@ -29,13 +29,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.bonsai.snapshot.SnapshotManager;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -47,10 +48,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
@@ -59,7 +58,6 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Arrays;
@@ -78,6 +76,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -114,13 +113,18 @@ public class BonsaiSnapshotIsolationTests {
 
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
 
-  @Rule
-  public final TemporaryFolder tempData = new TemporaryFolder();
+  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
+
+  @Mock private TrieLogManager trieLogManager;
+
+  @Mock private SnapshotManager snapshotManager;
 
   @Before
   public void createStorage() {
-//    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive = new BonsaiWorldStateArchive(createKeyValueStorageProvider(), blockchain);
+    //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    archive =
+        new BonsaiWorldStateArchive(
+            trieLogManager, snapshotManager, createKeyValueStorageProvider(), blockchain);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     ws.persist(blockchain.getChainHeadHeader());
@@ -146,7 +150,7 @@ public class BonsaiSnapshotIsolationTests {
 
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
-      .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+        .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
     assertThat(isolated.get().get(testAddress)).isNull();
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
@@ -341,7 +345,8 @@ public class BonsaiSnapshotIsolationTests {
 
                 @Override
                 public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database").toPath();
+                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
+                      .toPath();
                 }
 
                 @Override

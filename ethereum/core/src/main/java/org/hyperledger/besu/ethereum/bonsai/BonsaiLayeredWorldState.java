@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -45,7 +46,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   private final Blockchain blockchain;
   private final BonsaiWorldStateArchive archive;
 
-  BonsaiLayeredWorldState(
+  public BonsaiLayeredWorldState(
       final Blockchain blockchain,
       final BonsaiWorldStateArchive archive,
       final Optional<BonsaiWorldView> nextWorldView,
@@ -256,7 +257,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public MutableWorldState copy() {
+  public MutableWorldState duplicateWorldState() {
     final BonsaiPersistedWorldState bonsaiPersistedWorldState =
         ((BonsaiPersistedWorldState) archive.getMutable());
     return new BonsaiInMemoryWorldState(

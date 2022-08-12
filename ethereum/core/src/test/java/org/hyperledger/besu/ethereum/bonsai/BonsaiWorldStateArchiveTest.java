@@ -28,6 +28,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -83,6 +85,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 1),
+            snapshotManager,
             storageProvider,
             blockchain);
 
@@ -96,6 +99,7 @@ public class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateArchive(
             new TrieLogManager(
                 blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
+            snapshotManager,
             storageProvider,
             blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -111,6 +115,7 @@ public class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateArchive(
             new TrieLogManager(
                 blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
+            snapshotManager,
             storageProvider,
             blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -143,6 +148,7 @@ public class BonsaiWorldStateArchiveTest {
                 new BonsaiWorldStateKeyValueStorage(storageProvider),
                 12,
                 layeredWorldStatesByHash),
+            snapshotManager,
             storageProvider,
             blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -171,6 +177,7 @@ public class BonsaiWorldStateArchiveTest {
                     new BonsaiWorldStateKeyValueStorage(storageProvider),
                     12,
                     layeredWorldStatesByHash),
+                snapshotManager,
                 storageProvider,
                 blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
@@ -215,6 +222,7 @@ public class BonsaiWorldStateArchiveTest {
                     new BonsaiWorldStateKeyValueStorage(storageProvider),
                     12,
                     layeredWorldStatesByHash),
+                snapshotManager,
                 storageProvider,
                 blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
@@ -266,6 +274,7 @@ public class BonsaiWorldStateArchiveTest {
                     new BonsaiWorldStateKeyValueStorage(storageProvider),
                     12,
                     layeredWorldStatesByHash),
+                snapshotManager,
                 storageProvider,
                 blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());

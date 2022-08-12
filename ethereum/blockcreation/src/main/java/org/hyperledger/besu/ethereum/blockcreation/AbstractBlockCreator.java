@@ -261,7 +261,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                           + parentStateRoot);
                 });
 
-    return worldState.copy();
+    return worldState.duplicateWorldState();
   }
 
   private List<BlockHeader> selectOmmers() {

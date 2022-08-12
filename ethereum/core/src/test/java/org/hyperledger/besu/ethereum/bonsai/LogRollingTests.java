@@ -22,6 +22,8 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -112,6 +114,7 @@ public class LogRollingTests {
     archive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(provider)),
+            snapshotManager,
             provider,
             blockchain);
     accountStorage =
@@ -135,6 +138,7 @@ public class LogRollingTests {
     secondArchive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(secondProvider)),
+            snapshotManager,
             secondProvider,
             blockchain);
     secondAccountStorage =

@@ -74,7 +74,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public MutableWorldState copy() {
+  public MutableWorldState duplicateWorldState() {
     return new BonsaiInMemoryWorldState(
         archive,
         new BonsaiInMemoryWorldStateKeyValueStorage(

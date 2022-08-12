@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -41,45 +40,35 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
-  protected final SnappableKeyValueStorage accountStorage;
-  protected final SnappableKeyValueStorage codeStorage;
-  protected final SnappableKeyValueStorage storageStorage;
-  protected final SnappableKeyValueStorage trieBranchStorage;
+  protected final KeyValueStorage accountStorage;
+  protected final KeyValueStorage codeStorage;
+  protected final KeyValueStorage storageStorage;
+  protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     accountStorage =
-        provider.getSnappableStorageBySegmentIdentifier(
-            KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    codeStorage =
-        provider.getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
+    codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
     storageStorage =
-        provider.getSnappableStorageBySegmentIdentifier(
-            KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
     trieBranchStorage =
-        provider.getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
   }
 
   public BonsaiWorldStateKeyValueStorage(
-      final SnappableKeyValueStorage accountStorage,
-      final SnappableKeyValueStorage codeStorage,
-      final SnappableKeyValueStorage storageStorage,
-      final SnappableKeyValueStorage trieBranchStorage,
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage codeStorage,
+      final KeyValueStorage storageStorage,
+      final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
-  }
-
-  // provide a snapshot of the worldstate at the current state:
-  public BonsaiSnapshotWorldState snapshotWorldState() {
-    return new BonsaiSnapshotWorldState(
-        trieBranchStorage.takeSnapshot(), accountStorage.takeSnapshot(), codeStorage.takeSnapshot(), storageStorage.takeSnapshot()
-    );
   }
 
   @Override

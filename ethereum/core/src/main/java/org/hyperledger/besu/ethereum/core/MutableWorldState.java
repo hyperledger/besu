@@ -24,7 +24,7 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *
    * @return a copy of this world state.
    */
-  MutableWorldState copy();
+  MutableWorldState duplicateWorldState();
 
   /**
    * Persist accumulated changes to underlying storage.

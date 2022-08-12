@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +28,10 @@ public class BonsaiInMemoryWorldStateKeyValueStorage extends BonsaiWorldStateKey
       LoggerFactory.getLogger(BonsaiInMemoryWorldStateKeyValueStorage.class);
 
   public BonsaiInMemoryWorldStateKeyValueStorage(
-      final SnappableKeyValueStorage accountStorage,
-      final SnappableKeyValueStorage codeStorage,
-      final SnappableKeyValueStorage storageStorage,
-      final SnappableKeyValueStorage trieBranchStorage,
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage codeStorage,
+      final KeyValueStorage storageStorage,
+      final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
   }

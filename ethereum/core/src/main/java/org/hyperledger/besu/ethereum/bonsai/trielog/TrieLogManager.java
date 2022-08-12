@@ -12,11 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiLayeredWorldState;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
