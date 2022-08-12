@@ -38,7 +38,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   protected final int maxRetries;
 
   protected RetryingMessageTaskTest() {
-    this.maxRetries = 3;
+    this.maxRetries = 4;
   }
 
   @Override
@@ -76,8 +76,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     respondingPeer.respond(partialResponder);
     assertThat(future.isDone()).isFalse();
 
-    // Respond max times with no data
-    respondingPeer.respondTimes(emptyResponder, maxRetries);
+    // Respond max times - 1 with no data
+    respondingPeer.respondTimes(emptyResponder, maxRetries - 1);
     assertThat(future).isNotDone();
 
     // Next retry should fail
@@ -205,8 +205,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
     assertThat(future.isDone()).isFalse();
 
-    // Respond max times
-    respondingPeer.respondTimes(responder, maxRetries);
+    // Respond max times - 1
+    respondingPeer.respondTimes(responder, maxRetries - 1);
     assertThat(future).isNotDone();
 
     // Next retry should fail

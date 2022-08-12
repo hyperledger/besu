@@ -137,7 +137,7 @@ public class PivotBlockConfirmerTest {
 
   @Test
   public void delayedResponse() {
-    pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
@@ -170,7 +170,7 @@ public class PivotBlockConfirmerTest {
 
   @Test
   public void peerTimesOutThenIsUnresponsive() {
-    pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
@@ -210,7 +210,7 @@ public class PivotBlockConfirmerTest {
 
   @Test
   public void peerTimesOut() {
-    pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
@@ -250,7 +250,7 @@ public class PivotBlockConfirmerTest {
 
   @Test
   public void peerUnresponsive() {
-    pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
