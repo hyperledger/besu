@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -163,7 +164,8 @@ public class PendingBlocksManagerTest {
     pendingBlocksManager.registerPendingBlock(childBlockFromNodeTwo, NODE_ID_2);
 
     // check blocks from node 1 in the cache (node 1 should replace the lowest priority block)
-    List<Block> pendingBlocksForParent = pendingBlocksManager.childrenOf(parentBlock.getHash());
+    final List<Block> pendingBlocksForParent =
+        pendingBlocksManager.childrenOf(parentBlock.getHash());
     for (int i = 0; i < nbBlocks; i++) {
       final Block foundBlock = childBlockFromNodeOne.poll();
       if (i != 0) {
@@ -236,7 +238,7 @@ public class PendingBlocksManagerTest {
 
     // check blocks in the cache
     // and verify remove the block with the lowest priority (BLOCK-2)
-    for (Block block : childBlockFromNodeOne) {
+    for (final Block block : childBlockFromNodeOne) {
       if (block.getHeader().getNumber() == 2) {
         assertThat(pendingBlocksManager.contains(block.getHash())).isFalse();
       } else {
@@ -258,5 +260,46 @@ public class PendingBlocksManagerTest {
     pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
 
     assertThat(pendingBlocksManager.lowestAnnouncedBlock()).contains(parentBlock.getHeader());
+  }
+
+  @Test
+  public void shouldReturnLowestAncestorPendingBlock() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block parentBlock = gen.block();
+
+    final Block block = gen.nextBlock(parentBlock);
+    final Block child = gen.nextBlock(block);
+
+    final Block forkBlock = gen.nextBlock(parentBlock);
+    final Block forkChild = gen.nextBlock(forkBlock);
+
+    // register chain with one missing block
+    pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(child, NODE_ID_1);
+
+    // Register fork with one missing parent
+    pendingBlocksManager.registerPendingBlock(forkBlock, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(forkChild, NODE_ID_1);
+
+    // assert it is able to follow the chain
+    final Optional<Block> blockAncestor = pendingBlocksManager.pendingAncestorBlockOf(child);
+    assertThat(blockAncestor.get().getHeader().getHash()).isEqualTo(block.getHeader().getHash());
+
+    // assert it is able to follow the fork
+    final Optional<Block> forkAncestor = pendingBlocksManager.pendingAncestorBlockOf(forkChild);
+    assertThat(forkAncestor.get().getHeader().getHash()).isEqualTo(forkBlock.getHeader().getHash());
+
+    // Both forks result in the same parent
+    assertThat(forkAncestor.get().getHeader().getParentHash())
+        .isEqualTo(blockAncestor.get().getHeader().getParentHash());
+  }
+
+  @Test
+  public void shouldReturnLowestAncestorPendingBlock_sameBlock() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final Block block = gen.block();
+    pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
+    final Optional<Block> b = pendingBlocksManager.pendingAncestorBlockOf(block);
+    assertThat(b).contains(block);
   }
 }
