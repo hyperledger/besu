@@ -267,18 +267,31 @@ public class PendingBlocksManagerTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Block parentBlock = gen.block();
 
-    final Block childBlock = gen.nextBlock(parentBlock);
-    final Block childBlock2 = gen.nextBlock(childBlock);
-    final Block childBlock3 = gen.nextBlock(childBlock2);
+    final Block block = gen.nextBlock(parentBlock);
+    final Block child = gen.nextBlock(block);
 
-    pendingBlocksManager.registerPendingBlock(parentBlock, NODE_ID_1);
-    pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
-    pendingBlocksManager.registerPendingBlock(childBlock3, NODE_ID_1);
+    final Block forkBlock = gen.nextBlock(parentBlock);
+    final Block forkChild = gen.nextBlock(forkBlock);
 
-    final Optional<Block> block = pendingBlocksManager.pendingAncestorBlockOf(childBlock3);
-    assertThat(block.isPresent()).isTrue();
-    assertThat(block.get().getHeader().getHash()).isEqualTo(childBlock2.getHeader().getHash());
-    assertThat(block.get().getHeader().getParentHash()).isEqualTo(childBlock.getHeader().getHash());
+    // register chain with one missing block
+    pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(child, NODE_ID_1);
+
+    // Register fork with one missing parent
+    pendingBlocksManager.registerPendingBlock(forkBlock, NODE_ID_1);
+    pendingBlocksManager.registerPendingBlock(forkChild, NODE_ID_1);
+
+    // assert it is able to follow the chain
+    final Optional<Block> blockAncestor = pendingBlocksManager.pendingAncestorBlockOf(child);
+    assertThat(blockAncestor.get().getHeader().getHash()).isEqualTo(block.getHeader().getHash());
+
+    // assert it is able to follow the fork
+    final Optional<Block> forkAncestor = pendingBlocksManager.pendingAncestorBlockOf(forkChild);
+    assertThat(forkAncestor.get().getHeader().getHash()).isEqualTo(forkBlock.getHeader().getHash());
+
+    // Both forks result in the same parent
+    assertThat(forkAncestor.get().getHeader().getParentHash())
+        .isEqualTo(blockAncestor.get().getHeader().getParentHash());
   }
 
   @Test
