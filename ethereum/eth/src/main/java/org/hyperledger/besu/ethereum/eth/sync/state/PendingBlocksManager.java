@@ -135,15 +135,13 @@ public class PendingBlocksManager {
    * Get the lowest pending ancestor block saved for a block
    *
    * @param block target block
-   * @param maxAncestorDifference max level to go back in the pending blocks chain
    * @return An optional with the lowest ancestor pending block
    */
-  public Optional<Block> pendingAncestorBlockOf(
-      final Block block, final int maxAncestorDifference) {
+  public Optional<Block> pendingAncestorBlockOf(final Block block) {
     Block ancestor = block;
     int ancestorLevel = 0;
     while (pendingBlocks.containsKey(ancestor.getHeader().getParentHash())
-        && ancestorLevel++ < maxAncestorDifference) {
+        && ancestorLevel++ < pendingBlocks.size()) {
       ancestor = pendingBlocks.get(ancestor.getHeader().getParentHash()).block();
     }
     return Optional.of(ancestor);

@@ -511,8 +511,7 @@ public class BlockPropagationManager {
    */
   private void maybeProcessPendingBlocks(final Block block) {
     // Try to get the lowest ancestor pending for this block, so we can import it
-    final Optional<Block> lowestPending =
-        pendingBlocksManager.pendingAncestorBlockOf(block, pendingBlocksManager.size());
+    final Optional<Block> lowestPending = pendingBlocksManager.pendingAncestorBlockOf(block);
     if (lowestPending.isPresent()) {
       final Block lowestPendingBlock = lowestPending.get();
       // If the parent of the lowest ancestor is not in the chain, request it.

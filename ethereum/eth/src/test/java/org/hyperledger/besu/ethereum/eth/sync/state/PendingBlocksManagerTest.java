@@ -164,7 +164,8 @@ public class PendingBlocksManagerTest {
     pendingBlocksManager.registerPendingBlock(childBlockFromNodeTwo, NODE_ID_2);
 
     // check blocks from node 1 in the cache (node 1 should replace the lowest priority block)
-    List<Block> pendingBlocksForParent = pendingBlocksManager.childrenOf(parentBlock.getHash());
+    final List<Block> pendingBlocksForParent =
+        pendingBlocksManager.childrenOf(parentBlock.getHash());
     for (int i = 0; i < nbBlocks; i++) {
       final Block foundBlock = childBlockFromNodeOne.poll();
       if (i != 0) {
@@ -237,7 +238,7 @@ public class PendingBlocksManagerTest {
 
     // check blocks in the cache
     // and verify remove the block with the lowest priority (BLOCK-2)
-    for (Block block : childBlockFromNodeOne) {
+    for (final Block block : childBlockFromNodeOne) {
       if (block.getHeader().getNumber() == 2) {
         assertThat(pendingBlocksManager.contains(block.getHash())).isFalse();
       } else {
@@ -274,39 +275,10 @@ public class PendingBlocksManagerTest {
     pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
     pendingBlocksManager.registerPendingBlock(childBlock3, NODE_ID_1);
 
-    Optional<Block> block =
-        pendingBlocksManager.pendingAncestorBlockOf(childBlock3, pendingBlocksManager.size());
+    final Optional<Block> block = pendingBlocksManager.pendingAncestorBlockOf(childBlock3);
     assertThat(block.isPresent()).isTrue();
     assertThat(block.get().getHeader().getHash()).isEqualTo(childBlock2.getHeader().getHash());
     assertThat(block.get().getHeader().getParentHash()).isEqualTo(childBlock.getHeader().getHash());
-  }
-
-  @Test
-  public void shouldReturnLowestAncestorPendingBlock_maxAncestorLevel() {
-    final BlockDataGenerator gen = new BlockDataGenerator();
-    final Block block = gen.block();
-    final Block childBlock1 = gen.nextBlock(block);
-    final Block childBlock2 = gen.nextBlock(childBlock1);
-    final Block childBlock3 = gen.nextBlock(childBlock2);
-
-    pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
-    pendingBlocksManager.registerPendingBlock(childBlock1, NODE_ID_1);
-    pendingBlocksManager.registerPendingBlock(childBlock2, NODE_ID_1);
-    pendingBlocksManager.registerPendingBlock(childBlock3, NODE_ID_1);
-
-    // Must return the lowest pending block in the chain
-    Optional<Block> ancestor =
-        pendingBlocksManager.pendingAncestorBlockOf(childBlock3, pendingBlocksManager.size());
-    assertThat(ancestor.get().getHeader().getHash()).isEqualTo(block.getHeader().getHash());
-
-    Optional<Block> ancestor0 = pendingBlocksManager.pendingAncestorBlockOf(childBlock3, 0);
-    assertThat(ancestor0.get().getHeader().getHash()).isEqualTo(childBlock3.getHeader().getHash());
-
-    Optional<Block> ancestor1 = pendingBlocksManager.pendingAncestorBlockOf(childBlock3, 1);
-    assertThat(ancestor1.get().getHeader().getHash()).isEqualTo(childBlock2.getHeader().getHash());
-
-    Optional<Block> ancestor2 = pendingBlocksManager.pendingAncestorBlockOf(childBlock3, 2);
-    assertThat(ancestor2.get().getHeader().getHash()).isEqualTo(childBlock1.getHeader().getHash());
   }
 
   @Test
@@ -314,8 +286,7 @@ public class PendingBlocksManagerTest {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final Block block = gen.block();
     pendingBlocksManager.registerPendingBlock(block, NODE_ID_1);
-    Optional<Block> b =
-        pendingBlocksManager.pendingAncestorBlockOf(block, pendingBlocksManager.size());
+    final Optional<Block> b = pendingBlocksManager.pendingAncestorBlockOf(block);
     assertThat(b).contains(block);
   }
 }
