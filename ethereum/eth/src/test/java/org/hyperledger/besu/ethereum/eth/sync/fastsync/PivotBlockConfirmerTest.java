@@ -90,7 +90,7 @@ public class PivotBlockConfirmerTest {
             blockchainSetupUtil.getWorldArchive(),
             transactionPool,
             EthProtocolConfiguration.defaultConfig());
-    pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(3, 2);
   }
 
   private PivotBlockConfirmer createPivotBlockConfirmer(
@@ -108,7 +108,7 @@ public class PivotBlockConfirmerTest {
 
   @Test
   public void completeSuccessfully() {
-    pivotBlockConfirmer = createPivotBlockConfirmer(2, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
         RespondingEthPeer.blockchainResponder(
@@ -292,7 +292,7 @@ public class PivotBlockConfirmerTest {
 
   @Test
   public void headerMismatch() {
-    pivotBlockConfirmer = createPivotBlockConfirmer(3, 1);
+    pivotBlockConfirmer = createPivotBlockConfirmer(3, 2);
 
     final Responder responderA =
         RespondingEthPeer.blockchainResponder(
