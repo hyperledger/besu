@@ -235,13 +235,13 @@ public class BlockPropagationManager {
           .map(ProcessableBlockHeader::getNumber)
           .ifPresent(
               minAnnouncedBlockNumber -> {
-                long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
+                final long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
                 LOG.trace(
                     "Found lowest announced block {} with distance {}",
                     minAnnouncedBlockNumber,
                     distance);
 
-                long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
+                final long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
 
                 if (distance < config.getBlockPropagationRange().upperEndpoint()
                     && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
@@ -377,7 +377,7 @@ public class BlockPropagationManager {
   }
 
   private void requestParentBlock(final Block block) {
-    BlockHeader blockHeader = block.getHeader();
+    final BlockHeader blockHeader = block.getHeader();
     if (requestedBlocks.add(blockHeader.getParentHash())) {
       retrieveParentBlock(blockHeader);
     } else {
@@ -511,10 +511,10 @@ public class BlockPropagationManager {
    */
   private void maybeProcessPendingBlocks(final Block block) {
     // Try to get the lowest ancestor pending for this block, so we can import it
-    Optional<Block> lowestPending =
+    final Optional<Block> lowestPending =
         pendingBlocksManager.pendingAncestorBlockOf(block, pendingBlocksManager.size());
     if (lowestPending.isPresent()) {
-      Block lowestPendingBlock = lowestPending.get();
+      final Block lowestPendingBlock = lowestPending.get();
       // If the parent of the lowest ancestor is not in the chain, request it.
       if (!protocolContext
           .getBlockchain()
