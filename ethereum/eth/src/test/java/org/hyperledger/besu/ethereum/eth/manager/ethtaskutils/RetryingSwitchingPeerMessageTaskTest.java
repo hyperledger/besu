@@ -1,0 +1,111 @@
+/*
+ * Copyright contributors to Hyperledger Besu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
+import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import org.junit.Test;
+
+/**
+ * Tests ethTasks that request data from the network, and retry until all of the data is received.
+ *
+ * @param <T> The type of data being requested from the network
+ */
+public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMessageTaskTest<T> {
+  protected Optional<EthPeer> responsivePeer = Optional.empty();
+
+  @Override
+  protected void assertResultMatchesExpectation(
+      final T requestedData, final T response, final EthPeer respondingPeer) {
+    assertThat(response).isEqualTo(requestedData);
+    responsivePeer.ifPresent(rp -> assertThat(rp).isEqualByComparingTo(respondingPeer));
+  }
+
+  @Test
+  public void completesWhenBestPeerEmptyAndSecondPeerIsResponsive()
+      throws ExecutionException, InterruptedException {
+    // Setup data to be requested and expected response
+
+    // Setup first unresponsive peer
+    final RespondingEthPeer firstPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
+
+    // Setup first unresponsive peer
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
+
+    // Execute task and wait for response
+    final T requestedData = generateDataToBeRequested();
+    final EthTask<T> task = createTask(requestedData);
+    final CompletableFuture<T> future = task.run();
+
+    // First peer is not responsive
+    firstPeer.respond(RespondingEthPeer.emptyResponder());
+    // Second peer is responsive
+    secondPeer.respondTimes(
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool),
+        2);
+
+    responsivePeer = Optional.of(secondPeer.getEthPeer());
+
+    assertThat(future.isDone()).isTrue();
+    assertResultMatchesExpectation(requestedData, future.get(), secondPeer.getEthPeer());
+  }
+
+  @Test
+  public void completesWhenBestPeerTimeoutsAndSecondPeerIsResponsive()
+      throws ExecutionException, InterruptedException {
+    // Setup data to be requested and expected response
+    peerCountToTimeout.set(1);
+    // Setup first unresponsive peer
+    final RespondingEthPeer firstPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
+
+    // Setup first unresponsive peer
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
+
+    // Execute task and wait for response
+    final T requestedData = generateDataToBeRequested();
+    final EthTask<T> task = createTask(requestedData);
+    final CompletableFuture<T> future = task.run();
+
+    // First peer timeouts
+    firstPeer.respondTimes(
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool),
+        2);
+    // Second peer is responsive
+    secondPeer.respondTimes(
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool),
+        2);
+
+    responsivePeer = Optional.of(secondPeer.getEthPeer());
+
+    assertThat(future.isDone()).isTrue();
+    assertResultMatchesExpectation(requestedData, future.get(), secondPeer.getEthPeer());
+  }
+}

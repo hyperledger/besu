@@ -399,11 +399,10 @@ public class BlockPropagationManager {
       final Optional<Hash> blockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            protocolContext,
             protocolSchedule,
             ethContext,
             metricsSystem,
-            ethContext.getEthPeers().getMaxPeers(),
+            ethContext.getEthPeers().peerCount(),
             blockHash,
             blockNumber);
     preferredPeer.ifPresent(getBlockTask::assignPeer);

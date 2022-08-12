@@ -927,5 +927,37 @@ public abstract class AbstractBlockPropagationManagerTest {
     verifyNoInteractions(pendingBlocksManager);
   }
 
+  @Test
+  public void shouldRequestBlockAgainIfFirstGetBlockFails() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    // Sanity check
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    blockPropagationManager.start();
+
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final NewBlockHashesMessage nextAnnouncement =
+        NewBlockHashesMessage.create(
+            Collections.singletonList(
+                new NewBlockHashesMessage.NewBlockHash(
+                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+
+    // Broadcast message and peer fail to respond
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
+    peer.respondWhile(RespondingEthPeer.emptyResponder(), peer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    // Re-broadcast the previous message and peer responds
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
+    final Responder goodResponder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    peer.respondWhile(goodResponder, peer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
+  }
+
   public abstract Blockchain getFullBlockchain();
 }
