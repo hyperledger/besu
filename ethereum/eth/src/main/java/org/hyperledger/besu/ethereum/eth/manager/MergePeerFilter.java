@@ -70,7 +70,7 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
   }
 
   private boolean isFinalized() {
-    return this.numFinalizedSeen.get() > 1;
+    return this.numFinalizedSeen.get() >= 1;
   }
 
   @Override
@@ -79,7 +79,8 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash) {
     if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
+        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)
+        && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) { //forkchoices send finalized as 0 after ttd, but before an epoch is finalized
       this.lastFinalized = maybeFinalizedBlockHash.get();
       this.numFinalizedSeen.getAndIncrement();
       LOG.debug("have seen {} finalized blocks", this.numFinalizedSeen);
