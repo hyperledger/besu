@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.consensus.merge.MergeStateHandler;
 import org.hyperledger.besu.datatypes.Hash;
@@ -36,8 +37,7 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
 
   private Optional<Difficulty> powTerminalDifficulty = Optional.of(Difficulty.MAX_VALUE);
   private final StampedLock powTerminalDifficultyLock = new StampedLock();
-  private Hash lastFinalized = Hash.ZERO;
-  private final AtomicLong numFinalizedSeen = new AtomicLong(0);
+  private final AtomicBoolean finalized = new AtomicBoolean(false);
   private static final Logger LOG = LoggerFactory.getLogger(MergePeerFilter.class);
 
   public boolean disconnectIfPoW(final StatusMessage status, final EthPeer peer) {
@@ -70,7 +70,7 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
   }
 
   private boolean isFinalized() {
-    return this.numFinalizedSeen.get() >= 1;
+    return this.finalized.get();
   }
 
   @Override
@@ -79,11 +79,8 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash) {
     if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)
         && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) { //forkchoices send finalized as 0 after ttd, but before an epoch is finalized
-      this.lastFinalized = maybeFinalizedBlockHash.get();
-      this.numFinalizedSeen.getAndIncrement();
-      LOG.debug("have seen {} finalized blocks", this.numFinalizedSeen);
+      this.finalized.set(true);
     }
   }
 
