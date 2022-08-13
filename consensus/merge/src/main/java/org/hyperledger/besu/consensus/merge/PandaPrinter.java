@@ -21,20 +21,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter {
+public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
-  private static final String pandaBanner = PandaPrinter.loadBanner();
-  private static final AtomicBoolean beenDisplayed = new AtomicBoolean();
+  private static final String readyBanner = PandaPrinter.loadBanner("/readyPanda.txt");
+  private static final String ttdBanner = PandaPrinter.loadBanner("/ttdPanda.txt");
+  private static final String finalizedBanner = PandaPrinter.loadBanner("/finalizedPanda.txt");
+  private static final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
+  private static final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
+  private static final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
 
-  private static String loadBanner() {
+  private static String loadBanner(final String filename) {
     Class<PandaPrinter> c = PandaPrinter.class;
-    InputStream is = c.getResourceAsStream("/ProofOfPanda3.txt");
+    InputStream is = c.getResourceAsStream(filename);
     StringBuilder resultStringBuilder = new StringBuilder();
     try (BufferedReader br =
         new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -49,18 +56,46 @@ public class PandaPrinter {
   }
 
   public static boolean printOnFirstCrossing() {
-    boolean shouldPrint = beenDisplayed.compareAndSet(false, true);
+    boolean shouldPrint = ttdBeenDisplayed.compareAndSet(false, true);
     if (shouldPrint) {
-      LOG.info("\n" + pandaBanner);
+      LOG.info("\n" + ttdBanner);
     }
     return shouldPrint;
   }
 
   static boolean hasDisplayed() {
-    return beenDisplayed.get();
+    return ttdBeenDisplayed.get();
   }
 
   static void resetForTesting() {
-    beenDisplayed.set(false);
+    ttdBeenDisplayed.set(false);
+  }
+
+  public static void printReadyToMerge() {
+    boolean shouldPrint = readyBeenDisplayed.compareAndSet(false, true);
+    if(shouldPrint) {
+      LOG.info("\n"+readyBanner);
+    }
+  }
+
+  public static void printFinalized() {
+    boolean shouldPrint = finalizedBeenDisplayed.compareAndSet(false, true);
+    if(shouldPrint) {
+      LOG.info("\n"+finalizedBanner);
+    }
+  }
+
+
+  @Override
+  public void onInSyncStatusChange(boolean newSyncStatus) {
+    if(newSyncStatus) {
+      printReadyToMerge();
+    }
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(Hash headBlockHash,
+      Optional<Hash> maybeFinalizedBlockHash, Hash safeBlockHash) {
+
   }
 }
