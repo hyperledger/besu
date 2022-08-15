@@ -109,7 +109,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
       hidden = true,
-      defaultValue = "200",
+      defaultValue = "100",
       paramLabel = "<INTEGER>",
       description = "Number of headers to request per packet (default: ${DEFAULT-VALUE})")
   private int downloaderHeaderRequestSize =
@@ -128,7 +128,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
       hidden = true,
-      defaultValue = "200",
+      defaultValue = "100",
       paramLabel = "<INTEGER>",
       description = "Distance between checkpoint headers (default: ${DEFAULT-VALUE})")
   private int downloaderChainSegmentSize =
