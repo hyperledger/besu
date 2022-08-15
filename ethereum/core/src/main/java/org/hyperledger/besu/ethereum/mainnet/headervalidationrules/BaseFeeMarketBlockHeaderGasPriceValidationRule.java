@@ -46,7 +46,8 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
       }
 
       // if this is the fork block, baseFee should be the initial baseFee
-      if (baseFeeMarket.isForkBlock(header.getNumber())) {
+      if (BaseFeeMarket.ValidationMode.INITIAL.equals(
+          baseFeeMarket.validationMode(header.getNumber()))) {
         return baseFeeMarket
             .getInitialBasefee()
             .equals(header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader()));

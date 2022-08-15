@@ -53,17 +53,14 @@ public class BaseFeeMarketTest {
   }
 
   @Test
-  public void givenForkBlock_whenIsForkBlock_thenReturnsTrue() {
-    assertThat(baseFeeMarket.isForkBlock(FORK_BLOCK)).isTrue();
+  public void givenForkBlock_whenValidationMode_thenReturnsInitial() {
+    assertThat(baseFeeMarket.validationMode(FORK_BLOCK))
+        .isEqualTo(BaseFeeMarket.ValidationMode.INITIAL);
   }
 
   @Test
-  public void givenNotForkBlock_whenIsForkBlock_thenReturnsFalse() {
-    assertThat(baseFeeMarket.isForkBlock(FORK_BLOCK + 1)).isFalse();
-  }
-
-  @Test
-  public void getForkBlock() {
-    assertThat(baseFeeMarket.isForkBlock(FORK_BLOCK)).isTrue();
+  public void givenNotForkBlock_whenValidationMode_thenReturnsOngoing() {
+    assertThat(baseFeeMarket.validationMode(FORK_BLOCK + 1))
+        .isEqualTo(BaseFeeMarket.ValidationMode.ONGOING);
   }
 }

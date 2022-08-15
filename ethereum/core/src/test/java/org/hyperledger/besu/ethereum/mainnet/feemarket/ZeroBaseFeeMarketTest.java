@@ -32,11 +32,12 @@ public class ZeroBaseFeeMarketTest {
 
   private static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
+  private static final long FORK_BLOCK = 0;
   private ZeroBaseFeeMarket zeroBaseFeeMarket;
 
   @Before
   public void setUp() throws Exception {
-    zeroBaseFeeMarket = new ZeroBaseFeeMarket(0);
+    zeroBaseFeeMarket = new ZeroBaseFeeMarket(FORK_BLOCK);
   }
 
   @Test
@@ -116,13 +117,15 @@ public class ZeroBaseFeeMarketTest {
   }
 
   @Test
-  public void isForkBlockShouldBeTrue() {
-    assertThat(zeroBaseFeeMarket.isForkBlock(0)).isTrue();
+  public void validationModeShouldBeNoneWhenIsForkBlock() {
+    assertThat(zeroBaseFeeMarket.validationMode(FORK_BLOCK))
+        .isEqualTo(BaseFeeMarket.ValidationMode.NONE);
   }
 
   @Test
-  public void isForkBlockShouldBeFalse() {
-    assertThat(zeroBaseFeeMarket.isForkBlock(1)).isFalse();
+  public void validationModeShouldBeNoneWhenIsNotForkBlock() {
+    assertThat(zeroBaseFeeMarket.validationMode(FORK_BLOCK + 1))
+        .isEqualTo(BaseFeeMarket.ValidationMode.NONE);
   }
 
   @Test

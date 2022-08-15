@@ -33,4 +33,9 @@ public class ZeroBaseFeeMarket extends LondonFeeMarket {
 
     return Wei.ZERO;
   }
+
+  @Override
+  public ValidationMode validationMode(final long blockNumber) {
+    return ValidationMode.NONE;
+  }
 }
