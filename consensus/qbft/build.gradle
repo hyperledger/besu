@@ -67,7 +67,6 @@ dependencies {
   implementation project(':evm')
   implementation project(':pki')
   implementation project(':services:kvstore')
-  implementation project(':util')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
