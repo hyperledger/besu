@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.feemarket.FeeMarketException;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.ZeroBaseFeeMarket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,17 +39,16 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     try {
 
-      if (baseFeeMarket instanceof ZeroBaseFeeMarket) {
-        // skip check to allow sync when a zero baseFee chain has historical baseFees
-        return true;
-      }
-
       // if this is the fork block, baseFee should be the initial baseFee
       if (BaseFeeMarket.ValidationMode.INITIAL.equals(
           baseFeeMarket.validationMode(header.getNumber()))) {
         return baseFeeMarket
             .getInitialBasefee()
             .equals(header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader()));
+      } else if (BaseFeeMarket.ValidationMode.NONE.equals(
+          baseFeeMarket.validationMode(header.getNumber()))) {
+        // skip validation to allow sync when a zero baseFee chain has historical baseFees
+        return true;
       }
 
       final Wei parentBaseFee =
