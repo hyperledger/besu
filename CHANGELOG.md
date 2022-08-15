@@ -1,5 +1,16 @@
 # Changelog
 
+## 22.7.1
+
+### Additions and Improvements
+- Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
+- Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
+- Improve pending blocks retrieval mechanism [#4227](https://github.com/hyperledger/besu/pull/4227)
+
+### Bug Fixes
+- Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
+
+
 ## 22.7.0
 
 ### Additions and Improvements
@@ -11,6 +22,10 @@
 - Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
 - Upgrade Spotless to 6.8.0 [#4195](https://github.com/hyperledger/besu/pull/4195)
 - Upgrade Gradle to 7.5 [#4196](https://github.com/hyperledger/besu/pull/4196)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0/besu-22.7.0.tar.gz / sha256: `af21104a880c37706b660aa816e1c38b2b3f603a97420ddcbc889324b71aa50e`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0/besu-22.7.0.zip / sha256: `5b1586362e6e739c206c25224bb753a372bad70c0b22dbe091f9253024ebdc45`
 
 ## 22.7.0-RC3
 

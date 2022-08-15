@@ -24,7 +24,14 @@ import org.junit.Test;
 
 public class PeerReputationTest {
 
-  private final PeerReputation reputation = new PeerReputation();
+  private static final int INITIAL_SCORE = 25;
+  private static final int MAX_SCORE = 50;
+  private final PeerReputation reputation = new PeerReputation(INITIAL_SCORE, MAX_SCORE);
+
+  @Test(expected = java.lang.IllegalArgumentException.class)
+  public void shouldThrowOnInvalidInitialScore() {
+    new PeerReputation(2, 1);
+  }
 
   @Test
   public void shouldOnlyDisconnectWhenTimeoutLimitReached() {
@@ -83,7 +90,15 @@ public class PeerReputationTest {
 
   @Test
   public void shouldIncreaseScore() {
-    reputation.recordUsefulResposne();
-    assertThat(reputation.compareTo(new PeerReputation())).isGreaterThan(0);
+    reputation.recordUsefulResponse();
+    assertThat(reputation.getScore()).isGreaterThan(INITIAL_SCORE);
+  }
+
+  @Test
+  public void shouldNotIncreaseScoreOverMax() {
+    for (int i = 0; i <= MAX_SCORE + 1; i++) {
+      reputation.recordUsefulResponse();
+    }
+    assertThat(reputation.getScore()).isEqualTo(MAX_SCORE);
   }
 }

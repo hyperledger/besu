@@ -22,6 +22,7 @@ public class EnclaveConfiguration {
 
   private final Path[] publicKeys;
   private final Path[] privateKeys;
+  private final EnclaveEncryptorType enclaveEncryptorType;
   private final Path tempDir;
   private final List<String> otherNodes = new ArrayList<>();
   private final boolean clearKnownNodes;
@@ -32,6 +33,7 @@ public class EnclaveConfiguration {
       final String name,
       final Path[] publicKeys,
       final Path[] privateKeys,
+      final EnclaveEncryptorType enclaveEncryptorType,
       final Path tempDir,
       final List<String> otherNodes,
       final boolean clearKnownNodes,
@@ -39,6 +41,7 @@ public class EnclaveConfiguration {
 
     this.publicKeys = publicKeys;
     this.privateKeys = privateKeys;
+    this.enclaveEncryptorType = enclaveEncryptorType;
     this.tempDir = tempDir;
     this.otherNodes.addAll(otherNodes);
     this.clearKnownNodes = clearKnownNodes;
@@ -76,5 +79,9 @@ public class EnclaveConfiguration {
 
   public String getName() {
     return name;
+  }
+
+  public EnclaveEncryptorType getEnclaveEncryptorType() {
+    return enclaveEncryptorType;
   }
 }
