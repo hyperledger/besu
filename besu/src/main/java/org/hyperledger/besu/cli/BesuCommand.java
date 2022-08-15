@@ -1408,10 +1408,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         if (genesisConfigOptions.isQuorum()) {
           enableGoQuorumCompatibilityMode();
         }
-
-        if (genesisConfigOptions.isZeroBaseFee()) {
-          logger.info("zeroBaseFee is set, zeroing the base fee for future blocks");
-        }
       }
 
       // set merge config on the basis of genesis config
