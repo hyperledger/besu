@@ -254,6 +254,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.minPeers(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.limitRemoteWireConnectionsEnabled(anyBoolean()))
         .thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.fractionRemoteConnectionsAllowed(anyFloat()))
