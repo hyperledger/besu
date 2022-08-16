@@ -19,12 +19,13 @@ import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageCheckpoint;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 
 public class SnapshotManager {
 
@@ -54,7 +55,7 @@ public class SnapshotManager {
   public void saveCheckpoint(final KeyValueStorageCheckpoint trieBranch) {
     try {
       final Path checkpointDir = dataDirectory.resolve(CHECKPOINT_DIR);
-      Files.deleteIfExists(checkpointDir);
+      MoreFiles.deleteRecursively(checkpointDir, RecursiveDeleteOption.ALLOW_INSECURE);
       System.out.println("[TEST] checkpoint dir " + checkpointDir.toString());
       trieBranch.createCheckpoint(checkpointDir.toString());
     } catch (IOException e) {
