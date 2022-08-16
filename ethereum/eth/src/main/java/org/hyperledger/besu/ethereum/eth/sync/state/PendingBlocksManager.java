@@ -139,7 +139,9 @@ public class PendingBlocksManager {
    */
   public Optional<Block> pendingAncestorBlockOf(final Block block) {
     Block ancestor = block;
-    while (pendingBlocks.containsKey(ancestor.getHeader().getParentHash())) {
+    int ancestorLevel = 0;
+    while (pendingBlocks.containsKey(ancestor.getHeader().getParentHash())
+        && ancestorLevel++ < pendingBlocks.size()) {
       ancestor = pendingBlocks.get(ancestor.getHeader().getParentHash()).block();
     }
     return Optional.of(ancestor);

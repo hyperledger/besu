@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class PivotBlockRetriever {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotBlockRetriever.class);
-  public static final int MAX_QUERY_RETRIES_PER_PEER = 3;
+  public static final int MAX_QUERY_RETRIES_PER_PEER = 4;
   private static final int DEFAULT_MAX_PIVOT_BLOCK_RESETS = 250;
   private static final int SUSPICIOUS_NUMBER_OF_RETRIES = 5;
 

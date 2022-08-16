@@ -40,7 +40,7 @@ public class RetryingGetNodeDataFromPeerTask extends AbstractRetryingPeerTask<Ma
       final Collection<Hash> hashes,
       final long pivotBlockNumber,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, data -> false, metricsSystem);
+    super(ethContext, 4, data -> false, metricsSystem);
     this.ethContext = ethContext;
     this.hashes = new HashSet<>(hashes);
     this.pivotBlockNumber = pivotBlockNumber;

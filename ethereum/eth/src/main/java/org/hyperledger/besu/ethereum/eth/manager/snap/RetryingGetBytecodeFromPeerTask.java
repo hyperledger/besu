@@ -41,7 +41,7 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, Map::isEmpty, metricsSystem);
+    super(ethContext, 4, Map::isEmpty, metricsSystem);
     this.ethContext = ethContext;
     this.codeHashes = codeHashes;
     this.blockHeader = blockHeader;
