@@ -16,6 +16,10 @@
 
 package org.hyperledger.besu.consensus.merge;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,20 +28,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener {
+public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, MergeStateHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
   private static final String readyBanner = PandaPrinter.loadBanner("/readyPanda.txt");
   private static final String ttdBanner = PandaPrinter.loadBanner("/ttdPanda.txt");
   private static final String finalizedBanner = PandaPrinter.loadBanner("/finalizedPanda.txt");
-  private static final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
-  private static final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
-  private static final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
+
+  private static final AtomicBoolean hasTTD = new AtomicBoolean(false);
+  private static final AtomicBoolean inSync = new AtomicBoolean(false);
+  public static final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
+  public static final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
+  public static final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
 
   private static String loadBanner(final String filename) {
     Class<PandaPrinter> c = PandaPrinter.class;
@@ -55,47 +60,71 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener {
     return resultStringBuilder.toString();
   }
 
-  public static boolean printOnFirstCrossing() {
-    boolean shouldPrint = ttdBeenDisplayed.compareAndSet(false, true);
-    if (shouldPrint) {
-      LOG.info("\n" + ttdBanner);
+  public static void hasTTD() {
+    PandaPrinter.hasTTD.getAndSet(true);
+    if (hasTTD.get() && inSync.get()) {
+      printReadyToMerge();
     }
-    return shouldPrint;
   }
 
-  static boolean hasDisplayed() {
-    return ttdBeenDisplayed.get();
+  public static void inSync() {
+    PandaPrinter.inSync.getAndSet(true);
+    if (inSync.get() && hasTTD.get()) {
+      printReadyToMerge();
+    }
+  }
+
+  public static void printOnFirstCrossing() {
+    if (!ttdBeenDisplayed.get()) {
+      LOG.info("\n" + ttdBanner);
+    }
+    ttdBeenDisplayed.compareAndSet(false, true);
   }
 
   static void resetForTesting() {
     ttdBeenDisplayed.set(false);
+    readyBeenDisplayed.set(false);
+    finalizedBeenDisplayed.set(false);
   }
 
   public static void printReadyToMerge() {
-    boolean shouldPrint = readyBeenDisplayed.compareAndSet(false, true);
-    if(shouldPrint) {
-      LOG.info("\n"+readyBanner);
+    if (!readyBeenDisplayed.get()) {
+      LOG.info("\n" + readyBanner);
     }
+    readyBeenDisplayed.compareAndSet(false, true);
   }
 
   public static void printFinalized() {
-    boolean shouldPrint = finalizedBeenDisplayed.compareAndSet(false, true);
-    if(shouldPrint) {
-      LOG.info("\n"+finalizedBanner);
+    if (!finalizedBeenDisplayed.get()) {
+      LOG.info("\n" + finalizedBanner);
     }
+    finalizedBeenDisplayed.compareAndSet(false, true);
   }
 
-
   @Override
-  public void onInSyncStatusChange(boolean newSyncStatus) {
-    if(newSyncStatus) {
+  public void onInSyncStatusChange(final boolean newSyncStatus) {
+    if (newSyncStatus && hasTTD.get()) {
       printReadyToMerge();
     }
   }
 
   @Override
-  public void onNewForkchoiceMessage(Hash headBlockHash,
-      Optional<Hash> maybeFinalizedBlockHash, Hash safeBlockHash) {
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+      printFinalized();
+    }
+  }
 
+  @Override
+  public void mergeStateChanged(
+      final boolean isPoS,
+      final Optional<Boolean> priorState,
+      final Optional<Difficulty> difficultyStoppedAt) {
+    if (isPoS && priorState.isPresent() && !priorState.get()) { // just crossed from PoW to PoS
+      printOnFirstCrossing();
+    }
   }
 }
