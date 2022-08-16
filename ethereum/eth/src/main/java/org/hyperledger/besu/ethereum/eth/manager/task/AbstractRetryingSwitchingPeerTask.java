@@ -102,18 +102,15 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   @Override
   protected void handleTaskError(final Throwable error) {
-    getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+    if (isPeerFailure(error)) {
+      getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+    }
     super.handleTaskError(error);
   }
 
   @Override
   protected boolean isRetryableError(final Throwable error) {
-    final boolean isPeerError =
-        error instanceof PeerBreachedProtocolException
-            || error instanceof PeerDisconnectedException
-            || error instanceof NoAvailablePeersException;
-
-    return error instanceof TimeoutException || (isPeerError && remainingPeersToTry().count() > 0);
+    return error instanceof TimeoutException || isPeerFailure(error);
   }
 
   private Optional<EthPeer> selectNextPeer() {
