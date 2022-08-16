@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.snapshot.SnapshotManager;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -61,6 +62,8 @@ public class BonsaiWorldStateArchiveTest {
   @Mock StorageProvider storageProvider;
 
   @Mock KeyValueStorage keyValueStorage;
+
+  @Mock SnapshotManager snapshotManager;
 
   BonsaiWorldStateArchive bonsaiWorldStateArchive;
 

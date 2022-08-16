@@ -16,6 +16,7 @@ package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageCheckpoint;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
@@ -27,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.rocksdb.Checkpoint;
+import org.rocksdb.RocksDBException;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private final S segmentHandle;
@@ -126,8 +128,15 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
-  public void takeCheckpoint() {
-    Checkpoint checkpoint = checkpointSupplier.get();
-    // TODO create checkpoint with checkpoint.createCheckpoint();
+  public KeyValueStorageCheckpoint takeCheckpoint() {
+    final Checkpoint checkpoint = checkpointSupplier.get();
+    return checkpointPath -> {
+      try {
+        checkpoint.createCheckpoint(checkpointPath);
+      } catch (RocksDBException e) {
+        // TODO throw exception
+        System.out.println("exception during snapshot " + e.getMessage());
+      }
+    };
   }
 }

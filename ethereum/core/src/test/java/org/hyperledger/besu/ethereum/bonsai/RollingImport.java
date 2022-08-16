@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.ethereum.bonsai.snapshot.SnapshotManager;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -43,7 +44,7 @@ public class RollingImport {
     final BonsaiWorldStateArchive archive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(null, new BonsaiWorldStateKeyValueStorage(provider)),
-            snapshotManager,
+            new SnapshotManager(),
             provider,
             null);
     final InMemoryKeyValueStorage accountStorage =

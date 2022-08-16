@@ -101,7 +101,7 @@ public interface KeyValueStorage extends Closeable {
     throw new UnsupportedOperationException("snapshots not supported");
   }
 
-  default void takeCheckpoint() {
+  default KeyValueStorageCheckpoint takeCheckpoint() {
     throw new UnsupportedOperationException("checkpoints not supported");
   }
 }

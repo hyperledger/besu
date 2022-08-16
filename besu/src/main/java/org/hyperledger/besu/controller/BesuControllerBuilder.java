@@ -303,7 +303,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString());
 
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain);
+        createWorldStateArchive(worldStateStorage, blockchain, dataDirectory);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -599,7 +599,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private WorldStateArchive createWorldStateArchive(
-      final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
+      final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
+      final Path dataDirectory) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(
@@ -607,7 +609,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 blockchain,
                 (BonsaiWorldStateKeyValueStorage) worldStateStorage,
                 dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            new SnapshotManager(),
+            new SnapshotManager(dataDirectory),
             storageProvider,
             blockchain);
       case FOREST:

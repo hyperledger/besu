@@ -135,12 +135,12 @@ public class BonsaiSnapshotIsolationTests {
   public void testFindPathFromHead_behindHead() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
     // assert we can find the correct path if we are some number of blocks behind head
-    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash());
+    var isolated = archive.getSnapshotWorldState(genesisState.getBlock().getHash());
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(archive.getMutable(), firstBlock);
 
-    var isolated2 = archive.getMutableSnapshot(firstBlock.getHash());
+    var isolated2 = archive.getSnapshotWorldState(firstBlock.getHash());
     var res2 =
         executeBlock(
             archive.getMutable(),
@@ -173,11 +173,11 @@ public class BonsaiSnapshotIsolationTests {
 
     var block2 = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
     var res2 = executeBlock(archive.getMutable(), block2);
-    var isolated2 = archive.getMutableSnapshot(block2.getHash());
+    var isolated2 = archive.getSnapshotWorldState(block2.getHash());
 
     var block3 = forTransactions(List.of(burnTransaction(sender1, 2L, testAddress)));
     var res3 = executeBlock(archive.getMutable(), block3);
-    var isolated3 = archive.getMutableSnapshot(block3.getHash());
+    var isolated3 = archive.getSnapshotWorldState(block3.getHash());
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();

@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   public BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
-      SnapshotManager snapshotManager,
+      final SnapshotManager snapshotManager,
       final StorageProvider provider,
       final Blockchain blockchain) {
     this.trieLogManager = trieLogManager;
@@ -73,7 +74,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       trieLogManager.updateLayeredWorldState(
           eventBlockHeader.getParentHash(), eventBlockHeader.getHash());
       createWorldStateSnapshot();
-      // TODO call also createWorldStateCheckpoint
+      createWorldStateCheckpoint();
     }
   }
 
@@ -112,7 +113,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
     if (!isPersistingState) {
       if (snapshotManager.isSnapshotAvailable(blockHash)) {
-        return getWorldStateSnapshot(blockHash);
+        System.out.println("[TEST] snapshot worldstate for block " + blockHash);
+        return getSnapshotWorldState(blockHash);
       } else {
         return getTrieLogLayeredWorldState(blockHash);
       }
@@ -209,11 +211,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public void createWorldStateCheckpoint() {
-    // TODO delete before creating again
-    worldStateStorage.accountStorage.takeCheckpoint();
-    worldStateStorage.codeStorage.takeCheckpoint();
-    worldStateStorage.storageStorage.takeCheckpoint();
-    worldStateStorage.trieBranchStorage.takeCheckpoint();
+    snapshotManager.saveCheckpoint(worldStateStorage.trieBranchStorage.takeCheckpoint());
   }
 
   public void createWorldStateSnapshot() {
@@ -228,7 +226,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                 worldStateStorage.trieLogStorage.takeSnapshot())));
   }
 
-  private Optional<MutableWorldState> getWorldStateSnapshot(final Hash blockHash) {
+  @VisibleForTesting
+  public Optional<MutableWorldState> getSnapshotWorldState(final Hash blockHash) {
     return snapshotManager.getSnapshot(blockHash).flatMap(Optional::of);
   }
 

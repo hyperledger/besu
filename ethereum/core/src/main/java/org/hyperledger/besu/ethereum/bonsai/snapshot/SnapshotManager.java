@@ -16,7 +16,11 @@ package org.hyperledger.besu.ethereum.bonsai.snapshot;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiInMemoryWorldState;
 import org.hyperledger.besu.plugin.data.Hash;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageCheckpoint;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import com.google.common.cache.Cache;
@@ -24,8 +28,16 @@ import com.google.common.cache.CacheBuilder;
 
 public class SnapshotManager {
 
+  private static final String CHECKPOINT_DIR = "checkpoint";
+
   private final Cache<Hash, BonsaiInMemoryWorldState> snapshots =
-      CacheBuilder.newBuilder().maximumSize(512).build();
+      CacheBuilder.newBuilder().maximumSize(128).build();
+
+  final Path dataDirectory;
+
+  public SnapshotManager(final Path dataDirectory) {
+    this.dataDirectory = dataDirectory;
+  }
 
   public Optional<BonsaiInMemoryWorldState> getSnapshot(final Hash hash) {
     return Optional.ofNullable(snapshots.getIfPresent(hash));
@@ -37,5 +49,17 @@ public class SnapshotManager {
 
   public void addSnapshot(final BonsaiInMemoryWorldState bonsaiInMemoryWorldState) {
     snapshots.put(bonsaiInMemoryWorldState.blockHash(), bonsaiInMemoryWorldState);
+  }
+
+  public void saveCheckpoint(final KeyValueStorageCheckpoint trieBranch) {
+    try {
+      final Path checkpointDir = dataDirectory.resolve(CHECKPOINT_DIR);
+      Files.deleteIfExists(checkpointDir);
+      System.out.println("[TEST] checkpoint dir " + checkpointDir.toString());
+      trieBranch.createCheckpoint(checkpointDir.toString());
+    } catch (IOException e) {
+      // TODO throw exception
+      System.out.println("[TEST] failed to create checkpoint  " + e.getMessage());
+    }
   }
 }
