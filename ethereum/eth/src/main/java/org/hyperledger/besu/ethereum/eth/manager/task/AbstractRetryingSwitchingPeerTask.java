@@ -19,13 +19,17 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +40,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
       LoggerFactory.getLogger(AbstractRetryingSwitchingPeerTask.class);
 
   private final Set<EthPeer> triedPeers = new HashSet<>();
+  private final Set<EthPeer> failedPeers = new HashSet<>();
 
   protected AbstractRetryingSwitchingPeerTask(
       final EthContext ethContext,
@@ -95,20 +100,38 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             });
   }
 
+  @Override
+  protected void handleTaskError(final Throwable error) {
+    getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+    super.handleTaskError(error);
+  }
+
+  @Override
+  protected boolean isRetryableError(final Throwable error) {
+    final boolean isPeerError =
+        error instanceof PeerBreachedProtocolException
+            || error instanceof PeerDisconnectedException
+            || error instanceof NoAvailablePeersException;
+
+    return error instanceof TimeoutException || (isPeerError && remainingPeersToTry().count() > 0);
+  }
+
   private Optional<EthPeer> selectNextPeer() {
-    final Optional<EthPeer> maybeNextPeer =
-        getEthContext()
-            .getEthPeers()
-            .streamBestPeers()
-            .filter(peer -> !triedPeers.contains(peer))
-            .findFirst();
+    final Optional<EthPeer> maybeNextPeer = remainingPeersToTry().findFirst();
 
     if (maybeNextPeer.isEmpty()) {
-      // tried all the peers, restart from the best one
-      triedPeers.clear();
-      return getEthContext().getEthPeers().streamBestPeers().findFirst();
+      // tried all the peers, restart from the best one but excluding the failed ones
+      triedPeers.retainAll(failedPeers);
+      return remainingPeersToTry().findFirst();
     }
 
     return maybeNextPeer;
+  }
+
+  private Stream<EthPeer> remainingPeersToTry() {
+    return getEthContext()
+        .getEthPeers()
+        .streamBestPeers()
+        .filter(peer -> !triedPeers.contains(peer));
   }
 }
