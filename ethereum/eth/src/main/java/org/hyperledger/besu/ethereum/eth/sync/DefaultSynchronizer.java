@@ -306,13 +306,14 @@ public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListe
   }
 
   @Override
-  public void onNewForkchoiceMessage(Hash headBlockHash,
-      Optional<Hash> maybeFinalizedBlockHash, Hash safeBlockHash) {
-    if(maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)
-        && this.blockPropagationManager.isPresent()) {
-      this.blockPropagationManager.get().stop();
-
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (this.blockPropagationManager.isPresent()) {
+      this.blockPropagationManager
+          .get()
+          .onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
     }
   }
 }

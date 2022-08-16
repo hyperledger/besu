@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -64,7 +65,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockPropagationManager {
+public class BlockPropagationManager implements ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -600,5 +601,15 @@ public class BlockPropagationManager {
         + ", pendingBlocksManager="
         + pendingBlocksManager
         + '}';
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+      stop();
+    }
   }
 }

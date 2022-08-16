@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.consensus.merge.MergeStateHandler;
 import org.hyperledger.besu.datatypes.Hash;
@@ -27,7 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
 
 import org.slf4j.Logger;
@@ -79,7 +78,11 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash) {
     if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) { //forkchoices send finalized as 0 after ttd, but before an epoch is finalized
+        && !maybeFinalizedBlockHash
+            .get()
+            .equals(
+                Hash.ZERO)) { // forkchoices send finalized as 0 after ttd, but before an epoch is
+      // finalized
       this.finalized.set(true);
     }
   }
