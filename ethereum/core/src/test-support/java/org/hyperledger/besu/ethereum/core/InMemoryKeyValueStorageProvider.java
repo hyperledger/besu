@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.snapshot.SnapshotManager;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -33,6 +32,8 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+
+import java.util.Optional;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
@@ -71,7 +72,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     return new BonsaiWorldStateArchive(
         new TrieLogManager(
             blockchain, new BonsaiWorldStateKeyValueStorage(inMemoryKeyValueStorageProvider)),
-        new SnapshotManager(),
+        Optional.empty(),
         inMemoryKeyValueStorageProvider,
         blockchain);
   }

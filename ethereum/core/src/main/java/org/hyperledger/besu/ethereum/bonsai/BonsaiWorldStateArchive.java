@@ -49,18 +49,18 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final Blockchain blockchain;
 
   private final TrieLogManager trieLogManager;
-  private final SnapshotManager snapshotManager;
+  private final Optional<SnapshotManager> maybeSnapshotManager;
 
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
-      final SnapshotManager snapshotManager,
+      final Optional<SnapshotManager> snapshotManager,
       final StorageProvider provider,
       final Blockchain blockchain) {
     this.trieLogManager = trieLogManager;
-    this.snapshotManager = snapshotManager;
+    this.maybeSnapshotManager = snapshotManager;
     this.blockchain = blockchain;
     this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
@@ -112,7 +112,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
     if (!isPersistingState) {
-      if (snapshotManager.isSnapshotAvailable(blockHash)) {
+      if (maybeSnapshotManager
+          .filter(snapshotManager -> snapshotManager.isSnapshotAvailable(blockHash))
+          .isPresent()) {
         System.out.println("[TEST] snapshot worldstate for block " + blockHash);
         return getSnapshotWorldState(blockHash);
       } else {
@@ -211,24 +213,30 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public void createWorldStateCheckpoint() {
-    snapshotManager.saveCheckpoint(worldStateStorage.trieBranchStorage.takeCheckpoint());
+    maybeSnapshotManager.ifPresent(
+        snapshotManager ->
+            snapshotManager.saveCheckpoint(worldStateStorage.trieBranchStorage.takeCheckpoint()));
   }
 
   public void createWorldStateSnapshot() {
-    snapshotManager.addSnapshot(
-        new BonsaiInMemoryWorldState(
-            this,
-            new BonsaiInMemoryWorldStateKeyValueStorage(
-                worldStateStorage.accountStorage.takeSnapshot(),
-                worldStateStorage.codeStorage.takeSnapshot(),
-                worldStateStorage.storageStorage.takeSnapshot(),
-                worldStateStorage.trieBranchStorage.takeSnapshot(),
-                worldStateStorage.trieLogStorage.takeSnapshot())));
+    maybeSnapshotManager.ifPresent(
+        snapshotManager ->
+            snapshotManager.addSnapshot(
+                new BonsaiInMemoryWorldState(
+                    this,
+                    new BonsaiInMemoryWorldStateKeyValueStorage(
+                        worldStateStorage.accountStorage.takeSnapshot(),
+                        worldStateStorage.codeStorage.takeSnapshot(),
+                        worldStateStorage.storageStorage.takeSnapshot(),
+                        worldStateStorage.trieBranchStorage.takeSnapshot(),
+                        worldStateStorage.trieLogStorage.takeSnapshot()))));
   }
 
   @VisibleForTesting
   public Optional<MutableWorldState> getSnapshotWorldState(final Hash blockHash) {
-    return snapshotManager.getSnapshot(blockHash).flatMap(Optional::of);
+    return maybeSnapshotManager
+        .flatMap(snapshotManager -> snapshotManager.getSnapshot(blockHash))
+        .flatMap(Optional::of);
   }
 
   private Optional<MutableWorldState> getTrieLogLayeredWorldState(final Hash blockHash) {
