@@ -164,15 +164,6 @@ public class BlockPropagationManager {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
 
-    final List<Block> readyForImport;
-    synchronized (pendingBlocksManager) {
-      // Remove block from pendingBlocks list
-      pendingBlocksManager.deregisterPendingBlock(newBlock);
-
-      // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
-    }
-
     traceLambda(
         LOG,
         "Block added event type {} for block {}. Current status {}",
