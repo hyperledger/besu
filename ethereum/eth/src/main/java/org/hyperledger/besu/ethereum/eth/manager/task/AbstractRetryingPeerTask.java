@@ -140,12 +140,13 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   }
 
   protected boolean isRetryableError(final Throwable error) {
-    final boolean isPeerError =
-        error instanceof PeerBreachedProtocolException
-            || error instanceof PeerDisconnectedException
-            || error instanceof NoAvailablePeersException;
+    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerFailure(error));
+  }
 
-    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
+  protected boolean isPeerFailure(final Throwable error) {
+    return error instanceof PeerBreachedProtocolException
+        || error instanceof PeerDisconnectedException
+        || error instanceof NoAvailablePeersException;
   }
 
   protected EthContext getEthContext() {

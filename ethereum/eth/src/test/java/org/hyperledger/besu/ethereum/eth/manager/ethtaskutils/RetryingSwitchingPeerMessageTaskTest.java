@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
 import java.util.Optional;
@@ -104,5 +106,33 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
 
     assertThat(future.isDone()).isTrue();
     assertResultMatchesExpectation(requestedData, future.get(), secondPeer.getEthPeer());
+  }
+
+  @Test
+  public void failsWhenAllPeersFail() {
+    // Setup first unresponsive peer
+    final RespondingEthPeer firstPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
+
+    // Setup second unresponsive peer
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
+
+    // Execute task and wait for response
+    final T requestedData = generateDataToBeRequested();
+    final EthTask<T> task = createTask(requestedData);
+    final CompletableFuture<T> future = task.run();
+
+    for (int i = 0; i < maxRetries && !future.isDone(); i++) {
+      // First peer is unresponsive
+      firstPeer.respondWhile(RespondingEthPeer.emptyResponder(), firstPeer::hasOutstandingRequests);
+      // Second peer is unresponsive
+      secondPeer.respondWhile(
+          RespondingEthPeer.emptyResponder(), secondPeer::hasOutstandingRequests);
+    }
+
+    assertThat(future.isDone()).isTrue();
+    assertThat(future.isCompletedExceptionally()).isTrue();
+    assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
   }
 }
