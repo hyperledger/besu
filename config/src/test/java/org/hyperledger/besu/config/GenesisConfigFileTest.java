@@ -239,7 +239,6 @@ public class GenesisConfigFileTest {
         .isEqualTo(UInt256.valueOf(new BigInteger("58750000000000000000000")));
   }
 
-
   @Test
   public void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions ropstenOverrideOptions =
