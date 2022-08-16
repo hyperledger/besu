@@ -139,7 +139,7 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
   }
 
   @Test
-  public void disconnectAPeerWhenAllPeerTried() {
+  public void disconnectAPeerWhenAllPeersTried() {
     maxRetries = MAX_PEERS + 1;
     final int numPeers = MAX_PEERS;
     final List<RespondingEthPeer> respondingPeers = new ArrayList<>(numPeers);
