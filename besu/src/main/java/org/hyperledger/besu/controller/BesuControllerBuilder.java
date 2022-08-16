@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.BlockPropagationManager;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -100,6 +101,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -411,20 +413,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
 
     final Synchronizer synchronizer =
-        new DefaultSynchronizer(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            worldStateStorage,
-            ethProtocolManager.getBlockBroadcaster(),
-            maybePruner,
+        createSynchronizer(protocolSchedule, worldStateStorage, protocolContext, maybePruner,
             ethContext,
-            syncState,
-            dataDirectory,
-            clock,
-            metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
-            pivotBlockSelector);
+            syncState, ethProtocolManager, pivotBlockSelector);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -467,6 +458,38 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  @NotNull
+  private Synchronizer createSynchronizer(ProtocolSchedule protocolSchedule,
+      WorldStateStorage worldStateStorage, ProtocolContext protocolContext,
+      Optional<Pruner> maybePruner, EthContext ethContext, SyncState syncState,
+      EthProtocolManager ethProtocolManager, PivotBlockSelector pivotBlockSelector) {
+
+    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
+
+
+
+    DefaultSynchronizer toUse =  new DefaultSynchronizer(
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        worldStateStorage,
+        ethProtocolManager.getBlockBroadcaster(),
+        maybePruner,
+        ethContext,
+        syncState,
+        dataDirectory,
+        clock,
+        metricsSystem,
+        getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+        pivotBlockSelector);
+    if(maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
+      LOG.info("TTD present, creating DefaultSynchronizer that stops propagating after finalization");
+      protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(toUse);
+    }
+
+    return toUse;
   }
 
   private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
