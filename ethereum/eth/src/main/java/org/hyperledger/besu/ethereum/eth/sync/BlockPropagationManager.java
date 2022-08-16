@@ -529,7 +529,6 @@ public class BlockPropagationManager {
       final Optional<Hash> maybeBlockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            protocolContext,
             protocolSchedule,
             ethContext,
             metricsSystem,
