@@ -124,7 +124,10 @@ public class BonsaiSnapshotIsolationTests {
     //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     archive =
         new BonsaiWorldStateArchive(
-            trieLogManager, snapshotManager, createKeyValueStorageProvider(), blockchain);
+            trieLogManager,
+            Optional.of(snapshotManager),
+            createKeyValueStorageProvider(),
+            blockchain);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     ws.persist(blockchain.getChainHeadHeader());

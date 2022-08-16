@@ -117,7 +117,7 @@ public class LogRollingTests {
     archive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(provider)),
-            snapshotManager,
+            Optional.of(snapshotManager),
             provider,
             blockchain);
     accountStorage =
@@ -141,7 +141,7 @@ public class LogRollingTests {
     secondArchive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(secondProvider)),
-            snapshotManager,
+            Optional.of(snapshotManager),
             secondProvider,
             blockchain);
     secondAccountStorage =

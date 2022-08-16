@@ -88,7 +88,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 1),
-            snapshotManager,
+            Optional.of(snapshotManager),
             storageProvider,
             blockchain);
 
@@ -102,7 +102,7 @@ public class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateArchive(
             new TrieLogManager(
                 blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
-            snapshotManager,
+            Optional.of(snapshotManager),
             storageProvider,
             blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -118,7 +118,7 @@ public class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateArchive(
             new TrieLogManager(
                 blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
-            snapshotManager,
+            Optional.of(snapshotManager),
             storageProvider,
             blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -151,7 +151,7 @@ public class BonsaiWorldStateArchiveTest {
                 new BonsaiWorldStateKeyValueStorage(storageProvider),
                 12,
                 layeredWorldStatesByHash),
-            snapshotManager,
+            Optional.of(snapshotManager),
             storageProvider,
             blockchain);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -180,7 +180,7 @@ public class BonsaiWorldStateArchiveTest {
                     new BonsaiWorldStateKeyValueStorage(storageProvider),
                     12,
                     layeredWorldStatesByHash),
-                snapshotManager,
+                Optional.of(snapshotManager),
                 storageProvider,
                 blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
@@ -225,7 +225,7 @@ public class BonsaiWorldStateArchiveTest {
                     new BonsaiWorldStateKeyValueStorage(storageProvider),
                     12,
                     layeredWorldStatesByHash),
-                snapshotManager,
+                Optional.of(snapshotManager),
                 storageProvider,
                 blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
@@ -277,7 +277,7 @@ public class BonsaiWorldStateArchiveTest {
                     new BonsaiWorldStateKeyValueStorage(storageProvider),
                     12,
                     layeredWorldStatesByHash),
-                snapshotManager,
+                Optional.of(snapshotManager),
                 storageProvider,
                 blockchain));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
