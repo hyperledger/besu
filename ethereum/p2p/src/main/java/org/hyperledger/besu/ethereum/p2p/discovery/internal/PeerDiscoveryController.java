@@ -320,7 +320,7 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  addBondedPeerToPeerTable(peer);
+                  addToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
@@ -386,7 +386,7 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private boolean addBondedPeerToPeerTable(final DiscoveryPeer peer) {
+  private boolean addToPeerTable(final DiscoveryPeer peer) {
     if (!peerPermissions.isAllowedInPeerTable(peer)) {
       return false;
     }
@@ -403,15 +403,7 @@ public class PeerDiscoveryController {
       notifyPeerBonded(peer, now);
     }
 
-    return addToPeerTable(peer);
-  }
-
-  public boolean addToPeerTable(final DiscoveryPeer peer) {
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
-
-    if (result.getOutcome() == PeerTable.AddResult.AddOutcome.SELF) {
-      return false;
-    }
 
     if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
       // Bump peer.
@@ -469,7 +461,7 @@ public class PeerDiscoveryController {
    */
   private void refreshTable() {
     final Bytes target = Peer.randomId();
-    final List<DiscoveryPeer> initialPeers = peerTable.nearestPeers(Peer.randomId(), 16);
+    final List<DiscoveryPeer> initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
   }

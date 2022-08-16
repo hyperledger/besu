@@ -87,7 +87,7 @@ public class PeerPermissionsAdapter extends PeerPermissions {
   }
 
   private boolean allowOutboundBonding(final Peer localNode, final Peer remotePeer) {
-    boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
+    final boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
     if (!nodePermissioningController.getSyncStatusNodePermissioningProvider().isPresent()) {
       return outboundMessagingAllowed;
     }
@@ -101,7 +101,7 @@ public class PeerPermissionsAdapter extends PeerPermissions {
   }
 
   private boolean allowOutboundNeighborsRequests(final Peer localNode, final Peer remotePeer) {
-    boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
+    final boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
     if (!nodePermissioningController.getSyncStatusNodePermissioningProvider().isPresent()) {
       return outboundMessagingAllowed;
     }
