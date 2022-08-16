@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class GetReceiptsForHeadersTask
     extends AbstractRetryingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsForHeadersTask.class);
-  private static final int DEFAULT_RETRIES = 3;
+  private static final int DEFAULT_RETRIES = 4;
 
   private final EthContext ethContext;
 
