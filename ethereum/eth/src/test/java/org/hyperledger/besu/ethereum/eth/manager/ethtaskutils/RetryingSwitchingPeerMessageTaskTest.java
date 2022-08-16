@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -134,5 +136,27 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
+  }
+
+  @Test
+  public void disconnectAPeerWhenAllPeersTried() {
+    maxRetries = MAX_PEERS + 1;
+    final int numPeers = MAX_PEERS;
+    final List<RespondingEthPeer> respondingPeers = new ArrayList<>(numPeers);
+    for (int i = 0; i < numPeers; i++) {
+      respondingPeers.add(EthProtocolManagerTestUtil.createPeer(ethProtocolManager, numPeers - i));
+    }
+
+    // Execute task and wait for response
+    final T requestedData = generateDataToBeRequested();
+    final EthTask<T> task = createTask(requestedData);
+    task.run();
+
+    respondingPeers.forEach(
+        respondingPeer ->
+            respondingPeer.respondWhile(
+                RespondingEthPeer.emptyResponder(), respondingPeer::hasOutstandingRequests));
+
+    assertThat(respondingPeers.get(numPeers - 1).getEthPeer().isDisconnected()).isTrue();
   }
 }
