@@ -532,7 +532,7 @@ public class BlockPropagationManager {
             protocolSchedule,
             ethContext,
             metricsSystem,
-            ethContext.getEthPeers().getMaxPeers(),
+            ethContext.getEthPeers().peerCount(),
             maybeBlockHash,
             blockNumber);
     maybePreferredPeer.ifPresent(getBlockTask::assignPeer);
