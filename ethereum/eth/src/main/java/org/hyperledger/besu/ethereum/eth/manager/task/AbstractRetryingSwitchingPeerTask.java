@@ -14,11 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.HashSet;
@@ -116,6 +119,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
     if (maybeNextPeer.isEmpty()) {
       // tried all the peers, restart from the best one but excluding the failed ones
+      refreshPeers();
       triedPeers.retainAll(failedPeers);
       return remainingPeersToTry().findFirst();
     }
@@ -128,5 +132,22 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
         .getEthPeers()
         .streamBestPeers()
         .filter(peer -> !triedPeers.contains(peer));
+  }
+
+  private void refreshPeers() {
+    final EthPeers peers = getEthContext().getEthPeers();
+    // If we are at max connections, then refresh peers disconnecting one of the failed peers,
+    // or the least useful
+    if (peers.peerCount() >= peers.getMaxPeers()) {
+      failedPeers.stream()
+          .filter(peer -> !peer.isDisconnected())
+          .findAny()
+          .or(() -> peers.streamAvailablePeers().sorted(peers.getBestChainComparator()).findFirst())
+          .ifPresent(
+              peer -> {
+                debugLambda(LOG, "Refresh peers disconnecting peer {}", peer::toString);
+                peer.disconnect(DisconnectReason.USELESS_PEER);
+              });
+    }
   }
 }

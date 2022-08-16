@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -34,11 +35,12 @@ import org.junit.Test;
  * @param <T> The type of data being requested from the network
  */
 public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest<T, T> {
+  protected static final int DEFAULT_MAX_RETRIES = 4;
+  protected int maxRetries;
 
-  protected final int maxRetries;
-
-  protected RetryingMessageTaskTest() {
-    this.maxRetries = 4;
+  @Before
+  public void resetMaxRetries() {
+    this.maxRetries = DEFAULT_MAX_RETRIES;
   }
 
   @Override
