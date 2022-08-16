@@ -29,23 +29,11 @@ jar {
 
 dependencies {
   api project(':plugin-api')
-  api project(':util')
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':metrics:core')
-  implementation project(':metrics:rocksdb')
-
-  implementation 'com.google.guava:guava'
-  implementation 'io.prometheus:simpleclient'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.rocksdb:rocksdbjni'
-
   testImplementation project(':testutil')
-
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.mockito:mockito-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

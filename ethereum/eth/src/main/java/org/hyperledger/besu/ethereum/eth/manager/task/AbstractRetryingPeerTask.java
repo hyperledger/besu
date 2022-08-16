@@ -81,7 +81,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       // Return if task is done
       return;
     }
-    if (retryCount > maxRetries) {
+    if (retryCount >= maxRetries) {
       result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }
