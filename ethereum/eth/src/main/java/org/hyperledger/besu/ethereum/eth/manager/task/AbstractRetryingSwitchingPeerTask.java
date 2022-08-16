@@ -66,8 +66,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
       traceLambda(
           LOG,
           "No peer found to try to execute task at attempt {}, tried peers {}",
-          triedPeers::toString,
-          this::getRetryCount);
+          this::getRetryCount,
+          triedPeers::toString);
       final var ex = new NoAvailablePeersException();
       return CompletableFuture.failedFuture(ex);
     }
@@ -88,6 +88,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                   LOG,
                   "Got result {} from peer {}, attempt {}",
                   peerResult::toString,
+                  peerToUse::toString,
                   this::getRetryCount);
               result.complete(peerResult);
               return peerResult;

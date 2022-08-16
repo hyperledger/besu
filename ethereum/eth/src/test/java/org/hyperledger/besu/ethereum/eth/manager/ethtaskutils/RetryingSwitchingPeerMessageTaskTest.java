@@ -45,13 +45,11 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
   @Test
   public void completesWhenBestPeerEmptyAndSecondPeerIsResponsive()
       throws ExecutionException, InterruptedException {
-    // Setup data to be requested and expected response
-
     // Setup first unresponsive peer
     final RespondingEthPeer firstPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
-    // Setup first unresponsive peer
+    // Setup second responsive peer
     final RespondingEthPeer secondPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
 
@@ -77,13 +75,11 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
   @Test
   public void completesWhenBestPeerTimeoutsAndSecondPeerIsResponsive()
       throws ExecutionException, InterruptedException {
-    // Setup data to be requested and expected response
-    peerCountToTimeout.set(1);
     // Setup first unresponsive peer
     final RespondingEthPeer firstPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
-    // Setup first unresponsive peer
+    // Setup second responsive peer
     final RespondingEthPeer secondPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
 
@@ -93,6 +89,7 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
     final CompletableFuture<T> future = task.run();
 
     // First peer timeouts
+    peerCountToTimeout.set(1);
     firstPeer.respondTimes(
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool),
