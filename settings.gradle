@@ -22,7 +22,7 @@ pluginManagement {
      *  official version with the fix is release upstream
      */
     maven {
-      url = uri("https://raw.githubusercontent.com/ConsenSys/license-gradle-plugin-fix-artifacts/main/")
+      url = uri('https://raw.githubusercontent.com/ConsenSys/license-gradle-plugin-fix-artifacts/main/')
       content {
         includeGroup('com.github.hierynomus.license')
         includeGroup('com.hierynomus.gradle.plugins')

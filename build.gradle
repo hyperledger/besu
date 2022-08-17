@@ -104,27 +104,33 @@ allprojects {
 
   repositories {
     maven {
-      url "https://hyperledger.jfrog.io/hyperledger/besu-maven"
+      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
       content {
-        includeGroupByRegex("org\\.hyperledger\\..*")
+        includeGroupByRegex('org\\.hyperledger\\..*')
       }
     }
     maven {
-        url "https://artifacts.consensys.net/public/maven/maven/"
+        url 'https://artifacts.consensys.net/public/maven/maven/'
         content {
-            includeGroupByRegex("tech\\.pegasys\\..*")
+            includeGroupByRegex('tech\\.pegasys\\..*')
         }
     }
     maven {
-      url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"
+      url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
       content {
-        includeGroupByRegex("net\\.consensys\\..*")
+        includeGroupByRegex('net\\.consensys\\..*')
+      }
+    }
+    maven {
+      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      content {
+        includesGroupByRegex('com\\.splunk\\..*')
       }
     }
     mavenCentral()
   }
 
-  dependencies { errorprone "com.google.errorprone:error_prone_core" }
+  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
