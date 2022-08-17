@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.Checkpoint;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
@@ -177,6 +178,17 @@ public class RocksDBColumnarKeyValueStorage
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
+  }
+
+  public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
+          throws StorageException {
+    throwIfClosed();
+    return new RocksDBColumnarKeyValueSnapshot(db, segment, metrics);
+  }
+
+  public Checkpoint takeCheckpoint() throws StorageException {
+    throwIfClosed();
+    return Checkpoint.create(db);
   }
 
   @Override

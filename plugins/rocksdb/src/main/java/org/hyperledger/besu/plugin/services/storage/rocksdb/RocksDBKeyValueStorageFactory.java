@@ -53,7 +53,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private final int defaultVersion;
   private Integer databaseVersion;
   private Boolean isSegmentIsolationSupported;
-  private SegmentedKeyValueStorage<?> segmentedStorage;
+  private RocksDBColumnarKeyValueStorage segmentedStorage;
   private KeyValueStorage unsegmentedStorage;
   private RocksDBConfiguration rocksDBConfiguration;
 
@@ -125,7 +125,13 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                 new RocksDBColumnarKeyValueStorage(
                     rocksDBConfiguration, segmentsForVersion, metricsSystem, rocksDBMetricsFactory);
           }
-          return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+          final RocksDbSegmentIdentifier rocksSegment =
+                  segmentedStorage.getSegmentIdentifierByName(segment);
+          return new SegmentedKeyValueStorageAdapter<>(
+                  segment,
+                  segmentedStorage,
+                  () -> segmentedStorage.takeSnapshot(rocksSegment),
+                  () -> segmentedStorage.takeCheckpoint());
         }
       default:
         {
