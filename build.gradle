@@ -105,27 +105,19 @@ allprojects {
   repositories {
     maven {
       url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
-      content {
-        includeGroupByRegex('org\\.hyperledger\\..*')
-      }
+      content { includeGroupByRegex('org\\.hyperledger\\..*') }
     }
     maven {
-        url 'https://artifacts.consensys.net/public/maven/maven/'
-        content {
-            includeGroupByRegex('tech\\.pegasys\\..*')
-        }
+      url 'https://artifacts.consensys.net/public/maven/maven/'
+      content { includeGroupByRegex('tech\\.pegasys\\..*') }
     }
     maven {
       url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
-      content {
-        includeGroupByRegex('net\\.consensys\\..*')
-      }
+      content { includeGroupByRegex('net\\.consensys\\..*') }
     }
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
-      content {
-        includeGroupByRegex('com\\.splunk\\..*')
-      }
+      content { includeGroupByRegex('com\\.splunk\\..*') }
     }
     mavenCentral()
   }
