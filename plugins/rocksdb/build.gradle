@@ -38,6 +38,7 @@ dependencies {
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')
   implementation project(':services:kvstore')
+  implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'

@@ -45,7 +45,7 @@ public class RetryingGetStorageRangeFromPeerTask
       final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, data -> data.proofs().isEmpty() && data.slots().isEmpty(), metricsSystem);
+    super(ethContext, 4, data -> data.proofs().isEmpty() && data.slots().isEmpty(), metricsSystem);
     this.ethContext = ethContext;
     this.accountHashes = accountHashes;
     this.startKeyHash = startKeyHash;

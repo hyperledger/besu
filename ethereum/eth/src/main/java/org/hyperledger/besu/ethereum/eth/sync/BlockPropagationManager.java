@@ -155,16 +155,6 @@ public class BlockPropagationManager {
   private void onBlockAdded(final BlockAddedEvent blockAddedEvent) {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
-
-    final List<Block> readyForImport;
-    synchronized (pendingBlocksManager) {
-      // Remove block from pendingBlocks list
-      pendingBlocksManager.deregisterPendingBlock(newBlock);
-
-      // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
-    }
-
     traceLambda(
         LOG,
         "Block added event type {} for block {}. Current status {}",
@@ -172,12 +162,42 @@ public class BlockPropagationManager {
         newBlock::toLogString,
         () -> this);
 
+    // If there is no children to process, maybe try non announced blocks
+    if (!maybeProcessPendingChildrenBlocks(newBlock)) {
+      traceLambda(
+          LOG, "There are no pending blocks ready to import for block {}", newBlock::toLogString);
+      maybeProcessNonAnnouncedBlocks(newBlock);
+    }
+
+    if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
+      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
+      final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
+      pendingBlocksManager.purgeBlocksOlderThan(cutoff);
+    }
+  }
+
+  /**
+   * Process pending Children if any
+   *
+   * @param block the block to process the children
+   * @return true if block has any pending child
+   */
+  private boolean maybeProcessPendingChildrenBlocks(final Block block) {
+    final List<Block> readyForImport;
+    synchronized (pendingBlocksManager) {
+      // Remove block from pendingBlocks list
+      pendingBlocksManager.deregisterPendingBlock(block);
+
+      // Import any pending blocks that are children of the newly added block
+      readyForImport = pendingBlocksManager.childrenOf(block.getHash());
+    }
+
     if (!readyForImport.isEmpty()) {
       traceLambda(
           LOG,
           "Ready to import pending blocks found [{}] for block {}",
           () -> readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")),
-          newBlock::toLogString);
+          block::toLogString);
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
@@ -193,25 +213,17 @@ public class BlockPropagationManager {
           .whenComplete(
               (r, t) -> {
                 if (r != null) {
-                  LOG.info("Imported {} pending blocks", r.size());
+                  LOG.info(
+                      "Imported {} pending blocks: {}",
+                      r.size(),
+                      r.stream().map(b -> b.getHeader().getNumber()).collect(Collectors.toList()));
                 }
                 if (t != null) {
                   LOG.error("Error importing pending blocks", t);
                 }
               });
-    } else {
-
-      traceLambda(
-          LOG, "There are no pending blocks ready to import for block {}", newBlock::toLogString);
-
-      maybeProcessNonAnnouncedBlocks(newBlock);
     }
-
-    if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
-      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
-      final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
-      pendingBlocksManager.purgeBlocksOlderThan(cutoff);
-    }
+    return !readyForImport.isEmpty();
   }
 
   private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
@@ -223,13 +235,13 @@ public class BlockPropagationManager {
           .map(ProcessableBlockHeader::getNumber)
           .ifPresent(
               minAnnouncedBlockNumber -> {
-                long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
+                final long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
                 LOG.trace(
                     "Found lowest announced block {} with distance {}",
                     minAnnouncedBlockNumber,
                     distance);
 
-                long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
+                final long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
 
                 if (distance < config.getBlockPropagationRange().upperEndpoint()
                     && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
@@ -364,21 +376,19 @@ public class BlockPropagationManager {
     return getBlockFromPeers(Optional.of(peer), blockHash.number(), Optional.of(blockHash.hash()));
   }
 
-  private void requestParentBlock(final BlockHeader blockHeader) {
+  private void requestParentBlock(final Block block) {
+    final BlockHeader blockHeader = block.getHeader();
     if (requestedBlocks.add(blockHeader.getParentHash())) {
       retrieveParentBlock(blockHeader);
     } else {
-      LOG.trace("Parent block with hash {} was already requested", blockHeader.getParentHash());
+      LOG.debug("Parent block with hash {} is already requested", blockHeader.getParentHash());
     }
   }
 
   private CompletableFuture<Block> retrieveParentBlock(final BlockHeader blockHeader) {
     final long targetParentBlockNumber = blockHeader.getNumber() - 1L;
     final Hash targetParentBlockHash = blockHeader.getParentHash();
-    LOG.info(
-        "Retrieving parent {} of block #{} from peers",
-        targetParentBlockHash,
-        blockHeader.getNumber());
+    LOG.info("Retrieving parent {} of block {}", targetParentBlockHash, blockHeader.toLogString());
     return getBlockFromPeers(
         Optional.empty(), targetParentBlockNumber, Optional.of(targetParentBlockHash));
   }
@@ -434,18 +444,13 @@ public class BlockPropagationManager {
     // invoked for the parent of this block before we are able to register it.
     traceLambda(LOG, "Import or save pending block {}", block::toLogString);
 
-    synchronized (pendingBlocksManager) {
-      if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
-        // Block isn't connected to local chain, save it to pending blocks collection
-        if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
-          LOG.info("Saving announced block {} for future import", block.toLogString());
-        }
-
-        // Request parent of the lowest announced block
-        pendingBlocksManager.lowestAnnouncedBlock().ifPresent(this::requestParentBlock);
-
-        return CompletableFuture.completedFuture(block);
+    if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
+      // Block isn't connected to local chain, save it to pending blocks collection
+      if (savePendingBlock(block, nodeId)) {
+        // if block is saved as pending, try to resolve it
+        maybeProcessPendingBlocks(block);
       }
+      return CompletableFuture.completedFuture(block);
     }
 
     if (!importingBlocks.add(block.getHash())) {
@@ -478,6 +483,48 @@ public class BlockPropagationManager {
             () ->
                 validateAndProcessPendingBlock(
                     blockHeaderValidator, block, parent, badBlockManager));
+  }
+
+  /**
+   * Save the given block.
+   *
+   * @param block the block to track
+   * @param nodeId node that sent the block
+   * @return true if the block was added (was not previously present)
+   */
+  private boolean savePendingBlock(final Block block, final Bytes nodeId) {
+    synchronized (pendingBlocksManager) {
+      if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
+        LOG.info(
+            "Saved announced block for future import {} - {} saved block(s)",
+            block.toLogString(),
+            pendingBlocksManager.size());
+        return true;
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Try to request the lowest ancestor for the given pending block or process the descendants if
+   * the ancestor is already in the chain
+   */
+  private void maybeProcessPendingBlocks(final Block block) {
+    // Try to get the lowest ancestor pending for this block, so we can import it
+    final Optional<Block> lowestPending = pendingBlocksManager.pendingAncestorBlockOf(block);
+    if (lowestPending.isPresent()) {
+      final Block lowestPendingBlock = lowestPending.get();
+      // If the parent of the lowest ancestor is not in the chain, request it.
+      if (!protocolContext
+          .getBlockchain()
+          .contains(lowestPendingBlock.getHeader().getParentHash())) {
+        requestParentBlock(lowestPendingBlock);
+      } else {
+        LOG.trace("Parent block is already in the chain");
+        // if the parent is already imported, process its children
+        maybeProcessPendingChildrenBlocks(lowestPendingBlock);
+      }
+    }
   }
 
   private CompletableFuture<Block> validateAndProcessPendingBlock(
