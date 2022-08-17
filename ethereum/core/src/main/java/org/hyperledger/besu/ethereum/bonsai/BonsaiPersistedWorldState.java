@@ -13,7 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
@@ -275,6 +274,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
       if (success) {
         stateUpdater.commit();
         updater.reset();
+        archive.createWorldStateSnapshot(worldStateBlockHash);
       } else {
         stateUpdater.rollback();
         updater.reset();

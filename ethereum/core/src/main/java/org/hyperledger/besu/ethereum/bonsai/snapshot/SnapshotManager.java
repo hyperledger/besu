@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.snapshot;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiInMemoryWorldState;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiInMemoryWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageCheckpoint;
 
@@ -31,7 +31,7 @@ public class SnapshotManager {
 
   private static final String CHECKPOINT_DIR = "checkpoint";
 
-  private final Cache<Hash, BonsaiInMemoryWorldState> snapshots =
+  private final Cache<Hash, BonsaiInMemoryWorldStateKeyValueStorage> snapshots =
       CacheBuilder.newBuilder().maximumSize(128).build();
 
   final Path dataDirectory;
@@ -40,7 +40,7 @@ public class SnapshotManager {
     this.dataDirectory = dataDirectory;
   }
 
-  public Optional<BonsaiInMemoryWorldState> getSnapshot(final Hash hash) {
+  public Optional<BonsaiInMemoryWorldStateKeyValueStorage> getSnapshot(final Hash hash) {
     return Optional.ofNullable(snapshots.getIfPresent(hash));
   }
 
@@ -48,9 +48,10 @@ public class SnapshotManager {
     return getSnapshot(hash).isPresent();
   }
 
-  public void addSnapshot(final BonsaiInMemoryWorldState bonsaiInMemoryWorldState) {
-    snapshots.put(bonsaiInMemoryWorldState.blockHash(), bonsaiInMemoryWorldState);
-    System.out.printf("entry added in cache ");
+  public void addSnapshot(
+      final Hash blockHash,
+      final BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldState) {
+    snapshots.put(blockHash, bonsaiInMemoryWorldState);
   }
 
   public void saveCheckpoint(final KeyValueStorageCheckpoint trieBranch) {
