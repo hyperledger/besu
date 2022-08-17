@@ -409,8 +409,7 @@ public class BlockPropagationManager {
               if (throwable != null) {
                 LOG.warn(
                     "Failed to retrieve block "
-                        + blockNumber
-                        + maybeBlockHash.map(h -> " (" + h + ")").orElse(""),
+                        + logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
                     throwable);
               }
               requestedNonAnnouncedBlocks.remove(blockNumber);
