@@ -124,7 +124,7 @@ allprojects {
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content {
-        includesGroupByRegex('com\\.splunk\\..*')
+        includeGroupByRegex('com\\.splunk\\..*')
       }
     }
     mavenCentral()
