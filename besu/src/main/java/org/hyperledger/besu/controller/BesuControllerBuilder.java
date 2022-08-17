@@ -100,7 +100,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -465,7 +464,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
-  @NotNull
   private Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorage worldStateStorage,
