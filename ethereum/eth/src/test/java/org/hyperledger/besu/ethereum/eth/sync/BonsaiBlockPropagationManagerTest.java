@@ -14,21 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-
-import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class BonsaiBlockPropagationManagerTest extends AbstractBlockPropagationManagerTest {
 
@@ -47,34 +38,5 @@ public class BonsaiBlockPropagationManagerTest extends AbstractBlockPropagationM
   @Override
   public Blockchain getFullBlockchain() {
     return fullBlockchain;
-  }
-
-  @Test
-  @Override
-  public void shouldRepeatGetBlockWhenFirstAttemptFails() {
-    blockchainUtil.importFirstBlocks(2);
-    final Block nextBlock = blockchainUtil.getBlock(2);
-
-    // Sanity check
-    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
-
-    blockPropagationManager.start();
-
-    // Setup peer and messages
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final RespondingEthPeer secondPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
-
-    final NewBlockHashesMessage nextAnnouncement =
-        NewBlockHashesMessage.create(
-            Collections.singletonList(
-                new NewBlockHashesMessage.NewBlockHash(
-                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
-
-    // Broadcast first message
-    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
-    peer.respondWhile(RespondingEthPeer.emptyResponder(), peer::hasOutstandingRequests);
-    secondPeer.respondWhile(RespondingEthPeer.emptyResponder(), secondPeer::hasOutstandingRequests);
-    assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
   }
 }

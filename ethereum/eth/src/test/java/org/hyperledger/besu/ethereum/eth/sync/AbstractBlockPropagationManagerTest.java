@@ -72,7 +72,6 @@ import org.mockito.stubbing.Answer;
 public abstract class AbstractBlockPropagationManagerTest {
 
   private static final Bytes NODE_ID_1 = Bytes.fromHexString("0x00");
-  private static final int MAX_PEERS = 2;
 
   protected BlockchainSetupUtil blockchainUtil;
   protected ProtocolSchedule protocolSchedule;
@@ -105,7 +104,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchainUtil.getWorldArchive(),
             blockchainUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig(),
-            MAX_PEERS);
+            25);
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
     syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
     blockBroadcaster = mock(BlockBroadcaster.class);
@@ -815,34 +814,6 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldRepeatGetBlockWhenFirstAttemptFails() {
-    blockchainUtil.importFirstBlocks(2);
-    final Block nextBlock = blockchainUtil.getBlock(2);
-
-    // Sanity check
-    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
-
-    blockPropagationManager.start();
-
-    // Setup peer and messages
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    final RespondingEthPeer secondPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
-
-    final NewBlockHashesMessage nextAnnouncement =
-        NewBlockHashesMessage.create(
-            Collections.singletonList(
-                new NewBlockHashesMessage.NewBlockHash(
-                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
-
-    // Broadcast first message
-    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
-    peer.respondWhile(RespondingEthPeer.emptyResponder(), peer::hasOutstandingRequests);
-    secondPeer.respondWhile(RespondingEthPeer.emptyResponder(), peer::hasOutstandingRequests);
-    assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
-  }
-
-  @Test
   public void shouldThrowErrorWhenNoValidPeerAvailable() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
@@ -958,7 +929,7 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldRequestBlockAgainIfFirstGetBlockFails() {
+  public void shouldRequestBlockFromOtherPeersIfFirstPeerFails() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 

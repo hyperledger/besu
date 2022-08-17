@@ -32,9 +32,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlockFromPeersTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage.NewBlockHash;
@@ -50,7 +48,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -485,28 +482,6 @@ public class BlockPropagationManager {
         LOG,
         "Retrying to get block {}",
         () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
-
-    EthPeers peers = ethContext.getEthPeers();
-    // If we are at max connections, then refresh peers disconnecting the least useful
-    if (peers.peerCount() >= peers.getMaxPeers()) {
-      peers
-          .streamAvailablePeers()
-          .sorted(peers.getBestChainComparator())
-          .findFirst()
-          .ifPresent(
-              peer -> {
-                debugLambda(
-                    LOG, "Refresh peers disconnecting least useful peer {}", peer::toString);
-                peer.disconnect(DisconnectReason.USELESS_PEER);
-              });
-
-      final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
-      return ethContext
-          .getScheduler()
-          .timeout(waitTask, Duration.ofSeconds(5))
-          .thenCompose(
-              r -> repeatableGetBlockFromPeer(Optional.empty(), blockNumber, maybeBlockHash));
-    }
 
     return ethContext
         .getScheduler()

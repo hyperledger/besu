@@ -150,21 +150,4 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
               });
     }
   }
-
-  private void refreshPeers() {
-    final EthPeers peers = getEthContext().getEthPeers();
-    // If we are at max connections, then refresh peers disconnecting one of the failed peers,
-    // or the least useful
-    if (peers.peerCount() >= peers.getMaxPeers()) {
-      failedPeers.stream()
-          .filter(peer -> !peer.isDisconnected())
-          .findAny()
-          .or(() -> peers.streamAvailablePeers().sorted(peers.getBestChainComparator()).findFirst())
-          .ifPresent(
-              peer -> {
-                debugLambda(LOG, "Refresh peers disconnecting peer {}", peer::toString);
-                peer.disconnect(DisconnectReason.USELESS_PEER);
-              });
-    }
-  }
 }
