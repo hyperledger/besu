@@ -39,6 +39,8 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class BlockHeaderValidationRulesetFactory {
 
   /**
@@ -56,12 +58,21 @@ public class BlockHeaderValidationRulesetFactory {
       final long secondsBetweenBlocks,
       final EpochManager epochManager,
       final Optional<BaseFeeMarket> baseFeeMarket) {
+    return cliqueBlockHeaderValidator(
+        secondsBetweenBlocks, epochManager, baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+  }
+
+  @VisibleForTesting
+  public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
+      final long secondsBetweenBlocks,
+      final EpochManager epochManager,
+      final Optional<BaseFeeMarket> baseFeeMarket,
+      final boolean isMergeEnabled) {
 
     final BlockHeaderValidator.Builder builder =
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
             .addRule(new TimestampBoundedByFutureParameter(10))
-            .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
             .addRule(
                 new GasLimitRangeAndDeltaValidationRule(
                     DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
@@ -81,13 +92,15 @@ public class BlockHeaderValidationRulesetFactory {
     var mixHashRule =
         new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO);
     var voteValidationRule = new VoteValidationRule();
+    var cliqueTimestampRule = new TimestampMoreRecentThanParent(secondsBetweenBlocks);
 
-    if (MergeConfigOptions.isMergeEnabled()) {
+    if (isMergeEnabled) {
       builder
           .addRule(new AttachedComposedFromDetachedRule(mixHashRule))
-          .addRule(new AttachedComposedFromDetachedRule(voteValidationRule));
+          .addRule(new AttachedComposedFromDetachedRule(voteValidationRule))
+          .addRule(new AttachedComposedFromDetachedRule(cliqueTimestampRule));
     } else {
-      builder.addRule(mixHashRule).addRule(voteValidationRule);
+      builder.addRule(mixHashRule).addRule(voteValidationRule).addRule(cliqueTimestampRule);
     }
 
     return builder;

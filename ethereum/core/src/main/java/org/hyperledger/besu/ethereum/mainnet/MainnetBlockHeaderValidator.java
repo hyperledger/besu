@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class MainnetBlockHeaderValidator {
@@ -124,6 +125,12 @@ public final class MainnetBlockHeaderValidator {
 
   public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
       final BaseFeeMarket baseFeeMarket) {
+    return createBaseFeeMarketValidator(baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+  }
+
+  @VisibleForTesting
+  public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
+      final BaseFeeMarket baseFeeMarket, final boolean isMergeEnabled) {
     var builder =
         new BlockHeaderValidator.Builder()
             .addRule(CalculatedDifficultyValidationRule::new)
@@ -144,9 +151,8 @@ public final class MainnetBlockHeaderValidator {
             PoWHasher.ETHASH_LIGHT,
             Optional.of(baseFeeMarket));
 
-    if (MergeConfigOptions.isMergeEnabled()) {
+    if (isMergeEnabled) {
       builder.addRule(new AttachedComposedFromDetachedRule(powValidationRule));
-
     } else {
       builder.addRule(powValidationRule);
     }
