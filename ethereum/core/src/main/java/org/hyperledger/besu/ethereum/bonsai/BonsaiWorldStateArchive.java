@@ -20,6 +20,7 @@ import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.snapshot.SnapshotManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -45,6 +46,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final Blockchain blockchain;
 
   private final TrieLogManager trieLogManager;
+  private final Optional<SnapshotManager> maybeSnapshotManager;
+
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
@@ -52,7 +55,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final TrieLogManager trieLogManager,
       final StorageProvider provider,
       final Blockchain blockchain) {
+    this(trieLogManager, Optional.empty(), provider, blockchain);
+  }
+
+  public BonsaiWorldStateArchive(
+      final TrieLogManager trieLogManager,
+      final Optional<SnapshotManager> snapshotManager,
+      final StorageProvider provider,
+      final Blockchain blockchain) {
     this.trieLogManager = trieLogManager;
+    this.maybeSnapshotManager = snapshotManager;
     this.blockchain = blockchain;
     this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
@@ -61,10 +73,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private void blockAddedHandler(final BlockAddedEvent event) {
     LOG.debug("New block add event {}", event);
+    createWorldStateSnapshot();
     if (event.isNewCanonicalHead()) {
       final BlockHeader eventBlockHeader = event.getBlock().getHeader();
       trieLogManager.updateLayeredWorldState(
           eventBlockHeader.getParentHash(), eventBlockHeader.getHash());
+      createWorldStateCheckpoint();
     }
   }
 
@@ -214,6 +228,26 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   BonsaiWorldStateUpdater getUpdater() {
     return (BonsaiWorldStateUpdater) persistedState.updater();
+  }
+
+  public void createWorldStateCheckpoint() {
+    maybeSnapshotManager.ifPresent(
+        snapshotManager ->
+            snapshotManager.saveCheckpoint(worldStateStorage.trieBranchStorage.takeCheckpoint()));
+  }
+
+  public void createWorldStateSnapshot() {
+    maybeSnapshotManager.ifPresent(
+        snapshotManager ->
+            snapshotManager.addSnapshot(
+                new BonsaiInMemoryWorldState(
+                    this,
+                    new BonsaiInMemoryWorldStateKeyValueStorage(
+                        worldStateStorage.accountStorage.takeSnapshot(),
+                        worldStateStorage.codeStorage.takeSnapshot(),
+                        worldStateStorage.storageStorage.takeSnapshot(),
+                        worldStateStorage.trieBranchStorage.takeSnapshot(),
+                        worldStateStorage.trieLogStorage.takeSnapshot()))));
   }
 
   @Override
