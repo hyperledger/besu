@@ -295,7 +295,7 @@ public class BlockPropagationManager {
       importOrSavePendingBlock(block, message.getPeer().nodeId());
     } catch (final RLPException e) {
       LOG.debug(
-          "Malformed NEW_BLOCK message received from peer, disconnecting: {}",
+          "Malformed NEW_BLOCK message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
@@ -358,7 +358,7 @@ public class BlockPropagationManager {
       }
     } catch (final RLPException e) {
       LOG.debug(
-          "Malformed NEW_BLOCK_HASHES message received from peer, disconnecting: {}",
+          "Malformed NEW_BLOCK_HASHES message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
