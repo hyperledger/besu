@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -45,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -301,5 +303,17 @@ public class DefaultSynchronizer implements Synchronizer {
     maybePruner.ifPresent(Pruner::stop);
     running.set(false);
     return null;
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (this.blockPropagationManager.isPresent()) {
+      this.blockPropagationManager
+          .get()
+          .onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+    }
   }
 }
