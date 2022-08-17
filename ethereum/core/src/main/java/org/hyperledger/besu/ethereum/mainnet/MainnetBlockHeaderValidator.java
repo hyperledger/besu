@@ -18,7 +18,7 @@ import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedProofOfWorkValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
@@ -138,19 +138,17 @@ public final class MainnetBlockHeaderValidator {
             .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
 
     // if merge is enabled, use the attached version of the proof of work validation rule
+    var powValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWHasher.ETHASH_LIGHT,
+            Optional.of(baseFeeMarket));
+
     if (MergeConfigOptions.isMergeEnabled()) {
-      builder.addRule(
-          new AttachedProofOfWorkValidationRule(
-              new EpochCalculator.DefaultEpochCalculator(),
-              PoWHasher.ETHASH_LIGHT,
-              Optional.of(baseFeeMarket)));
+      builder.addRule(new AttachedComposedFromDetachedRule(powValidationRule));
 
     } else {
-      builder.addRule(
-          new ProofOfWorkValidationRule(
-              new EpochCalculator.DefaultEpochCalculator(),
-              PoWHasher.ETHASH_LIGHT,
-              Optional.of(baseFeeMarket)));
+      builder.addRule(powValidationRule);
     }
     return builder;
   }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.clique;
 import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
 
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
@@ -64,12 +66,9 @@ public class BlockHeaderValidationRulesetFactory {
                 new GasLimitRangeAndDeltaValidationRule(
                     DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
             .addRule(
-                new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
-            .addRule(
                 new ConstantFieldValidationRule<>(
                     "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
             .addRule(new CliqueExtraDataValidationRule(epochManager))
-            .addRule(new VoteValidationRule())
             .addRule(new CliqueDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
             .addRule(new CoinbaseHeaderValidationRule(epochManager))
@@ -77,6 +76,18 @@ public class BlockHeaderValidationRulesetFactory {
 
     if (baseFeeMarket.isPresent()) {
       builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
+    }
+
+    var mixHashRule =
+        new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO);
+    var voteValidationRule = new VoteValidationRule();
+
+    if (MergeConfigOptions.isMergeEnabled()) {
+      builder
+          .addRule(new AttachedComposedFromDetachedRule(mixHashRule))
+          .addRule(new AttachedComposedFromDetachedRule(voteValidationRule));
+    } else {
+      builder.addRule(mixHashRule).addRule(voteValidationRule);
     }
 
     return builder;
