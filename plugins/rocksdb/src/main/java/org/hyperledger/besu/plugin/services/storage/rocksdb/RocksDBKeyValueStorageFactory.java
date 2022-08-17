@@ -28,7 +28,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
@@ -126,12 +125,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                     rocksDBConfiguration, segmentsForVersion, metricsSystem, rocksDBMetricsFactory);
           }
           final RocksDbSegmentIdentifier rocksSegment =
-                  segmentedStorage.getSegmentIdentifierByName(segment);
+              segmentedStorage.getSegmentIdentifierByName(segment);
           return new SegmentedKeyValueStorageAdapter<>(
-                  segment,
-                  segmentedStorage,
-                  () -> segmentedStorage.takeSnapshot(rocksSegment),
-                  () -> segmentedStorage.takeCheckpoint());
+              segment,
+              segmentedStorage,
+              () -> segmentedStorage.takeSnapshot(rocksSegment),
+              () -> segmentedStorage.takeCheckpoint());
         }
       default:
         {

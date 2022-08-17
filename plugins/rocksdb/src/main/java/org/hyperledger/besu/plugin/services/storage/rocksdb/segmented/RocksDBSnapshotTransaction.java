@@ -5,6 +5,10 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
@@ -15,9 +19,6 @@ import org.rocksdb.TransactionDB;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
-import java.util.stream.Stream;
 
 public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBSnapshotTransaction.class);

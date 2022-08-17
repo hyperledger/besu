@@ -1,11 +1,12 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
+import static java.util.stream.Collectors.toUnmodifiableSet;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
-import org.rocksdb.TransactionDB;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -13,7 +14,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toUnmodifiableSet;
+import org.rocksdb.TransactionDB;
 
 public class RocksDBColumnarKeyValueSnapshot implements KeyValueStorage {
   final TransactionDB db;

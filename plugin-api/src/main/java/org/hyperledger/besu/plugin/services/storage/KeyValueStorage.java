@@ -97,7 +97,11 @@ public interface KeyValueStorage extends Closeable {
    */
   KeyValueStorageTransaction startTransaction() throws StorageException;
 
-    KeyValueStorage takeSnapshot();
+  default KeyValueStorage takeSnapshot() {
+    throw new UnsupportedOperationException("snapshots not supported");
+  }
 
-  KeyValueStorageCheckpoint takeCheckpoint();
+  default KeyValueStorageCheckpoint takeCheckpoint() {
+    throw new UnsupportedOperationException("checkpoints not supported");
+  }
 }

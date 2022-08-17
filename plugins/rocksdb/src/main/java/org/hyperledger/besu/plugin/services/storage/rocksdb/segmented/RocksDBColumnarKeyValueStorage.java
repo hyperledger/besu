@@ -181,7 +181,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
-          throws StorageException {
+      throws StorageException {
     throwIfClosed();
     return new RocksDBColumnarKeyValueSnapshot(db, segment, metrics);
   }

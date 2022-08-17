@@ -19,8 +19,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageCheckpoint;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.rocksdb.Checkpoint;
-import org.rocksdb.RocksDBException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -28,6 +26,9 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import org.rocksdb.Checkpoint;
+import org.rocksdb.RocksDBException;
 
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private final S segmentHandle;
@@ -38,21 +39,21 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
     this(
-            segment,
-            storage,
-            () -> {
-              throw new UnsupportedOperationException("Snapshot not supported");
-            },
-            () -> {
-              throw new UnsupportedOperationException("Checkpoint not supported");
-            });
+        segment,
+        storage,
+        () -> {
+          throw new UnsupportedOperationException("Snapshot not supported");
+        },
+        () -> {
+          throw new UnsupportedOperationException("Checkpoint not supported");
+        });
   }
 
   public SegmentedKeyValueStorageAdapter(
-          final SegmentIdentifier segment,
-          final SegmentedKeyValueStorage<S> storage,
-          final Supplier<? extends KeyValueStorage> snapshotSupplier,
-          final Supplier<Checkpoint> checkpointSupplier) {
+      final SegmentIdentifier segment,
+      final SegmentedKeyValueStorage<S> storage,
+      final Supplier<? extends KeyValueStorage> snapshotSupplier,
+      final Supplier<Checkpoint> checkpointSupplier) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
     this.snapshotSupplier = snapshotSupplier;
