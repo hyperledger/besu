@@ -18,6 +18,7 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -69,7 +70,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockPropagationManager {
+public class BlockPropagationManager implements ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -301,7 +302,7 @@ public class BlockPropagationManager {
       importOrSavePendingBlock(block, message.getPeer().nodeId());
     } catch (final RLPException e) {
       LOG.debug(
-          "Malformed NEW_BLOCK message received from peer, disconnecting: {}",
+          "Malformed NEW_BLOCK message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
@@ -364,7 +365,7 @@ public class BlockPropagationManager {
       }
     } catch (final RLPException e) {
       LOG.debug(
-          "Malformed NEW_BLOCK_HASHES message received from peer, disconnecting: {}",
+          "Malformed NEW_BLOCK_HASHES message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
@@ -663,8 +664,7 @@ public class BlockPropagationManager {
 
   private void reactToTTDReachedEvent(final boolean ttdReached) {
     if (started.get() && ttdReached) {
-      LOG.info("Block propagation was running, then ttd reached, stopping");
-      stop();
+      LOG.info("Block propagation was running, then ttd reached");
     } else if (!started.get()) {
       start();
     }
@@ -687,5 +687,14 @@ public class BlockPropagationManager {
   private String logBlockNumberMaybeHash(
       final long blockNumber, final Optional<Hash> maybeBlockHash) {
     return blockNumber + maybeBlockHash.map(h -> " (" + h + ")").orElse("");
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+      stop();
+    }
   }
 }
