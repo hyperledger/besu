@@ -16,13 +16,86 @@
 
 package org.hyperledger.besu.consensus.merge;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+
+import java.util.Optional;
+
 import org.junit.Test;
 
 public class PandaPrinterTest {
 
+  final MergeStateHandler fauxTransitionHandler =
+      (isPoS, priorState, ttd) -> {
+        if (isPoS && priorState.filter(prior -> !prior).isPresent())
+          PandaPrinter.printOnFirstCrossing();
+      };
+
   @Test
   public void printsPanda() {
-    PandaPrinter panda = new PandaPrinter();
-    panda.onTTDReached(true);
+    PandaPrinter.resetForTesting();
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    PandaPrinter.printOnFirstCrossing();
+    assertThat(PandaPrinter.ttdBeenDisplayed).isTrue();
+    assertThat(PandaPrinter.readyBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.finalizedBeenDisplayed).isFalse();
+  }
+
+  @Test
+  public void doesNotPrintAtInit() {
+    PandaPrinter.resetForTesting();
+    var mergeContext = new PostMergeContext(Difficulty.ONE);
+    mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
+
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    mergeContext.setIsPostMerge(Difficulty.ONE);
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.readyBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.finalizedBeenDisplayed).isFalse();
+  }
+
+  @Test
+  public void printsWhenCrossingOnly() {
+    PandaPrinter.resetForTesting();
+    var mergeContext = new PostMergeContext(Difficulty.ONE);
+    mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
+
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    mergeContext.setIsPostMerge(Difficulty.ZERO);
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    mergeContext.setIsPostMerge(Difficulty.ONE);
+    assertThat(PandaPrinter.ttdBeenDisplayed).isTrue();
+    assertThat(PandaPrinter.readyBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.finalizedBeenDisplayed).isFalse();
+  }
+
+  @Test
+  public void printsReadyOnStartupInSyncWithTTD() {
+    PandaPrinter.resetForTesting();
+    PandaPrinter.inSync();
+    PandaPrinter.hasTTD();
+    assertThat(PandaPrinter.readyBeenDisplayed).isTrue();
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.finalizedBeenDisplayed).isFalse();
+  }
+
+  @Test
+  public void printsFinalized() {
+    PandaPrinter.resetForTesting();
+    PandaPrinter pandaPrinter = new PandaPrinter();
+    MergeContext mergeContext = new PostMergeContext(Difficulty.ZERO);
+    mergeContext.addNewForkchoiceMessageListener(pandaPrinter);
+    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
+        Hash.ZERO, Optional.of(Hash.ZERO), Hash.ZERO);
+    assertThat(PandaPrinter.readyBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.finalizedBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
+        Hash.ZERO, Optional.of(Hash.fromHexStringLenient("0x1337")), Hash.ZERO);
+    assertThat(PandaPrinter.readyBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.ttdBeenDisplayed).isFalse();
+    assertThat(PandaPrinter.finalizedBeenDisplayed).isTrue();
   }
 }

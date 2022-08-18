@@ -110,15 +110,10 @@ public class EngineAuthServiceTest {
     assertThat(auth).isNotNull();
     JWTAuth jwtAuth = auth.getJwtAuthProvider();
     String token =
-        jwtAuth.generateToken(new JsonObject().put("iat", (System.currentTimeMillis() / 1000) - 6));
+        jwtAuth.generateToken(
+            new JsonObject().put("iat", (System.currentTimeMillis() / 1000) - 61));
 
-    Handler<Optional<User>> authHandler =
-        new Handler<Optional<User>>() {
-          @Override
-          public void handle(final Optional<User> event) {
-            assertThat(event).isEmpty();
-          }
-        };
+    Handler<Optional<User>> authHandler = event -> assertThat(event).isEmpty();
     auth.authenticate(token, authHandler);
   }
 }

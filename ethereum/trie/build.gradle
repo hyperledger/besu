@@ -30,16 +30,16 @@ jar {
 dependencies {
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
-  implementation project(':services:kvstore')
 
+  implementation "org.immutables:value-annotations"
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
   annotationProcessor "org.immutables:value"
-  implementation "org.immutables:value-annotations"
 
+  testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'

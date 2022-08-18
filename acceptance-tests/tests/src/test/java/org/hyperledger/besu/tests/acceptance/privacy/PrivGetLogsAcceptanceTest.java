@@ -22,6 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.util.LogFilterJsonParameter;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -45,15 +46,18 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode node;
 
-  public PrivGetLogsAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+  public PrivGetLogsAcceptanceTest(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
 
-    super(restriction, enclaveType);
+    super(restriction, enclaveType, enclaveEncryptorType);
 
     node =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-node",
-            PrivacyAccountResolver.ALICE,
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
             Optional.empty(),
             false,

@@ -30,6 +30,8 @@ public class BadBlockManager {
       CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
   private final Cache<Hash, BlockHeader> badHeaders =
       CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+  private final Cache<Hash, Hash> latestValidHashes =
+      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
 
   /**
    * Add a new invalid block.
@@ -67,5 +69,13 @@ public class BadBlockManager {
 
   public Optional<BlockHeader> getBadHash(final Hash blockHash) {
     return Optional.ofNullable(badHeaders.getIfPresent(blockHash));
+  }
+
+  public void addLatestValidHash(final Hash blockHash, final Hash latestValidHash) {
+    this.latestValidHashes.put(blockHash, latestValidHash);
+  }
+
+  public Optional<Hash> getLatestValidHash(final Hash blockHash) {
+    return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
   }
 }

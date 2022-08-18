@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -377,7 +379,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
-    syncState.subscribeTTDReached(new PandaPrinter());
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -411,20 +412,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
 
     final Synchronizer synchronizer =
-        new DefaultSynchronizer(
-            syncConfig,
+        createSynchronizer(
             protocolSchedule,
-            protocolContext,
             worldStateStorage,
-            ethProtocolManager.getBlockBroadcaster(),
+            protocolContext,
             maybePruner,
             ethContext,
             syncState,
-            dataDirectory,
-            clock,
-            metricsSystem,
-            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            ethProtocolManager,
             pivotBlockSelector);
+
+    synchronizer.subscribeInSync(new PandaPrinter());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -467,6 +465,44 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices);
+  }
+
+  private Synchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+
+    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
+
+    DefaultSynchronizer toUse =
+        new DefaultSynchronizer(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            worldStateStorage,
+            ethProtocolManager.getBlockBroadcaster(),
+            maybePruner,
+            ethContext,
+            syncState,
+            dataDirectory,
+            clock,
+            metricsSystem,
+            getFullSyncTerminationCondition(protocolContext.getBlockchain()),
+            pivotBlockSelector);
+    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
+      LOG.info(
+          "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .addNewForkchoiceMessageListener(toUse);
+    }
+
+    return toUse;
   }
 
   private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
@@ -602,7 +638,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
         return new BonsaiWorldStateArchive(
-            storageProvider, blockchain, dataStorageConfiguration.getBonsaiMaxLayersToLoad());
+            new TrieLogManager(
+                blockchain,
+                (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+                dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            storageProvider,
+            blockchain);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

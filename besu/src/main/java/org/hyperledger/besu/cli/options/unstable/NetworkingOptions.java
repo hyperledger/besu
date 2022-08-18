@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -31,6 +32,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       "--Xp2p-check-maintained-connections-frequency";
   private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
   private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
+  private final String P2P_PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
@@ -66,6 +68,13 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       description = "Whether to enable P2P Discovery Protocol v5 (default: ${DEFAULT-VALUE})")
   private final Boolean isPeerDiscoveryV5Enabled = false;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {P2P_PEER_LOWER_BOUND_FLAG},
+      description =
+          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
+  private final Integer peerLowerBound = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
+
   private NetworkingOptions() {}
 
   public static NetworkingOptions create() {
@@ -85,17 +94,18 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
 
   @Override
   public NetworkingConfiguration toDomainObject() {
-    NetworkingConfiguration config = NetworkingConfiguration.create();
+    final NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
     config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
+    config.getRlpx().setPeerLowerBound(peerLowerBound);
     return config;
   }
 
   @Override
   public List<String> getCLIOptions() {
-    List<String> retval =
+    final List<String> retval =
         Arrays.asList(
             CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
             OptionParser.format(checkMaintainedConnectionsFrequencySec),

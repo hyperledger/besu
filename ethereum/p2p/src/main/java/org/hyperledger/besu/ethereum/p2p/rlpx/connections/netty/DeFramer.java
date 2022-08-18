@@ -184,7 +184,7 @@ final class DeFramer extends ByteToMessageDecoder {
       } else {
         // Unexpected message - disconnect
         LOG.debug(
-            "Message received before HELLO's exchanged, disconnecting.  Peer: {}, Code: {}, Data: {}",
+            "Message received before HELLO's exchanged (BREACH_OF_PROTOCOL), disconnecting.  Peer: {}, Code: {}, Data: {}",
             expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
             message.getCode(),
             message.getData().toString());
@@ -205,7 +205,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (remoteAddress == null) {
       return Optional.empty();
     }
-    int port = peerInfo.getPort();
+    final int port = peerInfo.getPort();
     return Optional.of(
         DefaultPeer.fromEnodeURL(
             EnodeURLImpl.builder()
@@ -227,7 +227,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (cause instanceof FramingException
         || cause instanceof RLPException
         || cause instanceof IllegalArgumentException) {
-      LOG.debug("Invalid incoming message", throwable);
+      LOG.debug("Invalid incoming message (BREACH_OF_PROTOCOL)", throwable);
       if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
         connectFuture.get().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
         return;
@@ -241,7 +241,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
       connectFuture
           .get()
-          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, true);
+          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     } else {
       connectFuture.completeExceptionally(throwable);
       ctx.close();

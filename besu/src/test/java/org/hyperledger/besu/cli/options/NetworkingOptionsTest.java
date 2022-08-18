@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
 
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -120,6 +121,32 @@ public class NetworkingOptionsTest
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
     assertThat(networkingConfig.getDiscovery().isDiscoveryV5Enabled()).isFalse();
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkP2pPeerLowerBound_isSet() {
+    final int lowerBound = 13;
+    final TestBesuCommand cmd = parseCommand("--Xp2p-peer-lower-bound", String.valueOf(lowerBound));
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getRlpx().getPeerLowerBound()).isEqualTo(lowerBound);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkP2pPeerLowerBound_isNotSet() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getRlpx().getPeerLowerBound())
+        .isEqualTo(DEFAULT_P2P_PEER_LOWER_BOUND);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

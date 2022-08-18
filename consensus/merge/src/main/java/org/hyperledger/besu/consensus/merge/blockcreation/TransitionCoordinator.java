@@ -208,4 +208,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public boolean isBadBlock(final Hash blockHash) {
     return mergeCoordinator.isBadBlock(blockHash);
   }
+
+  @Override
+  public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
+    return mergeCoordinator.getLatestValidHashOfBadBlock(blockHash);
+  }
 }

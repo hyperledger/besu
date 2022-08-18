@@ -79,7 +79,7 @@ public class EngineNewPayloadTest {
 
   @Before
   public void before() {
-    when(protocolContext.getConsensusContext(Mockito.any())).thenReturn(mergeContext);
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator);
   }
@@ -184,13 +184,13 @@ public class EngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnInvalidWithLatestValidHashIfDescendingFromBadBlock() {
+  public void shouldReturnInvalidWithLatestValidHashIsABadBlock() {
     BlockHeader mockHeader = createBlockHeader();
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
 
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(mergeCoordinator.isBadBlock(mockHeader.getParentHash())).thenReturn(true);
-    when(mergeCoordinator.getLatestValidAncestor(mockHeader.getParentHash()))
+    when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
+    when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
         .thenReturn(Optional.of(latestValidHash));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));

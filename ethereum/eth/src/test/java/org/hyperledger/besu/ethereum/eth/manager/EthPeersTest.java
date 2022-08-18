@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -40,6 +41,7 @@ import java.util.function.Consumer;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.stubbing.Answer;
 
 public class EthPeersTest {
 
@@ -69,10 +71,10 @@ public class EthPeersTest {
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isGreaterThan(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isLessThan(0);
 
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerB)).isLessThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerA)).isGreaterThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerB)).isLessThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerA)).isGreaterThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
 
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerB);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
@@ -97,10 +99,10 @@ public class EthPeersTest {
     assertThat(EthPeers.CHAIN_HEIGHT.compare(peerA, peerB)).isEqualTo(0);
     assertThat(EthPeers.TOTAL_DIFFICULTY.compare(peerA, peerB)).isGreaterThan(0);
 
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerB)).isGreaterThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerA)).isLessThan(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
-    assertThat(EthPeers.BEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerB)).isGreaterThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerA)).isLessThan(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerA, peerA)).isEqualTo(0);
+    assertThat(EthPeers.HEAVIEST_CHAIN.compare(peerB, peerB)).isEqualTo(0);
 
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeer()).contains(peerA);
     assertThat(ethProtocolManager.ethContext().getEthPeers().bestPeerWithHeightEstimate())
@@ -263,6 +265,76 @@ public class EthPeersTest {
     ethPeers.registerDisconnect(ethPeer.getConnection());
 
     assertRequestFailure(pendingRequest, CancellationException.class);
+  }
+
+  @Test
+  public void shouldNotFailWhenAttemptExecutionDisconnectSamePeer() throws PeerNotConnected {
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final EthPeer ethPeer = spy(peer.getEthPeer());
+
+    // Force request to be added to pending request list
+    when(ethPeer.hasAvailableRequestCapacity()).thenReturn(false);
+
+    final PendingPeerRequest pendingPeerRequest =
+        ethPeers.executePeerRequest(peerRequest, 10, Optional.of(ethPeer));
+
+    // Force Request Attempt to cause the peer to disconnect
+    when(ethPeer.hasAvailableRequestCapacity())
+        .thenAnswer(
+            (Answer<Boolean>)
+                invocation -> {
+                  // Force Disconnect only on the first execution
+                  if (!peer.getPeerConnection().isDisconnected()) {
+                    peer.disconnect(DisconnectReason.UNKNOWN); // Force Peer to disconnect
+                  }
+                  return true;
+                });
+
+    // Sent Pending Requests
+    ethPeers.reattemptPendingPeerRequests();
+
+    // Request should be aborted.
+    assertRequestFailure(pendingPeerRequest, CancellationException.class);
+
+    // Mock works
+    assertThat(peer.getEthPeer().isDisconnected()).isTrue(); // peer is disconnected
+  }
+
+  @Test
+  public void shouldNotFailWhenAttemptExecutionDisconnectAnotherPeer() throws PeerNotConnected {
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final EthPeer ethPeer = spy(peer.getEthPeer());
+
+    // Force request to be added to pending request list
+    when(ethPeer.hasAvailableRequestCapacity()).thenReturn(false);
+
+    final PendingPeerRequest pendingPeerRequest =
+        ethPeers.executePeerRequest(peerRequest, 10, Optional.of(ethPeer));
+
+    final RespondingEthPeer peerToDisconnect =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    // Force Request Attempt to cause the peer to disconnect
+    when(ethPeer.hasAvailableRequestCapacity())
+        .thenAnswer(
+            (Answer<Boolean>)
+                invocation -> {
+                  // Force Disconnect only on the first execution
+                  if (!peerToDisconnect.getPeerConnection().isDisconnected()) {
+                    peerToDisconnect.disconnect(
+                        DisconnectReason.UNKNOWN); // Force Peer to disconnect
+                  }
+                  return true;
+                });
+
+    // Sent Pending Requests
+    ethPeers.reattemptPendingPeerRequests();
+
+    // Request Should Execute
+    assertRequestSuccessful(pendingPeerRequest);
+
+    // Mock works
+    assertThat(peerToDisconnect.getEthPeer().isDisconnected()).isTrue(); // peer is disconnected
   }
 
   @Test

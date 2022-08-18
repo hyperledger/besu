@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -45,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -179,7 +181,12 @@ public class DefaultSynchronizer implements Synchronizer {
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
-      blockPropagationManager.ifPresent(BlockPropagationManager::start);
+      blockPropagationManager.ifPresent(
+          manager -> {
+            if (!manager.isRunning()) {
+              manager.start();
+            }
+          });
       CompletableFuture<Void> future;
       if (fastSyncDownloader.isPresent()) {
         future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
@@ -201,7 +208,12 @@ public class DefaultSynchronizer implements Synchronizer {
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
       fullSyncDownloader.ifPresent(FullSyncDownloader::stop);
       maybePruner.ifPresent(Pruner::stop);
-      blockPropagationManager.ifPresent(BlockPropagationManager::stop);
+      blockPropagationManager.ifPresent(
+          manager -> {
+            if (manager.isRunning()) {
+              manager.stop();
+            }
+          });
     }
   }
 
@@ -228,9 +240,13 @@ public class DefaultSynchronizer implements Synchronizer {
         result.getPivotBlockNumber().getAsLong());
     pivotBlockSelector.close();
     syncState.markInitialSyncPhaseAsDone();
-    return terminationCondition.shouldContinueDownload()
-        ? startFullSync()
-        : CompletableFuture.completedFuture(null);
+
+    if (terminationCondition.shouldContinueDownload()) {
+      return startFullSync();
+    } else {
+      syncState.setReachedTerminalDifficulty(true);
+      return CompletableFuture.completedFuture(null);
+    }
   }
 
   private CompletableFuture<Void> startFullSync() {
@@ -287,5 +303,17 @@ public class DefaultSynchronizer implements Synchronizer {
     maybePruner.ifPresent(Pruner::stop);
     running.set(false);
     return null;
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (this.blockPropagationManager.isPresent()) {
+      this.blockPropagationManager
+          .get()
+          .onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+    }
   }
 }

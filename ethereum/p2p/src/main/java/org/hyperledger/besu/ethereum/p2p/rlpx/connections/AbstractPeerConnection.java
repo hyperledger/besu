@@ -147,6 +147,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
     // message and are waiting to close.
     closeConnectionImmediately();
+    LOG.debug("Terminating connection {}, reason {}", System.identityHashCode(this), reason);
   }
 
   protected abstract void closeConnectionImmediately();
@@ -158,6 +159,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     if (disconnected.compareAndSet(false, true)) {
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
+      LOG.debug("Disconnecting connection {}, reason {}", System.identityHashCode(this), reason);
       closeConnection();
     }
   }

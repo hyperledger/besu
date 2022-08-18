@@ -1,5 +1,55 @@
 # Changelog
 
+## 22.7.1
+
+### Additions and Improvements
+- Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
+- Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
+- Improve pending blocks retrieval mechanism [#4227](https://github.com/hyperledger/besu/pull/4227)
+- set mainnet terminal total difficulty [#4260](https://github.com/hyperledger/besu/pull/4260)
+
+### Bug Fixes
+- Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
+- Fix off-by-one error in AbstractRetryingPeerTask [#4254](https://github.com/hyperledger/besu/pull/4254)
+- Fix encoding of key (short hex) in eth_getProof [#4261](https://github.com/hyperledger/besu/pull/4261)
+- Fix for post-merge networks fast-sync [#4224](https://github.com/hyperledger/besu/pull/4224), [#4276](https://github.com/hyperledger/besu/pull/4276)
+
+## 22.7.0
+
+### Additions and Improvements
+- Deprecation warning for Ropsten, Rinkeby, Kiln [#4173](https://github.com/hyperledger/besu/pull/4173)
+
+### Bug Fixes 
+
+- Fixes previous known issue [#3890](https://github.com/hyperledger/besu/issues/3890)from RC3 requiring a restart post-merge to continue correct transaction handling.
+- Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
+- Upgrade Spotless to 6.8.0 [#4195](https://github.com/hyperledger/besu/pull/4195)
+- Upgrade Gradle to 7.5 [#4196](https://github.com/hyperledger/besu/pull/4196)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0/besu-22.7.0.tar.gz / sha256: `af21104a880c37706b660aa816e1c38b2b3f603a97420ddcbc889324b71aa50e`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0/besu-22.7.0.zip / sha256: `5b1586362e6e739c206c25224bb753a372bad70c0b22dbe091f9253024ebdc45`
+
+## 22.7.0-RC3
+
+### Known/Outstanding issues:
+- Besu requires a restart post-merge to re-enable remote transaction processing [#3890](https://github.com/hyperledger/besu/issues/3890)
+
+### Additions and Improvements
+- Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
+- Sepolia mergeNetSplit block [#4158](https://github.com/hyperledger/besu/pull/4158)
+- Goerli TTD [#4160](https://github.com/hyperledger/besu/pull/4160) 
+- Several logging improvements 
+
+### Bug Fixes
+- Allow to set any value for baseFeePerGas in the genesis file [#4177](https://github.com/hyperledger/besu/pull/4177)
+- Fix for stack overflow when searching for TTD block [#4169](https://github.com/hyperledger/besu/pull/4169)
+- Fix for chain stuck issue [#4175](https://github.com/hyperledger/besu/pull/4175)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC3/besu-22.7.0-RC3.tar.gz / sha256: `6a1ee89c82db9fa782d34733d8a8c726670378bcb71befe013da48d7928490a6`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC3/besu-22.7.0-RC3.zip / sha256: `5de22445ab2a270cf33e1850cd28f1946442b7104738f0d1ac253a009c53414e`
+
 ## 22.7.0-RC2
 
 ### Additions and Improvements
@@ -7,14 +57,29 @@
 - Backward sync exception improvements [#4092](https://github.com/hyperledger/besu/pull/4092)
 - Remove block header checks during backward sync, since they will be always performed during block import phase [#4098](https://github.com/hyperledger/besu/pull/4098)
 - Optimize the backward sync retry strategy [#4095](https://github.com/hyperledger/besu/pull/4095)
+- Add support for jemalloc library to better handle rocksdb memory consumption [#4126](https://github.com/hyperledger/besu/pull/4126)
+- RocksDB configuration changes to improve performance. [#4132](https://github.com/hyperledger/besu/pull/4132)
 
 ### Bug Fixes
-- Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
+- Changed max message size in the p2p layer to 16.7MB from 10MB to improve peering performance [#4120](https://github.com/hyperledger/besu/pull/4120)
+- Fixes for parent stateroot mismatch when using Bonsai storage mode (please report if you encounter this bug on this version) [#4094](https://github.com/hyperledger/besu/pull/4094)
+- Above Bonsai related fixes have addressed situations where the event log was not indexed properly [#3921](https://github.com/hyperledger/besu/pull/3921)
+- Fixes related to backward sync and reorgs [#4097](https://github.com/hyperledger/besu/pull/4097)
+- Checkpoint sync with more merge friendly checkpoint blocks [#4085](https://github.com/hyperledger/besu/pull/4085)
+- Fixes around RocksDB performance and memory usage [#4128](https://github.com/hyperledger/besu/pull/4128)
+- Fix for RPC performance parallelization to improve RPC performance under heavy load [#3959](https://github.com/hyperledger/besu/pull/3959)
+- Fix for post-Merge peering after PoW is removed in our logic for weighting peers [#4116](https://github.com/hyperledger/besu/pull/4116)
+- Various logging changes to improve UX- Return the correct latest valid hash in case of bad block when calling engine methods [#4056](https://github.com/hyperledger/besu/pull/4056)
 - Add a PoS block header rule to check that the current block is more recent than its parent [#4066](https://github.com/hyperledger/besu/pull/4066)
 - Fixed a trie log layer issue on bonsai during reorg [#4069](https://github.com/hyperledger/besu/pull/4069)
 - Fix transition protocol schedule to return the pre Merge schedule when reorg pre TTD [#4078](https://github.com/hyperledger/besu/pull/4078)
 - Remove hash to sync from the queue only if the sync step succeeds [#4105](https://github.com/hyperledger/besu/pull/4105)
-- The build process runs successfully even though the system language is not English  [#4102](https://github.com/hyperledger/besu/pull/4102)
+- The build process runs successfully even though the system language is not English [#4102](https://github.com/hyperledger/besu/pull/4102)
+- Avoid starting or stopping the BlockPropagationManager more than once [#4122](https://github.com/hyperledger/besu/pull/4122)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.tar.gz / sha256: `befe15b893820c9c6451a74fd87b41f555ff28561494b3bebadd5da5c7ce25d3`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.0-RC2/besu-22.7.0-RC2.zip / sha256: `d56c340f5982b882fbecca2697ca72a5bbefe0e978d2d4504211f012e2242a81`
 
 ## 22.7.0-RC1
 

@@ -57,7 +57,12 @@ public class PostMergeContext implements MergeContext {
 
   @VisibleForTesting
   PostMergeContext() {
-    this.terminalTotalDifficulty = new AtomicReference<>(Difficulty.ZERO);
+    this(Difficulty.ZERO);
+  }
+
+  @VisibleForTesting
+  PostMergeContext(final Difficulty difficulty) {
+    this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
   }
 
@@ -100,7 +105,8 @@ public class PostMergeContext implements MergeContext {
     if (oldState.isEmpty() || oldState.get() != newState) {
       newMergeStateCallbackSubscribers.forEach(
           newMergeStateCallback ->
-              newMergeStateCallback.mergeStateChanged(newState, Optional.of(totalDifficulty)));
+              newMergeStateCallback.mergeStateChanged(
+                  newState, oldState, Optional.of(totalDifficulty)));
     }
   }
 

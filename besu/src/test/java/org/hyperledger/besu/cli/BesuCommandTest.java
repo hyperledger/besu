@@ -21,11 +21,13 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
+import static org.hyperledger.besu.cli.config.NetworkName.KILN;
 import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
+import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
@@ -44,11 +46,13 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.junit.Assume.assumeThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -996,6 +1000,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1));
+
+    verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
   }
 
   @Test
@@ -1531,6 +1537,47 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).build();
 
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetLowerBoundEqualToUpperBound() {
+
+    final int maxPeers = 23;
+    parseCommand("--p2p-peer-upper-bound", String.valueOf(maxPeers));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).build();
+  }
+
+  @Test
+  public void maxpeersSet_p2pPeerLowerBoundSet() {
+
+    final int maxPeers = 123;
+    final int minPeers = 66;
+    parseCommand(
+        "--max-peers",
+        String.valueOf(maxPeers),
+        "--Xp2p-peer-lower-bound",
+        String.valueOf(minPeers));
+
+    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+
+    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(minPeers);
+
+    verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2754,6 +2801,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     parseCommand(
         "--rpc-http-enabled",
+        "--engine-rpc-enabled",
         "--rpc-http-host",
         host,
         "--rpc-http-port",
@@ -3622,6 +3670,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     parseCommand(
+        "--network",
+        "dev",
         "--miner-coinbase",
         requestedCoinbase.toString(),
         "--min-gas-price",
@@ -3644,7 +3694,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml =
         createTempFile(
             "toml",
-            "miner-coinbase=\""
+            "network=\"dev\"\n"
+                + "miner-coinbase=\""
                 + requestedCoinbase
                 + "\"\n"
                 + "min-gas-price=42\n"
@@ -3687,7 +3738,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void minGasPriceRequiresMainOption() {
-    parseCommand("--min-gas-price", "0");
+    parseCommand("--min-gas-price", "0", "--network", "dev");
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
@@ -3697,7 +3748,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void minGasPriceRequiresMainOptionToml() throws IOException {
-    final Path toml = createTempFile("toml", "min-gas-price=0\n");
+    final Path toml = createTempFile("toml", "min-gas-price=0\nnetwork=\"dev\"\n");
 
     parseCommand("--config-file", toml.toString());
 
@@ -3829,7 +3880,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rinkebyValuesAreUsed() throws Exception {
+  public void rinkebyValuesAreUsed() {
     parseCommand("--network", "rinkeby");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -3842,10 +3893,12 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, times(1)).warn(contains("Rinkeby is deprecated and will be shutdown"));
   }
 
   @Test
-  public void ropstenValuesAreUsed() throws Exception {
+  public void ropstenValuesAreUsed() {
     parseCommand("--network", "ropsten");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -3858,10 +3911,30 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, times(1)).warn(contains("Ropsten is deprecated and will be shutdown"));
   }
 
   @Test
-  public void goerliValuesAreUsed() throws Exception {
+  public void kilnValuesAreUsed() {
+    parseCommand("--network", "kiln");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(KILN));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, times(1)).warn(contains("Kiln is deprecated and will be shutdown"));
+  }
+
+  @Test
+  public void goerliValuesAreUsed() {
     parseCommand("--network", "goerli");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
@@ -3874,6 +3947,26 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Goerli is deprecated and will be shutdown"));
+  }
+
+  @Test
+  public void sepoliaValuesAreUsed() {
+    parseCommand("--network", "sepolia");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(SEPOLIA));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Sepolia is deprecated and will be shutdown"));
   }
 
   @Test
@@ -4777,7 +4870,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("Contents of privacy-public-key-file invalid");
-    assertThat(commandErrorOutput.toString(UTF_8)).contains("needs to be 44 characters long");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Last unit does not have enough valid bits");
   }
 
   @Test

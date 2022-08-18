@@ -11,6 +11,7 @@
     "istanbulBlock":0,
     "berlinBlock":0,
     "londonBlock":0,
+    "mergeNetSplitBlock": 1735371,
     "terminalTotalDifficulty": 17000000000000000,
     "ethash":{},
     "discovery": {
