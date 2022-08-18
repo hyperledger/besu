@@ -687,6 +687,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
   private String logBlockNumberMaybeHash(
       final long blockNumber, final Optional<Hash> maybeBlockHash) {
     return blockNumber + maybeBlockHash.map(h -> " (" + h + ")").orElse("");
+  }
 
   @Override
   public void onNewForkchoiceMessage(
