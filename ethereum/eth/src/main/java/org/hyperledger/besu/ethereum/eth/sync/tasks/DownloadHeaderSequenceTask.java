@@ -219,10 +219,10 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                         if (error == null && blockPeerTaskResult.getResult() != null) {
                           badBlockManager.addBadBlock(blockPeerTaskResult.getResult());
                         }
-                        headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
                         LOG.debug(
-                            "Received invalid headers from peer, disconnecting from: {}",
+                            "Received invalid headers from peer (BREACH_OF_PROTOCOL), disconnecting from: {}",
                             headersResult.getPeer());
+                        headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
                         future.completeExceptionally(
                             new InvalidBlockException(
                                 "Header failed validation.",
