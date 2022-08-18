@@ -21,12 +21,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.clique.BlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -36,8 +39,12 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 
 import java.util.Optional;
@@ -176,6 +183,56 @@ public class TransitionControllerBuilderTest {
     when(postMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(postMergeProtocolSpec);
     assertThat(transitionProtocolSchedule.getByBlockHeader(protocolContext, mockBlock))
         .isEqualTo(postMergeProtocolSpec);
+  }
+
+  @Test
+  public void assertCliqueDetachedHeaderValidationPreMerge() {
+    BlockHeaderValidator cliqueValidator =
+        BlockHeaderValidationRulesetFactory.cliqueBlockHeaderValidator(
+                5L, new EpochManager(5L), Optional.of(FeeMarket.london(1L)), true)
+            .build();
+    assertDetachedRulesForPostMergeBlocks(cliqueValidator);
+  }
+
+  @Test
+  public void assertPoWDetachedHeaderValidationPreMerge() {
+    BlockHeaderValidator powValidator =
+        MainnetBlockHeaderValidator.createBaseFeeMarketValidator(FeeMarket.london(1L), true)
+            .build();
+    assertDetachedRulesForPostMergeBlocks(powValidator);
+  }
+
+  void assertDetachedRulesForPostMergeBlocks(final BlockHeaderValidator validator) {
+    var preMergeProtocolSpec = mock(ProtocolSpec.class);
+    when(preMergeProtocolSpec.getBlockHeaderValidator()).thenReturn(validator);
+
+    when(preMergeProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(preMergeProtocolSpec);
+
+    var mockParentBlock =
+        new BlockHeaderTestFixture()
+            .number(100L)
+            .baseFeePerGas(Wei.of(7L))
+            .gasLimit(5000L)
+            .buildHeader();
+
+    var mockBlock =
+        new BlockHeaderTestFixture()
+            .number(101L)
+            .timestamp(1000L)
+            .baseFeePerGas(Wei.of(7L))
+            .gasLimit(5000L)
+            .difficulty(Difficulty.of(0L))
+            .parentHash(mockParentBlock.getHash())
+            .buildHeader();
+
+    var mergeFriendlyValidation =
+        transitionProtocolSchedule
+            .getPreMergeSchedule()
+            .getByBlockNumber(1L)
+            .getBlockHeaderValidator()
+            .validateHeader(
+                mockBlock, mockParentBlock, protocolContext, HeaderValidationMode.DETACHED_ONLY);
+    assertThat(mergeFriendlyValidation).isTrue();
   }
 
   TransitionCoordinator buildTransitionCoordinator(
