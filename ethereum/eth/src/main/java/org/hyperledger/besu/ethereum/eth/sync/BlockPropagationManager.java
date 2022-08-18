@@ -400,7 +400,6 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       final Optional<Hash> blockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            protocolContext,
             protocolSchedule,
             ethContext,
             metricsSystem,
