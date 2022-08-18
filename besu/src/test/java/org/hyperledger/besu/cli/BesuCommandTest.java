@@ -3670,6 +3670,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     parseCommand(
+        "--network",
+        "dev",
         "--miner-coinbase",
         requestedCoinbase.toString(),
         "--min-gas-price",
@@ -3692,7 +3694,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml =
         createTempFile(
             "toml",
-            "miner-coinbase=\""
+            "network=\"dev\"\n"
+                + "miner-coinbase=\""
                 + requestedCoinbase
                 + "\"\n"
                 + "min-gas-price=42\n"
@@ -3735,7 +3738,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void minGasPriceRequiresMainOption() {
-    parseCommand("--min-gas-price", "0");
+    parseCommand("--min-gas-price", "0", "--network", "dev");
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
@@ -3745,7 +3748,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void minGasPriceRequiresMainOptionToml() throws IOException {
-    final Path toml = createTempFile("toml", "min-gas-price=0\n");
+    final Path toml = createTempFile("toml", "min-gas-price=0\nnetwork=\"dev\"\n");
 
     parseCommand("--config-file", toml.toString());
 
