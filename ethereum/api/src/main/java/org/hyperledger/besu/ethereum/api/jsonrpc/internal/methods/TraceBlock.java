@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.TIMEOUT_ERROR;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.RewardTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -32,6 +36,12 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,6 +53,7 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final Supplier<BlockTracer> blockTracerSupplier;
+  private final int traceTimeout = 5000;
   protected final ProtocolSchedule protocolSchedule;
 
   public TraceBlock(
@@ -66,19 +77,38 @@ public class TraceBlock extends AbstractBlockParameterMethod {
 
   @Override
   protected Object resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
+      final JsonRpcRequestContext requestContext, final long blockNumber) {
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
       return emptyResult().getArrayNode();
     }
     LOG.trace("Received RPC rpcName={} block={}", getName(), blockNumber);
 
-    return getBlockchainQueries()
-        .getBlockchain()
-        .getBlockByNumber(blockNumber)
-        .map(block -> traceBlock(block, Optional.empty()))
-        .map(ArrayNodeWrapper::getArrayNode)
-        .orElse(null);
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    final Callable<Object> traceTask =
+        () ->
+            getBlockchainQueries()
+                .getBlockchain()
+                .getBlockByNumber(blockNumber)
+                .map(block -> traceBlock(block, Optional.empty()))
+                .map(ArrayNodeWrapper::getArrayNode)
+                .orElse(null);
+
+    final Future<Object> result = executor.submit(traceTask);
+    try {
+      return result.get(traceTimeout, TimeUnit.MILLISECONDS);
+    } catch (final TimeoutException ex) {
+      LOG.debug(
+          "trace_block not completed within {}ms. Specified block number: {}",
+          traceTimeout,
+          blockNumber);
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), TIMEOUT_ERROR);
+    } catch (final Exception ex) {
+      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
+    } finally {
+      executor.shutdown();
+    }
   }
 
   protected ArrayNodeWrapper traceBlock(
