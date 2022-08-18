@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -61,6 +62,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -87,6 +89,7 @@ public abstract class AbstractBlockPropagationManagerTest {
               SynchronizerConfiguration.builder().blockPropagationRange(-10, 30).build()));
   protected SyncState syncState;
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final Hash finalizedHash = Hash.fromHexStringLenient("0x1337");
 
   protected void setup(final DataStorageFormat dataStorageFormat) {
     blockchainUtil = BlockchainSetupUtil.forTesting(dataStorageFormat);
@@ -842,25 +845,27 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldStopWhenTTDReached() {
+  public void shouldStopWhenFinalized() {
     blockPropagationManager.start();
-    syncState.setReachedTerminalDifficulty(true);
+    // syncState.setReachedTerminalDifficulty(true);
+    blockPropagationManager.onNewForkchoiceMessage(null, Optional.of(this.finalizedHash), null);
     assertThat(blockPropagationManager.isRunning()).isFalse();
     assertThat(ethProtocolManager.ethContext().getEthMessages().messageCodesHandled())
         .doesNotContain(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
   }
 
   @Test
-  public void shouldRestartWhenTTDReachedReturnsFalse() {
+  public void shouldRestartWhenTTDReachedReturnsFalseAfterFinalizing() {
     blockPropagationManager.start();
     syncState.setReachedTerminalDifficulty(true);
+    blockPropagationManager.onNewForkchoiceMessage(null, Optional.of(this.finalizedHash), null);
     assertThat(blockPropagationManager.isRunning()).isFalse();
     syncState.setReachedTerminalDifficulty(false);
     assertThat(blockPropagationManager.isRunning()).isTrue();
   }
 
   @Test
-  public void shouldNotListenToNewBlockHashesAnnouncementsWhenTTDReached() {
+  public void shouldNotListenToNewBlockHashesAnnouncementsWhenTTDReachedAndFinal() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -878,7 +883,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     syncState.setReachedTerminalDifficulty(true);
-
+    blockPropagationManager.onNewForkchoiceMessage(null, Optional.of(this.finalizedHash), null);
     // Broadcast message
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
@@ -888,7 +893,7 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldNotListenToNewBlockAnnouncementsWhenTTDReached() {
+  public void shouldNotListenToNewBlockAnnouncementsWhenTTDReachedAndFinal() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -904,7 +909,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     syncState.setReachedTerminalDifficulty(true);
-
+    blockPropagationManager.onNewForkchoiceMessage(null, Optional.of(this.finalizedHash), null);
     // Broadcast message
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
@@ -914,13 +919,13 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldNotListenToBlockAddedEventsWhenTTDReached() {
+  public void shouldNotListenToBlockAddedEventsWhenTTDReachedAndFinal() {
     blockchainUtil.importFirstBlocks(2);
 
     blockPropagationManager.start();
 
     syncState.setReachedTerminalDifficulty(true);
-
+    blockPropagationManager.onNewForkchoiceMessage(null, Optional.of(this.finalizedHash), null);
     blockchainUtil.importBlockAtIndex(2);
 
     assertThat(blockPropagationManager.isRunning()).isFalse();
