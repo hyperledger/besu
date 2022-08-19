@@ -207,16 +207,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
+    Transaction lastLocalTransactionForSender = null;
 
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
+    for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
+      lastLocalTransactionForSender = createTransaction(i);
+      transactions.addLocalTransaction(lastLocalTransactionForSender);
 
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
-      transactions.addLocalTransaction(createTransaction(i));
     }
-
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
+    assertTransactionNotPending(lastLocalTransactionForSender);
   }
 
   @Test
@@ -710,9 +709,11 @@ public class GasPricePendingTransactionsTest {
         .isPresent()
         .hasValue(6);
     addLocalTransactions(6, 10);
+
+    // assert that transactions are pruned by account from latest future nonces first
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(6);
   }
 
   @Test

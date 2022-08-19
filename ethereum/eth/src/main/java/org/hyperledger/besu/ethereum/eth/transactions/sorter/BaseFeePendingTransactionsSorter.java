@@ -213,20 +213,23 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       if (pendingTransactions.size() > maxPendingTransactions) {
         final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
         if (!prioritizedTransactionsDynamicRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsDynamicRange.last());
+          lowestValueTxForRemovalBySender(prioritizedTransactionsDynamicRange)
+              .ifPresent(removalCandidates::add);
         if (!prioritizedTransactionsStaticRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsStaticRange.last());
-        final TransactionInfo toRemove =
+          lowestValueTxForRemovalBySender(prioritizedTransactionsStaticRange)
+              .ifPresent(removalCandidates::add);
+
+        droppedTransaction =
             removalCandidates
                 .build()
                 .min(
                     Comparator.comparing(
                         txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
-                // safe because we just added a tx to the pool so we're guaranteed to have one
-                .get();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        LOG.trace("Evicted {} due to transaction pool size", toRemove);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
+                    .map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(toRemove -> {
+              doRemoveTransaction(toRemove, false);
+              LOG.trace("Evicted {} due to transaction pool size", toRemove);
+        });
       }
     }
     notifyTransactionAdded(transaction);

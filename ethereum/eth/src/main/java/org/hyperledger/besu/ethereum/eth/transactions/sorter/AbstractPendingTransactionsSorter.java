@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -424,4 +425,16 @@ public abstract class AbstractPendingTransactionsSorter {
       return invalidReason;
     }
   }
+
+  Optional<TransactionInfo> lowestValueTxForRemovalBySender(NavigableSet<TransactionInfo> txSet){
+    return txSet
+        .descendingSet()
+        .stream()
+        .filter(tx -> transactionsBySender.get(tx.getSender())
+            .maybeLastTx()
+            .filter(tx::equals)
+            .isPresent()
+        ).findFirst();
+  }
+
 }

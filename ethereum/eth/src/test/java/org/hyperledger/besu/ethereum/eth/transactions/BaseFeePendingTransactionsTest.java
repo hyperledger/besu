@@ -122,10 +122,16 @@ public class BaseFeePendingTransactionsTest {
 
   @Test
   public void shouldDropOldestTransactionWhenLimitExceeded() {
-    final Transaction oldestTransaction = createTransaction(0);
+    final Transaction oldestTransaction = transactionWithNonceSenderAndGasPrice(
+        0,
+        SIGNATURE_ALGORITHM.get().generateKeyPair(),
+        10L);
     transactions.addRemoteTransaction(oldestTransaction);
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i));
+      transactions.addRemoteTransaction(transactionWithNonceSenderAndGasPrice(
+          i,
+          SIGNATURE_ALGORITHM.get().generateKeyPair(),
+          10L));
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
@@ -167,10 +173,13 @@ public class BaseFeePendingTransactionsTest {
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
     final List<Transaction> lowGasPriceTransactions =
         IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(i + 1, KEYS1, 10))
+            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(
+                i + 1,
+                SIGNATURE_ALGORITHM.get().generateKeyPair(),
+                10))
             .collect(Collectors.toUnmodifiableList());
 
-    // Fill the pool
+    // Fill the pool with transasctions from random senders
     lowGasPriceTransactions.forEach(transactions::addRemoteTransaction);
 
     // This should kick the oldest tx with the low gas price out, namely the first one we added
@@ -186,14 +195,15 @@ public class BaseFeePendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
+    Transaction lastLocalTransactionForSender = null;
 
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
-      transactions.addLocalTransaction(createTransaction(i));
+    for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
+      lastLocalTransactionForSender = createTransaction(i);
+      transactions.addLocalTransaction(lastLocalTransactionForSender);
+
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
+    assertTransactionNotPending(lastLocalTransactionForSender);
   }
 
   @Test
@@ -687,9 +697,11 @@ public class BaseFeePendingTransactionsTest {
         .isPresent()
         .hasValue(6);
     addLocalTransactions(6, 10);
+
+    // assert that we drop future nonces first:
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(6);
   }
 
   @Test

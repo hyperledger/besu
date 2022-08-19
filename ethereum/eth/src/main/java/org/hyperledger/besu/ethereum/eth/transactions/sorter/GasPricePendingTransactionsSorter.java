@@ -19,6 +19,7 @@ import static java.util.Comparator.comparing;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -101,9 +102,10 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
       if (pendingTransactions.size() > maxPendingTransactions) {
-        final TransactionInfo toRemove = prioritizedTransactions.last();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
+        droppedTransaction = lowestValueTxForRemovalBySender(prioritizedTransactions)
+            .map(TransactionInfo::getTransaction);
+        droppedTransaction
+            .ifPresent(tx -> doRemoveTransaction(tx, false));
       }
     }
     notifyTransactionAdded(transactionInfo.getTransaction());
