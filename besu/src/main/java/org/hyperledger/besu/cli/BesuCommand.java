@@ -1501,7 +1501,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .ifPresentOrElse(
               present -> logger.info("Using jemalloc"),
               () ->
-                  logger.info("jemalloc not found, you could improve memory usage installing it"));
+                  logger.info("jemalloc library not found, memory usage may be reduced by installing it"));
     }
   }
 
