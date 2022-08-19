@@ -21,6 +21,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -420,6 +421,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
+
+    synchronizer.subscribeInSync(new PandaPrinter());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
