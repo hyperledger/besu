@@ -120,7 +120,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       clearListeners();
       started.set(false);
     } else {
-      LOG.warn("Attempted to stop when we are not even running...");
+      LOG.debug("Attempted to stop when we are not even running...");
     }
   }
 
@@ -400,7 +400,6 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       final Optional<Hash> blockHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            protocolContext,
             protocolSchedule,
             ethContext,
             metricsSystem,
