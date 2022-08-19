@@ -19,7 +19,6 @@ import static java.util.Comparator.comparing;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -42,7 +41,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   public GasPricePendingTransactionsSorter(
@@ -102,10 +101,10 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
       if (pendingTransactions.size() > maxPendingTransactions) {
-        droppedTransaction = lowestValueTxForRemovalBySender(prioritizedTransactions)
-            .map(TransactionInfo::getTransaction);
-        droppedTransaction
-            .ifPresent(tx -> doRemoveTransaction(tx, false));
+        droppedTransaction =
+            lowestValueTxForRemovalBySender(prioritizedTransactions)
+                .map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(tx -> doRemoveTransaction(tx, false));
       }
     }
     notifyTransactionAdded(transactionInfo.getTransaction());

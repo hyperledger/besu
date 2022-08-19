@@ -84,7 +84,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .get()
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
@@ -97,7 +97,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   @Override
@@ -225,11 +225,12 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                 .min(
                     Comparator.comparing(
                         txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
-                    .map(TransactionInfo::getTransaction);
-        droppedTransaction.ifPresent(toRemove -> {
+                .map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(
+            toRemove -> {
               doRemoveTransaction(toRemove, false);
               LOG.trace("Evicted {} due to transaction pool size", toRemove);
-        });
+            });
       }
     }
     notifyTransactionAdded(transaction);

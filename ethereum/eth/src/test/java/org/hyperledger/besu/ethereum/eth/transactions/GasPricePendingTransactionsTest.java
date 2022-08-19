@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +70,7 @@ public class GasPricePendingTransactionsTest {
       new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
-          TestClock.fixed(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           GasPricePendingTransactionsTest::mockBlockHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
@@ -212,7 +213,6 @@ public class GasPricePendingTransactionsTest {
     for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
       lastLocalTransactionForSender = createTransaction(i);
       transactions.addLocalTransaction(lastLocalTransactionForSender);
-
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(lastLocalTransactionForSender);

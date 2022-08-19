@@ -81,6 +81,7 @@ public class TransactionsForSenderInfo {
       return nextGap.isEmpty() ? OptionalLong.of(transactionsInfos.lastKey() + 1) : nextGap;
     }
   }
+
   public Optional<TransactionInfo> maybeLastTx() {
     return Optional.ofNullable(transactionsInfos.lastEntry()).map(Map.Entry::getValue);
   }

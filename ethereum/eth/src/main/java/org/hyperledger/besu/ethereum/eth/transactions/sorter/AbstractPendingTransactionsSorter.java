@@ -426,15 +426,15 @@ public abstract class AbstractPendingTransactionsSorter {
     }
   }
 
-  Optional<TransactionInfo> lowestValueTxForRemovalBySender(NavigableSet<TransactionInfo> txSet){
-    return txSet
-        .descendingSet()
-        .stream()
-        .filter(tx -> transactionsBySender.get(tx.getSender())
-            .maybeLastTx()
-            .filter(tx::equals)
-            .isPresent()
-        ).findFirst();
+  Optional<TransactionInfo> lowestValueTxForRemovalBySender(NavigableSet<TransactionInfo> txSet) {
+    return txSet.descendingSet().stream()
+        .filter(
+            tx ->
+                transactionsBySender
+                    .get(tx.getSender())
+                    .maybeLastTx()
+                    .filter(tx::equals)
+                    .isPresent())
+        .findFirst();
   }
-
 }
