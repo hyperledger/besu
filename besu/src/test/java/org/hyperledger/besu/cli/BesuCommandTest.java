@@ -5333,6 +5333,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void logsSuggestInstallingJemallocWhenEnvVarNotPresent() {
     assumeThat(PlatformDetector.getOSType(), is("linux"));
     parseCommand();
-    verify(mockLogger).info("jemalloc not found, you could improve memory usage installing it");
+    verify(mockLogger)
+        .info("jemalloc library not found, memory usage may be reduced by installing it");
   }
 }
