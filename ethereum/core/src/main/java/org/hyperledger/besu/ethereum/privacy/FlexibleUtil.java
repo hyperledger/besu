@@ -20,10 +20,12 @@ import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagemen
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class FlexibleUtil {
 
@@ -40,11 +42,42 @@ public class FlexibleUtil {
   }
 
   public static List<String> getParticipantsFromParameter(final Bytes input) {
+    final int numberOfParticipants = input.slice(4 + 32, 32).toBigInteger().intValue();
+    if (numberOfParticipants == 0) return Collections.emptyList();
+    // Method selector + offset +  number of participants + (offset * number of participants)
+    final Bytes mungedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
+
+    return getParticipantsFromMungedParticipants(mungedParticipants, numberOfParticipants);
+  }
+
+  public static List<String> decodeList(final Bytes rlpEncodedList) {
+    // first 32 bytes is dynamic list offset
+    if (rlpEncodedList.size() < 64) return Collections.emptyList();
+    // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
+    final int lengthOfList =
+        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
+    if (lengthOfList == 0 || rlpEncodedList.size() < 64 + lengthOfList * 32)
+      return Collections.emptyList();
+
+    final Bytes mungedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
+
+    return getParticipantsFromMungedParticipants(mungedParticipants, lengthOfList);
+  }
+
+  private static List<String> getParticipantsFromMungedParticipants(
+      final Bytes mungedParticipants, final int numberOfParticipants) {
     final List<String> participants = new ArrayList<>();
-    final Bytes mungedParticipants = input.slice(4 + 32 + 32);
-    for (int i = 0; i <= mungedParticipants.size() - 32; i += 32) {
-      participants.add(mungedParticipants.slice(i, 32).toBase64String());
+    // The participant value is enclosed in the closest multiple of 32 (for instance, 91 would be
+    // enclosed in 96)
+    final int sliceSize = mungedParticipants.size() / numberOfParticipants;
+    // All the participants have to have the same size, so it is enough to check the first one
+    final int participantSize = mungedParticipants.slice(0, 32).toBigInteger().intValue();
+
+    for (int i = 0; i <= mungedParticipants.size() - sliceSize; i += sliceSize) {
+      // The size of each participant (as of now, either 32 or 91) is stored in 32 bytes
+      participants.add(mungedParticipants.slice(i + 32, participantSize).toBase64String());
     }
+
     return participants;
   }
 }

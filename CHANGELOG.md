@@ -2,6 +2,9 @@
 
 ## 22.7.1
 
+### Breaking Changes
+- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+
 ### Additions and Improvements
 - Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
