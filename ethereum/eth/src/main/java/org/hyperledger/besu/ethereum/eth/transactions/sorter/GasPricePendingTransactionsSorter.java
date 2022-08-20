@@ -19,8 +19,8 @@ import static java.util.Comparator.comparing;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.util.Iterator;
@@ -45,19 +45,11 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
               .reversed());
 
   public GasPricePendingTransactionsSorter(
-      final int maxTransactionRetentionHours,
-      final int maxPendingTransactions,
+      final TransactionPoolConfiguration poolConfig,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Percentage priceBump) {
-    super(
-        maxTransactionRetentionHours,
-        maxPendingTransactions,
-        clock,
-        metricsSystem,
-        chainHeadHeaderSupplier,
-        priceBump);
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier);
   }
 
   @Override
@@ -100,7 +92,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
-      if (pendingTransactions.size() > maxPendingTransactions) {
+      if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
         droppedTransaction =
             lowestValueTxForRemovalBySender(prioritizedTransactions)
                 .map(TransactionInfo::getTransaction);

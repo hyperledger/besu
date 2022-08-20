@@ -22,7 +22,6 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPa
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.isMergedNetwork;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
@@ -1193,15 +1192,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
     @Option(
-        names = {"--tx-pool-hashes-max-size"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        description =
-            "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    @SuppressWarnings("unused")
-    private final Integer pooledTransactionHashesSize = null;
-
-    @Option(
         names = {"--tx-pool-retention-hours"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
@@ -1218,6 +1208,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
         arity = "1")
     private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+
+    @Option(
+        names = {"--tx-pool-future-max"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        converter = PercentageConverter.class,
+        description =
+            "Maximum number of currently unexecutable future transactions that can occupy the txpool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer maxFutureTransactions =
+        TransactionPoolConfiguration.MAX_FUTURE_TRANSACTIONS;
+
+    @Option(
+        names = {"--tx-pool-future-max-by-account"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        converter = PercentageConverter.class,
+        description =
+            "Maximum per account of currently unexecutable future transactions that can occupy the txpool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer maxFutureTransactionsByAccount =
+        TransactionPoolConfiguration.MAX_FUTURE_TRANSACTION_BY_ACCOUNT;
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -1954,10 +1964,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           DEPRECATION_WARNING_MSG,
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
-    }
-
-    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
-      logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
   }
 
@@ -2810,6 +2816,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
+        .txPoolMaxFutureTransactions(txPoolOptionGroup.maxFutureTransactions)
+        .txPoolMaxFutureTransactionByAccount(txPoolOptionGroup.maxFutureTransactionsByAccount)
         .txFeeCap(txFeeCap)
         .build();
   }

@@ -60,12 +60,10 @@ public class PendingMultiTypesTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          () -> mockBlockHeader(Wei.of(7L)),
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          () -> mockBlockHeader(Wei.of(7L)));
 
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {

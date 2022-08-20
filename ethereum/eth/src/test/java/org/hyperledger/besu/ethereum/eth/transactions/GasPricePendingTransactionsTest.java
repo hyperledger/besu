@@ -68,12 +68,10 @@ public class GasPricePendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final GasPricePendingTransactionsSorter transactions =
       new GasPricePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          GasPricePendingTransactionsTest::mockBlockHeader,
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          GasPricePendingTransactionsTest::mockBlockHeader);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -609,15 +607,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldEvictMultipleOldTransactions() {
-    final int maxTransactionRetentionHours = 1;
     final GasPricePendingTransactionsSorter transactions =
         new GasPricePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(1)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            () -> null,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            () -> null);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -632,15 +630,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldEvictSingleOldTransaction() {
-    final int maxTransactionRetentionHours = 1;
     final GasPricePendingTransactionsSorter transactions =
         new GasPricePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(1)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            () -> null,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            () -> null);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -651,15 +649,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
-    final int maxTransactionRetentionHours = 2;
     final GasPricePendingTransactionsSorter transactions =
         new GasPricePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(2)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            () -> null,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            () -> null);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);

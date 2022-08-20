@@ -68,12 +68,10 @@ public class BaseFeePendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          BaseFeePendingTransactionsTest::mockBlockHeader,
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          BaseFeePendingTransactionsTest::mockBlockHeader);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -597,12 +595,13 @@ public class BaseFeePendingTransactionsTest {
     final int maxTransactionRetentionHours = 1;
     final BaseFeePendingTransactionsSorter transactions =
         new BaseFeePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(maxTransactionRetentionHours)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            BaseFeePendingTransactionsTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            BaseFeePendingTransactionsTest::mockBlockHeader);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -620,12 +619,13 @@ public class BaseFeePendingTransactionsTest {
     final int maxTransactionRetentionHours = 1;
     final BaseFeePendingTransactionsSorter transactions =
         new BaseFeePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(maxTransactionRetentionHours)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            BaseFeePendingTransactionsTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            BaseFeePendingTransactionsTest::mockBlockHeader);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -639,12 +639,13 @@ public class BaseFeePendingTransactionsTest {
     final int maxTransactionRetentionHours = 2;
     final BaseFeePendingTransactionsSorter transactions =
         new BaseFeePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(maxTransactionRetentionHours)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            BaseFeePendingTransactionsTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            BaseFeePendingTransactionsTest::mockBlockHeader);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);

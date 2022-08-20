@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -34,7 +35,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.Subscribers;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -69,8 +69,8 @@ public abstract class AbstractPendingTransactionsSorter {
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractPendingTransactionsSorter.class);
 
-  protected final int maxTransactionRetentionHours;
   protected final Clock clock;
+  protected final TransactionPoolConfiguration poolConfig;
 
   protected final Object lock = new Object();
   protected final Map<Hash, TransactionInfo> pendingTransactions = new ConcurrentHashMap<>();
@@ -88,22 +88,19 @@ public abstract class AbstractPendingTransactionsSorter {
   protected final Counter localTransactionAddedCounter;
   protected final Counter remoteTransactionAddedCounter;
 
-  protected final long maxPendingTransactions;
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
   public AbstractPendingTransactionsSorter(
-      final int maxTransactionRetentionHours,
-      final int maxPendingTransactions,
+      final TransactionPoolConfiguration poolConfig,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Percentage priceBump) {
-    this.maxTransactionRetentionHours = maxTransactionRetentionHours;
-    this.maxPendingTransactions = maxPendingTransactions;
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
+    this.poolConfig = poolConfig;
     this.clock = clock;
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    this.transactionReplacementHandler = new TransactionPoolReplacementHandler(priceBump);
+    this.transactionReplacementHandler =
+        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -130,7 +127,7 @@ public abstract class AbstractPendingTransactionsSorter {
 
   public void evictOldTransactions() {
     final Instant removeTransactionsBefore =
-        clock.instant().minus(maxTransactionRetentionHours, ChronoUnit.HOURS);
+        clock.instant().minus(poolConfig.getPendingTxRetentionPeriod(), ChronoUnit.HOURS);
 
     pendingTransactions.values().stream()
         .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
@@ -280,7 +277,7 @@ public abstract class AbstractPendingTransactionsSorter {
   }
 
   public long maxSize() {
-    return maxPendingTransactions;
+    return poolConfig.getTxPoolMaxSize();
   }
 
   public int size() {
