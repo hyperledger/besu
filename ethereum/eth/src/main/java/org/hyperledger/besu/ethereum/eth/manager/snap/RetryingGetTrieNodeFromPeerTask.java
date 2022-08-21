@@ -40,7 +40,7 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final Map<Bytes, List<Bytes>> paths,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, Map::isEmpty, metricsSystem);
+    super(ethContext, 4, Map::isEmpty, metricsSystem);
     this.ethContext = ethContext;
     this.paths = paths;
     this.blockHeader = blockHeader;

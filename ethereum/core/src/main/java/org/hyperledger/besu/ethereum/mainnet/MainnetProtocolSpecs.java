@@ -619,7 +619,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
 
-    return arrowGlacierDefinition(
+    return grayGlacierDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
