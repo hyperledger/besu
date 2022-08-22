@@ -11,6 +11,7 @@
 - Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
 - Fix off-by-one error in AbstractRetryingPeerTask [#4254](https://github.com/hyperledger/besu/pull/4254)
 - Fix encoding of key (short hex) in eth_getProof [#4261](https://github.com/hyperledger/besu/pull/4261)
+- Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
 
 ## 22.7.0
 
