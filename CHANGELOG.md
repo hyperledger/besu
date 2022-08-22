@@ -24,7 +24,7 @@
 
 ### Download links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.1.tar.gz / sha256: `7cca4c11e1d7525c172f2af9fbf456d134ada60e970d8b6abcfcd6c623b5dd36`
-- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.0.zip / sha256: `ba6e0b9b65ac36d041a5072392f119ff76e8e9f53a3d7b1e1a658ef1e4705d7a`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.1.zip / sha256: `ba6e0b9b65ac36d041a5072392f119ff76e8e9f53a3d7b1e1a658ef1e4705d7a`
 
 
 
