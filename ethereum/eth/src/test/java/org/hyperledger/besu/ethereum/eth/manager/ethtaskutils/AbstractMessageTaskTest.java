@@ -58,6 +58,7 @@ import org.junit.Test;
  * @param <R> The type of data returned from the network
  */
 public abstract class AbstractMessageTaskTest<T, R> {
+  protected static final int MAX_PEERS = 5;
   protected static Blockchain blockchain;
   protected static ProtocolSchedule protocolSchedule;
   protected static ProtocolContext protocolContext;
@@ -77,7 +78,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
-
     assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
@@ -91,7 +91,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 EthProtocol.NAME,
                 TestClock.fixed(),
                 metricsSystem,
-                25,
+                MAX_PEERS,
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE));
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =

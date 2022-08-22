@@ -16,13 +16,19 @@
 
 pluginManagement {
   repositories {
-    gradlePluginPortal()
     /*
      *  Temporary repository to host the improved version of the
      *  com.github.hierynomus.license plugin. Can be removed when an
      *  official version with the fix is release upstream
      */
-    maven { url = uri("https://raw.githubusercontent.com/ConsenSys/license-gradle-plugin-fix-artifacts/main/") }
+    maven {
+      url = uri('https://raw.githubusercontent.com/ConsenSys/license-gradle-plugin-fix-artifacts/main/')
+      content {
+        includeGroup('com.github.hierynomus.license')
+        includeGroup('com.hierynomus.gradle.plugins')
+      }
+    }
+    gradlePluginPortal()
   }
 }
 
