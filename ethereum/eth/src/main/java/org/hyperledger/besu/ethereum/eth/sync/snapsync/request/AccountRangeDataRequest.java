@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
@@ -134,6 +135,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, accounts);
+        BonsaiWorldStateKeyValueStorage.Updater updater =
+            (BonsaiWorldStateKeyValueStorage.Updater)
+                worldStateProofProvider.getWorldStateStorage().updater();
+        accounts.forEach(
+            (bytes32, bytes) -> {
+              updater.putAccountInfoState(Hash.wrap(bytes32), bytes);
+            });
+        updater.commit();
         isProofValid = Optional.of(true);
       }
     }

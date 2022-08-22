@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -163,6 +164,11 @@ public class SnapsyncMetricsManager {
         duration.toMinutesPart(),
         duration.toSecondsPart(),
         duration.toMillisPart());
+    LOG.info(
+        "Nodes to fix "
+            + TrieNodeDataRequest.nbNodesToCheck
+            + " "
+            + TrieNodeDataRequest.nbNodesToCheckStorage);
   }
 
   public MetricsSystem getMetricsSystem() {

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -46,15 +47,22 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
+
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
+
     return 1;
   }
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
-        .getAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash())
-        .filter(data -> Hash.hash(data).equals(getNodeHash()));
+    final Optional<Bytes> bytes =
+        worldStateStorage.getAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash());
+    if (bytes.isPresent() && !Hash.hash(bytes.get()).equals(getNodeHash())) {
+      nbNodesToCheckStorage = nbNodesToCheckStorage.add(BigInteger.ONE);
+      originalData = bytes.get();
+      return Optional.empty();
+    }
+    return bytes;
   }
 
   @Override

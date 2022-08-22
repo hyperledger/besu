@@ -27,6 +27,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -47,15 +48,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   protected final KeyValueStorage trieLogStorage;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
-    accountStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
-    storageStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
-    trieBranchStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
-    trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    this(
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -76,11 +74,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     return codeStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
+  public Optional<Bytes> getFlatAccount(final Hash accountHash) {
+    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  public TreeMap<Bytes32, Bytes> getFlatAccountInRange(
+      final Hash startKeyHash, final Hash endKeyHash) {
+    return accountStorage.getInRange(startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe());
+  }
+
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response = Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      final Optional<Bytes32> worldStateRootHash = getWorldStateRootHash();
       if (worldStateRootHash.isPresent()) {
         response =
             new StoredMerklePatriciaTrie<>(
@@ -128,23 +135,27 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
   }
 
-  public Optional<Bytes> getWorldStateRootHash() {
-    return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
+  public Optional<Bytes32> getWorldStateRootHash() {
+    return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes32::wrap);
   }
 
   public Optional<Bytes> getWorldStateBlockHash() {
     return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes::wrap);
   }
 
+  public Optional<Bytes> getFlatStorageValueBySlotHash(
+      final Hash accountHash, final Hash slotHash) {
+    return storageStorage
+        .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
+        .map(Bytes::wrap);
+  }
+
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    Optional<Bytes> response =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-            .map(Bytes::wrap);
+    Optional<Bytes> response = Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> account = getAccount(accountHash);
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      final Optional<Bytes32> worldStateRootHash = getWorldStateRootHash();
       if (account.isPresent() && worldStateRootHash.isPresent()) {
         final StateTrieAccountValue accountValue =
             StateTrieAccountValue.readFrom(

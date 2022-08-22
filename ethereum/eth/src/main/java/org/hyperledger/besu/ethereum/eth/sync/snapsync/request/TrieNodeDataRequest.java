@@ -21,10 +21,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,6 +35,8 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.bytes.MutableBytes32;
 
 public abstract class TrieNodeDataRequest extends SnapDataRequest implements TasksPriorityProvider {
 
@@ -40,7 +44,12 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   private final Bytes location;
   protected Bytes data;
 
+  public static BigInteger nbNodesToCheck = BigInteger.ZERO;
+
+  public static BigInteger nbNodesToCheckStorage = BigInteger.ZERO;
+
   protected boolean requiresPersisting = true;
+  protected Bytes originalData = Bytes.EMPTY;
 
   protected TrieNodeDataRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
     super(TRIE_NODE, rootHash);
@@ -82,9 +91,17 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
     }
-
-    final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(location, data);
-    return nodes.stream()
+    List<Node<Bytes>> oldNodes = new ArrayList<>();
+    if (!originalData.isEmpty()) {
+      oldNodes = TrieNodeDecoder.decodeNodes(location, originalData);
+    }
+    final List<Node<Bytes>> newNodes = TrieNodeDecoder.decodeNodes(location, data);
+    for (int i = 0; i < oldNodes.size(); i++) {
+      if (!(oldNodes.get(i) instanceof NullNode) && newNodes.get(i) instanceof NullNode) {
+        System.out.println("need to delete " + getLocation() + " child " + i);
+      }
+    }
+    return newNodes.stream()
         .flatMap(
             node -> {
               if (nodeIsHashReferencedDescendant(node)) {
@@ -104,6 +121,23 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
               }
             })
         .peek(request -> request.registerParent(this));
+  }
+
+  public static Bytes32 decodePath(final Bytes bytes, final Byte defaultValue) {
+    final MutableBytes32 decoded = MutableBytes32.create();
+    final MutableBytes path = MutableBytes.create(Bytes32.SIZE * 2);
+    path.fill(defaultValue);
+    path.set(0, bytes);
+    int decodedPos = 0;
+    for (int pathPos = 0; pathPos < path.size() - 1; pathPos += 2, decodedPos += 1) {
+      final byte high = path.get(pathPos);
+      final byte low = path.get(pathPos + 1);
+      if ((high & 0xf0) != 0 || (low & 0xf0) != 0) {
+        throw new IllegalArgumentException("Invalid path: contains elements larger than a nibble");
+      }
+      decoded.set(decodedPos, (byte) (high << 4 | (low & 0xff)));
+    }
+    return decoded;
   }
 
   public boolean isRoot() {

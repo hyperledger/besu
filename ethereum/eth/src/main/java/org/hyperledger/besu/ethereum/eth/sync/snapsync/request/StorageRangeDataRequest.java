@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -122,6 +123,14 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, slots);
+        BonsaiWorldStateKeyValueStorage.Updater updater =
+            (BonsaiWorldStateKeyValueStorage.Updater)
+                worldStateProofProvider.getWorldStateStorage().updater();
+        slots.forEach(
+            (bytes32, bytes) -> {
+              updater.putAccountInfoState(Hash.wrap(bytes32), bytes);
+            });
+        updater.commit();
         isProofValid = Optional.of(true);
       }
     }

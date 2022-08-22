@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,10 +64,16 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
-        .getAccountStateTrieNode(getLocation(), getNodeHash())
-        .filter(data -> !getLocation().isEmpty())
-        .filter(data -> Hash.hash(data).equals(getNodeHash()));
+    final Optional<Bytes> bytes =
+        worldStateStorage
+            .getAccountStateTrieNode(getLocation(), getNodeHash())
+            .filter(data -> !getLocation().isEmpty());
+    if (bytes.isPresent() && !Hash.hash(bytes.get()).equals(getNodeHash())) {
+      nbNodesToCheck = nbNodesToCheck.add(BigInteger.ONE);
+      originalData = bytes.get();
+      return Optional.empty();
+    }
+    return bytes;
   }
 
   @Override

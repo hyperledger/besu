@@ -20,8 +20,12 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Responsible for storing values against keys.
@@ -80,6 +84,10 @@ public interface KeyValueStorage extends Closeable {
    */
   boolean tryDelete(byte[] key) throws StorageException;
 
+  default TreeMap<Bytes32, Bytes> getInRange(final byte[] startKeyHash, final byte[] endKeyHash) {
+    throw new UnsupportedOperationException("test");
+  }
+
   /**
    * Performs an evaluation against each key in the store, returning the set of entries that pass.
    *
@@ -96,4 +104,8 @@ public interface KeyValueStorage extends Closeable {
    * @throws StorageException problem encountered when starting a new transaction.
    */
   KeyValueStorageTransaction startTransaction() throws StorageException;
+
+  default KeyValueStorage takeSnapshot() {
+    throw new UnsupportedOperationException("snapshots not supported");
+  }
 }

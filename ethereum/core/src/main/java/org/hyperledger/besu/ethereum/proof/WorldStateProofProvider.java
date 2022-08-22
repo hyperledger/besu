@@ -50,6 +50,10 @@ public class WorldStateProofProvider {
     this.worldStateStorage = worldStateStorage;
   }
 
+  public WorldStateStorage getWorldStateStorage() {
+    return worldStateStorage;
+  }
+
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,

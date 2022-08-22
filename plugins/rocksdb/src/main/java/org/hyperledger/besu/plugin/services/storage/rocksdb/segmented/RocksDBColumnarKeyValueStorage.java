@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
@@ -193,6 +195,29 @@ public class RocksDBColumnarKeyValueStorage
     final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
     rocksIterator.seekToFirst();
     return RocksDbKeyIterator.create(rocksIterator).toStream();
+  }
+
+  @Override
+  public TreeMap<Bytes32, Bytes> getInRange(
+      final byte[] startKeyHash,
+      final byte[] endKeyHash,
+      final RocksDbSegmentIdentifier segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seekForPrev(startKeyHash);
+    RocksDbKeyIterator rocksDbKeyIterator = RocksDbKeyIterator.create(rocksIterator);
+    TreeMap<Bytes32, Bytes> res = new TreeMap<>();
+    Bytes limitHash = Bytes.of(endKeyHash);
+    System.out.println("found next " + rocksDbKeyIterator.hasNext());
+    while (rocksDbKeyIterator.hasNext()) {
+      Map.Entry<byte[], byte[]> entry = rocksDbKeyIterator.nextEntry();
+      Bytes32 key = Bytes32.wrap(entry.getKey());
+      System.out.println("found next " + key);
+      if (key.compareTo(limitHash) >= 0) {
+        return res;
+      }
+      res.put(key, Bytes.wrap(entry.getValue()));
+    }
+    return res;
   }
 
   @Override

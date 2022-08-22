@@ -18,6 +18,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -66,6 +67,24 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
     final byte[] key = rocksIterator.key();
     rocksIterator.next();
     return key;
+  }
+
+  public Map.Entry<byte[], byte[]> nextEntry() {
+    assertOpen();
+    try {
+      rocksIterator.status();
+    } catch (final RocksDBException e) {
+      LOG.error(
+          String.format("%s encountered a problem while iterating.", getClass().getSimpleName()),
+          e);
+    }
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+    final byte[] key = rocksIterator.key();
+    final byte[] value = rocksIterator.value();
+    rocksIterator.next();
+    return Map.entry(key, value);
   }
 
   public Stream<byte[]> toStream() {
