@@ -1,6 +1,7 @@
 # Changelog
 
-## 22.7.1
+## 22.7.1   
+### Merge Ready Release. Required update for The Merge on ethereum mainnet!
 
 ### Additions and Improvements
 - Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
