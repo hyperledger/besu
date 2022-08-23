@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,7 +38,6 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
-@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class BftPrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   private final BftPrivacyType bftPrivacyType;
 

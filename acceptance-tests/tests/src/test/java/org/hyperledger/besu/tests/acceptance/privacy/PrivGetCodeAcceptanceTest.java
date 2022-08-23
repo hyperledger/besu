@@ -29,11 +29,9 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.utils.Restriction;
 
-@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode alice;
