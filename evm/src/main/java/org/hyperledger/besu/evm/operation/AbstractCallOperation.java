@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -57,7 +59,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the additional gas to provide the call operation
    */
-  protected abstract long gas(MessageFrame frame);
+  protected long gas(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(0));
+  }
 
   /**
    * Returns the account the call is being made to.
