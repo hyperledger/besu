@@ -38,6 +38,7 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.Lists;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,6 +51,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Contract;
 
 @RunWith(Parameterized.class)
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class FlexiblePrivacyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;

@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -45,6 +46,7 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Base64String;
 
 @RunWith(Parameterized.class)
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private final PrivacyNode alice;

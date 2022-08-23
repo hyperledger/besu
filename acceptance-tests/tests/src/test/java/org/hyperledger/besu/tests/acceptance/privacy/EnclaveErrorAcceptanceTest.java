@@ -49,6 +49,7 @@ import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private final PrivacyNode alice;
