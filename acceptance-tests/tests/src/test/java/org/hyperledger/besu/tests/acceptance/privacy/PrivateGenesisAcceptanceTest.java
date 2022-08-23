@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -36,6 +37,7 @@ import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivateGenesisAcceptanceTest extends ParameterizedEnclaveTestBase {
   private final PrivacyNode alice;
 

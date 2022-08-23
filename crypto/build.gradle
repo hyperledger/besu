@@ -38,6 +38,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:secp256k1'
   implementation 'org.hyperledger.besu:secp256r1'
+  implementation 'org.hyperledger.besu:blake2bf'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

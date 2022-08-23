@@ -18,8 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.bouncycastle.util.Pack;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 
 /**
  * Test vectors adapted from
@@ -47,7 +49,7 @@ public class Blake2bfMessageDigestTest {
         -61, 120, -93, -42, -38
       };
 
-  @Before
+  @BeforeEach
   public void setUp() {
     messageDigest = new Blake2bfMessageDigest();
   }
@@ -120,5 +122,25 @@ public class Blake2bfMessageDigestTest {
               messageDigest.update(update, 0, 214);
             })
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @ParameterizedTest
+  @CsvFileSource(resources = "eip152TestCases.csv", numLinesToSkip = 1)
+  public void eip152TestCases(final String hexIn, final String hexExpected) {
+    System.out.println("in=" + hexIn);
+    byte[] in = hexStringToByteArray(hexIn);
+    byte[] expected = hexStringToByteArray(hexExpected);
+    messageDigest.update(in, 0, 213);
+    assertThat(messageDigest.digest()).isEqualTo(expected);
+  }
+
+  private static byte[] hexStringToByteArray(final String s) {
+    int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      data[i / 2] =
+          (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i + 1), 16));
+    }
+    return data;
   }
 }
