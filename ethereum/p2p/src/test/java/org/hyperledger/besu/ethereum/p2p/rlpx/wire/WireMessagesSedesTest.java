@@ -54,6 +54,8 @@ public class WireMessagesSedesTest {
   }
 
   private static void assertSedesWorks(final byte[] data, final boolean encEqualsInput) {
+    // TODO: the boolean was added because we do encode the version number 0 as 0x00, not as 0x80
+    // Ticket #4284 to address the broader issue of encoding/decoding zero
     final Bytes input = Bytes.wrap(data);
 
     final PeerInfo peerInfo = PeerInfo.readFrom(RLP.input(input));
