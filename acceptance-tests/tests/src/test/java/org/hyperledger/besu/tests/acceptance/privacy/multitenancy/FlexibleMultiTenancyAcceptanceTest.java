@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,6 +51,7 @@ import org.web3j.utils.Base64String;
 import org.web3j.utils.Restriction;
 
 @RunWith(Parameterized.class)
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class FlexibleMultiTenancyAcceptanceTest extends FlexiblePrivacyAcceptanceTestBase {
 
   private final EnclaveType enclaveType;
