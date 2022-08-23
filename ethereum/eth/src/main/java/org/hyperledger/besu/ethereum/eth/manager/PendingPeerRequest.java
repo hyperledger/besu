@@ -80,7 +80,7 @@ public class PendingPeerRequest {
   }
 
   private Optional<EthPeer> getLeastBusySuitablePeer() {
-    return peer.isPresent()
+    return peer.filter(p -> !p.isDisconnected()).isPresent()
         ? peer
         : ethPeers
             .streamAvailablePeers()
