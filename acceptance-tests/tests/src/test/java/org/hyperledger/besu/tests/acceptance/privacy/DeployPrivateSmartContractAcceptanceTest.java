@@ -26,9 +26,11 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.utils.Restriction;
 
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode minerNode;
