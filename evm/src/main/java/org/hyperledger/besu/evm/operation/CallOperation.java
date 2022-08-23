@@ -35,15 +35,6 @@ public class CallOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected long gas(final MessageFrame frame) {
-    try {
-      return frame.getStackItem(0).trimLeadingZeros().toLong();
-    } catch (final ArithmeticException | IllegalArgumentException ae) {
-      return Long.MAX_VALUE;
-    }
-  }
-
-  @Override
   protected Address to(final MessageFrame frame) {
     return Words.toAddress(frame.getStackItem(1));
   }
