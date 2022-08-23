@@ -131,7 +131,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return getEthContext()
         .getEthPeers()
         .streamBestPeers()
-        .filter(peer -> !peer.isDisconnected() && !triedPeers.contains(peer));
+        .filter(peer -> !triedPeers.contains(peer));
   }
 
   private void refreshPeers() {
