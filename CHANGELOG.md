@@ -2,15 +2,15 @@
 
 ## 22.7.2
 
+### Breaking Changes
+- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+
 ### Additions and Improvements
 
 ### Bug Fixes
 
 
 ## 22.7.1
-
-### Breaking Changes
-- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
 
 ### Additions and Improvements
 - Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
