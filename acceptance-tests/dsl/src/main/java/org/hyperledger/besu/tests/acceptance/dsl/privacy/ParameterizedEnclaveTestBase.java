@@ -17,7 +17,6 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
 import static org.hyperledger.enclave.testutil.EnclaveType.NOOP;
-import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
 import static org.web3j.utils.Restriction.RESTRICTED;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
