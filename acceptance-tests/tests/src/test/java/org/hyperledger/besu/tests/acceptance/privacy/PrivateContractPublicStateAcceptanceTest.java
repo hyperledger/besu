@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -42,6 +43,7 @@ import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tx.exceptions.ContractCallException;
 import org.web3j.utils.Restriction;
 
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode transactionNode;

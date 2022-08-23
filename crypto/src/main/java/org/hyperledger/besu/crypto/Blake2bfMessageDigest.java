@@ -16,12 +16,17 @@ package org.hyperledger.besu.crypto;
 
 import static java.util.Arrays.copyOfRange;
 
+import org.hyperledger.besu.nativelib.blake2bf.LibBlake2bf;
+
 import org.bouncycastle.crypto.Digest;
 import org.bouncycastle.jcajce.provider.digest.BCMessageDigest;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable {
+  private static final Logger LOG = LoggerFactory.getLogger(Blake2bfMessageDigest.class);
 
   public Blake2bfMessageDigest() {
     super(new Blake2bfDigest());
@@ -37,7 +42,6 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
    * <p>Optimized for 64-bit platforms
    */
   public static class Blake2bfDigest implements Digest {
-
     public static final int MESSAGE_LENGTH_BYTES = 213;
 
     private static final long[] IV = {
@@ -76,8 +80,13 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     private long rounds; // unsigned integer represented as long
 
     private final long[] v;
+    private static boolean useNative = LibBlake2bf.ENABLED;
 
     Blake2bfDigest() {
+      if (!useNative) {
+        LOG.info("Native blake2bf not available");
+      }
+
       buffer = new byte[MESSAGE_LENGTH_BYTES];
       bufferPos = 0;
 
@@ -90,20 +99,12 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
       v = new long[16];
     }
 
-    // for tests
-    Blake2bfDigest(
-        final long[] h, final long[] m, final long[] t, final boolean f, final long rounds) {
-      assert rounds <= 4294967295L; // uint max value
-      buffer = new byte[MESSAGE_LENGTH_BYTES];
-      bufferPos = 0;
+    public static void disableNative() {
+      useNative = false;
+    }
 
-      this.h = h;
-      this.m = m;
-      this.t = t;
-      this.f = f;
-      this.rounds = rounds;
-
-      v = new long[16];
+    public static boolean isNative() {
+      return useNative;
     }
 
     @Override
@@ -123,16 +124,10 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
      */
     @Override
     public void update(final byte in) {
-
-      if (bufferPos == MESSAGE_LENGTH_BYTES) { // full buffer
-        throw new IllegalArgumentException();
-      } else {
-        buffer[bufferPos] = in;
-        bufferPos++;
-        if (bufferPos == MESSAGE_LENGTH_BYTES) {
-          initialize();
-        }
-      }
+      checkSize(1);
+      buffer[bufferPos] = in;
+      bufferPos++;
+      maybeInitialize();
     }
 
     /**
@@ -148,6 +143,15 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
         return;
       }
 
+      checkSize(len);
+
+      System.arraycopy(in, offset, buffer, bufferPos, len);
+      bufferPos += len;
+
+      maybeInitialize();
+    }
+
+    private void checkSize(final int len) {
       if (len > MESSAGE_LENGTH_BYTES - bufferPos) {
         throw new IllegalArgumentException(
             "Attempting to update buffer with "
@@ -156,12 +160,10 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
                 + (MESSAGE_LENGTH_BYTES - bufferPos)
                 + " byte(s) left to fill");
       }
+    }
 
-      System.arraycopy(in, offset, buffer, bufferPos, len);
-
-      bufferPos += len;
-
-      if (bufferPos == MESSAGE_LENGTH_BYTES) {
+    private void maybeInitialize() {
+      if (!useNative && bufferPos == MESSAGE_LENGTH_BYTES) {
         initialize();
       }
     }
@@ -178,10 +180,13 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
         throw new IllegalStateException("The buffer must be filled with 213 bytes");
       }
 
-      compress();
-
-      for (int i = 0; i < h.length; i++) {
-        System.arraycopy(Pack.longToLittleEndian(h[i]), 0, out, i * 8, 8);
+      if (useNative) {
+        LibBlake2bf.blake2bf_eip152(out, buffer);
+      } else {
+        compress();
+        for (int i = 0; i < h.length; i++) {
+          System.arraycopy(Pack.longToLittleEndian(h[i]), 0, out, i * 8, 8);
+        }
       }
 
       reset();
@@ -194,12 +199,14 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     public void reset() {
       bufferPos = 0;
       Arrays.fill(buffer, (byte) 0);
-      Arrays.fill(h, 0);
-      Arrays.fill(m, (byte) 0);
-      Arrays.fill(t, 0);
-      f = false;
-      rounds = 12;
-      Arrays.fill(v, 0);
+      if (!useNative) {
+        Arrays.fill(h, 0);
+        Arrays.fill(m, (byte) 0);
+        Arrays.fill(t, 0);
+        f = false;
+        rounds = 12;
+        Arrays.fill(v, 0);
+      }
     }
 
     private void initialize() {
