@@ -93,6 +93,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -186,6 +187,7 @@ import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
+import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -1391,6 +1393,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     handleUnstableOptions();
     preparePlugins();
     parse(resultHandler, exceptionHandler, args);
+    detectJemalloc();
   }
 
   @Override
@@ -1490,6 +1493,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
+  }
+
+  private void detectJemalloc() {
+    // jemalloc is only supported on Linux at the moment
+    if (PlatformDetector.getOSType().equals("linux")) {
+      Optional.ofNullable(environment.get("BESU_USING_JEMALLOC"))
+          .ifPresentOrElse(
+              present -> logger.info("Using jemalloc"),
+              () ->
+                  logger.info(
+                      "jemalloc library not found, memory usage may be reduced by installing it"));
+    }
   }
 
   private void handleStableOptions() {
@@ -1717,6 +1732,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       SignatureAlgorithmFactory.getInstance().disableNative();
       logger.info("Using the Java implementation of the signature algorithm");
+    }
+
+    if (unstableNativeLibraryOptions.getNativeBlake2bf()
+        && Blake2bfMessageDigest.Blake2bfDigest.isNative()) {
+      logger.info("Using the native implementation of the blake2bf algorithm");
+    } else {
+      Blake2bfMessageDigest.Blake2bfDigest.disableNative();
+      logger.info("Using the Java implementation of the blake2bf algorithm");
     }
   }
 
