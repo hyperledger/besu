@@ -1,5 +1,12 @@
 # Changelog
 
+## 22.7.2
+
+### Additions and Improvements
+
+### Bug Fixes
+
+
 ## 22.7.1
 
 ### Additions and Improvements
@@ -15,6 +22,12 @@
 - Fix encoding of key (short hex) in eth_getProof [#4261](https://github.com/hyperledger/besu/pull/4261)
 - Fix for post-merge networks fast-sync [#4224](https://github.com/hyperledger/besu/pull/4224), [#4276](https://github.com/hyperledger/besu/pull/4276)
 - Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.1.tar.gz / sha256: `7cca4c11e1d7525c172f2af9fbf456d134ada60e970d8b6abcfcd6c623b5dd36`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.1.zip / sha256: `ba6e0b9b65ac36d041a5072392f119ff76e8e9f53a3d7b1e1a658ef1e4705d7a`
+
+
 
 ## 22.7.0
 
