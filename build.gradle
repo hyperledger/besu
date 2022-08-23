@@ -103,14 +103,26 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
+    maven {
+      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
+      content { includeGroupByRegex('org\\.hyperledger\\..*') }
+    }
+    maven {
+      url 'https://artifacts.consensys.net/public/maven/maven/'
+      content { includeGroupByRegex('tech\\.pegasys\\..*') }
+    }
+    maven {
+      url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
+      content { includeGroupByRegex('net\\.consensys\\..*') }
+    }
+    maven {
+      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      content { includeGroupByRegex('com\\.splunk\\..*') }
+    }
     mavenCentral()
-    maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
-    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
-    maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
-    maven { url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"}
   }
 
-  dependencies { errorprone "com.google.errorprone:error_prone_core" }
+  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
 
   apply plugin: 'com.diffplug.spotless'
   spotless {

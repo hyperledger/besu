@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -34,11 +35,12 @@ import org.junit.Test;
  * @param <T> The type of data being requested from the network
  */
 public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest<T, T> {
+  protected static final int DEFAULT_MAX_RETRIES = 4;
+  protected int maxRetries;
 
-  protected final int maxRetries;
-
-  protected RetryingMessageTaskTest() {
-    this.maxRetries = 3;
+  @Before
+  public void resetMaxRetries() {
+    this.maxRetries = DEFAULT_MAX_RETRIES;
   }
 
   @Override
@@ -76,8 +78,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     respondingPeer.respond(partialResponder);
     assertThat(future.isDone()).isFalse();
 
-    // Respond max times with no data
-    respondingPeer.respondTimes(emptyResponder, maxRetries);
+    // Respond max times - 1 with no data
+    respondingPeer.respondTimes(emptyResponder, maxRetries - 1);
     assertThat(future).isNotDone();
 
     // Next retry should fail
@@ -205,8 +207,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
 
     assertThat(future.isDone()).isFalse();
 
-    // Respond max times
-    respondingPeer.respondTimes(responder, maxRetries);
+    // Respond max times - 1
+    respondingPeer.respondTimes(responder, maxRetries - 1);
     assertThat(future).isNotDone();
 
     // Next retry should fail

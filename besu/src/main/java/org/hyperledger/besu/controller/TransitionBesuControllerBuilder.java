@@ -219,6 +219,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     BesuController controller = super.build();
+    PandaPrinter.hasTTD();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
   }
