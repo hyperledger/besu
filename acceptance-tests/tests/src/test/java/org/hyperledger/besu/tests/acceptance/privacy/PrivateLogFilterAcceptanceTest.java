@@ -31,12 +31,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 import org.web3j.utils.Restriction;
 
 @SuppressWarnings("rawtypes")
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivateLogFilterAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode node;
