@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
-import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
+import static org.hyperledger.enclave.testutil.EnclaveType.NOOP;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
@@ -59,8 +59,8 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
   public static Collection<Object[]> enclaveParameters() {
     return Arrays.asList(
         new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
+          {NOOP, NACL},
+          {NOOP, EC}
         });
   }
 

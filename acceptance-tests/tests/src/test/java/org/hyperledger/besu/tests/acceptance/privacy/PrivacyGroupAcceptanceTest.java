@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.EC;
 import static org.hyperledger.enclave.testutil.EnclaveEncryptorType.NACL;
-import static org.hyperledger.enclave.testutil.EnclaveType.TESSERA;
+import static org.hyperledger.enclave.testutil.EnclaveType.NOOP;
 import static org.web3j.utils.Restriction.RESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyAcceptanceTestBase;
@@ -55,8 +55,8 @@ public class PrivacyGroupAcceptanceTest extends PrivacyAcceptanceTestBase {
   public static Collection<Object[]> enclaveParameters() {
     return Arrays.asList(
         new Object[][] {
-          {TESSERA, NACL},
-          {TESSERA, EC}
+          {NOOP, NACL},
+          {NOOP, EC}
         });
   }
 
