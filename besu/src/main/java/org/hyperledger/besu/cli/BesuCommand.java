@@ -92,6 +92,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -1731,6 +1732,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       SignatureAlgorithmFactory.getInstance().disableNative();
       logger.info("Using the Java implementation of the signature algorithm");
+    }
+
+    if (unstableNativeLibraryOptions.getNativeBlake2bf()
+        && Blake2bfMessageDigest.Blake2bfDigest.isNative()) {
+      logger.info("Using the native implementation of the blake2bf algorithm");
+    } else {
+      Blake2bfMessageDigest.Blake2bfDigest.disableNative();
+      logger.info("Using the Java implementation of the blake2bf algorithm");
     }
   }
 

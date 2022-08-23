@@ -32,6 +32,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,6 +40,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.testcontainers.containers.Network;
 
 @RunWith(Parameterized.class)
+@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
     extends FlexiblePrivacyAcceptanceTestBase {
 
