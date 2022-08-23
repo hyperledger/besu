@@ -136,6 +136,21 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
+    System.out.println(
+        "getMutable found block hash"
+            + persistedState.blockHash()
+            + " stateroot "
+            + persistedState.worldStateRootHash);
+    System.out.println("getMutable asked block hash " + blockHash + " stateroot " + rootHash);
+    System.out.println(
+        "get head asked block hash "
+            + blockchain.getChainHeadHeader().getHash()
+            + " stateroot "
+            + blockchain.getChainHeadHeader().getStateRoot()
+            + " "
+            + blockchain.getChainHeadHeader().getNumber());
+    System.out.println(
+        "stateroot in trie log " + worldStateStorage.getStateTrieNode(Bytes.EMPTY).map(Hash::hash));
     if (blockHash.equals(persistedState.blockHash())) {
       return Optional.of(persistedState);
     } else {
