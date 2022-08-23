@@ -3,6 +3,7 @@
 ## 22.7.2
 
 ### Additions and Improvements
+- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
 
 ### Bug Fixes
 

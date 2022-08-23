@@ -36,6 +36,15 @@ public class NativeLibraryOptions {
       arity = "1")
   private final Boolean nativeAltbn128 = Boolean.TRUE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xblake2bf-native-enabled"},
+      description =
+          "Per default a native library is used for blake2bf if present. "
+              + "If the Java implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeBlake2bf = Boolean.TRUE;
+
   public static NativeLibraryOptions create() {
     return new NativeLibraryOptions();
   }
@@ -46,5 +55,9 @@ public class NativeLibraryOptions {
 
   public Boolean getNativeAltbn128() {
     return nativeAltbn128;
+  }
+
+  public Boolean getNativeBlake2bf() {
+    return nativeBlake2bf;
   }
 }
