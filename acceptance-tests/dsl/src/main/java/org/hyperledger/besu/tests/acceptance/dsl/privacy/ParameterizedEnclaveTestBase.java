@@ -54,8 +54,8 @@ public abstract class ParameterizedEnclaveTestBase extends PrivacyAcceptanceTest
   public static Collection<Object[]> params() {
     return Arrays.asList(
         new Object[][] {
-          {RESTRICTED, TESSERA, NACL},
-          {RESTRICTED, TESSERA, EC},
+          {RESTRICTED, NACL},
+          {RESTRICTED, EC},
           {UNRESTRICTED, NOOP, EnclaveEncryptorType.NOOP}
         });
   }
