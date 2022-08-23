@@ -28,7 +28,7 @@ contract FlexiblePrivacyGroupManagementProxy is FlexiblePrivacyGroupManagementIn
         implementation = _newImp;
     }
 
-    function addParticipants(bytes[] memory _publicEnclaveKeys) public override returns (bool) {
+    function addParticipants(bytes[] calldata _publicEnclaveKeys) public override returns (bool) {
         FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         return privacyInterface.addParticipants(_publicEnclaveKeys);
     }
@@ -38,7 +38,7 @@ contract FlexiblePrivacyGroupManagementProxy is FlexiblePrivacyGroupManagementIn
         return privacyInterface.getParticipants();
     }
 
-    function removeParticipant(bytes memory _participant) public override returns (bool) {
+    function removeParticipant(bytes calldata _participant) public override returns (bool) {
         FlexiblePrivacyGroupManagementInterface privacyInterface = FlexiblePrivacyGroupManagementInterface(implementation);
         bool result = privacyInterface.removeParticipant(_participant);
         if (result) {

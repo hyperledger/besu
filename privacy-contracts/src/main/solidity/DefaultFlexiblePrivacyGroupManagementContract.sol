@@ -44,7 +44,7 @@ contract DefaultFlexiblePrivacyGroupManagementContract is FlexiblePrivacyGroupMa
         _canExecute = true;
     }
 
-    function addParticipants(bytes[] memory _publicEnclaveKeys) public override returns (bool) {
+    function addParticipants(bytes[] calldata _publicEnclaveKeys) public override returns (bool) {
         require(!_canExecute);
         if (_owner == address(0x0)) {
             // The account creating this group is set to be the owner
@@ -57,7 +57,7 @@ contract DefaultFlexiblePrivacyGroupManagementContract is FlexiblePrivacyGroupMa
         return result;
     }
 
-    function removeParticipant(bytes memory _participant) public override returns (bool) {
+    function removeParticipant(bytes calldata _participant) public override returns (bool) {
         require(_canExecute);
         require(tx.origin == _owner, "Origin not the owner.");
         bool result = removeInternal(_participant);
@@ -75,7 +75,7 @@ contract DefaultFlexiblePrivacyGroupManagementContract is FlexiblePrivacyGroupMa
 
 
     //internal functions
-    function addAll(bytes[] memory _publicEnclaveKeys) internal returns (bool) {
+    function addAll(bytes[] calldata _publicEnclaveKeys) internal returns (bool) {
         bool allAdded = true;
         for (uint i = 0; i < _publicEnclaveKeys.length; i++) {
             if (isMember(_publicEnclaveKeys[i])) {
@@ -91,11 +91,11 @@ contract DefaultFlexiblePrivacyGroupManagementContract is FlexiblePrivacyGroupMa
         return allAdded;
     }
 
-    function isMember(bytes memory _publicEnclaveKey) internal view returns (bool) {
+    function isMember(bytes calldata _publicEnclaveKey) internal view returns (bool) {
         return distributionIndexOf[_publicEnclaveKey] != 0;
     }
 
-    function addParticipant(bytes memory _publicEnclaveKey) internal returns (bool) {
+    function addParticipant(bytes calldata _publicEnclaveKey) internal returns (bool) {
         if (distributionIndexOf[_publicEnclaveKey] == 0) {
             distributionList.push(_publicEnclaveKey);
             distributionIndexOf[_publicEnclaveKey] = distributionList.length;
@@ -104,7 +104,7 @@ contract DefaultFlexiblePrivacyGroupManagementContract is FlexiblePrivacyGroupMa
         return false;
     }
 
-    function removeInternal(bytes memory _participant) internal returns (bool) {
+    function removeInternal(bytes calldata _participant) internal returns (bool) {
         uint256 index = distributionIndexOf[_participant];
         if (index > 0 && index <= distributionList.length) {
             //move last address into index being vacated (unless we are dealing with last index)
