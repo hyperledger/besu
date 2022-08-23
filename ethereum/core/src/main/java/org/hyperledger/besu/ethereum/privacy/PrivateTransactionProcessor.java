@@ -228,14 +228,4 @@ public class PrivateTransactionProcessor {
         throw new IllegalStateException("Request for unsupported message processor type " + type);
     }
   }
-
-  @SuppressWarnings("unused")
-  private long refunded(
-      final Transaction transaction, final long gasRemaining, final long gasRefund) {
-    // Integer truncation takes care of the the floor calculation needed after the divide.
-    final long maxRefundAllowance =
-        (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
-    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
-    return gasRemaining + refundAllowance;
-  }
 }
