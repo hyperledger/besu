@@ -34,7 +34,7 @@ public class WireMessagesSedesTest {
                 + "b35761b0fe3f0de19cb96092be29a0d0c033a1629d3cf270345586679aba8bbda61069532e3ac7551fc3a9"
                 + "7766c30037184a5bed48a821861");
 
-    assertSedesWorks(rlp);
+    assertSedesWorks(rlp, true);
 
     rlp =
         decodeHexDump(
@@ -43,11 +43,21 @@ public class WireMessagesSedesTest {
                 + "dd83a6a6580b2559c3c2d87527b83ea8f232ddeed2fff3263949105761ab5d0fe3733046e0e75aaa83cada"
                 + "3b1e5d41");
 
-    assertSedesWorks(rlp);
+    assertSedesWorks(rlp, true);
+
+    rlp =
+        decodeHexDump(
+            "f8a305b74e65746865726d696e642f76312e31332e342d302d3365353937326332342d32303232303831312f5836342d4c696e75782f362e302e36e4c5836574683ec5836574683fc58365746840c58365746841c58365746842c5837769748082765db84005c95b2618ba1ca53f0f019d1750d12769267705e46b4dbfb77f73998b21d30973161542a2090bcaa5876e6aed99436009f3f646029bb723b8dff75feec27374");
+    // This test conatains a hello message from Nethermind. The Capability version of the wit
+    // capability is encoded as 0x80, which is an empty string
+    assertSedesWorks(rlp, false);
   }
 
-  private static void assertSedesWorks(final byte[] data) {
+  private static void assertSedesWorks(final byte[] data, final boolean encEqualsInput) {
+    // TODO: the boolean was added because we do encode the version number 0 as 0x00, not as 0x80
+    // Ticket #4284 to address the broader issue of encoding/decoding zero
     final Bytes input = Bytes.wrap(data);
+
     final PeerInfo peerInfo = PeerInfo.readFrom(RLP.input(input));
 
     assertThat(peerInfo.getClientId()).isNotBlank();
@@ -59,6 +69,8 @@ public class WireMessagesSedesTest {
     // Re-serialize and check that data matches
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     peerInfo.writeTo(out);
-    assertThat(out.encoded()).isEqualTo(input);
+    if (encEqualsInput) {
+      assertThat(out.encoded()).isEqualTo(input);
+    }
   }
 }
