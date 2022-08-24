@@ -42,7 +42,6 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -58,7 +57,6 @@ import org.web3j.utils.Base64String;
 import org.web3j.utils.Numeric;
 
 @RunWith(Parameterized.class)
-@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
 
   private final PrivacyNode alice;
