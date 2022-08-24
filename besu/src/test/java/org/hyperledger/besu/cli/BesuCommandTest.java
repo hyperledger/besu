@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
@@ -94,6 +95,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -3670,6 +3672,8 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
     parseCommand(
+        "--network",
+        "dev",
         "--miner-coinbase",
         requestedCoinbase.toString(),
         "--min-gas-price",
@@ -3692,7 +3696,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path toml =
         createTempFile(
             "toml",
-            "miner-coinbase=\""
+            "network=\"dev\"\n"
+                + "miner-coinbase=\""
                 + requestedCoinbase
                 + "\"\n"
                 + "min-gas-price=42\n"
@@ -3735,7 +3740,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void minGasPriceRequiresMainOption() {
-    parseCommand("--min-gas-price", "0");
+    parseCommand("--min-gas-price", "0", "--network", "dev");
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
 
@@ -3745,7 +3750,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void minGasPriceRequiresMainOptionToml() throws IOException {
-    final Path toml = createTempFile("toml", "min-gas-price=0\n");
+    final Path toml = createTempFile("toml", "min-gas-price=0\nnetwork=\"dev\"\n");
 
     parseCommand("--config-file", toml.toString());
 
@@ -5314,5 +5319,21 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(pkiKeyStoreConfig.getTrustStorePath()).isEqualTo(Path.of("/tmp/truststore"));
     assertThat(pkiKeyStoreConfig.getTrustStorePassword()).isEqualTo("foo");
     assertThat(pkiKeyStoreConfig.getCrlFilePath()).hasValue(Path.of("/tmp/crl"));
+  }
+
+  @Test
+  public void logsUsingJemallocWhenEnvVarPresent() {
+    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
+    parseCommand();
+    verify(mockLogger).info("Using jemalloc");
+  }
+
+  @Test
+  public void logsSuggestInstallingJemallocWhenEnvVarNotPresent() {
+    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    parseCommand();
+    verify(mockLogger)
+        .info("jemalloc library not found, memory usage may be reduced by installing it");
   }
 }

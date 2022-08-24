@@ -203,7 +203,9 @@ public class EthPeers {
   }
 
   public Stream<EthPeer> streamAvailablePeers() {
-    return streamAllPeers().filter(EthPeer::readyForRequests);
+    return streamAllPeers()
+        .filter(EthPeer::readyForRequests)
+        .filter(peer -> !peer.isDisconnected());
   }
 
   public Stream<EthPeer> streamBestPeers() {

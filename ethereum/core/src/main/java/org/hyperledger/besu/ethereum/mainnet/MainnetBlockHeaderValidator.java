@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
@@ -29,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class MainnetBlockHeaderValidator {
@@ -122,22 +125,38 @@ public final class MainnetBlockHeaderValidator {
 
   public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
       final BaseFeeMarket baseFeeMarket) {
-    return new BlockHeaderValidator.Builder()
-        .addRule(CalculatedDifficultyValidationRule::new)
-        .addRule(new AncestryValidationRule())
-        .addRule(new GasUsageValidationRule())
-        .addRule(
-            new GasLimitRangeAndDeltaValidationRule(
-                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
-        .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
-        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
-        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
-        .addRule(
-            new ProofOfWorkValidationRule(
-                new EpochCalculator.DefaultEpochCalculator(),
-                PoWHasher.ETHASH_LIGHT,
-                Optional.of(baseFeeMarket)))
-        .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
+    return createBaseFeeMarketValidator(baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+  }
+
+  @VisibleForTesting
+  public static BlockHeaderValidator.Builder createBaseFeeMarketValidator(
+      final BaseFeeMarket baseFeeMarket, final boolean isMergeEnabled) {
+    var builder =
+        new BlockHeaderValidator.Builder()
+            .addRule(CalculatedDifficultyValidationRule::new)
+            .addRule(new AncestryValidationRule())
+            .addRule(new GasUsageValidationRule())
+            .addRule(
+                new GasLimitRangeAndDeltaValidationRule(
+                    MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
+            .addRule(new TimestampMoreRecentThanParent(MINIMUM_SECONDS_SINCE_PARENT))
+            .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
+            .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+            .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
+
+    // if merge is enabled, use the attached version of the proof of work validation rule
+    var powValidationRule =
+        new ProofOfWorkValidationRule(
+            new EpochCalculator.DefaultEpochCalculator(),
+            PoWHasher.ETHASH_LIGHT,
+            Optional.of(baseFeeMarket));
+
+    if (isMergeEnabled) {
+      builder.addRule(new AttachedComposedFromDetachedRule(powValidationRule));
+    } else {
+      builder.addRule(powValidationRule);
+    }
+    return builder;
   }
 
   static BlockHeaderValidator.Builder createBaseFeeMarketOmmerValidator(
