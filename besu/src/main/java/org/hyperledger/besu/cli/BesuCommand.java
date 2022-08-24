@@ -507,8 +507,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {"--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-
-      description = "Minimum number of peers required before starting fast sync. (default pre-merge: "+FAST_SYNC_MIN_PEER_COUNT+" and post-merge: "+FAST_SYNC_MIN_PEER_COUNT_POST_MERGE+")")
+      description =
+          "Minimum number of peers required before starting fast sync. (default pre-merge: "
+              + FAST_SYNC_MIN_PEER_COUNT
+              + " and post-merge: "
+              + FAST_SYNC_MIN_PEER_COUNT_POST_MERGE
+              + ")")
   private final Integer fastSyncMinPeerCount = null;
 
   @Option(
