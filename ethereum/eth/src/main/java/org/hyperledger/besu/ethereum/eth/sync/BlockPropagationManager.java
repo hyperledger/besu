@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -81,12 +82,9 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
   private final BlockBroadcaster blockBroadcaster;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
-
-  private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final Set<Long> requestedNonAnnouncedBlocks =
-      Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final ProcessingBlocksManager processingBlocksManager;
   private final PendingBlocksManager pendingBlocksManager;
+  private final Duration getBlockTimeoutMillis;
   private Optional<Long> onBlockAddedSId = Optional.empty();
   private Optional<Long> newBlockSId;
   private Optional<Long> newBlockHashesSId;
@@ -100,6 +98,28 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
       final BlockBroadcaster blockBroadcaster) {
+    this(
+        config,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        pendingBlocksManager,
+        metricsSystem,
+        blockBroadcaster,
+        new ProcessingBlocksManager());
+  }
+
+  BlockPropagationManager(
+      final SynchronizerConfiguration config,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final PendingBlocksManager pendingBlocksManager,
+      final MetricsSystem metricsSystem,
+      final BlockBroadcaster blockBroadcaster,
+      final ProcessingBlocksManager processingBlocksManager) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -109,6 +129,9 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
     this.syncState = syncState;
     this.pendingBlocksManager = pendingBlocksManager;
     this.syncState.subscribeTTDReached(this::reactToTTDReachedEvent);
+    this.getBlockTimeoutMillis =
+        Duration.ofMillis(config.getPropagationManagerGetBlockTimeoutMillis());
+    this.processingBlocksManager = processingBlocksManager;
   }
 
   public void start() {
@@ -253,7 +276,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
                 if (distance < config.getBlockPropagationRange().upperEndpoint()
                     && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
 
-                  if (requestedNonAnnouncedBlocks.add(firstNonAnnouncedBlockNumber)) {
+                  if (processingBlocksManager.addNonAnnouncedBlocks(firstNonAnnouncedBlockNumber)) {
                     retrieveNonAnnouncedBlock(firstNonAnnouncedBlockNumber);
                   }
                 }
@@ -344,7 +367,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
           LOG.trace("New block hash from network {} is already pending", announcedBlock);
           continue;
         }
-        if (importingBlocks.contains(announcedBlock.hash())) {
+        if (processingBlocksManager.alreadyImporting(announcedBlock.hash())) {
           LOG.trace("New block hash from network {} is already importing", announcedBlock);
           continue;
         }
@@ -352,7 +375,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
           LOG.trace("New block hash from network {} was already imported", announcedBlock);
           continue;
         }
-        if (requestedBlocks.add(announcedBlock.hash())) {
+        if (processingBlocksManager.addRequestedBlock(announcedBlock.hash())) {
           newBlocks.add(announcedBlock);
         } else {
           LOG.trace("New block hash from network {} was already requested", announcedBlock);
@@ -385,7 +408,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
 
   private void requestParentBlock(final Block block) {
     final BlockHeader blockHeader = block.getHeader();
-    if (requestedBlocks.add(blockHeader.getParentHash())) {
+    if (processingBlocksManager.addRequestedBlock(blockHeader.getParentHash())) {
       retrieveParentBlock(blockHeader);
     } else {
       LOG.debug("Parent block with hash {} is already requested", blockHeader.getParentHash());
@@ -407,25 +430,24 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
     return repeatableGetBlockFromPeer(preferredPeer, blockNumber, maybeBlockHash)
         .whenComplete(
             (block, throwable) -> {
-              if (throwable != null) {
-                LOG.warn(
-                    "Failed to retrieve block "
-                        + logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
-                    throwable);
-              }
-              requestedNonAnnouncedBlocks.remove(blockNumber);
               if (block != null) {
                 debugLambda(LOG, "Successfully retrieved block {}", block::toLogString);
-                maybeBlockHash.ifPresentOrElse(
-                    requestedBlocks::remove,
-                    () ->
-                        // in case we successfully retrieved only by block number, when can remove
-                        // the request by hash too
-                        requestedBlocks.remove(block.getHash()));
+                processingBlocksManager.registerReceivedBlock(block);
               } else {
-                // this could happen if we give up at some point since we find that it make no sense
-                // to retry
-                debugLambda(LOG, "Block {} not retrieved", block::toLogString);
+                if (throwable != null) {
+                  LOG.warn(
+                      "Failed to retrieve block "
+                          + logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
+                      throwable);
+                } else {
+                  // this could happen if we give up at some point since we find that it make no
+                  // sense to retry
+                  debugLambda(
+                      LOG,
+                      "Block {} not retrieved",
+                      () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
+                }
+                processingBlocksManager.registerFailedGetBlock(blockNumber, maybeBlockHash);
               }
             });
   }
@@ -468,8 +490,9 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       return CompletableFuture.completedFuture(block);
     }
 
-    long distanceFromChainHead = blockNumber - blockchain.getChainHeadBlockNumber();
-    if (!config.getBlockPropagationRange().contains(distanceFromChainHead)) {
+    final long localChainHeight = blockchain.getChainHeadBlockNumber();
+    final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
+    if (!shouldImportBlockAtHeight(blockNumber, localChainHeight, bestChainHeight)) {
       debugLambda(
           LOG,
           "Not retrying to get block {} since we are too far from local chain head {}",
@@ -498,15 +521,20 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
             protocolSchedule,
             ethContext,
             metricsSystem,
-            ethContext.getEthPeers().peerCount(),
+            Math.max(1, ethContext.getEthPeers().peerCount()),
             maybeBlockHash,
             blockNumber);
     maybePreferredPeer.ifPresent(getBlockTask::assignPeer);
 
-    return ethContext
-        .getScheduler()
-        .scheduleSyncWorkerTask(getBlockTask::run)
-        .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
+    var future =
+        ethContext
+            .getScheduler()
+            .scheduleSyncWorkerTask(getBlockTask::run)
+            .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
+
+    ethContext.getScheduler().failAfterTimeout(future, getBlockTimeoutMillis);
+
+    return future;
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -535,14 +563,14 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       return CompletableFuture.completedFuture(block);
     }
 
-    if (!importingBlocks.add(block.getHash())) {
+    if (!processingBlocksManager.addImportingBlock(block.getHash())) {
       traceLambda(LOG, "We're already importing this block {}", block::toLogString);
       return CompletableFuture.completedFuture(block);
     }
 
     if (protocolContext.getBlockchain().contains(block.getHash())) {
       traceLambda(LOG, "We've already imported this block {}", block::toLogString);
-      importingBlocks.remove(block.getHash());
+      processingBlocksManager.registerBlockImportDone(block.getHash());
       return CompletableFuture.completedFuture(block);
     }
 
@@ -619,7 +647,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
       return runImportTask(block);
     } else {
-      importingBlocks.remove(block.getHash());
+      processingBlocksManager.registerBlockImportDone(block.getHash());
       badBlockManager.addBadBlock(block);
       LOG.warn("Failed to import announced block {}", block.toLogString());
       return CompletableFuture.completedFuture(block);
@@ -639,7 +667,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
         .run()
         .whenComplete(
             (result, throwable) -> {
-              importingBlocks.remove(block.getHash());
+              processingBlocksManager.registerBlockImportDone(block.getHash());
               if (throwable != null) {
                 LOG.warn("Failed to import announced block {}", block.toLogString());
               }
@@ -673,12 +701,7 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
   @Override
   public String toString() {
     return "BlockPropagationManager{"
-        + "requestedBlocks="
-        + requestedBlocks
-        + ", requestedNonAnnounceBlocks="
-        + requestedNonAnnouncedBlocks
-        + ", importingBlocks="
-        + importingBlocks
+        + processingBlocksManager
         + ", pendingBlocksManager="
         + pendingBlocksManager
         + '}';
@@ -696,6 +719,56 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
       final Hash safeBlockHash) {
     if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
       stop();
+    }
+  }
+
+  static class ProcessingBlocksManager {
+    private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Long> requestedNonAnnouncedBlocks =
+        Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    boolean addRequestedBlock(final Hash hash) {
+      return requestedBlocks.add(hash);
+    }
+
+    public boolean addNonAnnouncedBlocks(final long blockNumber) {
+      return requestedNonAnnouncedBlocks.add(blockNumber);
+    }
+
+    public boolean alreadyImporting(final Hash hash) {
+      return importingBlocks.contains(hash);
+    }
+
+    public synchronized void registerReceivedBlock(final Block block) {
+      requestedBlocks.remove(block.getHash());
+      requestedNonAnnouncedBlocks.remove(block.getHeader().getNumber());
+    }
+
+    public synchronized void registerFailedGetBlock(
+        final long blockNumber, final Optional<Hash> maybeBlockHash) {
+      requestedNonAnnouncedBlocks.remove(blockNumber);
+      maybeBlockHash.ifPresent(requestedBlocks::remove);
+    }
+
+    public boolean addImportingBlock(final Hash hash) {
+      return importingBlocks.add(hash);
+    }
+
+    public void registerBlockImportDone(final Hash hash) {
+      importingBlocks.remove(hash);
+    }
+
+    @Override
+    public synchronized String toString() {
+      return "ProcessingBlocksManager{"
+          + "importingBlocks="
+          + importingBlocks
+          + ", requestedBlocks="
+          + requestedBlocks
+          + ", requestedNonAnnouncedBlocks="
+          + requestedNonAnnouncedBlocks
+          + '}';
     }
   }
 }
