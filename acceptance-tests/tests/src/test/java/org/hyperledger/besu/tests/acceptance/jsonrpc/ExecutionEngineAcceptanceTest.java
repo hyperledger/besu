@@ -41,7 +41,7 @@ public class ExecutionEngineAcceptanceTest extends AbstractJsonRpcTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> testCases() throws URISyntaxException {
-    return AbstractJsonRpcTest.testCases(TEST_CASE_PATH);
+    return testCases(TEST_CASE_PATH);
   }
 
   @AfterClass
