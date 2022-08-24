@@ -554,7 +554,7 @@ public class RlpxAgent {
       }
     }
     // Otherwise, keep older connection
-    LOG.info("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
+    LOG.debug("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
     return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 
