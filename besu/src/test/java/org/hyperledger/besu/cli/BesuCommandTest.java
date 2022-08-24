@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
@@ -94,6 +95,7 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -5317,5 +5319,21 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(pkiKeyStoreConfig.getTrustStorePath()).isEqualTo(Path.of("/tmp/truststore"));
     assertThat(pkiKeyStoreConfig.getTrustStorePassword()).isEqualTo("foo");
     assertThat(pkiKeyStoreConfig.getCrlFilePath()).hasValue(Path.of("/tmp/crl"));
+  }
+
+  @Test
+  public void logsUsingJemallocWhenEnvVarPresent() {
+    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
+    parseCommand();
+    verify(mockLogger).info("Using jemalloc");
+  }
+
+  @Test
+  public void logsSuggestInstallingJemallocWhenEnvVarNotPresent() {
+    assumeThat(PlatformDetector.getOSType(), is("linux"));
+    parseCommand();
+    verify(mockLogger)
+        .info("jemalloc library not found, memory usage may be reduced by installing it");
   }
 }
