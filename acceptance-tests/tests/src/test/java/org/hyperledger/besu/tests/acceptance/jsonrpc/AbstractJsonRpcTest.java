@@ -17,10 +17,10 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.engine.EngineTestCase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.rpc.JsonRpcTestCase;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 
 import java.io.File;
@@ -75,8 +75,8 @@ abstract class AbstractJsonRpcTest {
 
   @Test
   public void test() throws IOException {
-    final EngineTestCase testCase =
-        testsContext.mapper.readValue(testCaseFileURI.toURL(), EngineTestCase.class);
+    final JsonRpcTestCase testCase =
+        testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
     final Call preparePayloadRequest =
         testsContext.consensusClient.newCall(
