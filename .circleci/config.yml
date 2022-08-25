@@ -40,7 +40,7 @@ executors:
       
   quorum_ats_executor:
     docker:
-      - image: eclipse-temurin:17.0.4.1_1-jre-jammy
+      - image: ubuntu:20.04
     resource_class: xlarge
     working_directory: ~/project
     environment:
