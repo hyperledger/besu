@@ -29,7 +29,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RequestManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
   private final AtomicLong requestIdCounter = new AtomicLong(0);
   private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
@@ -73,7 +78,10 @@ public class RequestManager {
           .ifPresentOrElse(
               responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
               // disconnect on incorrect requestIds
-              () -> peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL));
+              () -> {
+                LOG.debug("Request ID incorrect (BREACH_OF_PROTOCOL), disconnecting peer {}", peer);
+                peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+              });
     } else {
       // otherwise iterate through all of them
       streams.forEach(stream -> stream.processMessage(ethMessage.getData()));

@@ -221,6 +221,11 @@ public interface RLPInput {
    *     long.
    */
   default int readUnsignedByte() {
+    if (isZeroLengthString()) {
+      // Decode an empty string (0x80) as an unsigned byte with value 0
+      readBytes();
+      return 0;
+    }
     return readByte() & 0xFF;
   }
 
@@ -276,7 +281,7 @@ public interface RLPInput {
   Bytes32 readBytes32();
 
   /**
-   * Reads the next iterm of this input (assuming it is not a list) and transform it with the
+   * Reads the next item of this input (assuming it is not a list) and transforms it with the
    * provided mapping function.
    *
    * <p>Note that the only benefit of this method over calling the mapper function on the result of
@@ -310,6 +315,8 @@ public interface RLPInput {
    * @return The raw RLP.
    */
   Bytes raw();
+
+  boolean isZeroLengthString();
 
   /** Resets this RLP input to the start. */
   void reset();

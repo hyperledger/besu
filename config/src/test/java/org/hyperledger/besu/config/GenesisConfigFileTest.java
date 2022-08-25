@@ -229,6 +229,17 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void assertMainnetTerminalTotalDifficulty() {
+    GenesisConfigOptions mainnetOptions =
+        GenesisConfigFile.genesisFileFromResources("/mainnet.json").getConfigOptions();
+
+    assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
+    // tentative as of 2022-08-11:
+    assertThat(mainnetOptions.getTerminalTotalDifficulty().get())
+        .isEqualTo(UInt256.valueOf(new BigInteger("58750000000000000000000")));
+  }
+
+  @Test
   public void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions ropstenOverrideOptions =
         GenesisConfigFile.genesisFileFromResources("/ropsten.json")

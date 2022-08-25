@@ -44,7 +44,7 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
       final Hash referenceHash,
       final int count,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 3, List::isEmpty, metricsSystem);
+    super(ethContext, 4, List::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.count = count;
     checkNotNull(referenceHash);

@@ -39,7 +39,7 @@ public class StorageEntryProof {
 
   @JsonGetter(value = "key")
   public String getKey() {
-    return key.toDecimalString();
+    return key.toShortHexString();
   }
 
   @JsonGetter(value = "value")

@@ -1,15 +1,37 @@
 # Changelog
 
+## 22.7.2
+
+### Additions and Improvements
+- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
+- Better management of jemalloc presence/absence in startup script [#4237](https://github.com/hyperledger/besu/pull/4237)
+- Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
+- Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
+
+### Bug Fixes
+- Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
+
+
 ## 22.7.1
 
 ### Additions and Improvements
 - Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
 - Improve pending blocks retrieval mechanism [#4227](https://github.com/hyperledger/besu/pull/4227)
+- Set mainnet terminal total difficulty [#4260](https://github.com/hyperledger/besu/pull/4260)
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 
 ### Bug Fixes
 - Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
+- Fix off-by-one error in AbstractRetryingPeerTask [#4254](https://github.com/hyperledger/besu/pull/4254)
+- Refactor and fix retrying get block switching peer [#4256](https://github.com/hyperledger/besu/pull/4256)
+- Fix encoding of key (short hex) in eth_getProof [#4261](https://github.com/hyperledger/besu/pull/4261)
+- Fix for post-merge networks fast-sync [#4224](https://github.com/hyperledger/besu/pull/4224), [#4276](https://github.com/hyperledger/besu/pull/4276)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.1.tar.gz / sha256: `7cca4c11e1d7525c172f2af9fbf456d134ada60e970d8b6abcfcd6c623b5dd36`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.1/besu-22.7.1.zip / sha256: `ba6e0b9b65ac36d041a5072392f119ff76e8e9f53a3d7b1e1a658ef1e4705d7a`
+
 
 
 ## 22.7.0
@@ -17,7 +39,7 @@
 ### Additions and Improvements
 - Deprecation warning for Ropsten, Rinkeby, Kiln [#4173](https://github.com/hyperledger/besu/pull/4173)
 
-### Bug Fixes 
+### Bug Fixes
 
 - Fixes previous known issue [#3890](https://github.com/hyperledger/besu/issues/3890)from RC3 requiring a restart post-merge to continue correct transaction handling.
 - Stop producing stack traces when a get headers response only contains the range start header [#4189](https://github.com/hyperledger/besu/pull/4189)
@@ -36,8 +58,8 @@
 ### Additions and Improvements
 - Engine API: Change expiration time for JWT tokens to 60s [#4168](https://github.com/hyperledger/besu/pull/4168)
 - Sepolia mergeNetSplit block [#4158](https://github.com/hyperledger/besu/pull/4158)
-- Goerli TTD [#4160](https://github.com/hyperledger/besu/pull/4160) 
-- Several logging improvements 
+- Goerli TTD [#4160](https://github.com/hyperledger/besu/pull/4160)
+- Several logging improvements
 
 ### Bug Fixes
 - Allow to set any value for baseFeePerGas in the genesis file [#4177](https://github.com/hyperledger/besu/pull/4177)

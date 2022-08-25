@@ -50,7 +50,6 @@ public class SyncStepStep {
   private CompletableFuture<Block> requestBlock(final Hash targetHash) {
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
-            context.getProtocolContext(),
             context.getProtocolSchedule(),
             context.getEthContext(),
             context.getMetricsSystem(),
