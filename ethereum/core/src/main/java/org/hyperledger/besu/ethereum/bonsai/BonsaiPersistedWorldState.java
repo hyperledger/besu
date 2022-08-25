@@ -84,7 +84,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             worldStateStorage.trieBranchStorage,
             worldStateStorage.trieLogStorage);
     bonsaiInMemoryWorldStateKeyValueStorage.addFallbackNodeFinder(
-        getWorldStateStorage().getFallbackNodeFinder());
+        getWorldStateStorage().getMaybeFallbackNodeFinder());
 
     return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
   }

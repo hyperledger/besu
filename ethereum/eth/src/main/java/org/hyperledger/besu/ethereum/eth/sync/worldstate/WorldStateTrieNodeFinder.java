@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.controller;
+package org.hyperledger.besu.ethereum.eth.sync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -23,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPee
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetNodeDataFromPeerTask;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.worldstate.FallbackTrieNodeFinder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
@@ -39,16 +39,18 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class FallbackNodeFinderImpl implements BonsaiWorldStateKeyValueStorage.FallbackNodeFinder {
+public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
 
   private final Cache<Bytes32, Bytes> foundNodes =
       CacheBuilder.newBuilder().maximumSize(10_000).expireAfterWrite(5, TimeUnit.MINUTES).build();
+
+  private static final long TIMEOUT_SECONDS = 1;
 
   final EthContext ethContext;
   final Blockchain blockchain;
   final MetricsSystem metricsSystem;
 
-  public FallbackNodeFinderImpl(
+  public WorldStateTrieNodeFinder(
       final EthContext ethContext, final Blockchain blockchain, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.blockchain = blockchain;
@@ -100,7 +102,7 @@ public class FallbackNodeFinderImpl implements BonsaiWorldStateKeyValueStorage.F
             ethContext, List.of(nodeHash), chainHead.getNumber(), metricsSystem);
     try {
       final Map<Hash, Bytes> response =
-          retryingGetNodeDataFromPeerTask.run().get(1, TimeUnit.SECONDS);
+          retryingGetNodeDataFromPeerTask.run().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       if (response.containsKey(nodeHash)) {
         System.out.println("found node with legacy" + nodeHash);
         return Optional.of(response.get(nodeHash));
@@ -124,7 +126,8 @@ public class FallbackNodeFinderImpl implements BonsaiWorldStateKeyValueStorage.F
     final EthTask<Map<Bytes, Bytes>> getTrieNodeFromPeerTask =
         RetryingGetTrieNodeFromPeerTask.forTrieNodes(ethContext, request, chainHead, metricsSystem);
     try {
-      final Map<Bytes, Bytes> response = getTrieNodeFromPeerTask.run().get(1, TimeUnit.SECONDS);
+      final Map<Bytes, Bytes> response =
+          getTrieNodeFromPeerTask.run().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       final Bytes nodeValue = response.get(path);
       if (Hash.hash(nodeValue).equals(nodeHash)) {
         System.out.println("found node with new api" + nodeHash);

@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.FallbackTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -244,8 +246,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
-  public void addFallbackNodeFinder(
-      final BonsaiWorldStateKeyValueStorage.FallbackNodeFinder fallbackNodeFinder) {
+  public void addFallbackNodeFinder(final Optional<FallbackTrieNodeFinder> fallbackNodeFinder) {
+    checkNotNull(fallbackNodeFinder);
     worldStateStorage.addFallbackNodeFinder(fallbackNodeFinder);
   }
 }

@@ -69,6 +69,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateTrieNodeFinder;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -79,6 +80,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.FallbackTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
@@ -377,17 +379,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
+    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
 
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
-      BonsaiWorldStateKeyValueStorage.FallbackNodeFinder fallbackNodeFinder =
-          new FallbackNodeFinderImpl(ethContext, blockchain, metricsSystem);
+    if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+      final Optional<FallbackTrieNodeFinder> fallbackNodeFinder =
+          Optional.of(new WorldStateTrieNodeFinder(ethContext, blockchain, metricsSystem));
       ((BonsaiWorldStateArchive) worldStateArchive).addFallbackNodeFinder(fallbackNodeFinder);
       ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
           .addFallbackNodeFinder(fallbackNodeFinder);
     }
-
-    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
-    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

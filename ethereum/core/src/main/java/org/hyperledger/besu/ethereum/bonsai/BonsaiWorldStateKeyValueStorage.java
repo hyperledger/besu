@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
+import org.hyperledger.besu.ethereum.worldstate.FallbackTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -46,7 +49,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
-  private FallbackNodeFinder fallbackNodeFinder;
+
+  private Optional<FallbackTrieNodeFinder> maybeFallbackNodeFinder;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     accountStorage =
@@ -58,6 +62,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    maybeFallbackNodeFinder = Optional.empty();
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -71,6 +76,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
+    this.maybeFallbackNodeFinder = Optional.empty();
   }
 
   @Override
@@ -106,15 +112,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      Optional<Bytes> bytes =
+      final Optional<Bytes> value =
           trieBranchStorage
               .get(location.toArrayUnsafe())
               .filter(b -> Hash.hash(Bytes.wrap(b)).equals(nodeHash))
               .map(Bytes::wrap);
-      if (bytes.isEmpty()) {
-        return fallbackNodeFinder.getAccountStateTrieNode(location, nodeHash);
+      if (maybeFallbackNodeFinder.isPresent() && value.isEmpty()) {
+        return maybeFallbackNodeFinder.get().getAccountStateTrieNode(location, nodeHash);
       } else {
-        return bytes;
+        return value;
       }
     }
   }
@@ -125,15 +131,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      Optional<Bytes> bytes =
+      final Optional<Bytes> value =
           trieBranchStorage
               .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
               .filter(b -> Hash.hash(Bytes.wrap(b)).equals(nodeHash))
               .map(Bytes::wrap);
-      if (bytes.isEmpty()) {
-        return fallbackNodeFinder.getAccountStorageTrieNode(accountHash, location, nodeHash);
+      if (maybeFallbackNodeFinder.isPresent() && value.isEmpty()) {
+        return maybeFallbackNodeFinder
+            .get()
+            .getAccountStorageTrieNode(accountHash, location, nodeHash);
       } else {
-        return bytes;
+        return value;
       }
     }
   }
@@ -236,12 +244,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     throw new RuntimeException("removeNodeAddedListener not available");
   }
 
-  public FallbackNodeFinder getFallbackNodeFinder() {
-    return fallbackNodeFinder;
+  public Optional<FallbackTrieNodeFinder> getMaybeFallbackNodeFinder() {
+    return maybeFallbackNodeFinder;
   }
 
-  public void addFallbackNodeFinder(final FallbackNodeFinder fallbackNodeFinder) {
-    this.fallbackNodeFinder = fallbackNodeFinder;
+  public void addFallbackNodeFinder(
+      final Optional<FallbackTrieNodeFinder> maybeFallbackNodeFinder) {
+    checkNotNull(maybeFallbackNodeFinder);
+    this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
   public static class Updater implements WorldStateStorage.Updater {
@@ -369,11 +379,5 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       trieBranchStorageTransaction.rollback();
       trieLogStorageTransaction.rollback();
     }
-  }
-
-  public interface FallbackNodeFinder {
-    Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash);
-
-    Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
   }
 }
