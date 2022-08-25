@@ -59,6 +59,7 @@ import org.slf4j.LoggerFactory;
 public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
+  private static final double TO_GWEI_DIVISOR = Math.pow(10, 9);
   private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
@@ -200,9 +201,11 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // execute block and return result response
+    final long startTimeMs = System.currentTimeMillis();
     final BlockValidator.Result executionResult = mergeCoordinator.rememberBlock(block);
 
     if (executionResult.errorMessage.isEmpty()) {
+      logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
@@ -251,5 +254,22 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestId,
         new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
+  }
+
+  private void logImportedBlockInfo(final Block block, final double timeInS) {
+    LOG.info(
+        String.format(
+            "Imported #%,d / %d tx / %,d (%01.1f%%) gas / base fee %01.2f%% gwei / (%s) in %01.3fs.",
+            block.getHeader().getNumber(),
+            block.getBody().getTransactions().size(),
+            block.getHeader().getGasUsed(),
+            (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+            block
+                .getHeader()
+                .getBaseFee()
+                .map(wei -> wei.getAsBigInteger().doubleValue() / TO_GWEI_DIVISOR)
+                .orElse(Double.NaN),
+            block.getHash().toHexString(),
+            timeInS));
   }
 }
