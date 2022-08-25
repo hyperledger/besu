@@ -6,6 +6,7 @@
 - Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
 - Better management of jemalloc presence/absence in startup script [#4237](https://github.com/hyperledger/besu/pull/4237)
 - Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
+- Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
 
 ### Bug Fixes
 
