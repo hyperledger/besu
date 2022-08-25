@@ -7,6 +7,7 @@
 - Better management of jemalloc presence/absence in startup script [#4237](https://github.com/hyperledger/besu/pull/4237)
 - Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
 - Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
+- Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 
 ### Bug Fixes
 - Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
@@ -19,7 +20,6 @@
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
 - Improve pending blocks retrieval mechanism [#4227](https://github.com/hyperledger/besu/pull/4227)
 - Set mainnet terminal total difficulty [#4260](https://github.com/hyperledger/besu/pull/4260)
-- Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 
 ### Bug Fixes
 - Fixes off-by-one error for mainnet TTD fallback [#4223](https://github.com/hyperledger/besu/pull/4223)
