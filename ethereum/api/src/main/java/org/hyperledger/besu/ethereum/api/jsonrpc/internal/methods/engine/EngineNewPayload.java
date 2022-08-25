@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -63,13 +64,16 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
+  private final EthPeers ethPeers;
 
   public EngineNewPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final MergeMiningCoordinator mergeCoordinator) {
+      final MergeMiningCoordinator mergeCoordinator,
+      final EthPeers ethPeers) {
     super(vertx, protocolContext);
     this.mergeCoordinator = mergeCoordinator;
+    this.ethPeers = ethPeers;
   }
 
   @Override
@@ -259,13 +263,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   private void logImportedBlockInfo(final Block block, final double timeInS) {
     LOG.info(
         String.format(
-            "Imported #%,d / %d tx / %,d (%01.1f%%) gas / base fee %s / (%s) in %01.3fs.",
+            "Imported #%,d / %d tx / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
             block.getHeader().getNumber(),
             block.getBody().getTransactions().size(),
+            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
             block.getHash().toHexString(),
-            timeInS));
+            timeInS,
+            ethPeers.peerCount()));
   }
 }
