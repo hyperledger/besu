@@ -384,9 +384,6 @@ workflows:
   default:
     jobs:
       - assemble
-      - acceptanceTestsQuorum:
-          requires:
-            - assemble
       - unitTests:
            requires:
             - assemble
