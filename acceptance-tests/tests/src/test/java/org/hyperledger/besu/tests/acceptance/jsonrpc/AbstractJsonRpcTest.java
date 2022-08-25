@@ -45,16 +45,16 @@ abstract class AbstractJsonRpcTest {
 
   static class JsonRpcTestsContext {
     final Cluster cluster;
-    final BesuNode executionEngine;
-    final OkHttpClient consensusClient;
+    final BesuNode besuNode;
+    final OkHttpClient httpClient;
     final ObjectMapper mapper;
 
     public JsonRpcTestsContext(final String genesisFile) throws IOException {
       cluster = new Cluster(new NetConditions(new NetTransactions()));
-      executionEngine =
+      besuNode =
           new BesuNodeFactory().createExecutionEngineGenesisNode("executionEngine", genesisFile);
-      cluster.start(executionEngine);
-      consensusClient = new OkHttpClient();
+      cluster.start(besuNode);
+      httpClient = new OkHttpClient();
 
       mapper = new ObjectMapper();
     }
@@ -78,13 +78,13 @@ abstract class AbstractJsonRpcTest {
     final JsonRpcTestCase testCase =
         testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
-    final Call preparePayloadRequest =
-        testsContext.consensusClient.newCall(
+    final Call testRequest =
+        testsContext.httpClient.newCall(
             new Request.Builder()
-                .url(testsContext.executionEngine.engineRpcUrl().get())
+                .url(testsContext.besuNode.engineRpcUrl().get())
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
                 .build());
-    final Response response = preparePayloadRequest.execute();
+    final Response response = testRequest.execute();
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     assertThat(response.body().string()).isEqualTo(testCase.getResponse().toPrettyString());
