@@ -25,6 +25,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -59,7 +60,6 @@ import org.slf4j.LoggerFactory;
 public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
-  private static final double TO_GWEI_DIVISOR = Math.pow(10, 9);
   private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
@@ -259,16 +259,12 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   private void logImportedBlockInfo(final Block block, final double timeInS) {
     LOG.info(
         String.format(
-            "Imported #%,d / %d tx / %,d (%01.1f%%) gas / base fee %01.2f%% gwei / (%s) in %01.3fs.",
+            "Imported #%,d / %d tx / %,d (%01.1f%%) gas / base fee %s / (%s) in %01.3fs.",
             block.getHeader().getNumber(),
             block.getBody().getTransactions().size(),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-            block
-                .getHeader()
-                .getBaseFee()
-                .map(wei -> wei.getAsBigInteger().doubleValue() / TO_GWEI_DIVISOR)
-                .orElse(Double.NaN),
+            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
             block.getHash().toHexString(),
             timeInS));
   }
