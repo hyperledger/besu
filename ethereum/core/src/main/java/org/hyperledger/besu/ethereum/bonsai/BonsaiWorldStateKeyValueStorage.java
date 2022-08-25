@@ -34,6 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
+@SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
@@ -45,6 +46,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
+  private FallbackNodeFinder fallbackNodeFinder;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
     accountStorage =
@@ -104,7 +106,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      Optional<Bytes> bytes =
+          trieBranchStorage
+              .get(location.toArrayUnsafe())
+              .filter(b -> Hash.hash(Bytes.wrap(b)).equals(nodeHash))
+              .map(Bytes::wrap);
+      if (bytes.isEmpty()) {
+        return fallbackNodeFinder.getAccountStateTrieNode(location, nodeHash);
+      } else {
+        return bytes;
+      }
     }
   }
 
@@ -114,9 +125,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-          .map(Bytes::wrap);
+      Optional<Bytes> bytes =
+          trieBranchStorage
+              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+              .filter(b -> Hash.hash(Bytes.wrap(b)).equals(nodeHash))
+              .map(Bytes::wrap);
+      if (bytes.isEmpty()) {
+        return fallbackNodeFinder.getAccountStorageTrieNode(accountHash, location, nodeHash);
+      } else {
+        return bytes;
+      }
     }
   }
 
@@ -216,6 +234,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public void removeNodeAddedListener(final long id) {
     throw new RuntimeException("removeNodeAddedListener not available");
+  }
+
+  public FallbackNodeFinder getFallbackNodeFinder() {
+    return fallbackNodeFinder;
+  }
+
+  public void addFallbackNodeFinder(final FallbackNodeFinder fallbackNodeFinder) {
+    this.fallbackNodeFinder = fallbackNodeFinder;
   }
 
   public static class Updater implements WorldStateStorage.Updater {
@@ -343,5 +369,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       trieBranchStorageTransaction.rollback();
       trieLogStorageTransaction.rollback();
     }
+  }
+
+  public interface FallbackNodeFinder {
+    Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash);
+
+    Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
   }
 }

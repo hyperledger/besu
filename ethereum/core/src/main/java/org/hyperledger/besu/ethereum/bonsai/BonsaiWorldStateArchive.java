@@ -243,4 +243,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     // FIXME we can do proofs for layered tries and the persisted trie
     return Optional.empty();
   }
+
+  public void addFallbackNodeFinder(
+      final BonsaiWorldStateKeyValueStorage.FallbackNodeFinder fallbackNodeFinder) {
+    worldStateStorage.addFallbackNodeFinder(fallbackNodeFinder);
+  }
 }

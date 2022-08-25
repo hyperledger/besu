@@ -377,6 +377,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
+
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      BonsaiWorldStateKeyValueStorage.FallbackNodeFinder fallbackNodeFinder =
+          new FallbackNodeFinderImpl(ethContext, blockchain, metricsSystem);
+      ((BonsaiWorldStateArchive) worldStateArchive).addFallbackNodeFinder(fallbackNodeFinder);
+      ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
+          .addFallbackNodeFinder(fallbackNodeFinder);
+    }
+
     final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
 
