@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -49,7 +48,6 @@ import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.Contract;
 import org.web3j.utils.Restriction;
 
-@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private static final int VALUE = 1024;

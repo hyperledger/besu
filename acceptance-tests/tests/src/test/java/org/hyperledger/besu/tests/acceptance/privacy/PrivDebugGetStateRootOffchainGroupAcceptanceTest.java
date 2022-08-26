@@ -29,12 +29,10 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testcontainers.containers.Network;
 import org.web3j.utils.Restriction;
 
-@Ignore("Ignored since Tessera/Docker container startup causing errors")
 public class PrivDebugGetStateRootOffchainGroupAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode aliceNode;
