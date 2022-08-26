@@ -21,7 +21,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public interface FallbackTrieNodeFinder {
+public interface PeerTrieNodeFinder {
 
   Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash);
 

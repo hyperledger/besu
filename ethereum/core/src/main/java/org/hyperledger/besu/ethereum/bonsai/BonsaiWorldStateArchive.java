@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.FallbackTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -246,7 +246,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
-  public void addFallbackNodeFinder(final Optional<FallbackTrieNodeFinder> fallbackNodeFinder) {
+  public void addFallbackNodeFinder(final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
     checkNotNull(fallbackNodeFinder);
     worldStateStorage.addFallbackNodeFinder(fallbackNodeFinder);
   }

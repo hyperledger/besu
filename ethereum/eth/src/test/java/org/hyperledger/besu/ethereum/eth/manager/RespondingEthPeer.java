@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
@@ -68,14 +69,17 @@ public class RespondingEthPeer {
   private final EthPeer ethPeer;
   private final BlockingQueue<OutgoingMessage> outgoingMessages;
   private final EthProtocolManager ethProtocolManager;
+  private final Optional<SnapProtocolManager> snapProtocolManager;
   private final MockPeerConnection peerConnection;
 
   private RespondingEthPeer(
       final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> snapProtocolManager,
       final MockPeerConnection peerConnection,
       final EthPeer ethPeer,
       final BlockingQueue<OutgoingMessage> outgoingMessages) {
     this.ethProtocolManager = ethProtocolManager;
+    this.snapProtocolManager = snapProtocolManager;
     this.peerConnection = peerConnection;
     this.ethPeer = ethPeer;
     this.outgoingMessages = outgoingMessages;
@@ -113,6 +117,7 @@ public class RespondingEthPeer {
 
   private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> snapProtocolManager,
       final Hash chainHeadHash,
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
@@ -130,7 +135,8 @@ public class RespondingEthPeer {
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     peer.registerStatusSent();
 
-    return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);
+    return new RespondingEthPeer(
+        ethProtocolManager, snapProtocolManager, peerConnection, peer, outgoingMessages);
   }
 
   public EthPeer getEthPeer() {
@@ -197,9 +203,16 @@ public class RespondingEthPeer {
   private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
     final Optional<MessageData> maybeResponse = responder.respond(msg.capability, msg.messageData);
     maybeResponse.ifPresent(
-        (response) ->
+        (response) -> {
+          if (ethProtocolManager.getSupportedCapabilities().contains(msg.capability)) {
             ethProtocolManager.processMessage(
-                msg.capability, new DefaultMessage(peerConnection, response)));
+                msg.capability, new DefaultMessage(peerConnection, response));
+          } else
+            snapProtocolManager.ifPresent(
+                protocolManager ->
+                    protocolManager.processMessage(
+                        msg.capability, new DefaultMessage(peerConnection, response)));
+        });
   }
 
   public Optional<MessageData> peekNextOutgoingRequest() {
@@ -376,6 +389,7 @@ public class RespondingEthPeer {
 
   public static class Builder {
     private EthProtocolManager ethProtocolManager;
+    private Optional<SnapProtocolManager> snapProtocolManager = Optional.empty();
     private Hash chainHeadHash = gen.hash();
     private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
@@ -385,12 +399,23 @@ public class RespondingEthPeer {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
 
       return RespondingEthPeer.create(
-          ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight, peerValidators);
+          ethProtocolManager,
+          snapProtocolManager,
+          chainHeadHash,
+          totalDifficulty,
+          estimatedHeight,
+          peerValidators);
     }
 
     public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {
       checkNotNull(ethProtocolManager);
       this.ethProtocolManager = ethProtocolManager;
+      return this;
+    }
+
+    public Builder snapProtocolManager(final SnapProtocolManager snapProtocolManager) {
+      checkNotNull(snapProtocolManager);
+      this.snapProtocolManager = Optional.of(snapProtocolManager);
       return this;
     }
 

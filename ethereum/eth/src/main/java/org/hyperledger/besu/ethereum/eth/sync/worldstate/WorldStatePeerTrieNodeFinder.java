@@ -21,8 +21,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetNodeDataFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.FallbackTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
@@ -38,8 +39,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
+/** This class is used to retrieve missing nodes in the trie by querying the peers */
+public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
   private final Cache<Bytes32, Bytes> foundNodes =
       CacheBuilder.newBuilder().maximumSize(10_000).expireAfterWrite(5, TimeUnit.MINUTES).build();
@@ -50,7 +56,7 @@ public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
   final Blockchain blockchain;
   final MetricsSystem metricsSystem;
 
-  public WorldStateTrieNodeFinder(
+  public WorldStatePeerTrieNodeFinder(
       final EthContext ethContext, final Blockchain blockchain, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.blockchain = blockchain;
@@ -58,8 +64,7 @@ public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
   }
 
   @Override
-  public synchronized Optional<Bytes> getAccountStateTrieNode(
-      final Bytes location, final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     Optional<Bytes> ifPresent = Optional.ofNullable(foundNodes.getIfPresent(nodeHash));
     if (ifPresent.isPresent()) {
       return ifPresent;
@@ -69,7 +74,10 @@ public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
             .or(() -> findByGetTrieNodeData(Hash.wrap(nodeHash), Optional.empty(), location));
     response.ifPresent(
         bytes -> {
-          System.out.println("found node " + response.get());
+          LOG.trace(
+              "Fixed missing account state trie node for location {} and hash {}",
+              location,
+              nodeHash);
           foundNodes.put(nodeHash, bytes);
         });
     return response;
@@ -89,7 +97,10 @@ public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
                     findByGetTrieNodeData(Hash.wrap(nodeHash), Optional.of(accountHash), location));
     response.ifPresent(
         bytes -> {
-          System.out.println("found storage node " + response.get());
+          LOG.trace(
+              "Fixed missing storage state trie node for location {} and hash {}",
+              location,
+              nodeHash);
           foundNodes.put(nodeHash, bytes);
         });
     return response;
@@ -104,11 +115,11 @@ public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
       final Map<Hash, Bytes> response =
           retryingGetNodeDataFromPeerTask.run().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       if (response.containsKey(nodeHash)) {
-        System.out.println("found node with legacy" + nodeHash);
+        LOG.trace("Found node {} with getNodeData request", nodeHash);
         return Optional.of(response.get(nodeHash));
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      System.out.println("node not found " + e);
+      LOG.trace("Error when trying to find node {} with getNodeData request", nodeHash);
     }
     return Optional.empty();
   }
@@ -128,13 +139,14 @@ public class WorldStateTrieNodeFinder implements FallbackTrieNodeFinder {
     try {
       final Map<Bytes, Bytes> response =
           getTrieNodeFromPeerTask.run().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      final Bytes nodeValue = response.get(path);
-      if (Hash.hash(nodeValue).equals(nodeHash)) {
-        System.out.println("found node with new api" + nodeHash);
+      final Bytes nodeValue =
+          response.get(Bytes.concatenate(accountHash.map(Bytes::wrap).orElse(Bytes.EMPTY), path));
+      if (nodeValue != null && Hash.hash(nodeValue).equals(nodeHash)) {
+        LOG.trace("Found node {} with getTrieNode request", nodeHash);
         return Optional.of(nodeValue);
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      System.out.println("node not found new api " + e);
+      LOG.trace("Error when trying to find node {} with getTrieNode request", nodeHash);
     }
     return Optional.empty();
   }
