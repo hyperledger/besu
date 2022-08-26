@@ -202,24 +202,24 @@ public class BackwardSyncContext {
             backwardSyncException -> {
               if (backwardSyncException.shouldRestart()) {
                 LOG.info(
-                    "Backward sync failed ({}). Current Peers: {}. Retrying in "
-                        + millisBetweenRetries
-                        + " milliseconds...",
-                    backwardSyncException.getMessage(),
-                    ethContext.getEthPeers().peerCount());
-                return;
+                    "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds...",
+                    throwable.getMessage(),
+                    ethContext.getEthPeers().peerCount(),
+                    millisBetweenRetries);
               } else {
                 debugLambda(
                     LOG, "Not recoverable backward sync exception {}", throwable::getMessage);
                 throw backwardSyncException;
               }
             },
-            () ->
-                LOG.warn(
-                    "There was an uncaught exception during Backwards Sync. Retrying in "
-                        + millisBetweenRetries
-                        + " milliseconds...",
-                    throwable));
+            () -> {
+              LOG.warn(
+                  "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds...",
+                  throwable.getMessage(),
+                  ethContext.getEthPeers().peerCount(),
+                  millisBetweenRetries);
+              LOG.debug("Exception details:", throwable);
+            });
   }
 
   private Optional<BackwardSyncException> extractBackwardSyncException(final Throwable throwable) {
