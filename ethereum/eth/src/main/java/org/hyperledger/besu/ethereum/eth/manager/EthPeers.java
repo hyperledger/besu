@@ -205,6 +205,7 @@ public class EthPeers {
   public Stream<EthPeer> streamAvailablePeers() {
     return streamAllPeers()
         .filter(EthPeer::readyForRequests)
+        .map(p -> p.isDisconnected() ? connections.remove(p) : p)
         .filter(peer -> !peer.isDisconnected());
   }
 
