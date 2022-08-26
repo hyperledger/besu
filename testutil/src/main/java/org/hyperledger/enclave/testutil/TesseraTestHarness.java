@@ -49,7 +49,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
   private URI q2TUri;
   private URI thirdPartyUri;
 
-  public static final String TESSERA_VERSION = "22.1.5";
+  public static final String TESSERA_VERSION = "22.1.6";
 
   private final int thirdPartyPort = 9081;
   private final int q2TPort = 9082;
