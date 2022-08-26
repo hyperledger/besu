@@ -184,6 +184,7 @@ public class RocksDBColumnarKeyValueStorage
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
+    writeOptions.setDisableWAL(true);
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
         new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions));
   }
