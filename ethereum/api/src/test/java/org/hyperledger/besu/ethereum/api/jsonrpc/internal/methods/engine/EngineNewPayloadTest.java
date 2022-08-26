@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import java.util.Collections;
 import java.util.List;
@@ -77,11 +78,14 @@ public class EngineNewPayloadTest {
 
   @Mock private MutableBlockchain blockchain;
 
+  @Mock private EthPeers ethPeers;
+
   @Before
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator);
+    when(ethPeers.peerCount()).thenReturn(1);
+    this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator, ethPeers);
   }
 
   @Test
