@@ -114,9 +114,9 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
     if (cause instanceof NoAvailablePeersException) {
       LOG.debug(
-          "No useful peer found, checking remaining current peers for usefulness: {}",
+          "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
           ethContext.getEthPeers().peerCount());
-      // Wait for new peer to connect
+
       final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
       executeSubTask(
           () ->
