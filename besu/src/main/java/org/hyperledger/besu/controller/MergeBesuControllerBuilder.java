@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
+import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBestPeerComparator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
@@ -125,6 +126,11 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             peerValidators,
             filterToUse);
 
+    Optional<Difficulty> currentTotal = protocolContext.getBlockchain().getTotalDifficultyByHash(
+        protocolContext.getBlockchain().getChainHeadHash()
+    );
+    PandaPrinter.init(currentTotal, Difficulty.of(
+        configOptionsSupplier.get().getTerminalTotalDifficulty().get()));
     return ethProtocolManager;
   }
 

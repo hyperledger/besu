@@ -193,7 +193,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
             if (priorState.filter(prior -> !prior).isPresent()) {
               // only print pandas if we had a prior merge state, and it was false
-              PandaPrinter.printOnFirstCrossing();
+              PandaPrinter.getInstance().printOnFirstCrossing();
             }
 
           } else if (composedCoordinator.isMiningBeforeMerge()) {
@@ -219,7 +219,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     BesuController controller = super.build();
-    PandaPrinter.hasTTD();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
   }

@@ -422,7 +422,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethProtocolManager,
             pivotBlockSelector);
 
-    synchronizer.subscribeInSync(new PandaPrinter());
+    synchronizer.subscribeInSync(PandaPrinter.getInstance());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(

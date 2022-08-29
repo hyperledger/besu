@@ -17,6 +17,9 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 
@@ -31,18 +34,49 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, MergeStateHandler {
+public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener,
+    BlockAddedObserver {
+
+  private static PandaPrinter INSTANCE;
+
+  public static PandaPrinter init(final Optional<Difficulty> currentTotal, final Difficulty ttd) {
+    if(INSTANCE != null) {
+      LOG.debug("overwriting already initialized panda printer");
+    }
+
+    INSTANCE = new PandaPrinter(currentTotal, ttd);
+
+    return INSTANCE;
+  }
+
+  public static PandaPrinter getInstance() {
+    if(INSTANCE == null) {
+      throw new IllegalStateException("Uninitialized, unknown ttd");
+    }
+    return INSTANCE;
+  }
+
+  public PandaPrinter(final Optional<Difficulty> currentTotal, final Difficulty ttd) {
+      this.ttd = ttd;
+      if(currentTotal.isPresent() && currentTotal.get().greaterOrEqualThan(ttd)) {
+        this.readyBeenDisplayed.set(true);
+        this.ttdBeenDisplayed.set(true);
+      }
+  }
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
   private static final String readyBanner = PandaPrinter.loadBanner("/readyPanda.txt");
   private static final String ttdBanner = PandaPrinter.loadBanner("/ttdPanda.txt");
   private static final String finalizedBanner = PandaPrinter.loadBanner("/finalizedPanda.txt");
 
-  private static final AtomicBoolean hasTTD = new AtomicBoolean(false);
-  private static final AtomicBoolean inSync = new AtomicBoolean(false);
-  public static final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
-  public static final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
-  public static final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
+  private final Difficulty ttd;
+  private  final AtomicBoolean hasTTD = new AtomicBoolean(false);
+  private  final AtomicBoolean inSync = new AtomicBoolean(false);
+  private  final AtomicBoolean isPoS = new AtomicBoolean(false);
+
+  public  final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
+  public  final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
+  public  final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
 
   private static String loadBanner(final String filename) {
     Class<PandaPrinter> c = PandaPrinter.class;
@@ -55,46 +89,44 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
         resultStringBuilder.append(line).append("\n");
       }
     } catch (IOException e) {
-      LOG.error("Couldn't load hilarious panda banner");
+      LOG.error("Couldn't load hilarious panda banner at {} ", filename);
     }
     return resultStringBuilder.toString();
   }
 
-  public static void hasTTD() {
-    PandaPrinter.hasTTD.getAndSet(true);
-    if (hasTTD.get() && inSync.get()) {
-      printReadyToMerge();
-    }
+  public void hasTTD() {
+    this.hasTTD.getAndSet(true);
   }
 
-  public static void inSync() {
-    PandaPrinter.inSync.getAndSet(true);
-    if (inSync.get() && hasTTD.get()) {
-      printReadyToMerge();
-    }
+  public void inSync() {
+    this.inSync.getAndSet(true);
   }
 
-  public static void printOnFirstCrossing() {
+  public void printOnFirstCrossing() {
     if (!ttdBeenDisplayed.get()) {
       LOG.info("\n" + ttdBanner);
     }
     ttdBeenDisplayed.compareAndSet(false, true);
   }
 
-  static void resetForTesting() {
+  public void resetForTesting() {
     ttdBeenDisplayed.set(false);
     readyBeenDisplayed.set(false);
     finalizedBeenDisplayed.set(false);
+    hasTTD.set(false);
+    isPoS.set(false);
+    inSync.set(false);
   }
 
-  public static void printReadyToMerge() {
-    if (!readyBeenDisplayed.get()) {
+  public void printReadyToMerge() {
+    if (!readyBeenDisplayed.get() && !isPoS.get() && !inSync.get()) {
+      LOG.info("Configured for TTD and in sync, still receiving PoW blocks. Ready to merge!");
       LOG.info("\n" + readyBanner);
     }
     readyBeenDisplayed.compareAndSet(false, true);
   }
 
-  public static void printFinalized() {
+  public void printFinalized() {
     if (!finalizedBeenDisplayed.get()) {
       LOG.info("\n" + finalizedBanner);
     }
@@ -103,7 +135,8 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
 
   @Override
   public void onInSyncStatusChange(final boolean newSyncStatus) {
-    if (newSyncStatus && hasTTD.get()) {
+    inSync.set(newSyncStatus);
+    if (newSyncStatus && hasTTD.get() && !isPoS.get()) {
       printReadyToMerge();
     }
   }
@@ -119,12 +152,27 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
   }
 
   @Override
-  public void mergeStateChanged(
-      final boolean isPoS,
-      final Optional<Boolean> priorState,
-      final Optional<Difficulty> difficultyStoppedAt) {
-    if (isPoS && priorState.isPresent() && !priorState.get()) { // just crossed from PoW to PoS
-      printOnFirstCrossing();
+  public void onBlockAdded(final BlockAddedEvent event) {
+    if(event.isNewCanonicalHead()) {
+      Block added = event.getBlock();
+      if(added.getHeader().getDifficulty().greaterOrEqualThan(this.ttd)) {
+        this.isPoS.set(true);
+        if(this.inSync.get()) {
+          this.printOnFirstCrossing();
+        }
+      } else {
+        this.isPoS.set(false);
+        if(this.inSync.get()) {
+          if(!readyBeenDisplayed.get()) {
+            this.printReadyToMerge();
+          }
+        }
+      }
     }
+  }
+
+  @Override
+  public void removeObserver() {
+    BlockAddedObserver.super.removeObserver();
   }
 }
