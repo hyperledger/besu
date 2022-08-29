@@ -35,7 +35,7 @@ public class ZeroBaseFeeMarket extends LondonFeeMarket {
   }
 
   @Override
-  public ValidationMode validationMode(final long blockNumber) {
+  public ValidationMode baseFeeValidationMode(final long blockNumber) {
     return ValidationMode.NONE;
   }
 }

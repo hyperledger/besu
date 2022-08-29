@@ -41,12 +41,12 @@ public class BaseFeeMarketBlockHeaderGasPriceValidationRule
 
       // if this is the fork block, baseFee should be the initial baseFee
       if (BaseFeeMarket.ValidationMode.INITIAL.equals(
-          baseFeeMarket.validationMode(header.getNumber()))) {
+          baseFeeMarket.baseFeeValidationMode(header.getNumber()))) {
         return baseFeeMarket
             .getInitialBasefee()
             .equals(header.getBaseFee().orElseThrow(() -> MissingBaseFeeFromBlockHeader()));
       } else if (BaseFeeMarket.ValidationMode.NONE.equals(
-          baseFeeMarket.validationMode(header.getNumber()))) {
+          baseFeeMarket.baseFeeValidationMode(header.getNumber()))) {
         // skip validation to allow sync when a zero baseFee chain has historical baseFees
         return true;
       }

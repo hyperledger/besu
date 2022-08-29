@@ -117,15 +117,27 @@ public class ZeroBaseFeeMarketTest {
   }
 
   @Test
-  public void validationModeShouldBeNoneWhenIsForkBlock() {
-    assertThat(zeroBaseFeeMarket.validationMode(FORK_BLOCK))
+  public void baseFeeValidationModeShouldBeNoneWhenIsForkBlock() {
+    assertThat(zeroBaseFeeMarket.baseFeeValidationMode(FORK_BLOCK))
         .isEqualTo(BaseFeeMarket.ValidationMode.NONE);
   }
 
   @Test
-  public void validationModeShouldBeNoneWhenIsNotForkBlock() {
-    assertThat(zeroBaseFeeMarket.validationMode(FORK_BLOCK + 1))
+  public void baseFeeValidationModeShouldBeNoneWhenIsNotForkBlock() {
+    assertThat(zeroBaseFeeMarket.baseFeeValidationMode(FORK_BLOCK + 1))
         .isEqualTo(BaseFeeMarket.ValidationMode.NONE);
+  }
+
+  @Test
+  public void gasLimitValidationModeShouldBeInitialWhenIsForkBlock() {
+    assertThat(zeroBaseFeeMarket.gasLimitValidationMode(FORK_BLOCK))
+        .isEqualTo(BaseFeeMarket.ValidationMode.INITIAL);
+  }
+
+  @Test
+  public void gasLimitValidationModeShouldBeOngoingWhenIsNotForkBlock() {
+    assertThat(zeroBaseFeeMarket.gasLimitValidationMode(FORK_BLOCK + 1))
+        .isEqualTo(BaseFeeMarket.ValidationMode.ONGOING);
   }
 
   @Test

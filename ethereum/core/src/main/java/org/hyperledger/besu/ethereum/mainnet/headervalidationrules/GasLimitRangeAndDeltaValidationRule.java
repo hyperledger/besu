@@ -71,7 +71,7 @@ public class GasLimitRangeAndDeltaValidationRule extends AbstractGasLimitSpecifi
             .filter(
                 baseFeeMarket ->
                     BaseFeeMarket.ValidationMode.INITIAL.equals(
-                        baseFeeMarket.validationMode(header.getNumber())))
+                        baseFeeMarket.gasLimitValidationMode(header.getNumber())))
             .map(baseFeeMarket -> parent.getGasLimit() * baseFeeMarket.getSlackCoefficient())
             .orElse(parent.getGasLimit());
 

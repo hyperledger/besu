@@ -53,7 +53,9 @@ public interface BaseFeeMarket extends FeeMarket {
       final long parentBlockGasUsed,
       final long targetGasUsed);
 
-  ValidationMode validationMode(final long blockNumber);
+  ValidationMode baseFeeValidationMode(final long blockNumber);
+
+  ValidationMode gasLimitValidationMode(final long blockNumber);
 
   boolean isBeforeForkBlock(final long blockNumber);
 }
