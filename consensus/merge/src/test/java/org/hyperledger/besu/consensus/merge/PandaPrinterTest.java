@@ -20,22 +20,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Optional;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -76,14 +72,14 @@ public class PandaPrinterTest {
   @Test
   public void printsWhenCrossingOnly() {
     PandaPrinter p = new PandaPrinter(Optional.of(Difficulty.of(1)), Difficulty.of(10));
-    //var mergeContext = new PostMergeContext(Difficulty.of(10));
-    //mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
+    // var mergeContext = new PostMergeContext(Difficulty.of(10));
+    // mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
     p.inSync();
     p.hasTTD();
-    //assertThat(p.ttdBeenDisplayed).isFalse();
-    //mergeContext.setIsPostMerge(Difficulty.ZERO);
+    // assertThat(p.ttdBeenDisplayed).isFalse();
+    // mergeContext.setIsPostMerge(Difficulty.ZERO);
     assertThat(p.ttdBeenDisplayed).isFalse();
-    //mergeContext.setIsPostMerge(Difficulty.ONE);
+    // mergeContext.setIsPostMerge(Difficulty.ONE);
     p.onBlockAdded(withDifficulty(Difficulty.of(11)));
     assertThat(p.ttdBeenDisplayed).isTrue();
     assertThat(p.readyBeenDisplayed).isFalse();
@@ -103,11 +99,11 @@ public class PandaPrinterTest {
 
   @Test
   public void noPandasPostTTD() {
-    PandaPrinter p = new PandaPrinter(Optional.of(Difficulty.of(11)),
-        Difficulty.of(BigInteger.TEN));
+    PandaPrinter p =
+        new PandaPrinter(Optional.of(Difficulty.of(11)), Difficulty.of(BigInteger.TEN));
     p.inSync();
     p.hasTTD();
-    //p.onNewForkchoiceMessage();
+    // p.onNewForkchoiceMessage();
 
     assertThat(p.readyBeenDisplayed).isTrue();
     assertThat(p.ttdBeenDisplayed).isTrue();
@@ -118,10 +114,10 @@ public class PandaPrinterTest {
     assertThat(p.finalizedBeenDisplayed).isFalse();
   }
 
-
   @Test
   public void printsFinalized() {
-    PandaPrinter p = new PandaPrinter(Optional.of(Difficulty.of(11)), Difficulty.of(BigInteger.TEN));
+    PandaPrinter p =
+        new PandaPrinter(Optional.of(Difficulty.of(11)), Difficulty.of(BigInteger.TEN));
     MergeContext mergeContext = new PostMergeContext(Difficulty.ZERO);
     mergeContext.addNewForkchoiceMessageListener(p);
     mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
@@ -145,7 +141,8 @@ public class PandaPrinterTest {
     Block mockBlock = mock(Block.class);
     when(mockBlock.getHeader()).thenReturn(mockHeader);
     when(mockBlock.getBody()).thenReturn(mockBody);
-    BlockAddedEvent powArrived = BlockAddedEvent.createForHeadAdvancement(mockBlock, new ArrayList<>(), new ArrayList<>());
+    BlockAddedEvent powArrived =
+        BlockAddedEvent.createForHeadAdvancement(mockBlock, new ArrayList<>(), new ArrayList<>());
     return powArrived;
   }
 }

@@ -34,13 +34,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener,
-    BlockAddedObserver {
+public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, BlockAddedObserver {
 
   private static PandaPrinter INSTANCE;
 
   public static PandaPrinter init(final Optional<Difficulty> currentTotal, final Difficulty ttd) {
-    if(INSTANCE != null) {
+    if (INSTANCE != null) {
       LOG.debug("overwriting already initialized panda printer");
     }
 
@@ -50,18 +49,18 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener,
   }
 
   public static PandaPrinter getInstance() {
-    if(INSTANCE == null) {
+    if (INSTANCE == null) {
       throw new IllegalStateException("Uninitialized, unknown ttd");
     }
     return INSTANCE;
   }
 
   public PandaPrinter(final Optional<Difficulty> currentTotal, final Difficulty ttd) {
-      this.ttd = ttd;
-      if(currentTotal.isPresent() && currentTotal.get().greaterOrEqualThan(ttd)) {
-        this.readyBeenDisplayed.set(true);
-        this.ttdBeenDisplayed.set(true);
-      }
+    this.ttd = ttd;
+    if (currentTotal.isPresent() && currentTotal.get().greaterOrEqualThan(ttd)) {
+      this.readyBeenDisplayed.set(true);
+      this.ttdBeenDisplayed.set(true);
+    }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(PandaPrinter.class);
@@ -70,13 +69,13 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener,
   private static final String finalizedBanner = PandaPrinter.loadBanner("/finalizedPanda.txt");
 
   private final Difficulty ttd;
-  private  final AtomicBoolean hasTTD = new AtomicBoolean(false);
-  private  final AtomicBoolean inSync = new AtomicBoolean(false);
-  private  final AtomicBoolean isPoS = new AtomicBoolean(false);
+  private final AtomicBoolean hasTTD = new AtomicBoolean(false);
+  private final AtomicBoolean inSync = new AtomicBoolean(false);
+  private final AtomicBoolean isPoS = new AtomicBoolean(false);
 
-  public  final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
-  public  final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
-  public  final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
+  public final AtomicBoolean readyBeenDisplayed = new AtomicBoolean();
+  public final AtomicBoolean ttdBeenDisplayed = new AtomicBoolean();
+  public final AtomicBoolean finalizedBeenDisplayed = new AtomicBoolean();
 
   private static String loadBanner(final String filename) {
     Class<PandaPrinter> c = PandaPrinter.class;
@@ -153,17 +152,17 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener,
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    if(event.isNewCanonicalHead()) {
+    if (event.isNewCanonicalHead()) {
       Block added = event.getBlock();
-      if(added.getHeader().getDifficulty().greaterOrEqualThan(this.ttd)) {
+      if (added.getHeader().getDifficulty().greaterOrEqualThan(this.ttd)) {
         this.isPoS.set(true);
-        if(this.inSync.get()) {
+        if (this.inSync.get()) {
           this.printOnFirstCrossing();
         }
       } else {
         this.isPoS.set(false);
-        if(this.inSync.get()) {
-          if(!readyBeenDisplayed.get()) {
+        if (this.inSync.get()) {
+          if (!readyBeenDisplayed.get()) {
             this.printReadyToMerge();
           }
         }

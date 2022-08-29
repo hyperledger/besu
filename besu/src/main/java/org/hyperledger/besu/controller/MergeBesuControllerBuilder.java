@@ -126,11 +126,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             peerValidators,
             filterToUse);
 
-    Optional<Difficulty> currentTotal = protocolContext.getBlockchain().getTotalDifficultyByHash(
-        protocolContext.getBlockchain().getChainHeadHash()
-    );
-    PandaPrinter.init(currentTotal, Difficulty.of(
-        configOptionsSupplier.get().getTerminalTotalDifficulty().get()));
+    Optional<Difficulty> currentTotal =
+        protocolContext
+            .getBlockchain()
+            .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
+    PandaPrinter.init(
+        currentTotal,
+        Difficulty.of(configOptionsSupplier.get().getTerminalTotalDifficulty().get()));
     return ethProtocolManager;
   }
 
