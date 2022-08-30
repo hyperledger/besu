@@ -1,5 +1,10 @@
 # Changelog
 
+## 22.7.3-next
+
+### Additions and Improvements
+- Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
+
 ## 22.7.2
 
 ### Additions and Improvements
@@ -9,7 +14,6 @@
 - Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
 - Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
 - Log imported block info post merge [#4310](https://github.com/hyperledger/besu/pull/4310)
-- Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 
 ### Bug Fixes
 - Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
