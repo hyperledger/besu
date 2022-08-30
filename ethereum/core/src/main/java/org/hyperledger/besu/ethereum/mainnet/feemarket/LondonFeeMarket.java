@@ -130,8 +130,13 @@ public class LondonFeeMarket implements BaseFeeMarket {
   }
 
   @Override
-  public boolean isForkBlock(final long blockNumber) {
-    return londonForkBlockNumber == blockNumber;
+  public ValidationMode baseFeeValidationMode(final long blockNumber) {
+    return londonForkBlockNumber == blockNumber ? ValidationMode.INITIAL : ValidationMode.ONGOING;
+  }
+
+  @Override
+  public ValidationMode gasLimitValidationMode(final long blockNumber) {
+    return londonForkBlockNumber == blockNumber ? ValidationMode.INITIAL : ValidationMode.ONGOING;
   }
 
   @Override
