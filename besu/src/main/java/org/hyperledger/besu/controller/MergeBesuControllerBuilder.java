@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PandaPrinter;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -36,13 +38,17 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.List;
 import java.util.Optional;
@@ -126,14 +132,47 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             peerValidators,
             filterToUse);
 
+    return ethProtocolManager;
+  }
+
+  @Override
+  protected Synchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+
+    DefaultSynchronizer sync =
+        (DefaultSynchronizer)
+            super.createSynchronizer(
+                protocolSchedule,
+                worldStateStorage,
+                protocolContext,
+                maybePruner,
+                ethContext,
+                syncState,
+                ethProtocolManager,
+                pivotBlockSelector);
+    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
     Optional<Difficulty> currentTotal =
         protocolContext
             .getBlockchain()
             .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
+
     PandaPrinter.init(
         currentTotal,
         Difficulty.of(configOptionsSupplier.get().getTerminalTotalDifficulty().get()));
-    return ethProtocolManager;
+    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
+      LOG.info(
+          "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
+      protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
+    }
+    sync.subscribeInSync(PandaPrinter.getInstance());
+    return sync;
   }
 
   protected MiningCoordinator createTransitionMiningCoordinator(
