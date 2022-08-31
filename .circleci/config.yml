@@ -41,14 +41,14 @@ executors:
   quorum_ats_executor:
     docker:
       - image: cimg/openjdk:11.0
-    resource_class: large
+    resource_class: xlarge
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false
 
   xl_machine_executor:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202201-02 #Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2, Google Cloud SDK updates
     resource_class: xlarge
 
   trivy_executor:
@@ -257,7 +257,9 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
+          docker_layer_caching: true
       - run:
           name: Quorum Acceptance Tests
           no_output_timeout: 30m

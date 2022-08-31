@@ -510,7 +510,9 @@ public abstract class MainnetProtocolSpecs {
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
     final BaseFeeMarket londonFeeMarket =
-        FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     return berlinDefinition(
             chainId,
             configContractSizeLimit,
