@@ -4,6 +4,8 @@
   "eip150Block": 2,
   "eip158Block": 3,
   "byzantiumBlock": 1035301,
+  "londonBlock": 2222222,
+  "zeroBaseFee": true,
   "ibft2": {
     "blockperiodseconds": 2,
     "epochlength": 30000,

@@ -278,6 +278,27 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getQip714BlockNumber()).hasValue(99999L);
   }
 
+  @Test
+  public void isZeroBaseFeeShouldDefaultToFalse() {
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
+
+    assertThat(config.isZeroBaseFee()).isFalse();
+  }
+
+  @Test
+  public void isZeroBaseFeeParsedCorrectly() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("zerobasefee", true));
+
+    assertThat(config.isZeroBaseFee()).isTrue();
+  }
+
+  @Test
+  public void asMapIncludesZeroBaseFee() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("zerobasefee", true));
+
+    assertThat(config.asMap()).containsOnlyKeys("zeroBaseFee").containsValue(true);
+  }
+
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {
     final ObjectNode rootNode = JsonUtil.createEmptyObjectNode();
     final ObjectNode options = JsonUtil.objectNodeFromMap(configOptions);
