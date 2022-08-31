@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INSUFFICIENT_GAS;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -38,11 +39,17 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TStoreOperationTest {
 
   private static final GasCalculator gasCalculator = new EIP1153GasCalculator();
+
+  @Before
+  public void setUp() {
+    ExperimentalEIPs.eip1153Enabled = true;
+  }
 
   private MessageFrame createMessageFrame(
       final Address address, final long initialGas, final long remainingGas) {

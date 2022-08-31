@@ -62,6 +62,7 @@ import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -4897,6 +4898,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     final TestBesuCommand command = parseCommand("--logging", "WARN");
 
     assertThat(command.getLogLevel()).isEqualTo(Level.WARN);
+  }
+
+  @Test
+  public void assertThatEnablingExperimentalEIPsWorks() {
+    parseCommand("--Xeip1153-enabled=true");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(ExperimentalEIPs.eip1153Enabled).isTrue();
+  }
+
+  @Test
+  public void assertThatDisablingExperimentalEIPsWorks() {
+    parseCommand("--Xeip1153-enabled=false");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(ExperimentalEIPs.eip1153Enabled).isFalse();
   }
 
   @Test

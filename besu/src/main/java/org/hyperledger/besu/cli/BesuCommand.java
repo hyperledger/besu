@@ -88,6 +88,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -1386,6 +1387,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setCaseInsensitiveEnumValuesAllowed(true);
 
     handleStableOptions();
+    enableExperimentalEIPs();
     addSubCommands(resultHandler, in);
     registerConverters();
     handleUnstableOptions();
@@ -1444,6 +1446,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @VisibleForTesting
   void setBesuConfiguration(final BesuConfiguration pluginCommonConfiguration) {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
+  }
+
+  private BesuCommand enableExperimentalEIPs() {
+    // Usage of static command line flags is strictly reserved for experimental EIPs
+    commandLine.addMixin("experimentalEIPs", ExperimentalEIPs.class);
+    return this;
   }
 
   private void addSubCommands(

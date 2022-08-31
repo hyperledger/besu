@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ByteCodeBuilder;
@@ -427,6 +428,7 @@ public class TStoreEVMOperationTest {
 
   @Before
   public void setUp() {
+    ExperimentalEIPs.eip1153Enabled = true;
     ProtocolSchedule protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
             new StubGenesisConfigOptions().eip1153Block(0), EvmConfiguration.DEFAULT);

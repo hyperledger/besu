@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
@@ -642,6 +643,10 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
+
+    if (!ExperimentalEIPs.eip1153Enabled) {
+      throw new RuntimeException("EIP-1153 feature flag must be enabled");
+    }
 
     return parisDefinition(
             chainId,

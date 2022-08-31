@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
@@ -187,6 +188,11 @@ public class ProtocolScheduleBuilder {
               protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
             });
 
+    if (ExperimentalEIPs.eip1153Enabled) {
+      addProtocolSpec(
+          protocolSchedule, config.getEIP1153BlockNumber(), specFactory.eip1153Definition(config));
+    }
+
     // specs for classic network
     config
         .getClassicForkBlock()
@@ -234,7 +240,6 @@ public class ProtocolScheduleBuilder {
                 create(
                     config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
                 create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
-                create(config.getEIP1153BlockNumber(), specFactory.eip1153Definition(config)),
                 // Classic Milestones
                 create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
                 create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
