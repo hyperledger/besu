@@ -402,13 +402,16 @@ public class JsonRpcService {
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(denyRouteToBlockedHost());
-    router.route().failureHandler(new Handler<RoutingContext>() {
-      @Override
-      public void handle(final RoutingContext event) {
-        LOG.error(event.failure().getMessage());
-        LOG.debug(event.failure().getMessage(), event.failure());
-      }
-    });
+    router
+        .route()
+        .failureHandler(
+            new Handler<RoutingContext>() {
+              @Override
+              public void handle(final RoutingContext event) {
+                LOG.error(event.failure().getMessage());
+                LOG.debug(event.failure().getMessage(), event.failure());
+              }
+            });
     router
         .route()
         .handler(

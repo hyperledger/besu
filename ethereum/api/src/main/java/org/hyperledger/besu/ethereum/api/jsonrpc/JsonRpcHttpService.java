@@ -298,13 +298,17 @@ public class JsonRpcHttpService {
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(checkAllowlistHostHeader());
-    router.route().failureHandler(new Handler<RoutingContext>() {
-      @Override
-      public void handle(final RoutingContext event) {
-        LOG.error(event.failure().getMessage());
-        LOG.debug(event.failure().getMessage(), event.failure());
-      }
-    });
+    router
+        .route()
+        .failureHandler(
+            new Handler<RoutingContext>() {
+              @Override
+              public void handle(final RoutingContext event) {
+                LOG.error(event.failure().getMessage());
+                LOG.debug(event.failure().getMessage(), event.failure());
+                event.fail(403);
+              }
+            });
     router
         .route()
         .handler(
