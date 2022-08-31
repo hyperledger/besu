@@ -17,6 +17,7 @@ package org.hyperledger.besu.datatypes;
 import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
@@ -97,5 +98,53 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
   public static Wei fromQuantity(final Quantity quantity) {
     return Wei.wrap((Bytes) quantity);
+  }
+
+  public String toHumanReadableString() {
+    final BigInteger amount = toBigInteger();
+    final int numOfDigits = amount.toString().length();
+    final Unit preferredUnit = Unit.getPreferred(numOfDigits);
+    final double res = amount.doubleValue() / preferredUnit.divisor;
+    return String.format("%1." + preferredUnit.decimals + "f %s", res, preferredUnit);
+  }
+
+  enum Unit {
+    Wei(0, 0),
+    KWei(3),
+    MWei(6),
+    GWei(9),
+    Szabo(12),
+    Finney(15),
+    Ether(18),
+    KEther(21),
+    MEther(24),
+    GEther(27),
+    TEther(30);
+
+    final int pow;
+    final double divisor;
+    final int decimals;
+
+    Unit(final int pow) {
+      this(pow, 2);
+    }
+
+    Unit(final int pow, final int decimals) {
+      this.pow = pow;
+      this.decimals = decimals;
+      this.divisor = Math.pow(10, pow);
+    }
+
+    static Unit getPreferred(final int numOfDigits) {
+      return Arrays.stream(values())
+          .filter(u -> numOfDigits <= u.pow + 3)
+          .findFirst()
+          .orElse(TEther);
+    }
+
+    @Override
+    public String toString() {
+      return name().toLowerCase();
+    }
   }
 }
