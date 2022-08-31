@@ -1210,16 +1210,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
 
     @Option(
-        names = {"--tx-pool-future-max"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        converter = PercentageConverter.class,
-        description =
-            "Maximum number of currently unexecutable future transactions that can occupy the txpool (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer maxFutureTransactions =
-        TransactionPoolConfiguration.MAX_FUTURE_TRANSACTIONS;
-
-    @Option(
         names = {"--tx-pool-future-max-by-account"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         converter = PercentageConverter.class,
@@ -2816,7 +2806,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
-        .txPoolMaxFutureTransactions(txPoolOptionGroup.maxFutureTransactions)
         .txPoolMaxFutureTransactionByAccount(txPoolOptionGroup.maxFutureTransactionsByAccount)
         .txFeeCap(txFeeCap)
         .build();

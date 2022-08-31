@@ -26,7 +26,6 @@ import org.immutables.value.Value;
 public interface TransactionPoolConfiguration {
   int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
   int MAX_PENDING_TRANSACTIONS = 4096;
-  int MAX_FUTURE_TRANSACTIONS = 1024;
   int MAX_FUTURE_TRANSACTION_BY_ACCOUNT = 64;
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
@@ -39,11 +38,6 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default int getTxPoolMaxSize() {
     return MAX_PENDING_TRANSACTIONS;
-  }
-
-  @Value.Default
-  default int getTxPoolMaxFutureTransactions() {
-    return MAX_FUTURE_TRANSACTIONS;
   }
 
   @Value.Default

@@ -54,6 +54,7 @@ import org.junit.Test;
 public class GasPricePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -148,6 +149,30 @@ public class GasPricePendingTransactionsTest {
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldDropFutureTransactionWhenSenderLimitExceeded() {
+    final GasPricePendingTransactionsSorter senderLimitedtransactions =
+        new GasPricePendingTransactionsSorter(
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+                .build(),
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            GasPricePendingTransactionsTest::mockBlockHeader);
+
+    Transaction furthestFutureTransaction = null;
+    for (int i = 0; i < MAX_TRANSACTIONS; i++) {
+      furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
+      senderLimitedtransactions.addRemoteTransaction(furthestFutureTransaction);
+    }
+    assertThat(senderLimitedtransactions.size()).isEqualTo(MAX_TRANSACTIONS_BY_SENDER);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1L);
+
+    assertThat(senderLimitedtransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
+        .isEmpty();
   }
 
   @Test

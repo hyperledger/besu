@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -54,6 +55,7 @@ import org.junit.Test;
 public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -69,6 +71,15 @@ public class BaseFeePendingTransactionsTest {
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
           ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+          TestClock.system(ZoneId.systemDefault()),
+          metricsSystem,
+          BaseFeePendingTransactionsTest::mockBlockHeader);
+  private final BaseFeePendingTransactionsSorter senderLimitedTransactions =
+      new BaseFeePendingTransactionsSorter(
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS)
+              .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+              .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           BaseFeePendingTransactionsTest::mockBlockHeader);
@@ -123,19 +134,32 @@ public class BaseFeePendingTransactionsTest {
   public void shouldDropOldestTransactionWhenLimitExceeded() {
     final Transaction oldestTransaction =
         transactionWithNonceSenderAndGasPrice(0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L);
-    transactions.addRemoteTransaction(oldestTransaction);
+    senderLimitedTransactions.addRemoteTransaction(oldestTransaction);
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(
+      senderLimitedTransactions.addRemoteTransaction(
           transactionWithNonceSenderAndGasPrice(
               i, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L));
     }
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
 
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    senderLimitedTransactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
+    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldDropFutureTransactionWhenSenderLimitExceeded() {
+    Transaction furthestFutureTransaction = null;
+    for (int i = 0; i < MAX_TRANSACTIONS; i++) {
+      furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
+      senderLimitedTransactions.addRemoteTransaction(furthestFutureTransaction);
+    }
+    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS_BY_SENDER);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1L);
+    assertThat(senderLimitedTransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
+        .isEmpty();
   }
 
   @Test
@@ -703,6 +727,27 @@ public class BaseFeePendingTransactionsTest {
   }
 
   @Test
+  public void assertThatCorrectNonceIsReturnedForSenderLimitedPool() {
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
+    addLocalTransactions(senderLimitedTransactions, 1, 2, 4, 5);
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(senderLimitedTransactions, 3);
+
+    // assert we have dropped previously added tx 5, and next nonce is now 5
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(5);
+    addLocalTransactions(senderLimitedTransactions, 6, 10);
+
+    // assert that we drop future nonces first:
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(5);
+  }
+
+  @Test
   public void assertThatCorrectNonceIsReturnedLargeGap() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
     addLocalTransactions(1, 2, Long.MAX_VALUE);
@@ -723,8 +768,13 @@ public class BaseFeePendingTransactionsTest {
   }
 
   private void addLocalTransactions(final long... nonces) {
+    addLocalTransactions(transactions, nonces);
+  }
+
+  private void addLocalTransactions(
+      final AbstractPendingTransactionsSorter sorter, final long... nonces) {
     for (final long nonce : nonces) {
-      transactions.addLocalTransaction(createTransaction(nonce));
+      sorter.addLocalTransaction(createTransaction(nonce));
     }
   }
 

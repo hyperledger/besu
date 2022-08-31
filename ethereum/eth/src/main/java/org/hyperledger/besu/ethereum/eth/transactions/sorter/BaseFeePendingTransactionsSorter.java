@@ -193,6 +193,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       if (!transactionAddedStatus.equals(ADDED)) {
         return transactionAddedStatus;
       }
+
       // check if it's in static or dynamic range
       if (isInStaticRange(transaction, baseFee)) {
         prioritizedTransactionsStaticRange.add(transactionInfo);
@@ -202,29 +203,41 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       LOG.trace("Adding {} to pending transactions", transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
-      if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
-        final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
-        if (!prioritizedTransactionsDynamicRange.isEmpty())
-          lowestValueTxForRemovalBySender(prioritizedTransactionsDynamicRange)
-              .ifPresent(removalCandidates::add);
-        if (!prioritizedTransactionsStaticRange.isEmpty())
-          lowestValueTxForRemovalBySender(prioritizedTransactionsStaticRange)
-              .ifPresent(removalCandidates::add);
-
-        droppedTransaction =
-            removalCandidates
-                .build()
-                .min(
-                    Comparator.comparing(
-                        txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
-                .map(TransactionInfo::getTransaction);
+      // check if this sender exceeds the transactions by sender limit:
+      var senderTxInfos = transactionsBySender.get(transactionInfo.getSender());
+      if (senderTxInfos.transactionCount() > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+        droppedTransaction = senderTxInfos.maybeLastTx().map(TransactionInfo::getTransaction);
         droppedTransaction.ifPresent(
-            toRemove -> {
-              doRemoveTransaction(toRemove, false);
-              LOG.trace("Evicted {} due to transaction pool size", toRemove);
-            });
+            tx -> LOG.trace("Evicted {} due to too many transactions from sender", tx));
+
+      } else {
+        // else if we are over txpool limit, select the lowest value transaction to evict
+        if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
+          final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
+          if (!prioritizedTransactionsDynamicRange.isEmpty())
+            lowestValueTxForRemovalBySender(prioritizedTransactionsDynamicRange)
+                .ifPresent(removalCandidates::add);
+          if (!prioritizedTransactionsStaticRange.isEmpty())
+            lowestValueTxForRemovalBySender(prioritizedTransactionsStaticRange)
+                .ifPresent(removalCandidates::add);
+
+          droppedTransaction =
+              removalCandidates
+                  .build()
+                  .min(
+                      Comparator.comparing(
+                          txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
+                  .map(TransactionInfo::getTransaction);
+        }
       }
+
+      droppedTransaction.ifPresent(
+          toRemove -> {
+            doRemoveTransaction(toRemove, false);
+            LOG.trace("Evicted {} due to transaction pool size", toRemove);
+          });
     }
+
     notifyTransactionAdded(transaction);
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
     return ADDED;

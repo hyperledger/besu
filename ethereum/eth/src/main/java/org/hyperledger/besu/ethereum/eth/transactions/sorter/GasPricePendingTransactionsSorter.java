@@ -29,6 +29,9 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
  * for mining or look-up by hash.
@@ -36,6 +39,8 @@ import java.util.function.Supplier;
  * <p>This class is safe for use across multiple threads.
  */
 public class GasPricePendingTransactionsSorter extends AbstractPendingTransactionsSorter {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(GasPricePendingTransactionsSorter.class);
 
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
@@ -92,12 +97,21 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
-      if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
-        droppedTransaction =
-            lowestValueTxForRemovalBySender(prioritizedTransactions)
-                .map(TransactionInfo::getTransaction);
-        droppedTransaction.ifPresent(tx -> doRemoveTransaction(tx, false));
+      // check if this sender exceeds the transactions by sender limit:
+      var senderTxInfos = transactionsBySender.get(transactionInfo.getSender());
+      if (senderTxInfos.transactionCount() > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+        droppedTransaction = senderTxInfos.maybeLastTx().map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(
+            tx -> LOG.trace("Evicted {} due to too many transactions from sender", tx));
+      } else {
+        // else if we are over txpool limit, select the lowest value transaction to evict
+        if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
+          droppedTransaction =
+              lowestValueTxForRemovalBySender(prioritizedTransactions)
+                  .map(TransactionInfo::getTransaction);
+        }
       }
+      droppedTransaction.ifPresent(tx -> doRemoveTransaction(tx, false));
     }
     notifyTransactionAdded(transactionInfo.getTransaction());
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
