@@ -301,13 +301,13 @@ public class JsonRpcHttpService {
     router
         .route()
         .failureHandler(
-            new Handler<RoutingContext>() {
-              @Override
-              public void handle(final RoutingContext event) {
-                LOG.error(event.failure().getMessage());
-                LOG.debug(event.failure().getMessage(), event.failure());
-                event.fail(403);
-              }
+            event -> {
+              LOG.error(event.failure().getMessage());
+              LOG.debug(event.failure().getMessage(), event.failure());
+              int statusCode = event.statusCode();
+
+              HttpServerResponse response = event.response();
+              response.setStatusCode(statusCode).end("Exception thrown handling RPC");
             });
     router
         .route()
