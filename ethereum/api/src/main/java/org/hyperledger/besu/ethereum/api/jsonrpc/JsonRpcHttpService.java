@@ -298,17 +298,16 @@ public class JsonRpcHttpService {
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(checkAllowlistHostHeader());
-    router
-        .route()
-        .failureHandler(
-            event -> {
-              LOG.error(event.failure().getMessage());
-              LOG.debug(event.failure().getMessage(), event.failure());
-              int statusCode = event.statusCode();
+    router.errorHandler(
+        403,
+        event -> {
+          LOG.error(event.failure().getMessage());
+          LOG.debug(event.failure().getMessage(), event.failure());
+          int statusCode = event.statusCode();
 
-              HttpServerResponse response = event.response();
-              response.setStatusCode(statusCode).end("Exception thrown handling RPC");
-            });
+          HttpServerResponse response = event.response();
+          response.setStatusCode(statusCode).end("Exception thrown handling RPC");
+        });
     router
         .route()
         .handler(
