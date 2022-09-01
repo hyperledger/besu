@@ -31,6 +31,7 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,9 @@ public class PendingMultiTypesTransactionsTest {
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private static final KeyPair KEYS3 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final KeyPair KEYS4 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final KeyPair KEYS5 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final KeyPair KEYS6 = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private static final String ADDED_COUNTER = "transactions_added_total";
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
@@ -58,7 +62,7 @@ public class PendingMultiTypesTransactionsTest {
       new BaseFeePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           MAX_TRANSACTIONS,
-          TestClock.fixed(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           () -> mockBlockHeader(Wei.of(7L)),
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
@@ -83,11 +87,11 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldReplaceTransactionWithLowestMaxFeePerGas() {
     final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
-    final Transaction localTransaction1 = create1559Transaction(1, 190, 20, KEYS1);
-    final Transaction localTransaction2 = create1559Transaction(2, 220, 20, KEYS1);
-    final Transaction localTransaction3 = create1559Transaction(3, 240, 20, KEYS1);
-    final Transaction localTransaction4 = create1559Transaction(4, 260, 20, KEYS1);
-    final Transaction localTransaction5 = create1559Transaction(5, 900, 20, KEYS1);
+    final Transaction localTransaction1 = create1559Transaction(0, 190, 20, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(0, 220, 20, KEYS3);
+    final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
+    final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
+    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0);
     transactions.addLocalTransaction(localTransaction1);
     transactions.addLocalTransaction(localTransaction2);
@@ -109,11 +113,11 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldEvictTransactionWithLowestMaxFeePerGasAndLowestTip() {
     final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
-    final Transaction localTransaction1 = create1559Transaction(1, 200, 19, KEYS1);
-    final Transaction localTransaction2 = create1559Transaction(2, 200, 18, KEYS1);
-    final Transaction localTransaction3 = create1559Transaction(3, 240, 20, KEYS1);
-    final Transaction localTransaction4 = create1559Transaction(4, 260, 20, KEYS1);
-    final Transaction localTransaction5 = create1559Transaction(5, 900, 20, KEYS1);
+    final Transaction localTransaction1 = create1559Transaction(0, 200, 19, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(0, 200, 18, KEYS3);
+    final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
+    final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
+    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0);
     transactions.addLocalTransaction(localTransaction1);
     transactions.addLocalTransaction(localTransaction2);
@@ -133,11 +137,11 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldEvictLegacyTransactionWithLowestEffectiveMaxPriorityFeePerGas() {
     final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
-    final Transaction localTransaction1 = createLegacyTransaction(1, 25, KEYS1);
-    final Transaction localTransaction2 = create1559Transaction(2, 200, 18, KEYS1);
-    final Transaction localTransaction3 = create1559Transaction(3, 240, 20, KEYS1);
-    final Transaction localTransaction4 = create1559Transaction(4, 260, 20, KEYS1);
-    final Transaction localTransaction5 = create1559Transaction(5, 900, 20, KEYS1);
+    final Transaction localTransaction1 = createLegacyTransaction(0, 25, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(0, 200, 18, KEYS3);
+    final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
+    final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
+    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0);
     transactions.addLocalTransaction(localTransaction1);
     transactions.addLocalTransaction(localTransaction2);
@@ -156,11 +160,11 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldEvictEIP1559TransactionWithLowestEffectiveMaxPriorityFeePerGas() {
     final Transaction localTransaction0 = create1559Transaction(0, 200, 20, KEYS1);
-    final Transaction localTransaction1 = createLegacyTransaction(1, 26, KEYS1);
-    final Transaction localTransaction2 = create1559Transaction(2, 200, 18, KEYS1);
-    final Transaction localTransaction3 = create1559Transaction(3, 240, 20, KEYS1);
-    final Transaction localTransaction4 = create1559Transaction(4, 260, 20, KEYS1);
-    final Transaction localTransaction5 = create1559Transaction(5, 900, 20, KEYS1);
+    final Transaction localTransaction1 = createLegacyTransaction(0, 26, KEYS2);
+    final Transaction localTransaction2 = create1559Transaction(0, 200, 18, KEYS3);
+    final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
+    final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
+    final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
     transactions.addLocalTransaction(localTransaction0);
     transactions.addLocalTransaction(localTransaction1);
     transactions.addLocalTransaction(localTransaction2);

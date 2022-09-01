@@ -29,6 +29,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.ZoneId;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class PoWMinerExecutorTest {
         new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             PoWMinerExecutorTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
@@ -74,7 +75,7 @@ public class PoWMinerExecutorTest {
         new GasPricePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             1,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             PoWMinerExecutorTest::mockBlockHeader,
             TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);

@@ -41,7 +41,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   public GasPricePendingTransactionsSorter(
@@ -101,9 +101,10 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
       if (pendingTransactions.size() > maxPendingTransactions) {
-        final TransactionInfo toRemove = prioritizedTransactions.last();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
+        droppedTransaction =
+            lowestValueTxForRemovalBySender(prioritizedTransactions)
+                .map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(tx -> doRemoveTransaction(tx, false));
       }
     }
     notifyTransactionAdded(transactionInfo.getTransaction());
