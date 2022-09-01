@@ -19,6 +19,7 @@ import static com.google.common.collect.Streams.stream;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -222,16 +223,7 @@ public class WebSocketService {
           .produces(APPLICATION_JSON)
           .handler(DefaultAuthenticationService::handleDisabledLogin);
     }
-    router.errorHandler(
-        403,
-        event -> {
-          LOG.error(event.failure().getMessage());
-          LOG.debug(event.failure().getMessage(), event.failure());
-          int statusCode = event.statusCode();
-
-          HttpServerResponse response = event.response();
-          response.setStatusCode(statusCode).end("Exception thrown handling RPC");
-        });
+    router.errorHandler(403, new Logging403ErrorHandler());
     router.route().handler(WebSocketService::handleHttpNotSupported);
     return router;
   }
