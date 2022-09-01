@@ -60,6 +60,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -84,7 +85,7 @@ public class BlockTransactionSelectorTest {
       new GasPricePendingTransactionsSorter(
           TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
           5,
-          TestClock.fixed(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           BlockTransactionSelectorTest::mockBlockHeader,
           TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
@@ -336,7 +337,7 @@ public class BlockTransactionSelectorTest {
         new BaseFeePendingTransactionsSorter(
             TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
             5,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             () -> {
               final BlockHeader mockBlockHeader = mock(BlockHeader.class);

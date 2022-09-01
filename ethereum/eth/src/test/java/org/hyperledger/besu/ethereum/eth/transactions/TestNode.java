@@ -64,6 +64,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -141,7 +142,7 @@ public class TestNode implements Closeable {
             protocolSchedule,
             protocolContext,
             ethContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState::isInitialSyncPhaseDone,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
