@@ -170,8 +170,4 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
     }
   }
 
-  @Override
-  public void removeObserver() {
-    BlockAddedObserver.super.removeObserver();
-  }
 }

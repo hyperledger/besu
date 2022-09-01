@@ -172,6 +172,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
     }
     sync.subscribeInSync(PandaPrinter.getInstance());
+    protocolContext.getBlockchain().observeBlockAdded(PandaPrinter.getInstance());
     return sync;
   }
 
