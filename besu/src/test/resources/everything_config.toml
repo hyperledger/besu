@@ -167,6 +167,7 @@ tx-pool-retention-hours=999
 tx-pool-price-bump=13
 tx-pool-max-size=1234
 tx-pool-hashes-max-size=10000
+tx-pool-future-max=1024
 tx-pool-future-max-by-account=50
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
