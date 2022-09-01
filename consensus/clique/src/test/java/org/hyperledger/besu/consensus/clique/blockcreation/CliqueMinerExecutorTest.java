@@ -45,6 +45,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -96,7 +97,7 @@ public class CliqueMinerExecutorTest {
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
-                TestClock.fixed(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
@@ -140,7 +141,7 @@ public class CliqueMinerExecutorTest {
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
-                TestClock.fixed(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
@@ -184,7 +185,7 @@ public class CliqueMinerExecutorTest {
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
-                TestClock.fixed(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
                 CliqueMinerExecutorTest::mockBlockHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
