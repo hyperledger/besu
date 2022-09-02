@@ -43,6 +43,7 @@ import org.junit.Test;
 public class PendingMultiTypesTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance)::get;
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -60,12 +61,13 @@ public class PendingMultiTypesTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS)
+              .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+              .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          () -> mockBlockHeader(Wei.of(7L)),
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          () -> mockBlockHeader(Wei.of(7L)));
 
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {

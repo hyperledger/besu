@@ -86,6 +86,10 @@ public class TransactionsForSenderInfo {
     return Optional.ofNullable(transactionsInfos.lastEntry()).map(Map.Entry::getValue);
   }
 
+  public int transactionCount() {
+    return transactionsInfos.size();
+  }
+
   public Stream<TransactionInfo> streamTransactionInfos() {
     return transactionsInfos.values().stream();
   }

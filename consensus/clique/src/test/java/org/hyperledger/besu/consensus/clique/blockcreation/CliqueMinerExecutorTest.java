@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -95,12 +95,10 @@ public class CliqueMinerExecutorTest {
             CliqueProtocolSchedule.create(
                 GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
             new GasPricePendingTransactionsSorter(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                1,
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
                 TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                CliqueMinerExecutorTest::mockBlockHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                CliqueMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
             new MiningParameters.Builder()
                 .coinbase(AddressHelpers.ofValue(1))
@@ -139,12 +137,10 @@ public class CliqueMinerExecutorTest {
             CliqueProtocolSchedule.create(
                 GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
             new GasPricePendingTransactionsSorter(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                1,
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
                 TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                CliqueMinerExecutorTest::mockBlockHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                CliqueMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
             new MiningParameters.Builder()
                 .coinbase(AddressHelpers.ofValue(1))
@@ -183,12 +179,10 @@ public class CliqueMinerExecutorTest {
             CliqueProtocolSchedule.create(
                 GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
             new GasPricePendingTransactionsSorter(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                1,
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
                 TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                CliqueMinerExecutorTest::mockBlockHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                CliqueMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
             new MiningParameters.Builder()
                 .coinbase(AddressHelpers.ofValue(1))

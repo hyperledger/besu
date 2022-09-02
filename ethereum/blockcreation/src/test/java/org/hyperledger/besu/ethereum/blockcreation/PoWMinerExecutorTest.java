@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -44,12 +44,10 @@ public class PoWMinerExecutorTest {
 
     final GasPricePendingTransactionsSorter pendingTransactions =
         new GasPricePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            PoWMinerExecutorTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            PoWMinerExecutorTest::mockBlockHeader);
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
@@ -73,12 +71,10 @@ public class PoWMinerExecutorTest {
 
     final GasPricePendingTransactionsSorter pendingTransactions =
         new GasPricePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            PoWMinerExecutorTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            PoWMinerExecutorTest::mockBlockHeader);
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
