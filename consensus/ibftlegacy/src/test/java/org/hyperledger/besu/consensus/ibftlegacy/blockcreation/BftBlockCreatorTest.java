@@ -46,6 +46,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -107,7 +108,7 @@ public class BftBlockCreatorTest {
             new GasPricePendingTransactionsSorter(
                 TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
                 1,
-                TestClock.fixed(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
                 blockchain::getChainHeadHeader,
                 TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
