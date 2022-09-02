@@ -87,9 +87,7 @@ public class RequestManager {
                 });
       } else {
         // otherwise iterate through all of them
-        for (final ResponseStream stream : streams) {
-          stream.processMessage(ethMessage.getData());
-        }
+        streams.forEach(stream -> stream.processMessage(ethMessage.getData()));
       }
     } catch (final RLPException e) {
       LOG.debug(
