@@ -89,7 +89,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -437,12 +437,10 @@ public class TestContextBuilder {
 
     final GasPricePendingTransactionsSorter pendingTransactions =
         new GasPricePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             clock,
             metricsSystem,
-            blockChain::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            blockChain::getChainHeadHeader);
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftBlockCreatorFactory<?> blockCreatorFactory =
