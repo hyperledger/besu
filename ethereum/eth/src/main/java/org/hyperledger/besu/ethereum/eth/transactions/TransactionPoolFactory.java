@@ -135,20 +135,16 @@ public class TransactionPoolFactory {
             .anyMatch(FeeMarket::implementsBaseFee);
     if (isFeeMarketImplementBaseFee) {
       return new BaseFeePendingTransactionsSorter(
-          transactionPoolConfiguration.getPendingTxRetentionPeriod(),
-          transactionPoolConfiguration.getTxPoolMaxSize(),
+          transactionPoolConfiguration,
           clock,
           metricsSystem,
-          protocolContext.getBlockchain()::getChainHeadHeader,
-          transactionPoolConfiguration.getPriceBump());
+          protocolContext.getBlockchain()::getChainHeadHeader);
     } else {
       return new GasPricePendingTransactionsSorter(
-          transactionPoolConfiguration.getPendingTxRetentionPeriod(),
-          transactionPoolConfiguration.getTxPoolMaxSize(),
+          transactionPoolConfiguration,
           clock,
           metricsSystem,
-          protocolContext.getBlockchain()::getChainHeadHeader,
-          transactionPoolConfiguration.getPriceBump());
+          protocolContext.getBlockchain()::getChainHeadHeader);
     }
   }
 }

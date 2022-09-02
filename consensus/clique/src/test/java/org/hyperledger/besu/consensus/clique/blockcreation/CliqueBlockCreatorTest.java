@@ -47,7 +47,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -132,12 +132,10 @@ public class CliqueBlockCreatorTest {
             () -> Optional.of(10_000_000L),
             parent -> extraData,
             new GasPricePendingTransactionsSorter(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                5,
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
                 TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                blockchain::getChainHeadHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                blockchain::getChainHeadHeader),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
@@ -167,12 +165,10 @@ public class CliqueBlockCreatorTest {
             () -> Optional.of(10_000_000L),
             parent -> extraData,
             new GasPricePendingTransactionsSorter(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                5,
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
                 TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                blockchain::getChainHeadHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                blockchain::getChainHeadHeader),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
@@ -204,12 +200,10 @@ public class CliqueBlockCreatorTest {
             () -> Optional.of(10_000_000L),
             parent -> extraData,
             new GasPricePendingTransactionsSorter(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                5,
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
                 TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                blockchain::getChainHeadHeader,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                blockchain::getChainHeadHeader),
             protocolContext,
             protocolSchedule,
             proposerNodeKey,

@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -117,12 +117,10 @@ public class BftBlockCreatorTest {
 
     final GasPricePendingTransactionsSorter pendingTransactions =
         new GasPricePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            blockchain::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            blockchain::getChainHeadHeader);
 
     final BftBlockCreator blockCreator =
         new BftBlockCreator(
