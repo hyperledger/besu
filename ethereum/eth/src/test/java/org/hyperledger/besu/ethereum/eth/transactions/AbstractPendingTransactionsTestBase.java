@@ -28,10 +28,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -48,6 +50,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public abstract class AbstractPendingTransactionsTestBase {
 
@@ -671,6 +674,52 @@ public abstract class AbstractPendingTransactionsTestBase {
     twoHourEvictionTransactionPool.evictOldTransactions();
     assertThat(twoHourEvictionTransactionPool.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldEvictGlobalFutureTransactions() {
+
+    Account mockAccount = when(mock(Account.class).getNonce()).thenReturn(-1L).getMock();
+    MutableWorldState mockWorldState =
+        when(mock(MutableWorldState.class).get(Mockito.any(Address.class)))
+            .thenReturn(mockAccount)
+            .getMock();
+
+    final AbstractPendingTransactionsSorter globalLimitTransactions =
+        getSorter(
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(2)
+                .txPoolMaxSize(10)
+                .txPoolMaxFutureTransactions(2)
+                .build(),
+            Optional.of(clock));
+
+    var addressList =
+        IntStream.range(0, 5)
+            .boxed()
+            .map(__ -> SIGNATURE_ALGORITHM.get().generateKeyPair())
+            .collect(Collectors.toList());
+
+    addressList.forEach(
+        keyPair ->
+            globalLimitTransactions.addRemoteTransaction(
+                transactionWithNonceSenderAndGasPrice(0, keyPair, 10L)));
+
+    // no-op evict:
+    globalLimitTransactions.evictGlobalFutureTransactions(mockWorldState);
+    assertThat(globalLimitTransactions.size()).isEqualTo(5);
+
+    // add future nonce transactions:
+    addressList.forEach(
+        keyPair ->
+            globalLimitTransactions.addRemoteTransaction(
+                transactionWithNonceSenderAndGasPrice(1, keyPair, 10L)));
+    assertThat(globalLimitTransactions.size()).isEqualTo(10);
+
+    // evict future nonce transactions beyond global limit
+    globalLimitTransactions.evictGlobalFutureTransactions(mockWorldState);
+    assertThat(globalLimitTransactions.size()).isEqualTo(7);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(3);
   }
 
   @Test
