@@ -147,6 +147,8 @@ public abstract class AbstractPendingTransactionsSorter {
    *
    * <p>Eviction criteria is first distance from the current account nonce, and then age in the
    * pool.
+   *
+   * @param worldState worldstate for account lookup
    */
   public void evictGlobalFutureTransactions(final MutableWorldState worldState) {
     final var senderAccountMap = new HashMap<Address, Account>();
