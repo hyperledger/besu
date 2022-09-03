@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
+
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -23,10 +25,15 @@ public class TransactionPoolEvictionService {
   private final Vertx vertx;
   private final TransactionPool transactionPool;
   private Optional<Long> timerId = Optional.empty();
+  private final ProtocolContext protocolContext;
 
-  public TransactionPoolEvictionService(final Vertx vertx, final TransactionPool transactionPool) {
+  public TransactionPoolEvictionService(
+      final Vertx vertx,
+      final TransactionPool transactionPool,
+      final ProtocolContext protocolContext) {
     this.vertx = vertx;
     this.transactionPool = transactionPool;
+    this.protocolContext = protocolContext;
   }
 
   public void start() {
@@ -35,7 +42,13 @@ public class TransactionPoolEvictionService {
         Optional.of(
             vertx.setPeriodic(
                 TimeUnit.MINUTES.toMillis(1),
-                id -> transactionPool.getPendingTransactions().evictOldTransactions()));
+                id -> {
+                  transactionPool.getPendingTransactions().evictOldTransactions();
+                  transactionPool
+                      .getPendingTransactions()
+                      .evictGlobalFutureTransactions(
+                          protocolContext.getWorldStateArchive().getMutable());
+                }));
   }
 
   public void stop() {

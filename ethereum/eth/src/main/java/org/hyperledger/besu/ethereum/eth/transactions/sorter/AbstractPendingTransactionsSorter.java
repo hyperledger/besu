@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionListener;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -41,6 +43,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -135,6 +138,37 @@ public abstract class AbstractPendingTransactionsSorter {
             transactionInfo -> {
               LOG.trace("Evicted {} due to age", transactionInfo);
               removeTransaction(transactionInfo.getTransaction());
+            });
+  }
+
+  /**
+   * Evaluates the transaction pool and evicts future nonce transactions until the global count of
+   * future nonce transactions is below the configured limit.
+   *
+   * <p>Eviction criteria is first distance from the current account nonce, and then age in the
+   * pool.
+   */
+  public void evictGlobalFutureTransactions(final MutableWorldState worldState) {
+    final var senderAccountMap = new HashMap<Address, Account>();
+
+    pendingTransactions.values().stream()
+        // filter pending transactions for future nonce transactions
+        .filter(
+            txInfo ->
+                senderAccountMap.computeIfAbsent(txInfo.getSender(), worldState::get).getNonce()
+                    < txInfo.getNonce() - 1L)
+        // sort first by nonce distance, then age in pool
+        .sorted(
+            Comparator.<TransactionInfo, Long>comparing(
+                    txi -> txi.getNonce() - senderAccountMap.get(txi.getSender()).getNonce())
+                .thenComparing(TransactionInfo::getAddedToPoolAt))
+        // skip allowable future nonce transactions
+        .skip(poolConfig.getTxPoolMaxFutureTransactions())
+        // evict the rest
+        .forEach(
+            futureTx -> {
+              doRemoveTransaction(futureTx.getTransaction(), false);
+              LOG.trace("Evicted {} due to global future transaction limits", futureTx);
             });
   }
 
