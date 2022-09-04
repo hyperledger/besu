@@ -408,6 +408,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isZeroBaseFee() {
+    return false;
+  }
+
+  @Override
   public List<Long> getForks() {
     return Collections.emptyList();
   }

@@ -43,6 +43,10 @@ public interface FeeMarket {
     return new LondonFeeMarket(londonForkBlockNumber, baseFeePerGasOverride);
   }
 
+  static BaseFeeMarket zeroBaseFee(final long londonForkBlockNumber) {
+    return new ZeroBaseFeeMarket(londonForkBlockNumber);
+  }
+
   static FeeMarket legacy() {
     return new LegacyFeeMarket();
   }

@@ -77,6 +77,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -133,12 +134,10 @@ public class TransactionPoolTest {
     blockchain = executionContext.getBlockchain();
     transactions =
         new GasPricePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            MAX_TRANSACTIONS,
-            TestClock.fixed(),
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            blockchain::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            blockchain::getChainHeadHeader);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.legacy());
