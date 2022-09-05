@@ -72,14 +72,9 @@ public class PandaPrinterTest {
   @Test
   public void printsWhenCrossingOnly() {
     PandaPrinter p = new PandaPrinter(Optional.of(Difficulty.of(1)), Difficulty.of(10));
-    // var mergeContext = new PostMergeContext(Difficulty.of(10));
-    // mergeContext.observeNewIsPostMergeState(fauxTransitionHandler);
     p.inSync();
     p.hasTTD();
-    // assertThat(p.ttdBeenDisplayed).isFalse();
-    // mergeContext.setIsPostMerge(Difficulty.ZERO);
     assertThat(p.ttdBeenDisplayed).isFalse();
-    // mergeContext.setIsPostMerge(Difficulty.ONE);
     p.onBlockAdded(withDifficulty(Difficulty.of(11)));
     assertThat(p.ttdBeenDisplayed).isTrue();
     assertThat(p.readyBeenDisplayed).isFalse();
