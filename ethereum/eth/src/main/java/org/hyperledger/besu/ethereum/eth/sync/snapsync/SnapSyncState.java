@@ -42,7 +42,7 @@ public class SnapSyncState extends FastSyncState {
     return isWaitingBlockchain;
   }
 
-  public void setWaitingBlockchain(boolean waitingBlockchain) {
+  public void setWaitingBlockchain(final boolean waitingBlockchain) {
     isWaitingBlockchain = waitingBlockchain;
   }
 
