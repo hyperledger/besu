@@ -339,7 +339,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .thenReturn(Optional.of(bytesToFind));
     storage.addFallbackNodeFinder(Optional.of(peerTrieNodeFinder));
 
-    storage.updater().putAccountStateTrieNode(location, Hash.hash(bytesInDB), bytesInDB).commit();
+    storage
+        .updater()
+        .putAccountStorageTrieNode(account, location, Hash.hash(bytesInDB), bytesInDB)
+        .commit();
 
     Optional<Bytes> accountStateTrieNodeResult =
         storage.getAccountStorageTrieNode(account, location, hashToFind);
