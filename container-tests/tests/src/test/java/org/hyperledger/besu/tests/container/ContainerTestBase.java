@@ -49,7 +49,7 @@ public class ContainerTestBase {
   private final String besuImage = System.getProperty("containertest.imagename");
 
   public static final String GOQUORUM_VERSION = "22.4.4";
-  public static final String TESSERA_VERSION = "22.1.6";
+  public static final String TESSERA_VERSION = "22.1.7";
 
   protected final String goQuorumTesseraPubKey = "3XGBIf+x8IdVQOVfIsbRnHwTYOJP/Fx84G8gMmy8qDM=";
   protected final String besuTesseraPubKey = "8JJLEAbq6o9m4Kqm++v0Y1n9Z2ryAFtZTyhnxSKWgws=";
