@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,7 +189,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     return new NoopPluginServiceFactory();
   }
 
-
   @Override
   protected Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
@@ -227,9 +227,11 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     }
     sync.subscribeInSync(PandaPrinter.getInstance());
     protocolContext.getBlockchain().observeBlockAdded(PandaPrinter.getInstance());
+    protocolContext
+        .getConsensusContext(MergeContext.class)
+        .addNewForkchoiceMessageListener(PandaPrinter.getInstance());
     return sync;
   }
-
 
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {

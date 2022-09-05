@@ -103,9 +103,10 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
 
   public void printOnFirstCrossing() {
     if (!ttdBeenDisplayed.get()) {
+      LOG.info("Crossed TTD, merging underway!");
       LOG.info("\n" + ttdBanner);
+      ttdBeenDisplayed.compareAndSet(false, true);
     }
-    ttdBeenDisplayed.compareAndSet(false, true);
   }
 
   public void resetForTesting() {
@@ -127,9 +128,10 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
 
   public void printFinalized() {
     if (!finalizedBeenDisplayed.get()) {
+      LOG.info("Beacon chain finalized, welcome to Proof of Stake Ethereum");
       LOG.info("\n" + finalizedBanner);
+      finalizedBeenDisplayed.compareAndSet(false, true);
     }
-    finalizedBeenDisplayed.compareAndSet(false, true);
   }
 
   @Override
@@ -169,5 +171,4 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
       }
     }
   }
-
 }
