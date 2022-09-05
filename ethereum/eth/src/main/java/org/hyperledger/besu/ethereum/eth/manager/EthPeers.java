@@ -206,7 +206,7 @@ public class EthPeers {
     final Collection<EthPeer> peerStream = connections.values();
     for (EthPeer p : peerStream) {
       if (p.isDisconnected()) {
-        connections.remove(p);
+        connections.remove(p.getConnection());
       }
     }
   }
