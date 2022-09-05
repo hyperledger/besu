@@ -18,7 +18,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
+import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -78,6 +80,14 @@ public class TransactionsForSenderInfo {
     } else {
       return nextGap.isEmpty() ? OptionalLong.of(transactionsInfos.lastKey() + 1) : nextGap;
     }
+  }
+
+  public Optional<TransactionInfo> maybeLastTx() {
+    return Optional.ofNullable(transactionsInfos.lastEntry()).map(Map.Entry::getValue);
+  }
+
+  public int transactionCount() {
+    return transactionsInfos.size();
   }
 
   public Stream<TransactionInfo> streamTransactionInfos() {
