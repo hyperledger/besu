@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -63,8 +62,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
-
-  private Blockchain blockchain;
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
