@@ -66,6 +66,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -144,7 +145,7 @@ public class BesuEventsImplTest {
             mockProtocolSchedule,
             mockProtocolContext,
             mockEthContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             new NoOpMetricsSystem(),
             syncState::isInitialSyncPhaseDone,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
