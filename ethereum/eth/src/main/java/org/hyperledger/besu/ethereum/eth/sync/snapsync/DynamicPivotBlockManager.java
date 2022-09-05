@@ -102,4 +102,8 @@ public class DynamicPivotBlockManager {
         },
         () -> onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false));
   }
+
+  public boolean isBlockchainBehind() {
+    return syncActions.isBlockchainBehind(syncState.getPivotBlockNumber().orElseThrow() - 256);
+  }
 }

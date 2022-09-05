@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -61,6 +63,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
+
+  private Blockchain blockchain;
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
@@ -137,6 +141,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       if (!snapSyncState.isHealInProgress()) {
         LOG.info("Starting world state heal process from peers");
         startHeal();
+      } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
+        LOG.info("Waiting blockchain part to finish");
+        snapSyncState.setWaitingBlockchain(true);
       } else {
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
@@ -259,8 +266,31 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
+    while (snapSyncState.isWaitingBlockchain()) {
+      try {
+        wait(1000);
+        snapSyncState.setWaitingBlockchain(false);
+        enqueueRequest(
+            createAccountTrieNodeDataRequest(
+                snapSyncState.getPivotBlockHash().orElseThrow(), Hash.EMPTY, inconsistentAccounts));
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
+      }
+    }
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
+        List.of(pendingTrieNodeRequests));
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueWaitingTaskBlocking() {
+    return dequeueRequestBlocking(
+        List.of(
+            pendingAccountRequests,
+            pendingStorageRequests,
+            pendingBigStorageRequests,
+            pendingCodeRequests,
+            pendingTrieNodeRequests),
         List.of(pendingTrieNodeRequests));
   }
 
