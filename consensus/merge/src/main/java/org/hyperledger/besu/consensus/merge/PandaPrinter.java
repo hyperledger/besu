@@ -118,11 +118,11 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
   }
 
   public void printReadyToMerge() {
-    if (!readyBeenDisplayed.get() && !isPoS.get() && !inSync.get()) {
+    if (!readyBeenDisplayed.get() && !isPoS.get() && inSync.get()) {
       LOG.info("Configured for TTD and in sync, still receiving PoW blocks. Ready to merge!");
       LOG.info("\n" + readyBanner);
+      readyBeenDisplayed.compareAndSet(false, true);
     }
-    readyBeenDisplayed.compareAndSet(false, true);
   }
 
   public void printFinalized() {

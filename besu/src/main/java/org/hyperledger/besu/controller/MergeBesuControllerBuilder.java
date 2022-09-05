@@ -135,47 +135,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     return ethProtocolManager;
   }
 
-  @Override
-  protected Synchronizer createSynchronizer(
-      final ProtocolSchedule protocolSchedule,
-      final WorldStateStorage worldStateStorage,
-      final ProtocolContext protocolContext,
-      final Optional<Pruner> maybePruner,
-      final EthContext ethContext,
-      final SyncState syncState,
-      final EthProtocolManager ethProtocolManager,
-      final PivotBlockSelector pivotBlockSelector) {
-
-    DefaultSynchronizer sync =
-        (DefaultSynchronizer)
-            super.createSynchronizer(
-                protocolSchedule,
-                worldStateStorage,
-                protocolContext,
-                maybePruner,
-                ethContext,
-                syncState,
-                ethProtocolManager,
-                pivotBlockSelector);
-    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
-    Optional<Difficulty> currentTotal =
-        protocolContext
-            .getBlockchain()
-            .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
-
-    PandaPrinter.init(
-        currentTotal,
-        Difficulty.of(configOptionsSupplier.get().getTerminalTotalDifficulty().get()));
-    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
-      LOG.info(
-          "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
-      protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
-    }
-    sync.subscribeInSync(PandaPrinter.getInstance());
-    protocolContext.getBlockchain().observeBlockAdded(PandaPrinter.getInstance());
-    return sync;
-  }
-
   protected MiningCoordinator createTransitionMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
