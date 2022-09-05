@@ -373,42 +373,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .andFinishWith(
                   "batchTrieNodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
 
-      final Pipeline<Task<SnapDataRequest>> waitingBlockchainDataPipeline =
-          createPipelineFrom(
-                  "requestTrieNodeDequeued",
-                  new TaskQueueIterator<>(
-                      downloadState, () -> downloadState.dequeueTrieNodeRequestBlocking()),
-                  bufferCapacity,
-                  outputCounter,
-                  true,
-                  "world_state_download")
-              .thenFlatMapInParallel(
-                  "requestLoadLocalTrieNodeData",
-                  task -> loadLocalDataStep.loadLocalDataTrieNode(task, requestsToComplete),
-                  3,
-                  bufferCapacity)
-              .inBatches(snapSyncConfiguration.getTrienodeCountPerRequest())
-              .thenProcess(
-                  "checkNewPivotBlock",
-                  tasks -> {
-                    pivotBlockManager.check(
-                        (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
-                    return tasks;
-                  })
-              .thenProcessAsync(
-                  "batchDownloadTrieNodeData",
-                  tasks -> requestDataStep.requestTrieNodeByPath(tasks),
-                  maxOutstandingRequests)
-              .thenProcess(
-                  "batchPersistTrieNodeData",
-                  tasks -> {
-                    persistDataStep.persist(tasks);
-                    return tasks;
-                  })
-              .andFinishWith(
-                  "batchTrieNodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
-
       return new SnapWorldStateDownloadProcess(
           fetchAccountDataPipeline,
           fetchStorageDataPipeline,

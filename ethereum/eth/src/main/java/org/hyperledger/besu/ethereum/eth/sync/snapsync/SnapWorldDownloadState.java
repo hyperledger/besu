@@ -283,17 +283,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         List.of(pendingTrieNodeRequests));
   }
 
-  public synchronized Task<SnapDataRequest> dequeueWaitingTaskBlocking() {
-    return dequeueRequestBlocking(
-        List.of(
-            pendingAccountRequests,
-            pendingStorageRequests,
-            pendingBigStorageRequests,
-            pendingCodeRequests,
-            pendingTrieNodeRequests),
-        List.of(pendingTrieNodeRequests));
-  }
-
   public SnapsyncMetricsManager getMetricsManager() {
     return metricsManager;
   }
