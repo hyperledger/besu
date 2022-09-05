@@ -119,7 +119,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
             .or(
                 () ->
                     maybeFallbackNodeFinder.flatMap(
-                        finder -> getAccountStateTrieNode(location, nodeHash)));
+                        finder -> finder.getAccountStateTrieNode(location, nodeHash)));
       }
       return Optional.empty();
     }
@@ -141,7 +141,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
             .or(
                 () ->
                     maybeFallbackNodeFinder.flatMap(
-                        finder -> getAccountStorageTrieNode(accountHash, location, nodeHash)));
+                        finder ->
+                            finder.getAccountStorageTrieNode(accountHash, location, nodeHash)));
       }
       return Optional.empty();
     }

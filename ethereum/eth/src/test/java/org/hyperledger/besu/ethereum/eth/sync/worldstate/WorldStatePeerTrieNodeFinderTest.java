@@ -48,7 +48,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@SuppressWarnings({"unchecked", "FieldCanBeLocal", "unused"})
+@SuppressWarnings({"FieldCanBeLocal", "unused"})
 @RunWith(MockitoJUnitRunner.class)
 public class WorldStatePeerTrieNodeFinderTest {
 

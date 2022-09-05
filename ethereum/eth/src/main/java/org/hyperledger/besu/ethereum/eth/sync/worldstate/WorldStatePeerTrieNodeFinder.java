@@ -74,7 +74,7 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
             .or(() -> findByGetTrieNodeData(Hash.wrap(nodeHash), Optional.empty(), location));
     response.ifPresent(
         bytes -> {
-          LOG.trace(
+          LOG.info(
               "Fixed missing account state trie node for location {} and hash {}",
               location,
               nodeHash);
@@ -97,7 +97,7 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
                     findByGetTrieNodeData(Hash.wrap(nodeHash), Optional.of(accountHash), location));
     response.ifPresent(
         bytes -> {
-          LOG.trace(
+          LOG.info(
               "Fixed missing storage state trie node for location {} and hash {}",
               location,
               nodeHash);
@@ -115,11 +115,11 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
       final Map<Hash, Bytes> response =
           retryingGetNodeDataFromPeerTask.run().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       if (response.containsKey(nodeHash)) {
-        LOG.trace("Found node {} with getNodeData request", nodeHash);
+        LOG.info("Found node {} with getNodeData request", nodeHash);
         return Optional.of(response.get(nodeHash));
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      LOG.trace("Error when trying to find node {} with getNodeData request", nodeHash);
+      LOG.info("Error when trying to find node {} with getNodeData request", nodeHash);
     }
     return Optional.empty();
   }
@@ -142,11 +142,11 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
       final Bytes nodeValue =
           response.get(Bytes.concatenate(accountHash.map(Bytes::wrap).orElse(Bytes.EMPTY), path));
       if (nodeValue != null && Hash.hash(nodeValue).equals(nodeHash)) {
-        LOG.trace("Found node {} with getTrieNode request", nodeHash);
+        LOG.info("Found node {} with getTrieNode request", nodeHash);
         return Optional.of(nodeValue);
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      LOG.trace("Error when trying to find node {} with getTrieNode request", nodeHash);
+      LOG.info("Error when trying to find node {} with getTrieNode request", nodeHash);
     }
     return Optional.empty();
   }
