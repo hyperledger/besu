@@ -23,8 +23,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.util.Comparator;
@@ -52,19 +52,11 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   private Optional<Wei> baseFee;
 
   public BaseFeePendingTransactionsSorter(
-      final int maxTransactionRetentionHours,
-      final int maxPendingTransactions,
+      final TransactionPoolConfiguration poolConfig,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Percentage priceBump) {
-    super(
-        maxTransactionRetentionHours,
-        maxPendingTransactions,
-        clock,
-        metricsSystem,
-        chainHeadHeaderSupplier,
-        priceBump);
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier);
     this.baseFee = chainHeadHeaderSupplier.get().getBaseFee();
   }
 
@@ -84,7 +76,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .get()
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
@@ -97,7 +89,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   @Override
@@ -201,6 +193,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       if (!transactionAddedStatus.equals(ADDED)) {
         return transactionAddedStatus;
       }
+
       // check if it's in static or dynamic range
       if (isInStaticRange(transaction, baseFee)) {
         prioritizedTransactionsStaticRange.add(transactionInfo);
@@ -210,25 +203,41 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       LOG.trace("Adding {} to pending transactions", transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
-      if (pendingTransactions.size() > maxPendingTransactions) {
-        final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
-        if (!prioritizedTransactionsDynamicRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsDynamicRange.last());
-        if (!prioritizedTransactionsStaticRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsStaticRange.last());
-        final TransactionInfo toRemove =
-            removalCandidates
-                .build()
-                .min(
-                    Comparator.comparing(
-                        txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
-                // safe because we just added a tx to the pool so we're guaranteed to have one
-                .get();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        LOG.trace("Evicted {} due to transaction pool size", toRemove);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
+      // check if this sender exceeds the transactions by sender limit:
+      var senderTxInfos = transactionsBySender.get(transactionInfo.getSender());
+      if (senderTxInfos.transactionCount() > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+        droppedTransaction = senderTxInfos.maybeLastTx().map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(
+            tx -> LOG.trace("Evicted {} due to too many transactions from sender", tx));
+
+      } else {
+        // else if we are over txpool limit, select the lowest value transaction to evict
+        if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
+          final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
+          if (!prioritizedTransactionsDynamicRange.isEmpty())
+            lowestValueTxForRemovalBySender(prioritizedTransactionsDynamicRange)
+                .ifPresent(removalCandidates::add);
+          if (!prioritizedTransactionsStaticRange.isEmpty())
+            lowestValueTxForRemovalBySender(prioritizedTransactionsStaticRange)
+                .ifPresent(removalCandidates::add);
+
+          droppedTransaction =
+              removalCandidates
+                  .build()
+                  .min(
+                      Comparator.comparing(
+                          txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
+                  .map(TransactionInfo::getTransaction);
+        }
       }
+
+      droppedTransaction.ifPresent(
+          toRemove -> {
+            doRemoveTransaction(toRemove, false);
+            LOG.trace("Evicted {} due to transaction pool size", toRemove);
+          });
     }
+
     notifyTransactionAdded(transaction);
     droppedTransaction.ifPresent(this::notifyTransactionDropped);
     return ADDED;

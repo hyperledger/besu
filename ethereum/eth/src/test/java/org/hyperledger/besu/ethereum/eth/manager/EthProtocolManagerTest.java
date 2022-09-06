@@ -73,6 +73,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1081,7 +1082,7 @@ public final class EthProtocolManagerTest {
           protocolSchedule,
           protocolContext,
           ethManager.ethContext(),
-          TestClock.fixed(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           () -> true,
           new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
