@@ -52,16 +52,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   private Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder;
 
   public BonsaiWorldStateKeyValueStorage(final StorageProvider provider) {
-    accountStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    codeStorage = provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
-    storageStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
-    trieBranchStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
-    trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    maybeFallbackNodeFinder = Optional.empty();
+    this(
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+        Optional.empty());
   }
 
   public BonsaiWorldStateKeyValueStorage(
@@ -70,12 +67,28 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
+    this(
+        accountStorage,
+        codeStorage,
+        storageStorage,
+        trieBranchStorage,
+        trieLogStorage,
+        Optional.empty());
+  }
+
+  public BonsaiWorldStateKeyValueStorage(
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage codeStorage,
+      final KeyValueStorage storageStorage,
+      final KeyValueStorage trieBranchStorage,
+      final KeyValueStorage trieLogStorage,
+      final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
-    this.maybeFallbackNodeFinder = Optional.empty();
+    this.maybeFallbackNodeFinder = fallbackNodeFinder;
   }
 
   @Override
@@ -250,7 +263,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     return maybeFallbackNodeFinder;
   }
 
-  public void addFallbackNodeFinder(final Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder) {
+  public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> maybeFallbackNodeFinder) {
     checkNotNull(maybeFallbackNodeFinder);
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }

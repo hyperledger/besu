@@ -75,16 +75,14 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
   @Override
   public MutableWorldState copy() {
-
     BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
         new BonsaiInMemoryWorldStateKeyValueStorage(
             worldStateStorage.accountStorage,
             worldStateStorage.codeStorage,
             worldStateStorage.storageStorage,
             worldStateStorage.trieBranchStorage,
-            worldStateStorage.trieLogStorage);
-    bonsaiInMemoryWorldStateKeyValueStorage.addFallbackNodeFinder(
-        getWorldStateStorage().getMaybeFallbackNodeFinder());
+            worldStateStorage.trieLogStorage,
+            getWorldStateStorage().getMaybeFallbackNodeFinder());
 
     return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
   }

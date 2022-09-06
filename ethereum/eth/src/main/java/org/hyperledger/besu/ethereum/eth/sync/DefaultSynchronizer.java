@@ -269,9 +269,9 @@ public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListe
               new WorldStatePeerTrieNodeFinder(
                   ethContext, protocolContext.getBlockchain(), metricsSystem));
       ((BonsaiWorldStateArchive) protocolContext.getWorldStateArchive())
-          .addFallbackNodeFinder(fallbackNodeFinder);
+          .useFallbackNodeFinder(fallbackNodeFinder);
       ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
-          .addFallbackNodeFinder(fallbackNodeFinder);
+          .useFallbackNodeFinder(fallbackNodeFinder);
     }
   }
 

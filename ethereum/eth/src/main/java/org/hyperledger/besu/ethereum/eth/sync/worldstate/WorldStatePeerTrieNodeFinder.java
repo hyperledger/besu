@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetNodeDataFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -45,7 +44,7 @@ import org.slf4j.LoggerFactory;
 /** This class is used to retrieve missing nodes in the trie by querying the peers */
 public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WorldStatePeerTrieNodeFinder.class);
 
   private final Cache<Bytes32, Bytes> foundNodes =
       CacheBuilder.newBuilder().maximumSize(10_000).expireAfterWrite(5, TimeUnit.MINUTES).build();
@@ -65,9 +64,9 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    Optional<Bytes> ifPresent = Optional.ofNullable(foundNodes.getIfPresent(nodeHash));
-    if (ifPresent.isPresent()) {
-      return ifPresent;
+    Optional<Bytes> cachedValue = Optional.ofNullable(foundNodes.getIfPresent(nodeHash));
+    if (cachedValue.isPresent()) {
+      return cachedValue;
     }
     final Optional<Bytes> response =
         findByGetNodeData(Hash.wrap(nodeHash))
@@ -86,9 +85,9 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    Optional<Bytes> ifPresent = Optional.ofNullable(foundNodes.getIfPresent(nodeHash));
-    if (ifPresent.isPresent()) {
-      return ifPresent;
+    Optional<Bytes> cachedValue = Optional.ofNullable(foundNodes.getIfPresent(nodeHash));
+    if (cachedValue.isPresent()) {
+      return cachedValue;
     }
     final Optional<Bytes> response =
         findByGetNodeData(Hash.wrap(nodeHash))
@@ -117,6 +116,8 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
       if (response.containsKey(nodeHash)) {
         LOG.debug("Found node {} with getNodeData request", nodeHash);
         return Optional.of(response.get(nodeHash));
+      } else {
+        LOG.debug("Found invalid node {} with getNodeData request", nodeHash);
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       LOG.debug("Error when trying to find node {} with getNodeData request", nodeHash);
@@ -144,6 +145,8 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
       if (nodeValue != null && Hash.hash(nodeValue).equals(nodeHash)) {
         LOG.debug("Found node {} with getTrieNode request", nodeHash);
         return Optional.of(nodeValue);
+      } else {
+        LOG.debug("Found invalid node {} with getTrieNode request", nodeHash);
       }
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       LOG.debug("Error when trying to find node {} with getTrieNode request", nodeHash);

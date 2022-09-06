@@ -265,9 +265,8 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
             bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage);
-    bonsaiInMemoryWorldStateKeyValueStorage.addFallbackNodeFinder(
-        bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
+            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
     return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
   }
 

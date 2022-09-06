@@ -246,8 +246,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
-  public void addFallbackNodeFinder(final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
+  public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
     checkNotNull(fallbackNodeFinder);
-    worldStateStorage.addFallbackNodeFinder(fallbackNodeFinder);
+    worldStateStorage.useFallbackNodeFinder(fallbackNodeFinder);
   }
 }

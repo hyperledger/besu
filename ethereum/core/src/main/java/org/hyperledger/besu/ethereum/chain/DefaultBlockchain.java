@@ -101,6 +101,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     chainHeadTransactionCount = chainHeadBody.getTransactions().size();
     chainHeadOmmerCount = chainHeadBody.getOmmers().size();
 
+    System.out.println("head " + getChainHead().getHeight() + " " + getChainHead().getHash());
+
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
         "blockchain_height",
