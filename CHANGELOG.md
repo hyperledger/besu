@@ -1,14 +1,16 @@
 # Changelog
 
 ## 22.7.2
+### Besu 22.7.2 is a recommended release for the Merge and Mainnet users. 22.7.1 remains Merge-ready. This release provides additional robustness before the Merge with some fixes and improvements in sync, peering, and logging.
 
 ### Additions and Improvements
-- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
 - Better management of jemalloc presence/absence in startup script [#4237](https://github.com/hyperledger/besu/pull/4237)
 - Retry mechanism when getting a broadcasted block fail on all peers [#4271](https://github.com/hyperledger/besu/pull/4271)
 - Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
 - Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
 - Log imported block info post merge [#4310](https://github.com/hyperledger/besu/pull/4310)
+- Transaction pool eviction by sender from tail of transaction list [#4327](https://github.com/hyperledger/besu/pull/4327)
+- Transaction pool sender future nonce limits [#4336](https://github.com/hyperledger/besu/pull/4336) 
 - Pandas! Pandas now appear in 3 phases: The black bear and polar bear that are preparing? Those will appear when
 your client has TTD configured (which is setup by default for mainnet), is in sync, and processing Proof of Work blocks. In the second phase you will see them powering up when the Terminal Total Difficulty block is added to the blockchain.
 The final form of the Ethereum Panda will appear when the first finalized block is received from the Consensus Layer.
