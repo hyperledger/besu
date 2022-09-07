@@ -81,7 +81,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     traceLambda(
         LOG,
         "received transitionConfiguration: {}",
-        () -> Json.encodePrettily(remoteTransitionConfiguration));
+        () -> Json.encodePrettily(remoteTransitionConfiguration.toString()));
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader =
         mergeContextOptional.flatMap(MergeContext::getTerminalPoWBlock);

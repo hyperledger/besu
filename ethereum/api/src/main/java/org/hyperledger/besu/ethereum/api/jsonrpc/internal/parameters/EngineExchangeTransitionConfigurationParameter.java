@@ -46,4 +46,13 @@ public class EngineExchangeTransitionConfigurationParameter {
   public long getTerminalBlockNumber() {
     return terminalBlockNumber;
   }
+
+  @Override
+  public String toString() {
+    return "EngineExchangeTransitionConfigurationParameter{" +
+            "terminalTotalDifficulty=" + terminalTotalDifficulty.toShortHexString() +
+            ", terminalBlockHash=" + terminalBlockHash.toShortHexString() +
+            ", terminalBlockNumber=" + terminalBlockNumber +
+            '}';
+  }
 }
