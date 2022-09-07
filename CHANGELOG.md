@@ -12,6 +12,7 @@
 
 ### Bug Fixes
 - Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
+- Properly shutdown the miner executor, to avoid waiting 30 seconds when stopping [#4353](https://github.com/hyperledger/besu/pull/4353)
 
 
 ## 22.7.1
