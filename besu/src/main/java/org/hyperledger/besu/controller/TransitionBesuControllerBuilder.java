@@ -222,8 +222,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
               .getBlockchain()
               .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
       PandaPrinter.init(
-          currentTotal,
-          Difficulty.of(maybeForTTD.getTerminalTotalDifficulty().get()));
+          currentTotal, Difficulty.of(maybeForTTD.getTerminalTotalDifficulty().get()));
     }
     sync.subscribeInSync(PandaPrinter.getInstance());
     protocolContext.getBlockchain().observeBlockAdded(PandaPrinter.getInstance());
