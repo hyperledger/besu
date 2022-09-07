@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -242,5 +244,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final List<UInt256> accountStorageKeys) {
     // FIXME we can do proofs for layered tries and the persisted trie
     return Optional.empty();
+  }
+
+  public void useFallbackNodeFinder(final Optional<PeerTrieNodeFinder> fallbackNodeFinder) {
+    checkNotNull(fallbackNodeFinder);
+    worldStateStorage.useFallbackNodeFinder(fallbackNodeFinder);
   }
 }
