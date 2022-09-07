@@ -212,18 +212,18 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 ethProtocolManager,
                 pivotBlockSelector);
     final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
-    Optional<Difficulty> currentTotal =
-        protocolContext
-            .getBlockchain()
-            .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
 
-    PandaPrinter.init(
-        currentTotal,
-        Difficulty.of(configOptionsSupplier.get().getTerminalTotalDifficulty().get()));
     if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
       protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
+      Optional<Difficulty> currentTotal =
+          protocolContext
+              .getBlockchain()
+              .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
+      PandaPrinter.init(
+          currentTotal,
+          Difficulty.of(maybeForTTD.getTerminalTotalDifficulty().get()));
     }
     sync.subscribeInSync(PandaPrinter.getInstance());
     protocolContext.getBlockchain().observeBlockAdded(PandaPrinter.getInstance());
