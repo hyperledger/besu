@@ -191,7 +191,7 @@ public class EthPeers {
   }
 
   public int peerCount() {
-    return (int) connections.values().stream().filter(c -> !c.isDisconnected()).count();
+    return connections.size();
   }
 
   public int getMaxPeers() {
