@@ -98,32 +98,26 @@ public class PandaPrinterTest {
         new PandaPrinter(Optional.of(Difficulty.of(11)), Difficulty.of(BigInteger.TEN));
     p.inSync();
     p.hasTTD();
-    // p.onNewForkchoiceMessage();
 
     assertThat(p.readyBeenDisplayed).isTrue();
     assertThat(p.ttdBeenDisplayed).isTrue();
-    assertThat(p.finalizedBeenDisplayed).isFalse();
+    assertThat(p.finalizedBeenDisplayed).isTrue();
     p.onBlockAdded(withDifficulty(Difficulty.of(11)));
     assertThat(p.readyBeenDisplayed).isTrue();
     assertThat(p.ttdBeenDisplayed).isTrue();
-    assertThat(p.finalizedBeenDisplayed).isFalse();
+    assertThat(p.finalizedBeenDisplayed).isTrue();
   }
 
   @Test
   public void printsFinalized() {
-    PandaPrinter p =
-        new PandaPrinter(Optional.of(Difficulty.of(11)), Difficulty.of(BigInteger.TEN));
+    PandaPrinter p = new PandaPrinter(Optional.of(Difficulty.of(9)), Difficulty.of(BigInteger.TEN));
+    assertThat(p.finalizedBeenDisplayed).isFalse();
     MergeContext mergeContext = new PostMergeContext(Difficulty.ZERO);
     mergeContext.addNewForkchoiceMessageListener(p);
     mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
         Hash.ZERO, Optional.of(Hash.ZERO), Hash.ZERO);
-    assertThat(p.readyBeenDisplayed).isTrue();
-    assertThat(p.ttdBeenDisplayed).isTrue();
-    assertThat(p.finalizedBeenDisplayed).isFalse();
     mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
         Hash.ZERO, Optional.of(Hash.fromHexStringLenient("0x1337")), Hash.ZERO);
-    assertThat(p.readyBeenDisplayed).isTrue();
-    assertThat(p.ttdBeenDisplayed).isTrue();
     assertThat(p.finalizedBeenDisplayed).isTrue();
   }
 
