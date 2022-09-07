@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -60,6 +60,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -82,12 +83,10 @@ public class BlockTransactionSelectorTest {
   private final Blockchain blockchain = new ReferenceTestBlockchain();
   private final GasPricePendingTransactionsSorter pendingTransactions =
       new GasPricePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          5,
-          TestClock.fixed(),
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          BlockTransactionSelectorTest::mockBlockHeader,
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          BlockTransactionSelectorTest::mockBlockHeader);
   private final MutableWorldState worldState =
       InMemoryKeyValueStorageProvider.createInMemoryWorldState();
   @Mock private MainnetTransactionProcessor transactionProcessor;
@@ -334,16 +333,14 @@ public class BlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BaseFeePendingTransactionsSorter pendingTransactions1559 =
         new BaseFeePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            5,
-            TestClock.fixed(),
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             () -> {
               final BlockHeader mockBlockHeader = mock(BlockHeader.class);
               when(mockBlockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
               return mockBlockHeader;
-            },
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            });
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,

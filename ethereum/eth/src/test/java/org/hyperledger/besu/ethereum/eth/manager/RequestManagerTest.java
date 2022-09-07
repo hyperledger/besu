@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.ArrayList;
@@ -308,5 +309,30 @@ public class RequestManagerTest {
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         TestClock.fixed(),
         Collections.emptyList());
+  }
+
+  @Test
+  public void disconnectsPeerOnBadMessage() throws Exception {
+    for (final boolean supportsRequestId : List.of(true, false)) {
+      final EthPeer peer = createPeer();
+      final RequestManager requestManager =
+          new RequestManager(peer, supportsRequestId, EthProtocol.NAME);
+
+      requestManager
+          .dispatchRequest(
+              messageData -> RLP.input(messageData.getData()).nextSize(),
+              new RawMessage(0x01, Bytes.EMPTY))
+          .then(
+              (closed, msg, p) -> {
+                if (!closed) {
+                  RLP.input(msg.getData()).skipNext();
+                }
+              });
+      final EthMessage mockMessage =
+          new EthMessage(peer, new RawMessage(1, Bytes.of(0x81, 0x82, 0x83, 0x84)));
+
+      requestManager.dispatchResponse(mockMessage);
+      assertThat(peer.isDisconnected()).isTrue();
+    }
   }
 }
