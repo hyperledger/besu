@@ -259,14 +259,15 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   public MutableWorldState copy() {
     final BonsaiPersistedWorldState bonsaiPersistedWorldState =
         ((BonsaiPersistedWorldState) archive.getMutable());
-    return new BonsaiInMemoryWorldState(
-        archive,
+    BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
         new BonsaiInMemoryWorldStateKeyValueStorage(
             bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage));
+            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
+    return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
   }
 
   @Override
