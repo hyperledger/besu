@@ -55,7 +55,7 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
     return INSTANCE;
   }
 
-  public PandaPrinter(final Optional<Difficulty> currentTotal, final Difficulty ttd) {
+  protected PandaPrinter(final Optional<Difficulty> currentTotal, final Difficulty ttd) {
     this.ttd = ttd;
     if (currentTotal.isPresent() && currentTotal.get().greaterOrEqualThan(ttd)) {
       this.readyBeenDisplayed.set(true);
