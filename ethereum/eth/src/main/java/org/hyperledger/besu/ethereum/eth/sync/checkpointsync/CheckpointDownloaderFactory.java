@@ -126,6 +126,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
+            protocolContext,
             worldStateStorage,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),

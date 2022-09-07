@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -34,6 +35,7 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -60,11 +62,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
   private final SnapSyncState snapSyncState;
 
+  // blockchain
+  private final Blockchain blockchain;
+  private long blockObserverId;
+
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
       final SnapSyncState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
@@ -77,6 +84,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock);
+    this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
     metricsManager
@@ -140,8 +148,11 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         startHeal();
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
         LOG.info("Waiting blockchain part to finish");
+        blockObserverId = blockchain.observeBlockAdded(getBlockAddedListener());
         snapSyncState.setWaitingBlockchain(true);
+        notifyTaskAvailable();
       } else {
+        blockchain.removeObserver(blockObserverId);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
@@ -215,7 +226,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueRequestBlocking(
       final List<TaskCollection<SnapDataRequest>> queueDependencies,
-      final List<TaskCollection<SnapDataRequest>> queues) {
+      final List<TaskCollection<SnapDataRequest>> queues,
+      final Consumer<Void> onRetryAction) {
     while (!internalFuture.isDone()) {
       while (queueDependencies.stream()
           .map(TaskCollection::allTasksCompleted)
@@ -240,6 +252,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         Thread.currentThread().interrupt();
         return null;
       }
+
+      onRetryAction.accept(null);
     }
     return null;
   }
@@ -247,37 +261,30 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
-        List.of(pendingAccountRequests));
+        List.of(pendingAccountRequests),
+        __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingBigStorageRequests));
+    return dequeueRequestBlocking(
+        Collections.emptyList(), List.of(pendingBigStorageRequests), __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingStorageRequests));
+    return dequeueRequestBlocking(
+        Collections.emptyList(), List.of(pendingStorageRequests), __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueCodeRequestBlocking() {
-    return dequeueRequestBlocking(List.of(pendingStorageRequests), List.of(pendingCodeRequests));
+    return dequeueRequestBlocking(
+        List.of(pendingStorageRequests), List.of(pendingCodeRequests), __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
-    while (snapSyncState.isWaitingBlockchain()) {
-      try {
-        wait(1000);
-        snapSyncState.setWaitingBlockchain(false);
-        enqueueRequest(
-            createAccountTrieNodeDataRequest(
-                snapSyncState.getPivotBlockHash().orElseThrow(), Hash.EMPTY, inconsistentAccounts));
-      } catch (final InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-      }
-    }
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
-        List.of(pendingTrieNodeRequests));
+        List.of(pendingTrieNodeRequests),
+        __ -> {});
   }
 
   public SnapsyncMetricsManager getMetricsManager() {
@@ -286,5 +293,19 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public void setDynamicPivotBlockManager(final DynamicPivotBlockManager dynamicPivotBlockManager) {
     this.dynamicPivotBlockManager = dynamicPivotBlockManager;
+  }
+
+  public BlockAddedObserver getBlockAddedListener() {
+    return addedBlockContext -> {
+      System.out.println("new block added " + addedBlockContext.getBlock().getHeader().getNumber());
+      if (snapSyncState.isWaitingBlockchain()) {
+        dynamicPivotBlockManager.check(
+            (____, ___) -> {
+              snapSyncState.setWaitingBlockchain(false);
+              System.out.println("new pivot block detected");
+              reloadHeal();
+            });
+      }
+    };
   }
 }
