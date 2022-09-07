@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
 import java.util.List;
+import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -59,6 +60,10 @@ public interface BlockProcessor {
 
     default boolean isFailed() {
       return !isSuccessful();
+    }
+
+    default Optional<Throwable> causedBy() {
+      return Optional.empty();
     }
   }
 
