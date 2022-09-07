@@ -34,6 +34,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -62,6 +63,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     private final boolean successful;
 
+    private Optional<Throwable> causedBy = Optional.empty();
+
     private final List<TransactionReceipt> receipts;
     private final List<TransactionReceipt> privateReceipts;
 
@@ -81,6 +84,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     public static AbstractBlockProcessor.Result failed() {
       return FAILED;
+    }
+
+    public static AbstractBlockProcessor.Result failedBecause(final Throwable t) {
+      return new AbstractBlockProcessor.Result(t);
+    }
+
+    Result(final Throwable t) {
+      this.successful = false;
+      this.receipts = null;
+      this.privateReceipts = Collections.emptyList();
+      this.causedBy = Optional.of(t);
     }
 
     Result(final boolean successful, final List<TransactionReceipt> receipts) {
@@ -111,6 +125,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     @Override
     public boolean isSuccessful() {
       return successful;
+    }
+
+    @Override
+    public Optional<Throwable> causedBy() {
+      return this.causedBy;
     }
   }
 
@@ -201,7 +220,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       worldState.persist(blockHeader);
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
-      return AbstractBlockProcessor.Result.failed();
+      return AbstractBlockProcessor.Result.failedBecause(e);
     }
 
     return AbstractBlockProcessor.Result.successful(receipts);
