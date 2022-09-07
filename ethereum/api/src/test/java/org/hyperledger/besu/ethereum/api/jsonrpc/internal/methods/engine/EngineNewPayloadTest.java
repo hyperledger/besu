@@ -39,6 +39,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -49,6 +51,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
 import java.util.List;
@@ -205,6 +208,24 @@ public class EngineNewPayloadTest {
   }
 
   @Test
+  public void shouldNotReturnInvalidOnInternalException() {
+    BlockHeader mockHeader = createBlockHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.rememberBlock(any()))
+        .thenReturn(new Result("kablooey", new StorageException(new Exception())));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    fromErrorResp(resp);
+  }
+
+  @Test
   public void shouldReturnInvalidBlockHashOnBadHashParameter() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
 
@@ -356,6 +377,14 @@ public class EngineNewPayloadTest {
         .map(JsonRpcSuccessResponse.class::cast)
         .map(JsonRpcSuccessResponse::getResult)
         .map(EnginePayloadStatusResult.class::cast)
+        .get();
+  }
+
+  private JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    return Optional.of(resp)
+        .map(JsonRpcErrorResponse.class::cast)
+        .map(JsonRpcErrorResponse::getError)
         .get();
   }
 
