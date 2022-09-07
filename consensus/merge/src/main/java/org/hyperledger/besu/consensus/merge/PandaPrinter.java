@@ -60,6 +60,7 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
     if (currentTotal.isPresent() && currentTotal.get().greaterOrEqualThan(ttd)) {
       this.readyBeenDisplayed.set(true);
       this.ttdBeenDisplayed.set(true);
+      this.finalizedBeenDisplayed.set(true);
     }
   }
 
