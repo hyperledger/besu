@@ -75,7 +75,7 @@ public class JsonRpcMethodsFactory {
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
       final EthPeers ethPeers,
-      final Vertx syncVertx) {
+      final Vertx consensusEngineServer) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -98,7 +98,7 @@ public class JsonRpcMethodsFactory {
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
-                  miningCoordinator, protocolContext, ethPeers, syncVertx),
+                  miningCoordinator, protocolContext, ethPeers, consensusEngineServer),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(

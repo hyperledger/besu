@@ -38,13 +38,13 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
   private final ProtocolContext protocolContext;
   private final EthPeers ethPeers;
-  private final Vertx syncVertx;
+  private final Vertx consensusEngineServer;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
       final ProtocolContext protocolContext,
       final EthPeers ethPeers,
-      final Vertx syncVertx) {
+      final Vertx consensusEngineServer) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -52,7 +52,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
-    this.syncVertx = syncVertx;
+    this.consensusEngineServer = consensusEngineServer;
   }
 
   @Override
@@ -64,12 +64,15 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     if (mergeCoordinator.isPresent()) {
       return mapOf(
-          new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
-          new EngineNewPayload(syncVertx, protocolContext, mergeCoordinator.get(), ethPeers),
-          new EngineForkchoiceUpdated(syncVertx, protocolContext, mergeCoordinator.get()),
-          new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
+          new EngineGetPayload(consensusEngineServer, protocolContext, blockResultFactory),
+          new EngineNewPayload(
+              consensusEngineServer, protocolContext, mergeCoordinator.get(), ethPeers),
+          new EngineForkchoiceUpdated(
+              consensusEngineServer, protocolContext, mergeCoordinator.get()),
+          new EngineExchangeTransitionConfiguration(consensusEngineServer, protocolContext));
     } else {
-      return mapOf(new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
+      return mapOf(
+          new EngineExchangeTransitionConfiguration(consensusEngineServer, protocolContext));
     }
   }
 }
