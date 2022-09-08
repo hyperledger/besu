@@ -12,19 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.tests.acceptance.dsl.engine;
+package org.hyperledger.besu.tests.acceptance.dsl.rpc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class EngineTestCase {
+public class JsonRpcTestCase {
   private final JsonNode request;
   private final JsonNode response;
   private final int statusCode;
 
   @JsonCreator
-  public EngineTestCase(
+  public JsonRpcTestCase(
       @JsonProperty("request") final JsonNode request,
       @JsonProperty("response") final JsonNode response,
       @JsonProperty("statusCode") final int statusCode) {

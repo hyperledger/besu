@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +54,7 @@ import org.junit.Test;
 public class GasPricePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -67,12 +69,10 @@ public class GasPricePendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final GasPricePendingTransactionsSorter transactions =
       new GasPricePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
-          TestClock.fixed(),
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          GasPricePendingTransactionsTest::mockBlockHeader,
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          GasPricePendingTransactionsTest::mockBlockHeader);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -152,6 +152,30 @@ public class GasPricePendingTransactionsTest {
   }
 
   @Test
+  public void shouldDropFutureTransactionWhenSenderLimitExceeded() {
+    final GasPricePendingTransactionsSorter senderLimitedtransactions =
+        new GasPricePendingTransactionsSorter(
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+                .build(),
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            GasPricePendingTransactionsTest::mockBlockHeader);
+
+    Transaction furthestFutureTransaction = null;
+    for (int i = 0; i < MAX_TRANSACTIONS; i++) {
+      furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
+      senderLimitedtransactions.addRemoteTransaction(furthestFutureTransaction);
+    }
+    assertThat(senderLimitedtransactions.size()).isEqualTo(MAX_TRANSACTIONS_BY_SENDER);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1L);
+
+    assertThat(senderLimitedtransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
+        .isEmpty();
+  }
+
+  @Test
   public void shouldHandleMaximumTransactionLimitCorrectlyWhenSameTransactionAddedMultipleTimes() {
     transactions.addRemoteTransaction(createTransaction(0));
     transactions.addRemoteTransaction(createTransaction(0));
@@ -207,16 +231,14 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
+    Transaction lastLocalTransactionForSender = null;
 
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
-
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
-      transactions.addLocalTransaction(createTransaction(i));
+    for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
+      lastLocalTransactionForSender = createTransaction(i);
+      transactions.addLocalTransaction(lastLocalTransactionForSender);
     }
-
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
+    assertTransactionNotPending(lastLocalTransactionForSender);
   }
 
   @Test
@@ -610,15 +632,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldEvictMultipleOldTransactions() {
-    final int maxTransactionRetentionHours = 1;
     final GasPricePendingTransactionsSorter transactions =
         new GasPricePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(1)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            () -> null,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            () -> null);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -633,15 +655,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldEvictSingleOldTransaction() {
-    final int maxTransactionRetentionHours = 1;
     final GasPricePendingTransactionsSorter transactions =
         new GasPricePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(1)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            () -> null,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            () -> null);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -652,15 +674,15 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldEvictExclusivelyOldTransactions() {
-    final int maxTransactionRetentionHours = 2;
     final GasPricePendingTransactionsSorter transactions =
         new GasPricePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(2)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            () -> null,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            () -> null);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);
@@ -710,9 +732,11 @@ public class GasPricePendingTransactionsTest {
         .isPresent()
         .hasValue(6);
     addLocalTransactions(6, 10);
+
+    // assert that transactions are pruned by account from latest future nonces first
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(6);
   }
 
   @Test

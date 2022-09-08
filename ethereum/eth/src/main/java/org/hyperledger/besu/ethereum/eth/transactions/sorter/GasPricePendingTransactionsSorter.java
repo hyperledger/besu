@@ -19,8 +19,8 @@ import static java.util.Comparator.comparing;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.util.Iterator;
@@ -29,6 +29,9 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
  * for mining or look-up by hash.
@@ -36,28 +39,22 @@ import java.util.function.Supplier;
  * <p>This class is safe for use across multiple threads.
  */
 public class GasPricePendingTransactionsSorter extends AbstractPendingTransactionsSorter {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(GasPricePendingTransactionsSorter.class);
 
   private final NavigableSet<TransactionInfo> prioritizedTransactions =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(TransactionInfo::getAddedToPoolAt)
               .reversed());
 
   public GasPricePendingTransactionsSorter(
-      final int maxTransactionRetentionHours,
-      final int maxPendingTransactions,
+      final TransactionPoolConfiguration poolConfig,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Percentage priceBump) {
-    super(
-        maxTransactionRetentionHours,
-        maxPendingTransactions,
-        clock,
-        metricsSystem,
-        chainHeadHeaderSupplier,
-        priceBump);
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier);
   }
 
   @Override
@@ -100,11 +97,21 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       prioritizedTransactions.add(transactionInfo);
       pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
 
-      if (pendingTransactions.size() > maxPendingTransactions) {
-        final TransactionInfo toRemove = prioritizedTransactions.last();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
+      // check if this sender exceeds the transactions by sender limit:
+      var senderTxInfos = transactionsBySender.get(transactionInfo.getSender());
+      if (senderTxInfos.transactionCount() > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+        droppedTransaction = senderTxInfos.maybeLastTx().map(TransactionInfo::getTransaction);
+        droppedTransaction.ifPresent(
+            tx -> LOG.trace("Evicted {} due to too many transactions from sender", tx));
+      } else {
+        // else if we are over txpool limit, select the lowest value transaction to evict
+        if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
+          droppedTransaction =
+              lowestValueTxForRemovalBySender(prioritizedTransactions)
+                  .map(TransactionInfo::getTransaction);
+        }
       }
+      droppedTransaction.ifPresent(tx -> doRemoveTransaction(tx, false));
     }
     notifyTransactionAdded(transactionInfo.getTransaction());
     droppedTransaction.ifPresent(this::notifyTransactionDropped);

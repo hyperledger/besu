@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineG
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,11 +37,13 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
   private final ProtocolContext protocolContext;
+  private final EthPeers ethPeers;
   private final Vertx syncVertx;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
       final ProtocolContext protocolContext,
+      final EthPeers ethPeers,
       final Vertx vertx) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
@@ -48,6 +51,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
             .map(MergeMiningCoordinator.class::cast);
 
     this.protocolContext = protocolContext;
+    this.ethPeers = ethPeers;
     this.syncVertx = vertx;
   }
 
@@ -61,7 +65,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     if (mergeCoordinator.isPresent()) {
       return mapOf(
           new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
-          new EngineNewPayload(syncVertx, protocolContext, mergeCoordinator.get()),
+          new EngineNewPayload(syncVertx, protocolContext, mergeCoordinator.get(), ethPeers),
           new EngineForkchoiceUpdated(syncVertx, protocolContext, mergeCoordinator.get()),
           new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
     } else {

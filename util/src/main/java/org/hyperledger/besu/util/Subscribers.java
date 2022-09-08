@@ -112,7 +112,8 @@ public class Subscribers<T> {
                 action.accept(subscriber);
               } catch (final Exception e) {
                 if (suppressCallbackExceptions) {
-                  LOG.error("Error in callback: ", e);
+                  LOG.error("Error in callback: {}", e.getMessage());
+                  LOG.debug("Error in callback: ", e);
                 } else {
                   throw e;
                 }

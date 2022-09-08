@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -97,12 +98,10 @@ public class EthGetFilterChangesIntegrationTest {
     blockchain = executionContext.getBlockchain();
     transactions =
         new GasPricePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
             TestClock.fixed(),
             metricsSystem,
-            blockchain::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            blockchain::getChainHeadHeader);
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
     EthContext ethContext = mock(EthContext.class);

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TimedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketMessageHandler;
@@ -402,7 +403,7 @@ public class JsonRpcService {
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(denyRouteToBlockedHost());
-
+    router.errorHandler(403, new Logging403ErrorHandler());
     router
         .route()
         .handler(
