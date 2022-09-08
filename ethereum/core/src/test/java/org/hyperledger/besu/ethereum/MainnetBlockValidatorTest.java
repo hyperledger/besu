@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -81,8 +83,9 @@ public class MainnetBlockValidatorTest {
         protocolContext,
         badBlock,
         HeaderValidationMode.DETACHED_ONLY,
-        HeaderValidationMode.DETACHED_ONLY);
+        HeaderValidationMode.DETACHED_ONLY, false);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
+    verify(worldStateArchive, times(1)).getMutable(any(Hash.class), any(Hash.class), eq(false));
   }
 
   @Test
@@ -273,5 +276,34 @@ public class MainnetBlockValidatorTest {
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlock(badBlock.getHash())).containsSame(badBlock);
+  }
+
+  @Test
+  public void shouldHonorPersistFlag() {
+
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    when(blockHeaderValidator.validateHeader(
+        any(BlockHeader.class),
+        any(BlockHeader.class),
+        eq(protocolContext),
+        eq(HeaderValidationMode.DETACHED_ONLY)))
+        .thenReturn(true);
+
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY,
+        false);
+    verify(worldStateArchive, times(1)).getMutable(any(Hash.class), any(Hash.class), eq(false));
+
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY,
+        true);
+    verify(worldStateArchive, times(1)).getMutable(any(Hash.class), any(Hash.class), eq(true));
   }
 }
