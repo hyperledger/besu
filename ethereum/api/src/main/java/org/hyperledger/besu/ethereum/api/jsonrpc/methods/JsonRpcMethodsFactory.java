@@ -97,7 +97,8 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
-              new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext, ethPeers, syncVertx),
+              new ExecutionEngineJsonRpcMethods(
+                  miningCoordinator, protocolContext, ethPeers, syncVertx),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(
