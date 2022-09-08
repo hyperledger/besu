@@ -83,7 +83,8 @@ public class MainnetBlockValidatorTest {
         protocolContext,
         badBlock,
         HeaderValidationMode.DETACHED_ONLY,
-        HeaderValidationMode.DETACHED_ONLY, false);
+        HeaderValidationMode.DETACHED_ONLY,
+        false);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
     verify(worldStateArchive, times(1)).getMutable(any(Hash.class), any(Hash.class), eq(false));
   }
@@ -284,10 +285,10 @@ public class MainnetBlockValidatorTest {
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     when(blockHeaderValidator.validateHeader(
-        any(BlockHeader.class),
-        any(BlockHeader.class),
-        eq(protocolContext),
-        eq(HeaderValidationMode.DETACHED_ONLY)))
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
 
     mainnetBlockValidator.validateAndProcessBlock(
