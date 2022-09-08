@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import io.vertx.core.VertxOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
@@ -84,7 +85,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
           RpcApis.TRACE.name());
 
   protected final Vertx vertx = Vertx.vertx();
-  protected final Vertx syncVertx = Vertx.vertx();
+  protected final Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
   protected JsonRpcHttpService service;
   protected OkHttpClient client;
   protected String baseUrl;
