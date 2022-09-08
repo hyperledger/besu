@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -83,10 +84,8 @@ public class MainnetBlockValidatorTest {
         protocolContext,
         badBlock,
         HeaderValidationMode.DETACHED_ONLY,
-        HeaderValidationMode.DETACHED_ONLY,
-        false);
+        HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(1);
-    verify(worldStateArchive, times(1)).getMutable(any(Hash.class), any(Hash.class), eq(false));
   }
 
   @Test
@@ -223,7 +222,7 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(
