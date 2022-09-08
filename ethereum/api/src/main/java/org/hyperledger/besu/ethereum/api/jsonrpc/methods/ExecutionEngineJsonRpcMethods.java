@@ -44,7 +44,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final MiningCoordinator miningCoordinator,
       final ProtocolContext protocolContext,
       final EthPeers ethPeers,
-      final Vertx vertx) {
+      final Vertx syncVertx) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -52,7 +52,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
-    this.syncVertx = vertx;
+    this.syncVertx = syncVertx;
   }
 
   @Override
