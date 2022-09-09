@@ -285,7 +285,9 @@ public class TransactionPool implements BlockAddedObserver {
                 return getTransactionValidator()
                     .validateForSender(
                         transaction, senderAccount, TransactionValidationParams.transactionPool());
-              } catch(MerkleTrieException ex) {
+              } catch (MerkleTrieException ex) {
+                LOG.debug(
+                    "MerkleTrieException while validating transaction for sender {}", transaction.getSender());
                 return ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
               }
             })
