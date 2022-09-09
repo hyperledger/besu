@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -70,6 +71,7 @@ public class SnapWorldDownloadStateTest {
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
   private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
+  private final Blockchain blockchain = mock(Blockchain.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
@@ -101,6 +103,7 @@ public class SnapWorldDownloadStateTest {
     downloadState =
         new SnapWorldDownloadState(
             worldStateStorage,
+            blockchain,
             snapSyncState,
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
