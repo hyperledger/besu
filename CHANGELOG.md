@@ -21,6 +21,8 @@
 - Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
 - Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
 - Log imported block info post merge [#4310](https://github.com/hyperledger/besu/pull/4310)
+- Transaction pool eviction by sender from tail of transaction list [#4327](https://github.com/hyperledger/besu/pull/4327)
+- Transaction pool sender future nonce limits [#4336](https://github.com/hyperledger/besu/pull/4336)
 - Pandas! Pandas now appear in 3 phases: The black bear and polar bear that are preparing? Those will appear when
 your client has TTD configured (which is setup by default for mainnet), is in sync, and processing Proof of Work blocks. In the second phase you will see them powering up when the Terminal Total Difficulty block is added to the blockchain.
 The final form of the Ethereum Panda will appear when the first finalized block is received from the Consensus Layer.
@@ -35,7 +37,7 @@ The final form of the Ethereum Panda will appear when the first finalized block 
 
 
 ## 22.7.1
-
+### Merge Ready Release. Required update for The Merge on ethereum mainnet!
 ### Additions and Improvements
 - Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)
