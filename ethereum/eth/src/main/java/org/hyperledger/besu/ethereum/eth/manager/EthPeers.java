@@ -202,7 +202,17 @@ public class EthPeers {
     return connections.values().stream();
   }
 
+  private void removeDisconnectedPeers() {
+    final Collection<EthPeer> peerStream = connections.values();
+    for (EthPeer p : peerStream) {
+      if (p.isDisconnected()) {
+        connections.remove(p.getConnection());
+      }
+    }
+  }
+
   public Stream<EthPeer> streamAvailablePeers() {
+    removeDisconnectedPeers();
     return streamAllPeers()
         .filter(EthPeer::readyForRequests)
         .filter(peer -> !peer.isDisconnected());

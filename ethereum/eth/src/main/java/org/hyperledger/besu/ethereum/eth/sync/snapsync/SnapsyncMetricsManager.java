@@ -156,7 +156,7 @@ public class SnapsyncMetricsManager {
   public void notifySnapSyncCompleted() {
     final Duration duration = Duration.ofMillis(System.currentTimeMillis() - startSyncTime);
     LOG.info(
-        "Finished snapsync with nodes {} (healed={}) duration {}{}:{},{}",
+        "Finished worldstate snapsync with nodes {} (healed={}) duration {}{}:{},{}. Sync block import may still be in progress...",
         nbNodesGenerated.addAndGet(nbNodesHealed.get()),
         nbNodesHealed,
         duration.toHoursPart() > 0 ? (duration.toHoursPart() + ":") : "",
