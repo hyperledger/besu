@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -155,7 +154,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         if (blockObserverId.isEmpty())
           blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
-        notifyTaskAvailable();
       } else {
         blockObserverId.ifPresent(blockchain::removeObserver);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
@@ -231,8 +229,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueRequestBlocking(
       final List<TaskCollection<SnapDataRequest>> queueDependencies,
-      final List<TaskCollection<SnapDataRequest>> queues,
-      final Consumer<Void> onRetryAction) {
+      final List<TaskCollection<SnapDataRequest>> queues) {
     while (!internalFuture.isDone()) {
       while (queueDependencies.stream()
           .map(TaskCollection::allTasksCompleted)
@@ -257,8 +254,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         Thread.currentThread().interrupt();
         return null;
       }
-
-      onRetryAction.accept(null);
     }
     return null;
   }
@@ -266,30 +261,25 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
-        List.of(pendingAccountRequests),
-        __ -> {});
+        List.of(pendingAccountRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    return dequeueRequestBlocking(
-        Collections.emptyList(), List.of(pendingBigStorageRequests), __ -> {});
+    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingBigStorageRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
-    return dequeueRequestBlocking(
-        Collections.emptyList(), List.of(pendingStorageRequests), __ -> {});
+    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingStorageRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueCodeRequestBlocking() {
-    return dequeueRequestBlocking(
-        List.of(pendingStorageRequests), List.of(pendingCodeRequests), __ -> {});
+    return dequeueRequestBlocking(List.of(pendingStorageRequests), List.of(pendingCodeRequests));
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
-        List.of(pendingTrieNodeRequests),
-        __ -> {});
+        List.of(pendingTrieNodeRequests));
   }
 
   public SnapsyncMetricsManager getMetricsManager() {
@@ -308,7 +298,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
             (____, isNewPivotBlock) -> {
               if (isNewPivotBlock) {
                 snapSyncState.setWaitingBlockchain(false);
-                System.out.println("new pivot block detected");
               }
             });
         // if we are close to the head we can also restart the heal and finish snapsync
