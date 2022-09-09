@@ -35,6 +35,7 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -64,7 +65,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   // blockchain
   private final Blockchain blockchain;
-  private long blockObserverId;
+  private OptionalLong blockObserverId;
 
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
@@ -87,6 +88,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
+    this.blockObserverId = OptionalLong.empty();
     metricsManager
         .getMetricsSystem()
         .createLongGauge(
@@ -144,15 +146,18 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
-        LOG.info("Starting world state heal process from peers");
+        LOG.info(
+            "Starting world state heal process from peers with pivot block {}",
+            snapSyncState.getPivotBlockNumber());
         startHeal();
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
-        LOG.info("Waiting blockchain part to finish");
-        blockObserverId = blockchain.observeBlockAdded(getBlockAddedListener());
+        LOG.info("Pausing world state download while waiting for sync to complete");
+        if (blockObserverId.isEmpty())
+          blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
         notifyTaskAvailable();
       } else {
-        blockchain.removeObserver(blockObserverId);
+        blockObserverId.ifPresent(blockchain::removeObserver);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
@@ -297,14 +302,22 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public BlockAddedObserver getBlockAddedListener() {
     return addedBlockContext -> {
-      System.out.println("new block added " + addedBlockContext.getBlock().getHeader().getNumber());
       if (snapSyncState.isWaitingBlockchain()) {
+        // if we receive a new pivot block we can restart the heal
         dynamicPivotBlockManager.check(
-            (____, ___) -> {
-              snapSyncState.setWaitingBlockchain(false);
-              System.out.println("new pivot block detected");
-              reloadHeal();
+            (____, isNewPivotBlock) -> {
+              if (isNewPivotBlock) {
+                snapSyncState.setWaitingBlockchain(false);
+                System.out.println("new pivot block detected");
+              }
             });
+        // if we are close to the head we can also restart the heal and finish snapsync
+        if (!dynamicPivotBlockManager.isBlockchainBehind()) {
+          snapSyncState.setWaitingBlockchain(false);
+        }
+        if (!snapSyncState.isWaitingBlockchain()) {
+          reloadHeal();
+        }
       }
     };
   }

@@ -38,7 +38,7 @@ public class DynamicPivotBlockManager {
 
   private final FastSyncActions syncActions;
 
-  private final FastSyncState syncState;
+  private final SnapSyncState syncState;
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
