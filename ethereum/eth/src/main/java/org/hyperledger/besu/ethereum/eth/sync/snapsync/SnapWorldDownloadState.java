@@ -145,9 +145,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
-        LOG.info(
-            "Starting world state heal process from peers with pivot block {}",
-            snapSyncState.getPivotBlockNumber());
         startHeal();
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
@@ -182,10 +179,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     snapSyncState.setHealStatus(true);
     // try to find new pivot block before healing
     dynamicPivotBlockManager.switchToNewPivotBlock(
-        (blockHeader, newPivotBlockFound) ->
-            enqueueRequest(
-                createAccountTrieNodeDataRequest(
-                    blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts)));
+        (blockHeader, newPivotBlockFound) -> {
+          LOG.info(
+              "Running world state heal process from peers with pivot block {}",
+              blockHeader.getNumber());
+          enqueueRequest(
+              createAccountTrieNodeDataRequest(
+                  blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
+        });
   }
 
   public synchronized void reloadHeal() {
