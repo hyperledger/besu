@@ -95,11 +95,10 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public void stop() {
     synchronized (this) {
-      if (state != State.RUNNING) {
-        return;
+      if (state == State.RUNNING) {
+        haltCurrentMiningOperation();
       }
       state = State.STOPPED;
-      haltCurrentMiningOperation();
       executor.shutDown();
     }
   }

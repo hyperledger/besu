@@ -72,7 +72,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
-  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -101,8 +100,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
     this.ethContext = ethContext;
-
-    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
@@ -257,7 +254,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
       LOG.debug(
-          "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
+          "{} requires a Status ({}) message to be sent first.  Instead, received message {} (BREACH_OF_PROTOCOL).  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
           code,
@@ -277,17 +274,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug("Unsolicited message received, disconnecting from EthPeer: {}", ethPeer);
+      LOG.debug(
+          "Unsolicited message received (BREACH_OF_PROTOCOL), disconnecting from EthPeer: {}",
+          ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
-    }
-
-    if (messageData.getSize() > this.maxMessageSize) {
-      LOG.debug(
-          "Peer {} sent a message with size {}, larger than the max message size {}",
-          ethPeer,
-          messageData.getSize(),
-          this.maxMessageSize);
     }
 
     // This will handle responses
@@ -308,7 +299,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.debug(
-          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+          "Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          messageData.getData(),
+          ethPeer,
+          e);
 
       ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }

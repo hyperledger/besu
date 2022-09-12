@@ -172,6 +172,8 @@ class EthGetProofTest {
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
+    assertThat(result.getStorageProof().size()).isGreaterThan(0);
+    assertThat(result.getStorageProof().get(0).getKey()).isEqualTo(storageKey.toShortHexString());
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

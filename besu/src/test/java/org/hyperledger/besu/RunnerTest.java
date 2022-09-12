@@ -403,6 +403,8 @@ public final class RunnerTest {
         (node) -> {
           // Clear DAO block so that inability to validate DAO block won't interfere with fast sync
           node.remove("daoForkBlock");
+          // remove merge terminal difficulty for fast sync in the absence of a CL mock
+          node.remove("terminalTotalDifficulty");
         });
     return GenesisConfigFile.fromConfig(jsonNode);
   }

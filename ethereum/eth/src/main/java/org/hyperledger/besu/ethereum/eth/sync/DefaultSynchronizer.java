@@ -16,7 +16,11 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
@@ -28,7 +32,9 @@ import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStatePeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -45,7 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -55,7 +61,10 @@ public class DefaultSynchronizer implements Synchronizer {
   private final Optional<BlockPropagationManager> blockPropagationManager;
   private final Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
+  private final EthContext ethContext;
   private final ProtocolContext protocolContext;
+  private final WorldStateStorage worldStateStorage;
+  private final MetricsSystem metricsSystem;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
 
@@ -76,7 +85,10 @@ public class DefaultSynchronizer implements Synchronizer {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
+    this.ethContext = ethContext;
     this.protocolContext = protocolContext;
+    this.worldStateStorage = worldStateStorage;
+    this.metricsSystem = metricsSystem;
     this.terminationCondition = terminationCondition;
 
     ChainHeadTracker.trackChainHeadForPeers(
@@ -191,6 +203,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
       } else {
         syncState.markInitialSyncPhaseAsDone();
+        enableFallbackNodeFinder();
         future = startFullSync();
       }
       return future.thenApply(this::finalizeSync);
@@ -239,11 +252,26 @@ public class DefaultSynchronizer implements Synchronizer {
     pivotBlockSelector.close();
     syncState.markInitialSyncPhaseAsDone();
 
+    enableFallbackNodeFinder();
+
     if (terminationCondition.shouldContinueDownload()) {
       return startFullSync();
     } else {
       syncState.setReachedTerminalDifficulty(true);
       return CompletableFuture.completedFuture(null);
+    }
+  }
+
+  private void enableFallbackNodeFinder() {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      final Optional<PeerTrieNodeFinder> fallbackNodeFinder =
+          Optional.of(
+              new WorldStatePeerTrieNodeFinder(
+                  ethContext, protocolContext.getBlockchain(), metricsSystem));
+      ((BonsaiWorldStateArchive) protocolContext.getWorldStateArchive())
+          .useFallbackNodeFinder(fallbackNodeFinder);
+      ((BonsaiWorldStateKeyValueStorage) worldStateStorage)
+          .useFallbackNodeFinder(fallbackNodeFinder);
     }
   }
 
@@ -301,5 +329,17 @@ public class DefaultSynchronizer implements Synchronizer {
     maybePruner.ifPresent(Pruner::stop);
     running.set(false);
     return null;
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (this.blockPropagationManager.isPresent()) {
+      this.blockPropagationManager
+          .get()
+          .onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+    }
   }
 }

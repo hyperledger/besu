@@ -61,6 +61,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import org.junit.After;
@@ -84,7 +85,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
           RpcApis.TRACE.name());
 
   protected final Vertx vertx = Vertx.vertx();
-  protected final Vertx syncVertx = Vertx.vertx();
+  protected final Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
   protected JsonRpcHttpService service;
   protected OkHttpClient client;
   protected String baseUrl;

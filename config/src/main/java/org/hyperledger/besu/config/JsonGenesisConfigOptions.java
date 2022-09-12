@@ -47,6 +47,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String TRANSITIONS_CONFIG_KEY = "transitions";
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
+  private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -410,6 +411,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isZeroBaseFee() {
+    return getOptionalBoolean(ZERO_BASE_FEE_KEY).orElse(false);
+  }
+
+  @Override
   public Map<String, Object> asMap() {
     final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     getChainId().ifPresent(chainId -> builder.put("chainId", chainId));
@@ -484,6 +490,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     if (isQuorum()) {
       builder.put("isQuorum", true);
       getQip714BlockNumber().ifPresent(blockNumber -> builder.put("qip714block", blockNumber));
+    }
+
+    if (isZeroBaseFee()) {
+      builder.put("zeroBaseFee", true);
     }
 
     return builder.build();

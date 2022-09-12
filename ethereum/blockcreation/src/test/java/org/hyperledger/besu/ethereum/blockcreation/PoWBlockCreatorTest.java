@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
@@ -96,12 +96,10 @@ public class PoWBlockCreatorTest {
 
     final BaseFeePendingTransactionsSorter pendingTransactions =
         new BaseFeePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.fixed(),
             metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -160,12 +158,10 @@ public class PoWBlockCreatorTest {
 
     final BaseFeePendingTransactionsSorter pendingTransactions =
         new BaseFeePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.fixed(),
             metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -216,12 +212,10 @@ public class PoWBlockCreatorTest {
 
     final BaseFeePendingTransactionsSorter pendingTransactions =
         new BaseFeePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.fixed(),
             metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
@@ -288,12 +282,10 @@ public class PoWBlockCreatorTest {
 
     final BaseFeePendingTransactionsSorter pendingTransactions =
         new BaseFeePendingTransactionsSorter(
-            TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-            1,
+            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
             TestClock.fixed(),
             metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(

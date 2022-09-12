@@ -19,6 +19,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public interface BaseFeeMarket extends FeeMarket {
 
+  enum ValidationMode {
+    NONE,
+    INITIAL,
+    ONGOING
+  }
+
   @Override
   default boolean implementsBaseFee() {
     return true;
@@ -47,7 +53,9 @@ public interface BaseFeeMarket extends FeeMarket {
       final long parentBlockGasUsed,
       final long targetGasUsed);
 
-  boolean isForkBlock(final long blockNumber);
+  ValidationMode baseFeeValidationMode(final long blockNumber);
+
+  ValidationMode gasLimitValidationMode(final long blockNumber);
 
   boolean isBeforeForkBlock(final long blockNumber);
 }

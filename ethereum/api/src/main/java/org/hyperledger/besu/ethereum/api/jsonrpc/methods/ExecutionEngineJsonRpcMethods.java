@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineG
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,19 +37,22 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
   private final ProtocolContext protocolContext;
-  private final Vertx syncVertx;
+  private final EthPeers ethPeers;
+  private final Vertx consensusEngineServer;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
       final ProtocolContext protocolContext,
-      final Vertx vertx) {
+      final EthPeers ethPeers,
+      final Vertx consensusEngineServer) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
             .map(MergeMiningCoordinator.class::cast);
 
     this.protocolContext = protocolContext;
-    this.syncVertx = vertx;
+    this.ethPeers = ethPeers;
+    this.consensusEngineServer = consensusEngineServer;
   }
 
   @Override
@@ -60,12 +64,15 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     if (mergeCoordinator.isPresent()) {
       return mapOf(
-          new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
-          new EngineNewPayload(syncVertx, protocolContext, mergeCoordinator.get()),
-          new EngineForkchoiceUpdated(syncVertx, protocolContext, mergeCoordinator.get()),
-          new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
+          new EngineGetPayload(consensusEngineServer, protocolContext, blockResultFactory),
+          new EngineNewPayload(
+              consensusEngineServer, protocolContext, mergeCoordinator.get(), ethPeers),
+          new EngineForkchoiceUpdated(
+              consensusEngineServer, protocolContext, mergeCoordinator.get()),
+          new EngineExchangeTransitionConfiguration(consensusEngineServer, protocolContext));
     } else {
-      return mapOf(new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
+      return mapOf(
+          new EngineExchangeTransitionConfiguration(consensusEngineServer, protocolContext));
     }
   }
 }

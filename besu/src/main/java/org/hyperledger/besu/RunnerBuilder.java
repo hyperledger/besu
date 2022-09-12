@@ -987,8 +987,8 @@ public class RunnerBuilder {
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
-    // sync vertex for engine consensus API, to process requests in FIFO order;
-    final Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
+    // sync vertx for engine consensus API, to process requests in FIFO order;
+    final Vertx consensusEngineServer = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
 
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
@@ -1017,7 +1017,7 @@ public class RunnerBuilder {
                 namedPlugins,
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers(),
-                syncVertx);
+                consensusEngineServer);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());

@@ -17,10 +17,10 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.engine.EngineTestCase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.rpc.JsonRpcTestCase;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 
 import java.io.File;
@@ -45,16 +45,16 @@ abstract class AbstractJsonRpcTest {
 
   static class JsonRpcTestsContext {
     final Cluster cluster;
-    final BesuNode executionEngine;
-    final OkHttpClient consensusClient;
+    final BesuNode besuNode;
+    final OkHttpClient httpClient;
     final ObjectMapper mapper;
 
     public JsonRpcTestsContext(final String genesisFile) throws IOException {
       cluster = new Cluster(new NetConditions(new NetTransactions()));
-      executionEngine =
+      besuNode =
           new BesuNodeFactory().createExecutionEngineGenesisNode("executionEngine", genesisFile);
-      cluster.start(executionEngine);
-      consensusClient = new OkHttpClient();
+      cluster.start(besuNode);
+      httpClient = new OkHttpClient();
 
       mapper = new ObjectMapper();
     }
@@ -75,16 +75,16 @@ abstract class AbstractJsonRpcTest {
 
   @Test
   public void test() throws IOException {
-    final EngineTestCase testCase =
-        testsContext.mapper.readValue(testCaseFileURI.toURL(), EngineTestCase.class);
+    final JsonRpcTestCase testCase =
+        testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
-    final Call preparePayloadRequest =
-        testsContext.consensusClient.newCall(
+    final Call testRequest =
+        testsContext.httpClient.newCall(
             new Request.Builder()
-                .url(testsContext.executionEngine.engineRpcUrl().get())
+                .url(testsContext.besuNode.engineRpcUrl().get())
                 .post(RequestBody.create(testCase.getRequest().toString(), MEDIA_TYPE_JSON))
                 .build());
-    final Response response = preparePayloadRequest.execute();
+    final Response response = testRequest.execute();
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
     assertThat(response.body().string()).isEqualTo(testCase.getResponse().toPrettyString());

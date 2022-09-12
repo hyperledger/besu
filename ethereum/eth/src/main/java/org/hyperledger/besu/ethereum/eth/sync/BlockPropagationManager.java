@@ -14,14 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
+import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -45,6 +49,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,8 +57,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -64,7 +71,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockPropagationManager {
+public class BlockPropagationManager implements ForkchoiceMessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -75,12 +82,9 @@ public class BlockPropagationManager {
   private final BlockBroadcaster blockBroadcaster;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
-
-  private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final Set<Long> requestedNonAnnouncedBlocks =
-      Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final ProcessingBlocksManager processingBlocksManager;
   private final PendingBlocksManager pendingBlocksManager;
+  private final Duration getBlockTimeoutMillis;
   private Optional<Long> onBlockAddedSId = Optional.empty();
   private Optional<Long> newBlockSId;
   private Optional<Long> newBlockHashesSId;
@@ -94,6 +98,28 @@ public class BlockPropagationManager {
       final PendingBlocksManager pendingBlocksManager,
       final MetricsSystem metricsSystem,
       final BlockBroadcaster blockBroadcaster) {
+    this(
+        config,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        pendingBlocksManager,
+        metricsSystem,
+        blockBroadcaster,
+        new ProcessingBlocksManager());
+  }
+
+  BlockPropagationManager(
+      final SynchronizerConfiguration config,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final PendingBlocksManager pendingBlocksManager,
+      final MetricsSystem metricsSystem,
+      final BlockBroadcaster blockBroadcaster,
+      final ProcessingBlocksManager processingBlocksManager) {
     this.config = config;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -103,6 +129,9 @@ public class BlockPropagationManager {
     this.syncState = syncState;
     this.pendingBlocksManager = pendingBlocksManager;
     this.syncState.subscribeTTDReached(this::reactToTTDReachedEvent);
+    this.getBlockTimeoutMillis =
+        Duration.ofMillis(config.getPropagationManagerGetBlockTimeoutMillis());
+    this.processingBlocksManager = processingBlocksManager;
   }
 
   public void start() {
@@ -119,7 +148,7 @@ public class BlockPropagationManager {
       clearListeners();
       started.set(false);
     } else {
-      LOG.warn("Attempted to stop when we are not even running...");
+      LOG.debug("Attempted to stop when we are not even running...");
     }
   }
 
@@ -156,15 +185,6 @@ public class BlockPropagationManager {
     // Check to see if any of our pending blocks are now ready for import
     final Block newBlock = blockAddedEvent.getBlock();
 
-    final List<Block> readyForImport;
-    synchronized (pendingBlocksManager) {
-      // Remove block from pendingBlocks list
-      pendingBlocksManager.deregisterPendingBlock(newBlock);
-
-      // Import any pending blocks that are children of the newly added block
-      readyForImport = pendingBlocksManager.childrenOf(newBlock.getHash());
-    }
-
     traceLambda(
         LOG,
         "Block added event type {} for block {}. Current status {}",
@@ -172,12 +192,42 @@ public class BlockPropagationManager {
         newBlock::toLogString,
         () -> this);
 
+    // If there is no children to process, maybe try non announced blocks
+    if (!maybeProcessPendingChildrenBlocks(newBlock)) {
+      traceLambda(
+          LOG, "There are no pending blocks ready to import for block {}", newBlock::toLogString);
+      maybeProcessNonAnnouncedBlocks(newBlock);
+    }
+
+    if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
+      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
+      final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
+      pendingBlocksManager.purgeBlocksOlderThan(cutoff);
+    }
+  }
+
+  /**
+   * Process pending Children if any
+   *
+   * @param block the block to process the children
+   * @return true if block has any pending child
+   */
+  private boolean maybeProcessPendingChildrenBlocks(final Block block) {
+    final List<Block> readyForImport;
+    synchronized (pendingBlocksManager) {
+      // Remove block from pendingBlocks list
+      pendingBlocksManager.deregisterPendingBlock(block);
+
+      // Import any pending blocks that are children of the newly added block
+      readyForImport = pendingBlocksManager.childrenOf(block.getHash());
+    }
+
     if (!readyForImport.isEmpty()) {
       traceLambda(
           LOG,
           "Ready to import pending blocks found [{}] for block {}",
           () -> readyForImport.stream().map(Block::toLogString).collect(Collectors.joining(", ")),
-          newBlock::toLogString);
+          block::toLogString);
 
       final Supplier<CompletableFuture<List<Block>>> importBlocksTask =
           PersistBlockTask.forUnorderedBlocks(
@@ -193,25 +243,17 @@ public class BlockPropagationManager {
           .whenComplete(
               (r, t) -> {
                 if (r != null) {
-                  LOG.info("Imported {} pending blocks", r.size());
+                  LOG.info(
+                      "Imported {} pending blocks: {}",
+                      r.size(),
+                      r.stream().map(b -> b.getHeader().getNumber()).collect(Collectors.toList()));
                 }
                 if (t != null) {
                   LOG.error("Error importing pending blocks", t);
                 }
               });
-    } else {
-
-      traceLambda(
-          LOG, "There are no pending blocks ready to import for block {}", newBlock::toLogString);
-
-      maybeProcessNonAnnouncedBlocks(newBlock);
     }
-
-    if (blockAddedEvent.getEventType().equals(EventType.HEAD_ADVANCED)) {
-      final long head = protocolContext.getBlockchain().getChainHeadBlockNumber();
-      final long cutoff = head + config.getBlockPropagationRange().lowerEndpoint();
-      pendingBlocksManager.purgeBlocksOlderThan(cutoff);
-    }
+    return !readyForImport.isEmpty();
   }
 
   private void maybeProcessNonAnnouncedBlocks(final Block newBlock) {
@@ -223,18 +265,18 @@ public class BlockPropagationManager {
           .map(ProcessableBlockHeader::getNumber)
           .ifPresent(
               minAnnouncedBlockNumber -> {
-                long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
+                final long distance = minAnnouncedBlockNumber - localHeadBlockNumber;
                 LOG.trace(
                     "Found lowest announced block {} with distance {}",
                     minAnnouncedBlockNumber,
                     distance);
 
-                long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
+                final long firstNonAnnouncedBlockNumber = newBlock.getHeader().getNumber() + 1;
 
                 if (distance < config.getBlockPropagationRange().upperEndpoint()
                     && minAnnouncedBlockNumber > firstNonAnnouncedBlockNumber) {
 
-                  if (requestedNonAnnouncedBlocks.add(firstNonAnnouncedBlockNumber)) {
+                  if (processingBlocksManager.addNonAnnouncedBlocks(firstNonAnnouncedBlockNumber)) {
                     retrieveNonAnnouncedBlock(firstNonAnnouncedBlockNumber);
                   }
                 }
@@ -283,7 +325,7 @@ public class BlockPropagationManager {
       importOrSavePendingBlock(block, message.getPeer().nodeId());
     } catch (final RLPException e) {
       LOG.debug(
-          "Malformed NEW_BLOCK message received from peer, disconnecting: {}",
+          "Malformed NEW_BLOCK message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
@@ -325,7 +367,7 @@ public class BlockPropagationManager {
           LOG.trace("New block hash from network {} is already pending", announcedBlock);
           continue;
         }
-        if (importingBlocks.contains(announcedBlock.hash())) {
+        if (processingBlocksManager.alreadyImporting(announcedBlock.hash())) {
           LOG.trace("New block hash from network {} is already importing", announcedBlock);
           continue;
         }
@@ -333,7 +375,7 @@ public class BlockPropagationManager {
           LOG.trace("New block hash from network {} was already imported", announcedBlock);
           continue;
         }
-        if (requestedBlocks.add(announcedBlock.hash())) {
+        if (processingBlocksManager.addRequestedBlock(announcedBlock.hash())) {
           newBlocks.add(announcedBlock);
         } else {
           LOG.trace("New block hash from network {} was already requested", announcedBlock);
@@ -346,7 +388,7 @@ public class BlockPropagationManager {
       }
     } catch (final RLPException e) {
       LOG.debug(
-          "Malformed NEW_BLOCK_HASHES message received from peer, disconnecting: {}",
+          "Malformed NEW_BLOCK_HASHES message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
       message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
@@ -364,21 +406,19 @@ public class BlockPropagationManager {
     return getBlockFromPeers(Optional.of(peer), blockHash.number(), Optional.of(blockHash.hash()));
   }
 
-  private void requestParentBlock(final BlockHeader blockHeader) {
-    if (requestedBlocks.add(blockHeader.getParentHash())) {
+  private void requestParentBlock(final Block block) {
+    final BlockHeader blockHeader = block.getHeader();
+    if (processingBlocksManager.addRequestedBlock(blockHeader.getParentHash())) {
       retrieveParentBlock(blockHeader);
     } else {
-      LOG.trace("Parent block with hash {} was already requested", blockHeader.getParentHash());
+      LOG.debug("Parent block with hash {} is already requested", blockHeader.getParentHash());
     }
   }
 
   private CompletableFuture<Block> retrieveParentBlock(final BlockHeader blockHeader) {
     final long targetParentBlockNumber = blockHeader.getNumber() - 1L;
     final Hash targetParentBlockHash = blockHeader.getParentHash();
-    LOG.info(
-        "Retrieving parent {} of block #{} from peers",
-        targetParentBlockHash,
-        blockHeader.getNumber());
+    LOG.info("Retrieving parent {} of block {}", targetParentBlockHash, blockHeader.toLogString());
     return getBlockFromPeers(
         Optional.empty(), targetParentBlockNumber, Optional.of(targetParentBlockHash));
   }
@@ -386,35 +426,115 @@ public class BlockPropagationManager {
   private CompletableFuture<Block> getBlockFromPeers(
       final Optional<EthPeer> preferredPeer,
       final long blockNumber,
-      final Optional<Hash> blockHash) {
-    final RetryingGetBlockFromPeersTask getBlockTask =
-        RetryingGetBlockFromPeersTask.create(
-            protocolContext,
-            protocolSchedule,
-            ethContext,
-            metricsSystem,
-            ethContext.getEthPeers().getMaxPeers(),
-            blockHash,
-            blockNumber);
-    preferredPeer.ifPresent(getBlockTask::assignPeer);
+      final Optional<Hash> maybeBlockHash) {
+    return repeatableGetBlockFromPeer(preferredPeer, blockNumber, maybeBlockHash)
+        .whenComplete(
+            (block, throwable) -> {
+              if (block != null) {
+                debugLambda(LOG, "Successfully retrieved block {}", block::toLogString);
+                processingBlocksManager.registerReceivedBlock(block);
+              } else {
+                if (throwable != null) {
+                  LOG.warn(
+                      "Failed to retrieve block "
+                          + logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
+                      throwable);
+                } else {
+                  // this could happen if we give up at some point since we find that it make no
+                  // sense to retry
+                  debugLambda(
+                      LOG,
+                      "Block {} not retrieved",
+                      () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
+                }
+                processingBlocksManager.registerFailedGetBlock(blockNumber, maybeBlockHash);
+              }
+            });
+  }
+
+  private CompletableFuture<Block> repeatableGetBlockFromPeer(
+      final Optional<EthPeer> preferredPeer,
+      final long blockNumber,
+      final Optional<Hash> maybeBlockHash) {
+    return exceptionallyCompose(
+            scheduleGetBlockFromPeers(preferredPeer, blockNumber, maybeBlockHash),
+            handleGetBlockErrors(blockNumber, maybeBlockHash))
+        .thenCompose(r -> maybeRepeatGetBlock(blockNumber, maybeBlockHash));
+  }
+
+  private Function<Throwable, CompletionStage<Block>> handleGetBlockErrors(
+      final long blockNumber, final Optional<Hash> maybeBlockHash) {
+    return throwable -> {
+      debugLambda(
+          LOG,
+          "Temporary failure retrieving block {} from peers with error {}",
+          () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
+          throwable::toString);
+      return CompletableFuture.completedFuture(null);
+    };
+  }
+
+  private CompletableFuture<Block> maybeRepeatGetBlock(
+      final long blockNumber, final Optional<Hash> maybeBlockHash) {
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final Optional<Block> maybeBlock =
+        maybeBlockHash
+            .map(hash -> blockchain.getBlockByHash(hash))
+            .orElseGet(() -> blockchain.getBlockByNumber(blockNumber));
+
+    // check if we got this block by other means
+    if (maybeBlock.isPresent()) {
+      final Block block = maybeBlock.get();
+      debugLambda(
+          LOG, "No need to retry to get block {} since it is already present", block::toLogString);
+      return CompletableFuture.completedFuture(block);
+    }
+
+    final long localChainHeight = blockchain.getChainHeadBlockNumber();
+    final long bestChainHeight = syncState.bestChainHeight(localChainHeight);
+    if (!shouldImportBlockAtHeight(blockNumber, localChainHeight, bestChainHeight)) {
+      debugLambda(
+          LOG,
+          "Not retrying to get block {} since we are too far from local chain head {}",
+          () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash),
+          blockchain.getChainHead()::toLogString);
+      return CompletableFuture.completedFuture(null);
+    }
+
+    debugLambda(
+        LOG,
+        "Retrying to get block {}",
+        () -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash));
 
     return ethContext
         .getScheduler()
-        .scheduleSyncWorkerTask(getBlockTask::run)
-        .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()))
-        .whenComplete(
-            (r, t) -> {
-              requestedNonAnnouncedBlocks.remove(blockNumber);
-              blockHash.ifPresentOrElse(
-                  requestedBlocks::remove,
-                  () -> {
-                    if (r != null) {
-                      // in case we successfully retrieved only by block number, when can remove
-                      // the request by hash too
-                      requestedBlocks.remove(r.getHash());
-                    }
-                  });
-            });
+        .scheduleSyncWorkerTask(
+            () -> repeatableGetBlockFromPeer(Optional.empty(), blockNumber, maybeBlockHash));
+  }
+
+  private CompletableFuture<Block> scheduleGetBlockFromPeers(
+      final Optional<EthPeer> maybePreferredPeer,
+      final long blockNumber,
+      final Optional<Hash> maybeBlockHash) {
+    final RetryingGetBlockFromPeersTask getBlockTask =
+        RetryingGetBlockFromPeersTask.create(
+            protocolSchedule,
+            ethContext,
+            metricsSystem,
+            Math.max(1, ethContext.getEthPeers().peerCount()),
+            maybeBlockHash,
+            blockNumber);
+    maybePreferredPeer.ifPresent(getBlockTask::assignPeer);
+
+    var future =
+        ethContext
+            .getScheduler()
+            .scheduleSyncWorkerTask(getBlockTask::run)
+            .thenCompose(r -> importOrSavePendingBlock(r.getResult(), r.getPeer().nodeId()));
+
+    ethContext.getScheduler().failAfterTimeout(future, getBlockTimeoutMillis);
+
+    return future;
   }
 
   private void broadcastBlock(final Block block, final BlockHeader parent) {
@@ -434,28 +554,23 @@ public class BlockPropagationManager {
     // invoked for the parent of this block before we are able to register it.
     traceLambda(LOG, "Import or save pending block {}", block::toLogString);
 
-    synchronized (pendingBlocksManager) {
-      if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
-        // Block isn't connected to local chain, save it to pending blocks collection
-        if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
-          LOG.info("Saving announced block {} for future import", block.toLogString());
-        }
-
-        // Request parent of the lowest announced block
-        pendingBlocksManager.lowestAnnouncedBlock().ifPresent(this::requestParentBlock);
-
-        return CompletableFuture.completedFuture(block);
+    if (!protocolContext.getBlockchain().contains(block.getHeader().getParentHash())) {
+      // Block isn't connected to local chain, save it to pending blocks collection
+      if (savePendingBlock(block, nodeId)) {
+        // if block is saved as pending, try to resolve it
+        maybeProcessPendingBlocks(block);
       }
+      return CompletableFuture.completedFuture(block);
     }
 
-    if (!importingBlocks.add(block.getHash())) {
+    if (!processingBlocksManager.addImportingBlock(block.getHash())) {
       traceLambda(LOG, "We're already importing this block {}", block::toLogString);
       return CompletableFuture.completedFuture(block);
     }
 
     if (protocolContext.getBlockchain().contains(block.getHash())) {
       traceLambda(LOG, "We've already imported this block {}", block::toLogString);
-      importingBlocks.remove(block.getHash());
+      processingBlocksManager.registerBlockImportDone(block.getHash());
       return CompletableFuture.completedFuture(block);
     }
 
@@ -480,6 +595,48 @@ public class BlockPropagationManager {
                     blockHeaderValidator, block, parent, badBlockManager));
   }
 
+  /**
+   * Save the given block.
+   *
+   * @param block the block to track
+   * @param nodeId node that sent the block
+   * @return true if the block was added (was not previously present)
+   */
+  private boolean savePendingBlock(final Block block, final Bytes nodeId) {
+    synchronized (pendingBlocksManager) {
+      if (pendingBlocksManager.registerPendingBlock(block, nodeId)) {
+        LOG.info(
+            "Saved announced block for future import {} - {} saved block(s)",
+            block.toLogString(),
+            pendingBlocksManager.size());
+        return true;
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Try to request the lowest ancestor for the given pending block or process the descendants if
+   * the ancestor is already in the chain
+   */
+  private void maybeProcessPendingBlocks(final Block block) {
+    // Try to get the lowest ancestor pending for this block, so we can import it
+    final Optional<Block> lowestPending = pendingBlocksManager.pendingAncestorBlockOf(block);
+    if (lowestPending.isPresent()) {
+      final Block lowestPendingBlock = lowestPending.get();
+      // If the parent of the lowest ancestor is not in the chain, request it.
+      if (!protocolContext
+          .getBlockchain()
+          .contains(lowestPendingBlock.getHeader().getParentHash())) {
+        requestParentBlock(lowestPendingBlock);
+      } else {
+        LOG.trace("Parent block is already in the chain");
+        // if the parent is already imported, process its children
+        maybeProcessPendingChildrenBlocks(lowestPendingBlock);
+      }
+    }
+  }
+
   private CompletableFuture<Block> validateAndProcessPendingBlock(
       final BlockHeaderValidator blockHeaderValidator,
       final Block block,
@@ -490,7 +647,7 @@ public class BlockPropagationManager {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
       return runImportTask(block);
     } else {
-      importingBlocks.remove(block.getHash());
+      processingBlocksManager.registerBlockImportDone(block.getHash());
       badBlockManager.addBadBlock(block);
       LOG.warn("Failed to import announced block {}", block.toLogString());
       return CompletableFuture.completedFuture(block);
@@ -510,7 +667,7 @@ public class BlockPropagationManager {
         .run()
         .whenComplete(
             (result, throwable) -> {
-              importingBlocks.remove(block.getHash());
+              processingBlocksManager.registerBlockImportDone(block.getHash());
               if (throwable != null) {
                 LOG.warn("Failed to import announced block {}", block.toLogString());
               }
@@ -535,8 +692,7 @@ public class BlockPropagationManager {
 
   private void reactToTTDReachedEvent(final boolean ttdReached) {
     if (started.get() && ttdReached) {
-      LOG.info("Block propagation was running, then ttd reached, stopping");
-      stop();
+      LOG.info("Block propagation was running, then ttd reached");
     } else if (!started.get()) {
       start();
     }
@@ -545,14 +701,74 @@ public class BlockPropagationManager {
   @Override
   public String toString() {
     return "BlockPropagationManager{"
-        + "requestedBlocks="
-        + requestedBlocks
-        + ", requestedNonAnnounceBlocks="
-        + requestedNonAnnouncedBlocks
-        + ", importingBlocks="
-        + importingBlocks
+        + processingBlocksManager
         + ", pendingBlocksManager="
         + pendingBlocksManager
         + '}';
+  }
+
+  private String logBlockNumberMaybeHash(
+      final long blockNumber, final Optional<Hash> maybeBlockHash) {
+    return blockNumber + maybeBlockHash.map(h -> " (" + h + ")").orElse("");
+  }
+
+  @Override
+  public void onNewForkchoiceMessage(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash) {
+    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+      stop();
+    }
+  }
+
+  static class ProcessingBlocksManager {
+    private final Set<Hash> importingBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Hash> requestedBlocks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<Long> requestedNonAnnouncedBlocks =
+        Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    boolean addRequestedBlock(final Hash hash) {
+      return requestedBlocks.add(hash);
+    }
+
+    public boolean addNonAnnouncedBlocks(final long blockNumber) {
+      return requestedNonAnnouncedBlocks.add(blockNumber);
+    }
+
+    public boolean alreadyImporting(final Hash hash) {
+      return importingBlocks.contains(hash);
+    }
+
+    public synchronized void registerReceivedBlock(final Block block) {
+      requestedBlocks.remove(block.getHash());
+      requestedNonAnnouncedBlocks.remove(block.getHeader().getNumber());
+    }
+
+    public synchronized void registerFailedGetBlock(
+        final long blockNumber, final Optional<Hash> maybeBlockHash) {
+      requestedNonAnnouncedBlocks.remove(blockNumber);
+      maybeBlockHash.ifPresent(requestedBlocks::remove);
+    }
+
+    public boolean addImportingBlock(final Hash hash) {
+      return importingBlocks.add(hash);
+    }
+
+    public void registerBlockImportDone(final Hash hash) {
+      importingBlocks.remove(hash);
+    }
+
+    @Override
+    public synchronized String toString() {
+      return "ProcessingBlocksManager{"
+          + "importingBlocks="
+          + importingBlocks
+          + ", requestedBlocks="
+          + requestedBlocks
+          + ", requestedNonAnnouncedBlocks="
+          + requestedNonAnnouncedBlocks
+          + '}';
+    }
   }
 }

@@ -31,12 +31,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +55,7 @@ import org.junit.Test;
 public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
+  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -67,12 +70,19 @@ public class BaseFeePendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-          MAX_TRANSACTIONS,
-          TestClock.fixed(),
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          BaseFeePendingTransactionsTest::mockBlockHeader,
-          TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+          BaseFeePendingTransactionsTest::mockBlockHeader);
+  private final BaseFeePendingTransactionsSorter senderLimitedTransactions =
+      new BaseFeePendingTransactionsSorter(
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS)
+              .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+              .build(),
+          TestClock.system(ZoneId.systemDefault()),
+          metricsSystem,
+          BaseFeePendingTransactionsTest::mockBlockHeader);
   private final Transaction transaction1 = createTransaction(2);
   private final Transaction transaction2 = createTransaction(1);
 
@@ -122,18 +132,34 @@ public class BaseFeePendingTransactionsTest {
 
   @Test
   public void shouldDropOldestTransactionWhenLimitExceeded() {
-    final Transaction oldestTransaction = createTransaction(0);
-    transactions.addRemoteTransaction(oldestTransaction);
+    final Transaction oldestTransaction =
+        transactionWithNonceSenderAndGasPrice(0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L);
+    senderLimitedTransactions.addRemoteTransaction(oldestTransaction);
     for (int i = 1; i < MAX_TRANSACTIONS; i++) {
-      transactions.addRemoteTransaction(createTransaction(i));
+      senderLimitedTransactions.addRemoteTransaction(
+          transactionWithNonceSenderAndGasPrice(
+              i, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L));
     }
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isZero();
 
-    transactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    senderLimitedTransactions.addRemoteTransaction(createTransaction(MAX_TRANSACTIONS + 1));
+    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(oldestTransaction);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldDropFutureTransactionWhenSenderLimitExceeded() {
+    Transaction furthestFutureTransaction = null;
+    for (int i = 0; i < MAX_TRANSACTIONS; i++) {
+      furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
+      senderLimitedTransactions.addRemoteTransaction(furthestFutureTransaction);
+    }
+    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS_BY_SENDER);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1L);
+    assertThat(senderLimitedTransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
+        .isEmpty();
   }
 
   @Test
@@ -167,10 +193,13 @@ public class BaseFeePendingTransactionsTest {
   public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
     final List<Transaction> lowGasPriceTransactions =
         IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(i -> transactionWithNonceSenderAndGasPrice(i + 1, KEYS1, 10))
+            .mapToObj(
+                i ->
+                    transactionWithNonceSenderAndGasPrice(
+                        i + 1, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10))
             .collect(Collectors.toUnmodifiableList());
 
-    // Fill the pool
+    // Fill the pool with transasctions from random senders
     lowGasPriceTransactions.forEach(transactions::addRemoteTransaction);
 
     // This should kick the oldest tx with the low gas price out, namely the first one we added
@@ -186,14 +215,14 @@ public class BaseFeePendingTransactionsTest {
 
   @Test
   public void shouldStartDroppingLocalTransactionsWhenPoolIsFullOfLocalTransactions() {
-    final Transaction firstLocalTransaction = createTransaction(0);
-    transactions.addLocalTransaction(firstLocalTransaction);
+    Transaction lastLocalTransactionForSender = null;
 
-    for (int i = 1; i <= MAX_TRANSACTIONS; i++) {
-      transactions.addLocalTransaction(createTransaction(i));
+    for (int i = 0; i <= MAX_TRANSACTIONS; i++) {
+      lastLocalTransactionForSender = createTransaction(i);
+      transactions.addLocalTransaction(lastLocalTransactionForSender);
     }
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(firstLocalTransaction);
+    assertTransactionNotPending(lastLocalTransactionForSender);
   }
 
   @Test
@@ -590,12 +619,13 @@ public class BaseFeePendingTransactionsTest {
     final int maxTransactionRetentionHours = 1;
     final BaseFeePendingTransactionsSorter transactions =
         new BaseFeePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(maxTransactionRetentionHours)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            BaseFeePendingTransactionsTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            BaseFeePendingTransactionsTest::mockBlockHeader);
 
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
@@ -613,12 +643,13 @@ public class BaseFeePendingTransactionsTest {
     final int maxTransactionRetentionHours = 1;
     final BaseFeePendingTransactionsSorter transactions =
         new BaseFeePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(maxTransactionRetentionHours)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            BaseFeePendingTransactionsTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            BaseFeePendingTransactionsTest::mockBlockHeader);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(2L, ChronoUnit.HOURS);
@@ -632,12 +663,13 @@ public class BaseFeePendingTransactionsTest {
     final int maxTransactionRetentionHours = 2;
     final BaseFeePendingTransactionsSorter transactions =
         new BaseFeePendingTransactionsSorter(
-            maxTransactionRetentionHours,
-            MAX_TRANSACTIONS,
+            ImmutableTransactionPoolConfiguration.builder()
+                .pendingTxRetentionPeriod(maxTransactionRetentionHours)
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .build(),
             clock,
             metricsSystem,
-            BaseFeePendingTransactionsTest::mockBlockHeader,
-            TransactionPoolConfiguration.DEFAULT_PRICE_BUMP);
+            BaseFeePendingTransactionsTest::mockBlockHeader);
     transactions.addRemoteTransaction(transaction1);
     assertThat(transactions.size()).isEqualTo(1);
     clock.step(3L, ChronoUnit.HOURS);
@@ -687,9 +719,32 @@ public class BaseFeePendingTransactionsTest {
         .isPresent()
         .hasValue(6);
     addLocalTransactions(6, 10);
+
+    // assert that we drop future nonces first:
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(7);
+        .hasValue(6);
+  }
+
+  @Test
+  public void assertThatCorrectNonceIsReturnedForSenderLimitedPool() {
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
+    addLocalTransactions(senderLimitedTransactions, 1, 2, 4, 5);
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(3);
+    addLocalTransactions(senderLimitedTransactions, 3);
+
+    // assert we have dropped previously added tx 5, and next nonce is now 5
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(5);
+    addLocalTransactions(senderLimitedTransactions, 6, 10);
+
+    // assert that we drop future nonces first:
+    assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
+        .isPresent()
+        .hasValue(5);
   }
 
   @Test
@@ -713,8 +768,13 @@ public class BaseFeePendingTransactionsTest {
   }
 
   private void addLocalTransactions(final long... nonces) {
+    addLocalTransactions(transactions, nonces);
+  }
+
+  private void addLocalTransactions(
+      final AbstractPendingTransactionsSorter sorter, final long... nonces) {
     for (final long nonce : nonces) {
-      transactions.addLocalTransaction(createTransaction(nonce));
+      sorter.addLocalTransaction(createTransaction(nonce));
     }
   }
 

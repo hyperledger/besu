@@ -229,6 +229,17 @@ public class GenesisConfigFileTest {
   }
 
   @Test
+  public void assertMainnetTerminalTotalDifficulty() {
+    GenesisConfigOptions mainnetOptions =
+        GenesisConfigFile.genesisFileFromResources("/mainnet.json").getConfigOptions();
+
+    assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
+    // tentative as of 2022-08-11:
+    assertThat(mainnetOptions.getTerminalTotalDifficulty().get())
+        .isEqualTo(UInt256.valueOf(new BigInteger("58750000000000000000000")));
+  }
+
+  @Test
   public void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions ropstenOverrideOptions =
         GenesisConfigFile.genesisFileFromResources("/ropsten.json")
@@ -448,7 +459,7 @@ public class GenesisConfigFileTest {
 
     final GenesisConfigFile config = fromConfig(configNode);
 
-    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L);
+    assertThat(config.getForks()).containsExactly(1L, 2L, 3L, 1035301L, 2222222L);
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(4));
   }
 
