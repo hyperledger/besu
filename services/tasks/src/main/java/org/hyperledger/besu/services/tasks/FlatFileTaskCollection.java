@@ -20,7 +20,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -40,6 +42,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   private final Function<T, Bytes> serializer;
   private final Function<Bytes, T> deserializer;
   private final long rollWhenFileSizeExceedsBytes;
+  private final String fileNamePrefix;
 
   private final ByteBuffer lengthBuffer = ByteBuffer.allocate(Integer.BYTES);
 
@@ -54,18 +57,28 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
       final Path storageDirectory,
       final Function<T, Bytes> serializer,
       final Function<Bytes, T> deserializer) {
-    this(storageDirectory, serializer, deserializer, DEFAULT_FILE_ROLL_SIZE_BYTES);
+    this(storageDirectory, serializer, deserializer, DEFAULT_FILE_ROLL_SIZE_BYTES, FILENAME_PREFIX);
+  }
+
+  public FlatFileTaskCollection(
+      final Path storageDirectory,
+      final Function<T, Bytes> serializer,
+      final Function<Bytes, T> deserializer,
+      final String fileNamePrefix) {
+    this(storageDirectory, serializer, deserializer, DEFAULT_FILE_ROLL_SIZE_BYTES, fileNamePrefix);
   }
 
   FlatFileTaskCollection(
       final Path storageDirectory,
       final Function<T, Bytes> serializer,
       final Function<Bytes, T> deserializer,
-      final long rollWhenFileSizeExceedsBytes) {
+      final long rollWhenFileSizeExceedsBytes,
+      final String fileNamePrefix) {
     this.storageDirectory = storageDirectory;
     this.serializer = serializer;
     this.deserializer = deserializer;
     this.rollWhenFileSizeExceedsBytes = rollWhenFileSizeExceedsBytes;
+    this.fileNamePrefix = fileNamePrefix;
     writeFileChannel = openWriteFileChannel(writeFileNumber);
     readFileChannel = openReadFileChannel(readFileNumber);
   }
@@ -124,6 +137,28 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
       outstandingTasks.add(task);
       size--;
       return task;
+    } catch (final IOException e) {
+      throw new StorageException(
+          "There was a problem removing from FileChannel " + pathForFileNumber(readFileNumber), e);
+    }
+  }
+
+  public synchronized List<Task<T>> getAll() {
+    if (isEmpty()) {
+      return null;
+    }
+    try {
+      final List<Task<T>> tasks = new ArrayList<>();
+      final long nbItems = size();
+      final long position = readFileChannel.position();
+      readFileChannel.position(0);
+      for (int i = 0; i < nbItems; i++) {
+        final ByteBuffer dataBuffer = readNextTaskData();
+        final T data = deserializer.apply(Bytes.wrapByteBuffer(dataBuffer));
+        tasks.add(new FlatFileTask<>(this, data));
+      }
+      readFileChannel.position(position);
+      return tasks;
     } catch (final IOException e) {
       throw new StorageException(
           "There was a problem removing from FileChannel " + pathForFileNumber(readFileNumber), e);
@@ -235,7 +270,7 @@ public class FlatFileTaskCollection<T> implements TaskCollection<T> {
   }
 
   private Path pathForFileNumber(final int fileNumber) {
-    return storageDirectory.resolve(FILENAME_PREFIX + fileNumber);
+    return storageDirectory.resolve(fileNamePrefix + fileNumber);
   }
 
   private synchronized boolean markTaskCompleted(final FlatFileTask<T> task) {

@@ -101,6 +101,7 @@ public class SnapWorldDownloadStateTest {
     downloadState =
         new SnapWorldDownloadState(
             worldStateStorage,
+            snapContext,
             snapSyncState,
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,

@@ -31,8 +31,8 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -54,9 +54,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
-  public final HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
+
+  private final SnapPersistedContext snapContext;
   private final SnapSyncState snapSyncState;
 
   // metrics around the snapsync
@@ -64,6 +65,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
+      final SnapPersistedContext snapContext,
       final SnapSyncState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
@@ -76,6 +78,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock);
+    this.snapContext = snapContext;
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
     metricsManager
@@ -164,10 +167,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     snapSyncState.setHealStatus(true);
     // try to find new pivot block before healing
     dynamicPivotBlockManager.switchToNewPivotBlock(
-        (blockHeader, newPivotBlockFound) ->
-            enqueueRequest(
-                createAccountTrieNodeDataRequest(
-                    blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts)));
+        (blockHeader, newPivotBlockFound) -> {
+          snapContext.clearPersistedTasks();
+          enqueueRequest(
+              createAccountTrieNodeDataRequest(
+                  blockHeader.getStateRoot(), Bytes.EMPTY, snapContext.getInconsistentAccounts()));
+        });
   }
 
   public synchronized void reloadHeal() {
@@ -199,7 +204,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public void addInconsistentAccount(final Bytes account) {
-    inconsistentAccounts.add(account);
+    snapContext.addInconsistentAccount(account);
   }
 
   @Override
@@ -211,23 +216,28 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized Task<SnapDataRequest> dequeueRequestBlocking(
       final List<TaskCollection<SnapDataRequest>> queueDependencies,
-      final List<TaskCollection<SnapDataRequest>> queues) {
+      final TaskCollection<SnapDataRequest> queue,
+      final Consumer<Void> unBlocked) {
+    boolean isWaiting = false;
     while (!internalFuture.isDone()) {
       while (queueDependencies.stream()
           .map(TaskCollection::allTasksCompleted)
           .anyMatch(Predicate.isEqual(false))) {
         try {
+          isWaiting = true;
           wait();
         } catch (final InterruptedException e) {
           Thread.currentThread().interrupt();
           return null;
         }
       }
-      for (TaskCollection<SnapDataRequest> queue : queues) {
-        Task<SnapDataRequest> task = queue.remove();
-        if (task != null) {
-          return task;
-        }
+      if (isWaiting) {
+        unBlocked.accept(null);
+      }
+      isWaiting = false;
+      Task<SnapDataRequest> task = queue.remove();
+      if (task != null) {
+        return task;
       }
 
       try {
@@ -243,25 +253,27 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized Task<SnapDataRequest> dequeueAccountRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
-        List.of(pendingAccountRequests));
+        pendingAccountRequests,
+        unused -> snapContext.updatePersistedTasks(pendingAccountRequests.asList()));
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingBigStorageRequests));
+    return dequeueRequestBlocking(Collections.emptyList(), pendingBigStorageRequests, __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueStorageRequestBlocking() {
-    return dequeueRequestBlocking(Collections.emptyList(), List.of(pendingStorageRequests));
+    return dequeueRequestBlocking(Collections.emptyList(), pendingStorageRequests, __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueCodeRequestBlocking() {
-    return dequeueRequestBlocking(List.of(pendingStorageRequests), List.of(pendingCodeRequests));
+    return dequeueRequestBlocking(List.of(pendingStorageRequests), pendingCodeRequests, __ -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueTrieNodeRequestBlocking() {
     return dequeueRequestBlocking(
         List.of(pendingAccountRequests, pendingStorageRequests, pendingBigStorageRequests),
-        List.of(pendingTrieNodeRequests));
+        pendingTrieNodeRequests,
+        __ -> {});
   }
 
   public SnapsyncMetricsManager getMetricsManager() {

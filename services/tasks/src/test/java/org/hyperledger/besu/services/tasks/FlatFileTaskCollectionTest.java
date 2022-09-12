@@ -41,7 +41,11 @@ public class FlatFileTaskCollectionTest
 
   private FlatFileTaskCollection<Bytes> createQueue(final Path dataDir) {
     return new FlatFileTaskCollection<>(
-        dataDir, Function.identity(), Function.identity(), ROLL_SIZE);
+        dataDir,
+        Function.identity(),
+        Function.identity(),
+        ROLL_SIZE,
+        FlatFileTaskCollection.FILENAME_PREFIX);
   }
 
   @Test

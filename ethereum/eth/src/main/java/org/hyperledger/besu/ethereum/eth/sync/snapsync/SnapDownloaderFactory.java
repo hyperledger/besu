@@ -45,6 +45,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
+  protected static final String SNAP_SYNC_FOLDER = "snapsync";
+
   public static Optional<FastSyncDownloader<?>> createSnapDownloader(
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
@@ -93,6 +95,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
+            snapContextLoader,
             worldStateStorage,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),
@@ -125,5 +128,11 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
   protected static InMemoryTasksPriorityQueues<SnapDataRequest>
       createSnapWorldStateDownloaderTaskCollection() {
     return new InMemoryTasksPriorityQueues<>();
+  }
+
+  protected static Path getSyncDataDirectory(final Path dataDirectory) {
+    final Path syncDataDir = dataDirectory.resolve(SNAP_SYNC_FOLDER);
+    ensureDirectoryExists(syncDataDir.toFile());
+    return syncDataDir;
   }
 }

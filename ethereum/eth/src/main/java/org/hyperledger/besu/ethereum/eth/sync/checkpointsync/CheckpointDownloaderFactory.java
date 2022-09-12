@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapPersistedContext;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
@@ -119,13 +120,20 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
         new SnapSyncState(
             fastSyncStateStorage.loadState(
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
-    worldStateStorage.clear();
+
+    final SnapPersistedContext snapContextLoader =
+        new SnapPersistedContext(getSyncDataDirectory(dataDirectory));
+
+    if (!snapContextLoader.isContextAvailable()) {
+      worldStateStorage.clear();
+    }
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
+            snapContextLoader,
             worldStateStorage,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),
