@@ -65,6 +65,7 @@ public class SnapContextLoader {
               final BytesValueRLPInput rlpInput =
                   new BytesValueRLPInput(Bytes.wrap(ois.readAllBytes()), false);
               snapDataRequests = rlpInput.readList(SnapDataRequest::deserialize);
+                System.out.println("found snapDataRequests"+snapDataRequests);
               ois.close();
             } catch (final Throwable e) {
               e.printStackTrace(System.out);
@@ -83,9 +84,10 @@ public class SnapContextLoader {
           if (savedInconsistentAccounts.exists()) {
             try (final FileInputStream fis = new FileInputStream(savedInconsistentAccounts)) {
               final ObjectInputStream ois = new ObjectInputStream(fis);
-              while (ois.available() == Bytes32.SIZE) {
+              while (ois.available() >= Bytes32.SIZE) {
                 inconsistentAccounts.add(Bytes32.wrap(ois.readNBytes(Bytes32.SIZE)));
               }
+                System.out.println("found inconsistentAccounts"+inconsistentAccounts);
               ois.close();
             } catch (final Throwable e) {
               e.printStackTrace(System.out);
@@ -98,7 +100,7 @@ public class SnapContextLoader {
 
   public synchronized void updateContext(
       final InMemoryTaskQueue<SnapDataRequest> tasks, final List<Bytes> inconsistentAccounts) {
-    System.out.println("want persist");
+    System.out.println("want persist "+tasks.asList()+ " "+inconsistentAccounts.size());
     saveTasks(tasks);
     saveInconsistentAccounts(inconsistentAccounts);
   }

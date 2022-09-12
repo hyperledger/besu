@@ -121,7 +121,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     worldStateStorage.clear();
 
     final SnapContextLoader snapContextLoader =
-        new SnapContextLoader(geSyncDataDirectory(dataDirectory));
+        new SnapContextLoader(getSyncDataDirectory(dataDirectory));
 
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(

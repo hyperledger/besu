@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 
 import java.util.Optional;
 import java.util.function.Consumer;

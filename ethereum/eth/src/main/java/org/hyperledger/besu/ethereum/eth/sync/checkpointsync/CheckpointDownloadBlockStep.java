@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 

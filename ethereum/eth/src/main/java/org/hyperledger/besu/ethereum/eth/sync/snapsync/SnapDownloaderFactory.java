@@ -89,7 +89,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     worldStateStorage.clear();
 
     final SnapContextLoader snapContextLoader =
-        new SnapContextLoader(geSyncDataDirectory(dataDirectory));
+        new SnapContextLoader(getSyncDataDirectory(dataDirectory));
 
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
@@ -123,7 +123,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     return Optional.of(fastSyncDownloader);
   }
 
-  protected static Path geSyncDataDirectory(final Path dataDirectory) {
+  protected static Path getSyncDataDirectory(final Path dataDirectory) {
     final Path syncDataDir = dataDirectory.resolve(SNAP_SYNC_FOLDER);
     ensureDirectoryExists(syncDataDir.toFile());
     return syncDataDir;

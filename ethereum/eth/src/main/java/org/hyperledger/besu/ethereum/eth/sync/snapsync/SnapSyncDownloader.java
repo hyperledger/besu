@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -59,7 +60,9 @@ public class SnapSyncDownloader extends FastSyncDownloader {
 
   @Override
   protected CompletableFuture<FastSyncState> handleFailure(final Throwable error) {
-    snapContextLoader.clear();
+    if(!(error.getCause() instanceof CancellationException)) {
+      snapContextLoader.clear();
+    }
     return super.handleFailure(error);
   }
 
