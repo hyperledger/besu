@@ -138,7 +138,9 @@ public class JsonRpcMethodsFactory {
             (TransitionCoordinator) miningCoordinator;
         enabled.putAll(
             new RollupJsonRpcMethods(
-                    transitionCoordinator.getMergeCoordinator(), protocolContext, syncVertx)
+                    transitionCoordinator.getMergeCoordinator(),
+                    protocolContext,
+                    consensusEngineServer)
                 .create(rpcApis));
       }
 
