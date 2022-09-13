@@ -189,7 +189,7 @@ public interface RLPOutput {
   default void writeUnsignedByte(final int b) {
     // If input == 0, encode 0 value as 0x80
     if (b == 0) {
-      writeBytes(Bytes.of(new byte[0x80]));
+      writeBytes(Bytes.of(0x80));
     } else {
       writeBytes(Bytes.of(b));
     }
