@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -464,9 +465,9 @@ public final class RunnerTest {
       final ProtocolSpec protocolSpec =
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-      final boolean result =
+      final BlockImportResult result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
-      if (!result) {
+      if (!result.isImported()) {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }
     }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public interface BlockImporter {
    * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
    *     false}
    */
-  default boolean importBlock(
+  default BlockImportResult importBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode) {
@@ -54,7 +55,7 @@ public interface BlockImporter {
    * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
    *     false}
    */
-  boolean importBlock(
+  BlockImportResult importBlock(
       ProtocolContext context,
       Block block,
       HeaderValidationMode headerValidationMode,
@@ -72,7 +73,7 @@ public interface BlockImporter {
    * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
    *     false}
    */
-  boolean fastImportBlock(
+  BlockImportResult fastImportBlock(
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
