@@ -55,6 +55,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+
 /** Provides a facade to construct the JSON-RPC component. */
 public class JsonRpcTestMethodsFactory {
 
@@ -180,6 +183,7 @@ public class JsonRpcTestMethodsFactory {
             natService,
             new HashMap<>(),
             dataDir,
-            ethPeers);
+            ethPeers,
+            Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)));
   }
 }

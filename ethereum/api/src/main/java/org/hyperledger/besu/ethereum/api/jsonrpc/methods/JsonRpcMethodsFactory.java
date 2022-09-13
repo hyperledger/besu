@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import io.vertx.core.Vertx;
+
 public class JsonRpcMethodsFactory {
 
   public Map<String, JsonRpcMethod> methods(
@@ -72,7 +74,8 @@ public class JsonRpcMethodsFactory {
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
-      final EthPeers ethPeers) {
+      final EthPeers ethPeers,
+      final Vertx consensusEngineServer) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
 
     if (!rpcApis.isEmpty()) {
@@ -94,7 +97,8 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, metricsSystem, transactionPool, dataDir),
               new EeaJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
-              new ExecutionEngineJsonRpcMethods(miningCoordinator, protocolContext, ethPeers),
+              new ExecutionEngineJsonRpcMethods(
+                  miningCoordinator, protocolContext, ethPeers, consensusEngineServer),
               new GoQuorumJsonRpcPrivacyMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(
