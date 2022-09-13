@@ -87,6 +87,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class JsonRpcHttpServiceLoginTest {
+
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
   private static final Vertx vertx = Vertx.vertx();
@@ -151,7 +152,8 @@ public class JsonRpcHttpServiceLoginTest {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    vertx));
     service = createJsonRpcHttpService();
     jwtAuth = service.authenticationService.get().getJwtAuthProvider();
     service.start().join();
