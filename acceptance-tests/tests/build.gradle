@@ -88,7 +88,11 @@ dependencies {
 test.enabled = false
 
 sourceSets {
-  test { resources { srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs" } }
+  test {
+    resources {
+      srcDirs "${rootDir}/acceptance-tests/test-plugins/build/libs"
+    }
+  }
 }
 
 processTestResources.dependsOn(':acceptance-tests:test-plugins:testPluginsJar')
