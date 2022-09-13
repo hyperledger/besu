@@ -4,10 +4,10 @@
 
 ### Additions and Improvements
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
-- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
+- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4364](https://github.com/hyperledger/besu/pull/4364)
 
 ### Bug Fixes
-
+- Always return a transaction type for pending transactions [#4264](https://github.com/hyperledger/besu/pull/4264)
 
 ## 22.7.2
 ### Besu 22.7.2 is a recommended release for the Merge and Mainnet users. 22.7.1 remains Merge-ready. This release provides additional robustness before the Merge with some fixes and improvements in sync, peering, and logging.
