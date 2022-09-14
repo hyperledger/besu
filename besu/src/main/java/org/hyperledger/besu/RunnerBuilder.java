@@ -142,6 +142,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -986,6 +987,9 @@ public class RunnerBuilder {
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+    // sync vertx for engine consensus API, to process requests in FIFO order;
+    final Vertx consensusEngineServer = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
+
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -1012,7 +1016,8 @@ public class RunnerBuilder {
                 natService,
                 namedPlugins,
                 dataDir,
-                besuController.getProtocolManager().ethContext().getEthPeers());
+                besuController.getProtocolManager().ethContext().getEthPeers(),
+                consensusEngineServer);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
