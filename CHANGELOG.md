@@ -5,6 +5,7 @@
 ### Additions and Improvements
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 - Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
+- Improved RLP processing to handle zero-length string as 0x80 [#4388](https://github.com/hyperledger/besu/issues/4388).
 
 ### Bug Fixes
 
