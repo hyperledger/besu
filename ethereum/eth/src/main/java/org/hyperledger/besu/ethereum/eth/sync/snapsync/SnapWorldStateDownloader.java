@@ -149,8 +149,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final List<AccountRangeDataRequest> persistedTasks = snapContext.getPersistedTasks();
       final HashSet<Bytes> inconsistentAccounts = snapContext.getInconsistentAccounts();
 
-      if (!persistedTasks.isEmpty()
-          && !inconsistentAccounts.isEmpty()) { // continue to download worldstate ranges
+      if (!persistedTasks.isEmpty()) { // continue to download worldstate ranges
+        newDownloadState.setInconsistentAccounts(inconsistentAccounts);
         snapContext
             .getPersistedTasks()
             .forEach(
@@ -161,6 +161,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                 });
       } else if (!inconsistentAccounts.isEmpty()) { // restart only the heal step
         snapSyncState.setHealStatus(true);
+        newDownloadState.setInconsistentAccounts(inconsistentAccounts);
         newDownloadState.enqueueRequest(
             SnapDataRequest.createAccountTrieNodeDataRequest(
                 stateRoot, Bytes.EMPTY, snapContext.getInconsistentAccounts()));
@@ -171,8 +172,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                 newDownloadState.enqueueRequest(
                     createAccountRangeDataRequest(stateRoot, key, value)));
       }
-
-      inconsistentAccounts.forEach(newDownloadState::addInconsistentAccount);
 
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 

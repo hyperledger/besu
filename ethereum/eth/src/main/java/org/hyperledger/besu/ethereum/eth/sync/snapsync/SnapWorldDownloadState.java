@@ -55,7 +55,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
-  public final HashSet<Bytes> inconsistentAccounts = new HashSet<>();
+  public HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
 
@@ -205,9 +205,15 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
+  public synchronized void setInconsistentAccounts(final HashSet<Bytes> inconsistentAccounts) {
+    this.inconsistentAccounts = inconsistentAccounts;
+  }
+
   public synchronized void addInconsistentAccount(final Bytes account) {
-    snapContext.addInconsistentAccount(account);
-    inconsistentAccounts.add(account);
+    if (!inconsistentAccounts.contains(account)) {
+      snapContext.addInconsistentAccount(account);
+      inconsistentAccounts.add(account);
+    }
   }
 
   @Override
