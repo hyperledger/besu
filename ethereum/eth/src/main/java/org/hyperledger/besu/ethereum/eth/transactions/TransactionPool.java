@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -279,10 +280,17 @@ public class TransactionPool implements BlockAddedObserver {
         .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
         .map(
             worldState -> {
-              final Account senderAccount = worldState.get(transaction.getSender());
-              return getTransactionValidator()
-                  .validateForSender(
-                      transaction, senderAccount, TransactionValidationParams.transactionPool());
+              try {
+                final Account senderAccount = worldState.get(transaction.getSender());
+                return getTransactionValidator()
+                    .validateForSender(
+                        transaction, senderAccount, TransactionValidationParams.transactionPool());
+              } catch (MerkleTrieException ex) {
+                LOG.debug(
+                    "MerkleTrieException while validating transaction for sender {}",
+                    transaction.getSender());
+                return ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+              }
             })
         .orElseGet(() -> ValidationResult.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
   }
