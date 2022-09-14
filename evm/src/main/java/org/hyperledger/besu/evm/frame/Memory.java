@@ -44,11 +44,6 @@ public class Memory {
 
   public Memory() {
     memBytes = new byte[0];
-    updateSize();
-  }
-
-  private void updateSize() {
-    activeWords = memBytes.length / Bytes32.SIZE;
   }
 
   private static RuntimeException overflow(final long v) {
@@ -137,11 +132,14 @@ public class Memory {
   private void maybeExpandCapacity(final int newActiveWords) {
     if (activeWords >= newActiveWords) return;
 
-    // Require full capacity to guarantee we don't resize more than once.
-    byte[] newMem = new byte[newActiveWords * Bytes32.SIZE];
-    System.arraycopy(memBytes, 0, newMem, 0, memBytes.length);
-    memBytes = newMem;
-    updateSize();
+    int neededSize = newActiveWords * Bytes32.SIZE;
+    if (neededSize > memBytes.length) {
+      int newSize = Math.max(neededSize, memBytes.length * 2);
+      byte[] newMem = new byte[newSize];
+      System.arraycopy(memBytes, 0, newMem, 0, memBytes.length);
+      memBytes = newMem;
+    }
+    activeWords = newActiveWords;
   }
 
   /**
@@ -170,7 +168,7 @@ public class Memory {
    * @return The current number of active bytes stored in memory.
    */
   int getActiveBytes() {
-    return memBytes.length;
+    return activeWords * Bytes32.SIZE;
   }
 
   /**

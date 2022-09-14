@@ -138,7 +138,7 @@ allprojects {
     }
     groovyGradle {
       target '*.gradle'
-      greclipse('4.6.3').configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.21.0').configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
