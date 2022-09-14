@@ -152,7 +152,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
       } else {
-        blockObserverId.ifPresent(blockchain::removeObserver);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
         updater.commit();
@@ -306,6 +305,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           snapSyncState.setWaitingBlockchain(false);
         }
         if (!snapSyncState.isWaitingBlockchain()) {
+          blockObserverId.ifPresent(blockchain::removeObserver);
+          blockObserverId = OptionalLong.empty();
           reloadHeal();
         }
       }
