@@ -67,4 +67,20 @@ public class BftExtraData implements ParsedExtraData {
   public int getRound() {
     return round;
   }
+
+  @Override
+  public String toString() {
+    return "BftExtraData{"
+        + "vanityData="
+        + vanityData
+        + ", seals="
+        + seals
+        + ", validators="
+        + validators
+        + ", vote="
+        + vote
+        + ", round="
+        + round
+        + '}';
+  }
 }

@@ -72,8 +72,8 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                       transactionInfo
                           .getTransaction()
                           .getMaxPriorityFeePerGas()
-                          // safe to .get() here because only 1559 txs can be in the static range
-                          .get()
+                          // just in case we attempt to compare non-1559 transaction
+                          .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
               .thenComparing(TransactionInfo::getAddedToPoolAt)
@@ -104,7 +104,10 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
         if (!prioritizedTransactionsDynamicRange.remove(removedTransactionInfo))
-          prioritizedTransactionsStaticRange.remove(removedTransactionInfo);
+          removedTransactionInfo
+              .getTransaction()
+              .getMaxPriorityFeePerGas()
+              .ifPresent(__ -> prioritizedTransactionsStaticRange.remove(removedTransactionInfo));
         removeTransactionTrackedBySenderAndNonce(transaction);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
