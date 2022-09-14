@@ -52,10 +52,12 @@ public class JsonRpcExecutorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
   private static final String SPAN_CONTEXT = "span_context";
   private static final String APPLICATION_JSON = "application/json";
-  private static final ObjectWriter JSON_OBJECT_WRITER =
+  private static final ObjectMapper JSON_OBJECT_MAPPER =
       new ObjectMapper()
-          .registerModule(new Jdk8Module()) // Handle JDK8 Optionals (de)serialization
-          .writer()
+          .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
+  private static final ObjectWriter JSON_OBJECT_WRITER =
+      JSON_OBJECT_MAPPER
+          .writerWithDefaultPrettyPrinter()
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
@@ -72,7 +74,7 @@ public class JsonRpcExecutorHandler {
 
         if (ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name())) {
           JsonObject jsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
-          LOG.trace(jsonRequest.toString());
+          lazyTraceLogger(jsonRequest::toString);
           JsonRpcResponse jsonRpcResponse =
               jsonRpcExecutor.execute(
                   user,
@@ -88,13 +90,13 @@ public class JsonRpcExecutorHandler {
             try (final JsonResponseStreamer streamer =
                 new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
               // underlying output stream lifecycle is managed by the json object writer
-              LOG.trace(JSON_OBJECT_WRITER.writeValueAsString(jsonRpcResponse));
+              lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(jsonRpcResponse));
               JSON_OBJECT_WRITER.writeValue(streamer, jsonRpcResponse);
             }
           }
         } else if (ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name())) {
           JsonArray batchJsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
-          LOG.trace(batchJsonRequest.toString());
+          lazyTraceLogger(batchJsonRequest::toString);
           List<JsonRpcResponse> jsonRpcBatchResponses = new ArrayList<>();
           try {
             for (int i = 0; i < batchJsonRequest.size(); i++) {
@@ -125,7 +127,7 @@ public class JsonRpcExecutorHandler {
           try (final JsonResponseStreamer streamer =
               new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
             // underlying output stream lifecycle is managed by the json object writer
-            LOG.trace(JSON_OBJECT_WRITER.writeValueAsString(completed));
+            lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(completed));
             JSON_OBJECT_WRITER.writeValue(streamer, completed);
           }
         } else {
@@ -170,6 +172,21 @@ public class JsonRpcExecutorHandler {
         return HttpResponseStatus.BAD_REQUEST;
       default:
         return HttpResponseStatus.OK;
+    }
+  }
+
+  @FunctionalInterface
+  private interface ExceptionThrowingSupplier<T> {
+    T get() throws Exception;
+  }
+
+  private static void lazyTraceLogger(final ExceptionThrowingSupplier<String> logMessageSupplier) {
+    if (LOG.isTraceEnabled()) {
+      try {
+        LOG.trace(logMessageSupplier.get());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }
