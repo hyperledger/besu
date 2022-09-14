@@ -36,7 +36,6 @@ public class SnapPersistedContext {
             new ValueConvertor<>() {
               @Override
               public AccountRangeDataRequest fromBytes(final byte[] bytes) {
-                System.out.println("fromBytes " + Bytes.of(bytes));
                 return AccountRangeDataRequest.deserialize(
                     new BytesValueRLPInput(Bytes.of(bytes), false));
               }
@@ -67,7 +66,6 @@ public class SnapPersistedContext {
   }
 
   public void updatePersistedTasks(final List<? extends SnapDataRequest> accountRangeDataRequests) {
-    System.out.println("updatePersistedTasks " + accountRangeDataRequests.size());
     accountRangeToDownload.clear();
     accountRangeToDownload.putAll(
         keyValueStorageTransaction ->
@@ -121,6 +119,6 @@ public class SnapPersistedContext {
   }
 
   private Predicate<byte[]> notEqualsTo(final byte[] name) {
-    return key -> Arrays.equals(key, name);
+    return key -> !Arrays.equals(key, name);
   }
 }

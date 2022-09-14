@@ -59,7 +59,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
-    return storage.getAllKeysThat(segmentHandle, returnCondition);
+    return storage.getAllValuesFromKeysThat(segmentHandle, returnCondition);
   }
 
   @Override

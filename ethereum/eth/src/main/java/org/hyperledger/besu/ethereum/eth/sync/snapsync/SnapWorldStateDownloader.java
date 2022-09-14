@@ -172,6 +172,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                     createAccountRangeDataRequest(stateRoot, key, value)));
       }
 
+      inconsistentAccounts.forEach(newDownloadState::addInconsistentAccount);
+
       maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
       final DynamicPivotBlockManager dynamicPivotBlockManager =

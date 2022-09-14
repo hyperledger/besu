@@ -31,6 +31,7 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -54,6 +55,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       new InMemoryTaskQueue<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
+  public final HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
 
@@ -171,7 +173,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           snapContext.clearPersistedTasks();
           enqueueRequest(
               createAccountTrieNodeDataRequest(
-                  blockHeader.getStateRoot(), Bytes.EMPTY, snapContext.getInconsistentAccounts()));
+                  blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
         });
   }
 
@@ -203,8 +205,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
-  public void addInconsistentAccount(final Bytes account) {
+  public synchronized void addInconsistentAccount(final Bytes account) {
     snapContext.addInconsistentAccount(account);
+    inconsistentAccounts.add(account);
   }
 
   @Override
