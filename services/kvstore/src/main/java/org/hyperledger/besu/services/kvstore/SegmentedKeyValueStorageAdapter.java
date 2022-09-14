@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
+
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
@@ -56,8 +58,13 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   }
 
   @Override
-  public Stream<byte[]> streamKeys() {
-    return storage.streamKeys(segmentHandle);
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return storage.getAllKeysThat(segmentHandle, returnCondition);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
+    return storage.stream(segmentHandle);
   }
 
   @Override

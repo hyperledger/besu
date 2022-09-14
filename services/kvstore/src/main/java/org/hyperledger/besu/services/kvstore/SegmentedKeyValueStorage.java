@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
+
 /**
  * Service provided by Besu to facilitate persistent data storage.
  *
@@ -58,7 +60,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * @param segmentHandle The segment handle whose keys we want to stream.
    * @return A stream of all keys in the specified segment.
    */
-  Stream<byte[]> streamKeys(final S segmentHandle);
+  Stream<Pair<byte[], byte[]>> stream(final S segmentHandle);
 
   /**
    * Delete the value corresponding to the given key in the given segment if a write lock can be
@@ -73,6 +75,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   boolean tryDelete(S segmentHandle, byte[] key) throws StorageException;
 
   Set<byte[]> getAllKeysThat(S segmentHandle, Predicate<byte[]> returnCondition);
+
+  Set<byte[]> getAllValuesFromKeysThat(final S segmentHandle, Predicate<byte[]> returnCondition);
 
   void clear(S segmentHandle);
 

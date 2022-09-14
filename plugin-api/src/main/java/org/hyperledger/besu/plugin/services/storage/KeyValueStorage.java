@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
+
 /**
  * Responsible for storing values against keys.
  *
@@ -67,7 +69,7 @@ public interface KeyValueStorage extends Closeable {
    * @return A stream of all keys in storage.
    * @throws StorageException problem encountered during the retrieval attempt.
    */
-  Stream<byte[]> streamKeys() throws StorageException;
+  Stream<Pair<byte[], byte[]>> stream() throws StorageException;
 
   /**
    * Delete the value corresponding to the given key if a write lock can be instantly acquired on
@@ -88,6 +90,8 @@ public interface KeyValueStorage extends Closeable {
    * @return the set of keys that pass the condition.
    */
   Set<byte[]> getAllKeysThat(Predicate<byte[]> returnCondition);
+
+  Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition);
 
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.

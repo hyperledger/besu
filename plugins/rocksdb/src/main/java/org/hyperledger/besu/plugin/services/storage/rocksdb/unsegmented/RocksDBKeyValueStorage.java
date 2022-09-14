@@ -23,7 +23,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.LRUCache;
 import org.rocksdb.Options;
@@ -124,14 +125,25 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getFirst()))
+        .map(Pair::getFirst)
+        .collect(toUnmodifiableSet());
   }
 
   @Override
-  public Stream<byte[]> streamKeys() {
+  public Stream<Pair<byte[], byte[]>> stream() {
     final RocksIterator rocksIterator = db.newIterator();
     rocksIterator.seekToFirst();
-    return RocksDbKeyIterator.create(rocksIterator).toStream();
+    return RocksDbIterator.create(rocksIterator).toStream();
+  }
+
+  @Override
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getFirst()))
+        .map(Pair::getSecond)
+        .collect(toUnmodifiableSet());
   }
 
   @Override

@@ -212,9 +212,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   public static AccountRangeDataRequest deserialize(final RLPInput in) {
+    in.enterList();
+    in.skipNext(); // skip request type
     final Hash rootHash = Hash.wrap(in.readBytes32());
     final Bytes32 startKeyHash = in.readBytes32();
     final Bytes32 endKeyHash = in.readBytes32();
+    in.leaveList();
     return createAccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
   }
 }

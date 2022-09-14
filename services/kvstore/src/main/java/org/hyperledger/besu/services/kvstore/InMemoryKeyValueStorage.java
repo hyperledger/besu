@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
 public class InMemoryKeyValueStorage implements KeyValueStorage {
@@ -77,15 +78,28 @@ public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getFirst()))
+        .map(Pair::getFirst)
+        .collect(toUnmodifiableSet());
   }
 
   @Override
-  public Stream<byte[]> streamKeys() {
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getFirst()))
+        .map(Pair::getSecond)
+        .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(hashValueStore.keySet()).stream().map(Bytes::toArrayUnsafe);
+      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .map(
+              bytesEntry -> new Pair<>(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()));
     } finally {
       lock.unlock();
     }

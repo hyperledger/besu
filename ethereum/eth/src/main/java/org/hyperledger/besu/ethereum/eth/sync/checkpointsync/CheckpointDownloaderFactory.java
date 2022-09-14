@@ -50,6 +50,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(CheckpointDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
+      final SnapPersistedContext snapContext,
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -121,19 +122,12 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
             fastSyncStateStorage.loadState(
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
 
-    final SnapPersistedContext snapContextLoader =
-        new SnapPersistedContext(getSyncDataDirectory(dataDirectory));
-
-    if (!snapContextLoader.isContextAvailable()) {
-      worldStateStorage.clear();
-    }
-
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
-            snapContextLoader,
+            snapContext,
             worldStateStorage,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),

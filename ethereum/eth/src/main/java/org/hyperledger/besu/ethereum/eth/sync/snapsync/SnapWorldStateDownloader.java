@@ -30,6 +30,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -144,23 +146,26 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
 
-      if (snapContext.isContextAvailable()) {
-        if (snapContext.isHealing()) {
-          snapSyncState.setHealStatus(true);
-          newDownloadState.enqueueRequest(
-              SnapDataRequest.createAccountTrieNodeDataRequest(
-                  stateRoot, Bytes.EMPTY, snapContext.getInconsistentAccounts()));
-        } else {
-          snapContext.getPersistedTasks().stream()
-              .map(AccountRangeDataRequest.class::cast)
-              .forEach(
-                  snapDataRequest -> {
-                    snapsyncMetricsManager.notifyStateDownloaded(
-                        snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
-                    newDownloadState.enqueueRequest(snapDataRequest);
-                  });
-        }
-      } else {
+      final List<AccountRangeDataRequest> persistedTasks = snapContext.getPersistedTasks();
+      final HashSet<Bytes> inconsistentAccounts = snapContext.getInconsistentAccounts();
+
+      if (!persistedTasks.isEmpty()
+          && !inconsistentAccounts.isEmpty()) { // continue to download worldstate ranges
+        snapContext
+            .getPersistedTasks()
+            .forEach(
+                snapDataRequest -> {
+                  snapsyncMetricsManager.notifyStateDownloaded(
+                      snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
+                  newDownloadState.enqueueRequest(snapDataRequest);
+                });
+      } else if (!inconsistentAccounts.isEmpty()) { // restart only the heal step
+        snapSyncState.setHealStatus(true);
+        newDownloadState.enqueueRequest(
+            SnapDataRequest.createAccountTrieNodeDataRequest(
+                stateRoot, Bytes.EMPTY, snapContext.getInconsistentAccounts()));
+      } else { // start from scratch
+        worldStateStorage.clear();
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(

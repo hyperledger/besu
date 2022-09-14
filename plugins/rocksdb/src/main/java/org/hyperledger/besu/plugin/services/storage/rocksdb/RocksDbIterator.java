@@ -25,23 +25,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import kotlin.Pair;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
-  private static final Logger LOG = LoggerFactory.getLogger(RocksDbKeyIterator.class);
+public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoCloseable {
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDbIterator.class);
 
   private final RocksIterator rocksIterator;
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  private RocksDbKeyIterator(final RocksIterator rocksIterator) {
+  private RocksDbIterator(final RocksIterator rocksIterator) {
     this.rocksIterator = rocksIterator;
   }
 
-  public static RocksDbKeyIterator create(final RocksIterator rocksIterator) {
-    return new RocksDbKeyIterator(rocksIterator);
+  public static RocksDbIterator create(final RocksIterator rocksIterator) {
+    return new RocksDbIterator(rocksIterator);
   }
 
   @Override
@@ -51,7 +52,7 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
   }
 
   @Override
-  public byte[] next() {
+  public Pair<byte[], byte[]> next() {
     assertOpen();
     try {
       rocksIterator.status();
@@ -64,13 +65,14 @@ public class RocksDbKeyIterator implements Iterator<byte[]>, AutoCloseable {
       throw new NoSuchElementException();
     }
     final byte[] key = rocksIterator.key();
+    final byte[] value = rocksIterator.value();
     rocksIterator.next();
-    return key;
+    return new Pair<>(key, value);
   }
 
-  public Stream<byte[]> toStream() {
+  public Stream<Pair<byte[], byte[]>> toStream() {
     assertOpen();
-    final Spliterator<byte[]> spliterator =
+    final Spliterator<Pair<byte[], byte[]>> spliterator =
         Spliterators.spliteratorUnknownSize(
             this,
             Spliterator.IMMUTABLE
