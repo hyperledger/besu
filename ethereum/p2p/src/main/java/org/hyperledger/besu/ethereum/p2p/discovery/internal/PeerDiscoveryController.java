@@ -439,7 +439,7 @@ public class PeerDiscoveryController {
       LOG.debug("Refreshing peer table after {} ms", tableRefreshIntervalMs);
       refreshTable();
     } else if (!peerRequirement.hasSufficientPeers()) {
-      LOG.debug("Refreshing peer table: seeking more peers");
+      LOG.debug("Refreshing peer table: seeking more peers. peer count < max");
       refreshTable();
     }
   }
