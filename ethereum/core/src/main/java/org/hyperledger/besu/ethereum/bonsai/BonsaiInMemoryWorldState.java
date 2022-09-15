@@ -48,7 +48,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   }
 
   @Override
-  public void persist(final BlockHeader blockHeader) {
+  public synchronized void persist(final BlockHeader blockHeader) {
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
     final Hash newWorldStateRootHash = rootHash(localUpdater);
     archive
