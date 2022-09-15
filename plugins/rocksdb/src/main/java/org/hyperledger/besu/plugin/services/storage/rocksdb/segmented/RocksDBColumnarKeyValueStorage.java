@@ -51,6 +51,7 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
+import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
@@ -78,7 +79,7 @@ public class RocksDBColumnarKeyValueStorage
 
   private final DBOptions options;
   private final TransactionDBOptions txOptions;
-  private final TransactionDB db;
+  private final OptimisticTransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
   private final RocksDBMetrics metrics;
@@ -141,9 +142,8 @@ public class RocksDBColumnarKeyValueStorage
       txOptions = new TransactionDBOptions();
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
       db =
-          TransactionDB.open(
+          OptimisticTransactionDB.open(
               options,
-              txOptions,
               configuration.getDatabaseDir().toString(),
               columnDescriptors,
               columnHandles);

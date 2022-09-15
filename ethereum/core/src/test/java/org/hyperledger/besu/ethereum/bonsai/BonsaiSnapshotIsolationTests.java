@@ -138,10 +138,9 @@ public class BonsaiSnapshotIsolationTests {
     var res = executeBlock(archive.getMutable(), firstBlock);
 
     var isolated2 = archive.getMutableSnapshot(firstBlock.getHash());
-    var res2 =
-        executeBlock(
-            archive.getMutable(),
-            forTransactions(List.of(burnTransaction(sender1, 1L, testAddress))));
+    var secondBlock = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
+    var res2 = executeBlock(archive.getMutable(), secondBlock);
+
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
@@ -153,9 +152,11 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
 
-    // hacky snapshot release using persist
-    isolated.get().persist(null);
-    isolated2.get().persist(null);
+    // persist trielogs
+    isolated.get().persist(firstBlock.getHeader());
+    isolated2.get().persist(secondBlock.getHeader());
+
+    //todo: check trielog layer for correctness
   }
 
   @Test
@@ -192,9 +193,11 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated3.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(3_000_000_000_000_000_000L));
 
-    // hacky close using persist
-    isolated2.get().persist(null);
-    isolated3.get().persist(null);
+    // persist trielog layer:
+    isolated2.get().persist(block2.getHeader());
+    isolated3.get().persist(block3.getHeader());
+
+    //todo: check trieloglayer for correctness
   }
 
   /**

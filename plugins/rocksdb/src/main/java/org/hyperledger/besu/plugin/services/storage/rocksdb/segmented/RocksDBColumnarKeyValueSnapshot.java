@@ -14,14 +14,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.TransactionDB;
 
 public class RocksDBColumnarKeyValueSnapshot implements KeyValueStorage {
-  final TransactionDB db;
+  final OptimisticTransactionDB db;
   final RocksDBSnapshotTransaction snapTx;
 
   RocksDBColumnarKeyValueSnapshot(
-      final TransactionDB db,
+      final OptimisticTransactionDB db,
       final RocksDbSegmentIdentifier segment,
       final RocksDBMetrics metrics) {
     this.db = db;
