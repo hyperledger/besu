@@ -191,7 +191,7 @@ public class RecursivePeerRefreshState {
     if (metadataPeer == null) {
       return;
     }
-    LOG.info(
+    LOG.debug(
         "Received neighbours packet with {} neighbours from {}",
         peers.size(),
         peer.getEnodeURLString());
