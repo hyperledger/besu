@@ -61,8 +61,13 @@ dependencies {
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:api')
+  testImplementation project(path: ':ethereum:blockcreation')
   testImplementation project(path: ':ethereum:referencetests')
+  testImplementation project(path: ':ethereum:eth')
   testImplementation project(':testutil')
+  // TESTING HACK HACK HACK
+  testImplementation project(path: ':plugins:rocksdb')
+
 
   testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-core'

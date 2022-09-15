@@ -18,21 +18,37 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
+public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
+  private final Supplier<? extends KeyValueStorage> snapshotSupplier;
 
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
+    this(
+        segment,
+        storage,
+        () -> {
+          throw new UnsupportedOperationException("Snapshot not supported");
+        });
+  }
+
+  public SegmentedKeyValueStorageAdapter(
+      final SegmentIdentifier segment,
+      final SegmentedKeyValueStorage<S> storage,
+      final Supplier<? extends KeyValueStorage> snapshotSupplier) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
+    this.snapshotSupplier = snapshotSupplier;
   }
 
   @Override
@@ -95,5 +111,10 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
         transaction.rollback();
       }
     };
+  }
+
+  @Override
+  public KeyValueStorage takeSnapshot() {
+    return snapshotSupplier.get();
   }
 }

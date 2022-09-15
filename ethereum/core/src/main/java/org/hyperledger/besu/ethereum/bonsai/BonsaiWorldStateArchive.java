@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -51,6 +51,16 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   public BonsaiWorldStateArchive(
+      final StorageProvider provider,
+      final Blockchain blockchain) {
+    this.blockchain = blockchain;
+    this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
+    this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
+    this.trieLogManager = new TrieLogManager(blockchain, worldStateStorage);
+    blockchain.observeBlockAdded(this::blockAddedHandler);
+  }
+
+  public BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
       final StorageProvider provider,
       final Blockchain blockchain) {
@@ -90,6 +100,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
+  public Optional<BonsaiSnapshotWorldState> getMutableSnapshot(final Hash blockHash) {
+    // TODO: snapshot worldstate, then roll snapshot to this blockhash
+
+    return Optional.ofNullable(BonsaiSnapshotWorldState.create(this, worldStateStorage));
+  }
+
   @Override
   public Optional<MutableWorldState> getMutable(
       final long blockNumber, final boolean isPersistingState) {
@@ -100,41 +116,41 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
-  @Override
-  public Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
-    if (!isPersistingState) {
-      final Optional<MutableWorldState> layeredWorldState =
-          trieLogManager.getBonsaiLayeredWorldState(blockHash);
-      if (layeredWorldState.isPresent()) {
-        return layeredWorldState;
+    @Override
+    public Optional<MutableWorldState> getMutable(
+    final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
+      if (!isPersistingState) {
+        final Optional<MutableWorldState> layeredWorldState =
+            trieLogManager.getBonsaiLayeredWorldState(blockHash);
+        if (layeredWorldState.isPresent()) {
+          return layeredWorldState;
+        } else {
+          final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
+          final BlockHeader currentHeader = blockchain.getChainHeadHeader();
+          if ((currentHeader.getNumber() - header.getNumber())
+              >= trieLogManager.getMaxLayersToLoad()) {
+            LOG.warn(
+                "Exceeded the limit of back layers that can be loaded ({})",
+                trieLogManager.getMaxLayersToLoad());
+            return Optional.empty();
+          }
+          final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
+          if (trieLogLayer.isPresent()) {
+            return Optional.of(
+                new BonsaiLayeredWorldState(
+                    blockchain,
+                    this,
+                    Optional.empty(),
+                    header.getNumber(),
+                    fromPlugin(header.getStateRoot()),
+                    trieLogLayer.get()));
+          }
+        }
       } else {
-        final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
-        final BlockHeader currentHeader = blockchain.getChainHeadHeader();
-        if ((currentHeader.getNumber() - header.getNumber())
-            >= trieLogManager.getMaxLayersToLoad()) {
-          LOG.warn(
-              "Exceeded the limit of back layers that can be loaded ({})",
-              trieLogManager.getMaxLayersToLoad());
-          return Optional.empty();
-        }
-        final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
-        if (trieLogLayer.isPresent()) {
-          return Optional.of(
-              new BonsaiLayeredWorldState(
-                  blockchain,
-                  this,
-                  Optional.empty(),
-                  header.getNumber(),
-                  fromPlugin(header.getStateRoot()),
-                  trieLogLayer.get()));
-        }
+        return getMutable(rootHash, blockHash);
       }
-    } else {
-      return getMutable(rootHash, blockHash);
+      return Optional.empty();
     }
-    return Optional.empty();
-  }
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
