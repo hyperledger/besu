@@ -38,7 +38,7 @@ public class DynamicPivotBlockManager {
 
   private final FastSyncActions syncActions;
 
-  private final FastSyncState syncState;
+  private final SnapSyncState syncState;
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
@@ -101,5 +101,12 @@ public class DynamicPivotBlockManager {
           onSwitchDone.accept(blockHeader, true);
         },
         () -> onSwitchDone.accept(syncState.getPivotBlockHeader().orElseThrow(), false));
+  }
+
+  public boolean isBlockchainBehind() {
+    return syncState
+        .getPivotBlockHeader()
+        .map(pivot -> syncActions.isBlockchainBehind(pivot.getNumber()))
+        .orElse(false);
   }
 }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 public class SnapSyncState extends FastSyncState {
 
   private boolean isHealInProgress;
+  private boolean isWaitingBlockchain;
 
   public SnapSyncState(final FastSyncState fastSyncState) {
     super(
@@ -35,6 +36,14 @@ public class SnapSyncState extends FastSyncState {
 
   public void setHealStatus(final boolean healStatus) {
     isHealInProgress = healStatus;
+  }
+
+  public boolean isWaitingBlockchain() {
+    return isWaitingBlockchain;
+  }
+
+  public void setWaitingBlockchain(final boolean waitingBlockchain) {
+    isWaitingBlockchain = waitingBlockchain;
   }
 
   public boolean isExpired(final SnapDataRequest request) {
