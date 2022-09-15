@@ -235,7 +235,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public void persist(final BlockHeader blockHeader) {
+  public synchronized void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     debugLambda(LOG, "Persist world state for block {}", maybeBlockHeader::toString);
     boolean success = false;
@@ -259,6 +259,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         archive
             .getTrieLogManager()
             .saveTrieLog(archive, localUpdater, newWorldStateRootHash, blockHeader);
+
+        archive
+            .getTrieLogManager()
+            .updateLayeredWorldState(blockHeader.getParentHash(), blockHeader.getHash());
+
         stateUpdater
             .getTrieBranchStorageTransaction()
             .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());

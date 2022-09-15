@@ -21,7 +21,6 @@ import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -58,16 +57,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.blockchain = blockchain;
     this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
-    blockchain.observeBlockAdded(this::blockAddedHandler);
-  }
-
-  private void blockAddedHandler(final BlockAddedEvent event) {
-    LOG.debug("New block add event {}", event);
-    if (event.isNewCanonicalHead()) {
-      final BlockHeader eventBlockHeader = event.getBlock().getHeader();
-      trieLogManager.updateLayeredWorldState(
-          eventBlockHeader.getParentHash(), eventBlockHeader.getHash());
-    }
   }
 
   @Override
@@ -167,6 +156,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
             LOG.debug("Rollforward {}", targetBlockHash);
             rollForwards.add(trieLogManager.getTrieLogLayer(targetBlockHash).get());
             targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
+
+            trieLogManager.updateLayeredWorldState(
+                targetHeader.getParentHash(), targetHeader.getHash());
+
             targetBlockHash = targetHeader.getBlockHash();
           }
 

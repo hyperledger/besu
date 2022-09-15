@@ -97,7 +97,7 @@ public class MainnetBlockValidator implements BlockValidator {
     final Optional<MutableWorldState> maybeWorldState =
         context
             .getWorldStateArchive()
-            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
+            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash(), shouldPersist);
 
     if (maybeWorldState.isEmpty()) {
       return handleAndReportFailure(
