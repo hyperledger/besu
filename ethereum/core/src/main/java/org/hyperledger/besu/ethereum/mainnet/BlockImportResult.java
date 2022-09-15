@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,13 +17,13 @@ package org.hyperledger.besu.ethereum.mainnet;
 public class BlockImportResult {
 
   public enum BlockImportStatus {
-    TRUE,
-    FALSE,
+    IMPORTED,
+    NOT_IMPORTED,
     ALREADY_IMPORTED
   }
 
   public BlockImportResult(final boolean status) {
-    this.status = status ? BlockImportStatus.TRUE : BlockImportStatus.FALSE;
+    this.status = status ? BlockImportStatus.IMPORTED : BlockImportStatus.NOT_IMPORTED;
   }
 
   public BlockImportResult(final BlockImportStatus status) {
@@ -31,7 +31,7 @@ public class BlockImportResult {
   }
 
   public boolean isImported() {
-    return status == BlockImportStatus.TRUE || status == BlockImportStatus.ALREADY_IMPORTED;
+    return status == BlockImportStatus.IMPORTED || status == BlockImportStatus.ALREADY_IMPORTED;
   }
 
   private final BlockImportStatus status;

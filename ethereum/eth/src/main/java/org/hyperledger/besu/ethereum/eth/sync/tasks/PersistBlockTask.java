@@ -216,7 +216,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
   protected void cleanup() {
     final double timeInS = getTaskTimeInSec();
     switch (blockImportResult.getStatus()) {
-      case TRUE:
+      case IMPORTED:
         LOG.info(
             String.format(
                 "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
