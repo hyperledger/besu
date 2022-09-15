@@ -33,6 +33,8 @@ public class BlockImportResult {
   }
 
   /**
+   * The result of the block import call
+   *
    * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
    *     false}
    */
