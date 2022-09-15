@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+/** The result of a block import. */
 public class BlockImportResult {
+  private final BlockImportStatus status;
 
   public enum BlockImportStatus {
     IMPORTED,
@@ -30,11 +32,13 @@ public class BlockImportResult {
     this.status = status;
   }
 
+  /**
+   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
+   *     false}
+   */
   public boolean isImported() {
     return status == BlockImportStatus.IMPORTED || status == BlockImportStatus.ALREADY_IMPORTED;
   }
-
-  private final BlockImportStatus status;
 
   public BlockImportStatus getStatus() {
     return status;

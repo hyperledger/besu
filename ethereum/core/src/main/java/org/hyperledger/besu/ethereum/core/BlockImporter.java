@@ -35,8 +35,8 @@ public interface BlockImporter {
    * @param context The context to attempt to update
    * @param block The block
    * @param headerValidationMode Determines the validation to perform on this header.
-   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
-   *     false}
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
    */
   default BlockImportResult importBlock(
       final ProtocolContext context,
@@ -52,8 +52,8 @@ public interface BlockImporter {
    * @param block The block
    * @param headerValidationMode Determines the validation to perform on this header.
    * @param ommerValidationMode Determines the validation to perform on ommer headers.
-   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
-   *     false}
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
    */
   BlockImportResult importBlock(
       ProtocolContext context,
@@ -70,8 +70,8 @@ public interface BlockImporter {
    * @param receipts The receipts associated with this block.
    * @param headerValidationMode Determines the validation to perform on this header.
    * @param ommerValidationMode Determines the validation to perform on ommer headers.
-   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
-   *     false}
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
    */
   BlockImportResult fastImportBlock(
       ProtocolContext context,
