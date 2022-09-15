@@ -102,7 +102,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   protected Hash calculateRootHash(
-      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater) {
     // first clear storage
     for (final Address address : worldStateUpdater.getStorageToClear()) {
@@ -241,7 +241,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     boolean success = false;
 
     final BonsaiWorldStateUpdater localUpdater = updater.copy();
-    final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
 
     try {
       final Hash newWorldStateRootHash = calculateRootHash(stateUpdater, localUpdater);

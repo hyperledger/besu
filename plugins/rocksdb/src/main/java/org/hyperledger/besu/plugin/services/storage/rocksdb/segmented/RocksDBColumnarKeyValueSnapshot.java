@@ -3,8 +3,8 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 
@@ -15,9 +15,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.rocksdb.OptimisticTransactionDB;
-import org.rocksdb.TransactionDB;
 
-public class RocksDBColumnarKeyValueSnapshot implements KeyValueStorage {
+public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   final OptimisticTransactionDB db;
   final RocksDBSnapshotTransaction snapTx;
 
@@ -70,5 +69,10 @@ public class RocksDBColumnarKeyValueSnapshot implements KeyValueStorage {
   @Override
   public void close() throws IOException {
     snapTx.close();
+  }
+
+  @Override
+  public KeyValueStorageTransaction getSnapshotTransaction() {
+    return snapTx;
   }
 }

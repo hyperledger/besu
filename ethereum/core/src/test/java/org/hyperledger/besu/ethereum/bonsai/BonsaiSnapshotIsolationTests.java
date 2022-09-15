@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -48,19 +47,15 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Arrays;
@@ -100,9 +95,7 @@ public class BonsaiSnapshotIsolationTests {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
   private final AbstractPendingTransactionsSorter sorter =
       new GasPricePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder()
-              .txPoolMaxSize(100)
-              .build(),
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build(),
           Clock.systemUTC(),
           new NoOpMetricsSystem(),
           blockchain::getChainHeadHeader);
@@ -115,12 +108,11 @@ public class BonsaiSnapshotIsolationTests {
 
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
 
-  @Rule
-  public final TemporaryFolder tempData = new TemporaryFolder();
+  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
 
   @Before
   public void createStorage() {
-//    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     archive = new BonsaiWorldStateArchive(createKeyValueStorageProvider(), blockchain);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
@@ -146,7 +138,7 @@ public class BonsaiSnapshotIsolationTests {
 
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
-      .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+        .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
     assertThat(isolated.get().get(testAddress)).isNull();
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
@@ -156,7 +148,10 @@ public class BonsaiSnapshotIsolationTests {
     isolated.get().persist(firstBlock.getHeader());
     isolated2.get().persist(secondBlock.getHeader());
 
-    //todo: check trielog layer for correctness
+    // todo: check trielog layer for correctness
+    // todo: check trieloglayer snapshot replay for correctness
+    assertThat(archive.getMutableSnapshot(firstBlock.getHash()).get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
   }
 
   @Test
@@ -196,8 +191,6 @@ public class BonsaiSnapshotIsolationTests {
     // persist trielog layer:
     isolated2.get().persist(block2.getHeader());
     isolated3.get().persist(block3.getHeader());
-
-    //todo: check trieloglayer for correctness
   }
 
   /**
@@ -335,7 +328,8 @@ public class BonsaiSnapshotIsolationTests {
 
                 @Override
                 public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database").toPath();
+                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
+                      .toPath();
                 }
 
                 @Override

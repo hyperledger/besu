@@ -15,10 +15,10 @@
 package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
-  private final Supplier<? extends KeyValueStorage> snapshotSupplier;
+  private final Supplier<SnappedKeyValueStorage> snapshotSupplier;
 
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
@@ -45,7 +45,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment,
       final SegmentedKeyValueStorage<S> storage,
-      final Supplier<? extends KeyValueStorage> snapshotSupplier) {
+      final Supplier<SnappedKeyValueStorage> snapshotSupplier) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
     this.snapshotSupplier = snapshotSupplier;
@@ -114,7 +114,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   }
 
   @Override
-  public KeyValueStorage takeSnapshot() {
+  public SnappedKeyValueStorage takeSnapshot() {
     return snapshotSupplier.get();
   }
 }

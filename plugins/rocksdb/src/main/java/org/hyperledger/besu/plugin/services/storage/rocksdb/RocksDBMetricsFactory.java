@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
+
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Statistics;

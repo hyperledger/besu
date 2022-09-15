@@ -23,7 +23,6 @@ import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.TransactionDB;
 
 public class RocksDbSegmentIdentifier {
 

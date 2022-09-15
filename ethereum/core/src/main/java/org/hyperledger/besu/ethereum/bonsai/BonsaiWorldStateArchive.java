@@ -50,9 +50,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  public BonsaiWorldStateArchive(
-      final StorageProvider provider,
-      final Blockchain blockchain) {
+  public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
     this.blockchain = blockchain;
     this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
@@ -100,10 +98,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
-  public Optional<BonsaiSnapshotWorldState> getMutableSnapshot(final Hash blockHash) {
-    // TODO: snapshot worldstate, then roll snapshot to this blockhash
-
-    return Optional.ofNullable(BonsaiSnapshotWorldState.create(this, worldStateStorage));
+  public Optional<MutableWorldState> getMutableSnapshot(final Hash blockHash) {
+    return getWorldstateFor(BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash);
   }
 
   @Override
@@ -116,56 +112,61 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return Optional.empty();
   }
 
-    @Override
-    public Optional<MutableWorldState> getMutable(
-    final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
-      if (!isPersistingState) {
-        final Optional<MutableWorldState> layeredWorldState =
-            trieLogManager.getBonsaiLayeredWorldState(blockHash);
-        if (layeredWorldState.isPresent()) {
-          return layeredWorldState;
-        } else {
-          final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
-          final BlockHeader currentHeader = blockchain.getChainHeadHeader();
-          if ((currentHeader.getNumber() - header.getNumber())
-              >= trieLogManager.getMaxLayersToLoad()) {
-            LOG.warn(
-                "Exceeded the limit of back layers that can be loaded ({})",
-                trieLogManager.getMaxLayersToLoad());
-            return Optional.empty();
-          }
-          final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
-          if (trieLogLayer.isPresent()) {
-            return Optional.of(
-                new BonsaiLayeredWorldState(
-                    blockchain,
-                    this,
-                    Optional.empty(),
-                    header.getNumber(),
-                    fromPlugin(header.getStateRoot()),
-                    trieLogLayer.get()));
-          }
-        }
+  @Override
+  public Optional<MutableWorldState> getMutable(
+      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
+    if (!isPersistingState) {
+      final Optional<MutableWorldState> layeredWorldState =
+          trieLogManager.getBonsaiLayeredWorldState(blockHash);
+      if (layeredWorldState.isPresent()) {
+        return layeredWorldState;
       } else {
-        return getMutable(rootHash, blockHash);
+        final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
+        final BlockHeader currentHeader = blockchain.getChainHeadHeader();
+        if ((currentHeader.getNumber() - header.getNumber())
+            >= trieLogManager.getMaxLayersToLoad()) {
+          LOG.warn(
+              "Exceeded the limit of back layers that can be loaded ({})",
+              trieLogManager.getMaxLayersToLoad());
+          return Optional.empty();
+        }
+        final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
+        if (trieLogLayer.isPresent()) {
+          return Optional.of(
+              new BonsaiLayeredWorldState(
+                  blockchain,
+                  this,
+                  Optional.empty(),
+                  header.getNumber(),
+                  fromPlugin(header.getStateRoot()),
+                  trieLogLayer.get()));
+        }
       }
-      return Optional.empty();
+    } else {
+      return getMutable(rootHash, blockHash);
     }
+    return Optional.empty();
+  }
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    if (blockHash.equals(persistedState.blockHash())) {
-      return Optional.of(persistedState);
+    return getWorldstateFor(persistedState, blockHash);
+  }
+
+  private Optional<MutableWorldState> getWorldstateFor(
+      final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
+    if (blockHash.equals(mutableState.blockHash())) {
+      return Optional.of(mutableState);
     } else {
       try {
 
         final Optional<BlockHeader> maybePersistedHeader =
-            blockchain.getBlockHeader(persistedState.blockHash()).map(BlockHeader.class::cast);
+            blockchain.getBlockHeader(mutableState.blockHash()).map(BlockHeader.class::cast);
 
         final List<TrieLogLayer> rollBacks = new ArrayList<>();
         final List<TrieLogLayer> rollForwards = new ArrayList<>();
         if (maybePersistedHeader.isEmpty()) {
-          trieLogManager.getTrieLogLayer(persistedState.blockHash()).ifPresent(rollBacks::add);
+          trieLogManager.getTrieLogLayer(mutableState.blockHash()).ifPresent(rollBacks::add);
         } else {
           BlockHeader targetHeader = blockchain.getBlockHeader(blockHash).get();
           BlockHeader persistedHeader = maybePersistedHeader.get();
@@ -214,10 +215,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
           }
           bonsaiUpdater.commit();
 
-          persistedState.persist(blockchain.getBlockHeader(blockHash).get());
+          mutableState.persist(blockchain.getBlockHeader(blockHash).get());
 
           LOG.debug("Archive rolling finished, now at {}", blockHash);
-          return Optional.of(persistedState);
+          return Optional.of(mutableState);
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();

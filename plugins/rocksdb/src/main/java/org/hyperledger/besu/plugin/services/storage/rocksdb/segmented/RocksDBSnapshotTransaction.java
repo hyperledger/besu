@@ -16,7 +16,6 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Snapshot;
 import org.rocksdb.Transaction;
-import org.rocksdb.TransactionDB;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction {
 
   public Optional<byte[]> get(final byte[] key) {
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(snapTx.getForUpdate(readOptions, columnFamilyHandle, key, false));
+      return Optional.ofNullable(snapTx.get(columnFamilyHandle, readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }

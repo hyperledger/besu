@@ -15,19 +15,19 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState {
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage snapshotWorldStateStorage) {
     super(archive, snapshotWorldStateStorage);
-    }
+  }
 
   public static BonsaiSnapshotWorldState create(
       final BonsaiWorldStateArchive archive,
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage) {
     return new BonsaiSnapshotWorldState(
         archive,
-        new BonsaiWorldStateKeyValueStorage(
+        new BonsaiSnapshotWorldStateKeyValueStorage(
             ((SnappableKeyValueStorage) parentWorldStateStorage.accountStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage).takeSnapshot(),
-            parentWorldStateStorage.trieLogStorage));
+            ((SnappableKeyValueStorage) parentWorldStateStorage.trieLogStorage).takeSnapshot()));
   }
 
   @Override

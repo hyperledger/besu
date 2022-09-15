@@ -42,8 +42,6 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.Status;
-import org.rocksdb.TransactionDB;
-import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,9 +77,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
               .setStatistics(stats);
       options.getEnv().setBackgroundThreads(configuration.getBackgroundThreadCount());
 
-      db =
-          OptimisticTransactionDB.open(
-              options, configuration.getDatabaseDir().toString());
+      db = OptimisticTransactionDB.open(options, configuration.getDatabaseDir().toString());
       rocksDBMetrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
     } catch (final RocksDBException e) {
       throw new StorageException(e);

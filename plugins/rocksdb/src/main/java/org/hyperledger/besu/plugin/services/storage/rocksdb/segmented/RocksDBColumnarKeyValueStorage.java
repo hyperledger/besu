@@ -56,7 +56,6 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.Status;
-import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
@@ -143,10 +142,7 @@ public class RocksDBColumnarKeyValueStorage
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
       db =
           OptimisticTransactionDB.open(
-              options,
-              configuration.getDatabaseDir().toString(),
-              columnDescriptors,
-              columnHandles);
+              options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);
       metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
       final Map<Bytes, String> segmentsById =
           segments.stream()
