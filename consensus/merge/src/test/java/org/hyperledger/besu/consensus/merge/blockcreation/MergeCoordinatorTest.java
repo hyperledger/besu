@@ -15,14 +15,18 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +45,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -51,6 +57,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -59,6 +66,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -67,6 +75,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock AbstractPendingTransactionsSorter mockSorter;
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
+  @Mock EthContext ethContext;
+  @Mock EthScheduler ethScheduler;
+  private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
+
+  @Spy
+  MiningParameters miningParameters = new MiningParameters.Builder().coinbase(coinbase).build();
 
   private MergeCoordinator coordinator;
   private ProtocolContext protocolContext;
@@ -81,7 +95,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       spy(createInMemoryBlockchain(genesisState.getBlock()));
 
   private final Address suggestedFeeRecipient = Address.ZERO;
-  private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
       new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
@@ -92,19 +105,23 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(mergeContext.getTerminalTotalDifficulty())
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(terminalPowBlock()));
-
     protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
+
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    when(ethScheduler.scheduleComputationTask(any()))
+        .thenAnswer(i -> CompletableFuture.completedFuture(i.getArgument(0, Supplier.class).get()));
 
     MergeConfigOptions.setMergeEnabled(true);
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
             mockProtocolSchedule,
+            ethContext,
             mockSorter,
-            new MiningParameters.Builder().coinbase(coinbase).build(),
+            miningParameters,
             backwardSyncContext);
   }
 
@@ -124,6 +141,60 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
 
     assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
+  }
+
+  @Test
+  public void shouldRetryBlockCreationIfStillHaveTime() {
+    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+    reset(ethContext, ethScheduler);
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    when(ethScheduler.scheduleComputationTask(any()))
+        .thenReturn(CompletableFuture.failedFuture(new IllegalStateException()))
+        .thenAnswer(i -> CompletableFuture.completedFuture(i.getArgument(0, Supplier.class).get()));
+
+    var payloadId =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.ZERO,
+            suggestedFeeRecipient);
+
+    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+
+    verify(mergeContext, times(2)).putPayloadById(eq(payloadId), block.capture());
+    verify(ethScheduler, times(2)).scheduleComputationTask(any());
+  }
+
+  @Test
+  public void shouldStopRetryBlockCreationIfTimeExpired() {
+    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+    doReturn(1L).when(miningParameters).getPosBlockCreationTimeout();
+    reset(ethContext, ethScheduler);
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    when(ethScheduler.scheduleComputationTask(any()))
+        .thenReturn(
+            CompletableFuture.supplyAsync(
+                () -> {
+                  try {
+                    Thread.sleep(1000L);
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return CompletableFuture.failedFuture(new RuntimeException());
+                }))
+        .thenAnswer(i -> fail("Must not be called twice"));
+
+    var payloadId =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.ZERO,
+            suggestedFeeRecipient);
+
+    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+
+    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), block.capture());
+    verify(ethScheduler, times(1)).scheduleComputationTask(any());
   }
 
   @Test
@@ -345,6 +416,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             mockProtocolContext,
             mockProtocolSchedule,
+            ethContext,
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
@@ -405,6 +477,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new MergeCoordinator(
             mockProtocolContext,
             mockProtocolSchedule,
+            ethContext,
             mockSorter,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
@@ -594,6 +667,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             new MergeCoordinator(
                 mockProtocolContext,
                 mockProtocolSchedule,
+                ethContext,
                 mockSorter,
                 new MiningParameters.Builder().coinbase(coinbase).build(),
                 mock(BackwardSyncContext.class)));

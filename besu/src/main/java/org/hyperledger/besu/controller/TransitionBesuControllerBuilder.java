@@ -131,6 +131,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
                 transitionProtocolSchedule,
                 protocolContext,
+                ethProtocolManager.ethContext(),
                 transactionPool,
                 transitionMiningParameters,
                 syncState,
