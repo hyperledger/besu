@@ -92,8 +92,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
       final SegmentIdentifier segment) {
-    // TODO: this is an expedient cast for now, we should add some safety and/or fix the storage
-    // hierarchy
     return (SnappableKeyValueStorage) storageInstances.computeIfAbsent(segment, storageCreator);
   }
 

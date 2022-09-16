@@ -1,3 +1,18 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -45,9 +60,9 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
 
   @Override
   public MutableWorldState copy() {
-    // TODO: find out if we can stack transaction based snapshots, so perhaps we return a new
-    // transaction based
-    //  worldstate.  For now we just return ourself rather than a copy.
+    // The copy method interface doesn't make much sense in this context since
+    // this class is a snapshot based copy of the worldstate and *is* an
+    // independent/isolated version of the worldstate, so just return ourselves.
     return this;
   }
 

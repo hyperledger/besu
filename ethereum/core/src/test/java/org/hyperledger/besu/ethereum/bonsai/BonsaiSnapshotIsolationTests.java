@@ -69,7 +69,6 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -222,39 +221,6 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolatedRollBack.get().rootHash()).isEqualTo(block1.getHeader().getStateRoot());
-  }
-
-  /**
-   * this is an initial negative test case. we should expect this to fail with a mutable and
-   * non-persisting copy of the persisted state.
-   */
-  @Test
-  @Ignore("this is expected to fail without getting an isolated mutable copy")
-  public void testCopyNonIsolation() {
-    var tx1 = burnTransaction(sender1, 0L, Address.ZERO);
-    Block oneTx = forTransactions(List.of(tx1));
-
-    MutableWorldState firstWorldState = archive.getMutable();
-    var res = executeBlock(firstWorldState, oneTx);
-
-    assertThat(res.isSuccessful()).isTrue();
-    // get a copy of this worldstate after it has persisted, then save the account val
-    var isolated = archive.getMutable(oneTx.getHeader().getStateRoot(), oneTx.getHash(), false);
-    Address beforeAddress = extractAddress.apply(accounts.get(1));
-    var before = isolated.get().get(beforeAddress);
-
-    // build and execute another block
-    var tx2 = burnTransaction(sender1, 1L, beforeAddress);
-
-    Block oneMoreTx = forTransactions(List.of(tx2));
-
-    var res2 =
-        executeBlock(archive.getMutable(oneTx.getHeader().getNumber(), true).get(), oneMoreTx);
-    assertThat(res2.isSuccessful()).isTrue();
-
-    // compare the cached account value to the current account value from the mutable worldstate
-    var after = isolated.get().get(beforeAddress);
-    assertThat(after.getBalance()).isNotEqualTo(before.getBalance());
   }
 
   @Test

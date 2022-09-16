@@ -153,12 +153,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    return rollMutableStateToBlockHash(persistedState, blockHash);
+    return rollMutableStateToBlockHash(persistedState, blockHash)
+        .map(MutableWorldState.class::cast);
   }
 
-  private <T extends BonsaiPersistedWorldState>
-      Optional<MutableWorldState> rollMutableStateToBlockHash(
-          final T mutableState, final Hash blockHash) {
+  private <T extends BonsaiPersistedWorldState> Optional<T> rollMutableStateToBlockHash(
+      final T mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {
