@@ -143,55 +143,76 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+  }
 
-    // persist trielogs
+  @Test
+  public void testIsolatedSnapshotMutation() {
+    Address testAddress = Address.fromHexString("0xdeadbeef");
+    // assert we can correctly execute a block on a mutable snapshot
+    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash());
+
+    var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
+    var res = executeBlock(isolated.get(), firstBlock);
+
+    assertThat(res.isSuccessful()).isTrue();
+    assertThat(isolated.get().get(testAddress)).isNotNull();
+    assertThat(isolated.get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+
+    // persist the isolated worldstate as trielog only:
     isolated.get().persist(firstBlock.getHeader());
-    isolated2.get().persist(secondBlock.getHeader());
 
-    // todo: check trielog layer for correctness
-    // todo: check trieloglayer snapshot replay for correctness
-    assertThat(archive.getMutableSnapshot(firstBlock.getHash()).get().get(testAddress).getBalance())
+    //assert we have not modified the head worldstate:
+    assertThat(archive.getMutable().get(testAddress)).isNull();
+
+    // roll the persisted world state to the new trie log from the persisted snapshot
+    var ws = archive.getMutable(firstBlock.getHeader().getNumber(), true);
+    assertThat(ws).isPresent();
+    assertThat(ws.get().get(testAddress)).isNotNull();
+    assertThat(ws.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
   }
 
   @Test
-  public void testIsolatedFromHead_pastHead() {
+  public void testSnapshotRollToTrieLogBlockHash() {
     // assert we can find the correct path if our state is n blocks ahead of head
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
+    var block1 = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res =
-        executeBlock(
-            archive.getMutable(),
-            forTransactions(List.of(burnTransaction(sender1, 0L, testAddress))));
+        executeBlock(archive.getMutable(), block1);
 
     var block2 = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
     var res2 = executeBlock(archive.getMutable(), block2);
-    var isolated2 = archive.getMutableSnapshot(block2.getHash());
 
     var block3 = forTransactions(List.of(burnTransaction(sender1, 2L, testAddress)));
     var res3 = executeBlock(archive.getMutable(), block3);
-    var isolated3 = archive.getMutableSnapshot(block3.getHash());
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
     assertThat(res3.isSuccessful()).isTrue();
 
-    blockchain.rewindToBlock(1L);
+    blockchain.rewindToBlock(2L);
+
+    var isolatedRollForward = archive.getMutableSnapshot(block3.getHash());
 
     // we should be 1 blocks ahead of head
-    assertThat(isolated2.get().get(testAddress)).isNotNull();
-    assertThat(isolated2.get().get(testAddress).getBalance())
-        .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
-
-    // we should be 2 blocks ahead of head
-    assertThat(isolated3.get().get(testAddress)).isNotNull();
-    assertThat(isolated3.get().get(testAddress).getBalance())
+    assertThat(isolatedRollForward.get().get(testAddress)).isNotNull();
+    assertThat(isolatedRollForward.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(3_000_000_000_000_000_000L));
 
-    // persist trielog layer:
-    isolated2.get().persist(block2.getHeader());
-    isolated3.get().persist(block3.getHeader());
+    var isolatedRollBack = archive.getMutableSnapshot(block1.getHash());
+    assertThat(isolatedRollBack.get().get(testAddress)).isNotNull();
+    assertThat(isolatedRollBack.get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
   }
+
+  @Test
+  public void assertCanPersistTrieLogFromMutableSnapshot() {
+    //TODO:
+  }
+
+
 
   /**
    * this is an initial negative test case. we should expect this to fail with a mutable and

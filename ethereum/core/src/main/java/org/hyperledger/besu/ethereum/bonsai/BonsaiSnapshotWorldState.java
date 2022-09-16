@@ -27,7 +27,7 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState {
             ((SnappableKeyValueStorage) parentWorldStateStorage.codeStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.storageStorage).takeSnapshot(),
             ((SnappableKeyValueStorage) parentWorldStateStorage.trieBranchStorage).takeSnapshot(),
-            ((SnappableKeyValueStorage) parentWorldStateStorage.trieLogStorage).takeSnapshot()));
+            parentWorldStateStorage.trieLogStorage));
   }
 
   @Override

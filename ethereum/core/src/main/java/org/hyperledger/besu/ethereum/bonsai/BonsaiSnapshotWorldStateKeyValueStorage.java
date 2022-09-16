@@ -3,6 +3,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
@@ -17,7 +18,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final SnappedKeyValueStorage codeStorage,
       final SnappedKeyValueStorage storageStorage,
       final SnappedKeyValueStorage trieBranchStorage,
-      final SnappedKeyValueStorage trieLogStorage) {
+      final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
     this.updater =
         new SnapshotUpdater(
@@ -34,19 +35,19 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     private final SnappedKeyValueStorage codeStorage;
     private final SnappedKeyValueStorage storageStorage;
     private final SnappedKeyValueStorage trieBranchStorage;
-    private final SnappedKeyValueStorage trieLogStorage;
+    private final KeyValueStorageTransaction trieLogStorage;
 
     public SnapshotUpdater(
         final SnappedKeyValueStorage accountStorage,
         final SnappedKeyValueStorage codeStorage,
         final SnappedKeyValueStorage storageStorage,
         final SnappedKeyValueStorage trieBranchStorage,
-        final SnappedKeyValueStorage trieLogStorage) {
+        final KeyValueStorage trieLogStorage) {
       this.accountStorage = accountStorage;
       this.codeStorage = codeStorage;
       this.storageStorage = storageStorage;
       this.trieBranchStorage = trieBranchStorage;
-      this.trieLogStorage = trieLogStorage;
+      this.trieLogStorage = trieLogStorage.startTransaction();
     }
 
     @Override
@@ -107,7 +108,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
     @Override
     public KeyValueStorageTransaction getTrieLogStorageTransaction() {
-      return trieLogStorage.getSnapshotTransaction();
+      return trieLogStorage;
     }
 
     @Override
