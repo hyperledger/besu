@@ -4,9 +4,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 /**
- * This class takes a snapshot of the worldstate as the basis of a mutable worldstate. It is not
- * able to commit or persist however. This is useful for async blockchain opperations like block
- * creation and/or point-in-time queries.
+ * This class takes a snapshot of the worldstate as the basis of a mutable worldstate. It is able
+ * to commit/perist as a trielog layer only. This is useful for async blockchain opperations like block
+ * creation and/or point-in-time queries since the snapshot worldstate is fully isolated from the main
+ * BonsaiPersistedWorldState.
  */
 public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState {
   //  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldState.class);
@@ -32,8 +33,8 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState {
 
   @Override
   public MutableWorldState copy() {
-    // TODO: we are transaction based, so perhaps we return a new transaction based worldstate...
-    //       for now lets just return ourselves
+    // TODO: find out if we can stack transaction based snapshots, so perhaps we return a new transaction based
+    //  worldstate.  For now we just return ourself rather than a copy.
     return this;
   }
 }
