@@ -163,7 +163,7 @@ public class BonsaiSnapshotIsolationTests {
     // persist the isolated worldstate as trielog only:
     isolated.get().persist(firstBlock.getHeader());
 
-    //assert we have not modified the head worldstate:
+    // assert we have not modified the head worldstate:
     assertThat(archive.getMutable().get(testAddress)).isNull();
 
     // roll the persisted world state to the new trie log from the persisted snapshot
@@ -180,8 +180,7 @@ public class BonsaiSnapshotIsolationTests {
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
     var block1 = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
-    var res =
-        executeBlock(archive.getMutable(), block1);
+    var res = executeBlock(archive.getMutable(), block1);
 
     var block2 = forTransactions(List.of(burnTransaction(sender1, 1L, testAddress)));
     var res2 = executeBlock(archive.getMutable(), block2);
@@ -215,13 +214,6 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
   }
-
-  @Test
-  public void assertCanPersistTrieLogFromMutableSnapshot() {
-    //TODO: assert we can roll the peristed state to a trie log saved from a mutatble snapshot
-  }
-
-
 
   /**
    * this is an initial negative test case. we should expect this to fail with a mutable and

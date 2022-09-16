@@ -31,11 +31,14 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {
+    //    private static final Logger LOG =
+    // LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
+
     private final SnappedKeyValueStorage accountStorage;
     private final SnappedKeyValueStorage codeStorage;
     private final SnappedKeyValueStorage storageStorage;
     private final SnappedKeyValueStorage trieBranchStorage;
-    private final KeyValueStorageTransaction trieLogStorage;
+    private final KeyValueStorageTransaction trieLogStorageTransaction;
 
     public SnapshotUpdater(
         final SnappedKeyValueStorage accountStorage,
@@ -47,7 +50,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       this.codeStorage = codeStorage;
       this.storageStorage = storageStorage;
       this.trieBranchStorage = trieBranchStorage;
-      this.trieLogStorage = trieLogStorage.startTransaction();
+      this.trieLogStorageTransaction = trieLogStorage.startTransaction();
     }
 
     @Override
@@ -108,7 +111,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
     @Override
     public KeyValueStorageTransaction getTrieLogStorageTransaction() {
-      return trieLogStorage;
+      return trieLogStorageTransaction;
     }
 
     @Override
@@ -159,12 +162,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
     @Override
     public void commit() {
-      // no-op, do not commit snapshot transactions
+      // only commit the trielog layer transaction, leave the snapshot transactions open:
+      trieLogStorageTransaction.commit();
     }
 
     @Override
     public void rollback() {
-      // no-op, do not commit snapshot transactions
+      // no-op
     }
   }
 }

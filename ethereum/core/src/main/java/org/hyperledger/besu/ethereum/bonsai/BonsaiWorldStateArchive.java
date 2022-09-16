@@ -99,8 +99,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public Optional<MutableWorldState> getMutableSnapshot(final Hash blockHash) {
-    return rollMutableStateToBlockHash(BonsaiSnapshotWorldState.create(this, worldStateStorage),
-        blockHash);
+    return rollMutableStateToBlockHash(
+        BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash);
   }
 
   @Override
@@ -204,7 +204,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         }
 
         // attempt the state rolling
-        final BonsaiWorldStateUpdater bonsaiUpdater = getUpdater();
+        final BonsaiWorldStateUpdater bonsaiUpdater = getUpdaterFromPersistedState(mutableState);
         try {
           for (final TrieLogLayer rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
@@ -232,8 +232,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     }
   }
 
-  BonsaiWorldStateUpdater getUpdater() {
-    return (BonsaiWorldStateUpdater) persistedState.updater();
+  BonsaiWorldStateUpdater getUpdaterFromPersistedState(
+      final BonsaiPersistedWorldState mutableState) {
+    return (BonsaiWorldStateUpdater) mutableState.updater();
   }
 
   @Override
