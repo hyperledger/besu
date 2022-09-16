@@ -99,7 +99,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   public Optional<MutableWorldState> getMutableSnapshot(final Hash blockHash) {
-    return getWorldstateFor(BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash);
+    return rollMutableStateToBlockHash(BonsaiSnapshotWorldState.create(this, worldStateStorage),
+        blockHash);
   }
 
   @Override
@@ -150,10 +151,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    return getWorldstateFor(persistedState, blockHash);
+    return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  private Optional<MutableWorldState> getWorldstateFor(
+  private Optional<MutableWorldState> rollMutableStateToBlockHash(
       final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);

@@ -123,7 +123,7 @@ public class BonsaiSnapshotIsolationTests {
   @Test
   public void testIsolatedFromHead_behindHead() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
-    // assert we can find the correct path if we are some number of blocks behind head
+    // assert we can mutate head without mutating the isolated snapshot
     var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash());
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
@@ -139,6 +139,7 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+
     assertThat(isolated.get().get(testAddress)).isNull();
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
@@ -148,7 +149,7 @@ public class BonsaiSnapshotIsolationTests {
   @Test
   public void testIsolatedSnapshotMutation() {
     Address testAddress = Address.fromHexString("0xdeadbeef");
-    // assert we can correctly execute a block on a mutable snapshot
+    // assert we can correctly execute a block on a mutable snapshot without mutating head
     var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash());
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
@@ -175,7 +176,7 @@ public class BonsaiSnapshotIsolationTests {
 
   @Test
   public void testSnapshotRollToTrieLogBlockHash() {
-    // assert we can find the correct path if our state is n blocks ahead of head
+    // assert we can roll a snapshot to a specific worldstate without mutating head
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
     var block1 = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
@@ -192,15 +193,23 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(res2.isSuccessful()).isTrue();
     assertThat(res3.isSuccessful()).isTrue();
 
+    // roll chain and worldstate to block 2
     blockchain.rewindToBlock(2L);
+    var block1State = archive.getMutable(2L, true);
+
+    // BonsaiPersistedWorldState should be at block 2
+    assertThat(block1State.get().get(testAddress)).isNotNull();
+    assertThat(block1State.get().get(testAddress).getBalance())
+        .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
 
     var isolatedRollForward = archive.getMutableSnapshot(block3.getHash());
 
-    // we should be 1 blocks ahead of head
+    // we should be at block 3, one block ahead of BonsaiPersistatedWorldState
     assertThat(isolatedRollForward.get().get(testAddress)).isNotNull();
     assertThat(isolatedRollForward.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(3_000_000_000_000_000_000L));
 
+    // we should be at block 1, one block behind BonsaiPersistatedWorldState
     var isolatedRollBack = archive.getMutableSnapshot(block1.getHash());
     assertThat(isolatedRollBack.get().get(testAddress)).isNotNull();
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
@@ -209,7 +218,7 @@ public class BonsaiSnapshotIsolationTests {
 
   @Test
   public void assertCanPersistTrieLogFromMutableSnapshot() {
-    //TODO:
+    //TODO: assert we can roll the peristed state to a trie log saved from a mutatble snapshot
   }
 
 
