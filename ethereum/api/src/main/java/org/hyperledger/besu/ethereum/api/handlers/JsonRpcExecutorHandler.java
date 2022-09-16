@@ -130,11 +130,21 @@ public class JsonRpcExecutorHandler {
           handleJsonRpcError(ctx, null, JsonRpcError.PARSE_ERROR);
         }
       } catch (IOException ex) {
-        LOG.error("Error streaming JSON-RPC response", ex);
+        final String method = getRpcMethodName(ctx);
+        LOG.error(String.format("%s - Error streaming JSON-RPC response", method), ex);
       } catch (RuntimeException e) {
         handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
       }
     };
+  }
+
+  private static String getRpcMethodName(final RoutingContext ctx) {
+    if (ctx.data().containsKey(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name())) {
+      final JsonObject jsonObject = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+      return jsonObject.getString("method");
+    } else {
+      return "";
+    }
   }
 
   private static void handleJsonRpcError(
