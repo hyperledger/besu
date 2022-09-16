@@ -248,6 +248,32 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(after.getBalance()).isNotEqualTo(before.getBalance());
   }
 
+  @Test
+  public void assertCloseDisposesOfStateWithoutCommitting() {
+    Address testAddress = Address.fromHexString("0xdeadbeef");
+
+    var head = archive.getMutable();
+
+    try (var shouldCloseSnapshot =
+        archive.getMutableSnapshot(genesisState.getBlock().getHash()).get()) {
+
+      var tx1 = burnTransaction(sender1, 0L, Address.ZERO);
+      Block oneTx = forTransactions(List.of(tx1));
+
+      var res = executeBlock(shouldCloseSnapshot, oneTx);
+
+      assertThat(res.isSuccessful()).isTrue();
+      assertThat(shouldCloseSnapshot.get(testAddress)).isNotNull();
+      assertThat(shouldCloseSnapshot.get(testAddress).getBalance())
+          .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+
+    } catch (Exception e) {
+      // just a cheap way to close the snapshot worldstate and transactions
+    }
+
+    assertThat(head.get(testAddress)).isNull();
+  }
+
   private Transaction burnTransaction(final KeyPair sender, final Long nonce, final Address to) {
     return new TransactionTestFixture()
         .sender(Address.extract(Hash.hash(sender.getPublicKey().getEncodedBytes())))

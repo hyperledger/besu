@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
@@ -98,9 +99,10 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
-  public Optional<MutableWorldState> getMutableSnapshot(final Hash blockHash) {
+  public Optional<SnapshotMutableWorldState> getMutableSnapshot(final Hash blockHash) {
     return rollMutableStateToBlockHash(
-        BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash);
+            BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash)
+        .map(SnapshotMutableWorldState.class::cast);
   }
 
   @Override
@@ -154,8 +156,9 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  private Optional<MutableWorldState> rollMutableStateToBlockHash(
-      final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
+  private <T extends BonsaiPersistedWorldState>
+      Optional<MutableWorldState> rollMutableStateToBlockHash(
+          final T mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {
