@@ -141,9 +141,13 @@ public class BonsaiSnapshotIsolationTests {
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
 
     assertThat(isolated.get().get(testAddress)).isNull();
+    assertThat(isolated.get().rootHash())
+        .isEqualTo(genesisState.getBlock().getHeader().getStateRoot());
+
     assertThat(isolated2.get().get(testAddress)).isNotNull();
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(isolated2.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
   }
 
   @Test
@@ -159,6 +163,7 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated.get().get(testAddress)).isNotNull();
     assertThat(isolated.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(isolated.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
 
     // persist the isolated worldstate as trielog only:
     isolated.get().persist(firstBlock.getHeader());
@@ -172,6 +177,7 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(ws.get().get(testAddress)).isNotNull();
     assertThat(ws.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(ws.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
   }
 
   @Test
@@ -200,6 +206,7 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(block1State.get().get(testAddress)).isNotNull();
     assertThat(block1State.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+    assertThat(block1State.get().rootHash()).isEqualTo(block2.getHeader().getStateRoot());
 
     var isolatedRollForward = archive.getMutableSnapshot(block3.getHash());
 
@@ -207,12 +214,14 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolatedRollForward.get().get(testAddress)).isNotNull();
     assertThat(isolatedRollForward.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(3_000_000_000_000_000_000L));
+    assertThat(isolatedRollForward.get().rootHash()).isEqualTo(block3.getHeader().getStateRoot());
 
     // we should be at block 1, one block behind BonsaiPersistatedWorldState
     var isolatedRollBack = archive.getMutableSnapshot(block1.getHash());
     assertThat(isolatedRollBack.get().get(testAddress)).isNotNull();
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(isolatedRollBack.get().rootHash()).isEqualTo(block1.getHeader().getStateRoot());
   }
 
   /**
