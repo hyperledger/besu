@@ -173,12 +173,10 @@ public class BonsaiWorldStateArchiveTest {
                     layeredWorldStatesByHash),
                 storageProvider,
                 blockchain));
-    var updater =
-        spy(
-            bonsaiWorldStateArchive.getUpdaterFromPersistedState(
-                any(BonsaiSnapshotWorldState.class)));
-    when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(any(BonsaiSnapshotWorldState.class)))
-        .thenReturn(updater);
+
+    var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
+    var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
+    when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
 
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
@@ -221,12 +219,9 @@ public class BonsaiWorldStateArchiveTest {
                     layeredWorldStatesByHash),
                 storageProvider,
                 blockchain));
-    var updater =
-        spy(
-            bonsaiWorldStateArchive.getUpdaterFromPersistedState(
-                any(BonsaiSnapshotWorldState.class)));
-    when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(any(BonsaiSnapshotWorldState.class)))
-        .thenReturn(updater);
+    var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
+    var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
+    when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
@@ -276,12 +271,9 @@ public class BonsaiWorldStateArchiveTest {
                     layeredWorldStatesByHash),
                 storageProvider,
                 blockchain));
-    var updater =
-        spy(
-            bonsaiWorldStateArchive.getUpdaterFromPersistedState(
-                any(BonsaiSnapshotWorldState.class)));
-    when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(any(BonsaiSnapshotWorldState.class)))
-        .thenReturn(updater);
+    var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
+    var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
+    when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
 
     // initial persisted state hash key
     when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
