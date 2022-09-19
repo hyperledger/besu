@@ -56,15 +56,16 @@ import org.slf4j.LoggerFactory;
 public class MergeCoordinator implements MergeMiningCoordinator, BadChainListener {
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
 
-  final AtomicLong targetGasLimit;
-  final MiningParameters miningParameters;
-  final MergeBlockCreatorFactory mergeBlockCreator;
-  final AtomicReference<Bytes> extraData = new AtomicReference<>(Bytes.fromHexString("0x"));
-  final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
-  private final MergeContext mergeContext;
-  private final ProtocolContext protocolContext;
-  private final BackwardSyncContext backwardSyncContext;
-  private final ProtocolSchedule protocolSchedule;
+  protected final AtomicLong targetGasLimit;
+  protected final MiningParameters miningParameters;
+  protected final MergeBlockCreatorFactory mergeBlockCreator;
+  protected final AtomicReference<Bytes> extraData =
+      new AtomicReference<>(Bytes.fromHexString("0x"));
+  protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
+  protected final MergeContext mergeContext;
+  protected final ProtocolContext protocolContext;
+  protected final BackwardSyncContext backwardSyncContext;
+  protected final ProtocolSchedule protocolSchedule;
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
@@ -194,7 +195,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .whenComplete(
             (bestBlock, throwable) -> {
               if (throwable != null) {
-                LOG.warn("something went wrong creating block", throwable);
+                LOG.debug("something went wrong creating block", throwable);
               } else {
                 final var resultBest = validateBlock(bestBlock);
                 if (resultBest.blockProcessingOutputs.isPresent()) {
@@ -594,7 +595,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @FunctionalInterface
-  interface MergeBlockCreatorFactory {
+  protected interface MergeBlockCreatorFactory {
     MergeBlockCreator forParams(BlockHeader header, Optional<Address> feeRecipient);
   }
 

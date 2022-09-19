@@ -268,4 +268,8 @@ public class FastSyncActions {
               return new FastSyncState(blockHeader);
             });
   }
+
+  public boolean isBlockchainBehind(final long blockNumber) {
+    return protocolContext.getBlockchain().getChainHeadHeader().getNumber() < blockNumber;
+  }
 }

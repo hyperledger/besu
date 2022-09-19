@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.config.NetworkName.isMergedNetwork;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
@@ -92,6 +93,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
+import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -185,6 +187,7 @@ import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
+import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -505,8 +508,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. (default: ${DEFAULT-VALUE})")
-  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
+          "Minimum number of peers required before starting fast sync. (default pre-merge: "
+              + FAST_SYNC_MIN_PEER_COUNT
+              + " and post-merge: "
+              + FAST_SYNC_MIN_PEER_COUNT_POST_MERGE
+              + ")")
+  private final Integer fastSyncMinPeerCount = null;
 
   @Option(
       names = {"--network"},
@@ -1211,6 +1218,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
         arity = "1")
     private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+
+    @Option(
+        names = {"--tx-pool-future-max-by-account"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        converter = PercentageConverter.class,
+        description =
+            "Maximum per account of currently unexecutable future transactions that can occupy the txpool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer maxFutureTransactionsByAccount =
+        TransactionPoolConfiguration.MAX_FUTURE_TRANSACTION_BY_ACCOUNT;
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -1391,6 +1408,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     handleUnstableOptions();
     preparePlugins();
     parse(resultHandler, exceptionHandler, args);
+    detectJemalloc();
   }
 
   @Override
@@ -1490,6 +1508,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
+  }
+
+  private void detectJemalloc() {
+    // jemalloc is only supported on Linux at the moment
+    if (PlatformDetector.getOSType().equals("linux")) {
+      Optional.ofNullable(environment.get("BESU_USING_JEMALLOC"))
+          .ifPresentOrElse(
+              present -> logger.info("Using jemalloc"),
+              () ->
+                  logger.info(
+                      "jemalloc library not found, memory usage may be reduced by installing it"));
+    }
   }
 
   private void handleStableOptions() {
@@ -1717,6 +1747,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       SignatureAlgorithmFactory.getInstance().disableNative();
       logger.info("Using the Java implementation of the signature algorithm");
+    }
+
+    if (unstableNativeLibraryOptions.getNativeBlake2bf()
+        && Blake2bfMessageDigest.Blake2bfDigest.isNative()) {
+      logger.info("Using the native implementation of the blake2bf algorithm");
+    } else {
+      Blake2bfMessageDigest.Blake2bfDigest.disableNative();
+      logger.info("Using the Java implementation of the blake2bf algorithm");
     }
   }
 
@@ -2760,10 +2798,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
+    Integer fastSyncMinPeers = fastSyncMinPeerCount;
+    if (fastSyncMinPeers == null) {
+      if (isMergedNetwork(network)) {
+        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT_POST_MERGE;
+      } else {
+        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT;
+      }
+    }
+
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
+        .fastSyncMinimumPeerCount(fastSyncMinPeers)
         .build();
   }
 
@@ -2773,6 +2820,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
+        .txPoolMaxFutureTransactionByAccount(txPoolOptionGroup.maxFutureTransactionsByAccount)
         .txFeeCap(txFeeCap)
         .build();
   }

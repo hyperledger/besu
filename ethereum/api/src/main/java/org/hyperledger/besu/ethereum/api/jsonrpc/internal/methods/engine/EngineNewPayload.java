@@ -25,12 +25,15 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
@@ -41,9 +44,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
 import java.util.List;
@@ -62,13 +67,16 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
+  private final EthPeers ethPeers;
 
   public EngineNewPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final MergeMiningCoordinator mergeCoordinator) {
+      final MergeMiningCoordinator mergeCoordinator,
+      final EthPeers ethPeers) {
     super(vertx, protocolContext);
     this.mergeCoordinator = mergeCoordinator;
+    this.ethPeers = ethPeers;
   }
 
   @Override
@@ -200,11 +208,22 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // execute block and return result response
+    final long startTimeMs = System.currentTimeMillis();
     final BlockValidator.Result executionResult = mergeCoordinator.rememberBlock(block);
 
     if (executionResult.errorMessage.isEmpty()) {
+      logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
+      if (executionResult.cause.isPresent()) {
+        // TODO; would prefer to invert the logic so we rpc error on anything that isn't a
+        // consensus error
+        if (executionResult.cause.get() instanceof StorageException) {
+          JsonRpcError error = JsonRpcError.INTERNAL_ERROR;
+          JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
+          return response;
+        }
+      }
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
       return respondWithInvalid(
           reqId, blockParam, latestValidAncestor.get(), executionResult.errorMessage.get());
@@ -251,5 +270,19 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestId,
         new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
+  }
+
+  private void logImportedBlockInfo(final Block block, final double timeInS) {
+    LOG.info(
+        String.format(
+            "Imported #%,d / %d tx / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
+            block.getHeader().getNumber(),
+            block.getBody().getTransactions().size(),
+            block.getHeader().getBaseFee().map(Wei::toHumanReadableString).orElse("N/A"),
+            block.getHeader().getGasUsed(),
+            (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+            block.getHash().toHexString(),
+            timeInS,
+            ethPeers.peerCount()));
   }
 }

@@ -91,14 +91,11 @@ public class TransactionPoolFactoryTest {
             new NoOpMetricsSystem(),
             () -> true,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
-            ImmutableTransactionPoolConfiguration.of(
-                1,
-                1,
-                1,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP,
-                TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD,
-                TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP,
-                TransactionPoolConfiguration.DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED),
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(1)
+                .txMessageKeepAliveSeconds(1)
+                .pendingTxRetentionPeriod(1)
+                .build(),
             pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,

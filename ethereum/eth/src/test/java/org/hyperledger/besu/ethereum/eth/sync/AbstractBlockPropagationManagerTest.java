@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
+import org.hyperledger.besu.ethereum.eth.sync.BlockPropagationManager.ProcessingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -87,6 +88,8 @@ public abstract class AbstractBlockPropagationManagerTest {
       spy(
           new PendingBlocksManager(
               SynchronizerConfiguration.builder().blockPropagationRange(-10, 30).build()));
+  protected final ProcessingBlocksManager processingBlocksManager =
+      spy(new ProcessingBlocksManager());
   protected SyncState syncState;
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final Hash finalizedHash = Hash.fromHexStringLenient("0x1337");
@@ -119,7 +122,8 @@ public abstract class AbstractBlockPropagationManagerTest {
             syncState,
             pendingBlocksManager,
             metricsSystem,
-            blockBroadcaster);
+            blockBroadcaster,
+            processingBlocksManager);
   }
 
   @Test
@@ -933,7 +937,7 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldRequestBlockAgainIfFirstGetBlockFails() {
+  public void shouldRequestBlockFromOtherPeersIfFirstPeerFails() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -956,15 +960,18 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
-    // Re-broadcast the previous message and peer responds
+    // second peer responds
     final RespondingEthPeer secondPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
-    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, secondPeer, nextAnnouncement);
     final Responder goodResponder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     secondPeer.respondWhile(goodResponder, secondPeer::hasOutstandingRequests);
 
     assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
+    verify(processingBlocksManager).addRequestedBlock(nextBlock.getHash());
+    verify(processingBlocksManager).addImportingBlock(nextBlock.getHash());
+    verify(processingBlocksManager).registerReceivedBlock(nextBlock);
+    verify(processingBlocksManager).registerBlockImportDone(nextBlock.getHash());
   }
 
   public abstract Blockchain getFullBlockchain();

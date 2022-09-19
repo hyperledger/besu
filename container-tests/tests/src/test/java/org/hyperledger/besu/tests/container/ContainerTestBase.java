@@ -48,8 +48,8 @@ public class ContainerTestBase {
   //  private final String besuImage = "hyperledger/besu:21.7.0-SNAPSHOT";
   private final String besuImage = System.getProperty("containertest.imagename");
 
-  private final String goQuorumVersion = "22.4.4";
-  private final String tesseraVersion = "22.1.3";
+  public static final String GOQUORUM_VERSION = "22.4.4";
+  public static final String TESSERA_VERSION = "22.1.7";
 
   protected final String goQuorumTesseraPubKey = "3XGBIf+x8IdVQOVfIsbRnHwTYOJP/Fx84G8gMmy8qDM=";
   protected final String besuTesseraPubKey = "8JJLEAbq6o9m4Kqm++v0Y1n9Z2ryAFtZTyhnxSKWgws=";
@@ -127,7 +127,7 @@ public class ContainerTestBase {
             goQuorumContainer.getMappedPort(goQuorumRpcPort));
 
     waitFor(10, () -> assertClientVersion(besuWeb3j, "besu"));
-    waitFor(10, () -> assertClientVersion(goQuorumWeb3j, goQuorumVersion));
+    waitFor(10, () -> assertClientVersion(goQuorumWeb3j, GOQUORUM_VERSION));
 
     // Tell GoQuorum to peer to Besu
     goQuorumContainer.execInContainer(
@@ -187,7 +187,7 @@ public class ContainerTestBase {
       final String containerIpcPath,
       final String privKeyPath,
       final String pubKeyPath) {
-    return new GenericContainer("quorumengineering/tessera:" + tesseraVersion)
+    return new GenericContainer("quorumengineering/tessera:" + TESSERA_VERSION)
         .withNetwork(containerNetwork)
         .withNetworkAliases("goQuorumTessera")
         .withClasspathResourceMapping(
@@ -209,7 +209,7 @@ public class ContainerTestBase {
 
   private GenericContainer buildBesuTesseraContainer(
       final String privKeyPath, final String pubKeyPath) {
-    return new GenericContainer("quorumengineering/tessera:" + tesseraVersion)
+    return new GenericContainer("quorumengineering/tessera:" + TESSERA_VERSION)
         .withNetwork(containerNetwork)
         .withNetworkAliases("besuTessera")
         .withClasspathResourceMapping(
@@ -230,7 +230,7 @@ public class ContainerTestBase {
 
   private GenericContainer buildGoQuorumContainer(
       final String ipcPath, final String ipcBindDir, final String containerIpcPath) {
-    return new GenericContainer("quorumengineering/quorum:" + goQuorumVersion)
+    return new GenericContainer("quorumengineering/quorum:" + GOQUORUM_VERSION)
         .withNetwork(containerNetwork)
         .dependsOn(tesseraGoQuorumContainer)
         .withExposedPorts(goQuorumRpcPort, goQuorumP2pPort)
