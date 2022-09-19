@@ -104,7 +104,7 @@ public class SnapPersistedContext {
         .collect(Collectors.toCollection(HashSet::new));
   }
 
-  public void clearPersistedTasks() {
+  public void clearAccountRangeTasks() {
     accountRangeToDownload.clear();
   }
 

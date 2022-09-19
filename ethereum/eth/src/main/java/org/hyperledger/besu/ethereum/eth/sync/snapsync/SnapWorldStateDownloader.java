@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
@@ -57,16 +58,15 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
+  private final ProtocolContext protocolContext;
   private final WorldStateStorage worldStateStorage;
-  private SnapWorldStateDownloadProcess downloadProcess;
 
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
-
-  private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
 
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final SnapPersistedContext snapContext,
+      final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
       final SnapSyncConfiguration snapSyncConfiguration,
@@ -76,6 +76,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final Clock clock,
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
+    this.protocolContext = protocolContext;
     this.worldStateStorage = worldStateStorage;
     this.snapContext = snapContext;
     this.snapTaskCollection = snapTaskCollection;
@@ -136,6 +137,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           new SnapWorldDownloadState(
               worldStateStorage,
               snapContext,
+              protocolContext.getBlockchain(),
               snapSyncState,
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
@@ -173,7 +175,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                     createAccountRangeDataRequest(stateRoot, key, value)));
       }
 
-      maybeCompleteTask = Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
+      Optional<CompleteTaskStep> maybeCompleteTask =
+          Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
       final DynamicPivotBlockManager dynamicPivotBlockManager =
           new DynamicPivotBlockManager(
@@ -182,7 +185,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapSyncConfiguration.getPivotBlockWindowValidity(),
               snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());
 
-      downloadProcess =
+      SnapWorldStateDownloadProcess downloadProcess =
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
