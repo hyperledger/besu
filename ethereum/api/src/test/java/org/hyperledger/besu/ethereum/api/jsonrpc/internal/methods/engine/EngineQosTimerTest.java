@@ -26,6 +26,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,12 +34,17 @@ import org.junit.runner.RunWith;
 @RunWith(VertxUnitRunner.class)
 public class EngineQosTimerTest {
   private EngineQosTimer engineQosTimer;
-
-  private static final Vertx vertx = Vertx.vertx();
+  private Vertx vertx;
 
   @Before
   public void setUp() throws Exception {
+    vertx = Vertx.vertx();
     engineQosTimer = new EngineQosTimer(vertx);
+  }
+
+  @After
+  public void cleanUp() {
+    vertx.close();
   }
 
   @Test
@@ -60,12 +66,12 @@ public class EngineQosTimerTest {
           try {
             // once on construction, once on call:
             verify(spyTimer, times(2)).resetTimer();
+            // should not warn
+            verify(spyEngineQosTimer, never()).logTimeoutWarning();
+            async.complete();
           } catch (Exception ex) {
             ctx.fail(ex);
           }
-          // should not warn
-          verify(spyEngineQosTimer, never()).logTimeoutWarning();
-          async.complete();
         });
   }
 
@@ -85,12 +91,12 @@ public class EngineQosTimerTest {
           try {
             // once on construction:
             verify(spyTimer, times(1)).resetTimer();
+            // should warn
+            verify(spyEngineQosTimer, times(1)).logTimeoutWarning();
+            async.complete();
           } catch (Exception ex) {
             ctx.fail(ex);
           }
-          // should warn
-          verify(spyEngineQosTimer, times(1)).logTimeoutWarning();
-          async.complete();
         });
   }
 }
