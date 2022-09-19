@@ -33,6 +33,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -45,20 +49,28 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -72,7 +84,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
-  @Mock AbstractPendingTransactionsSorter mockSorter;
+  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  private static final SECPPrivateKey PRIVATE_KEY1 =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createPrivateKey(
+              Bytes32.fromHexString(
+                  "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
+  private static final KeyPair KEYS1 =
+      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
   @Mock EthContext ethContext;
@@ -99,6 +121,18 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final BaseFeeMarket feeMarket =
       new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
 
+  private final org.hyperledger.besu.metrics.StubMetricsSystem metricsSystem =
+      new StubMetricsSystem();
+
+  private final BaseFeePendingTransactionsSorter transactions =
+      new BaseFeePendingTransactionsSorter(
+          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(10).build(),
+          TestClock.system(ZoneId.systemDefault()),
+          metricsSystem,
+          MergeCoordinatorTest::mockBlockHeader);
+
+  final Transaction localTransaction0 = createTransaction(0);
+
   @Before
   public void setUp() {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
@@ -120,7 +154,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             protocolContext,
             mockProtocolSchedule,
             ethContext,
-            mockSorter,
+            transactions,
             miningParameters,
             backwardSyncContext);
   }
@@ -149,8 +183,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     reset(ethContext, ethScheduler);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     when(ethScheduler.scheduleComputationTask(any()))
-        .thenReturn(CompletableFuture.failedFuture(new IllegalStateException()))
+        .thenReturn(CompletableFuture.failedFuture(new StorageException("lock")))
         .thenAnswer(i -> CompletableFuture.completedFuture(i.getArgument(0, Supplier.class).get()));
+
+    transactions.addLocalTransaction(localTransaction0);
 
     var payloadId =
         coordinator.preparePayload(
@@ -163,6 +199,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     verify(mergeContext, times(2)).putPayloadById(eq(payloadId), block.capture());
     verify(ethScheduler, times(2)).scheduleComputationTask(any());
+
+    assertThat(block.getAllValues().size()).isEqualTo(2);
+    assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
+    assertThat(block.getAllValues().get(1).getBody().getTransactions()).hasSize(1);
   }
 
   @Test
@@ -417,7 +457,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockProtocolContext,
             mockProtocolSchedule,
             ethContext,
-            mockSorter,
+            transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
 
@@ -478,7 +518,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mockProtocolContext,
             mockProtocolSchedule,
             ethContext,
-            mockSorter,
+            transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
             mock(BackwardSyncContext.class));
 
@@ -668,10 +708,32 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 mockProtocolContext,
                 mockProtocolSchedule,
                 ethContext,
-                mockSorter,
+                transactions,
                 new MiningParameters.Builder().coinbase(coinbase).build(),
                 mock(BackwardSyncContext.class)));
 
     return mockCoordinator;
+  }
+
+  private Transaction createTransaction(final long transactionNumber) {
+    return new TransactionTestFixture()
+        .value(Wei.of(transactionNumber + 1))
+        .to(Optional.of(Address.ZERO))
+        .gasLimit(53000L)
+        .gasPrice(
+            Wei.fromHexString("0x00000000000000000000000000000000000000000000000000000013b9aca00"))
+        .maxFeePerGas(
+            Optional.of(
+                Wei.fromHexString(
+                    "0x00000000000000000000000000000000000000000000000000000013b9aca00")))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(100_000)))
+        .nonce(transactionNumber)
+        .createTransaction(KEYS1);
+  }
+
+  private static BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
+    return blockHeader;
   }
 }

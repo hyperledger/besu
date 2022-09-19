@@ -173,7 +173,8 @@ public class RocksDBColumnarKeyValueStorage
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(db.get(segment.get(), key));
+      // return Optional.ofNullable(db.get(segment.get(), key));
+      throw new RocksDBException(new Status(Code.TimedOut, SubCode.LockTimeout, "failure"));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
@@ -258,6 +259,7 @@ public class RocksDBColumnarKeyValueStorage
     public void put(final RocksDbSegmentIdentifier segment, final byte[] key, final byte[] value) {
       try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
         innerTx.put(segment.get(), key, value);
+        throw new RocksDBException(new Status(Code.TimedOut, SubCode.LockTimeout, "failure"));
       } catch (final RocksDBException e) {
         if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
           LOG.error(e.getMessage());

@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -49,7 +50,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -273,10 +273,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean canRetryBlockCreation(final Throwable throwable) {
-    if (throwable instanceof TimeoutException) {
-      return false;
+    if (throwable instanceof StorageException) {
+      return true;
     }
-    return true;
+    return false;
   }
 
   @Override
