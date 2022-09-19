@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoor
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
@@ -219,12 +220,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               final var resultBest = validateBlock(bestBlock);
               if (resultBest.blockProcessingOutputs.isPresent()) {
                 mergeContext.putPayloadById(payloadIdentifier, bestBlock);
-                debugLambda(
-                    LOG,
+                LOG.info(
                     "Block proposal {} with {} transactions, ready in {}ms",
-                    bestBlock::toLogString,
-                    bestBlock.getBody().getTransactions()::size,
-                    () -> System.currentTimeMillis() - startedAt);
+                    bestBlock.toLogString(),
+                    bestBlock.getBody().getTransactions().size(),
+                    System.currentTimeMillis() - startedAt);
               } else {
                 LOG.warn(
                     "Failed to execute block proposal {}, reason {}",
