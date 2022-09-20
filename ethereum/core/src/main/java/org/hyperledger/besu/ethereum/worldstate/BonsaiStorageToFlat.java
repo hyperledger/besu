@@ -40,25 +40,25 @@ public class BonsaiStorageToFlat {
   }
 
   public void traverse(final Hash... accountHashes) {
-    keyValueStorageTransaction = storageStorage.startTransaction();
     for (Hash accountHash : accountHashes) {
+      keyValueStorageTransaction = storageStorage.startTransaction();
       LOG.info("Flattening {}", accountHash);
       final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
       traverseStartingFrom(accountHash, storageNodeValue);
+      keyValueStorageTransaction.commit();
     }
-    keyValueStorageTransaction.commit();
   }
 
   public void traverse(final Address... accountAddresses) {
-    keyValueStorageTransaction = storageStorage.startTransaction();
     for (Address accountAddress : accountAddresses) {
+      keyValueStorageTransaction = storageStorage.startTransaction();
       final Hash accountHash = Hash.hash(accountAddress);
 
       LOG.info("Flattening {} - {}", accountAddress.toHexString(), accountHash.toHexString());
       final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
       traverseStartingFrom(accountHash, storageNodeValue);
+      keyValueStorageTransaction.commit();
     }
-    keyValueStorageTransaction.commit();
   }
 
   public void traverseHardcodedAccounts() {
