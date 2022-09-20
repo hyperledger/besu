@@ -93,6 +93,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final WorldStateDownloader snapWorldStateDownloader =
         new SnapWorldStateDownloader(
             ethContext,
+            protocolContext,
             worldStateStorage,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),

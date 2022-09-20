@@ -8,7 +8,7 @@
 - Improved RLP processing to handle zero-length string as 0x80 [#4388](https://github.com/hyperledger/besu/issues/4388).
 
 ### Bug Fixes
-
+- Fix StacklessClosedChannelException in Besu and resulted timeout errors in CL clients ([#4398](https://github.com/hyperledger/besu/issues/4398), [#4400](https://github.com/hyperledger/besu/issues/4400))
 
 ## 22.7.2
 ### Besu 22.7.2 is a recommended release for the Merge and Mainnet users. 22.7.1 remains Merge-ready. This release provides additional robustness before the Merge with some fixes and improvements in sync, peering, and logging.
