@@ -59,14 +59,22 @@ public class BonsaiStorageToFlat {
         .parallel()
         .forEach(
             address -> {
+              LOG.info("Flattening {}", address.toHexString());
+              final long startTime = System.nanoTime();
               KeyValueStorageTransaction keyValueStorageTransaction =
                   storageStorage.startTransaction();
               final Hash accountHash = Hash.hash(address);
 
-              LOG.info("Flattening {} -> {}", address.toHexString(), accountHash.toHexString());
               final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
               traverseStartingFrom(accountHash, storageNodeValue, keyValueStorageTransaction);
               keyValueStorageTransaction.commit();
+              final long endTime = System.nanoTime();
+              final long duration = (endTime - startTime) / 1_000_000;
+              LOG.info(
+                  "Flattened {}:{} in {} ms",
+                  address.toHexString(),
+                  accountHash.toHexString(),
+                  duration);
             });
   }
 
