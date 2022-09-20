@@ -82,7 +82,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       LOG.info(
           "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
       LOG.info("Flappening the db...");
-      storageToFlat.traverseHardcodedAccounts();
+      storageToFlat.traverseMostUsed();
       LOG.info("Flappening the db done");
       return Optional.empty();
     }
