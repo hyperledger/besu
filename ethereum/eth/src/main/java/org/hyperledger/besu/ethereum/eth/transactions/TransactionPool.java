@@ -48,10 +48,10 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,15 +139,22 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
-    final Set<Transaction> addedTransactions = new HashSet<>(transactions.size());
+    final List<Transaction> addedTransactions = new ArrayList<>(transactions.size());
+    LOG.trace("Adding {} remote transactions", transactions.size());
     for (final Transaction transaction : transactions) {
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
+        traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
         continue;
       }
       final Wei transactionGasPrice = minTransactionGasPrice(transaction);
       if (transactionGasPrice.compareTo(miningParameters.getMinTransactionGasPrice()) < 0) {
+        traceLambda(
+            LOG,
+            "Discard transaction {} below min gas price {}",
+            transaction::toTraceLog,
+            miningParameters::getMinTransactionGasPrice);
         continue;
       }
       final ValidationResult<TransactionInvalidReason> validationResult =
@@ -155,19 +162,28 @@ public class TransactionPool implements BlockAddedObserver {
       if (validationResult.isValid()) {
         final boolean added = pendingTransactions.addRemoteTransaction(transaction);
         if (added) {
+          traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);
           addedTransactions.add(transaction);
         } else {
+          traceLambda(LOG, "Duplicate remote transaction {}", transaction::toTraceLog);
           duplicateTransactionCounter.labels(REMOTE).inc();
         }
       } else {
-        LOG.trace(
-            "Validation failed ({}) for transaction {}. Discarding.",
-            validationResult.getInvalidReason(),
-            transaction);
+        traceLambda(
+            LOG,
+            "Discard invalid transaction {}, reason {}",
+            transaction::toTraceLog,
+            validationResult::getInvalidReason);
       }
     }
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
+      traceLambda(
+          LOG,
+          "Added {} transactions to the pool, current pool size {}, content {}",
+          addedTransactions::size,
+          pendingTransactions::size,
+          pendingTransactions::toTraceLog);
     }
   }
 
@@ -189,9 +205,14 @@ public class TransactionPool implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
+    LOG.trace("Block added event {}", event);
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
     pendingTransactions.manageBlockAdded(event.getBlock());
-    addRemoteTransactions(event.getRemovedTransactions());
+    var readdTransactions = event.getRemovedTransactions();
+    if (!readdTransactions.isEmpty()) {
+      LOG.trace("Readding {} transactions from a block event", readdTransactions.size());
+      addRemoteTransactions(readdTransactions);
+    }
   }
 
   private MainnetTransactionValidator getTransactionValidator() {
@@ -222,7 +243,7 @@ public class TransactionPool implements BlockAddedObserver {
       traceLambda(
           LOG,
           "rejecting transaction {} due to chain head not available yet",
-          () -> transaction.getHash());
+          transaction::getHash);
       return ValidationResult.invalid(CHAIN_HEAD_NOT_AVAILABLE);
     }
 

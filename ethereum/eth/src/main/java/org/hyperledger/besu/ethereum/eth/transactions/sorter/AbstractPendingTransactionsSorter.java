@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -50,10 +51,13 @@ import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -133,7 +137,7 @@ public abstract class AbstractPendingTransactionsSorter {
         .filter(transaction -> transaction.getAddedToPoolAt().isBefore(removeTransactionsBefore))
         .forEach(
             transactionInfo -> {
-              LOG.trace("Evicted {} due to age", transactionInfo);
+              traceLambda(LOG, "Evicted {} due to age", transactionInfo::toTraceLog);
               removeTransaction(transactionInfo.getTransaction());
             });
   }
@@ -212,12 +216,18 @@ public abstract class AbstractPendingTransactionsSorter {
             case CONTINUE:
               break;
             case COMPLETE_OPERATION:
+              if (LOG.isTraceEnabled()) {
+                dump(transactionsToRemove);
+              }
               transactionsToRemove.forEach(this::removeTransaction);
               return;
             default:
               throw new RuntimeException("Illegal value for TransactionSelectionResult.");
           }
         }
+      }
+      if (LOG.isTraceEnabled()) {
+        dump(transactionsToRemove);
       }
       transactionsToRemove.forEach(this::removeTransaction);
     }
@@ -238,8 +248,15 @@ public abstract class AbstractPendingTransactionsSorter {
     if (existingTransaction != null) {
       if (!transactionReplacementHandler.shouldReplace(
           existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
+        traceLambda(
+            LOG, "Reject underpriced transaction replacement {}", transactionInfo::toTraceLog);
         return REJECTED_UNDERPRICED_REPLACEMENT;
       }
+      traceLambda(
+          LOG,
+          "Replace existing transaction {}, with new transaction {}",
+          existingTransaction::toTraceLog,
+          transactionInfo::toTraceLog);
       removeTransaction(existingTransaction.getTransaction());
     }
     trackTransactionBySenderAndNonce(transactionInfo);
@@ -251,13 +268,20 @@ public abstract class AbstractPendingTransactionsSorter {
         transactionsBySender.computeIfAbsent(
             transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
     transactionsForSenderInfo.addTransactionToTrack(transactionInfo.getNonce(), transactionInfo);
+    traceLambda(LOG, "Tracked transaction by sender {}", transactionsForSenderInfo::toTraceLog);
   }
 
   protected void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
-            transactionsForSender ->
-                transactionsForSender.removeTrackedTransaction(transaction.getNonce()));
+            transactionsForSender -> {
+              transactionsForSender.removeTrackedTransaction(transaction.getNonce());
+              traceLambda(
+                  LOG,
+                  "Tracked transaction by sender {} after the removal of {}",
+                  transactionsForSender::toTraceLog,
+                  transaction::toTraceLog);
+            });
   }
 
   protected TransactionInfo getTrackedTransactionBySenderAndNonce(
@@ -389,6 +413,16 @@ public abstract class AbstractPendingTransactionsSorter {
           .map(TransactionInfo::getTransaction)
           .collect(Collectors.toUnmodifiableList());
     }
+
+    public String toTraceLog() {
+      return "{sequence: "
+          + sequence
+          + ", addedAt: "
+          + addedToPoolAt
+          + ", "
+          + transaction.toTraceLog()
+          + "}";
+    }
   }
 
   public enum TransactionSelectionResult {
@@ -433,5 +467,33 @@ public abstract class AbstractPendingTransactionsSorter {
                     .filter(tx::equals)
                     .isPresent())
         .findFirst();
+  }
+
+  public String toTraceLog() {
+    synchronized (lock) {
+      return "Transactions in order { "
+          + StreamSupport.stream(
+                  Spliterators.spliteratorUnknownSize(
+                      prioritizedTransactions(), Spliterator.ORDERED),
+                  false)
+              .map(TransactionInfo::toTraceLog)
+              .collect(Collectors.joining("; "))
+          + " }, Transactions by sender { "
+          + transactionsBySender.entrySet().stream()
+              .map(e -> "(" + e.getKey() + ") " + e.getValue().toTraceLog())
+              .collect(Collectors.joining("; "))
+          + " }";
+    }
+  }
+
+  void dump(final List<Transaction> transactionsToRemove) {
+    traceLambda(LOG, "Transaction pool dump {}", this::toTraceLog);
+    traceLambda(
+        LOG,
+        "Transactions to remove {}",
+        () ->
+            transactionsToRemove.stream()
+                .map(Transaction::toTraceLog)
+                .collect(Collectors.joining("; ")));
   }
 }

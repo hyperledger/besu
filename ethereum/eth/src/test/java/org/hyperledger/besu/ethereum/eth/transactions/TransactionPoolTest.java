@@ -449,7 +449,7 @@ public class TransactionPoolTest {
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction2);
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction2));
   }
 
   @Test
@@ -464,7 +464,7 @@ public class TransactionPoolTest {
 
     assertTransactionNotPending(transaction1);
     assertTransactionPending(transaction2);
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction2));
     verify(transactionValidator).validate(eq(transaction1), any(Optional.class), any());
     verify(transactionValidator)
         .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
@@ -545,7 +545,6 @@ public class TransactionPoolTest {
             TransactionPoolConfiguration.DEFAULT);
 
     when(pendingTransactions.containsTransaction(transaction1.getHash())).thenReturn(true);
-
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
@@ -574,8 +573,8 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction2));
 
     assertTransactionPending(transaction1);
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction1));
-    verify(transactionBroadcaster, never()).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction1));
+    verify(transactionBroadcaster, never()).onTransactionsAdded(singletonList(transaction2));
   }
 
   @Test
@@ -1167,7 +1166,7 @@ public class TransactionPoolTest {
   private void assertRemoteTransactionValid(final Transaction tx) {
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(tx));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(tx));
     assertTransactionPending(tx);
   }
 }

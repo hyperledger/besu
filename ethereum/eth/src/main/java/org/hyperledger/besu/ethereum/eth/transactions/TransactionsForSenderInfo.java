@@ -23,6 +23,7 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TransactionsForSenderInfo {
@@ -96,5 +97,16 @@ public class TransactionsForSenderInfo {
 
   public TransactionInfo getTransactionInfoForNonce(final long nonce) {
     return transactionsInfos.get(nonce);
+  }
+
+  public String toTraceLog() {
+    return "{"
+        + "transactions "
+        + transactionsInfos.entrySet().stream()
+            .map(e -> "(" + e.getKey() + ")" + e.getValue().toTraceLog())
+            .collect(Collectors.joining("; "))
+        + ", nextGap "
+        + nextGap
+        + '}';
   }
 }
