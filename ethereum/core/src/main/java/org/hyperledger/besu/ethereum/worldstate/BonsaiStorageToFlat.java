@@ -10,6 +10,7 @@ import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,7 +25,6 @@ public class BonsaiStorageToFlat {
 
   private final KeyValueStorage trieBranchStorage;
   private final KeyValueStorage storageStorage;
-  private KeyValueStorageTransaction keyValueStorageTransaction;
 
   public BonsaiStorageToFlat(
       final KeyValueStorage trieBranchStorage, final KeyValueStorage storageStorage) {
@@ -34,31 +34,40 @@ public class BonsaiStorageToFlat {
 
   public void traverse(final Hash accountHash) {
     final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
-    keyValueStorageTransaction = storageStorage.startTransaction();
-    traverseStartingFrom(accountHash, storageNodeValue);
+    KeyValueStorageTransaction keyValueStorageTransaction = storageStorage.startTransaction();
+    traverseStartingFrom(accountHash, storageNodeValue, keyValueStorageTransaction);
     keyValueStorageTransaction.commit();
   }
 
   public void traverse(final Hash... accountHashes) {
-    for (Hash accountHash : accountHashes) {
-      keyValueStorageTransaction = storageStorage.startTransaction();
-      LOG.info("Flattening {}", accountHash);
-      final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
-      traverseStartingFrom(accountHash, storageNodeValue);
-      keyValueStorageTransaction.commit();
-    }
+    Arrays.stream(accountHashes)
+        .parallel()
+        .forEach(
+            accountHash -> {
+              KeyValueStorageTransaction keyValueStorageTransaction =
+                  storageStorage.startTransaction();
+              LOG.info("Flattening {}", accountHash);
+              final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
+              traverseStartingFrom(accountHash, storageNodeValue, keyValueStorageTransaction);
+              keyValueStorageTransaction.commit();
+            });
   }
 
   public void traverse(final Address... accountAddresses) {
-    for (Address accountAddress : accountAddresses) {
-      keyValueStorageTransaction = storageStorage.startTransaction();
-      final Hash accountHash = Hash.hash(accountAddress);
+    LOG.info("Flattening {} accounts", accountAddresses.length);
+    Arrays.stream(accountAddresses)
+        .parallel()
+        .forEach(
+            address -> {
+              KeyValueStorageTransaction keyValueStorageTransaction =
+                  storageStorage.startTransaction();
+              final Hash accountHash = Hash.hash(address);
 
-      LOG.info("Flattening {} - {}", accountAddress.toHexString(), accountHash.toHexString());
-      final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
-      traverseStartingFrom(accountHash, storageNodeValue);
-      keyValueStorageTransaction.commit();
-    }
+              LOG.info("Flattening {} -> {}", address.toHexString(), accountHash.toHexString());
+              final Node<Bytes> storageNodeValue = getStorageNodeValue(accountHash, Bytes.EMPTY);
+              traverseStartingFrom(accountHash, storageNodeValue, keyValueStorageTransaction);
+              keyValueStorageTransaction.commit();
+            });
   }
 
   public void traverseHardcodedAccounts() {
@@ -184,16 +193,21 @@ public class BonsaiStorageToFlat {
         Address.fromHexString("0xfbddadd80fe7bda00b901fbaf73803f2238ae655"));
   }
 
-  private void traverseStartingFrom(final Hash accountHash, final Node<Bytes> node) {
+  private void traverseStartingFrom(
+      final Hash accountHash,
+      final Node<Bytes> node,
+      final KeyValueStorageTransaction keyValueStorageTransaction) {
     if (node == null) {
       LOG.warn("No root found for hash {}", accountHash);
       return;
     }
-    LOG.info("Starting from root {}", node.getHash());
-    traverseStorageTrie(accountHash, node);
+    traverseStorageTrie(accountHash, node, keyValueStorageTransaction);
   }
 
-  private void traverseStorageTrie(final Bytes32 accountHash, final Node<Bytes> parentNode) {
+  private void traverseStorageTrie(
+      final Bytes32 accountHash,
+      final Node<Bytes> parentNode,
+      final KeyValueStorageTransaction keyValueStorageTransaction) {
 
     if (parentNode == null) {
       return;
@@ -204,16 +218,21 @@ public class BonsaiStorageToFlat {
         node -> {
           if (nodeIsHashReferencedDescendant(parentNode, node)) {
             traverseStorageTrie(
-                accountHash, getStorageNodeValue(accountHash, node.getLocation().orElseThrow()));
+                accountHash,
+                getStorageNodeValue(accountHash, node.getLocation().orElseThrow()),
+                keyValueStorageTransaction);
           } else {
             if (node.getValue().isPresent()) {
-              copyToFlatDatabase(accountHash, node);
+              copyToFlatDatabase(accountHash, node, keyValueStorageTransaction);
             }
           }
         });
   }
 
-  private void copyToFlatDatabase(final Bytes32 accountHash, final Node<Bytes> node) {
+  private void copyToFlatDatabase(
+      final Bytes32 accountHash,
+      final Node<Bytes> node,
+      final KeyValueStorageTransaction keyValueStorageTransaction) {
     final byte[] key =
         Bytes.concatenate(
                 accountHash, getSlotHash(node.getLocation().orElseThrow(), node.getPath()))
