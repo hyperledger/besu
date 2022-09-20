@@ -186,7 +186,7 @@ public class BonsaiStorageToFlat {
 
   private void traverseStartingFrom(final Hash accountHash, final Node<Bytes> node) {
     if (node == null) {
-      LOG.info("Root is null");
+      LOG.warn("No root found for hash {}", accountHash);
       return;
     }
     LOG.info("Starting from root {}", node.getHash());
@@ -237,7 +237,6 @@ public class BonsaiStorageToFlat {
             .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
             .map(Bytes::wrap);
     if (bytes.isEmpty()) {
-      LOG.warn("No value found for hash {} at location {}", accountHash, location);
       return null;
     }
     return TrieNodeDecoder.decode(location, bytes.get());

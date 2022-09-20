@@ -81,9 +81,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
           "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
-      LOG.info("Flappening the db...");
+      LOG.info("Flattening the most used accounts...");
       storageToFlat.traverseMostUsed();
-      LOG.info("Flappening the db done");
+      LOG.info("Flattening of the db done");
       return Optional.empty();
     }
 
