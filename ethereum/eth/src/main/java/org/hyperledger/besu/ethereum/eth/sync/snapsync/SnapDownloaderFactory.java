@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.worldstate.BonsaiStorageToFlat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -55,7 +56,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
       final SyncState syncState,
-      final Clock clock) {
+      final Clock clock,
+      final BonsaiStorageToFlat storageToFlat) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -79,6 +81,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
       LOG.info(
           "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
+      LOG.info("Flappening the db...");
+      storageToFlat.traverseHardcodedAccounts();
+      LOG.info("Flappening the db done");
       return Optional.empty();
     }
 

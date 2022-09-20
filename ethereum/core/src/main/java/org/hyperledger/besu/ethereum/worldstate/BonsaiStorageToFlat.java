@@ -3,6 +3,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
@@ -41,6 +42,27 @@ public class BonsaiStorageToFlat {
     keyValueStorageTransaction = storageStorage.startTransaction();
     traverseStartingFrom(account);
     keyValueStorageTransaction.commit();
+  }
+
+  public void traverse(final Hash... hashes) {
+    keyValueStorageTransaction = storageStorage.startTransaction();
+    for (Hash hash : hashes) {
+      final Bytes targetPath = bytesToPath(hash);
+      final Node<Bytes> account = getAccountNodeValue(hash, targetPath);
+      traverseStartingFrom(account);
+    }
+    keyValueStorageTransaction.commit();
+  }
+
+  public void traverseHardcodedAccounts() {
+//    traverse(
+//        Hash.fromHexString("0xab14d68802a763f7db875346d03fbf86f137de55814b191c069e721f47474733"),
+//        Hash.fromHexString("0xc2aec71cf00dd782c8767c016bfec3eb9cd487eddc065d1fe8f2758eda85699e"),
+//        Hash.fromHexString("0x7b5855bb92cd7f3f78137497df02f6ccb9badda93d9782e0f230c807ba728be0"));
+    traverse(
+            Hash.hash(Address.fromHexString("0xdac17f958d2ee523a2206206994597c13d831ec7")),
+            Hash.hash(Address.fromHexString("0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85")),
+            Hash.hash(Address.fromHexString("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")));
   }
 
   @Nullable

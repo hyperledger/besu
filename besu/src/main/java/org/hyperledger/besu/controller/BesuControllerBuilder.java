@@ -75,6 +75,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.BonsaiStorageToFlat;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
@@ -105,16 +106,6 @@ import org.slf4j.LoggerFactory;
 
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
-
-  private GenesisConfigFile genesisConfig;
-  private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
-
-  protected Supplier<GenesisConfigOptions> configOptionsSupplier =
-      () ->
-          Optional.ofNullable(genesisConfig)
-              .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
-              .orElseGet(genesisConfig::getConfigOptions);
-
   protected SynchronizerConfiguration syncConfig;
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
   protected TransactionPoolConfiguration transactionPoolConfiguration;
@@ -128,7 +119,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected Clock clock;
   protected NodeKey nodeKey;
   protected boolean isRevertReasonEnabled;
-  GasLimitCalculator gasLimitCalculator;
   protected StorageProvider storageProvider;
   protected boolean isPruningEnabled;
   protected PrunerConfiguration prunerConfiguration;
@@ -140,6 +130,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  GasLimitCalculator gasLimitCalculator;
+  private GenesisConfigFile genesisConfig;
+  private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
+  protected Supplier<GenesisConfigOptions> configOptionsSupplier =
+      () ->
+          Optional.ofNullable(genesisConfig)
+              .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
+              .orElseGet(genesisConfig::getConfigOptions);
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -410,6 +408,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
 
+    final BonsaiStorageToFlat bonsaiStorageToFlat =
+        new BonsaiStorageToFlat(
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+            storageProvider.getStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE));
     final Synchronizer synchronizer =
         createSynchronizer(
             protocolSchedule,
@@ -419,7 +423,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             syncState,
             ethProtocolManager,
-            pivotBlockSelector);
+            pivotBlockSelector,
+            bonsaiStorageToFlat);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -472,7 +477,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthContext ethContext,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
-      final PivotBlockSelector pivotBlockSelector) {
+      final PivotBlockSelector pivotBlockSelector,
+      final BonsaiStorageToFlat storageToFlat) {
 
     DefaultSynchronizer toUse =
         new DefaultSynchronizer(
@@ -488,7 +494,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             clock,
             metricsSystem,
             getFullSyncTerminationCondition(protocolContext.getBlockchain()),
-            pivotBlockSelector);
+            pivotBlockSelector,
+            storageToFlat);
 
     return toUse;
   }

@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.BonsaiStorageToFlat;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
@@ -198,7 +199,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final EthContext ethContext,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
-      final PivotBlockSelector pivotBlockSelector) {
+      final PivotBlockSelector pivotBlockSelector,
+      final BonsaiStorageToFlat storageToFlat) {
 
     DefaultSynchronizer sync =
         (DefaultSynchronizer)
@@ -210,7 +212,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 ethContext,
                 syncState,
                 ethProtocolManager,
-                pivotBlockSelector);
+                pivotBlockSelector,
+                storageToFlat);
     final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
 
     if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {

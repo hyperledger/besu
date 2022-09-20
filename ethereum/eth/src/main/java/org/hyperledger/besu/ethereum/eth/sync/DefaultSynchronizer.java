@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStatePeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.BonsaiStorageToFlat;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -81,7 +82,8 @@ public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListe
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
-      final PivotBlockSelector pivotBlockSelector) {
+      final PivotBlockSelector pivotBlockSelector,
+      final BonsaiStorageToFlat storageToFlat) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
@@ -163,7 +165,8 @@ public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListe
               ethContext,
               worldStateStorage,
               syncState,
-              clock);
+              clock,
+              storageToFlat);
     }
 
     metricsSystem.createLongGauge(
