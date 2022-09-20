@@ -199,7 +199,8 @@ public interface RLPOutput {
    *     if either {@code s < 0} or {@code s > 0xFFFF}.
    */
   default void writeUnsignedShort(final int s) {
-    checkAndWriteZeroByte(Long.valueOf(s), a -> writeBytes(Bytes.ofUnsignedShort(s)));
+    checkAndWriteZeroByte(
+        Long.valueOf(s), a -> writeBytes(Bytes.ofUnsignedShort(s).trimLeadingZeros()));
   }
 
   /**
@@ -210,7 +211,7 @@ public interface RLPOutput {
    *     either {@code i < 0} or {@code i > 0xFFFFFFFFL}.
    */
   default void writeUnsignedInt(final long i) {
-    checkAndWriteZeroByte(i, a -> writeBytes(Bytes.ofUnsignedInt(i)));
+    checkAndWriteZeroByte(i, a -> writeBytes(Bytes.ofUnsignedInt(i).trimLeadingZeros()));
   }
 
   /**
