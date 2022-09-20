@@ -256,8 +256,15 @@ public abstract class AbstractPendingTransactionsSorter {
   protected void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
-            transactionsForSender ->
-                transactionsForSender.removeTrackedTransaction(transaction.getNonce()));
+            transactionsForSender -> {
+              transactionsForSender.removeTrackedTransaction(transaction.getNonce());
+              if (transactionsForSender.transactionCount() == 0) {
+                LOG.trace(
+                    "Removing sender {} from transactionBySender since no more tracked transactions",
+                    transaction.getSender());
+                transactionsBySender.remove(transaction.getSender());
+              }
+            });
   }
 
   protected TransactionInfo getTrackedTransactionBySenderAndNonce(
