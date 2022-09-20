@@ -129,10 +129,10 @@ public class JsonRpcExecutorHandler {
         } else {
           handleJsonRpcError(ctx, null, JsonRpcError.PARSE_ERROR);
         }
-      } catch (IOException ex) {
+      } catch (final IOException ex) {
         final String method = getRpcMethodName(ctx);
-        LOG.error(String.format("%s - Error streaming JSON-RPC response", method), ex);
-      } catch (RuntimeException e) {
+        LOG.error("{} - Error streaming JSON-RPC response", method, ex);
+      } catch (final RuntimeException e) {
         handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
       }
     };
