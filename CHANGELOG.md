@@ -8,6 +8,7 @@
 - Improved RLP processing to handle zero-length string as 0x80 [#4388](https://github.com/hyperledger/besu/issues/4388).
 
 ### Bug Fixes
+- Retry block creation if there is a transient error and we still have time, to mitigate empty block issue [#4407](https://github.com/hyperledger/besu/pull/4407)
 - Fix StacklessClosedChannelException in Besu and resulted timeout errors in CL clients ([#4398](https://github.com/hyperledger/besu/issues/4398), [#4400](https://github.com/hyperledger/besu/issues/4400))
 
 ## 22.7.2
