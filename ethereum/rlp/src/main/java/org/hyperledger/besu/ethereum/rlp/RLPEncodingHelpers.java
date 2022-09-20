@@ -25,14 +25,7 @@ class RLPEncodingHelpers {
   private RLPEncodingHelpers() {}
 
   static boolean isSingleRLPByte(final Bytes value) {
-    if (value.size() == 1) {
-      // Check for 0x80 zero encoding
-      if (value.get(0) == -128) {
-        return true;
-      }
-      return value.get(0) >= 0;
-    }
-    return false;
+    return value.size() == 1 && value.get(0) >= 0;
   }
 
   static boolean isShortElement(final Bytes value) {
