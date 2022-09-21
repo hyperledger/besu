@@ -91,7 +91,10 @@ public class BlockTransactionSelectorTest {
     worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     pendingTransactions =
         new GasPricePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(5)
+                .txPoolLimitByAccountPercentage(1)
+                .build(),
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             BlockTransactionSelectorTest::mockBlockHeader);
