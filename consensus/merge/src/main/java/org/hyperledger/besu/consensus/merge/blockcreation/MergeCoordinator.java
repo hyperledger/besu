@@ -279,7 +279,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean canRetryBlockCreation(final Throwable throwable) {
-    if (throwable instanceof StorageException) {
+    if (throwable instanceof StorageException || throwable instanceof IllegalStateException) {
       return true;
     }
     return false;
