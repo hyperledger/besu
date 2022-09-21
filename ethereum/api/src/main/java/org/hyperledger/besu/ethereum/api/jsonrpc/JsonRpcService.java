@@ -444,7 +444,8 @@ public class JsonRpcService {
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
-              tracer));
+              tracer),
+          false);
     } else {
       mainRoute.blockingHandler(
           HandlerFactory.jsonRpcExecutor(
@@ -452,7 +453,8 @@ public class JsonRpcService {
                   new TimedJsonRpcProcessor(
                       new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
                   rpcMethods),
-              tracer));
+              tracer),
+          false);
     }
 
     if (authenticationService.isPresent()) {

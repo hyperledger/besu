@@ -39,7 +39,7 @@ public class MonitoredExecutors {
 
   public static ExecutorService newFixedThreadPool(
       final String name, final int workerCount, final MetricsSystem metricsSystem) {
-    return newFixedThreadPool(name, workerCount, new LinkedBlockingQueue<>(), metricsSystem);
+    return newFixedThreadPool(name, 0, workerCount, new LinkedBlockingQueue<>(), metricsSystem);
   }
 
   public static ExecutorService newBoundedThreadPool(
@@ -47,16 +47,27 @@ public class MonitoredExecutors {
       final int workerCount,
       final int queueSize,
       final MetricsSystem metricsSystem) {
+    return newBoundedThreadPool(name, 0, workerCount, queueSize, metricsSystem);
+  }
+
+  public static ExecutorService newBoundedThreadPool(
+      final String name,
+      final int minWorkerCount,
+      final int maxWorkerCount,
+      final int queueSize,
+      final MetricsSystem metricsSystem) {
     return newFixedThreadPool(
         name,
-        workerCount,
+        minWorkerCount,
+        maxWorkerCount,
         new BoundedQueue(queueSize, toMetricName(name), metricsSystem),
         metricsSystem);
   }
 
-  public static ExecutorService newFixedThreadPool(
+  private static ExecutorService newFixedThreadPool(
       final String name,
-      final int workerCount,
+      final int minWorkerCount,
+      final int maxWorkerCount,
       final BlockingQueue<Runnable> workingQueue,
       final MetricsSystem metricsSystem) {
     return newMonitoredExecutor(
@@ -64,8 +75,8 @@ public class MonitoredExecutors {
         metricsSystem,
         (rejectedExecutionHandler, threadFactory) ->
             new ThreadPoolExecutor(
-                workerCount,
-                workerCount,
+                minWorkerCount,
+                maxWorkerCount,
                 0L,
                 TimeUnit.MILLISECONDS,
                 workingQueue,
