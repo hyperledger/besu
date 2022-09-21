@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -31,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -81,6 +84,8 @@ public abstract class AbstractPendingTransactionsSorter {
 
   protected final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
+
+  protected final Map<Address, Long> lowestInvalidKnownNonceBySender = new ConcurrentHashMap<>();
 
   protected final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
@@ -149,21 +154,36 @@ public abstract class AbstractPendingTransactionsSorter {
         .collect(Collectors.toList());
   }
 
-  public boolean addRemoteTransaction(final Transaction transaction) {
+  public TransactionAddedStatus addRemoteTransaction(
+      final Transaction transaction, final Account senderAccount) {
+
+    final Long maybeInvalidNonce = lowestInvalidKnownNonceBySender.get(transaction.getSender());
+    if (maybeInvalidNonce != null && transaction.getNonce() > maybeInvalidNonce) {
+      debugLambda(
+          LOG,
+          "Dropping transaction {} since the sender has an invalid transaction with nonce {}",
+          transaction::toTraceLog,
+          maybeInvalidNonce::toString);
+      return LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
+    }
+
     final TransactionInfo transactionInfo =
-        new TransactionInfo(transaction, false, clock.instant());
+        new TransactionInfo(senderAccount, transaction, false, clock.instant());
     final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
-    final boolean added = transactionAddedStatus.equals(ADDED);
-    if (added) {
+    if (transactionAddedStatus.equals(ADDED)) {
+      lowestInvalidKnownNonceBySender.computeIfPresent(
+          transaction.getSender(),
+          (address, invalidNonce) -> transaction.getNonce() >= invalidNonce ? null : invalidNonce);
       remoteTransactionAddedCounter.inc();
     }
-    return added;
+    return transactionAddedStatus;
   }
 
   @VisibleForTesting
-  public TransactionAddedStatus addLocalTransaction(final Transaction transaction) {
+  public TransactionAddedStatus addLocalTransaction(
+      final Transaction transaction, final Account senderAccount) {
     final TransactionAddedStatus transactionAdded =
-        addTransaction(new TransactionInfo(transaction, true, clock.instant()));
+        addTransaction(new TransactionInfo(senderAccount, transaction, true, clock.instant()));
     if (transactionAdded.equals(ADDED)) {
       localTransactionAddedCounter.inc();
     }
@@ -177,6 +197,9 @@ public abstract class AbstractPendingTransactionsSorter {
 
   public void transactionAddedToBlock(final Transaction transaction) {
     doRemoveTransaction(transaction, true);
+    lowestInvalidKnownNonceBySender.computeIfPresent(
+        transaction.getSender(),
+        (address, invalidNonce) -> transaction.getNonce() >= invalidNonce ? null : invalidNonce);
   }
 
   protected void incrementTransactionRemovedCounter(
@@ -212,6 +235,7 @@ public abstract class AbstractPendingTransactionsSorter {
           switch (result) {
             case DELETE_TRANSACTION_AND_CONTINUE:
               transactionsToRemove.add(transactionToProcess);
+              signalInvalidTransaction(transactionToProcess);
               break;
             case CONTINUE:
               break;
@@ -353,6 +377,39 @@ public abstract class AbstractPendingTransactionsSorter {
 
   protected abstract TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo);
 
+  public void signalInvalidTransaction(final Transaction transaction) {
+    final long invalidNonce =
+        lowestInvalidKnownNonceBySender.merge(
+            transaction.getSender(),
+            transaction.getNonce(),
+            (existingNonce, newNonce) -> {
+              traceLambda(
+                  LOG,
+                  "Invalid transaction {}, previous lowest known invalid nonce for this sender {}",
+                  transaction::toTraceLog,
+                  existingNonce::toString);
+              return Math.min(existingNonce, newNonce);
+            });
+
+    TransactionsForSenderInfo txsForSender = transactionsBySender.get(transaction.getSender());
+    if (txsForSender != null) {
+      txsForSender
+          .streamTransactionInfos()
+          .filter(txInfo -> txInfo.getTransaction().getNonce() >= invalidNonce)
+          .collect(Collectors.toList())
+          .forEach(
+              txInfo -> {
+                traceLambda(
+                    LOG,
+                    "Removing transaction {} since lowest nonce invalid transaction found {}",
+                    txInfo::toTraceLog,
+                    transaction::toTraceLog);
+                txsForSender.removeTrackedTransaction(txInfo.getNonce());
+                removeTransaction(txInfo.getTransaction());
+              });
+    }
+  }
+
   /**
    * Tracks the additional metadata associated with transactions to enable prioritization for mining
    * and deciding which transactions to drop when the transaction pool reaches its size limit.
@@ -360,19 +417,29 @@ public abstract class AbstractPendingTransactionsSorter {
   public static class TransactionInfo {
 
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
+    private final Account senderAccount;
     private final Transaction transaction;
     private final boolean receivedFromLocalSource;
     private final Instant addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
+    private final long nonceDistance;
+
     public TransactionInfo(
+        final Account senderAccount,
         final Transaction transaction,
         final boolean receivedFromLocalSource,
         final Instant addedToPoolAt) {
+      this.senderAccount = senderAccount;
       this.transaction = transaction;
       this.receivedFromLocalSource = receivedFromLocalSource;
       this.addedToPoolAt = addedToPoolAt;
       this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
+      this.nonceDistance = transaction.getNonce() - senderAccount.getNonce();
+    }
+
+    public Account getSenderAccount() {
+      return senderAccount;
     }
 
     public Transaction getTransaction() {
@@ -407,6 +474,10 @@ public abstract class AbstractPendingTransactionsSorter {
       return addedToPoolAt;
     }
 
+    public long getNonceDistance() {
+      return nonceDistance;
+    }
+
     public static List<Transaction> toTransactionList(
         final Collection<TransactionInfo> transactionsInfo) {
       return transactionsInfo.stream()
@@ -419,6 +490,10 @@ public abstract class AbstractPendingTransactionsSorter {
           + sequence
           + ", addedAt: "
           + addedToPoolAt
+          + ", nonceDistance: "
+          + nonceDistance
+          + ", senderAccount: "
+          + senderAccount
           + ", "
           + transaction.toTraceLog()
           + "}";
@@ -440,6 +515,8 @@ public abstract class AbstractPendingTransactionsSorter {
   public enum TransactionAddedStatus {
     ALREADY_KNOWN(TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN),
     REJECTED_UNDERPRICED_REPLACEMENT(TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED),
+    NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER(),
+    LOWER_NONCE_INVALID_TRANSACTION_KNOWN(),
     ADDED();
 
     private final Optional<TransactionInvalidReason> invalidReason;
@@ -482,7 +559,9 @@ public abstract class AbstractPendingTransactionsSorter {
           + transactionsBySender.entrySet().stream()
               .map(e -> "(" + e.getKey() + ") " + e.getValue().toTraceLog())
               .collect(Collectors.joining("; "))
-          + " }";
+          + " }, Lowest invalid nonce by sender {"
+          + lowestInvalidKnownNonceBySender
+          + "}";
     }
   }
 

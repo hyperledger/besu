@@ -194,8 +194,9 @@ public class BlockTransactionSelector {
       if (blockOccupancyAboveThreshold()) {
         traceLambda(
             LOG,
-            "Block occupancy above threshold, completing operation, result {}",
-            transactionSelectionResult::toTraceLog);
+            "Block occupancy above threshold, completing operation, result {} transaction pool status {}",
+            transactionSelectionResult::toTraceLog,
+            pendingTransactions::toTraceLog);
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
@@ -204,6 +205,7 @@ public class BlockTransactionSelector {
 
     // If the gas price specified by the transaction is less than this node is willing to accept,
     // do not include it in the block.
+    // ToDo: why we accept this in the pool in the first place then?
     final Wei actualMinTransactionGasPriceInBlock =
         feeMarket
             .getTransactionPriceCalculator()
