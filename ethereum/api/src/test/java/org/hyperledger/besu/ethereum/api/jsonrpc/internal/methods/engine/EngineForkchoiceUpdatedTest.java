@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,11 +78,14 @@ public class EngineForkchoiceUpdatedTest {
 
   @Mock private MutableBlockchain blockchain;
 
+  @Mock private EngineCallListener engineCallListener;
+
   @Before
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    this.method = new EngineForkchoiceUpdated(vertx, protocolContext, mergeCoordinator);
+    this.method =
+        new EngineForkchoiceUpdated(vertx, protocolContext, mergeCoordinator, engineCallListener);
   }
 
   @Test
@@ -189,6 +193,7 @@ public class EngineForkchoiceUpdatedTest {
     assertThat(resp.getPayloadStatus().getLatestValidHash().get()).isEqualTo(parent.getBlockHash());
     assertThat(resp.getPayloadStatus().getError())
         .isEqualTo("new head timestamp not greater than parent");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -255,6 +260,7 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -276,6 +282,7 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -300,6 +307,7 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -327,6 +335,7 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -351,6 +360,7 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -376,6 +386,7 @@ public class EngineForkchoiceUpdatedTest {
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -412,6 +423,8 @@ public class EngineForkchoiceUpdatedTest {
     assertThat(forkchoiceRes.getPayloadStatus().getLatestValidHashAsString())
         .isEqualTo(mockHeader.getHash().toHexString());
     assertThat(forkchoiceRes.getPayloadId()).isNull();
+    assertThat(forkchoiceRes.getPayloadId()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   private EngineUpdateForkchoiceResult assertSuccessWithPayloadForForkchoiceResult(
@@ -463,6 +476,8 @@ public class EngineForkchoiceUpdatedTest {
                 ? Optional.empty()
                 : Optional.of(fcuParam.getFinalizedBlockHash()),
             fcuParam.getSafeBlockHash());
+
+    verify(engineCallListener, times(1)).executionEngineCalled();
 
     return res;
   }
