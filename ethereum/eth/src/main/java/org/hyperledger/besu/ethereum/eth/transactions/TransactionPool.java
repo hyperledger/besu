@@ -370,7 +370,7 @@ public class TransactionPool implements BlockAddedObserver {
     ValidationResultAndAccount(
         final Account account, final ValidationResult<TransactionInvalidReason> result) {
       this.result = result;
-      this.maybeAccount = Optional.of(account);
+      this.maybeAccount = Optional.ofNullable(account);
     }
 
     ValidationResultAndAccount(final ValidationResult<TransactionInvalidReason> result) {
