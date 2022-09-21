@@ -137,6 +137,7 @@ public abstract class Words {
 
   /**
    * Returns the lesser of the two values, when compared as an unsigned value
+   *
    * @param a first value
    * @param b second value
    * @return a if, as an unsigned integer, a is less than b; otherwise b.

@@ -144,7 +144,6 @@ public abstract class MainnetProtocolSpecs {
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
@@ -363,7 +362,6 @@ public abstract class MainnetProtocolSpecs {
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    gasCalculator,
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,

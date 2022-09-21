@@ -31,16 +31,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 class WordsTest {
 
   Collection<Object[]> unsignedMinLongTestVector() {
-    return Arrays.asList(new Object[][] {
-        {10, 10, 10},
-        {-10, -10, -10},
-        {10, 20, 10},
-        {20, 10, 10},
-        {10, -10, 10},
-        {-10, 10, 10},
-        {-20, -10, -20},
-        {-10, -20, -20},
-    });
+    return Arrays.asList(
+        new Object[][] {
+          {10, 10, 10},
+          {-10, -10, -10},
+          {10, 20, 10},
+          {20, 10, 10},
+          {10, -10, 10},
+          {-10, 10, 10},
+          {-20, -10, -20},
+          {-10, -20, -20},
+        });
   }
 
   @ParameterizedTest
