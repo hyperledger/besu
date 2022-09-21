@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.QosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -46,21 +45,11 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       Difficulty.fromHexString(
           "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc00");
 
-  static final long QOS_TIMEOUT_MILLIS = 120000L;
-
-  private final QosTimer qosTimer;
-
   public EngineExchangeTransitionConfiguration(
-      final Vertx vertx, final ProtocolContext protocolContext) {
-    super(vertx, protocolContext);
-    qosTimer =
-        new QosTimer(
-            vertx,
-            QOS_TIMEOUT_MILLIS,
-            lastCall ->
-                LOG.warn(
-                    "not called in {} seconds, consensus client may not be connected",
-                    QOS_TIMEOUT_MILLIS / 1000L));
+      final Vertx vertx,
+      final ProtocolContext protocolContext,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, engineCallListener);
   }
 
   @Override
@@ -70,8 +59,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // update our QoS "last call time"
-    getQosTimer().resetTimer();
+    engineCallListener.executionEngineCalled();
 
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(
@@ -97,7 +85,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     if (!localTransitionConfiguration
         .getTerminalTotalDifficulty()
         .equals(remoteTransitionConfiguration.getTerminalTotalDifficulty())) {
-      LOG.warn(
+      LOG.debug(
           "Configured terminal total difficulty {} does not match value of consensus client {}",
           localTransitionConfiguration.getTerminalTotalDifficulty(),
           remoteTransitionConfiguration.getTerminalTotalDifficulty());
@@ -106,7 +94,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     if (!localTransitionConfiguration
         .getTerminalBlockHash()
         .equals(remoteTransitionConfiguration.getTerminalBlockHash())) {
-      LOG.warn(
+      LOG.debug(
           "Configured terminal block hash {} does not match value of consensus client {}",
           localTransitionConfiguration.getTerminalBlockHash(),
           remoteTransitionConfiguration.getTerminalBlockHash());
@@ -127,10 +115,5 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       final Object requestId,
       final EngineExchangeTransitionConfigurationResult transitionConfiguration) {
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
-  }
-
-  // QosTimer accessor for testing considerations
-  QosTimer getQosTimer() {
-    return qosTimer;
   }
 }
