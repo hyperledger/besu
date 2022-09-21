@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -65,8 +65,7 @@ public class EngineQosTimerTest {
         100L,
         z -> {
           try {
-            // once on construction, once on call:
-            verify(spyTimer, times(2)).resetTimer();
+            verify(spyTimer, atLeast(2)).resetTimer();
             // should not warn
             verify(spyEngineQosTimer, never()).logTimeoutWarning();
             async.complete();
@@ -90,8 +89,7 @@ public class EngineQosTimerTest {
         100L,
         z -> {
           try {
-            // once on construction:
-            verify(spyTimer, times(1)).resetTimer();
+            verify(spyTimer, atLeastOnce()).resetTimer();
             // should warn
             verify(spyEngineQosTimer, atLeastOnce()).logTimeoutWarning();
             async.complete();
