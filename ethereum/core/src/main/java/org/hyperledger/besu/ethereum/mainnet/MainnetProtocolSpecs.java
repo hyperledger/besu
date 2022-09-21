@@ -139,9 +139,9 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
             (transactionValidator,
-             contractCreationProcessor,
-             messageCallProcessor,
-             privateTransactionValidator) ->
+                contractCreationProcessor,
+                messageCallProcessor,
+                privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
                     transactionValidator,
                     contractCreationProcessor,
@@ -356,9 +356,9 @@ public abstract class MainnetProtocolSpecs {
         .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
         .privateTransactionProcessorBuilder(
             (transactionValidator,
-             contractCreationProcessor,
-             messageCallProcessor,
-             privateTransactionValidator) ->
+                contractCreationProcessor,
+                messageCallProcessor,
+                privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
                     transactionValidator,
                     contractCreationProcessor,
