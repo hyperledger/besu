@@ -158,6 +158,9 @@ public class BlockTransactionSelector {
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
+    LOG.debug("Transaction pool size {}", pendingTransactions.size());
+    traceLambda(
+        LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction));
     return transactionSelectionResult;
@@ -194,9 +197,8 @@ public class BlockTransactionSelector {
       if (blockOccupancyAboveThreshold()) {
         traceLambda(
             LOG,
-            "Block occupancy above threshold, completing operation, result {} transaction pool status {}",
-            transactionSelectionResult::toTraceLog,
-            pendingTransactions::toTraceLog);
+            "Block occupancy above threshold, completing operation, result {}",
+            transactionSelectionResult::toTraceLog);
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;

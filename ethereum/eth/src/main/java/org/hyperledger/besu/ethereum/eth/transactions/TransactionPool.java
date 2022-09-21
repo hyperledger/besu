@@ -190,7 +190,7 @@ public class TransactionPool implements BlockAddedObserver {
           "Added {} transactions to the pool, current pool size {}, content {}",
           addedTransactions::size,
           pendingTransactions::size,
-          pendingTransactions::toTraceLog);
+          () -> pendingTransactions.toTraceLog(true, true));
     }
   }
 

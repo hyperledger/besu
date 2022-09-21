@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -64,15 +65,25 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
     this.baseFee = chainHeadHeaderSupplier.get().getBaseFee();
   }
 
+  private final Comparator<TransactionInfo> minNonceDistance =
+      (ti1, ti2) -> {
+        final long nonceDistance1 =
+            ti1.getNonce() - transactionsBySender.get(ti1.getSender()).getSenderAccountNonce();
+        final long nonceDistance2 =
+            ti2.getNonce() - transactionsBySender.get(ti2.getSender()).getSenderAccountNonce();
+        return Long.compare(nonceDistance1, nonceDistance2);
+      };
+
   /**
    * See this post for an explainer about these data structures:
    * https://hackmd.io/@adietrichs/1559-transaction-sorting
    */
   private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          comparing(TransactionInfo::getNonceDistance)
-              .reversed()
-              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
+          //          minNonceDistance
+          //              .reversed()
+          //              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(
                   transactionInfo ->
                       transactionInfo
@@ -87,9 +98,10 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          comparing(TransactionInfo::getNonceDistance)
-              .reversed()
-              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
+          //          minNonceDistance
+          //              .reversed()
+          //              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(
                   transactionInfo ->
                       transactionInfo
@@ -104,7 +116,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .reversed()
-              .thenComparing(TransactionInfo::getNonceDistance)
+              .thenComparing(minNonceDistance)
               .reversed()
               .thenComparing(TransactionInfo::getSequence));
 
@@ -212,7 +224,8 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
-  protected TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
+  protected TransactionAddedStatus addTransaction(
+      final TransactionInfo transactionInfo, final Account senderAccount) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     final Transaction transaction = transactionInfo.getTransaction();
     synchronized (lock) {
@@ -221,18 +234,18 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
         return ALREADY_KNOWN;
       }
 
-      if (transaction.getNonce() - transactionInfo.getSenderAccount().getNonce()
+      if (transaction.getNonce() - senderAccount.getNonce()
           > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
         traceLambda(
             LOG,
             "Transaction {} not added because nonce too far in the future for sender {}",
             transaction::toTraceLog,
-            transactionInfo.getSenderAccount()::toString);
+            senderAccount::toString);
         return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
       }
 
       final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo);
+          addTransactionForSenderAndNonce(transactionInfo, senderAccount);
       if (!transactionAddedStatus.equals(ADDED)) {
         traceLambda(
             LOG,

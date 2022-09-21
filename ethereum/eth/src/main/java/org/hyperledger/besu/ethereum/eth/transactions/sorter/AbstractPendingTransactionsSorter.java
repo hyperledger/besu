@@ -168,8 +168,9 @@ public abstract class AbstractPendingTransactionsSorter {
     }
 
     final TransactionInfo transactionInfo =
-        new TransactionInfo(senderAccount, transaction, false, clock.instant());
-    final TransactionAddedStatus transactionAddedStatus = addTransaction(transactionInfo);
+        new TransactionInfo(transaction, false, clock.instant());
+    final TransactionAddedStatus transactionAddedStatus =
+        addTransaction(transactionInfo, senderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
       lowestInvalidKnownNonceBySender.computeIfPresent(
           transaction.getSender(),
@@ -183,7 +184,7 @@ public abstract class AbstractPendingTransactionsSorter {
   public TransactionAddedStatus addLocalTransaction(
       final Transaction transaction, final Account senderAccount) {
     final TransactionAddedStatus transactionAdded =
-        addTransaction(new TransactionInfo(senderAccount, transaction, true, clock.instant()));
+        addTransaction(new TransactionInfo(transaction, true, clock.instant()), senderAccount);
     if (transactionAdded.equals(ADDED)) {
       localTransactionAddedCounter.inc();
     }
@@ -240,18 +241,12 @@ public abstract class AbstractPendingTransactionsSorter {
             case CONTINUE:
               break;
             case COMPLETE_OPERATION:
-              if (LOG.isTraceEnabled()) {
-                dump(transactionsToRemove);
-              }
               transactionsToRemove.forEach(this::removeTransaction);
               return;
             default:
               throw new RuntimeException("Illegal value for TransactionSelectionResult.");
           }
         }
-      }
-      if (LOG.isTraceEnabled()) {
-        dump(transactionsToRemove);
       }
       transactionsToRemove.forEach(this::removeTransaction);
     }
@@ -266,12 +261,18 @@ public abstract class AbstractPendingTransactionsSorter {
   }
 
   protected TransactionAddedStatus addTransactionForSenderAndNonce(
-      final TransactionInfo transactionInfo) {
-    final TransactionInfo existingTransaction =
-        getTrackedTransactionBySenderAndNonce(transactionInfo);
-    if (existingTransaction != null) {
+      final TransactionInfo transactionInfo, final Account senderAccount) {
+
+    TransactionsForSenderInfo txsSenderInfo =
+        transactionsBySender.computeIfAbsent(
+            transactionInfo.getSender(), address -> new TransactionsForSenderInfo(senderAccount));
+
+    TransactionInfo existingTxInfo =
+        txsSenderInfo.getTransactionInfoForNonce(transactionInfo.getNonce());
+
+    if (existingTxInfo != null) {
       if (!transactionReplacementHandler.shouldReplace(
-          existingTransaction, transactionInfo, chainHeadHeaderSupplier.get())) {
+          existingTxInfo, transactionInfo, chainHeadHeaderSupplier.get())) {
         traceLambda(
             LOG, "Reject underpriced transaction replacement {}", transactionInfo::toTraceLog);
         return REJECTED_UNDERPRICED_REPLACEMENT;
@@ -279,20 +280,15 @@ public abstract class AbstractPendingTransactionsSorter {
       traceLambda(
           LOG,
           "Replace existing transaction {}, with new transaction {}",
-          existingTransaction::toTraceLog,
+          existingTxInfo::toTraceLog,
           transactionInfo::toTraceLog);
-      removeTransaction(existingTransaction.getTransaction());
+      removeTransaction(existingTxInfo.getTransaction());
     }
-    trackTransactionBySenderAndNonce(transactionInfo);
-    return ADDED;
-  }
 
-  protected void trackTransactionBySenderAndNonce(final TransactionInfo transactionInfo) {
-    final TransactionsForSenderInfo transactionsForSenderInfo =
-        transactionsBySender.computeIfAbsent(
-            transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
-    transactionsForSenderInfo.addTransactionToTrack(transactionInfo.getNonce(), transactionInfo);
-    traceLambda(LOG, "Tracked transaction by sender {}", transactionsForSenderInfo::toTraceLog);
+    txsSenderInfo.updateSenderAccount(senderAccount);
+    txsSenderInfo.addTransactionToTrack(transactionInfo);
+    traceLambda(LOG, "Tracked transaction by sender {}", txsSenderInfo::toTraceLog);
+    return ADDED;
   }
 
   protected void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
@@ -306,14 +302,6 @@ public abstract class AbstractPendingTransactionsSorter {
                   transactionsForSender::toTraceLog,
                   transaction::toTraceLog);
             });
-  }
-
-  protected TransactionInfo getTrackedTransactionBySenderAndNonce(
-      final TransactionInfo transactionInfo) {
-    final TransactionsForSenderInfo transactionsForSenderInfo =
-        transactionsBySender.computeIfAbsent(
-            transactionInfo.getSender(), key -> new TransactionsForSenderInfo());
-    return transactionsForSenderInfo.getTransactionInfoForNonce(transactionInfo.getNonce());
   }
 
   protected void notifyTransactionAdded(final Transaction transaction) {
@@ -375,7 +363,8 @@ public abstract class AbstractPendingTransactionsSorter {
 
   protected abstract Iterator<TransactionInfo> prioritizedTransactions();
 
-  protected abstract TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo);
+  protected abstract TransactionAddedStatus addTransaction(
+      final TransactionInfo transactionInfo, final Account senderAccount);
 
   public void signalInvalidTransaction(final Transaction transaction) {
     final long invalidNonce =
@@ -417,29 +406,19 @@ public abstract class AbstractPendingTransactionsSorter {
   public static class TransactionInfo {
 
     private static final AtomicLong TRANSACTIONS_ADDED = new AtomicLong();
-    private final Account senderAccount;
     private final Transaction transaction;
     private final boolean receivedFromLocalSource;
     private final Instant addedToPoolAt;
     private final long sequence; // Allows prioritization based on order transactions are added
 
-    private final long nonceDistance;
-
     public TransactionInfo(
-        final Account senderAccount,
         final Transaction transaction,
         final boolean receivedFromLocalSource,
         final Instant addedToPoolAt) {
-      this.senderAccount = senderAccount;
       this.transaction = transaction;
       this.receivedFromLocalSource = receivedFromLocalSource;
       this.addedToPoolAt = addedToPoolAt;
       this.sequence = TRANSACTIONS_ADDED.getAndIncrement();
-      this.nonceDistance = transaction.getNonce() - senderAccount.getNonce();
-    }
-
-    public Account getSenderAccount() {
-      return senderAccount;
     }
 
     public Transaction getTransaction() {
@@ -474,10 +453,6 @@ public abstract class AbstractPendingTransactionsSorter {
       return addedToPoolAt;
     }
 
-    public long getNonceDistance() {
-      return nonceDistance;
-    }
-
     public static List<Transaction> toTransactionList(
         final Collection<TransactionInfo> transactionsInfo) {
       return transactionsInfo.stream()
@@ -490,10 +465,6 @@ public abstract class AbstractPendingTransactionsSorter {
           + sequence
           + ", addedAt: "
           + addedToPoolAt
-          + ", nonceDistance: "
-          + nonceDistance
-          + ", senderAccount: "
-          + senderAccount
           + ", "
           + transaction.toTraceLog()
           + "}";
@@ -546,33 +517,44 @@ public abstract class AbstractPendingTransactionsSorter {
         .findFirst();
   }
 
-  public String toTraceLog() {
+  public String toTraceLog(
+      final boolean withTransactionsBySender, final boolean withLowestInvalidNonce) {
     synchronized (lock) {
-      return "Transactions in order { "
-          + StreamSupport.stream(
-                  Spliterators.spliteratorUnknownSize(
-                      prioritizedTransactions(), Spliterator.ORDERED),
-                  false)
-              .map(TransactionInfo::toTraceLog)
-              .collect(Collectors.joining("; "))
-          + " }, Transactions by sender { "
-          + transactionsBySender.entrySet().stream()
-              .map(e -> "(" + e.getKey() + ") " + e.getValue().toTraceLog())
-              .collect(Collectors.joining("; "))
-          + " }, Lowest invalid nonce by sender {"
-          + lowestInvalidKnownNonceBySender
-          + "}";
-    }
-  }
+      StringBuilder sb =
+          new StringBuilder(
+              "Transactions in order { "
+                  + StreamSupport.stream(
+                          Spliterators.spliteratorUnknownSize(
+                              prioritizedTransactions(), Spliterator.ORDERED),
+                          false)
+                      .map(
+                          txInfo -> {
+                            TransactionsForSenderInfo txsSenderInfo =
+                                transactionsBySender.get(txInfo.getSender());
+                            long nonceDistance =
+                                txInfo.getNonce() - txsSenderInfo.getSenderAccountNonce();
+                            return "nonceDistance: "
+                                + nonceDistance
+                                + ", senderAccount: "
+                                + txsSenderInfo.getSenderAccount()
+                                + ", "
+                                + txInfo.toTraceLog();
+                          })
+                      .collect(Collectors.joining("; "))
+                  + " }");
 
-  void dump(final List<Transaction> transactionsToRemove) {
-    traceLambda(LOG, "Transaction pool dump {}", this::toTraceLog);
-    traceLambda(
-        LOG,
-        "Transactions to remove {}",
-        () ->
-            transactionsToRemove.stream()
-                .map(Transaction::toTraceLog)
-                .collect(Collectors.joining("; ")));
+      if (withTransactionsBySender) {
+        sb.append(
+            ", Transactions by sender { "
+                + transactionsBySender.entrySet().stream()
+                    .map(e -> "(" + e.getKey() + ") " + e.getValue().toTraceLog())
+                    .collect(Collectors.joining("; "))
+                + " }");
+      }
+      if (withLowestInvalidNonce) {
+        sb.append(", Lowest invalid nonce by sender {" + lowestInvalidKnownNonceBySender + "}");
+      }
+      return sb.toString();
+    }
   }
 }
