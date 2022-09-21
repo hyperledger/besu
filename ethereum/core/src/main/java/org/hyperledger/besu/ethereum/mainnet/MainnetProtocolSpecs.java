@@ -138,11 +138,10 @@ public abstract class MainnetProtocolSpecs {
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
-            (gasCalculator,
-                transactionValidator,
-                contractCreationProcessor,
-                messageCallProcessor,
-                privateTransactionValidator) ->
+            (transactionValidator,
+             contractCreationProcessor,
+             messageCallProcessor,
+             privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
                     transactionValidator,
                     contractCreationProcessor,
@@ -356,11 +355,10 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
         .privateTransactionProcessorBuilder(
-            (gasCalculator,
-                transactionValidator,
-                contractCreationProcessor,
-                messageCallProcessor,
-                privateTransactionValidator) ->
+            (transactionValidator,
+             contractCreationProcessor,
+             messageCallProcessor,
+             privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
                     transactionValidator,
                     contractCreationProcessor,
