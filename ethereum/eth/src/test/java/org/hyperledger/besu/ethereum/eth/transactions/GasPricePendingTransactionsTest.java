@@ -57,7 +57,7 @@ import org.junit.Test;
 public class GasPricePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
+  private static final double MAX_TRANSACTIONS_BY_SENDER_PERCENT = 0.8d; // should evaluate to 4
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -72,7 +72,10 @@ public class GasPricePendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final GasPricePendingTransactionsSorter transactions =
       new GasPricePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS)
+              .txPoolLimitByAccountPercentage(1)
+              .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           GasPricePendingTransactionsTest::mockBlockHeader);
@@ -156,12 +159,14 @@ public class GasPricePendingTransactionsTest {
 
   @Test
   public void shouldDropFutureTransactionWhenSenderLimitExceeded() {
+    final var senderLimitedConfig =
+        ImmutableTransactionPoolConfiguration.builder()
+            .txPoolMaxSize(MAX_TRANSACTIONS)
+            .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENT)
+            .build();
     final GasPricePendingTransactionsSorter senderLimitedtransactions =
         new GasPricePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder()
-                .txPoolMaxSize(MAX_TRANSACTIONS)
-                .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
-                .build(),
+            senderLimitedConfig,
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             GasPricePendingTransactionsTest::mockBlockHeader);
@@ -171,7 +176,9 @@ public class GasPricePendingTransactionsTest {
       furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
       senderLimitedtransactions.addRemoteTransaction(furthestFutureTransaction, Optional.empty());
     }
-    assertThat(senderLimitedtransactions.size()).isEqualTo(MAX_TRANSACTIONS_BY_SENDER);
+    assertThat(senderLimitedtransactions.size())
+        .isEqualTo(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount());
+    assertThat(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(4);
     assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1L);
 
     assertThat(senderLimitedtransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
@@ -642,6 +649,7 @@ public class GasPricePendingTransactionsTest {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(1)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             clock,
             metricsSystem,
@@ -684,6 +692,7 @@ public class GasPricePendingTransactionsTest {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(2)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             clock,
             metricsSystem,

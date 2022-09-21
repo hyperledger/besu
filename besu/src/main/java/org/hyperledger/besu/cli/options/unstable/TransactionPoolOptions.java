@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -35,6 +36,9 @@ public class TransactionPoolOptions
 
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
+
+  private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
+      "--tx-pool-limit-by-account-percentage";
 
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
@@ -65,6 +69,16 @@ public class TransactionPoolOptions
   private long eth65TrxAnnouncedBufferingPeriod =
       TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
 
+  @CommandLine.Option(
+      names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
+      paramLabel = "<DOUBLE>",
+      converter = FractionConverter.class,
+      description =
+          "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Float txPoolLimitByAccountPercentage =
+      TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+
   private TransactionPoolOptions() {}
 
   public static TransactionPoolOptions create() {
@@ -77,6 +91,7 @@ public class TransactionPoolOptions
     options.eth65TrxAnnouncedBufferingPeriod =
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
+    options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
     return options;
   }
 
@@ -85,13 +100,16 @@ public class TransactionPoolOptions
     return ImmutableTransactionPoolConfiguration.builder()
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
-        .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod));
+        .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
+        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage);
   }
 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
+        TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
+        OptionParser.format(txPoolLimitByAccountPercentage),
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
