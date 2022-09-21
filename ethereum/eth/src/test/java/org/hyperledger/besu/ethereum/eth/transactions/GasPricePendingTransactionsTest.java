@@ -57,7 +57,7 @@ import org.junit.Test;
 public class GasPricePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final double MAX_TRANSACTIONS_BY_SENDER_PERCENT = 0.8d; // should evaluate to 4
+  private static final float MAX_TRANSACTIONS_BY_SENDER_PERCENT = 0.8f; // should evaluate to 4
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();

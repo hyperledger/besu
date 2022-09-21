@@ -59,7 +59,7 @@ import org.junit.Test;
 public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final double MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8d;
+  private static final float MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
