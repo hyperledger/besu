@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -225,7 +226,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
 
   @Override
   protected TransactionAddedStatus addTransaction(
-      final TransactionInfo transactionInfo, final Account senderAccount) {
+      final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     final Transaction transaction = transactionInfo.getTransaction();
     synchronized (lock) {
@@ -234,18 +235,18 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
         return ALREADY_KNOWN;
       }
 
-      if (transaction.getNonce() - senderAccount.getNonce()
+      if (transaction.getNonce() - maybeSenderAccount.map(AccountState::getNonce).orElse(0L)
           > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
         traceLambda(
             LOG,
             "Transaction {} not added because nonce too far in the future for sender {}",
             transaction::toTraceLog,
-            senderAccount::toString);
+            maybeSenderAccount::toString);
         return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
       }
 
       final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo, senderAccount);
+          addTransactionForSenderAndNonce(transactionInfo, maybeSenderAccount);
       if (!transactionAddedStatus.equals(ADDED)) {
         traceLambda(
             LOG,

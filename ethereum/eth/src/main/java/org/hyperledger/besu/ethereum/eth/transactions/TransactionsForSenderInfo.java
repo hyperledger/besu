@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
+import org.hyperledger.besu.evm.account.Account;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -24,17 +25,16 @@ import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.hyperledger.besu.evm.account.Account;
 
 public class TransactionsForSenderInfo {
   private final NavigableMap<Long, TransactionInfo> transactionsInfos;
   private OptionalLong nextGap = OptionalLong.empty();
 
-  private Account senderAccount;
+  private Optional<Account> maybeSenderAccount;
 
-  public TransactionsForSenderInfo(final Account senderAccount) {
+  public TransactionsForSenderInfo(final Optional<Account> maybeSenderAccount) {
     this.transactionsInfos = new TreeMap<>();
-    this.senderAccount = senderAccount;
+    this.maybeSenderAccount = maybeSenderAccount;
   }
 
   public void addTransactionToTrack(final TransactionInfo transactionInfo) {
@@ -62,16 +62,16 @@ public class TransactionsForSenderInfo {
     }
   }
 
-  public void updateSenderAccount(final Account senderAccount) {
-    this.senderAccount = senderAccount;
+  public void updateSenderAccount(final Optional<Account> maybeSenderAccount) {
+    this.maybeSenderAccount = maybeSenderAccount;
   }
 
   public long getSenderAccountNonce() {
-    return senderAccount.getNonce();
+    return maybeSenderAccount.map(Account::getNonce).orElse(0L);
   }
 
-  public Account getSenderAccount() {
-    return senderAccount;
+  public Optional<Account> getSenderAccount() {
+    return maybeSenderAccount;
   }
 
   private void findGap() {
@@ -116,7 +116,7 @@ public class TransactionsForSenderInfo {
   public String toTraceLog() {
     return "{"
         + "senderAccount "
-        + senderAccount
+        + maybeSenderAccount
         + ", transactions "
         + transactionsInfos.entrySet().stream()
             .map(e -> "(" + e.getKey() + ")" + e.getValue().toTraceLog())

@@ -116,7 +116,7 @@ public class TransactionPool implements BlockAddedObserver {
         return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
       }
       final TransactionAddedStatus transactionAddedStatus =
-          pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount.get());
+          pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
       if (!transactionAddedStatus.equals(ADDED)) {
         duplicateTransactionCounter.labels(LOCAL).inc();
         return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
@@ -160,8 +160,7 @@ public class TransactionPool implements BlockAddedObserver {
       final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
       if (validationResult.result.isValid()) {
         final TransactionAddedStatus status =
-            pendingTransactions.addRemoteTransaction(
-                transaction, validationResult.maybeAccount.get());
+            pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
         switch (status) {
           case ADDED:
             traceLambda(LOG, "Added remote transaction {}", transaction::toTraceLog);

@@ -84,7 +84,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
 
   @Override
   protected TransactionAddedStatus addTransaction(
-      final TransactionInfo transactionInfo, final Account senderAccount) {
+      final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     synchronized (lock) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
@@ -92,7 +92,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       }
 
       final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo, senderAccount);
+          addTransactionForSenderAndNonce(transactionInfo, maybeSenderAccount);
       if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
         return transactionAddedStatus;
       }

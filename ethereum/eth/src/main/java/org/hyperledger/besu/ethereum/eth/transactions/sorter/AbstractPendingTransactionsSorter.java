@@ -155,7 +155,7 @@ public abstract class AbstractPendingTransactionsSorter {
   }
 
   public TransactionAddedStatus addRemoteTransaction(
-      final Transaction transaction, final Account senderAccount) {
+      final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
     final Long maybeInvalidNonce = lowestInvalidKnownNonceBySender.get(transaction.getSender());
     if (maybeInvalidNonce != null && transaction.getNonce() > maybeInvalidNonce) {
@@ -170,7 +170,7 @@ public abstract class AbstractPendingTransactionsSorter {
     final TransactionInfo transactionInfo =
         new TransactionInfo(transaction, false, clock.instant());
     final TransactionAddedStatus transactionAddedStatus =
-        addTransaction(transactionInfo, senderAccount);
+        addTransaction(transactionInfo, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
       lowestInvalidKnownNonceBySender.computeIfPresent(
           transaction.getSender(),
@@ -182,9 +182,9 @@ public abstract class AbstractPendingTransactionsSorter {
 
   @VisibleForTesting
   public TransactionAddedStatus addLocalTransaction(
-      final Transaction transaction, final Account senderAccount) {
+      final Transaction transaction, final Optional<Account> maybeSenderAccount) {
     final TransactionAddedStatus transactionAdded =
-        addTransaction(new TransactionInfo(transaction, true, clock.instant()), senderAccount);
+        addTransaction(new TransactionInfo(transaction, true, clock.instant()), maybeSenderAccount);
     if (transactionAdded.equals(ADDED)) {
       localTransactionAddedCounter.inc();
     }
@@ -261,11 +261,12 @@ public abstract class AbstractPendingTransactionsSorter {
   }
 
   protected TransactionAddedStatus addTransactionForSenderAndNonce(
-      final TransactionInfo transactionInfo, final Account senderAccount) {
+      final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount) {
 
     TransactionsForSenderInfo txsSenderInfo =
         transactionsBySender.computeIfAbsent(
-            transactionInfo.getSender(), address -> new TransactionsForSenderInfo(senderAccount));
+            transactionInfo.getSender(),
+            address -> new TransactionsForSenderInfo(maybeSenderAccount));
 
     TransactionInfo existingTxInfo =
         txsSenderInfo.getTransactionInfoForNonce(transactionInfo.getNonce());
@@ -285,7 +286,7 @@ public abstract class AbstractPendingTransactionsSorter {
       removeTransaction(existingTxInfo.getTransaction());
     }
 
-    txsSenderInfo.updateSenderAccount(senderAccount);
+    txsSenderInfo.updateSenderAccount(maybeSenderAccount);
     txsSenderInfo.addTransactionToTrack(transactionInfo);
     traceLambda(LOG, "Tracked transaction by sender {}", txsSenderInfo::toTraceLog);
     return ADDED;
@@ -364,7 +365,7 @@ public abstract class AbstractPendingTransactionsSorter {
   protected abstract Iterator<TransactionInfo> prioritizedTransactions();
 
   protected abstract TransactionAddedStatus addTransaction(
-      final TransactionInfo transactionInfo, final Account senderAccount);
+      final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount);
 
   public void signalInvalidTransaction(final Transaction transaction) {
     final long invalidNonce =
