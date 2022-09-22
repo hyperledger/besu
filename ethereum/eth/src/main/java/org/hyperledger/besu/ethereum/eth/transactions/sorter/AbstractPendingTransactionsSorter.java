@@ -43,7 +43,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,8 +55,10 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -73,6 +74,7 @@ import org.slf4j.LoggerFactory;
  * <p>This class is safe for use across multiple threads.
  */
 public abstract class AbstractPendingTransactionsSorter {
+  private static final int DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE = 10_000;
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractPendingTransactionsSorter.class);
 
@@ -85,8 +87,8 @@ public abstract class AbstractPendingTransactionsSorter {
   protected final Map<Address, TransactionsForSenderInfo> transactionsBySender =
       new ConcurrentHashMap<>();
 
-  protected final Map<Address, Long> lowestInvalidKnownNonceBySender = new ConcurrentHashMap<>();
-
+  protected final LowestInvalidNonceCache lowestInvalidKnownNonceCache =
+      new LowestInvalidNonceCache(DEFAULT_LOWEST_INVALID_KNOWN_NONCE_CACHE);
   protected final Subscribers<PendingTransactionListener> pendingTransactionSubscribers =
       Subscribers.create();
 
@@ -157,13 +159,11 @@ public abstract class AbstractPendingTransactionsSorter {
   public TransactionAddedStatus addRemoteTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
 
-    final Long maybeInvalidNonce = lowestInvalidKnownNonceBySender.get(transaction.getSender());
-    if (maybeInvalidNonce != null && transaction.getNonce() > maybeInvalidNonce) {
+    if (lowestInvalidKnownNonceCache.hasInvalidLowerNonce(transaction)) {
       debugLambda(
           LOG,
-          "Dropping transaction {} since the sender has an invalid transaction with nonce {}",
-          transaction::toTraceLog,
-          maybeInvalidNonce::toString);
+          "Dropping transaction {} since the sender has an invalid transaction with lower nonce",
+          transaction::toTraceLog);
       return LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
     }
 
@@ -172,9 +172,7 @@ public abstract class AbstractPendingTransactionsSorter {
     final TransactionAddedStatus transactionAddedStatus =
         addTransaction(transactionInfo, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
-      lowestInvalidKnownNonceBySender.computeIfPresent(
-          transaction.getSender(),
-          (address, invalidNonce) -> transaction.getNonce() >= invalidNonce ? null : invalidNonce);
+      lowestInvalidKnownNonceCache.registerValidTransaction(transaction);
       remoteTransactionAddedCounter.inc();
     }
     return transactionAddedStatus;
@@ -198,9 +196,7 @@ public abstract class AbstractPendingTransactionsSorter {
 
   public void transactionAddedToBlock(final Transaction transaction) {
     doRemoveTransaction(transaction, true);
-    lowestInvalidKnownNonceBySender.computeIfPresent(
-        transaction.getSender(),
-        (address, invalidNonce) -> transaction.getNonce() >= invalidNonce ? null : invalidNonce);
+    lowestInvalidKnownNonceCache.registerValidTransaction(transaction);
   }
 
   protected void incrementTransactionRemovedCounter(
@@ -367,19 +363,65 @@ public abstract class AbstractPendingTransactionsSorter {
   protected abstract TransactionAddedStatus addTransaction(
       final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount);
 
+  Optional<TransactionInfo> lowestValueTxForRemovalBySender(
+      final NavigableSet<TransactionInfo> txSet) {
+    return txSet.descendingSet().stream()
+        .filter(
+            tx ->
+                transactionsBySender
+                    .get(tx.getSender())
+                    .maybeLastTx()
+                    .filter(tx::equals)
+                    .isPresent())
+        .findFirst();
+  }
+
+  public String toTraceLog(
+      final boolean withTransactionsBySender, final boolean withLowestInvalidNonce) {
+    synchronized (lock) {
+      StringBuilder sb =
+          new StringBuilder(
+              "Transactions in order { "
+                  + StreamSupport.stream(
+                          Spliterators.spliteratorUnknownSize(
+                              prioritizedTransactions(), Spliterator.ORDERED),
+                          false)
+                      .map(
+                          txInfo -> {
+                            TransactionsForSenderInfo txsSenderInfo =
+                                transactionsBySender.get(txInfo.getSender());
+                            long nonceDistance =
+                                txInfo.getNonce() - txsSenderInfo.getSenderAccountNonce();
+                            return "nonceDistance: "
+                                + nonceDistance
+                                + ", senderAccount: "
+                                + txsSenderInfo.getSenderAccount()
+                                + ", "
+                                + txInfo.toTraceLog();
+                          })
+                      .collect(Collectors.joining("; "))
+                  + " }");
+
+      if (withTransactionsBySender) {
+        sb.append(
+            ", Transactions by sender { "
+                + transactionsBySender.entrySet().stream()
+                    .map(e -> "(" + e.getKey() + ") " + e.getValue().toTraceLog())
+                    .collect(Collectors.joining("; "))
+                + " }");
+      }
+      if (withLowestInvalidNonce) {
+        sb.append(
+            ", Lowest invalid nonce by sender cache {"
+                + lowestInvalidKnownNonceCache.toTraceLog()
+                + "}");
+      }
+      return sb.toString();
+    }
+  }
+
   public List<Transaction> signalInvalidTransaction(final Transaction transaction) {
-    final long invalidNonce =
-        lowestInvalidKnownNonceBySender.merge(
-            transaction.getSender(),
-            transaction.getNonce(),
-            (existingNonce, newNonce) -> {
-              traceLambda(
-                  LOG,
-                  "Invalid transaction {}, previous lowest known invalid nonce for this sender {}",
-                  transaction::toTraceLog,
-                  existingNonce::toString);
-              return Math.min(existingNonce, newNonce);
-            });
+    final long invalidNonce = lowestInvalidKnownNonceCache.registerInvalidTransaction(transaction);
 
     TransactionsForSenderInfo txsForSender = transactionsBySender.get(transaction.getSender());
     if (txsForSender != null) {
@@ -505,56 +547,196 @@ public abstract class AbstractPendingTransactionsSorter {
     }
   }
 
-  Optional<TransactionInfo> lowestValueTxForRemovalBySender(NavigableSet<TransactionInfo> txSet) {
-    return txSet.descendingSet().stream()
-        .filter(
-            tx ->
-                transactionsBySender
-                    .get(tx.getSender())
-                    .maybeLastTx()
-                    .filter(tx::equals)
-                    .isPresent())
-        .findFirst();
-  }
+  private static class LowestInvalidNonceCache {
+    private final int maxSize;
+    private final Map<Address, InvalidNonceStatus> lowestInvalidKnownNonceBySender;
+    private final NavigableSet<InvalidNonceStatus> evictionOrder = new TreeSet<>();
 
-  public String toTraceLog(
-      final boolean withTransactionsBySender, final boolean withLowestInvalidNonce) {
-    synchronized (lock) {
-      StringBuilder sb =
-          new StringBuilder(
-              "Transactions in order { "
-                  + StreamSupport.stream(
-                          Spliterators.spliteratorUnknownSize(
-                              prioritizedTransactions(), Spliterator.ORDERED),
-                          false)
-                      .map(
-                          txInfo -> {
-                            TransactionsForSenderInfo txsSenderInfo =
-                                transactionsBySender.get(txInfo.getSender());
-                            long nonceDistance =
-                                txInfo.getNonce() - txsSenderInfo.getSenderAccountNonce();
-                            return "nonceDistance: "
-                                + nonceDistance
-                                + ", senderAccount: "
-                                + txsSenderInfo.getSenderAccount()
-                                + ", "
-                                + txInfo.toTraceLog();
-                          })
-                      .collect(Collectors.joining("; "))
-                  + " }");
+    public LowestInvalidNonceCache(final int maxSize) {
+      this.maxSize = maxSize;
+      this.lowestInvalidKnownNonceBySender = new HashMap<>(maxSize);
+    }
 
-      if (withTransactionsBySender) {
-        sb.append(
-            ", Transactions by sender { "
-                + transactionsBySender.entrySet().stream()
-                    .map(e -> "(" + e.getKey() + ") " + e.getValue().toTraceLog())
-                    .collect(Collectors.joining("; "))
-                + " }");
+    synchronized long registerInvalidTransaction(final Transaction transaction) {
+      final Address sender = transaction.getSender();
+      final long invalidNonce = transaction.getNonce();
+      final InvalidNonceStatus currStatus = lowestInvalidKnownNonceBySender.get(sender);
+      if (currStatus == null) {
+        final InvalidNonceStatus newStatus = new InvalidNonceStatus(sender, invalidNonce);
+        addInvalidNonceStatus(newStatus);
+        traceLambda(
+            LOG,
+            "Added invalid nonce status {}, cache status {}",
+            newStatus::toString,
+            this::toString);
+        return invalidNonce;
       }
-      if (withLowestInvalidNonce) {
-        sb.append(", Lowest invalid nonce by sender {" + lowestInvalidKnownNonceBySender + "}");
+
+      updateInvalidNonceStatus(
+          currStatus,
+          status -> {
+            if (invalidNonce < currStatus.nonce) {
+              currStatus.updateNonce(invalidNonce);
+            } else {
+              currStatus.newHit();
+            }
+          });
+      traceLambda(
+          LOG,
+          "Updated invalid nonce status {}, cache status {}",
+          currStatus::toString,
+          this::toString);
+
+      return currStatus.nonce;
+    }
+
+    synchronized void registerValidTransaction(final Transaction transaction) {
+      final InvalidNonceStatus currStatus =
+          lowestInvalidKnownNonceBySender.get(transaction.getSender());
+      if (currStatus != null) {
+        evictionOrder.remove(currStatus);
+        lowestInvalidKnownNonceBySender.remove(transaction.getSender());
+        traceLambda(
+            LOG,
+            "Valid transaction, removed invalid nonce status {}, cache status {}",
+            currStatus::toString,
+            this::toString);
       }
-      return sb.toString();
+    }
+
+    synchronized boolean hasInvalidLowerNonce(final Transaction transaction) {
+      final InvalidNonceStatus currStatus =
+          lowestInvalidKnownNonceBySender.get(transaction.getSender());
+      if (currStatus != null && transaction.getNonce() > currStatus.nonce) {
+        updateInvalidNonceStatus(currStatus, status -> status.newHit());
+        traceLambda(
+            LOG,
+            "New hit for invalid nonce status {}, cache status {}",
+            currStatus::toString,
+            this::toString);
+        return true;
+      }
+      return false;
+    }
+
+    private void updateInvalidNonceStatus(
+        final InvalidNonceStatus status, final Consumer<InvalidNonceStatus> updateAction) {
+      evictionOrder.remove(status);
+      updateAction.accept(status);
+      evictionOrder.add(status);
+    }
+
+    private void addInvalidNonceStatus(final InvalidNonceStatus newStatus) {
+      if (lowestInvalidKnownNonceBySender.size() >= maxSize) {
+        final InvalidNonceStatus statusToEvict = evictionOrder.pollFirst();
+        lowestInvalidKnownNonceBySender.remove(statusToEvict.address);
+        traceLambda(
+            LOG,
+            "Evicted invalid nonce status {}, cache status {}",
+            statusToEvict::toString,
+            this::toString);
+      }
+      lowestInvalidKnownNonceBySender.put(newStatus.address, newStatus);
+      evictionOrder.add(newStatus);
+    }
+
+    synchronized String toTraceLog() {
+      return "by eviction order "
+          + StreamSupport.stream(evictionOrder.spliterator(), false)
+              .map(InvalidNonceStatus::toString)
+              .collect(Collectors.joining("; "));
+    }
+
+    @Override
+    public String toString() {
+      return "LowestInvalidNonceCache{"
+          + "maxSize: "
+          + maxSize
+          + ", currentSize: "
+          + lowestInvalidKnownNonceBySender.size()
+          + ", evictionOrder: [size: "
+          + evictionOrder.size()
+          + ", first evictable: "
+          + evictionOrder.first()
+          + "]"
+          + '}';
+    }
+
+    private static class InvalidNonceStatus implements Comparable<InvalidNonceStatus> {
+      final Address address;
+      long nonce;
+      long hits;
+      long lastUpdate;
+
+      InvalidNonceStatus(final Address address, final long nonce) {
+        this.address = address;
+        this.nonce = nonce;
+        this.hits = 1L;
+        this.lastUpdate = System.currentTimeMillis();
+      }
+
+      void updateNonce(final long nonce) {
+        this.nonce = nonce;
+        newHit();
+      }
+
+      void newHit() {
+        this.hits++;
+        this.lastUpdate = System.currentTimeMillis();
+      }
+
+      @Override
+      public boolean equals(final Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+
+        InvalidNonceStatus that = (InvalidNonceStatus) o;
+
+        return address.equals(that.address);
+      }
+
+      @Override
+      public int hashCode() {
+        return address.hashCode();
+      }
+
+      /**
+       * An InvalidNonceStatus is smaller than another when it has fewer hits and was last access
+       * earlier, the address is the last tiebreaker
+       *
+       * @param o the object to be compared.
+       * @return 0 if they are equal, negative if this is smaller, positive if this is greater
+       */
+      @Override
+      public int compareTo(final InvalidNonceStatus o) {
+        final int cmpHits = Long.compare(this.hits, o.hits);
+        if (cmpHits != 0) {
+          return cmpHits;
+        }
+        final int cmpLastUpdate = Long.compare(this.lastUpdate, o.lastUpdate);
+        if (cmpLastUpdate != 0) {
+          return cmpLastUpdate;
+        }
+        return this.address.compareTo(o.address);
+      }
+
+      @Override
+      public String toString() {
+        return "{"
+            + "address="
+            + address
+            + ", nonce="
+            + nonce
+            + ", hits="
+            + hits
+            + ", lastUpdate="
+            + lastUpdate
+            + '}';
+      }
     }
   }
 }
