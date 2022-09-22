@@ -1959,6 +1959,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
       logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
+
+    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
+      logger.warn(
+          DEPRECATION_WARNING_MSG,
+          "--tx-pool-future-max-by-account",
+          "--tx-pool-limit-by-account-percentage");
+    }
   }
 
   private void configure() throws Exception {

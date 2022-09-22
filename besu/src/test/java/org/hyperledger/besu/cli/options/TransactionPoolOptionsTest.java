@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -94,14 +95,16 @@ public class TransactionPoolOptionsTest
 
   @Test
   public void senderLimitedTxPoolCeiling_violated() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=1.00000001");
+    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getTxPoolLimitByAccountPercentage())
+        .isEqualTo(LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(config).isNotNull();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--tx-pool-limit-by-account-percentage'");
   }
 
   @Test

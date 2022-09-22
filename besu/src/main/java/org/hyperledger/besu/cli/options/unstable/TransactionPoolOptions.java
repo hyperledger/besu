@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+
+import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
@@ -24,10 +27,14 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 public class TransactionPoolOptions
     implements CLIOptions<ImmutableTransactionPoolConfiguration.Builder> {
+  private static final Logger LOG = LoggerFactory.getLogger(Besu.class);
+
   private static final String TX_MESSAGE_KEEP_ALIVE_SEC_FLAG =
       "--Xincoming-tx-messages-keep-alive-seconds";
 
@@ -79,6 +86,13 @@ public class TransactionPoolOptions
   private Float txPoolLimitByAccountPercentage =
       TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--tx-pool-future-max-by-account"},
+      description = "Deprecated parameter, see instead: --tx-pool-limit-by-account-percentage")
+  @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
+  private Integer maxFutureTransactionsByAccount = -1;
+
   private TransactionPoolOptions() {}
 
   public static TransactionPoolOptions create() {
@@ -97,6 +111,12 @@ public class TransactionPoolOptions
 
   @Override
   public ImmutableTransactionPoolConfiguration.Builder toDomainObject() {
+    if (maxFutureTransactionsByAccount != null) {
+      LOG.warn(
+          DEPRECATION_WARNING_MSG,
+          "--tx-pool-future-max-by-account",
+          "--tx-pool-limit-by-account-percentage");
+    }
     return ImmutableTransactionPoolConfiguration.builder()
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
