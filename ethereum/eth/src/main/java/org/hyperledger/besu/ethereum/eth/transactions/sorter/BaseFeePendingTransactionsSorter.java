@@ -66,15 +66,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
     this.baseFee = chainHeadHeaderSupplier.get().getBaseFee();
   }
 
-  private final Comparator<TransactionInfo> minNonceDistance =
-      (ti1, ti2) -> {
-        final long nonceDistance1 =
-            ti1.getNonce() - transactionsBySender.get(ti1.getSender()).getSenderAccountNonce();
-        final long nonceDistance2 =
-            ti2.getNonce() - transactionsBySender.get(ti2.getSender()).getSenderAccountNonce();
-        return Long.compare(nonceDistance1, nonceDistance2);
-      };
-
   /**
    * See this post for an explainer about these data structures:
    * https://hackmd.io/@adietrichs/1559-transaction-sorting
@@ -112,8 +103,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   private final TreeSet<TransactionInfo> transactionsByEvictionOrder =
       new TreeSet<>(
           comparing(TransactionInfo::isReceivedFromLocalSource)
-              .reversed()
-              .thenComparing(minNonceDistance)
               .reversed()
               .thenComparing(TransactionInfo::getSequence));
 
