@@ -232,7 +232,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       }
 
       if (transaction.getNonce() - maybeSenderAccount.map(AccountState::getNonce).orElse(0L)
-          > poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+          >= poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
         traceLambda(
             LOG,
             "Transaction {} not added because nonce too far in the future for sender {}",

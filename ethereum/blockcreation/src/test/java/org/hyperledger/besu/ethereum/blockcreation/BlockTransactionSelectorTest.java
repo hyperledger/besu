@@ -88,8 +88,7 @@ public class BlockTransactionSelectorTest {
 
   @Before
   public void setup() {
-    worldState =
-        InMemoryKeyValueStorageProvider.createInMemoryWorldState();
+    worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     pendingTransactions =
         new GasPricePendingTransactionsSorter(
             ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
