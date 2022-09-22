@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -83,12 +84,16 @@ public class EngineNewPayloadTest {
 
   @Mock private EthPeers ethPeers;
 
+  @Mock private EngineCallListener engineCallListener;
+
   @Before
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(ethPeers.peerCount()).thenReturn(1);
-    this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator, ethPeers);
+    this.method =
+        new EngineNewPayload(
+            vertx, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
   @Test
@@ -116,6 +121,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -136,6 +142,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("error 42");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -155,6 +162,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(ACCEPTED.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -171,6 +179,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -188,6 +197,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     verify(mergeCoordinator, atLeastOnce()).addBadBlock(any());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -205,6 +215,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(latestValidHash));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -223,6 +234,7 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     fromErrorResp(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -234,6 +246,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -247,6 +260,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -261,6 +275,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Failed to decode transactions from block parameter");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -282,6 +297,7 @@ public class EngineNewPayloadTest {
     var payloadStatusResult = (EnginePayloadStatusResult) res;
     assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
     assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -297,6 +313,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getError()).isNull();
     assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
     assertThat(res.getLatestValidHash()).isEmpty();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -310,6 +327,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -331,6 +349,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Field extraData must not be null");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -344,6 +363,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   private JsonRpcResponse resp(final EnginePayloadParameter payload) {
