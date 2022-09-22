@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
@@ -29,6 +30,7 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int maxBackgroundCompactions = DEFAULT_MAX_BACKGROUND_COMPACTIONS;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
+  private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
 
   public RocksDBConfigurationBuilder databaseDir(final Path databaseDir) {
     this.databaseDir = databaseDir;
@@ -60,12 +62,18 @@ public class RocksDBConfigurationBuilder {
     return this;
   }
 
+  public RocksDBConfigurationBuilder isHighSpec(final boolean isHighSpec) {
+    this.isHighSpec = isHighSpec;
+    return this;
+  }
+
   public static RocksDBConfigurationBuilder from(final RocksDBFactoryConfiguration configuration) {
     return new RocksDBConfigurationBuilder()
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
         .cacheCapacity(configuration.getCacheCapacity())
         .maxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
-        .maxOpenFiles(configuration.getMaxOpenFiles());
+        .maxOpenFiles(configuration.getMaxOpenFiles())
+        .isHighSpec(configuration.isHighSpec());
   }
 
   public RocksDBConfiguration build() {
@@ -75,6 +83,7 @@ public class RocksDBConfigurationBuilder {
         maxBackgroundCompactions,
         backgroundThreadCount,
         cacheCapacity,
-        label);
+        label,
+        isHighSpec);
   }
 }
