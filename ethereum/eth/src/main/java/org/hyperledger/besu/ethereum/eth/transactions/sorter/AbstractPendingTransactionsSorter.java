@@ -219,7 +219,7 @@ public abstract class AbstractPendingTransactionsSorter {
   // right now.
   public void selectTransactions(final TransactionSelector selector) {
     synchronized (lock) {
-      final List<Transaction> transactionsToRemove = new ArrayList<>();
+      final Set<Transaction> transactionsToRemove = new HashSet<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       final Iterator<TransactionInfo> prioritizedTransactions = prioritizedTransactions();
       while (prioritizedTransactions.hasNext()) {
@@ -236,7 +236,7 @@ public abstract class AbstractPendingTransactionsSorter {
           switch (result) {
             case DELETE_TRANSACTION_AND_CONTINUE:
               transactionsToRemove.add(transactionToProcess);
-              signalInvalidTransaction(transactionToProcess);
+              signalInvalidTransaction(transactionToProcess).forEach(transactionsToRemove::add);
               break;
             case CONTINUE:
               break;
@@ -367,7 +367,7 @@ public abstract class AbstractPendingTransactionsSorter {
   protected abstract TransactionAddedStatus addTransaction(
       final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount);
 
-  public void signalInvalidTransaction(final Transaction transaction) {
+  public List<Transaction> signalInvalidTransaction(final Transaction transaction) {
     final long invalidNonce =
         lowestInvalidKnownNonceBySender.merge(
             transaction.getSender(),
@@ -383,21 +383,20 @@ public abstract class AbstractPendingTransactionsSorter {
 
     TransactionsForSenderInfo txsForSender = transactionsBySender.get(transaction.getSender());
     if (txsForSender != null) {
-      txsForSender
+      return txsForSender
           .streamTransactionInfos()
           .filter(txInfo -> txInfo.getTransaction().getNonce() >= invalidNonce)
-          .collect(Collectors.toList())
-          .forEach(
-              txInfo -> {
-                traceLambda(
-                    LOG,
-                    "Removing transaction {} since lowest nonce invalid transaction found {}",
-                    txInfo::toTraceLog,
-                    transaction::toTraceLog);
-                txsForSender.removeTrackedTransaction(txInfo.getNonce());
-                removeTransaction(txInfo.getTransaction());
-              });
+          .peek(
+              txInfo ->
+                  traceLambda(
+                      LOG,
+                      "Transaction {} piked for removal since there is a lowest invalid nonce {} for the sender",
+                      txInfo::toTraceLog,
+                      () -> invalidNonce))
+          .map(TransactionInfo::getTransaction)
+          .collect(Collectors.toList());
     }
+    return List.of();
   }
 
   /**

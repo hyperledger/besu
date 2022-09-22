@@ -154,7 +154,9 @@ public class TransactionPool implements BlockAddedObserver {
             "Discard transaction {} below min gas price {}",
             transaction::toTraceLog,
             miningParameters::getMinTransactionGasPrice);
-        pendingTransactions.signalInvalidTransaction(transaction);
+        pendingTransactions
+            .signalInvalidTransaction(transaction)
+            .forEach(pendingTransactions::removeTransaction);
         continue;
       }
       final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
@@ -179,7 +181,9 @@ public class TransactionPool implements BlockAddedObserver {
             "Discard invalid transaction {}, reason {}",
             transaction::toTraceLog,
             validationResult.result::getInvalidReason);
-        pendingTransactions.signalInvalidTransaction(transaction);
+        pendingTransactions
+            .signalInvalidTransaction(transaction)
+            .forEach(pendingTransactions::removeTransaction);
       }
     }
     if (!addedTransactions.isEmpty()) {
