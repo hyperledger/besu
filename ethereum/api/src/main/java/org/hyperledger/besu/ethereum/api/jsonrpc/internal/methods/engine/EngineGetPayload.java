@@ -43,8 +43,9 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
   public EngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final BlockResultFactory blockResultFactory) {
-    super(vertx, protocolContext);
+      final BlockResultFactory blockResultFactory,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, engineCallListener);
     this.blockResultFactory = blockResultFactory;
   }
 
@@ -55,6 +56,8 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
+    engineCallListener.executionEngineCalled();
+
     final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
 
     final Optional<Block> block = mergeContext.get().retrieveBlockById(payloadId);
