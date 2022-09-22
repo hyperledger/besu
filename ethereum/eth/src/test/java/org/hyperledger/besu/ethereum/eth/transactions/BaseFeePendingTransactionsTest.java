@@ -201,28 +201,38 @@ public class BaseFeePendingTransactionsTest {
   }
 
   @Test
-  public void shouldEvictHighestNonceForSenderFirst() {
+  public void shouldEvictHighestNonceForSenderOfTheOldestTransactionFirst() {
+    final Account firstSender = mock(Account.class);
+    when(firstSender.getNonce()).thenReturn(0L);
+
+    final KeyPair firstSenderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+    // first sender sends 2 txs
+    final Transaction oldestTx = transactionWithNonceSenderAndGasPrice(1, firstSenderKeys, 9);
+    final Transaction penultimateTx = transactionWithNonceSenderAndGasPrice(2, firstSenderKeys, 11);
+    transactions.addRemoteTransaction(oldestTx, Optional.of(firstSender));
+    transactions.addRemoteTransaction(penultimateTx, Optional.of(firstSender));
+
     final List<Transaction> lowGasPriceTransactions =
-        IntStream.range(0, MAX_TRANSACTIONS)
+        IntStream.range(0, MAX_TRANSACTIONS - 2)
             .mapToObj(
                 i ->
                     transactionWithNonceSenderAndGasPrice(
                         i + 1, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10))
             .collect(Collectors.toUnmodifiableList());
 
-    // Fill the pool with transasctions from random senders
+    // Fill the pool with transactions from random senders
     lowGasPriceTransactions.forEach(tx -> transactions.addRemoteTransaction(tx, Optional.empty()));
 
-    // This should kick the oldest tx with the low gas price out, namely the first one we added
+    // This should kick the tx with the highest nonce for the sender of the oldest tx, that is
+    // the penultimate tx
     final Transaction highGasPriceTransaction =
         transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
     transactions.addRemoteTransaction(highGasPriceTransaction, Optional.empty());
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-    assertTransactionNotPending(highGasPriceTransaction);
-    IntStream.range(0, MAX_TRANSACTIONS)
+    assertTransactionNotPending(penultimateTx);
+    assertTransactionPending(oldestTx);
+    IntStream.range(0, MAX_TRANSACTIONS - 2)
         .forEach(i -> assertTransactionPending(lowGasPriceTransactions.get(i)));
-
-    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
   }
 
   @Test
