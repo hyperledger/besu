@@ -81,9 +81,6 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
    */
   private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          //          minNonceDistance
-          //              .reversed()
-          //              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(
                   transactionInfo ->
@@ -95,13 +92,11 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getAsBigInteger()
                           .longValue())
               .thenComparing(TransactionInfo::getAddedToPoolAt)
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
   private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          //          minNonceDistance
-          //              .reversed()
-          //              .thenComparing(TransactionInfo::isReceivedFromLocalSource)
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(
                   transactionInfo ->
@@ -111,6 +106,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(transactionInfo.getGasPrice().toLong()))
               .thenComparing(TransactionInfo::getAddedToPoolAt)
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
   private final TreeSet<TransactionInfo> transactionsByEvictionOrder =

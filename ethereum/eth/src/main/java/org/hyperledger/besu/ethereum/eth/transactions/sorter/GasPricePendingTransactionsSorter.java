@@ -48,6 +48,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
               .thenComparing(TransactionInfo::getAddedToPoolAt)
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
   public GasPricePendingTransactionsSorter(

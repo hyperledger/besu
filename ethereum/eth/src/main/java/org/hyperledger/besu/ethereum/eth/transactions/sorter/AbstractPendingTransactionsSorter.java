@@ -427,7 +427,7 @@ public abstract class AbstractPendingTransactionsSorter {
     if (txsForSender != null) {
       return txsForSender
           .streamTransactionInfos()
-          .filter(txInfo -> txInfo.getTransaction().getNonce() >= invalidNonce)
+          .filter(txInfo -> txInfo.getTransaction().getNonce() > invalidNonce)
           .peek(
               txInfo ->
                   traceLambda(

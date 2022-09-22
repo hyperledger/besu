@@ -163,6 +163,8 @@ public class BlockTransactionSelector {
         LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction));
+    traceLambda(
+        LOG, "Transaction selection result result {}", transactionSelectionResult::toTraceLog);
     return transactionSelectionResult;
   }
 
@@ -195,10 +197,7 @@ public class BlockTransactionSelector {
       traceLambda(
           LOG, "Transaction {} too large to select for block creation", transaction::toTraceLog);
       if (blockOccupancyAboveThreshold()) {
-        traceLambda(
-            LOG,
-            "Block occupancy above threshold, completing operation, result {}",
-            transactionSelectionResult::toTraceLog);
+        traceLambda(LOG, "Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
