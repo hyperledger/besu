@@ -14,15 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -40,6 +48,7 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -70,6 +79,9 @@ public class SnapWorldDownloadStateTest {
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
   private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
+  private final Blockchain blockchain = mock(Blockchain.class);
+  private final DynamicPivotBlockManager dynamicPivotBlockManager =
+      mock(DynamicPivotBlockManager.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
@@ -101,6 +113,7 @@ public class SnapWorldDownloadStateTest {
     downloadState =
         new SnapWorldDownloadState(
             worldStateStorage,
+            blockchain,
             snapSyncState,
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
@@ -260,5 +273,90 @@ public class SnapWorldDownloadStateTest {
     verify(snapSyncState).setHealStatus(false);
     assertThat(downloadState.pendingTrieNodeRequests.size()).isEqualTo(1);
     assertThat(downloadState.pendingCodeRequests.isEmpty()).isTrue();
+  }
+
+  @Test
+  public void shouldWaitingBlockchainWhenTooBehind() {
+    when(snapSyncState.isHealInProgress()).thenReturn(true);
+
+    assertThat(snapSyncState.isWaitingBlockchain()).isFalse();
+
+    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
+
+    downloadState.checkCompletion(header);
+
+    downloadState.checkCompletion(header);
+
+    // should register only one time
+    verify(blockchain, times(1)).observeBlockAdded(any());
+    verify(snapSyncState, atLeastOnce()).setWaitingBlockchain(true);
+
+    assertThat(future).isNotDone();
+    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(downloadState.isDownloading()).isTrue();
+  }
+
+  @Test
+  public void shouldStopWaitingBlockchainWhenNewPivotBlockAvailable() {
+
+    when(snapSyncState.isHealInProgress()).thenReturn(true);
+
+    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
+
+    downloadState.checkCompletion(header);
+
+    verify(snapSyncState).setWaitingBlockchain(true);
+    when(snapSyncState.isWaitingBlockchain()).thenReturn(true);
+
+    final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
+    final BlockHeader newPivotBlock = blockHeaderTestFixture.number(550L).buildHeader();
+    doAnswer(
+            invocation -> {
+              BiConsumer<BlockHeader, Boolean> callback =
+                  invocation.getArgument(0, BiConsumer.class);
+              callback.accept(newPivotBlock, true);
+              return null;
+            })
+        .when(dynamicPivotBlockManager)
+        .check(any());
+
+    final BlockAddedObserver blockAddedListener = downloadState.getBlockAddedListener();
+    blockAddedListener.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(
+            new Block(
+                new BlockHeaderTestFixture().number(500).buildHeader(),
+                new BlockBody(emptyList(), emptyList())),
+            Collections.emptyList(),
+            Collections.emptyList()));
+
+    verify(snapSyncState).setWaitingBlockchain(false);
+  }
+
+  @Test
+  public void shouldStopWaitingBlockchainWhenCloseToTheHead() {
+
+    when(snapSyncState.isHealInProgress()).thenReturn(true);
+
+    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
+
+    downloadState.checkCompletion(header);
+
+    verify(snapSyncState).setWaitingBlockchain(true);
+    when(snapSyncState.isWaitingBlockchain()).thenReturn(true);
+
+    when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(false);
+    final BlockAddedObserver blockAddedListener = downloadState.getBlockAddedListener();
+    blockAddedListener.onBlockAdded(
+        BlockAddedEvent.createForHeadAdvancement(
+            new Block(
+                new BlockHeaderTestFixture().number(500).buildHeader(),
+                new BlockBody(emptyList(), emptyList())),
+            Collections.emptyList(),
+            Collections.emptyList()));
+
+    verify(snapSyncState).setWaitingBlockchain(false);
   }
 }

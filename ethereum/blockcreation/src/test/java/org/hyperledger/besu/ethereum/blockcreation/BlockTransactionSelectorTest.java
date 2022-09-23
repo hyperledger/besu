@@ -81,19 +81,23 @@ public class BlockTransactionSelectorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   private final Blockchain blockchain = new ReferenceTestBlockchain();
-  private final GasPricePendingTransactionsSorter pendingTransactions =
-      new GasPricePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(5).build(),
-          TestClock.system(ZoneId.systemDefault()),
-          metricsSystem,
-          BlockTransactionSelectorTest::mockBlockHeader);
-  private final MutableWorldState worldState =
-      InMemoryKeyValueStorageProvider.createInMemoryWorldState();
+  private GasPricePendingTransactionsSorter pendingTransactions;
+  private MutableWorldState worldState;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private MainnetTransactionValidator transactionValidator;
 
   @Before
   public void setup() {
+    worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
+    pendingTransactions =
+        new GasPricePendingTransactionsSorter(
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(5)
+                .txPoolLimitByAccountPercentage(1)
+                .build(),
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            BlockTransactionSelectorTest::mockBlockHeader);
     when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
     when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
   }
@@ -158,7 +162,7 @@ public class BlockTransactionSelectorTest {
   @Test
   public void failedTransactionsAreIncludedInTheBlock() {
     final Transaction transaction = createTransaction(1);
-    pendingTransactions.addRemoteTransaction(transaction);
+    pendingTransactions.addRemoteTransaction(transaction, Optional.empty());
 
     when(transactionProcessor.processTransaction(
             any(), any(), any(), eq(transaction), any(), any(), anyBoolean(), any()))
@@ -199,7 +203,7 @@ public class BlockTransactionSelectorTest {
     for (int i = 0; i < 5; i++) {
       final Transaction tx = createTransaction(i);
       transactionsToInject.add(tx);
-      pendingTransactions.addRemoteTransaction(tx);
+      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
     }
 
     when(transactionProcessor.processTransaction(
@@ -255,7 +259,7 @@ public class BlockTransactionSelectorTest {
     for (int i = 0; i < 5; i++) {
       final Transaction tx = createTransaction(i);
       transactionsToInject.add(tx);
-      pendingTransactions.addRemoteTransaction(tx);
+      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
     }
 
     when(transactionProcessor.processTransaction(
@@ -317,7 +321,7 @@ public class BlockTransactionSelectorTest {
             FeeMarket.legacy());
 
     final Transaction tx = createTransaction(1);
-    pendingTransactions.addRemoteTransaction(tx);
+    pendingTransactions.addRemoteTransaction(tx, Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -389,8 +393,8 @@ public class BlockTransactionSelectorTest {
             TransactionProcessingResult.successful(
                 new ArrayList<>(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
 
-    pendingTransactions1559.addRemoteTransaction(fillingLegacyTx);
-    pendingTransactions1559.addRemoteTransaction(extraEIP1559Tx);
+    pendingTransactions1559.addRemoteTransaction(fillingLegacyTx, Optional.empty());
+    pendingTransactions1559.addRemoteTransaction(extraEIP1559Tx, Optional.empty());
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
@@ -441,7 +445,7 @@ public class BlockTransactionSelectorTest {
             .createTransaction(keyPair));
 
     for (final Transaction tx : transactionsToInject) {
-      pendingTransactions.addRemoteTransaction(tx);
+      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
     }
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -504,10 +508,10 @@ public class BlockTransactionSelectorTest {
             .nonce(4)
             .createTransaction(keyPair);
 
-    pendingTransactions.addRemoteTransaction(transaction1);
-    pendingTransactions.addRemoteTransaction(transaction2);
-    pendingTransactions.addRemoteTransaction(transaction3);
-    pendingTransactions.addRemoteTransaction(transaction4);
+    pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
+    pendingTransactions.addRemoteTransaction(transaction2, Optional.empty());
+    pendingTransactions.addRemoteTransaction(transaction3, Optional.empty());
+    pendingTransactions.addRemoteTransaction(transaction4, Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -544,8 +548,8 @@ public class BlockTransactionSelectorTest {
     final Transaction invalidTransaction =
         txTestFixture.nonce(2).gasLimit(2).createTransaction(keyPair);
 
-    pendingTransactions.addRemoteTransaction(validTransaction);
-    pendingTransactions.addRemoteTransaction(invalidTransaction);
+    pendingTransactions.addRemoteTransaction(validTransaction, Optional.empty());
+    pendingTransactions.addRemoteTransaction(invalidTransaction, Optional.empty());
 
     when(transactionProcessor.processTransaction(
             eq(blockchain),
@@ -588,7 +592,7 @@ public class BlockTransactionSelectorTest {
     final Transaction futureTransaction =
         txTestFixture.nonce(5).gasLimit(1).createTransaction(keyPair);
 
-    pendingTransactions.addRemoteTransaction(futureTransaction);
+    pendingTransactions.addRemoteTransaction(futureTransaction, Optional.empty());
 
     when(transactionProcessor.processTransaction(
             eq(blockchain),
