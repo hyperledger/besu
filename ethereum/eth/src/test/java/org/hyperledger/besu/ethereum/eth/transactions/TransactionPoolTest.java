@@ -134,7 +134,10 @@ public class TransactionPoolTest {
     blockchain = executionContext.getBlockchain();
     transactions =
         new GasPricePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
+                .build(),
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             blockchain::getChainHeadHeader);

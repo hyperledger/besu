@@ -59,7 +59,7 @@ import org.junit.Test;
 public class BaseFeePendingTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
+  private static final float MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -74,16 +74,21 @@ public class BaseFeePendingTransactionsTest {
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(MAX_TRANSACTIONS)
+              .txPoolLimitByAccountPercentage(1)
+              .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           BaseFeePendingTransactionsTest::mockBlockHeader);
+  private final TransactionPoolConfiguration senderLimitedConfig =
+      ImmutableTransactionPoolConfiguration.builder()
+          .txPoolMaxSize(MAX_TRANSACTIONS)
+          .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
+          .build();
   private final BaseFeePendingTransactionsSorter senderLimitedTransactions =
       new BaseFeePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder()
-              .txPoolMaxSize(MAX_TRANSACTIONS)
-              .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
-              .build(),
+          senderLimitedConfig,
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           BaseFeePendingTransactionsTest::mockBlockHeader);
@@ -168,7 +173,9 @@ public class BaseFeePendingTransactionsTest {
       furthestFutureTransaction = transactionWithNonceSenderAndGasPrice(i, KEYS1, 10L);
       senderLimitedTransactions.addRemoteTransaction(furthestFutureTransaction, Optional.empty());
     }
-    assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS_BY_SENDER);
+    assertThat(senderLimitedTransactions.size())
+        .isEqualTo(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount());
+    assertThat(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(4);
     assertThat(senderLimitedTransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
         .isEmpty();
   }
@@ -226,7 +233,7 @@ public class BaseFeePendingTransactionsTest {
     // This should kick the tx with the highest nonce for the sender of the oldest tx, that is
     // the penultimate tx
     final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
+        transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
     transactions.addRemoteTransaction(highGasPriceTransaction, Optional.empty());
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(penultimateTx);
@@ -540,8 +547,8 @@ public class BaseFeePendingTransactionsTest {
     transactions.addRemoteTransaction(transactionWithNonceAndSender(2, KEYS1), Optional.empty());
     assertMaximumNonceForSender(SENDER1, 3);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(20, KEYS2), Optional.empty());
-    assertMaximumNonceForSender(SENDER2, 21);
+    transactions.addRemoteTransaction(transactionWithNonceAndSender(4, KEYS2), Optional.empty());
+    assertMaximumNonceForSender(SENDER2, 5);
     assertMaximumNonceForSender(SENDER1, 3);
   }
 
@@ -588,7 +595,7 @@ public class BaseFeePendingTransactionsTest {
     final Transaction transaction1 = transactionWithNonceAndSender(0, KEYS1);
     final Transaction transaction2 = transactionWithNonceAndSender(1, KEYS1);
     final Transaction transaction3 = transactionWithNonceAndSender(2, KEYS1);
-    final Transaction transaction4 = transactionWithNonceAndSender(5, KEYS2);
+    final Transaction transaction4 = transactionWithNonceAndSender(4, KEYS2);
 
     transactions.addLocalTransaction(transaction1, Optional.empty());
     transactions.addLocalTransaction(transaction4, Optional.empty());
@@ -646,6 +653,7 @@ public class BaseFeePendingTransactionsTest {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(maxTransactionRetentionHours)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             clock,
             metricsSystem,
@@ -670,6 +678,7 @@ public class BaseFeePendingTransactionsTest {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(maxTransactionRetentionHours)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             clock,
             metricsSystem,
@@ -690,6 +699,7 @@ public class BaseFeePendingTransactionsTest {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(maxTransactionRetentionHours)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             clock,
             metricsSystem,

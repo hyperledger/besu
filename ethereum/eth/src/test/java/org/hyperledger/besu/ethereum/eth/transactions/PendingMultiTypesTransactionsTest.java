@@ -44,7 +44,7 @@ import org.junit.Test;
 public class PendingMultiTypesTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
+  private static final float MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f; // evaluates to 4
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance)::get;
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -64,7 +64,7 @@ public class PendingMultiTypesTransactionsTest {
       new BaseFeePendingTransactionsSorter(
           ImmutableTransactionPoolConfiguration.builder()
               .txPoolMaxSize(MAX_TRANSACTIONS)
-              .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+              .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
               .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
