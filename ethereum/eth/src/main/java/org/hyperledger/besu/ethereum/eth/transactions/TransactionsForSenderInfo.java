@@ -15,8 +15,8 @@
 
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
+import org.hyperledger.besu.evm.account.Account;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -27,16 +27,18 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TransactionsForSenderInfo {
-  private final NavigableMap<Long, AbstractPendingTransactionsSorter.TransactionInfo>
-      transactionsInfos;
+  private final NavigableMap<Long, TransactionInfo> transactionsInfos;
   private OptionalLong nextGap = OptionalLong.empty();
 
-  public TransactionsForSenderInfo() {
-    transactionsInfos = new TreeMap<>();
+  private Optional<Account> maybeSenderAccount;
+
+  public TransactionsForSenderInfo(final Optional<Account> maybeSenderAccount) {
+    this.transactionsInfos = new TreeMap<>();
+    this.maybeSenderAccount = maybeSenderAccount;
   }
 
-  public void addTransactionToTrack(
-      final long nonce, final AbstractPendingTransactionsSorter.TransactionInfo transactionInfo) {
+  public void addTransactionToTrack(final TransactionInfo transactionInfo) {
+    final long nonce = transactionInfo.getNonce();
     synchronized (transactionsInfos) {
       if (!transactionsInfos.isEmpty()) {
         final long expectedNext = transactionsInfos.lastKey() + 1;
@@ -58,6 +60,18 @@ public class TransactionsForSenderInfo {
         findGap();
       }
     }
+  }
+
+  public void updateSenderAccount(final Optional<Account> maybeSenderAccount) {
+    this.maybeSenderAccount = maybeSenderAccount;
+  }
+
+  public long getSenderAccountNonce() {
+    return maybeSenderAccount.map(Account::getNonce).orElse(0L);
+  }
+
+  public Optional<Account> getSenderAccount() {
+    return maybeSenderAccount;
   }
 
   private void findGap() {
@@ -101,7 +115,9 @@ public class TransactionsForSenderInfo {
 
   public String toTraceLog() {
     return "{"
-        + "transactions "
+        + "senderAccount "
+        + maybeSenderAccount
+        + ", transactions "
         + transactionsInfos.entrySet().stream()
             .map(e -> "(" + e.getKey() + ")" + e.getValue().toTraceLog())
             .collect(Collectors.joining("; "))

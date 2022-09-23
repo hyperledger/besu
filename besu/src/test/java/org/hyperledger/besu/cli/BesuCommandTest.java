@@ -824,6 +824,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);
+      } else if (optionSpec.type().equals(Float.class)) {
+        tomlResult.getDouble(tomlKey);
       } else if (Number.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getLong(tomlKey);
       } else if (Wei.class.isAssignableFrom(optionSpec.type())) {

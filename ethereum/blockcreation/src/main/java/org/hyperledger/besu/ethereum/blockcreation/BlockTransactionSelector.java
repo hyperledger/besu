@@ -158,8 +158,13 @@ public class BlockTransactionSelector {
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
+    LOG.debug("Transaction pool size {}", pendingTransactions.size());
+    traceLambda(
+        LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction));
+    traceLambda(
+        LOG, "Transaction selection result result {}", transactionSelectionResult::toTraceLog);
     return transactionSelectionResult;
   }
 
@@ -192,10 +197,7 @@ public class BlockTransactionSelector {
       traceLambda(
           LOG, "Transaction {} too large to select for block creation", transaction::toTraceLog);
       if (blockOccupancyAboveThreshold()) {
-        traceLambda(
-            LOG,
-            "Block occupancy above threshold, completing operation, result {}",
-            transactionSelectionResult::toTraceLog);
+        traceLambda(LOG, "Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
@@ -204,6 +206,7 @@ public class BlockTransactionSelector {
 
     // If the gas price specified by the transaction is less than this node is willing to accept,
     // do not include it in the block.
+    // ToDo: why we accept this in the pool in the first place then?
     final Wei actualMinTransactionGasPriceInBlock =
         feeMarket
             .getTransactionPriceCalculator()
