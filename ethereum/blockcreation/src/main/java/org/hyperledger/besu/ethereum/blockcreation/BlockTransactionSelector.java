@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -66,7 +69,6 @@ import org.slf4j.LoggerFactory;
  * Once "used" this class must be discarded and another created. This class contains state which is
  * not cleared between executions of buildTransactionListForBlock().
  */
-@SuppressWarnings("UnusedMethod")
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
 
@@ -123,6 +125,12 @@ public class BlockTransactionSelector {
       transactions.add(transaction);
       receipts.add(receipt);
       cumulativeGasUsed += gasUsed;
+      traceLambda(
+          LOG,
+          "New selected transaction {}, total transactions {}, cumulative gas used {}",
+          transaction::toTraceLog,
+          transactions::size,
+          () -> cumulativeGasUsed);
     }
 
     private void updateWithInvalidTransaction(
@@ -165,6 +173,13 @@ public class BlockTransactionSelector {
     @Override
     public int hashCode() {
       return Objects.hash(transactions, receipts, invalidTransactions, cumulativeGasUsed);
+    }
+
+    public String toTraceLog() {
+      return "cumulativeGasUsed="
+          + cumulativeGasUsed
+          + ", transactions="
+          + transactions.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; "));
     }
   }
 
@@ -213,8 +228,13 @@ public class BlockTransactionSelector {
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
+    LOG.debug("Transaction pool size {}", pendingTransactions.size());
+    traceLambda(
+        LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction, false));
+    traceLambda(
+        LOG, "Transaction selection result result {}", transactionSelectionResult::toTraceLog);
     return transactionSelectionResult;
   }
 
@@ -245,8 +265,10 @@ public class BlockTransactionSelector {
     }
 
     if (transactionTooLargeForBlock(transaction)) {
-      LOG.trace("{} too large to select for block creation", transaction);
+      traceLambda(
+          LOG, "Transaction {} too large to select for block creation", transaction::toTraceLog);
       if (blockOccupancyAboveThreshold()) {
+        traceLambda(LOG, "Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
@@ -255,6 +277,7 @@ public class BlockTransactionSelector {
 
     // If the gas price specified by the transaction is less than this node is willing to accept,
     // do not include it in the block.
+    // ToDo: why we accept this in the pool in the first place then?
     final Wei actualMinTransactionGasPriceInBlock =
         feeMarket
             .getTransactionPriceCalculator()
@@ -284,7 +307,7 @@ public class BlockTransactionSelector {
             validationResult.getErrorMessage(),
             processableBlockHeader.getParentHash().toHexString(),
             transaction.getHash().toHexString());
-        return transactionSelectionResultForInvalidResult(validationResult);
+        return transactionSelectionResultForInvalidResult(transaction, validationResult);
       } else {
         // valid GoQuorum private tx, we need to hand craft the receipt and increment the nonce
         effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
@@ -305,7 +328,7 @@ public class BlockTransactionSelector {
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
-      LOG.trace("Selected {} for block creation", transaction);
+      traceLambda(LOG, "Selected {} for block creation", transaction::toTraceLog);
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
       final var isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
@@ -313,18 +336,29 @@ public class BlockTransactionSelector {
         transactionSelectionResult.updateWithInvalidTransaction(
             transaction, effectiveResult.getValidationResult());
       }
-      return transactionSelectionResultForInvalidResult(effectiveResult.getValidationResult());
+      return transactionSelectionResultForInvalidResult(
+          transaction, effectiveResult.getValidationResult());
     }
     return TransactionSelectionResult.CONTINUE;
   }
 
   private TransactionSelectionResult transactionSelectionResultForInvalidResult(
+      final Transaction transaction,
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
     // If the transaction has an incorrect nonce, leave it in the pool and continue
     if (isIncorrectNonce(invalidReasonValidationResult)) {
+      traceLambda(
+          LOG,
+          "Incorrect nonce for transaction {} keeping it in the pool",
+          transaction::toTraceLog);
       return TransactionSelectionResult.CONTINUE;
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
+    traceLambda(
+        LOG,
+        "Delete invalid transaction {}, reason {}",
+        transaction::toTraceLog,
+        invalidReasonValidationResult::getInvalidReason);
     return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
   }
 
@@ -397,6 +431,13 @@ public class BlockTransactionSelector {
   private boolean blockOccupancyAboveThreshold() {
     final double gasAvailable = processableBlockHeader.getGasLimit();
     final double gasUsed = transactionSelectionResult.getCumulativeGasUsed();
-    return (gasUsed / gasAvailable) >= minBlockOccupancyRatio;
+    final double occupancyRatio = gasUsed / gasAvailable;
+    LOG.trace(
+        "Min block occupancy ratio {}, gas used {}, available {}, used/available {}",
+        minBlockOccupancyRatio,
+        gasUsed,
+        gasAvailable,
+        occupancyRatio);
+    return occupancyRatio >= minBlockOccupancyRatio;
   }
 }

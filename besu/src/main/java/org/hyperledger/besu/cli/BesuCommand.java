@@ -1221,16 +1221,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
         arity = "1")
     private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
-
-    @Option(
-        names = {"--tx-pool-future-max-by-account"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        converter = PercentageConverter.class,
-        description =
-            "Maximum per account of currently unexecutable future transactions that can occupy the txpool (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer maxFutureTransactionsByAccount =
-        TransactionPoolConfiguration.MAX_FUTURE_TRANSACTION_BY_ACCOUNT;
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -1972,6 +1962,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
       logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
+    }
+
+    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
+      logger.warn(
+          DEPRECATION_WARNING_MSG,
+          "--tx-pool-future-max-by-account",
+          "--tx-pool-limit-by-account-percentage");
     }
   }
 
@@ -2827,7 +2824,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
-        .txPoolMaxFutureTransactionByAccount(txPoolOptionGroup.maxFutureTransactionsByAccount)
         .txFeeCap(txFeeCap)
         .build();
   }
