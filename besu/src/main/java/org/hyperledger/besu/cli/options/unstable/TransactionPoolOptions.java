@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
+
+import org.hyperledger.besu.Besu;
+import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -23,10 +27,14 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 public class TransactionPoolOptions
     implements CLIOptions<ImmutableTransactionPoolConfiguration.Builder> {
+  private static final Logger LOG = LoggerFactory.getLogger(Besu.class);
+
   private static final String TX_MESSAGE_KEEP_ALIVE_SEC_FLAG =
       "--Xincoming-tx-messages-keep-alive-seconds";
 
@@ -35,6 +43,9 @@ public class TransactionPoolOptions
 
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
+
+  private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
+      "--tx-pool-limit-by-account-percentage";
 
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
@@ -65,6 +76,23 @@ public class TransactionPoolOptions
   private long eth65TrxAnnouncedBufferingPeriod =
       TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
 
+  @CommandLine.Option(
+      names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
+      paramLabel = "<DOUBLE>",
+      converter = FractionConverter.class,
+      description =
+          "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Float txPoolLimitByAccountPercentage =
+      TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--tx-pool-future-max-by-account"},
+      description = "Deprecated parameter, see instead: --tx-pool-limit-by-account-percentage")
+  @SuppressWarnings({"FieldCanBeFinal", "UnusedVariable"})
+  private Integer maxFutureTransactionsByAccount = -1;
+
   private TransactionPoolOptions() {}
 
   public static TransactionPoolOptions create() {
@@ -77,21 +105,31 @@ public class TransactionPoolOptions
     options.eth65TrxAnnouncedBufferingPeriod =
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
+    options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
     return options;
   }
 
   @Override
   public ImmutableTransactionPoolConfiguration.Builder toDomainObject() {
+    if (maxFutureTransactionsByAccount != null) {
+      LOG.warn(
+          DEPRECATION_WARNING_MSG,
+          "--tx-pool-future-max-by-account",
+          "--tx-pool-limit-by-account-percentage");
+    }
     return ImmutableTransactionPoolConfiguration.builder()
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
-        .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod));
+        .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
+        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage);
   }
 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
+        TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
+        OptionParser.format(txPoolLimitByAccountPercentage),
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,

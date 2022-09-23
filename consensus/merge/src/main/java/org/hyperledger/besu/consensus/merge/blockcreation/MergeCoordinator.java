@@ -190,6 +190,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
+      debugLambda(
+          LOG,
+          "Built empty block proposal {} for payload {}",
+          emptyBlock::toLogString,
+          payloadIdentifier::toShortHexString);
     } else {
       LOG.warn(
           "failed to execute empty block proposal {}, reason {}",
