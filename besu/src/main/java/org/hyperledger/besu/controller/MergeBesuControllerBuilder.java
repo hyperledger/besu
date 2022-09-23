@@ -146,6 +146,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       return new RollupMergeCoordinator(
           protocolContext,
           protocolSchedule,
+          ethContext,
           transactionPool.getPendingTransactions(),
           miningParameters,
           backwardSyncContext);

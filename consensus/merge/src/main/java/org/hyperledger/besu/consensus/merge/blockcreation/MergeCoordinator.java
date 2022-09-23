@@ -223,7 +223,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final long startedAt = System.currentTimeMillis();
     retryBlockCreation(payloadIdentifier, blockCreator, remainingTime)
         .thenAccept(
-            bestBlock -> {
+            bestBlockCreationResult -> {
+              final var bestBlock = bestBlockCreationResult.getBlock();
               final var resultBest = validateBlock(bestBlock);
               if (resultBest.blockProcessingOutputs.isPresent()) {
                 mergeContext.putPayloadById(payloadIdentifier, bestBlock);

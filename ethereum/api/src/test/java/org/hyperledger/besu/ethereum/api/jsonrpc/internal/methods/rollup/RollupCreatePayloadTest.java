@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineCallListener;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -143,7 +144,15 @@ public class RollupCreatePayloadTest {
   public void before() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =
-        new RollupCreatePayload(vertx, protocolContext, mergeCoordinator, new BlockResultFactory());
+        new RollupCreatePayload(
+            vertx,
+            protocolContext,
+            mergeCoordinator,
+            new BlockResultFactory(),
+            new EngineCallListener() {
+              @Override
+              public void executionEngineCalled() {}
+            });
   }
 
   @Test

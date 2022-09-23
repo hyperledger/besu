@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineCallListener;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -55,8 +56,9 @@ public class RollupCreatePayload extends ExecutionEngineJsonRpcMethod {
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final RollupMergeCoordinator mergeCoordinator,
-      final BlockResultFactory blockResultFactory) {
-    super(vertx, protocolContext);
+      final BlockResultFactory blockResultFactory,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.blockResultFactory = blockResultFactory;
   }
@@ -75,6 +77,8 @@ public class RollupCreatePayload extends ExecutionEngineJsonRpcMethod {
     final long timestamp;
     final Bytes32 prevRandao;
     final List<String> rawTransactions;
+
+    engineCallListener.executionEngineCalled();
 
     try {
       parentBlockHash = requestContext.getRequiredParameter(0, Hash.class);

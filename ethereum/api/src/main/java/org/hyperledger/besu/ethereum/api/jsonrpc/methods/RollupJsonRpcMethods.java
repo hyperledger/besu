@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.rollup.blockcreation.RollupMergeCoordinato
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineCallListener;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.rollup.RollupCreatePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 
@@ -50,7 +51,17 @@ public class RollupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
+    // TODO: check if this should share same EngineQosTimer as engine_ APIs
+    final var noopListener =
+        new EngineCallListener() {
+          @Override
+          public void executionEngineCalled() {
+            // do nothing
+          }
+        };
+
     return mapOf(
-        new RollupCreatePayload(vertx, protocolContext, mergeCoordinator, blockResultFactory));
+        new RollupCreatePayload(
+            vertx, protocolContext, mergeCoordinator, blockResultFactory, noopListener));
   }
 }

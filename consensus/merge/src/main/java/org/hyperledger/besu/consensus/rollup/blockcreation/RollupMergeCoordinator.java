@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationRes
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,11 +46,17 @@ public class RollupMergeCoordinator extends MergeCoordinator implements MergeMin
   public RollupMergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final EthContext ethContext,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext) {
     super(
-        protocolContext, protocolSchedule, pendingTransactions, miningParams, backwardSyncContext);
+        protocolContext,
+        protocolSchedule,
+        ethContext,
+        pendingTransactions,
+        miningParams,
+        backwardSyncContext);
   }
 
   public static class PayloadCreationResult {
