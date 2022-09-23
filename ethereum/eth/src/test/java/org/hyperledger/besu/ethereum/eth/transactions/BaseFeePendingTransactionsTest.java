@@ -176,7 +176,6 @@ public class BaseFeePendingTransactionsTest {
     assertThat(senderLimitedTransactions.size())
         .isEqualTo(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount());
     assertThat(senderLimitedConfig.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(4);
-    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1L);
     assertThat(senderLimitedTransactions.getTransactionByHash(furthestFutureTransaction.getHash()))
         .isEmpty();
   }
@@ -234,7 +233,7 @@ public class BaseFeePendingTransactionsTest {
     // This should kick the tx with the highest nonce for the sender of the oldest tx, that is
     // the penultimate tx
     final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(MAX_TRANSACTIONS + 1, KEYS1, 100);
+        transactionWithNonceSenderAndGasPrice(1, KEYS1, 100);
     transactions.addRemoteTransaction(highGasPriceTransaction, Optional.empty());
     assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
     assertTransactionNotPending(penultimateTx);
@@ -548,8 +547,8 @@ public class BaseFeePendingTransactionsTest {
     transactions.addRemoteTransaction(transactionWithNonceAndSender(2, KEYS1), Optional.empty());
     assertMaximumNonceForSender(SENDER1, 3);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(20, KEYS2), Optional.empty());
-    assertMaximumNonceForSender(SENDER2, 21);
+    transactions.addRemoteTransaction(transactionWithNonceAndSender(4, KEYS2), Optional.empty());
+    assertMaximumNonceForSender(SENDER2, 5);
     assertMaximumNonceForSender(SENDER1, 3);
   }
 
@@ -596,7 +595,7 @@ public class BaseFeePendingTransactionsTest {
     final Transaction transaction1 = transactionWithNonceAndSender(0, KEYS1);
     final Transaction transaction2 = transactionWithNonceAndSender(1, KEYS1);
     final Transaction transaction3 = transactionWithNonceAndSender(2, KEYS1);
-    final Transaction transaction4 = transactionWithNonceAndSender(5, KEYS2);
+    final Transaction transaction4 = transactionWithNonceAndSender(4, KEYS2);
 
     transactions.addLocalTransaction(transaction1, Optional.empty());
     transactions.addLocalTransaction(transaction4, Optional.empty());
@@ -679,6 +678,7 @@ public class BaseFeePendingTransactionsTest {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(maxTransactionRetentionHours)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             clock,
             metricsSystem,
