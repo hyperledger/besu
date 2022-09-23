@@ -1,5 +1,16 @@
 # Changelog
 
+## 22.7.4
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.tar.gz / sha256: ``
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.zip / sha256: ``
+
+
 ## 22.7.3
 
 ### Additions and Improvements
