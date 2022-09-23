@@ -186,7 +186,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(CompletableFuture.failedFuture(new StorageException("lock")))
         .thenAnswer(i -> CompletableFuture.completedFuture(i.getArgument(0, Supplier.class).get()));
 
-    transactions.addLocalTransaction(localTransaction0);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
 
     var payloadId =
         coordinator.preparePayload(

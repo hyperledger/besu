@@ -69,6 +69,8 @@ public class RocksDBColumnarKeyValueStorage
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
+  private static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
+  private static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -111,15 +113,30 @@ public class RocksDBColumnarKeyValueStorage
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
-      options =
-          new DBOptions()
-              .setCreateIfMissing(true)
-              .setMaxOpenFiles(configuration.getMaxOpenFiles())
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
-              .setStatistics(stats)
-              .setCreateMissingColumnFamilies(true)
-              .setEnv(
-                  Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
+      if (configuration.isHighSpec()) {
+        options =
+            new DBOptions()
+                .setCreateIfMissing(true)
+                .setMaxOpenFiles(configuration.getMaxOpenFiles())
+                .setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC)
+                .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
+                .setStatistics(stats)
+                .setCreateMissingColumnFamilies(true)
+                .setEnv(
+                    Env.getDefault()
+                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
+      } else {
+        options =
+            new DBOptions()
+                .setCreateIfMissing(true)
+                .setMaxOpenFiles(configuration.getMaxOpenFiles())
+                .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
+                .setStatistics(stats)
+                .setCreateMissingColumnFamilies(true)
+                .setEnv(
+                    Env.getDefault()
+                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
+      }
 
       txOptions = new TransactionDBOptions();
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
@@ -153,6 +170,22 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   private BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
+    if (config.isHighSpec()) return createBlockBasedTableConfigHighSpec();
+    else return createBlockBasedTableConfigDefault(config);
+  }
+
+  private BlockBasedTableConfig createBlockBasedTableConfigHighSpec() {
+    final LRUCache cache = new LRUCache(ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC);
+    return new BlockBasedTableConfig()
+        .setBlockCache(cache)
+        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
+        .setOptimizeFiltersForMemory(true)
+        .setCacheIndexAndFilterBlocks(true)
+        .setBlockSize(ROCKSDB_BLOCK_SIZE);
+  }
+
+  private BlockBasedTableConfig createBlockBasedTableConfigDefault(
+      final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setBlockCache(cache)
