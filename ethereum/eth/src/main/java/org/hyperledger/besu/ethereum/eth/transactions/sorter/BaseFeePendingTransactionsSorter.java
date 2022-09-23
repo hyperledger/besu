@@ -135,7 +135,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                     }
                   });
         }
-        removeTransactionTrackedBySenderAndNonce(transaction);
+        removeTransactionInfoTrackedBySenderAndNonce(removedTransactionInfo);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
       }
