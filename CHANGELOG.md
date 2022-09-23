@@ -6,11 +6,6 @@
 
 ### Bug Fixes
 
-### Download links
-- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.tar.gz / sha256: ``
-- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.zip / sha256: ``
-
-
 ## 22.7.3
 
 ### Additions and Improvements
@@ -27,6 +22,10 @@
 - Retry block creation if there is a transient error and we still have time, to mitigate empty block issue [#4407](https://github.com/hyperledger/besu/pull/4407)
 - Fix StacklessClosedChannelException in Besu and resulted timeout errors in CL clients ([#4398](https://github.com/hyperledger/besu/issues/4398), [#4400](https://github.com/hyperledger/besu/issues/4400))
 - Return JSON-RPC error code instead of INVALID in engine api when certain storage exceptions are encountered ([#4349](https://github.com/hyperledger/besu/issues/4349))
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.tar.gz / sha256: `b0863fe2406cab57caf8a02f2bf02632cc5198622ac48b69bc63c128703bbd79`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.zip / sha256: `368c6cb86119f8fe30bb12ab8c63b4d95a0fd8baf9c9414307a0a4033756b709`
 
 ## 22.7.2
 ### Besu 22.7.2 is a recommended release for the Merge and Mainnet users. 22.7.1 remains Merge-ready. This release provides additional robustness before the Merge with some fixes and improvements in sync, peering, and logging.
