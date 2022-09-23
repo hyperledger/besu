@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -47,6 +48,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
           comparing(TransactionInfo::isReceivedFromLocalSource)
               .thenComparing(TransactionInfo::getGasPrice)
               .thenComparing(TransactionInfo::getAddedToPoolAt)
+              .thenComparing(TransactionInfo::getSequence)
               .reversed());
 
   public GasPricePendingTransactionsSorter(
@@ -82,7 +84,8 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   }
 
   @Override
-  protected TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
+  protected TransactionAddedStatus addTransaction(
+      final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount) {
     Optional<Transaction> droppedTransaction = Optional.empty();
     synchronized (lock) {
       if (pendingTransactions.containsKey(transactionInfo.getHash())) {
@@ -90,7 +93,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       }
 
       final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo);
+          addTransactionForSenderAndNonce(transactionInfo, maybeSenderAccount);
       if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
         return transactionAddedStatus;
       }

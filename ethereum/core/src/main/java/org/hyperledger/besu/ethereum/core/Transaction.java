@@ -902,6 +902,23 @@ public class Transaction
     return sb.append("}").toString();
   }
 
+  public String toTraceLog() {
+    final StringBuilder sb = new StringBuilder();
+    sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append(", ");
+    sb.append(getSender()).append(", ");
+    sb.append(getType()).append(", ");
+    sb.append(getNonce()).append(", ");
+    getGasPrice().ifPresent(gasPrice -> sb.append(gasPrice.toBigInteger()).append(", "));
+    if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
+      sb.append(getMaxPriorityFeePerGas().map(Wei::toBigInteger).get()).append(", ");
+      sb.append(getMaxFeePerGas().map(Wei::toBigInteger).get()).append(", ");
+    }
+    sb.append(getGasLimit()).append(", ");
+    sb.append(getValue().toBigInteger()).append(", ");
+    if (getTo().isPresent()) sb.append(getTo().get()).append(", ");
+    return sb.append("}").toString();
+  }
+
   public Optional<Address> contractAddress() {
     if (isContractCreation()) {
       return Optional.of(Address.contractAddress(getSender(), getNonce()));
