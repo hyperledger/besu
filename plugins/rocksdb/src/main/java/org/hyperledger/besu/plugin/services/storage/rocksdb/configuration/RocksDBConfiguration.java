@@ -24,6 +24,7 @@ public class RocksDBConfiguration {
   private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
   private final long cacheCapacity;
+  private final boolean isHighSpec;
 
   public RocksDBConfiguration(
       final Path databaseDir,
@@ -31,13 +32,15 @@ public class RocksDBConfiguration {
       final int maxBackgroundCompactions,
       final int backgroundThreadCount,
       final long cacheCapacity,
-      final String label) {
+      final String label,
+      final boolean isHighSpec) {
     this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.label = label;
+    this.isHighSpec = isHighSpec;
   }
 
   public Path getDatabaseDir() {
@@ -62,5 +65,9 @@ public class RocksDBConfiguration {
 
   public String getLabel() {
     return label;
+  }
+
+  public boolean isHighSpec() {
+    return isHighSpec;
   }
 }

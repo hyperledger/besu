@@ -219,7 +219,7 @@ public class EthGetFilterChangesIntegrationTest {
     JsonRpcResponse actual = method.response(request);
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
-    transactions.addRemoteTransaction(transaction);
+    transactions.addRemoteTransaction(transaction, Optional.empty());
 
     // We've added one transaction, so there should be one new hash.
     expected =
