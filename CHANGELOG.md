@@ -5,6 +5,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
 
 ## 22.7.3
 
@@ -15,14 +16,13 @@
 - ExchangeTransitionConfiguration mismatch will only submit a debug log not a warning anymore [#4411](https://github.com/hyperledger/besu/issues/4411)
 - Upgrade besu-native to 0.6.1 and include linux arm64 build of bls12-381 [#4416](https://github.com/hyperledger/besu/pull/4416)
 - Create a new flag on RocksDB (_--Xplugin-rocksdb-high-spec-enabled_) for high spec hardware to boost performance
-- Transaction pool improvements to avoid filling the pool with not executable transactions, that could result in empty or semi-empty block proposals [#4425](https://github.com/hyperledger/besu/pull/4425) 
+- Transaction pool improvements to avoid filling the pool with not executable transactions, that could result in empty or semi-empty block proposals [#4425](https://github.com/hyperledger/besu/pull/4425)
 - Limit Transaction pool consumption by sender to a configurable percentage of the pool size [#4417](https://github.com/hyperledger/besu/pull/4417)
-- Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
 
 ### Bug Fixes
 - Retry block creation if there is a transient error and we still have time, to mitigate empty block issue [#4407](https://github.com/hyperledger/besu/pull/4407)
 - Fix StacklessClosedChannelException in Besu and resulted timeout errors in CL clients ([#4398](https://github.com/hyperledger/besu/issues/4398), [#4400](https://github.com/hyperledger/besu/issues/4400))
-- Return JSON-RPC error code instead of INVALID in engine api when certain storage exceptions are encountered ([#4349](https://github.com/hyperledger/besu/issues/4349)) 
+- Return JSON-RPC error code instead of INVALID in engine api when certain storage exceptions are encountered ([#4349](https://github.com/hyperledger/besu/issues/4349))
 
 ### Download links
 - https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.tar.gz / sha256: `b0863fe2406cab57caf8a02f2bf02632cc5198622ac48b69bc63c128703bbd79`
