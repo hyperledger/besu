@@ -113,7 +113,7 @@ dependencyManagement {
 
     dependency 'net.consensys.services:quorum-mainnet-launcher:1.0.1'
 
-    dependency 'net.java.dev.jna:jna:5.11.0'
+    dependency 'net.java.dev.jna:jna:5.12.1'
 
     dependency 'org.apache.commons:commons-compress:1.21'
     dependency 'org.apache.commons:commons-lang3:3.12.0'
@@ -147,10 +147,10 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
 
-    dependency 'org.hyperledger.besu:bls12-381:0.6.0'
-    dependency 'org.hyperledger.besu:secp256k1:0.6.0'
-    dependency 'org.hyperledger.besu:secp256r1:0.6.0'
-    dependency 'org.hyperledger.besu:blake2bf:0.6.0'
+    dependency 'org.hyperledger.besu:bls12-381:0.6.1'
+    dependency 'org.hyperledger.besu:secp256k1:0.6.1'
+    dependency 'org.hyperledger.besu:secp256r1:0.6.1'
+    dependency 'org.hyperledger.besu:blake2bf:0.6.1'
 
     dependency 'org.immutables:value-annotations:2.9.0'
     dependency 'org.immutables:value:2.9.0'
@@ -198,7 +198,7 @@ dependencyManagement {
 
     dependency 'org.xerial.snappy:snappy-java:1.1.8.4'
 
-    dependency 'org.yaml:snakeyaml:1.26'
+    dependency 'org.yaml:snakeyaml:1.32'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
   }
