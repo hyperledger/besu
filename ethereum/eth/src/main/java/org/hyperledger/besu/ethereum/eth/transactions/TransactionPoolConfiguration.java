@@ -26,7 +26,7 @@ import org.immutables.value.Value;
 public interface TransactionPoolConfiguration {
   int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
   int MAX_PENDING_TRANSACTIONS = 4096;
-  int MAX_FUTURE_TRANSACTION_BY_ACCOUNT = 64;
+  float LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE = 0.001f; // 0.1%
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
@@ -41,8 +41,13 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
+  default float getTxPoolLimitByAccountPercentage() {
+    return LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+  }
+
+  @Value.Derived
   default int getTxPoolMaxFutureTransactionByAccount() {
-    return MAX_FUTURE_TRANSACTION_BY_ACCOUNT;
+    return (int) Math.ceil(getTxPoolLimitByAccountPercentage() * getTxPoolMaxSize());
   }
 
   @Value.Default

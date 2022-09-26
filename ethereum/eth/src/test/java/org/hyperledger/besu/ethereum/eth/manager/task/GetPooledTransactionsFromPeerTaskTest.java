@@ -50,7 +50,7 @@ public class GetPooledTransactionsFromPeerTaskTest extends PeerMessageTaskTest<L
               .gasLimit(100000)
               .chainId(Optional.empty())
               .createTransaction(keyPair);
-      assertThat(transactionPool.getPendingTransactions().addLocalTransaction(tx))
+      assertThat(transactionPool.getPendingTransactions().addLocalTransaction(tx, Optional.empty()))
           .isEqualTo(TransactionAddedStatus.ADDED);
       requestedData.add(tx);
     }
