@@ -1,11 +1,23 @@
 # Changelog
 
+## 22.7.5
+
+
+### Additions and Improvements
+### Bug Fixes
+### Download Links
+
 ## 22.7.4
 
 
 ### Bug Fixes
 - Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
-- Add Toml configuration file support for _--Xplugin-rocksdb-high-spec-enabled_ flag
+- Add Toml configuration file support for _--Xplugin-rocksdb-high-spec-enabled_ flag [#4438](https://github.com/hyperledger/besu/pull/4438)
+
+### Download Links
+- https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.zip / sha256: 4f2a0c20bee7f266ec1dcb45fa90ae1ca42f4b22e9b21a601b7705357259aea9
+- https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.tar.gz / sha256: a60efc4d515ac94710bbc6d61a24f409b03fcfc02323bee2a2d75c883fc99dce
+
 
 ## 22.7.3
 
