@@ -2,11 +2,11 @@
 
 ## 22.7.4
 
-### Additions and Improvements
 
 ### Bug Fixes
 - Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
 - Add Toml configuration file support for _--Xplugin-rocksdb-high-spec-enabled_ flag
+
 ## 22.7.3
 
 ### Additions and Improvements
