@@ -2,15 +2,16 @@
 
 ## 22.7.4
 
+### Breaking Changes
+- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+
 ### Additions and Improvements
 
 ### Bug Fixes
 - Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
 - Add Toml configuration file support for _--Xplugin-rocksdb-high-spec-enabled_ flag
-## 22.7.3
 
-### Breaking Changes
-- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+## 22.7.3
 
 ### Additions and Improvements
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
