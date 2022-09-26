@@ -71,7 +71,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
           pendingTransactions.remove(transaction.getHash());
       if (removedTransactionInfo != null) {
         prioritizedTransactions.remove(removedTransactionInfo);
-        removeTransactionTrackedBySenderAndNonce(transaction);
+        removeTransactionInfoTrackedBySenderAndNonce(removedTransactionInfo);
         incrementTransactionRemovedCounter(
             removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
       }
