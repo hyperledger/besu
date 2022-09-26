@@ -31,6 +31,7 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
+  implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'org.apache.logging.log4j:log4j-slf4j-impl'
   implementation 'org.xerial.snappy:snappy-java'

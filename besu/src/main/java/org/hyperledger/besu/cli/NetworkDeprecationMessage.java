@@ -15,49 +15,24 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.util.log.FramedLogMessage;
 
-import org.apache.commons.lang3.StringUtils;
+import java.util.List;
 
 public class NetworkDeprecationMessage {
-  private static final int MAX_LINE_LENGTH = 80;
 
   public static String generate(final NetworkName network) {
     if (network.getDeprecationDate().isEmpty()) {
       throw new AssertionError("Deprecation date is not set. Cannot print a deprecation message");
     }
 
-    final StringBuilder messageBuilder = new StringBuilder("\n");
-    messageBuilder
-        .append("#".repeat(MAX_LINE_LENGTH))
-        .append(emptyLine())
-        .append(
-            String.format(
-                "#%s#",
-                StringUtils.center(
-                    deprecationDetails(
-                        network.humanReadableNetworkName(), network.getDeprecationDate().get()),
-                    MAX_LINE_LENGTH - 2)))
-        .append(emptyLine())
-        .append(
-            String.format(
-                "#%s#\n", StringUtils.center("For more details please go to", MAX_LINE_LENGTH - 2)))
-        .append(
-            String.format(
-                "#%s#",
-                StringUtils.center(
-                    "https://blog.ethereum.org/2022/06/21/testnet-deprecation/",
-                    MAX_LINE_LENGTH - 2)))
-        .append(emptyLine())
-        .append("#".repeat(MAX_LINE_LENGTH));
-
-    return messageBuilder.toString();
-  }
-
-  private static String deprecationDetails(final String networkName, final String deprecationDate) {
-    return networkName + " is deprecated and will be shutdown " + deprecationDate;
-  }
-
-  private static String emptyLine() {
-    return String.format("\n#%s#\n", StringUtils.center("", MAX_LINE_LENGTH - 2));
+    return FramedLogMessage.generateCentered(
+        List.of(
+            network.humanReadableNetworkName()
+                + " is deprecated and will be shutdown "
+                + network.getDeprecationDate().get(),
+            "",
+            "For more details please go to",
+            "https://blog.ethereum.org/2022/06/21/testnet-deprecation/"));
   }
 }
