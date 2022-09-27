@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -63,11 +65,13 @@ public class EngineGetPayloadTest {
 
   @Mock private MergeContext mergeContext;
 
+  @Mock private EngineCallListener engineCallListener;
+
   @Before
   public void before() {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlock));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    this.method = new EngineGetPayload(vertx, protocolContext, factory);
+    this.method = new EngineGetPayload(vertx, protocolContext, factory, engineCallListener);
   }
 
   @Test
@@ -90,12 +94,14 @@ public class EngineGetPayloadTest {
               assertThat(res.getPrevRandao())
                   .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
   public void shouldFailForUnknownPayloadId() {
     var resp = resp(PayloadIdentifier.forPayloadParams(Hash.ZERO, 0L));
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   private JsonRpcResponse resp(final PayloadIdentifier pid) {
