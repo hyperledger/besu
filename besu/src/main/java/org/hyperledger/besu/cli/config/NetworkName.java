@@ -75,7 +75,7 @@ public enum NetworkName {
     return canFastSync;
   }
 
-  public String humanReadableNetworkName() {
+  public String normalize() {
     return StringUtils.capitalize(name().toLowerCase());
   }
 

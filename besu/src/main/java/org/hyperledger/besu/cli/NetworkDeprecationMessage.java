@@ -28,7 +28,7 @@ public class NetworkDeprecationMessage {
 
     return FramedLogMessage.generateCentered(
         List.of(
-            network.humanReadableNetworkName()
+            network.normalize()
                 + " is deprecated and will be shutdown "
                 + network.getDeprecationDate().get(),
             "",

@@ -16,10 +16,11 @@ package org.hyperledger.besu.util.log;
 
 import java.util.List;
 
+import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 
 public class FramedLogMessage {
-  private static final int MAX_LINE_LENGTH = 80;
+  private static final int MAX_LINE_LENGTH = 100;
 
   private FramedLogMessage() {}
 
@@ -29,8 +30,14 @@ public class FramedLogMessage {
 
     logLines.forEach(
         logLine ->
-            builder.append(
-                String.format("#%s#", StringUtils.rightPad(logLine, MAX_LINE_LENGTH - 2))));
+            Splitter.fixedLength(76)
+                .split(logLine)
+                .forEach(
+                    splitLogLine ->
+                        builder.append(
+                            String.format(
+                                "# %s #\n",
+                                StringUtils.rightPad(splitLogLine, MAX_LINE_LENGTH - 4)))));
 
     appendFooter(builder);
 

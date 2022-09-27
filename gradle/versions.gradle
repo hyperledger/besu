@@ -201,5 +201,7 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:1.32'
 
     dependency 'tech.pegasys.discovery:discovery:22.2.0'
+
+    dependency 'com.github.oshi:oshi-core:6.2.2'
   }
 }

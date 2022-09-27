@@ -5311,7 +5311,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger).info("Using the native implementation of the signature algorithm");
 
     assertThat(AbstractAltBnPrecompiledContract.isNative()).isTrue();
-    verify(mockLogger).info("Using LibEthPairings native alt bn128");
+    verify(mockLogger).info("Using the native implementation of alt bn128");
   }
 
   @Test
