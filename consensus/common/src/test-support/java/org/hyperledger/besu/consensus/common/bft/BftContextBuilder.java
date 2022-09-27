@@ -37,7 +37,7 @@ public class BftContextBuilder {
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
-    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
+    when(bftContext.as(any())).thenReturn(bftContext);
     return bftContext;
   }
 
@@ -59,7 +59,7 @@ public class BftContextBuilder {
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
     when(mockBftBlockInterface.getExtraData(any())).thenReturn(bftExtraData);
-    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
+    when(bftContext.as(any())).thenReturn(bftContext);
     return bftContext;
   }
 
@@ -78,7 +78,7 @@ public class BftContextBuilder {
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataCodec));
-    when(bftContext.as(Mockito.any())).thenReturn(bftContext);
+    when(bftContext.as(any())).thenReturn(bftContext);
 
     return bftContext;
   }
