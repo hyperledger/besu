@@ -24,8 +24,6 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
-import org.mockito.Mockito;
-
 public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
