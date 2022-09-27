@@ -267,6 +267,7 @@ public abstract class AbstractPendingTransactionsSorter {
     TransactionInfo existingTxInfo =
         txsSenderInfo.getTransactionInfoForNonce(transactionInfo.getNonce());
 
+    final Optional<Transaction> maybeReplacedTransaction;
     if (existingTxInfo != null) {
       if (!transactionReplacementHandler.shouldReplace(
           existingTxInfo, transactionInfo, chainHeadHeaderSupplier.get())) {
@@ -279,25 +280,37 @@ public abstract class AbstractPendingTransactionsSorter {
           "Replace existing transaction {}, with new transaction {}",
           existingTxInfo::toTraceLog,
           transactionInfo::toTraceLog);
-      removeTransaction(existingTxInfo.getTransaction());
+      maybeReplacedTransaction = Optional.of(existingTxInfo.getTransaction());
+    } else {
+      maybeReplacedTransaction = Optional.empty();
     }
 
     txsSenderInfo.updateSenderAccount(maybeSenderAccount);
     txsSenderInfo.addTransactionToTrack(transactionInfo);
     traceLambda(LOG, "Tracked transaction by sender {}", txsSenderInfo::toTraceLog);
+    maybeReplacedTransaction.ifPresent(this::removeTransaction);
     return ADDED;
   }
 
-  protected void removeTransactionTrackedBySenderAndNonce(final Transaction transaction) {
+  protected void removeTransactionInfoTrackedBySenderAndNonce(
+      final TransactionInfo transactionInfo) {
+    final Transaction transaction = transactionInfo.getTransaction();
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
             transactionsForSender -> {
-              transactionsForSender.removeTrackedTransaction(transaction.getNonce());
-              traceLambda(
-                  LOG,
-                  "Tracked transaction by sender {} after the removal of {}",
-                  transactionsForSender::toTraceLog,
-                  transaction::toTraceLog);
+              transactionsForSender.removeTrackedTransactionInfo(transactionInfo);
+              if (transactionsForSender.transactionCount() == 0) {
+                LOG.trace(
+                    "Removing sender {} from transactionBySender since no more tracked transactions",
+                    transaction.getSender());
+                transactionsBySender.remove(transaction.getSender());
+              } else {
+                traceLambda(
+                    LOG,
+                    "Tracked transaction by sender {} after the removal of {}",
+                    transactionsForSender::toTraceLog,
+                    transaction::toTraceLog);
+              }
             });
   }
 
@@ -500,6 +513,25 @@ public abstract class AbstractPendingTransactionsSorter {
       return transactionsInfo.stream()
           .map(TransactionInfo::getTransaction)
           .collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      TransactionInfo that = (TransactionInfo) o;
+
+      return sequence == that.sequence;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * (int) (sequence ^ (sequence >>> 32));
     }
 
     public String toTraceLog() {

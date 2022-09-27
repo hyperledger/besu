@@ -53,11 +53,13 @@ public class TransactionsForSenderInfo {
     }
   }
 
-  public void removeTrackedTransaction(final long nonce) {
-    transactionsInfos.remove(nonce);
-    synchronized (transactionsInfos) {
-      if (!transactionsInfos.isEmpty() && nonce != transactionsInfos.firstKey()) {
-        findGap();
+  public void removeTrackedTransactionInfo(final TransactionInfo txInfo) {
+    // check the value when removing, because it could have been replaced
+    if (transactionsInfos.remove(txInfo.getNonce(), txInfo)) {
+      synchronized (transactionsInfos) {
+        if (!transactionsInfos.isEmpty() && txInfo.getNonce() != transactionsInfos.firstKey()) {
+          findGap();
+        }
       }
     }
   }
