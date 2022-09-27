@@ -177,6 +177,7 @@ revert-reason-enabled=false
 
 # Storage plugin to use
 key-value-storage="rocksdb"
+Xplugin-rocksdb-high-spec-enabled=true
 
 # Gas limit
 target-gas-limit=8000000
