@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -35,6 +37,9 @@ public class PostMergeContext implements MergeContext {
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
+
+  private static final Comparator<Block> compareByGasUsedDesc =
+      Comparator.comparingLong((Block block) -> block.getHeader().getGasUsed()).reversed();
 
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
@@ -198,14 +203,38 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
-    var priorsById = retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList());
-    blocksInProgress.add(new PayloadTuple(payloadId, block));
-    priorsById.stream().forEach(blocksInProgress::remove);
+    synchronized (blocksInProgress) {
+      final List<PayloadTuple> prevBlockTuples =
+          retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList());
+
+      if (prevBlockTuples.isEmpty()) {
+        blocksInProgress.add(new PayloadTuple(payloadId, block));
+        return;
+      }
+
+      final Block currBestBlock =
+          Stream.concat(
+                  Stream.of(block),
+                  prevBlockTuples.stream().map(payloadTuple -> payloadTuple.block))
+              .sorted(compareByGasUsedDesc)
+              .findFirst()
+              .get();
+
+      if (currBestBlock.getHash().equals(block.getHash())) {
+        prevBlockTuples.forEach(blocksInProgress::remove);
+        blocksInProgress.add(new PayloadTuple(payloadId, block));
+      }
+    }
   }
 
   @Override
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
-    return retrieveTuplesById(payloadId).map(tuple -> tuple.block).findFirst();
+    synchronized (blocksInProgress) {
+      return retrieveTuplesById(payloadId)
+          .map(tuple -> tuple.block)
+          .sorted(compareByGasUsedDesc)
+          .findFirst();
+    }
   }
 
   private Stream<PayloadTuple> retrieveTuplesById(final PayloadIdentifier payloadId) {
