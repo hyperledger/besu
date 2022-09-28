@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -32,8 +34,11 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PostMergeContext implements MergeContext {
+  private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
@@ -209,21 +214,26 @@ public class PostMergeContext implements MergeContext {
 
       if (prevBlockTuples.isEmpty()) {
         blocksInProgress.add(new PayloadTuple(payloadId, block));
-        return;
-      }
+      } else {
+        final Block currBestBlock =
+            Stream.concat(
+                    Stream.of(block),
+                    prevBlockTuples.stream().map(payloadTuple -> payloadTuple.block))
+                .sorted(compareByGasUsedDesc)
+                .findFirst()
+                .get();
 
-      final Block currBestBlock =
-          Stream.concat(
-                  Stream.of(block),
-                  prevBlockTuples.stream().map(payloadTuple -> payloadTuple.block))
-              .sorted(compareByGasUsedDesc)
-              .findFirst()
-              .get();
-
-      if (currBestBlock.getHash().equals(block.getHash())) {
-        prevBlockTuples.forEach(blocksInProgress::remove);
-        blocksInProgress.add(new PayloadTuple(payloadId, block));
+        if (currBestBlock.getHash().equals(block.getHash())) {
+          debugLambda(LOG, "");
+          prevBlockTuples.forEach(blocksInProgress::remove);
+          blocksInProgress.add(new PayloadTuple(payloadId, block));
+        }
       }
+      debugLambda(
+          LOG,
+          "Current best proposal for payloadId {} {}",
+          payloadId::toHexString,
+          () -> retrieveBlockById(payloadId).map(bb -> logBlockProposal(bb)).orElse("N/A"));
     }
   }
 
@@ -239,6 +249,15 @@ public class PostMergeContext implements MergeContext {
 
   private Stream<PayloadTuple> retrieveTuplesById(final PayloadIdentifier payloadId) {
     return blocksInProgress.stream().filter(z -> z.payloadIdentifier.equals(payloadId));
+  }
+
+  private String logBlockProposal(final Block block) {
+    return "block "
+        + block.toLogString()
+        + " gas used "
+        + block.getHeader().getGasUsed()
+        + " transactions "
+        + block.getBody().getTransactions().size();
   }
 
   private static class PayloadTuple {
