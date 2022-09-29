@@ -50,7 +50,8 @@ import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.custom.RpcAuthFileValidator;
-import org.hyperledger.besu.cli.error.BesuExceptionHandler;
+import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
+import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
@@ -241,9 +242,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import picocli.AutoComplete;
 import picocli.CommandLine;
-import picocli.CommandLine.AbstractParseResultHandler;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
+import picocli.CommandLine.IExecutionStrategy;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
@@ -1382,9 +1383,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
   }
 
-  public void parse(
-      final AbstractParseResultHandler<List<Object>> resultHandler,
-      final BesuExceptionHandler exceptionHandler,
+  public int parse(
+      final IExecutionStrategy resultHandler,
+      final BesuParameterExceptionHandler parameterExceptionHandler,
+      final BesuExecutionExceptionHandler executionExceptionHandler,
       final InputStream in,
       final String... args) {
 
@@ -1393,12 +1395,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setCaseInsensitiveEnumValuesAllowed(true);
 
     handleStableOptions();
-    addSubCommands(resultHandler, in);
+    addSubCommands(in);
     registerConverters();
     handleUnstableOptions();
     preparePlugins();
-    parse(resultHandler, exceptionHandler, args);
     detectJemalloc();
+    return parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
   }
 
   @Override
@@ -1454,27 +1456,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.pluginCommonConfiguration = pluginCommonConfiguration;
   }
 
-  private void addSubCommands(
-      final AbstractParseResultHandler<List<Object>> resultHandler, final InputStream in) {
+  private void addSubCommands(final InputStream in) {
     commandLine.addSubcommand(
         BlocksSubCommand.COMMAND_NAME,
         new BlocksSubCommand(
             rlpBlockImporter,
             jsonBlockImporterFactory,
             rlpBlockExporterFactory,
-            resultHandler.out()));
+            commandLine.getOut()));
     commandLine.addSubcommand(
-        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(resultHandler.out()));
+        PublicKeySubCommand.COMMAND_NAME, new PublicKeySubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
-        PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(resultHandler.out()));
+        PasswordSubCommand.COMMAND_NAME, new PasswordSubCommand(commandLine.getOut()));
     commandLine.addSubcommand(RetestethSubCommand.COMMAND_NAME, new RetestethSubCommand());
     commandLine.addSubcommand(
-        RLPSubCommand.COMMAND_NAME, new RLPSubCommand(resultHandler.out(), in));
+        RLPSubCommand.COMMAND_NAME, new RLPSubCommand(commandLine.getOut(), in));
     commandLine.addSubcommand(
-        OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(resultHandler.out()));
+        OperatorSubCommand.COMMAND_NAME, new OperatorSubCommand(commandLine.getOut()));
     commandLine.addSubcommand(
         ValidateConfigSubCommand.COMMAND_NAME,
-        new ValidateConfigSubCommand(commandLine, resultHandler.out()));
+        new ValidateConfigSubCommand(commandLine, commandLine.getOut()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
@@ -1577,16 +1578,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFile));
   }
 
-  private void parse(
-      final AbstractParseResultHandler<List<Object>> resultHandler,
-      final BesuExceptionHandler exceptionHandler,
+  private int parse(
+      final CommandLine.IExecutionStrategy resultHandler,
+      final BesuExecutionExceptionHandler besuExecutionExceptionHandler,
+      final BesuParameterExceptionHandler besuParameterExceptionHandler,
       final String... args) {
     // Create a handler that will search for a config file option and use it for
     // default values
     // and eventually it will run regular parsing of the remaining options.
 
     final ConfigOptionSearchAndRunHandler configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(resultHandler, exceptionHandler, environment);
+        new ConfigOptionSearchAndRunHandler(
+            resultHandler, besuParameterExceptionHandler, environment);
+    new ConfigOptionSearchAndRunHandler(resultHandler, besuParameterExceptionHandler, environment);
 
     ParseArgsHelper.getLauncherOptions(unstableLauncherOptions, args);
     if (unstableLauncherOptions.isLauncherMode()
@@ -1600,15 +1604,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .build();
         final File file = new LauncherManager(launcherConfig).run();
         logger.info("Config file location : {}", file.getAbsolutePath());
-        commandLine.parseWithHandlers(
-            configParsingHandler,
-            exceptionHandler,
-            String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
+        return commandLine
+            .setExecutionStrategy(configParsingHandler)
+            .setParameterExceptionHandler(besuParameterExceptionHandler)
+            .setExecutionExceptionHandler(besuExecutionExceptionHandler)
+            .execute(String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
+
       } catch (final LauncherException e) {
         logger.warn("Unable to run the launcher {}", e.getMessage());
+        return -1;
       }
     } else {
-      commandLine.parseWithHandlers(configParsingHandler, exceptionHandler, args);
+      return commandLine
+          .setExecutionStrategy(configParsingHandler)
+          .setParameterExceptionHandler(besuParameterExceptionHandler)
+          .setExecutionExceptionHandler(besuExecutionExceptionHandler)
+          .execute(args);
     }
   }
 
@@ -3108,8 +3119,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .collect(Collectors.toList());
   }
 
-  public BesuExceptionHandler exceptionHandler() {
-    return new BesuExceptionHandler(this::getLogLevel);
+  public BesuParameterExceptionHandler parameterExceptionHandler() {
+    return new BesuParameterExceptionHandler(this::getLogLevel);
+  }
+
+  public BesuExecutionExceptionHandler executionExceptionHandler() {
+    return new BesuExecutionExceptionHandler();
   }
 
   public EnodeDnsConfiguration getEnodeDnsConfiguration() {
