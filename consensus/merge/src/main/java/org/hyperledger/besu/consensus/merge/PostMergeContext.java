@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -207,27 +206,26 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
+  public void putPayloadById(final PayloadIdentifier payloadId, final Block newBlock) {
     synchronized (blocksInProgress) {
-      final List<PayloadTuple> prevBlockTuples =
-          retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList());
+      final Optional<Block> maybeCurrBestBlock = retrieveBlockById(payloadId);
 
-      if (prevBlockTuples.isEmpty()) {
-        blocksInProgress.add(new PayloadTuple(payloadId, block));
-      } else {
-        final Block currBestBlock =
-            Stream.concat(
-                    Stream.of(block),
-                    prevBlockTuples.stream().map(payloadTuple -> payloadTuple.block))
-                .sorted(compareByGasUsedDesc)
-                .findFirst()
-                .get();
+      maybeCurrBestBlock.ifPresentOrElse(
+          currBestBlock -> {
+            if (compareByGasUsedDesc.compare(newBlock, currBestBlock) < 0) {
+              debugLambda(
+                  LOG,
+                  "New proposal for payloadId {} {} is better than the previous one {}",
+                  payloadId::toHexString,
+                  () -> logBlockProposal(newBlock),
+                  () -> logBlockProposal(currBestBlock));
+              blocksInProgress.removeAll(
+                  retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
+              blocksInProgress.add(new PayloadTuple(payloadId, newBlock));
+            }
+          },
+          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlock)));
 
-        if (currBestBlock.getHash().equals(block.getHash())) {
-          prevBlockTuples.forEach(blocksInProgress::remove);
-          blocksInProgress.add(new PayloadTuple(payloadId, block));
-        }
-      }
       debugLambda(
           LOG,
           "Current best proposal for payloadId {} {}",

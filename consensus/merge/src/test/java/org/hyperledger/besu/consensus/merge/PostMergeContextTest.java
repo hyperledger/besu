@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -146,12 +145,10 @@ public class PostMergeContextTest {
     Block zeroTxBlock = mock(Block.class);
     when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
 
-    Hash betterBlockHash = Hash.fromHexStringLenient("0xBE51");
     BlockHeader betterBlockHeader = mock(BlockHeader.class);
     when(betterBlockHeader.getGasUsed()).thenReturn(11L);
     Block betterBlock = mock(Block.class);
     when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
-    when(betterBlock.getHash()).thenReturn(betterBlockHash);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
     postMergeContext.putPayloadById(payloadId, zeroTxBlock);
@@ -167,19 +164,15 @@ public class PostMergeContextTest {
     Block zeroTxBlock = mock(Block.class);
     when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
 
-    Hash betterBlockHash = Hash.fromHexStringLenient("0xBE51");
     BlockHeader betterBlockHeader = mock(BlockHeader.class);
     when(betterBlockHeader.getGasUsed()).thenReturn(11L);
     Block betterBlock = mock(Block.class);
     when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
-    when(betterBlock.getHash()).thenReturn(betterBlockHash);
 
-    Hash smallBlockHash = Hash.fromHexStringLenient("0x5011");
     BlockHeader smallBlockHeader = mock(BlockHeader.class);
     when(smallBlockHeader.getGasUsed()).thenReturn(5L);
     Block smallBlock = mock(Block.class);
     when(smallBlock.getHeader()).thenReturn(smallBlockHeader);
-    when(smallBlock.getHash()).thenReturn(smallBlockHash);
 
     PayloadIdentifier payloadId = new PayloadIdentifier(1L);
     postMergeContext.putPayloadById(payloadId, zeroTxBlock);
