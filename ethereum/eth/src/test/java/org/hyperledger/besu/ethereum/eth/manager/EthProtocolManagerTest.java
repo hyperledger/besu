@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -1084,7 +1085,7 @@ public final class EthProtocolManagerTest {
           ethManager.ethContext(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          () -> true,
+          mock(SyncState.class),
           new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
           TransactionPoolConfiguration.DEFAULT);
 

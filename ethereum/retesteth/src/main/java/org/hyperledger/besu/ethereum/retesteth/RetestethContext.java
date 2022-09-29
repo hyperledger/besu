@@ -213,7 +213,7 @@ public class RetestethContext {
             ethContext,
             retestethClock,
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             transactionPoolConfiguration);
 

@@ -144,7 +144,7 @@ public class TestNode implements Closeable {
             ethContext,
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT);
 

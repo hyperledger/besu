@@ -147,7 +147,7 @@ public class BesuEventsImplTest {
             mockEthContext,
             TestClock.system(ZoneId.systemDefault()),
             new NoOpMetricsSystem(),
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             txPoolConfig);
 
