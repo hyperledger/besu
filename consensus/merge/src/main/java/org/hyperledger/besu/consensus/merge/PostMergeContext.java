@@ -224,7 +224,6 @@ public class PostMergeContext implements MergeContext {
                 .get();
 
         if (currBestBlock.getHash().equals(block.getHash())) {
-          debugLambda(LOG, "");
           prevBlockTuples.forEach(blocksInProgress::remove);
           blocksInProgress.add(new PayloadTuple(payloadId, block));
         }
