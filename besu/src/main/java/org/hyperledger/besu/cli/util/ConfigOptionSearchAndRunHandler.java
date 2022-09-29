@@ -39,8 +39,7 @@ public class ConfigOptionSearchAndRunHandler implements IExecutionStrategy {
     this.resultHandler = resultHandler;
     this.parameterExceptionHandler = parameterExceptionHandler;
     this.environment = environment;
-   }
-
+  }
 
   private void validatePrivacyOptions(
       final ParseResult parseResult, final CommandLine commandLine) {

@@ -25,10 +25,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +42,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine;
+import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.IExecutionStrategy;
 import picocli.CommandLine.IParameterExceptionHandler;
-import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.IGetter;
 import picocli.CommandLine.Model.OptionSpec;
@@ -60,8 +58,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   @Mock Supplier<Level> levelSupplier;
-  private final IExecutionStrategy resultHandler =
-          new RunLast();
+  private final IExecutionStrategy resultHandler = new RunLast();
   private final IParameterExceptionHandler parameterExceptionHandler =
       new BesuParameterExceptionHandler(levelSupplier);
   private final Map<String, String> environment = singletonMap("BESU_LOGGING", "ERROR");
@@ -91,7 +88,10 @@ public class ConfigOptionSearchAndRunHandlerTest {
     when(mockConfigOptionGetter.get()).thenReturn(temp.newFile());
     final int result = configParsingHandler.execute(mockParseResult);
     verify(mockCommandLine).setDefaultValueProvider(any(IDefaultValueProvider.class));
-    verify(mockCommandLine).setExecutionStrategy (eq(resultHandler)).setParameterExceptionHandler(eq(parameterExceptionHandler)).execute(anyString());
+    verify(mockCommandLine)
+        .setExecutionStrategy(eq(resultHandler))
+        .setParameterExceptionHandler(eq(parameterExceptionHandler))
+        .execute(anyString());
 
     assertThat(result).isEqualTo(0);
   }
