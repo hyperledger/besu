@@ -1,7 +1,14 @@
 # Changelog
 
-## 22.7.4
+## 22.7.5
 
+### Additions and Improvements
+- When building a new proposal, keep the best block built until now instead of the last one [#4455](https://github.com/hyperledger/besu/pull/4455)
+
+### Bug Fixes
+### Download Links
+
+## 22.7.4
 
 ### Bug Fixes
 - Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)

@@ -175,17 +175,18 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   public PayloadIdentifier preparePayload(
       final BlockHeader parentHeader,
       final Long timestamp,
-      final Bytes32 random,
+      final Bytes32 prevRandao,
       final Address feeRecipient) {
 
     final PayloadIdentifier payloadIdentifier =
-        PayloadIdentifier.forPayloadParams(parentHeader.getBlockHash(), timestamp);
+        PayloadIdentifier.forPayloadParams(
+            parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient);
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
     final Block emptyBlock =
-        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), random, timestamp);
+        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp);
 
     Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
@@ -202,7 +203,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           result.errorMessage);
     }
 
-    tryToBuildBetterBlock(timestamp, random, payloadIdentifier, mergeBlockCreator);
+    tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator);
 
     return payloadIdentifier;
   }
