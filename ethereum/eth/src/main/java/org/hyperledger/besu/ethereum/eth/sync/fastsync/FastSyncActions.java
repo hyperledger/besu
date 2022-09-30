@@ -20,7 +20,6 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -37,7 +36,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -136,52 +134,10 @@ public class FastSyncActions {
 
   private CompletableFuture<FastSyncState> selectNewPivotBlock() {
 
-    return selectBestPeer()
-        .map(
-            bestPeer ->
-                pivotBlockSelector
-                    .selectNewPivotBlock(bestPeer)
-                    .map(CompletableFuture::completedFuture)
-                    .orElse(null))
+    return pivotBlockSelector
+        .selectNewPivotBlock()
+        .map(CompletableFuture::completedFuture)
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
-  }
-
-  private Optional<EthPeer> selectBestPeer() {
-    return ethContext
-        .getEthPeers()
-        .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
-        // Only select a pivot block number when we have a minimum number of height estimates
-        .filter(unused -> enoughFastSyncPeersArePresent());
-  }
-
-  private boolean enoughFastSyncPeersArePresent() {
-    final long peerCount = countPeersThatCanDeterminePivotBlock();
-    final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
-    if (peerCount < minPeerCount) {
-      LOG.info(
-          "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",
-          peerCount,
-          minPeerCount);
-      return false;
-    }
-    return true;
-  }
-
-  private long countPeersThatCanDeterminePivotBlock() {
-    return ethContext
-        .getEthPeers()
-        .streamAvailablePeers()
-        .filter(this::canPeerDeterminePivotBlock)
-        .count();
-  }
-
-  private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
-    LOG.debug(
-        "peer {} hasEstimatedHeight {} isFullyValidated? {}",
-        peer.getShortNodeId(),
-        peer.chainState().hasEstimatedHeight(),
-        peer.isFullyValidated());
-    return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
   }
 
   private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {

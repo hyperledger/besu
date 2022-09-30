@@ -847,7 +847,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
+  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);

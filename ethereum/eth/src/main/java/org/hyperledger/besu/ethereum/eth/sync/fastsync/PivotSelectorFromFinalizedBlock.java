@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 
 import java.util.Optional;
@@ -43,7 +42,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
+  public Optional<FastSyncState> selectNewPivotBlock() {
     final Optional<Hash> maybeHash = finalizedBlockHashSupplier.get();
     if (maybeHash.isPresent()) {
       return Optional.of(selectLastFinalizedBlockAsPivot(maybeHash.get()));

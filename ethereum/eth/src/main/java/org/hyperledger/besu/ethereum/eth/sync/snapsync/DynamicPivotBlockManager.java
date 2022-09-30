@@ -69,8 +69,7 @@ public class DynamicPivotBlockManager {
               if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching
                   && isSearchingPivotBlock.compareAndSet(false, true)) {
                 syncActions
-                    .waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)
-                    .thenCompose(syncActions::selectPivotBlock)
+                    .selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE)
                     .thenCompose(syncActions::downloadPivotBlockHeader)
                     .thenAccept(fss -> lastPivotBlockFound = fss.getPivotBlockHeader())
                     .orTimeout(5, TimeUnit.MINUTES)

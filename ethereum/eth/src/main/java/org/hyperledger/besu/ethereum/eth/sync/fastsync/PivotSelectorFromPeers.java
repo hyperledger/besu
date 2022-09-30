@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 
@@ -28,26 +29,62 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromPeers.class);
 
+  private final EthPeers ethPeers;
   private final SynchronizerConfiguration syncConfig;
 
-  public PivotSelectorFromPeers(final SynchronizerConfiguration syncConfig) {
+  public PivotSelectorFromPeers(
+      final EthPeers ethPeers, final SynchronizerConfiguration syncConfig) {
+    this.ethPeers = ethPeers;
     this.syncConfig = syncConfig;
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
-    return fromBestPeer(peer);
+  public Optional<FastSyncState> selectNewPivotBlock() {
+    return selectBestPeer().flatMap(this::fromBestPeer);
   }
 
   private Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
         peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
-      // Peer's chain isn't long enough, return an empty value so we can try again.
+      // Peer's chain isn't long enough, return an empty value, so we can try again.
       LOG.info("Waiting for peers with sufficient chain height");
       return Optional.empty();
     }
     LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
     return Optional.of(new FastSyncState(pivotBlockNumber));
+  }
+
+  private Optional<EthPeer> selectBestPeer() {
+    return ethPeers
+        .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
+        // Only select a pivot block number when we have a minimum number of height estimates
+        .filter(unused -> enoughFastSyncPeersArePresent());
+  }
+
+  private boolean enoughFastSyncPeersArePresent() {
+    final long peerCount = countPeersThatCanDeterminePivotBlock();
+    final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
+    if (peerCount < minPeerCount) {
+      LOG.info(
+          "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",
+          peerCount,
+          minPeerCount);
+      return false;
+    }
+    return true;
+  }
+
+  private long countPeersThatCanDeterminePivotBlock() {
+    return ethPeers.streamAvailablePeers().filter(this::canPeerDeterminePivotBlock).count();
+  }
+
+  private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
+    LOG.debug(
+        "peer {} hasEstimatedHeight {} isFullyValidated? {}",
+        peer.getShortNodeId(),
+        peer.chainState().hasEstimatedHeight(),
+        peer.isFullyValidated());
+    return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
   }
 }

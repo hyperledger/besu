@@ -63,7 +63,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.TransitionPivotSelector;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -408,7 +407,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
-    final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
+    final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext, ethPeers);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -493,14 +492,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return toUse;
   }
 
-  private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
+  private PivotBlockSelector createPivotSelector(
+      final ProtocolContext protocolContext, final EthPeers ethPeers) {
 
-    final PivotSelectorFromPeers pivotSelectorFromPeers = new PivotSelectorFromPeers(syncConfig);
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
-      LOG.info(
-          "TTD difficulty is present, creating initial sync phase with transition to PoS support");
+      LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
       final FinalizedBlockHashSupplier finalizedBlockHashSupplier =
@@ -514,17 +512,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             LOG.info("Initial sync done, unsubscribe finalized block hash supplier");
           };
 
-      return new TransitionPivotSelector(
-          genesisConfigOptions,
-          finalizedBlockHashSupplier,
-          pivotSelectorFromPeers,
-          new PivotSelectorFromFinalizedBlock(
-              genesisConfigOptions,
-              finalizedBlockHashSupplier,
-              unsubscribeFinalizedBlockHashListener));
+      return new PivotSelectorFromFinalizedBlock(
+          genesisConfigOptions, finalizedBlockHashSupplier, unsubscribeFinalizedBlockHashListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
-      return pivotSelectorFromPeers;
+      return new PivotSelectorFromPeers(ethPeers, syncConfig);
     }
   }
 
