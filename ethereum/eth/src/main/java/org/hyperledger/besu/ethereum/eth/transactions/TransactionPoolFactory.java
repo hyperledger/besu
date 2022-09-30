@@ -30,7 +30,11 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TransactionPoolFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolFactory.class);
 
   public static TransactionPool createTransactionPool(
       final ProtocolSchedule protocolSchedule,
@@ -114,6 +118,7 @@ public class TransactionPoolFactory {
 
     syncState.subscribeCompletionReached(
         () -> {
+          LOG.info("Enabling transaction pool");
           ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
           protocolContext.getBlockchain().observeBlockAdded(transactionPool);
           ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
