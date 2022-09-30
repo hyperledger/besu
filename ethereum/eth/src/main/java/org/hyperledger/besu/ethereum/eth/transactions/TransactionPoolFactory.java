@@ -100,7 +100,7 @@ public class TransactionPoolFactory {
             ethContext.getScheduler(),
             new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
-    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
         new NewPooledTransactionHashesMessageHandler(
             ethContext.getScheduler(),
@@ -109,16 +109,18 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metricsSystem,
-                syncState::isInitialSyncPhaseDone),
+                metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
-    ethContext
-        .getEthMessages()
-        .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
 
     syncState.subscribeCompletionReached(
-        () -> protocolContext.getBlockchain().observeBlockAdded(transactionPool));
-    ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+        () -> {
+          ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+          protocolContext.getBlockchain().observeBlockAdded(transactionPool);
+          ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+          ethContext
+              .getEthMessages()
+              .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
+        });
     return transactionPool;
   }
 

@@ -79,8 +79,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             transactionPool,
             transactionPoolConfiguration,
             ethContext,
-            metricsSystem,
-            syncState::isInitialSyncPhaseDone);
+            metricsSystem);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
