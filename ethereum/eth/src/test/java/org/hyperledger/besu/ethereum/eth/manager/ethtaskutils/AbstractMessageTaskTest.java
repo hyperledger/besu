@@ -107,7 +107,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
             ethContext,
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT);
     ethProtocolManager =
