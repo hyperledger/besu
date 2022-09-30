@@ -1085,7 +1085,7 @@ public final class EthProtocolManagerTest {
           ethManager.ethContext(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          mock(SyncState.class),
+          new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
           new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
           TransactionPoolConfiguration.DEFAULT);
 
