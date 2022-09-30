@@ -154,7 +154,6 @@ public final class RunnerBuilderTest {
             .vertx(vertx)
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     runner.startEthereumMainLoop();
@@ -199,7 +198,6 @@ public final class RunnerBuilderTest {
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(storageProvider)
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     runner.startEthereumMainLoop();
@@ -225,11 +223,11 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedListensOnDefaultPort() {
-    JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
+    final JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
     jrpc.setEnabled(true);
-    JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
+    final JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
     engine.setEnabled(true);
-    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
@@ -255,7 +253,6 @@ public final class RunnerBuilderTest {
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -266,13 +263,13 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedWebSocketReadyOnSamePort() {
-    WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
+    final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
-    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
-    JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
+    final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
     engineConf.setEnabled(true);
 
     final Runner runner =
@@ -296,7 +293,6 @@ public final class RunnerBuilderTest {
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -306,13 +302,13 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedEthSubscribeAvailable() {
-    WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
+    final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
-    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
-    JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
+    final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
     engineConf.setEnabled(true);
 
     final Runner runner =
@@ -336,7 +332,6 @@ public final class RunnerBuilderTest {
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -349,11 +344,11 @@ public final class RunnerBuilderTest {
 
   @Test
   public void noEngineApiNoServiceForMethods() {
-    JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();
+    final JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();
     defaultRpcConfig.setEnabled(true);
-    WebSocketConfiguration defaultWebSockConfig = WebSocketConfiguration.createDefault();
+    final WebSocketConfiguration defaultWebSockConfig = WebSocketConfiguration.createDefault();
     defaultWebSockConfig.setEnabled(true);
-    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
@@ -378,7 +373,6 @@ public final class RunnerBuilderTest {
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot().toPath())
             .storageProvider(mock(KeyValueStorageProvider.class))
-            .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -389,16 +383,16 @@ public final class RunnerBuilderTest {
 
   @Test
   public void assertTransitionStratumConfiguration() {
-    JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
+    final JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
     jrpc.setEnabled(true);
-    JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
+    final JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
     engine.setEnabled(true);
-    EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
+    final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
     when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
-    MiningParameters mockMiningParams = besuController.getMiningParameters();
+    final MiningParameters mockMiningParams = besuController.getMiningParameters();
     when(mockMiningParams.isStratumMiningEnabled()).thenReturn(true);
-    TransitionCoordinator mockTransitionCoordinator =
+    final TransitionCoordinator mockTransitionCoordinator =
         spy(
             new TransitionCoordinator(
                 mock(PoWMiningCoordinator.class), mock(MergeMiningCoordinator.class)));
@@ -424,7 +418,6 @@ public final class RunnerBuilderTest {
         .vertx(Vertx.vertx())
         .dataDir(dataDir.getRoot().toPath())
         .storageProvider(mock(KeyValueStorageProvider.class))
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
         .rpcEndpointService(new RpcEndpointServiceImpl())
         .besuPluginContext(mock(BesuPluginContextImpl.class))
         .build();

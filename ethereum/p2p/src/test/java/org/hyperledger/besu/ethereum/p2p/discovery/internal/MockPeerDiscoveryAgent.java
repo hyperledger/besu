@@ -18,6 +18,7 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -33,7 +34,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService,
-      final Supplier<List<Bytes>> forkIdSupplier) {
+      final ForkIdManager forkIdManager) {
     super(
         nodeKey,
         config,
@@ -61,7 +61,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
         natService,
         new NoOpMetricsSystem(),
         new InMemoryKeyValueStorageProvider(),
-        forkIdSupplier);
+        forkIdManager);
     this.agentNetwork = agentNetwork;
   }
 
@@ -79,7 +79,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
    * @return A list of packets received by this agent
    */
   public List<IncomingPacket> getIncomingPackets() {
-    List<IncomingPacket> packets = Arrays.asList(incomingPackets.toArray(new IncomingPacket[0]));
+    final List<IncomingPacket> packets =
+        Arrays.asList(incomingPackets.toArray(new IncomingPacket[0]));
     incomingPackets.clear();
     return packets;
   }
@@ -88,19 +89,20 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
     isRunning = true;
     // Skip network setup for tests
-    InetSocketAddress address = new InetSocketAddress(config.getBindHost(), config.getBindPort());
+    final InetSocketAddress address =
+        new InetSocketAddress(config.getBindHost(), config.getBindPort());
     return CompletableFuture.completedFuture(address);
   }
 
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer toPeer, final Packet packet) {
-    CompletableFuture<Void> result = new CompletableFuture<>();
+    final CompletableFuture<Void> result = new CompletableFuture<>();
     if (!this.isRunning) {
       result.completeExceptionally(new Exception("Attempt to send message from an inactive agent"));
     }
 
-    MockPeerDiscoveryAgent toAgent = agentNetwork.get(toPeer.getId());
+    final MockPeerDiscoveryAgent toAgent = agentNetwork.get(toPeer.getId());
     if (toAgent == null) {
       result.completeExceptionally(
           new Exception(

@@ -133,7 +133,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -190,7 +189,6 @@ public class RunnerBuilder {
   private boolean autoLogBloomCaching = true;
   private boolean randomPeerPriority;
   private StorageProvider storageProvider;
-  private Supplier<List<Bytes>> forkIdSupplier;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
 
@@ -387,11 +385,6 @@ public class RunnerBuilder {
     return this;
   }
 
-  public RunnerBuilder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
-    this.forkIdSupplier = forkIdSupplier;
-    return this;
-  }
-
   public RunnerBuilder rpcEndpointService(final RpcEndpointServiceImpl rpcEndpointService) {
     this.rpcEndpointServiceImpl = rpcEndpointService;
     return this;
@@ -492,8 +485,9 @@ public class RunnerBuilder {
                 .natService(natService)
                 .randomPeerPriority(randomPeerPriority)
                 .storageProvider(storageProvider)
-                .forkIdSupplier(forkIdSupplier)
                 .p2pTLSConfiguration(p2pTLSConfiguration)
+                .blockchain(context.getBlockchain())
+                .forks(besuController.getGenesisConfigOptions().getForks())
                 .build();
 
     final NetworkRunner networkRunner =
@@ -662,7 +656,7 @@ public class RunnerBuilder {
               dataDir,
               rpcEndpointServiceImpl);
 
-      Optional<AuthenticationService> authToUse =
+      final Optional<AuthenticationService> authToUse =
           engineJsonRpcConfiguration.get().isAuthenticationEnabled()
               ? Optional.of(
                   new EngineAuthService(
@@ -672,7 +666,7 @@ public class RunnerBuilder {
                       dataDir))
               : Optional.empty();
 
-      WebSocketConfiguration engineSocketConfig =
+      final WebSocketConfiguration engineSocketConfig =
           webSocketConfiguration.isEnabled()
               ? webSocketConfiguration
               : WebSocketConfiguration.createEngineDefault();
@@ -781,7 +775,8 @@ public class RunnerBuilder {
       createPrivateTransactionObserver(subscriptionManager, privacyParameters);
     }
 
-    Optional<MetricsService> metricsService = createMetricsService(vertx, metricsConfiguration);
+    final Optional<MetricsService> metricsService =
+        createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
     if (!Strings.isNullOrEmpty(ethstatsUrl)) {
@@ -804,7 +799,7 @@ public class RunnerBuilder {
 
     final Optional<JsonRpcIpcService> jsonRpcIpcService;
     if (jsonRpcIpcConfiguration.isEnabled()) {
-      Map<String, JsonRpcMethod> ipcMethods =
+      final Map<String, JsonRpcMethod> ipcMethods =
           jsonRpcMethods(
               protocolSchedule,
               context,
@@ -1020,9 +1015,10 @@ public class RunnerBuilder {
                 consensusEngineServer);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
-    var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
+    final var pluginMethods =
+        rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
 
-    var overriddenMethods =
+    final var overriddenMethods =
         methods.keySet().stream().filter(pluginMethods::containsKey).collect(Collectors.toList());
     if (overriddenMethods.size() > 0) {
       throw new RuntimeException("You can not override built in methods " + overriddenMethods);

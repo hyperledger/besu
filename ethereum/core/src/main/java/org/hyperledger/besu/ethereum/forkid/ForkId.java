@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.forkid;
 
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -99,6 +99,8 @@ public class ForkId {
 
   @Override
   public int hashCode() {
-    return super.hashCode();
+    int hashCode = 31;
+    hashCode = hashCode * this.hash.hashCode();
+    return hashCode * this.next.hashCode();
   }
 }

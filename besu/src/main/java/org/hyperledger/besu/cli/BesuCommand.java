@@ -1433,7 +1433,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       besuPluginContext.beforeExternalServices();
 
-      var runner = buildRunner();
+      final var runner = buildRunner();
       runner.startExternalServices();
 
       startPlugins();
@@ -1478,7 +1478,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
-    CommandLine generateCompletionSubcommand =
+    final CommandLine generateCompletionSubcommand =
         commandLine.getSubcommands().get(generateCompletionSubcommandName);
     generateCompletionSubcommand.getCommandSpec().usageMessage().hidden(true);
   }
@@ -1844,7 +1844,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void validateRpcOptionsParams() {
-    Predicate<String> configuredApis =
+    final Predicate<String> configuredApis =
         apiName ->
             Arrays.stream(RpcApis.values())
                     .anyMatch(builtInApi -> apiName.equals(builtInApi.name()))
@@ -2179,7 +2179,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
       final Integer listenPort, final List<String> allowCallsFrom) {
-    JsonRpcConfiguration engineConfig =
+    final JsonRpcConfiguration engineConfig =
         jsonRpcConfiguration(listenPort, Arrays.asList("ENGINE", "ETH"), allowCallsFrom);
     engineConfig.setEnabled(isEngineApiEnabled());
     if (!engineRPCOptionGroup.isEngineAuthDisabled) {
@@ -2347,7 +2347,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + ")");
     }
 
-    for (String cipherSuite : jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites) {
+    for (final String cipherSuite : jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites) {
       if (!getJDKEnabledCypherSuites().contains(cipherSuite)) {
         throw new ParameterException(
             commandLine, "Invalid TLS cipher suite specified " + cipherSuite);
@@ -2895,7 +2895,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .ethstatsUrl(ethstatsOptions.getEthstatsUrl())
             .ethstatsContact(ethstatsOptions.getEthstatsContact())
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
-            .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
             .rpcEndpointService(rpcEndpointServiceImpl)
             .build();
 
@@ -3025,7 +3024,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try (final InputStream genesisFileInputStream =
         EthNetworkConfig.class.getResourceAsStream(networkName.getGenesisFile())) {
       return new String(genesisFileInputStream.readAllBytes(), UTF_8);
-    } catch (IOException | NullPointerException e) {
+    } catch (final IOException | NullPointerException e) {
       throw new IllegalStateException(e);
     }
   }
@@ -3286,22 +3285,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   public static List<String> getJDKEnabledCypherSuites() {
     try {
-      SSLContext context = SSLContext.getInstance("TLS");
+      final SSLContext context = SSLContext.getInstance("TLS");
       context.init(null, null, null);
-      SSLEngine engine = context.createSSLEngine();
+      final SSLEngine engine = context.createSSLEngine();
       return Arrays.asList(engine.getEnabledCipherSuites());
-    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+    } catch (final KeyManagementException | NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
   }
 
   public static List<String> getJDKEnabledProtocols() {
     try {
-      SSLContext context = SSLContext.getInstance("TLS");
+      final SSLContext context = SSLContext.getInstance("TLS");
       context.init(null, null, null);
-      SSLEngine engine = context.createSSLEngine();
+      final SSLEngine engine = context.createSSLEngine();
       return Arrays.asList(engine.getEnabledProtocols());
-    } catch (KeyManagementException | NoSuchAlgorithmException e) {
+    } catch (final KeyManagementException | NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
   }

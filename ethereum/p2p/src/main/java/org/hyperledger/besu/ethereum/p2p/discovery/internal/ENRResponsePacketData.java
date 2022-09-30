@@ -25,6 +25,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 
 public class ENRResponsePacketData implements PacketData {
   /* The hash of the entire ENRRequest packet being replied to. */
+
   private final Bytes requestHash;
 
   /* The node record. */

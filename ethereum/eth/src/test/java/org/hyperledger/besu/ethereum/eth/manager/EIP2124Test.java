@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.ForkIds;
 import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.GenesisHash;
 import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.Network;
 import org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.PeerCheckCase;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 
 import java.util.Arrays;
 import java.util.Collection;
