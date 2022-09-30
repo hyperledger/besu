@@ -116,17 +116,44 @@ public class TransactionPoolFactory {
                 metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
-    syncState.subscribeCompletionReached(
-        () -> {
-          LOG.info("Enabling transaction pool");
-          ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
-          protocolContext.getBlockchain().observeBlockAdded(transactionPool);
-          ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
-          ethContext
-              .getEthMessages()
-              .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
-        });
+    if (syncState.isInitialSyncPhaseDone()) {
+      enableTransactionPool(
+          protocolContext,
+          ethContext,
+          transactionTracker,
+          transactionPool,
+          transactionsMessageHandler,
+          pooledTransactionsMessageHandler);
+    } else {
+      syncState.subscribeCompletionReached(
+          () -> {
+            enableTransactionPool(
+                protocolContext,
+                ethContext,
+                transactionTracker,
+                transactionPool,
+                transactionsMessageHandler,
+                pooledTransactionsMessageHandler);
+          });
+    }
+
     return transactionPool;
+  }
+
+  private static void enableTransactionPool(
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final PeerTransactionTracker transactionTracker,
+      final TransactionPool transactionPool,
+      final TransactionsMessageHandler transactionsMessageHandler,
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    LOG.info("Enabling transaction pool");
+    ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+    protocolContext.getBlockchain().observeBlockAdded(transactionPool);
+    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+    ethContext
+        .getEthMessages()
+        .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
   }
 
   private static AbstractPendingTransactionsSorter createPendingTransactionsSorter(

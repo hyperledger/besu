@@ -95,8 +95,121 @@ public class TransactionPoolFactoryTest {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
 
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
+  }
 
-    syncState = new SyncState(blockchain, ethPeers);
+  @Test
+  public void disconnectNotInvokedBeforeInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    final RespondingEthPeer ethPeer =
+        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+    assertThat(ethPeer.getEthPeer()).isNotNull();
+    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verifyNoInteractions(peerTransactionTracker);
+  }
+
+  @Test
+  public void disconnectInvokedAfterInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    final RespondingEthPeer ethPeer =
+        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+    assertThat(ethPeer.getEthPeer()).isNotNull();
+    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+
+    syncState.markInitialSyncPhaseAsDone();
+
+    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
+  }
+
+  @Test
+  public void disconnectInvokedIfNoInitialSync() {
+    setupInitialSyncPhase(false);
+    final RespondingEthPeer ethPeer =
+        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+    assertThat(ethPeer.getEthPeer()).isNotNull();
+    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+
+    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
+  }
+
+  @Test
+  public void notRegisteredToBlockAddedEventBeforeInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
+
+    assertThat(blockAddedListeners.getAllValues()).doesNotContain(pool);
+  }
+
+  @Test
+  public void registeredToBlockAddedEventAfterInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    syncState.markInitialSyncPhaseAsDone();
+
+    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
+
+    assertThat(blockAddedListeners.getAllValues()).contains(pool);
+  }
+
+  @Test
+  public void registeredToBlockAddedEventIfNoInitialSync() {
+    setupInitialSyncPhase(false);
+
+    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
+
+    assertThat(blockAddedListeners.getAllValues()).contains(pool);
+  }
+
+  @Test
+  public void incomingTransactionMessageHandlersNotRegisteredBeforeInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
+
+    assertThat(messageHandlers.getAllValues())
+        .doesNotHaveAnyElementsOfTypes(
+            TransactionsMessageHandler.class, NewPooledTransactionHashesMessageHandler.class);
+  }
+
+  @Test
+  public void incomingTransactionMessageHandlersRegisteredAfterInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    syncState.markInitialSyncPhaseAsDone();
+
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
+
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(TransactionsMessageHandler.class);
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(NewPooledTransactionHashesMessageHandler.class);
+  }
+
+  @Test
+  public void incomingTransactionMessageHandlersRegisteredIfNoInitialSync() {
+    setupInitialSyncPhase(false);
+
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
+
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(TransactionsMessageHandler.class);
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(NewPooledTransactionHashesMessageHandler.class);
+  }
+
+  private void setupInitialSyncPhase(final boolean hasInitialSyncPhase) {
+    syncState = new SyncState(blockchain, ethPeers, hasInitialSyncPhase, Optional.empty());
 
     pool =
         TransactionPoolFactory.createTransactionPool(
@@ -131,73 +244,5 @@ public class TransactionPoolFactoryTest {
             true,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));
-  }
-
-  @Test
-  public void disconnectNotInvokedBeforeInitialSyncIsDone() {
-    final RespondingEthPeer ethPeer =
-        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
-    assertThat(ethPeer.getEthPeer()).isNotNull();
-    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
-    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
-    verifyNoInteractions(peerTransactionTracker);
-  }
-
-  @Test
-  public void disconnectInvokedAfterInitialSyncIsDone() {
-    final RespondingEthPeer ethPeer =
-        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
-    assertThat(ethPeer.getEthPeer()).isNotNull();
-    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
-
-    syncState.markInitialSyncPhaseAsDone();
-
-    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
-    verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
-  }
-
-  @Test
-  public void notRegisteredToBlockAddedEventBeforeInitialSyncIsDone() {
-    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
-        ArgumentCaptor.forClass(BlockAddedObserver.class);
-    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
-
-    assertThat(blockAddedListeners.getAllValues()).doesNotContain(pool);
-  }
-
-  @Test
-  public void registeredToBlockAddedEventAfterInitialSyncIsDone() {
-    syncState.markInitialSyncPhaseAsDone();
-
-    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
-        ArgumentCaptor.forClass(BlockAddedObserver.class);
-    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
-
-    assertThat(blockAddedListeners.getAllValues()).contains(pool);
-  }
-
-  @Test
-  public void incomingTransactionMessageHandlersNotRegisteredBeforeInitialSyncIsDone() {
-    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
-        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
-    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
-
-    assertThat(messageHandlers.getAllValues())
-        .doesNotHaveAnyElementsOfTypes(
-            TransactionsMessageHandler.class, NewPooledTransactionHashesMessageHandler.class);
-  }
-
-  @Test
-  public void incomingTransactionMessageHandlersRegisteredAfterInitialSyncIsDone() {
-    syncState.markInitialSyncPhaseAsDone();
-
-    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
-        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
-    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
-
-    assertThat(messageHandlers.getAllValues())
-        .hasAtLeastOneElementOfType(TransactionsMessageHandler.class);
-    assertThat(messageHandlers.getAllValues())
-        .hasAtLeastOneElementOfType(NewPooledTransactionHashesMessageHandler.class);
   }
 }
