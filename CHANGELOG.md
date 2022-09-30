@@ -6,6 +6,8 @@
 - Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
 
 ### Additions and Improvements
+- When building a new proposal, keep the best block built until now instead of the last one [#4455](https://github.com/hyperledger/besu/pull/4455)
+
 ### Bug Fixes
 ### Download Links
 
