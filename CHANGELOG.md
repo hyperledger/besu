@@ -2,9 +2,9 @@
 
 ## 22.7.5
 
-
 ### Additions and Improvements
 - Avoid sending added block events to transaction pool during initial sync, since the transaction pool is empty until initial sync is done [#4457](https://github.com/hyperledger/besu/pull/4457)
+- When building a new proposal, keep the best block built until now instead of the last one [#4455](https://github.com/hyperledger/besu/pull/4455)
 
 ### Bug Fixes
 ### Download Links
