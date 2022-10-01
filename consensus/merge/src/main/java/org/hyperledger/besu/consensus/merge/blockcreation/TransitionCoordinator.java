@@ -131,9 +131,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public PayloadIdentifier preparePayload(
       final BlockHeader parentHeader,
       final Long timestamp,
-      final Bytes32 random,
+      final Bytes32 prevRandao,
       final Address feeRecipient) {
-    return mergeCoordinator.preparePayload(parentHeader, timestamp, random, feeRecipient);
+    return mergeCoordinator.preparePayload(parentHeader, timestamp, prevRandao, feeRecipient);
   }
 
   @Override

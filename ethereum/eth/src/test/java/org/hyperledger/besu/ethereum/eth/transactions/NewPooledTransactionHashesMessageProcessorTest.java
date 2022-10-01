@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
@@ -57,7 +56,6 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @Mock private EthPeer peer1;
   @Mock private EthContext ethContext;
   @Mock private EthScheduler ethScheduler;
-  @Mock private SyncState syncState;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
   private final Hash hash1 = generator.transaction().getHash();
@@ -72,15 +70,13 @@ public class NewPooledTransactionHashesMessageProcessorTest {
     metricsSystem = new StubMetricsSystem();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
-    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
     messageHandler =
         new NewPooledTransactionHashesMessageProcessor(
             transactionTracker,
             transactionPool,
             transactionPoolConfiguration,
             ethContext,
-            metricsSystem,
-            syncState::isInitialSyncPhaseDone);
+            metricsSystem);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
@@ -186,18 +182,5 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
     verify(ethScheduler, times(1))
         .scheduleFutureTask(any(FetcherCreatorTask.class), any(Duration.class));
-  }
-
-  @Test
-  public void shouldNotAddTransactionsWhenDisabled() {
-
-    when(syncState.isInitialSyncPhaseDone()).thenReturn(false);
-    messageHandler.processNewPooledTransactionHashesMessage(
-        peer1,
-        NewPooledTransactionHashesMessage.create(asList(hash1, hash2, hash3)),
-        now(),
-        ofMinutes(1));
-
-    verifyNoInteractions(transactionPool);
   }
 }
