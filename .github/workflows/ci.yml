@@ -10,7 +10,7 @@ env:
 
 jobs:
   compile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: tmio/besu-build:1.0
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
@@ -34,7 +34,7 @@ jobs:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
   assemble:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: compile
     container: tmio/besu-build:1.0
     timeout-minutes: 30
@@ -62,7 +62,7 @@ jobs:
           name: besu-zip
           path: build/distributions/*.zip
   testWindows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     needs: assemble
     timeout-minutes: 10
     if: ${{ github.actor != 'dependabot[bot]' }}
@@ -85,7 +85,7 @@ jobs:
           besu\bin\besu.bat --help
           besu\bin\besu.bat --version
   runner-indexes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Generate runner indexes
     outputs:
       json: ${{ steps.generate-index-list.outputs.json }}
@@ -97,7 +97,7 @@ jobs:
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
   run-parallel-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
     needs:
@@ -142,7 +142,7 @@ jobs:
           path: '**/build/test-results/test/TEST-*.xml'
           retention-days: 1
   integration-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: compile
     timeout-minutes: 30
     container: tmio/besu-build:1.0
@@ -173,7 +173,7 @@ jobs:
           path: '**/build/test-results/integrationTest/TEST-*.xml'
           retention-days: 1
   javadoc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: tmio/besu-build:1.0
     needs: compile
     timeout-minutes: 30
@@ -197,7 +197,7 @@ jobs:
         with:
           arguments: javadoc --scan
   compileJmh:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: tmio/besu-build:1.0
     needs: compile
     timeout-minutes: 30
@@ -221,7 +221,7 @@ jobs:
         with:
           arguments: compileJmh --scan
   prepareReferenceTestEthereum:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: tmio/besu-build:1.0
     needs: compile
     timeout-minutes: 30
@@ -252,7 +252,7 @@ jobs:
           path: "ethereum/referencetests/build/generated/sources/reference-test/**"
           key: ${{ runner.os }}-reftests-${{ github.sha }}
   referenceTestEthereum:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: tmio/besu-build:1.0
     needs:
      - prepareReferenceTestEthereum
@@ -300,7 +300,7 @@ jobs:
           path: '**/build/test-results/test/TEST-*.xml'
           retention-days: 1
   referenceTestQbft:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: tmio/besu-build:1.0
     needs: compile
     timeout-minutes: 30
@@ -333,7 +333,7 @@ jobs:
           path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
   acceptanceTests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: compile
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
