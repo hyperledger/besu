@@ -15,7 +15,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: hadoLint_openjdk_11
         run: docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
@@ -59,7 +59,7 @@ jobs:
         with:
           distribution: zulu
           architecture: arm64
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: buildDocker
         uses: gradle/gradle-build-action@v2

@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Compile
         uses: gradle/gradle-build-action@v2
@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -71,7 +71,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
       - name: Download zip
         uses: actions/download-artifact@v3
         with:
@@ -113,7 +113,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -154,7 +154,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -185,7 +185,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -209,7 +209,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -235,7 +235,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -271,7 +271,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -314,7 +314,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
@@ -346,7 +346,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: adopt
-          java-version: 11
+          java-version: 17
           cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
