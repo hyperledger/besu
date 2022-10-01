@@ -16,6 +16,10 @@
 dependencyManagement {
   dependencies {
 
+    dependencySet(group: 'org.antlr', version: '4.9.3') {
+      entry 'antlr4-runtime'
+    }
+
     dependencySet(group:'com.fasterxml.jackson.core', version:'2.13.3') {
       entry 'jackson-databind'
       entry 'jackson-datatype'
