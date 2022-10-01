@@ -33,6 +33,8 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'com.google.guava:guava'
+
 
   jmh project(':util')
 
