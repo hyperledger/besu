@@ -121,7 +121,7 @@ allprojects {
     }
     maven {
       url 'https://repository.apache.org/content/repositories/orgapachetuweni-1024'
-        content { includeGroupByRegex('org\\.apache\\..*') }
+      content { includeGroupByRegex('org\\.apache\\..*') }
     }
     mavenCentral()
   }
