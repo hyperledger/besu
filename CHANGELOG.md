@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - When building a new proposal, keep the best block built until now instead of the last one [#4455](https://github.com/hyperledger/besu/pull/4455)
+- Add Mainnet to merged networks [#4463](https://github.com/hyperledger/besu/pull/4463)
 
 ### Bug Fixes
 ### Download Links
