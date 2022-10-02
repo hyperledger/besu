@@ -22,7 +22,7 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
-import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.EnclaveTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.net.URI;
@@ -51,7 +51,7 @@ public class EnclaveTest {
   private Vertx vertx;
   private EnclaveFactory factory;
 
-  private static TesseraTestHarness testHarness;
+  private static EnclaveTestHarness testHarness;
 
   @BeforeEach
   public void setUp() throws Exception {

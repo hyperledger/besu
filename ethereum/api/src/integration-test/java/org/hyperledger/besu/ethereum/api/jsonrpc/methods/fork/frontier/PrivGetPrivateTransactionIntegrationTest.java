@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.data.Restriction;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
-import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.EnclaveTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.math.BigInteger;
@@ -115,7 +115,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
           .signAndBuild(KEY_PAIR);
 
   private Vertx vertx = Vertx.vertx();
-  private TesseraTestHarness testHarness;
+  private EnclaveTestHarness testHarness;
   private Enclave enclave;
   private PrivacyController privacyController;
 

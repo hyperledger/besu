@@ -29,7 +29,7 @@ import org.testcontainers.containers.Network;
 public class TesseraTestHarnessFactory {
   private static final String storage = "memory";
 
-  public static TesseraTestHarness create(
+  public static EnclaveTestHarness create(
       final String name,
       final Path tempDir,
       final EnclaveKeyConfiguration enclaveConfig,
@@ -44,7 +44,7 @@ public class TesseraTestHarnessFactory {
         containerNetwork);
   }
 
-  public static TesseraTestHarness create(
+  public static EnclaveTestHarness create(
       final String name,
       final Path tempDir,
       final String[] pubKeyPaths,
@@ -59,7 +59,7 @@ public class TesseraTestHarnessFactory {
         name, tempDir, pubKeys, privKeys, enclaveEncryptorType, othernodes, containerNetwork);
   }
 
-  public static TesseraTestHarness create(
+  public static EnclaveTestHarness create(
       final String name,
       final Path tempDir,
       final Path[] key1pubs,
