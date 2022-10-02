@@ -89,6 +89,7 @@ public enum NetworkName {
 
   public static boolean isMergedNetwork(final NetworkName networkName) {
     switch (networkName) {
+      case MAINNET:
       case GOERLI:
       case ROPSTEN:
       case SEPOLIA:
