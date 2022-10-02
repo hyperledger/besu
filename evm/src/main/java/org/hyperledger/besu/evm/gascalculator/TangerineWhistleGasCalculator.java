@@ -83,7 +83,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   private static long gasCap(final long remaining, final long stipend) {
-    return Words.unsignedMin(remaining, stipend);
+    return Words.unsignedMin(allButOneSixtyFourth(remaining), stipend);
   }
 
   @Override
