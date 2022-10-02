@@ -1,3 +1,6 @@
+configurations {
+  tessera.extendsFrom integrationTestRuntimeOnly
+}
 dependencies {
   api project(':util')
   api project(':crypto')
@@ -30,4 +33,24 @@ dependencies {
   integrationTestImplementation 'org.testcontainers:testcontainers'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:22.1.7@tar'
 }
+
+def tesseraDist = '22.1.7'
+integrationTest {
+  useJUnitPlatform()
+  systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
+}
+task copyDependencies(type: Copy) {
+  def outputDir = file("${buildDir}/tessera/dist")
+  from configurations.tessera
+  into outputDir
+}
+task unzipTessera(type: Copy) {
+  def zipFile = file("${buildDir}/tessera/dist/tessera-dist-${tesseraDist}.tar")
+  def outputDir = file("${buildDir}/tessera/dist")
+  from tarTree(zipFile)
+  into outputDir
+}
+unzipTessera.dependsOn copyDependencies
+integrationTest.dependsOn unzipTessera
