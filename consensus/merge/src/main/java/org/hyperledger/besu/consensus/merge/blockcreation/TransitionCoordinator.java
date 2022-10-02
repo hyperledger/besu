@@ -46,6 +46,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }
 
+  public MergeMiningCoordinator getMergeCoordinator() {
+    return mergeCoordinator;
+  }
+
   @Override
   public void start() {
     if (isMiningBeforeMerge()) {

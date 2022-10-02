@@ -49,6 +49,8 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -126,7 +128,8 @@ public class QbftRoundTest {
     final BlockHeader header = headerTestFixture.buildHeader();
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
-    when(blockCreator.createBlock(anyLong())).thenReturn(proposedBlock);
+    when(blockCreator.createBlock(anyLong()))
+        .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -103,7 +104,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
    * @param ommers The list of ommers to include.
    * @return the newly created block.
    */
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
@@ -119,7 +120,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
    * @param timestamp unix timestamp of the new block.
    * @return the newly created block.
    */
-  public Block createBlock(final BlockHeader parentHeader, final long timestamp) {
+  public BlockCreationResult createBlock(final BlockHeader parentHeader, final long timestamp) {
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
     return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
@@ -133,7 +134,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
-    final Block block = minerBlockCreator.createBlock(newBlockTimestamp);
+    final Block block = minerBlockCreator.createBlock(newBlockTimestamp).getBlock();
     LOG.trace(
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());

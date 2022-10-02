@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -186,7 +187,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     // put the empty block in first
     final Block emptyBlock =
-        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp);
+        mergeBlockCreator
+            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp)
+            .getBlock();
 
     Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
@@ -215,13 +218,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final MergeBlockCreator mergeBlockCreator) {
 
     long remainingTime = miningParameters.getPosBlockCreationTimeout();
-    final Supplier<Block> blockCreator =
+    final Supplier<BlockCreationResult> blockCreator =
         () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp);
     // start working on a full block and update the payload value and candidate when it's ready
     final long startedAt = System.currentTimeMillis();
     retryBlockCreation(payloadIdentifier, blockCreator, remainingTime)
         .thenAccept(
-            bestBlock -> {
+            bestBlockCreationResult -> {
+              final var bestBlock = bestBlockCreationResult.getBlock();
               final var resultBest = validateBlock(bestBlock);
               if (resultBest.blockProcessingOutputs.isPresent()) {
                 mergeContext.putPayloadById(payloadIdentifier, bestBlock);
@@ -241,9 +245,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             });
   }
 
-  private CompletableFuture<Block> retryBlockCreation(
+  private CompletableFuture<BlockCreationResult> retryBlockCreation(
       final PayloadIdentifier payloadIdentifier,
-      final Supplier<Block> blockCreator,
+      final Supplier<BlockCreationResult> blockCreator,
       final long remainingTime) {
     final long startedAt = System.currentTimeMillis();
 

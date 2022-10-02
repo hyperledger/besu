@@ -31,6 +31,8 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -77,7 +79,7 @@ public class PkiQbftBlockCreatorTest {
     final Bytes cms = Bytes.random(32);
     when(cmsCreator.create(any(Bytes.class))).thenReturn(cms);
 
-    final Block proposedBlock = pkiQbftBlockCreator.createBlock(1L);
+    final Block proposedBlock = pkiQbftBlockCreator.createBlock(1L).getBlock();
 
     final PkiQbftExtraData proposedBlockExtraData =
         (PkiQbftExtraData) extraDataCodec.decodeRaw(proposedBlock.getHeader().getExtraData());
@@ -103,7 +105,7 @@ public class PkiQbftBlockCreatorTest {
     createBlockBeingProposed();
     when(cmsCreator.create(any(Bytes.class))).thenReturn(Bytes.random(32));
 
-    final Block blockWithCms = pkiQbftBlockCreator.createBlock(1L);
+    final Block blockWithCms = pkiQbftBlockCreator.createBlock(1L).getBlock();
 
     final Hash expectedBlockHash =
         BftBlockHeaderFunctions.forCommittedSeal(extraDataCodec).hash(blockWithCms.getHeader());
@@ -120,7 +122,8 @@ public class PkiQbftBlockCreatorTest {
         new Block(
             blockHeaderWithExtraData,
             new BlockBody(Collections.emptyList(), Collections.emptyList()));
-    when(blockCreator.createBlock(eq(1L))).thenReturn(block);
+    when(blockCreator.createBlock(eq(1L)))
+        .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
 
     return block;
   }
