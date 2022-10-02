@@ -131,6 +131,7 @@ public class PostMergeContextTest {
   @Test
   public void putAndRetrieveFirstPayload() {
     Block mockBlock = mock(Block.class);
+
     PayloadIdentifier firstPayloadId = new PayloadIdentifier(1L);
     postMergeContext.putPayloadById(firstPayloadId, mockBlock);
 
@@ -138,14 +139,47 @@ public class PostMergeContextTest {
   }
 
   @Test
-  public void puttingTwoBlocksWithTheSamePayloadIdWeRetrieveTheLatter() {
-    Block mockBlock1 = mock(Block.class);
-    Block mockBlock2 = mock(Block.class);
-    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
-    postMergeContext.putPayloadById(payloadId, mockBlock1);
-    postMergeContext.putPayloadById(payloadId, mockBlock2);
+  public void puttingTwoBlocksWithTheSamePayloadIdWeRetrieveTheBest() {
+    BlockHeader zeroTxBlockHeader = mock(BlockHeader.class);
+    when(zeroTxBlockHeader.getGasUsed()).thenReturn(0L);
+    Block zeroTxBlock = mock(Block.class);
+    when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
 
-    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(mockBlock2);
+    BlockHeader betterBlockHeader = mock(BlockHeader.class);
+    when(betterBlockHeader.getGasUsed()).thenReturn(11L);
+    Block betterBlock = mock(Block.class);
+    when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
+
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+    postMergeContext.putPayloadById(payloadId, zeroTxBlock);
+    postMergeContext.putPayloadById(payloadId, betterBlock);
+
+    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlock);
+  }
+
+  @Test
+  public void puttingABlockWithTheSamePayloadIdSmallerThanAnExistingOneWeRetrieveTheBest() {
+    BlockHeader zeroTxBlockHeader = mock(BlockHeader.class);
+    when(zeroTxBlockHeader.getGasUsed()).thenReturn(0L);
+    Block zeroTxBlock = mock(Block.class);
+    when(zeroTxBlock.getHeader()).thenReturn(zeroTxBlockHeader);
+
+    BlockHeader betterBlockHeader = mock(BlockHeader.class);
+    when(betterBlockHeader.getGasUsed()).thenReturn(11L);
+    Block betterBlock = mock(Block.class);
+    when(betterBlock.getHeader()).thenReturn(betterBlockHeader);
+
+    BlockHeader smallBlockHeader = mock(BlockHeader.class);
+    when(smallBlockHeader.getGasUsed()).thenReturn(5L);
+    Block smallBlock = mock(Block.class);
+    when(smallBlock.getHeader()).thenReturn(smallBlockHeader);
+
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+    postMergeContext.putPayloadById(payloadId, zeroTxBlock);
+    postMergeContext.putPayloadById(payloadId, betterBlock);
+    postMergeContext.putPayloadById(payloadId, smallBlock);
+
+    assertThat(postMergeContext.retrieveBlockById(payloadId)).contains(betterBlock);
   }
 
   @Test
