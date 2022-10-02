@@ -67,10 +67,9 @@ public class TesseraTestHarnessFactory {
       final EnclaveEncryptorType enclaveEncryptorType,
       final List<String> othernodes,
       final Optional<Network> containerNetwork) {
-    return new TesseraTestHarness(
+    return new TesseraProcessTestHarness(
         new EnclaveConfiguration(
-            name, key1pubs, key1keys, enclaveEncryptorType, tempDir, othernodes, false, storage),
-        containerNetwork);
+            name, key1pubs, key1keys, enclaveEncryptorType, tempDir, othernodes, false, storage));
   }
 
   @Nonnull
