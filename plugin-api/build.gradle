@@ -22,7 +22,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
-      'Automatic-Module-Name': 'org.hyperledger.besu.PluginApi'
+      'Automatic-Module-Name': 'org.hyperledger.besu.plugin.api'
       )
   }
 }
