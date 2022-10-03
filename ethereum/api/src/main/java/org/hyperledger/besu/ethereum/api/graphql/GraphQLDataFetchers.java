@@ -70,7 +70,7 @@ import org.slf4j.LoggerFactory;
 public class GraphQLDataFetchers {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphQLDataFetchers.class);
-
+  private final Integer highestEthVersion;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 
   public GraphQLDataFetchers(
@@ -88,8 +88,6 @@ public class GraphQLDataFetchers {
             .max();
     highestEthVersion = version.isPresent() ? version.getAsInt() : null;
   }
-
-  private final Integer highestEthVersion;
 
   DataFetcher<Optional<Integer>> getProtocolVersionDataFetcher() {
     return dataFetchingEnvironment -> Optional.of(highestEthVersion);
@@ -154,9 +152,12 @@ public class GraphQLDataFetchers {
     };
   }
 
-  public DataFetcher<Optional<Wei>> getMaxPriorityFeePerGasDataFetcher() {
-    // FIXME
-    return dataFetchingEnvironment -> Optional.of(Wei.of(2_000_000_000L));
+  public DataFetcher<Wei> getMaxPriorityFeePerGasDataFetcher() {
+    return dataFetchingEnvironment -> {
+      final BlockchainQueries blockchainQuery =
+          dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
+      return blockchainQuery.gasPriorityFee().orElse(Wei.ZERO);
+    };
   }
 
   DataFetcher<List<NormalBlockAdapter>> getRangeBlockDataFetcher() {
