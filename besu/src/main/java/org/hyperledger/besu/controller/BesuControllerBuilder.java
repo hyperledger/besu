@@ -386,7 +386,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             clock,
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             miningParameters,
             transactionPoolConfiguration);
 
