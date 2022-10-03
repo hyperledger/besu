@@ -131,10 +131,10 @@ public class BackwardsSyncAlgorithm {
   private void checkReadiness(final CountDownLatch latch, final long idTTD, final long idIS) {
     try {
       if (!context.isReady()) {
-        LOG.info("Waiting for preconditions...");
+        LOG.debug("Waiting for preconditions...");
         final boolean await = latch.await(2, TimeUnit.MINUTES);
         if (await) {
-          LOG.info("Preconditions meet...");
+          LOG.debug("Preconditions meet...");
         }
       }
     } catch (InterruptedException e) {
