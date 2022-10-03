@@ -134,4 +134,15 @@ public abstract class Words {
       return ((a ^ b) < 0) ? Long.MIN_VALUE : Long.MAX_VALUE;
     }
   }
+
+  /**
+   * Returns the lesser of the two values, when compared as an unsigned value
+   *
+   * @param a first value
+   * @param b second value
+   * @return a if, as an unsigned integer, a is less than b; otherwise b.
+   */
+  public static long unsignedMin(final long a, final long b) {
+    return Long.compareUnsigned(a, b) < 0 ? a : b;
+  }
 }
