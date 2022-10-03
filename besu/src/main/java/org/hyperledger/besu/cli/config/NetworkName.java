@@ -86,4 +86,17 @@ public enum NetworkName {
   public Optional<String> getDeprecationDate() {
     return Optional.ofNullable(deprecationDate);
   }
+
+  public static boolean isMergedNetwork(final NetworkName networkName) {
+    switch (networkName) {
+      case MAINNET:
+      case GOERLI:
+      case ROPSTEN:
+      case SEPOLIA:
+      case KILN:
+        return true;
+      default:
+        return false;
+    }
+  }
 }

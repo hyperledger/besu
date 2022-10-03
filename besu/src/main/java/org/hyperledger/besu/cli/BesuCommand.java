@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.config.NetworkName.isMergedNetwork;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
@@ -507,15 +508,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "!!DEPRECATED!! Use `--fast-sync-min-peers-pow` instead. Minimum number of peers required before starting initial sync. Only for PoW networks.")
+          "Minimum number of peers required before starting fast sync. (default pre-merge: "
+              + FAST_SYNC_MIN_PEER_COUNT
+              + " and post-merge: "
+              + FAST_SYNC_MIN_PEER_COUNT_POST_MERGE
+              + ")")
   private final Integer fastSyncMinPeerCount = null;
-
-  @Option(
-      names = {"--initial-sync-min-peers-pow"},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Minimum number of peers required before starting initial sync. Only for PoW networks. (default: ${DEFAULT-VALUE})")
-  private Integer initialSyncMinPeerPoWCount = null;
 
   @Option(
       names = {"--network"},
@@ -1941,7 +1939,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         commandLine,
         "--sync-mode",
         SyncMode.isFullSync(syncMode),
-        singletonList("--initial-sync-min-peers-pow"));
+        singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
@@ -1968,16 +1966,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--tx-pool-future-max-by-account",
           "--tx-pool-limit-by-account-percentage");
     }
-
-    if (fastSyncMinPeerCount != null) {
-      logger.warn(DEPRECATION_WARNING_MSG, "--fast-sync-min-peers", "--initial-sync-min-peers-pow");
-    }
   }
 
   private void configure() throws Exception {
     checkPortClash();
 
-    syncConfiguration();
+    syncMode =
+        Optional.ofNullable(syncMode)
+            .orElse(
+                genesisFile == null
+                        && !privacyOptionGroup.isPrivacyEnabled
+                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
+                    ? SyncMode.FAST
+                    : SyncMode.FULL);
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -2031,31 +2032,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     logger.info("Security Module: {}", securityModuleName);
     instantiateSignatureAlgorithmFactory();
-  }
-
-  private void syncConfiguration() {
-    syncMode =
-        Optional.ofNullable(syncMode)
-            .orElse(
-                genesisFile == null
-                        && !privacyOptionGroup.isPrivacyEnabled
-                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                    ? SyncMode.FAST
-                    : SyncMode.FULL);
-
-    if (initialSyncMinPeerPoWCount != null) {
-      if (fastSyncMinPeerCount != null) {
-        throw new ParameterException(
-            this.commandLine,
-            "--fast-sync-min-peers and --initial-sync-min-peers-pow must not be present together.");
-      }
-    } else {
-      if (fastSyncMinPeerCount != null) {
-        initialSyncMinPeerPoWCount = fastSyncMinPeerCount;
-      } else {
-        initialSyncMinPeerPoWCount = INITIAL_SYNC_MIN_PEER_POW_COUNT;
-      }
-    }
   }
 
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration(
@@ -2819,10 +2795,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
+    Integer fastSyncMinPeers = fastSyncMinPeerCount;
+    if (fastSyncMinPeers == null) {
+      if (isMergedNetwork(network)) {
+        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT_POST_MERGE;
+      } else {
+        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT;
+      }
+    }
+
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .initialSyncMinimumPeerPoWCount(initialSyncMinPeerPoWCount)
+        .fastSyncMinimumPeerCount(fastSyncMinPeers)
         .build();
   }
 
