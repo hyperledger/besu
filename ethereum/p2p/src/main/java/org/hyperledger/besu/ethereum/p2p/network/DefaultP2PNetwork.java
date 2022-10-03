@@ -259,6 +259,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
 
+    // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer additions
+    checkMaintainedConnectionPeers();
+
     // Periodically check maintained connections
     final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
     peerConnectionScheduler.scheduleWithFixedDelay(
@@ -307,10 +310,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainedConnectionPeer(final Peer peer) {
-    if (localNode.isReady()
-        && localNode.getPeer() != null
-        && localNode.getPeer().getEnodeURL() != null
-        && peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
+    final boolean localNodeIsReady =
+        localNode.isReady()
+            && localNode.getPeer() != null
+            && localNode.getPeer().getEnodeURL() != null;
+    if (!localNodeIsReady
+        || peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
       return false;
     }
     final boolean wasAdded = maintainedPeers.add(peer);
