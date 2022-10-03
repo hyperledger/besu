@@ -8,6 +8,8 @@
 - Add Mainnet to merged networks [#4463](https://github.com/hyperledger/besu/pull/4463)
 
 ### Bug Fixes
+- Do not add static node to maintained connection list if local node is not yet ready.
+
 ### Download Links
 
 ## 22.7.4
