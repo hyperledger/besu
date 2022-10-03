@@ -29,7 +29,7 @@ public class SynchronizerConfiguration {
 
   public static final int DEFAULT_PIVOT_DISTANCE_FROM_HEAD = 50;
   public static final float DEFAULT_FULL_VALIDATION_RATE = .1f;
-  public static final int DEFAULT_FAST_SYNC_MINIMUM_PEERS = 5;
+  public static final int DEFAULT_INITIAL_SYNC_MINIMUM_POW_PEERS = 5;
   public static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 384;
   public static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
   public static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 1000;
@@ -245,7 +245,7 @@ public class SynchronizerConfiguration {
 
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
-    private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
+    private int initialSyncMinimumPeerPoWCount = DEFAULT_INITIAL_SYNC_MINIMUM_POW_PEERS;
     private int maxTrailingPeers = Integer.MAX_VALUE;
     private Range<Long> blockPropagationRange = DEFAULT_BLOCK_PROPAGATION_RANGE;
     private long downloaderChangeTargetThresholdByHeight =
@@ -347,8 +347,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder fastSyncMinimumPeerCount(final int fastSyncMinimumPeerCount) {
-      this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
+    public Builder initialSyncMinimumPeerPoWCount(final int initialSyncMinimumPeerPoWCount) {
+      this.initialSyncMinimumPeerPoWCount = initialSyncMinimumPeerPoWCount;
       return this;
     }
 
@@ -393,7 +393,7 @@ public class SynchronizerConfiguration {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
           fastSyncFullValidationRate,
-          fastSyncMinimumPeerCount,
+          initialSyncMinimumPeerPoWCount,
           worldStateHashCountPerRequest,
           worldStateRequestParallelism,
           worldStateMaxRequestsWithoutProgress,
