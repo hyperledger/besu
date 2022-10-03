@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
@@ -68,8 +69,8 @@ public class DynamicPivotBlockManager {
                           .orElse(currentPivotBlockNumber);
               if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching
                   && isSearchingPivotBlock.compareAndSet(false, true)) {
-                syncActions
-                    .selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE)
+                CompletableFuture.completedFuture(FastSyncState.EMPTY_SYNC_STATE)
+                    .thenCompose(syncActions::selectPivotBlock)
                     .thenCompose(syncActions::downloadPivotBlockHeader)
                     .thenAccept(fss -> lastPivotBlockFound = fss.getPivotBlockHeader())
                     .orTimeout(5, TimeUnit.MINUTES)

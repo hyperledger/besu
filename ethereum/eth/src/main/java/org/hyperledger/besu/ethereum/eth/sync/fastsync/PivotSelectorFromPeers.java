@@ -15,12 +15,18 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
+import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,18 +35,38 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromPeers.class);
 
-  private final EthPeers ethPeers;
+  private final EthContext ethContext;
   private final SynchronizerConfiguration syncConfig;
+  private final SyncState syncState;
+  private final MetricsSystem metricsSystem;
 
   public PivotSelectorFromPeers(
-      final EthPeers ethPeers, final SynchronizerConfiguration syncConfig) {
-    this.ethPeers = ethPeers;
+      final EthContext ethContext,
+      final SynchronizerConfiguration syncConfig,
+      final SyncState syncState,
+      final MetricsSystem metricsSystem) {
+    this.ethContext = ethContext;
     this.syncConfig = syncConfig;
+    this.syncState = syncState;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
     return selectBestPeer().flatMap(this::fromBestPeer);
+  }
+
+  @Override
+  public CompletableFuture<Void> prepareRetry() {
+    final TrailingPeerLimiter trailingPeerLimiter =
+        new TrailingPeerLimiter(
+            ethContext.getEthPeers(),
+            () ->
+                new TrailingPeerRequirements(
+                    conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
+    trailingPeerLimiter.enforceTrailingPeerLimit();
+
+    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount());
   }
 
   private Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
@@ -56,7 +82,8 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   }
 
   private Optional<EthPeer> selectBestPeer() {
-    return ethPeers
+    return ethContext
+        .getEthPeers()
         .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
         // Only select a pivot block number when we have a minimum number of height estimates
         .filter(unused -> enoughFastSyncPeersArePresent());
@@ -76,7 +103,11 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   }
 
   private long countPeersThatCanDeterminePivotBlock() {
-    return ethPeers.streamAvailablePeers().filter(this::canPeerDeterminePivotBlock).count();
+    return ethContext
+        .getEthPeers()
+        .streamAvailablePeers()
+        .filter(this::canPeerDeterminePivotBlock)
+        .count();
   }
 
   private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
@@ -86,5 +117,17 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
         peer.chainState().hasEstimatedHeight(),
         peer.isFullyValidated());
     return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
+  }
+
+  private long conservativelyEstimatedPivotBlock() {
+    long estimatedNextPivot =
+        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
+    return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
+  }
+
+  private CompletableFuture<Void> waitForPeers(final int count) {
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(ethContext, count, metricsSystem);
+    return waitForPeersTask.run();
   }
 }

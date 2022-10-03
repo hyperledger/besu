@@ -85,6 +85,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.io.Closeable;
@@ -407,7 +408,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
-    final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext, ethPeers);
+    final PivotBlockSelector pivotBlockSelector =
+        createPivotSelector(protocolContext, ethContext, syncState, metricsSystem);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -493,7 +495,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private PivotBlockSelector createPivotSelector(
-      final ProtocolContext protocolContext, final EthPeers ethPeers) {
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final MetricsSystem metricsSystem) {
 
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
 
@@ -516,7 +521,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           genesisConfigOptions, finalizedBlockHashSupplier, unsubscribeFinalizedBlockHashListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
-      return new PivotSelectorFromPeers(ethPeers, syncConfig);
+      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
     }
   }
 

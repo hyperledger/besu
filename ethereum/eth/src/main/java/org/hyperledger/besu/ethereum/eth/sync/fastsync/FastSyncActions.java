@@ -15,17 +15,13 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerLimiter;
-import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -33,11 +29,9 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -92,40 +86,6 @@ public class FastSyncActions {
     return syncState;
   }
 
-  public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
-    if (fastSyncState.hasPivotBlockHeader()) {
-      return waitForAnyPeer().thenApply(ignore -> fastSyncState);
-    }
-
-    LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
-    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-        .thenApply(successfulWaitResult -> fastSyncState);
-  }
-
-  public <T> CompletableFuture<T> scheduleFutureTask(
-      final Supplier<CompletableFuture<T>> future, final Duration duration) {
-    return ethContext.getScheduler().scheduleFutureTask(future, duration);
-  }
-
-  private CompletableFuture<Void> waitForAnyPeer() {
-    final CompletableFuture<Void> waitForPeerResult =
-        ethContext.getScheduler().timeout(WaitForPeersTask.create(ethContext, 1, metricsSystem));
-    return exceptionallyCompose(
-        waitForPeerResult,
-        throwable -> {
-          if (ExceptionUtils.rootCause(throwable) instanceof TimeoutException) {
-            return waitForAnyPeer();
-          }
-          return CompletableFuture.failedFuture(throwable);
-        });
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(ethContext, count, metricsSystem);
-    return waitForPeersTask.run();
-  }
-
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
     return fastSyncState.hasPivotBlockHeader()
         ? completedFuture(fastSyncState)
@@ -140,29 +100,15 @@ public class FastSyncActions {
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
   }
 
+  <T> CompletableFuture<T> scheduleFutureTask(
+      final Supplier<CompletableFuture<T>> future, final Duration duration) {
+    return ethContext.getScheduler().scheduleFutureTask(future, duration);
+  }
+
   private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {
     return ethContext
         .getScheduler()
-        .scheduleFutureTask(
-            this::limitTrailingPeersAndRetrySelectPivotBlock, Duration.ofSeconds(5));
-  }
-
-  private long conservativelyEstimatedPivotBlock() {
-    long estimatedNextPivot =
-        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
-    return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
-  }
-
-  private CompletableFuture<FastSyncState> limitTrailingPeersAndRetrySelectPivotBlock() {
-    final TrailingPeerLimiter trailingPeerLimiter =
-        new TrailingPeerLimiter(
-            ethContext.getEthPeers(),
-            () ->
-                new TrailingPeerRequirements(
-                    conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
-    trailingPeerLimiter.enforceTrailingPeerLimit();
-
-    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
+        .scheduleFutureTask(pivotBlockSelector::prepareRetry, Duration.ofSeconds(5))
         .thenCompose(ignore -> selectNewPivotBlock());
   }
 

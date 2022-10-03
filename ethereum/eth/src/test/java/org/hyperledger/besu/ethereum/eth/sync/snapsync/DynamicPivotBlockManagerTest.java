@@ -16,9 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.OptionalLong;
-import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -60,18 +57,13 @@ public class DynamicPivotBlockManagerTest {
     when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(999));
     dynamicPivotBlockManager.check(
         (blockHeader, newBlockFound) -> assertThat(newBlockFound).isFalse());
-    verify(fastSyncActions, never()).waitForSuitablePeers(any());
   }
 
   @Test
   public void shouldSearchNewPivotBlockWhenNotCloseToTheHead() {
-
-    final CompletableFuture<FastSyncState> COMPLETE =
-        completedFuture(FastSyncState.EMPTY_SYNC_STATE);
     final FastSyncState selectPivotBlockState = new FastSyncState(1090);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1090).buildHeader();
     final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
-    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
@@ -82,18 +74,13 @@ public class DynamicPivotBlockManagerTest {
     when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(939));
     dynamicPivotBlockManager.check(
         (blockHeader, newBlockFound) -> assertThat(newBlockFound).isFalse());
-    verify(fastSyncActions).waitForSuitablePeers(any());
   }
 
   @Test
   public void shouldSwitchToNewPivotBlockWhenNeeded() {
-
-    final CompletableFuture<FastSyncState> COMPLETE =
-        completedFuture(FastSyncState.EMPTY_SYNC_STATE);
     final FastSyncState selectPivotBlockState = new FastSyncState(1060);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1060).buildHeader();
     final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
-    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
@@ -117,18 +104,13 @@ public class DynamicPivotBlockManagerTest {
         });
 
     verify(snapSyncState).setCurrentHeader(pivotBlockHeader);
-    verify(fastSyncActions).waitForSuitablePeers(any());
   }
 
   @Test
   public void shouldSwitchToNewPivotOnlyOnce() {
-
-    final CompletableFuture<FastSyncState> COMPLETE =
-        completedFuture(FastSyncState.EMPTY_SYNC_STATE);
     final FastSyncState selectPivotBlockState = new FastSyncState(1060);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(1060).buildHeader();
     final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
-    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))

@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -49,6 +50,12 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     }
     LOG.trace("No finalized block hash announced yet");
     return Optional.empty();
+  }
+
+  @Override
+  public CompletableFuture<Void> prepareRetry() {
+    // nothing to do
+    return CompletableFuture.completedFuture(null);
   }
 
   private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
