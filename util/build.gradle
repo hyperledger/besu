@@ -24,7 +24,7 @@ jar {
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
       'Automatic-Module-Name': 'org.hyperledger.besu.internal.Util'
-    )
+      )
   }
 }
 
