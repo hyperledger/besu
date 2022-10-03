@@ -259,7 +259,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
 
-    // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer additions
+    // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer
+    // additions
     checkMaintainedConnectionPeers();
 
     // Periodically check maintained connections
