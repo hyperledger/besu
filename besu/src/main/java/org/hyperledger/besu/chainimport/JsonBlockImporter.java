@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
@@ -146,9 +147,9 @@ public class JsonBlockImporter {
             .getByBlockNumber(block.getHeader().getNumber())
             .getBlockImporter();
 
-    final boolean imported =
+    final BlockImportResult importResult =
         importer.importBlock(controller.getProtocolContext(), block, HeaderValidationMode.NONE);
-    if (imported) {
+    if (importResult.isImported()) {
       LOG.info(
           "Successfully created and imported block at height {} ({})",
           block.getHeader().getNumber(),
@@ -220,7 +221,7 @@ public class JsonBlockImporter {
 
     if (importedBlocks.size() > 0 && blockData.getNumber().isPresent()) {
       final long targetParentBlockNumber = blockData.getNumber().get() - 1L;
-      Optional<BlockHeader> maybeHeader =
+      final Optional<BlockHeader> maybeHeader =
           importedBlocks.stream()
               .map(Block::getHeader)
               .filter(h -> h.getNumber() == targetParentBlockNumber)
@@ -230,7 +231,7 @@ public class JsonBlockImporter {
       }
     }
 
-    long blockNumber;
+    final long blockNumber;
     if (blockData.getNumber().isPresent()) {
       blockNumber = blockData.getNumber().get() - 1L;
     } else if (importedBlocks.size() > 0) {
@@ -241,7 +242,7 @@ public class JsonBlockImporter {
     }
 
     if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
-      throw new IllegalArgumentException("Invalid block number: " + blockNumber + 1);
+      throw new IllegalArgumentException("Invalid block number: " + (blockNumber + 1));
     }
 
     return controller
