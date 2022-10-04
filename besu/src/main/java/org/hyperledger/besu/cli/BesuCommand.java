@@ -1590,7 +1590,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final ConfigOptionSearchAndRunHandler configParsingHandler =
         new ConfigOptionSearchAndRunHandler(
             resultHandler, besuParameterExceptionHandler, environment);
-    new ConfigOptionSearchAndRunHandler(resultHandler, besuParameterExceptionHandler, environment);
 
     ParseArgsHelper.getLauncherOptions(unstableLauncherOptions, args);
     if (unstableLauncherOptions.isLauncherMode()
