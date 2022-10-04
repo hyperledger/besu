@@ -278,12 +278,20 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     // cheaply limit the noise of fcU during consensus client syncing to once a minute:
     if (lastFcuInfoLog + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastFcuInfoLog = System.currentTimeMillis();
+      if (status.name() == "SYNCING") {
+        LOG.info(
+          "Besu is still syncing. Consensus layer providing a fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
+          forkChoice.getHeadBlockHash(),
+          forkChoice.getFinalizedBlockHash(),
+          forkChoice.getSafeBlockHash());
+      } else {
       LOG.info(
           "{} for fork-choice-update: head: {}, finalized: {}, safeBlockHash: {}",
           status.name(),
           forkChoice.getHeadBlockHash(),
           forkChoice.getFinalizedBlockHash(),
           forkChoice.getSafeBlockHash());
+      }
     }
   }
 }
