@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayload;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -30,7 +31,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 
 public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -38,13 +38,14 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Optional<MergeMiningCoordinator> mergeCoordinator;
   private final ProtocolContext protocolContext;
-
   private final EthPeers ethPeers;
+  private final Vertx consensusEngineServer;
 
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
       final ProtocolContext protocolContext,
-      final EthPeers ethPeers) {
+      final EthPeers ethPeers,
+      final Vertx consensusEngineServer) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
             .filter(mc -> mc.isCompatibleWithEngineApi())
@@ -52,6 +53,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
+    this.consensusEngineServer = consensusEngineServer;
   }
 
   @Override
@@ -61,15 +63,26 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
-    Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
+    final EngineQosTimer engineQosTimer = new EngineQosTimer(consensusEngineServer);
+
     if (mergeCoordinator.isPresent()) {
       return mapOf(
-          new EngineGetPayload(syncVertx, protocolContext, blockResultFactory),
-          new EngineNewPayload(syncVertx, protocolContext, mergeCoordinator.get(), ethPeers),
-          new EngineForkchoiceUpdated(syncVertx, protocolContext, mergeCoordinator.get()),
-          new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
+          new EngineGetPayload(
+              consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
+          new EngineNewPayload(
+              consensusEngineServer,
+              protocolContext,
+              mergeCoordinator.get(),
+              ethPeers,
+              engineQosTimer),
+          new EngineForkchoiceUpdated(
+              consensusEngineServer, protocolContext, mergeCoordinator.get(), engineQosTimer),
+          new EngineExchangeTransitionConfiguration(
+              consensusEngineServer, protocolContext, engineQosTimer));
     } else {
-      return mapOf(new EngineExchangeTransitionConfiguration(syncVertx, protocolContext));
+      return mapOf(
+          new EngineExchangeTransitionConfiguration(
+              consensusEngineServer, protocolContext, engineQosTimer));
     }
   }
 }

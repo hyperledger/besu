@@ -32,6 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
@@ -46,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
 import java.util.List;
@@ -70,8 +73,9 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
-      final EthPeers ethPeers) {
-    super(vertx, protocolContext);
+      final EthPeers ethPeers,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
   }
@@ -83,6 +87,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    engineCallListener.executionEngineCalled();
+
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
@@ -212,6 +218,15 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
+      if (executionResult.cause.isPresent()) {
+        // TODO; would prefer to invert the logic so we rpc error on anything that isn't a
+        // consensus error
+        if (executionResult.cause.get() instanceof StorageException) {
+          JsonRpcError error = JsonRpcError.INTERNAL_ERROR;
+          JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
+          return response;
+        }
+      }
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
       return respondWithInvalid(
           reqId, blockParam, latestValidAncestor.get(), executionResult.errorMessage.get());

@@ -50,8 +50,9 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   public EngineForkchoiceUpdated(
       final Vertx vertx,
       final ProtocolContext protocolContext,
-      final MergeMiningCoordinator mergeCoordinator) {
-    super(vertx, protocolContext);
+      final MergeMiningCoordinator mergeCoordinator,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
   }
 
@@ -62,12 +63,16 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    engineCallListener.executionEngineCalled();
+
     final Object requestId = requestContext.getRequest().getId();
 
     final EngineForkchoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
     final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+
+    LOG.debug("Forkchoice parameters {}", forkChoice);
 
     Optional<Hash> maybeFinalizedHash =
         Optional.ofNullable(forkChoice.getFinalizedBlockHash())

@@ -110,7 +110,9 @@ public class MainnetBlockValidator implements BlockValidator {
         shouldPersist ? maybeWorldState.get() : maybeWorldState.get().copy();
 
     final BlockProcessor.Result result = processBlock(context, worldState, block);
-    if (result.isFailed()) {
+    if (result.isFailed() && result.causedBy().isPresent()) {
+      return handleAndReportFailure(block, "Error processing block", result);
+    } else if (result.isFailed()) {
       return handleAndReportFailure(block, "Error processing block");
     }
 
@@ -140,8 +142,22 @@ public class MainnetBlockValidator implements BlockValidator {
 
   private Result handleAndReportFailure(final Block invalidBlock, final String reason) {
     badBlockManager.addBadBlock(invalidBlock);
-    LOG.error("{}. Block {}", reason, invalidBlock.toLogString());
+    LOG.info("{}. Block {}", reason, invalidBlock.toLogString());
     return new Result(reason);
+  }
+
+  private Result handleAndReportFailure(
+      final Block invalidBlock, final String reason, final BlockProcessor.Result result) {
+    if (result.causedBy().isPresent()) {
+      LOG.info("{}. Block {}, caused by {}", reason, invalidBlock.toLogString(), result.causedBy());
+      // TODO: if it's an internal error, don't add it
+      badBlockManager.addBadBlock(invalidBlock);
+      return new Result(reason, result.causedBy().get());
+    } else {
+      LOG.info("{}. Block {}", reason, invalidBlock.toLogString());
+      badBlockManager.addBadBlock(invalidBlock);
+      return new Result(reason);
+    }
   }
 
   /**

@@ -17,6 +17,11 @@ package org.hyperledger.besu;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -101,11 +106,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Tests for {@link Runner}. */
 @RunWith(MockitoJUnitRunner.class)
 public final class RunnerTest {
-
-  private static final int MAX_OPEN_FILES = 1024;
-  private static final long CACHE_CAPACITY = 8388608;
-  private static final int MAX_BACKGROUND_COMPACTIONS = 4;
-  private static final int BACKGROUND_THREAD_COUNT = 4;
 
   private Vertx vertx;
 
@@ -415,10 +415,11 @@ public final class RunnerTest {
             new RocksDBKeyValueStorageFactory(
                 () ->
                     new RocksDBFactoryConfiguration(
-                        MAX_OPEN_FILES,
-                        MAX_BACKGROUND_COMPACTIONS,
-                        BACKGROUND_THREAD_COUNT,
-                        CACHE_CAPACITY),
+                        DEFAULT_MAX_OPEN_FILES,
+                        DEFAULT_MAX_BACKGROUND_COMPACTIONS,
+                        DEFAULT_BACKGROUND_THREAD_COUNT,
+                        DEFAULT_CACHE_CAPACITY,
+                        DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))

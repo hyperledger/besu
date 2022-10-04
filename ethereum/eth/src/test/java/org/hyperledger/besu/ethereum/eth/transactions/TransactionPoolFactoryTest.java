@@ -15,29 +15,31 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
@@ -49,47 +51,173 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@SuppressWarnings("unchecked")
+@RunWith(MockitoJUnitRunner.class)
 public class TransactionPoolFactoryTest {
+  @Mock ProtocolSchedule schedule;
+  @Mock ProtocolContext context;
+  @Mock MutableBlockchain blockchain;
+  @Mock EthContext ethContext;
+  @Mock EthMessages ethMessages;
+  @Mock EthScheduler ethScheduler;
 
-  @Test
-  public void testDisconnect() {
-    final ProtocolSchedule schedule = mock(ProtocolSchedule.class);
-    final ProtocolContext context = mock(ProtocolContext.class);
-    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+  @Mock GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock PeerTransactionTracker peerTransactionTracker;
+  @Mock TransactionsMessageSender transactionsMessageSender;
 
-    when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(mock(Block.class)));
+  @Mock NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
+
+  TransactionPool pool;
+  EthPeers ethPeers;
+
+  SyncState syncState;
+
+  EthProtocolManager ethProtocolManager;
+
+  @Before
+  public void setup() {
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(mock(Hash.class)));
     when(context.getBlockchain()).thenReturn(blockchain);
-    final EthPeers ethPeers =
+    ethPeers =
         new EthPeers(
             "ETH",
             TestClock.fixed(),
             new NoOpMetricsSystem(),
             25,
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
-    final EthContext ethContext = mock(EthContext.class);
-    when(ethContext.getEthMessages()).thenReturn(mock(EthMessages.class));
+    when(ethContext.getEthMessages()).thenReturn(ethMessages);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    final EthScheduler ethScheduler = mock(EthScheduler.class);
+
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    final GasPricePendingTransactionsSorter pendingTransactions =
-        mock(GasPricePendingTransactionsSorter.class);
-    final PeerTransactionTracker peerTransactionTracker = mock(PeerTransactionTracker.class);
-    final TransactionsMessageSender transactionsMessageSender =
-        mock(TransactionsMessageSender.class);
-    doNothing().when(transactionsMessageSender).sendTransactionsToPeer(any(EthPeer.class));
-    final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
-        mock(NewPooledTransactionHashesMessageSender.class);
-    final TransactionPool pool =
+  }
+
+  @Test
+  public void disconnectNotInvokedBeforeInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    final RespondingEthPeer ethPeer =
+        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+    assertThat(ethPeer.getEthPeer()).isNotNull();
+    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verifyNoInteractions(peerTransactionTracker);
+  }
+
+  @Test
+  public void disconnectInvokedAfterInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    final RespondingEthPeer ethPeer =
+        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+    assertThat(ethPeer.getEthPeer()).isNotNull();
+    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+
+    syncState.markInitialSyncPhaseAsDone();
+
+    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
+  }
+
+  @Test
+  public void disconnectInvokedIfNoInitialSync() {
+    setupInitialSyncPhase(false);
+    final RespondingEthPeer ethPeer =
+        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+    assertThat(ethPeer.getEthPeer()).isNotNull();
+    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
+
+    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
+    verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
+  }
+
+  @Test
+  public void notRegisteredToBlockAddedEventBeforeInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
+
+    assertThat(blockAddedListeners.getAllValues()).doesNotContain(pool);
+  }
+
+  @Test
+  public void registeredToBlockAddedEventAfterInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    syncState.markInitialSyncPhaseAsDone();
+
+    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
+
+    assertThat(blockAddedListeners.getAllValues()).contains(pool);
+  }
+
+  @Test
+  public void registeredToBlockAddedEventIfNoInitialSync() {
+    setupInitialSyncPhase(false);
+
+    ArgumentCaptor<BlockAddedObserver> blockAddedListeners =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
+
+    assertThat(blockAddedListeners.getAllValues()).contains(pool);
+  }
+
+  @Test
+  public void incomingTransactionMessageHandlersNotRegisteredBeforeInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
+
+    assertThat(messageHandlers.getAllValues())
+        .doesNotHaveAnyElementsOfTypes(
+            TransactionsMessageHandler.class, NewPooledTransactionHashesMessageHandler.class);
+  }
+
+  @Test
+  public void incomingTransactionMessageHandlersRegisteredAfterInitialSyncIsDone() {
+    setupInitialSyncPhase(true);
+    syncState.markInitialSyncPhaseAsDone();
+
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
+
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(TransactionsMessageHandler.class);
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(NewPooledTransactionHashesMessageHandler.class);
+  }
+
+  @Test
+  public void incomingTransactionMessageHandlersRegisteredIfNoInitialSync() {
+    setupInitialSyncPhase(false);
+
+    ArgumentCaptor<EthMessages.MessageCallback> messageHandlers =
+        ArgumentCaptor.forClass(EthMessages.MessageCallback.class);
+    verify(ethMessages, atLeast(0)).subscribe(anyInt(), messageHandlers.capture());
+
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(TransactionsMessageHandler.class);
+    assertThat(messageHandlers.getAllValues())
+        .hasAtLeastOneElementOfType(NewPooledTransactionHashesMessageHandler.class);
+  }
+
+  private void setupInitialSyncPhase(final boolean hasInitialSyncPhase) {
+    syncState = new SyncState(blockchain, ethPeers, hasInitialSyncPhase, Optional.empty());
+
+    pool =
         TransactionPoolFactory.createTransactionPool(
             schedule,
             context,
             ethContext,
             new NoOpMetricsSystem(),
-            () -> true,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
@@ -101,7 +229,7 @@ public class TransactionPoolFactoryTest {
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender);
 
-    final EthProtocolManager ethProtocolManager =
+    ethProtocolManager =
         new EthProtocolManager(
             blockchain,
             BigInteger.ONE,
@@ -116,12 +244,5 @@ public class TransactionPoolFactoryTest {
             true,
             mock(EthScheduler.class),
             mock(ForkIdManager.class));
-
-    final RespondingEthPeer ethPeer =
-        RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
-    assertThat(ethPeer.getEthPeer()).isNotNull();
-    assertThat(ethPeer.getEthPeer().isDisconnected()).isFalse();
-    ethPeer.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
-    verify(peerTransactionTracker, times(1)).onDisconnect(ethPeer.getEthPeer());
   }
 }

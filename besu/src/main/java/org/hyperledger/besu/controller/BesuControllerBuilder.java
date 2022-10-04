@@ -21,7 +21,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -387,7 +386,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             clock,
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             miningParameters,
             transactionPoolConfiguration);
 
@@ -421,8 +420,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
-
-    synchronizer.subscribeInSync(new PandaPrinter());
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -467,7 +464,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         additionalPluginServices);
   }
 
-  private Synchronizer createSynchronizer(
+  protected Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorage worldStateStorage,
       final ProtocolContext protocolContext,
@@ -476,8 +473,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
-
-    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
 
     DefaultSynchronizer toUse =
         new DefaultSynchronizer(
@@ -494,13 +489,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             getFullSyncTerminationCondition(protocolContext.getBlockchain()),
             pivotBlockSelector);
-    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
-      LOG.info(
-          "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
-      protocolContext
-          .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(toUse);
-    }
 
     return toUse;
   }

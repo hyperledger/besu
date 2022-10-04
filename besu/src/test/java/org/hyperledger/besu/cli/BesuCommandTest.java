@@ -824,6 +824,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);
+      } else if (optionSpec.type().equals(Float.class)) {
+        tomlResult.getDouble(tomlKey);
       } else if (Number.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getLong(tomlKey);
       } else if (Wei.class.isAssignableFrom(optionSpec.type())) {
@@ -880,7 +882,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
+    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(1);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
@@ -1707,37 +1709,25 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST");
+  public void checkValidDefaultFastSyncMinPeersPoS() {
+    parseCommand("--sync-mode", "FAST", "--network", "MAINNET");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
+    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(1);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeersPreMergeOption() {
+  public void checkValidDefaultFastSyncMinPeersPoW() {
     parseCommand("--sync-mode", "FAST", "--network", "CLASSIC");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
     assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkValidDefaultFastSyncMinPeersPostMergeOption() {
-    parseCommand("--sync-mode", "FAST", "--network", "GOERLI");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(1);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

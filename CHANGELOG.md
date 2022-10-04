@@ -1,26 +1,74 @@
 # Changelog
 
-## 22.7.3-next
+## 22.7.5
+
+### Additions and Improvements
+- Avoid sending added block events to transaction pool, and processing incoming transactions during initial sync [#4457](https://github.com/hyperledger/besu/pull/4457)
+- When building a new proposal, keep the best block built until now instead of the last one [#4455](https://github.com/hyperledger/besu/pull/4455)
+- Add Mainnet to merged networks [#4463](https://github.com/hyperledger/besu/pull/4463)
+
+### Bug Fixes
+### Download Links
+
+## 22.7.4
+
+
+### Bug Fixes
+- Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
+- Add Toml configuration file support for _--Xplugin-rocksdb-high-spec-enabled_ flag [#4438](https://github.com/hyperledger/besu/pull/4438)
+
+### Download Links
+- https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.zip / sha256: 4f2a0c20bee7f266ec1dcb45fa90ae1ca42f4b22e9b21a601b7705357259aea9
+- https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.tar.gz / sha256: a60efc4d515ac94710bbc6d61a24f409b03fcfc02323bee2a2d75c883fc99dce
+
+
+## 22.7.3
 
 ### Additions and Improvements
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
+- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
+- Resets engine QoS timer with every call to the engine API instead of only when ExchangeTransitionConfiguration is called [#4411](https://github.com/hyperledger/besu/issues/4411)
+- ExchangeTransitionConfiguration mismatch will only submit a debug log not a warning anymore [#4411](https://github.com/hyperledger/besu/issues/4411)
+- Upgrade besu-native to 0.6.1 and include linux arm64 build of bls12-381 [#4416](https://github.com/hyperledger/besu/pull/4416)
+- Create a new flag on RocksDB (_--Xplugin-rocksdb-high-spec-enabled_) for high spec hardware to boost performance
+- Transaction pool improvements to avoid filling the pool with not executable transactions, that could result in empty or semi-empty block proposals [#4425](https://github.com/hyperledger/besu/pull/4425)
+- Limit Transaction pool consumption by sender to a configurable percentage of the pool size [#4417](https://github.com/hyperledger/besu/pull/4417)
+
+### Bug Fixes
+- Retry block creation if there is a transient error and we still have time, to mitigate empty block issue [#4407](https://github.com/hyperledger/besu/pull/4407)
+- Fix StacklessClosedChannelException in Besu and resulted timeout errors in CL clients ([#4398](https://github.com/hyperledger/besu/issues/4398), [#4400](https://github.com/hyperledger/besu/issues/4400))
+- Return JSON-RPC error code instead of INVALID in engine api when certain storage exceptions are encountered ([#4349](https://github.com/hyperledger/besu/issues/4349))
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.tar.gz / sha256: `b0863fe2406cab57caf8a02f2bf02632cc5198622ac48b69bc63c128703bbd79`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.3/besu-22.7.3.zip / sha256: `368c6cb86119f8fe30bb12ab8c63b4d95a0fd8baf9c9414307a0a4033756b709`
 
 ## 22.7.2
+### Besu 22.7.2 is a recommended release for the Merge and Mainnet users. 22.7.1 remains Merge-ready. This release provides additional robustness before the Merge with some fixes and improvements in sync, peering, and logging.
 
 ### Additions and Improvements
-- Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
 - Better management of jemalloc presence/absence in startup script [#4237](https://github.com/hyperledger/besu/pull/4237)
 - Retry mechanism when getting a broadcasted block fail on all peers [#4271](https://github.com/hyperledger/besu/pull/4271)
 - Filter out disconnected peers when fetching available peers [#4269](https://github.com/hyperledger/besu/pull/4269)
 - Updated the default value of fast-sync-min-peers post merge [#4298](https://github.com/hyperledger/besu/pull/4298)
 - Log imported block info post merge [#4310](https://github.com/hyperledger/besu/pull/4310)
+- Transaction pool eviction by sender from tail of transaction list [#4327](https://github.com/hyperledger/besu/pull/4327)
+- Transaction pool sender future nonce limits [#4336](https://github.com/hyperledger/besu/pull/4336)
+- Pandas! Pandas now appear in 3 phases: The black bear and polar bear that are preparing? Those will appear when
+your client has TTD configured (which is setup by default for mainnet), is in sync, and processing Proof of Work blocks. In the second phase you will see them powering up when the Terminal Total Difficulty block is added to the blockchain.
+The final form of the Ethereum Panda will appear when the first finalized block is received from the Consensus Layer.
 
 ### Bug Fixes
 - Accept wit/80 from Nethermind [#4279](https://github.com/hyperledger/besu/pull/4279)
+- Properly shutdown the miner executor, to avoid waiting 30 seconds when stopping [#4353](https://github.com/hyperledger/besu/pull/4353)
+
+### Download links
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.2/besu-22.7.2.tar.gz / sha256: `8030a48f824c7bbc138b38a9e84e5531950bc16f6d21cda8b215232cce334214`
+- https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.7.2/besu-22.7.2.zip / sha256: `72653171b1ddd910e705fc6f616d7f1f4c120ef0d91718f0376f3ee5f2982c11`
 
 
 ## 22.7.1
-
+### Merge Ready Release. Required update for The Merge on ethereum mainnet!
 ### Additions and Improvements
 - Introduce a cap to reputation score increase [#4230](https://github.com/hyperledger/besu/pull/4230)
 - Add experimental CLI option for `--Xp2p-peer-lower-bound` [#4200](https://github.com/hyperledger/besu/pull/4200)

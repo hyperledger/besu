@@ -82,8 +82,9 @@ public class EthScheduler {
             metricsSystem),
         MonitoredExecutors.newCachedThreadPool(
             EthScheduler.class.getSimpleName() + "-Services", metricsSystem),
-        MonitoredExecutors.newFixedThreadPool(
+        MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-Computation",
+            1,
             computationWorkerCount,
             metricsSystem));
   }
