@@ -15,6 +15,8 @@
 package org.hyperledger.besu.cli.util;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,7 +29,7 @@ import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
-public class ConfigOptionSearchAndRunHandler implements IExecutionStrategy {
+public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   private final IExecutionStrategy resultHandler;
   private final IParameterExceptionHandler parameterExceptionHandler;
   private final Map<String, String> environment;
@@ -39,6 +41,19 @@ public class ConfigOptionSearchAndRunHandler implements IExecutionStrategy {
     this.resultHandler = resultHandler;
     this.parameterExceptionHandler = parameterExceptionHandler;
     this.environment = environment;
+  }
+
+  @Override
+  public List<Object> handle(final ParseResult parseResult) throws ParameterException {
+    final CommandLine commandLine = parseResult.commandSpec().commandLine();
+    final Optional<File> configFile = findConfigFile(parseResult, commandLine);
+    validatePrivacyOptions(parseResult, commandLine);
+    commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));
+    commandLine.setExecutionStrategy(resultHandler);
+    commandLine.setParameterExceptionHandler(parameterExceptionHandler);
+    commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+
+    return new ArrayList<>();
   }
 
   private void validatePrivacyOptions(
@@ -96,15 +111,7 @@ public class ConfigOptionSearchAndRunHandler implements IExecutionStrategy {
   }
 
   @Override
-  public int execute(final ParseResult parseResult)
-      throws CommandLine.ExecutionException, ParameterException {
-    final CommandLine commandLine = parseResult.commandSpec().commandLine();
-    final Optional<File> configFile = findConfigFile(parseResult, commandLine);
-    validatePrivacyOptions(parseResult, commandLine);
-    commandLine.setDefaultValueProvider(createDefaultValueProvider(commandLine, configFile));
-    return commandLine
-        .setExecutionStrategy(resultHandler)
-        .setParameterExceptionHandler(parameterExceptionHandler)
-        .execute(parseResult.originalArgs().toArray(new String[0]));
+  public ConfigOptionSearchAndRunHandler self() {
+    return this;
   }
 }
