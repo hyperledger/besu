@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -50,8 +48,6 @@ public class PrivateTransactionProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionProcessor.class);
 
-  private final GasCalculator gasCalculator;
-
   @SuppressWarnings("unused")
   private final MainnetTransactionValidator transactionValidator;
 
@@ -67,14 +63,12 @@ public class PrivateTransactionProcessor {
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
-      final GasCalculator gasCalculator,
       final MainnetTransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
       final PrivateTransactionValidator privateTransactionValidator) {
-    this.gasCalculator = gasCalculator;
     this.transactionValidator = transactionValidator;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
@@ -227,15 +221,5 @@ public class PrivateTransactionProcessor {
       default:
         throw new IllegalStateException("Request for unsupported message processor type " + type);
     }
-  }
-
-  @SuppressWarnings("unused")
-  private long refunded(
-      final Transaction transaction, final long gasRemaining, final long gasRefund) {
-    // Integer truncation takes care of the the floor calculation needed after the divide.
-    final long maxRefundAllowance =
-        (transaction.getGasLimit() - gasRemaining) / gasCalculator.getMaxRefundQuotient();
-    final long refundAllowance = Math.min(maxRefundAllowance, gasRefund);
-    return gasRemaining + refundAllowance;
   }
 }

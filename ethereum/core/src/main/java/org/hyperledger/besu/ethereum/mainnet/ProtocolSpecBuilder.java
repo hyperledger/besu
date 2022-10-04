@@ -315,7 +315,6 @@ public class ProtocolSpecBuilder {
           privateTransactionValidatorBuilder.apply();
       privateTransactionProcessor =
           privateTransactionProcessorBuilder.apply(
-              gasCalculator,
               transactionValidator,
               contractCreationProcessor,
               messageCallProcessor,
@@ -392,7 +391,6 @@ public class ProtocolSpecBuilder {
 
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
-        GasCalculator gasCalculator,
         MainnetTransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor,

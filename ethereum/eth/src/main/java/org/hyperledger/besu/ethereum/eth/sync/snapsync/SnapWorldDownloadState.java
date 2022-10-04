@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -33,6 +35,7 @@ import java.time.Clock;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -59,11 +62,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
   private final SnapSyncState snapSyncState;
 
+  // blockchain
+  private final Blockchain blockchain;
+  private OptionalLong blockObserverId;
+
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
 
   public SnapWorldDownloadState(
       final WorldStateStorage worldStateStorage,
+      final Blockchain blockchain,
       final SnapSyncState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
@@ -76,8 +84,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock);
+    this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
+    this.blockObserverId = OptionalLong.empty();
     metricsManager
         .getMetricsSystem()
         .createLongGauge(
@@ -135,8 +145,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealInProgress()) {
-        LOG.info("Starting world state heal process from peers");
         startHeal();
+      } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
+        LOG.info("Pausing world state download while waiting for sync to complete");
+        if (blockObserverId.isEmpty())
+          blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
+        snapSyncState.setWaitingBlockchain(true);
       } else {
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
@@ -164,10 +178,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     snapSyncState.setHealStatus(true);
     // try to find new pivot block before healing
     dynamicPivotBlockManager.switchToNewPivotBlock(
-        (blockHeader, newPivotBlockFound) ->
-            enqueueRequest(
-                createAccountTrieNodeDataRequest(
-                    blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts)));
+        (blockHeader, newPivotBlockFound) -> {
+          LOG.info(
+              "Running world state heal process from peers with pivot block {}",
+              blockHeader.getNumber());
+          enqueueRequest(
+              createAccountTrieNodeDataRequest(
+                  blockHeader.getStateRoot(), Bytes.EMPTY, inconsistentAccounts));
+        });
   }
 
   public synchronized void reloadHeal() {
@@ -270,5 +288,28 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public void setDynamicPivotBlockManager(final DynamicPivotBlockManager dynamicPivotBlockManager) {
     this.dynamicPivotBlockManager = dynamicPivotBlockManager;
+  }
+
+  public BlockAddedObserver getBlockAddedListener() {
+    return addedBlockContext -> {
+      if (snapSyncState.isWaitingBlockchain()) {
+        // if we receive a new pivot block we can restart the heal
+        dynamicPivotBlockManager.check(
+            (____, isNewPivotBlock) -> {
+              if (isNewPivotBlock) {
+                snapSyncState.setWaitingBlockchain(false);
+              }
+            });
+        // if we are close to the head we can also restart the heal and finish snapsync
+        if (!dynamicPivotBlockManager.isBlockchainBehind()) {
+          snapSyncState.setWaitingBlockchain(false);
+        }
+        if (!snapSyncState.isWaitingBlockchain()) {
+          blockObserverId.ifPresent(blockchain::removeObserver);
+          blockObserverId = OptionalLong.empty();
+          reloadHeal();
+        }
+      }
+    };
   }
 }

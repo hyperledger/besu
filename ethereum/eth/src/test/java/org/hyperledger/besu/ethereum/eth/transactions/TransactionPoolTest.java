@@ -134,7 +134,10 @@ public class TransactionPoolTest {
     blockchain = executionContext.getBlockchain();
     transactions =
         new GasPricePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(MAX_TRANSACTIONS).build(),
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(MAX_TRANSACTIONS)
+                .txPoolLimitByAccountPercentage(1)
+                .build(),
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             blockchain::getChainHeadHeader);
@@ -208,13 +211,13 @@ public class TransactionPoolTest {
   @Test
   public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
     final Transaction localTransaction0 = createTransaction(0);
-    transactions.addLocalTransaction(localTransaction0);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
 
-    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
 
-    transactions.addRemoteTransaction(transaction2);
+    transactions.addRemoteTransaction(transaction2, Optional.empty());
     assertThat(transactions.size()).isEqualTo(3);
 
     List<Transaction> localTransactions = transactions.getLocalTransactions();
@@ -223,7 +226,7 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldRemoveTransactionsFromPendingListWhenIncludedInBlockOnchain() {
-    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
     assertTransactionPending(transaction1);
     appendBlock(transaction1);
 
@@ -232,8 +235,8 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldRemoveMultipleTransactionsAddedInOneBlock() {
-    transactions.addRemoteTransaction(transaction1);
-    transactions.addRemoteTransaction(transaction2);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addRemoteTransaction(transaction2, Optional.empty());
     appendBlock(transaction1, transaction2);
 
     assertTransactionNotPending(transaction1);
@@ -243,7 +246,7 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldIgnoreUnknownTransactionsThatAreAddedInABlock() {
-    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
     appendBlock(transaction1, transaction2);
 
     assertTransactionNotPending(transaction1);
@@ -253,7 +256,7 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldNotRemovePendingTransactionsWhenABlockAddedToAFork() {
-    transactions.addRemoteTransaction(transaction1);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block canonicalHead = appendBlock(Difficulty.of(1000), commonParent);
     appendBlock(Difficulty.ONE, commonParent, transaction1);
@@ -265,8 +268,8 @@ public class TransactionPoolTest {
 
   @Test
   public void shouldRemovePendingTransactionsFromAllBlocksOnAForkWhenItBecomesTheCanonicalChain() {
-    transactions.addRemoteTransaction(transaction1);
-    transactions.addRemoteTransaction(transaction2);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addRemoteTransaction(transaction2, Optional.empty());
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block originalChainHead = appendBlock(Difficulty.of(1000), commonParent);
 
@@ -284,8 +287,8 @@ public class TransactionPoolTest {
   public void shouldReadTransactionsFromThePreviousCanonicalHeadWhenAReorgOccurs() {
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
-    transactions.addRemoteTransaction(transaction1);
-    transactions.addRemoteTransaction(transaction2);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addRemoteTransaction(transaction2, Optional.empty());
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction1);
     final Block originalFork2 =
@@ -311,8 +314,8 @@ public class TransactionPoolTest {
   public void shouldNotReadTransactionsThatAreInBothForksWhenReorgHappens() {
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
-    transactions.addRemoteTransaction(transaction1);
-    transactions.addRemoteTransaction(transaction2);
+    transactions.addRemoteTransaction(transaction1, Optional.empty());
+    transactions.addRemoteTransaction(transaction2, Optional.empty());
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction1);
     final Block originalFork2 =
@@ -440,7 +443,7 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToInvariantChecks() {
+  public void shouldNotAddRemoteTransactionsWhenThereIsAnLowestInvalidNonceForTheSender() {
     givenTransactionIsValid(transaction2);
     when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
@@ -448,23 +451,22 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
 
     assertTransactionNotPending(transaction1);
-    assertTransactionPending(transaction2);
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction2));
+    assertTransactionNotPending(transaction2);
+    verify(transactionBroadcaster, never()).onTransactionsAdded(singletonList(transaction2));
   }
 
   @Test
   public void shouldNotAddRemoteTransactionsThatAreInvalidAccordingToStateDependentChecks() {
+    givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
-    when(transactionValidator.validate(eq(transaction1), any(Optional.class), any()))
-        .thenReturn(valid());
     when(transactionValidator.validateForSender(
-            eq(transaction1), eq(null), any(TransactionValidationParams.class)))
+            eq(transaction2), eq(null), any(TransactionValidationParams.class)))
         .thenReturn(ValidationResult.invalid(NONCE_TOO_LOW));
     transactionPool.addRemoteTransactions(asList(transaction1, transaction2));
 
-    assertTransactionNotPending(transaction1);
-    assertTransactionPending(transaction2);
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction2));
+    assertTransactionPending(transaction1);
+    assertTransactionNotPending(transaction2);
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction1));
     verify(transactionValidator).validate(eq(transaction1), any(Optional.class), any());
     verify(transactionValidator)
         .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
@@ -545,7 +547,6 @@ public class TransactionPoolTest {
             TransactionPoolConfiguration.DEFAULT);
 
     when(pendingTransactions.containsTransaction(transaction1.getHash())).thenReturn(true);
-
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
     verify(pendingTransactions).containsTransaction(transaction1.getHash());
@@ -574,8 +575,8 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction2));
 
     assertTransactionPending(transaction1);
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(transaction1));
-    verify(transactionBroadcaster, never()).onTransactionsAdded(singleton(transaction2));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(transaction1));
+    verify(transactionBroadcaster, never()).onTransactionsAdded(singletonList(transaction2));
   }
 
   @Test
@@ -1167,7 +1168,7 @@ public class TransactionPoolTest {
   private void assertRemoteTransactionValid(final Transaction tx) {
     transactionPool.addRemoteTransactions(List.of(tx));
 
-    verify(transactionBroadcaster).onTransactionsAdded(singleton(tx));
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(tx));
     assertTransactionPending(tx);
   }
 }
