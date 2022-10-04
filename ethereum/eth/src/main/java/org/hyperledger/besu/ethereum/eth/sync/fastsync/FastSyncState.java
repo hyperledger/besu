@@ -75,6 +75,10 @@ public class FastSyncState {
     return pivotBlockHeader.isPresent();
   }
 
+  public boolean hasPivotBlockHash() {
+    return pivotBlockHash.isPresent();
+  }
+
   public void setCurrentHeader(final BlockHeader header) {
     pivotBlockNumber = OptionalLong.of(header.getNumber());
     pivotBlockHash = Optional.of(header.getHash());

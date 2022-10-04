@@ -149,6 +149,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final DynamicPivotBlockManager dynamicPivotBlockManager =
           new DynamicPivotBlockManager(
+              ethContext,
               fastSyncActions,
               snapSyncState,
               snapSyncConfiguration.getPivotBlockWindowValidity(),

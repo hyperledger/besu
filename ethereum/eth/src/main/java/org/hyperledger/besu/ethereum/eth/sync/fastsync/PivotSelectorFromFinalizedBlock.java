@@ -48,7 +48,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     if (maybeHash.isPresent()) {
       return Optional.of(selectLastFinalizedBlockAsPivot(maybeHash.get()));
     }
-    LOG.trace("No finalized block hash announced yet");
+    LOG.debug("No finalized block hash announced yet");
     return Optional.empty();
   }
 
@@ -59,7 +59,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   }
 
   private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
-    LOG.trace("Returning finalized block hash as pivot: {}", finalizedHash);
+    LOG.debug("Returning finalized block hash {} as pivot", finalizedHash);
     return new FastSyncState(finalizedHash);
   }
 
