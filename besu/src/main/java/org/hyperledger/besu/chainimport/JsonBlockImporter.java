@@ -242,7 +242,7 @@ public class JsonBlockImporter {
     }
 
     if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
-      throw new IllegalArgumentException("Invalid block number: " + blockNumber + 1);
+      throw new IllegalArgumentException("Invalid block number: " + (blockNumber + 1));
     }
 
     return controller
