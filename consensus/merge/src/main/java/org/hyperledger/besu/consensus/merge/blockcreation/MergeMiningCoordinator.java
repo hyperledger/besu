@@ -33,7 +33,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   PayloadIdentifier preparePayload(
       final BlockHeader parentHeader,
       final Long timestamp,
-      final Bytes32 random,
+      final Bytes32 prevRandao,
       final Address feeRecipient);
 
   @Override

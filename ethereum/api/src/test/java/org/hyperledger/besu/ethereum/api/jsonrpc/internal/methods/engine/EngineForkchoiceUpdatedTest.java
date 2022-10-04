@@ -227,7 +227,11 @@ public class EngineForkchoiceUpdatedTest {
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString());
     var mockPayloadId =
-        PayloadIdentifier.forPayloadParams(mockHeader.getHash(), payloadParams.getTimestamp());
+        PayloadIdentifier.forPayloadParams(
+            mockHeader.getHash(),
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
             mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
