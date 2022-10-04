@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -103,7 +104,7 @@ public class IbftRoundIntegrationTest {
     throwingMessageFactory = new MessageFactory(nodeKey);
     transmitter = new IbftMessageTransmitter(throwingMessageFactory, multicaster);
 
-    BftExtraData proposedExtraData =
+    final BftExtraData proposedExtraData =
         new BftExtraData(Bytes.wrap(new byte[32]), emptyList(), empty(), 0, emptyList());
     final BlockHeaderTestFixture headerTestFixture = new BlockHeaderTestFixture();
     headerTestFixture.extraData(bftExtraDataEncoder.encode(proposedExtraData));
@@ -111,7 +112,7 @@ public class IbftRoundIntegrationTest {
     final BlockHeader header = headerTestFixture.buildHeader();
     proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
 
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
+    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
     protocolContext =
         new ProtocolContext(
