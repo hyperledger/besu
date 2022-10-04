@@ -21,7 +21,6 @@ import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.hyperledger.besu.cli.operator.OperatorSubCommandTest.Cmd.cmd;
 
@@ -57,7 +56,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -208,62 +206,78 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void shouldFailIfDuplicateFiles() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(
-                        "--private-key-file-name",
-                        "dup.test",
-                        "--public-key-file-name",
-                        "dup.test"),
-                    "/operator/config_generate_keys.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "priv.test")))
-        .isInstanceOf(CommandLine.ExecutionException.class);
+    final URL configFilePath = this.getClass().getResource("/operator/config_generate_keys.json");
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                tmpOutputDirectoryPath.toString())
+            .args(
+                cmd("--private-key-file-name", "dup.test", "--public-key-file-name", "dup.test")
+                    .argsArray())
+            .argsArray());
+
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .endsWith("Output file paths must be unique.");
   }
 
   @Test
-  public void shouldFailIfPublicKeysAreWrongType() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_import_keys_invalid_keys.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    false,
-                    singletonList("key.pub")))
-        .isInstanceOf(CommandLine.ExecutionException.class);
+  public void shouldFailIfPublicKeysAreWrongType() throws IOException {
+    final URL configFilePath =
+        this.getClass().getResource("/operator/config_import_keys_invalid_keys.json");
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                tmpOutputDirectoryPath.toString())
+            .args(cmd().argsArray())
+            .argsArray());
+
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .endsWith("Invalid key json of type: OBJECT");
   }
 
   @Test
   public void shouldFailIfOutputDirectoryNonEmpty() throws IOException {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_generate_keys.json",
-                    FileSystems.getDefault().getPath("."),
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "key.priv")))
-        .isInstanceOf(CommandLine.ExecutionException.class);
+    final URL configFilePath = this.getClass().getResource("/operator/config_generate_keys.json");
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                FileSystems.getDefault().getPath(".").toString())
+            .args(cmd().argsArray())
+            .argsArray());
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .endsWith("Output directory already exists.");
   }
 
   @Test
   public void shouldFailIfInvalidEcCurveIsSet() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_generate_keys_ec_invalid.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "priv.test")))
-        .isInstanceOf(CommandLine.ExecutionException.class);
+
+    final URL configFilePath =
+        this.getClass().getResource("/operator/config_generate_keys_ec_invalid.json");
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                tmpOutputDirectoryPath.toString())
+            .args(cmd().argsArray())
+            .argsArray());
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .endsWith(
+            "Invalid parameter for ecCurve in genesis config: abcd is not in the list of valid elliptic curves [secp256k1, secp256r1]");
   }
 
   @Test
@@ -280,34 +294,40 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void shouldFailIfImportedKeysAreFromDifferentEllipticCurve() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_import_keys_secp256r1_invalid_keys.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "key.priv")))
-        .isInstanceOf(CommandLine.ExecutionException.class)
-        .hasMessageEndingWith(
+    final URL configFilePath =
+        this.getClass().getResource("/operator/config_import_keys_secp256r1_invalid_keys.json");
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                tmpOutputDirectoryPath.toString())
+            .args(cmd().argsArray())
+            .argsArray());
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .endsWith(
             "0xb295c4242fb40c6e8ac7b831c916846050f191adc560b8098ba6ad513079571ec1be6e5e1a715857a13a91963097962e048c36c5863014b59e8f67ed3f667680 is not a valid public key for elliptic curve secp256r1");
   }
 
   @Test
   public void shouldFailIfNoConfigSection() {
-    assertThatThrownBy(
-            () ->
-                runCmdAndCheckOutput(
-                    cmd(),
-                    "/operator/config_no_config_section.json",
-                    tmpOutputDirectoryPath,
-                    "genesis.json",
-                    true,
-                    asList("key.pub", "key.priv"),
-                    Optional.of(new SECP256K1())))
-        .isInstanceOf(CommandLine.ExecutionException.class)
-        .hasMessageEndingWith("Missing config section in config file");
+
+    final URL configFilePath =
+        this.getClass().getResource("/operator/config_no_config_section.json");
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                tmpOutputDirectoryPath.toString())
+            .args(cmd().argsArray())
+            .argsArray());
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .endsWith("Missing config section in config file");
   }
 
   @Test
