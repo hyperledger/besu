@@ -82,7 +82,7 @@ public class PasswordSubCommand implements Runnable {
     public void run() {
       checkNotNull(parentCommand);
 
-      parentCommand.out.print(BCrypt.hashpw(password, BCrypt.gensalt()));
+      parentCommand.out.println(BCrypt.hashpw(password, BCrypt.gensalt()));
     }
   }
 }

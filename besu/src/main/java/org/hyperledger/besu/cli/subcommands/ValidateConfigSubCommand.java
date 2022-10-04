@@ -66,7 +66,7 @@ public class ValidateConfigSubCommand implements Runnable {
       this.out.println(e);
       return;
     }
-    this.out.print(
+    this.out.println(
         "TOML config file is valid on basic inspection. Further dependencies between related options are checked when Besu starts.");
   }
 }
