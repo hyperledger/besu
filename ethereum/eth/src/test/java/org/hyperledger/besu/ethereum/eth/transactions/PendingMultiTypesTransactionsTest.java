@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,7 +44,7 @@ import org.junit.Test;
 public class PendingMultiTypesTransactionsTest {
 
   private static final int MAX_TRANSACTIONS = 5;
-  private static final int MAX_TRANSACTIONS_BY_SENDER = 4;
+  private static final float MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f; // evaluates to 4
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance)::get;
   private static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
@@ -63,7 +64,7 @@ public class PendingMultiTypesTransactionsTest {
       new BaseFeePendingTransactionsSorter(
           ImmutableTransactionPoolConfiguration.builder()
               .txPoolMaxSize(MAX_TRANSACTIONS)
-              .txPoolMaxFutureTransactionByAccount(MAX_TRANSACTIONS_BY_SENDER)
+              .txPoolLimitByAccountPercentage(MAX_TRANSACTIONS_BY_SENDER_PERCENTAGE)
               .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
@@ -72,14 +73,14 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldReturnExclusivelyLocal1559TransactionsWhenAppropriate() {
     final Transaction localTransaction0 = create1559Transaction(0, 19, 20, KEYS1);
-    transactions.addLocalTransaction(localTransaction0);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
 
     List<Transaction> localTransactions = transactions.getLocalTransactions();
     assertThat(localTransactions.size()).isEqualTo(1);
 
     final Transaction remoteTransaction1 = create1559Transaction(1, 19, 20, KEYS1);
-    transactions.addRemoteTransaction(remoteTransaction1);
+    transactions.addRemoteTransaction(remoteTransaction1, Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
 
     localTransactions = transactions.getLocalTransactions();
@@ -94,15 +95,15 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
     final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
-    transactions.addLocalTransaction(localTransaction3);
-    transactions.addLocalTransaction(localTransaction4);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
+    transactions.addLocalTransaction(localTransaction3, Optional.empty());
+    transactions.addLocalTransaction(localTransaction4, Optional.empty());
 
     transactions.updateBaseFee(Wei.of(300L));
 
-    transactions.addLocalTransaction(localTransaction5);
+    transactions.addLocalTransaction(localTransaction5, Optional.empty());
     assertThat(transactions.size()).isEqualTo(5);
 
     transactions.selectTransactions(
@@ -120,12 +121,12 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
     final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
-    transactions.addLocalTransaction(localTransaction3);
-    transactions.addLocalTransaction(localTransaction4);
-    transactions.addLocalTransaction(localTransaction5); // causes eviction
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
+    transactions.addLocalTransaction(localTransaction3, Optional.empty());
+    transactions.addLocalTransaction(localTransaction4, Optional.empty());
+    transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
 
     assertThat(transactions.size()).isEqualTo(5);
 
@@ -144,12 +145,12 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
     final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
-    transactions.addLocalTransaction(localTransaction3);
-    transactions.addLocalTransaction(localTransaction4);
-    transactions.addLocalTransaction(localTransaction5); // causes eviction
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
+    transactions.addLocalTransaction(localTransaction3, Optional.empty());
+    transactions.addLocalTransaction(localTransaction4, Optional.empty());
+    transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
     assertThat(transactions.size()).isEqualTo(5);
 
     transactions.selectTransactions(
@@ -167,12 +168,12 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction3 = create1559Transaction(0, 240, 20, KEYS4);
     final Transaction localTransaction4 = create1559Transaction(0, 260, 20, KEYS5);
     final Transaction localTransaction5 = create1559Transaction(0, 900, 20, KEYS6);
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
-    transactions.addLocalTransaction(localTransaction3);
-    transactions.addLocalTransaction(localTransaction4);
-    transactions.addLocalTransaction(localTransaction5); // causes eviction
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
+    transactions.addLocalTransaction(localTransaction3, Optional.empty());
+    transactions.addLocalTransaction(localTransaction4, Optional.empty());
+    transactions.addLocalTransaction(localTransaction5, Optional.empty()); // causes eviction
     assertThat(transactions.size()).isEqualTo(5);
 
     transactions.selectTransactions(
@@ -188,9 +189,9 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction1 = create1559Transaction(1, 100, 20, KEYS2);
     final Transaction localTransaction2 = create1559Transaction(2, 100, 19, KEYS2);
 
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -223,9 +224,9 @@ public class PendingMultiTypesTransactionsTest {
 
     transactions.updateBaseFee(Wei.of(110L));
 
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -257,10 +258,10 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction2 = create1559Transaction(2, 100, 19, KEYS2);
     final Transaction localTransaction3 = createLegacyTransaction(0, 20, KEYS1);
 
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
-    transactions.addLocalTransaction(localTransaction3);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
+    transactions.addLocalTransaction(localTransaction3, Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -281,10 +282,10 @@ public class PendingMultiTypesTransactionsTest {
     final Transaction localTransaction2 = createLegacyTransaction(0, 20, KEYS3);
     final Transaction localTransaction3 = createLegacyTransaction(1, 2000, KEYS3);
 
-    transactions.addLocalTransaction(localTransaction0);
-    transactions.addLocalTransaction(localTransaction1);
-    transactions.addLocalTransaction(localTransaction2);
-    transactions.addLocalTransaction(localTransaction3);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    transactions.addLocalTransaction(localTransaction1, Optional.empty());
+    transactions.addLocalTransaction(localTransaction2, Optional.empty());
+    transactions.addLocalTransaction(localTransaction3, Optional.empty());
 
     final List<Transaction> iterationOrder = new ArrayList<>();
     transactions.selectTransactions(
@@ -313,12 +314,12 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldAdd1559Transaction() {
     final Transaction remoteTransaction0 = create1559Transaction(0, 19, 20, KEYS1);
-    transactions.addRemoteTransaction(remoteTransaction0);
+    transactions.addRemoteTransaction(remoteTransaction0, Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
 
     final Transaction remoteTransaction1 = create1559Transaction(1, 19, 20, KEYS1);
-    transactions.addRemoteTransaction(remoteTransaction1);
+    transactions.addRemoteTransaction(remoteTransaction1, Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(2);
   }
@@ -326,12 +327,13 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldNotIncrementAddedCounterWhenRemote1559TransactionAlreadyPresent() {
     final Transaction localTransaction0 = create1559Transaction(0, 19, 20, KEYS1);
-    transactions.addLocalTransaction(localTransaction0);
+    transactions.addLocalTransaction(localTransaction0, Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(0);
 
-    assertThat(transactions.addRemoteTransaction(localTransaction0)).isFalse();
+    assertThat(transactions.addRemoteTransaction(localTransaction0, Optional.empty()))
+        .isEqualTo(ALREADY_KNOWN);
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, LOCAL)).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(0);
@@ -340,12 +342,12 @@ public class PendingMultiTypesTransactionsTest {
   @Test
   public void shouldAddMixedTransactions() {
     final Transaction remoteTransaction0 = create1559Transaction(0, 19, 20, KEYS1);
-    transactions.addRemoteTransaction(remoteTransaction0);
+    transactions.addRemoteTransaction(remoteTransaction0, Optional.empty());
     assertThat(transactions.size()).isEqualTo(1);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(1);
 
     final Transaction remoteTransaction1 = createLegacyTransaction(1, 5000, KEYS1);
-    transactions.addRemoteTransaction(remoteTransaction1);
+    transactions.addRemoteTransaction(remoteTransaction1, Optional.empty());
     assertThat(transactions.size()).isEqualTo(2);
     assertThat(metricsSystem.getCounterValue(ADDED_COUNTER, REMOTE)).isEqualTo(2);
   }

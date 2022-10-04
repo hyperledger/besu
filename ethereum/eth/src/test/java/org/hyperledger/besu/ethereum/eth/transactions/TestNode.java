@@ -123,6 +123,7 @@ public class TestNode implements Closeable {
 
     final SyncState syncState = mock(SyncState.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
     final EthMessages ethMessages = new EthMessages();
 
@@ -144,7 +145,7 @@ public class TestNode implements Closeable {
             ethContext,
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT);
 
