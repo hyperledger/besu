@@ -101,7 +101,7 @@ public class FastSyncState {
     return "FastSyncState{"
         + "pivotBlockNumber="
         + pivotBlockNumber
-        + "pivotBlockHash="
+        + ", pivotBlockHash="
         + pivotBlockHash
         + ", pivotBlockHeader="
         + pivotBlockHeader
