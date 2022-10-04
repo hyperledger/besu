@@ -188,7 +188,7 @@ public interface RLPOutput {
    *     {@code b < 0} or {@code b > 0xFF}.
    */
   default void writeUnsignedByte(final int b) {
-    checkAndWriteZeroByte(Long.valueOf(b), a -> writeBytes(Bytes.of(b)));
+    processZeroByte(Long.valueOf(b), a -> writeBytes(Bytes.of(b)));
   }
 
   /**
@@ -199,8 +199,7 @@ public interface RLPOutput {
    *     if either {@code s < 0} or {@code s > 0xFFFF}.
    */
   default void writeUnsignedShort(final int s) {
-    checkAndWriteZeroByte(
-        Long.valueOf(s), a -> writeBytes(Bytes.ofUnsignedShort(s).trimLeadingZeros()));
+    processZeroByte(Long.valueOf(s), a -> writeBytes(Bytes.ofUnsignedShort(s).trimLeadingZeros()));
   }
 
   /**
@@ -211,7 +210,7 @@ public interface RLPOutput {
    *     either {@code i < 0} or {@code i > 0xFFFFFFFFL}.
    */
   default void writeUnsignedInt(final long i) {
-    checkAndWriteZeroByte(i, a -> writeBytes(Bytes.ofUnsignedInt(i).trimLeadingZeros()));
+    processZeroByte(i, a -> writeBytes(Bytes.ofUnsignedInt(i).trimLeadingZeros()));
   }
 
   /**
@@ -299,7 +298,7 @@ public interface RLPOutput {
    * @param input The value to check
    * @param writer The consumer to write the non-zero output
    */
-  private void checkAndWriteZeroByte(final Long input, final Consumer<Long> writer) {
+  private void processZeroByte(final Long input, final Consumer<Long> writer) {
     // If input == 0, encode 0 value as 0x80
     if (input == 0) {
       writeRaw(Bytes.of(0x80));
