@@ -77,11 +77,11 @@ public class FastSyncDownloader<REQUEST> {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("FastSyncDownloader already running");
     }
+    LOG.info("Starting sync");
     return start(initialFastSyncState);
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.info("Starting sync");
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       LOG.info("Clearing bonsai flat account db");
       worldStateStorage.clearFlatDatabase();
