@@ -44,7 +44,7 @@ public class FlexibleUtil {
   public static List<String> getParticipantsFromParameter(final Bytes input) {
     final int numberOfParticipants;
     try {
-      numberOfParticipants = input.slice(4 + 32, 32).toBigInteger().intValue();
+      numberOfParticipants = UInt256.fromBytes(input.slice(4 + 32, 32)).toInt();
     } catch (final Exception exception) {
       return Collections.emptyList();
     }
@@ -77,12 +77,7 @@ public class FlexibleUtil {
     // enclosed in 96)
     final int sliceSize = encodedParticipants.size() / numberOfParticipants;
     // All the participants have to have the same size, so it is enough to check the first one
-    final int participantSize;
-    try {
-      participantSize = encodedParticipants.slice(0, 32).toBigInteger().intValue();
-    } catch (final Exception exception) {
-      return participants;
-    }
+    final int participantSize = UInt256.fromBytes(encodedParticipants.slice(0, 32)).toInt();
 
     for (int i = 0; i <= encodedParticipants.size() - sliceSize; i += sliceSize) {
       // The size of each participant (as of now, either 32 or 91 because of the enclave public key
