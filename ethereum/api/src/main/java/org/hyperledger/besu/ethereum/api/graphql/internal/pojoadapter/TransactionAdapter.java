@@ -190,6 +190,7 @@ public class TransactionAdapter extends AdapterBase {
         .map(
             rwm ->
                 LogWithMetadata.generate(
+                        rwm.getTransactionIndex(),
                         rwm.getReceipt(),
                         transactionWithMetadata.getBlockNumber().get(),
                         transactionWithMetadata.getBlockHash().get(),
