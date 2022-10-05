@@ -3298,13 +3298,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private SyncMode getDefaultSyncModeIfNotSet(final SyncMode syncMode){
+  private SyncMode getDefaultSyncModeIfNotSet(final SyncMode syncMode) {
     return Optional.ofNullable(syncMode)
-            .orElse(
-                    genesisFile == null
-                            && !privacyOptionGroup.isPrivacyEnabled
-                            && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                            ? SyncMode.FAST
-                            : SyncMode.FULL);
+        .orElse(
+            genesisFile == null
+                    && !privacyOptionGroup.isPrivacyEnabled
+                    && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
+                ? SyncMode.FAST
+                : SyncMode.FULL);
   }
 }

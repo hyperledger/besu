@@ -98,16 +98,15 @@ public class CommandLineUtils {
   }
 
   public static void failIfOptionDoesntMeetRequirement(
-          final CommandLine commandLine,
-          final String errorMessage,
-          final boolean requirement,
-          final List<String> dependentOptionsNames) {
+      final CommandLine commandLine,
+      final String errorMessage,
+      final boolean requirement,
+      final List<String> dependentOptionsNames) {
     if (!requirement) {
       final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
 
       if (!affectedOptions.isEmpty()) {
-        throw new CommandLine.ParameterException(
-                commandLine,errorMessage);
+        throw new CommandLine.ParameterException(commandLine, errorMessage);
       }
     }
   }
