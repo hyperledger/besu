@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -38,10 +39,11 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -145,7 +147,7 @@ public class EvmToolCommand implements Runnable {
   private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
-  private PrintWriter out = new PrintWriter(System.out, true);
+  private PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
 
   void parse(final CommandLine.IExecutionStrategy resultHandler, final String[] args) {
 
@@ -257,7 +259,7 @@ public class EvmToolCommand implements Runnable {
             if (messageFrame.getRevertReason().isPresent()) {
               out.println(
                   new String(
-                      messageFrame.getRevertReason().get().toArray(), StandardCharsets.UTF_8));
+                      messageFrame.getRevertReason().get().toArray(), UTF_8));
             }
           }
           if (messageFrameStack.isEmpty()) {
