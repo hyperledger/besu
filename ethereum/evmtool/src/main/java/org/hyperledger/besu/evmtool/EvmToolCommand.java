@@ -40,10 +40,10 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
 import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -147,7 +147,8 @@ public class EvmToolCommand implements Runnable {
   private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
-  private PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
+  private PrintWriter out =
+      new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
 
   void parse(final CommandLine.IExecutionStrategy resultHandler, final String[] args) {
 
@@ -257,9 +258,7 @@ public class EvmToolCommand implements Runnable {
               out.println(messageFrame.getExceptionalHaltReason().get());
             }
             if (messageFrame.getRevertReason().isPresent()) {
-              out.println(
-                  new String(
-                      messageFrame.getRevertReason().get().toArray(), UTF_8));
+              out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
             }
           }
           if (messageFrameStack.isEmpty()) {
