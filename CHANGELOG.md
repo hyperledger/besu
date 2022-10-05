@@ -3,7 +3,9 @@
 ## 22.7.5
 
 ### Breaking Changes
-- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+- Flexible Privacy Groups support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282) 
+  * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
+  * For the EC encryptor, the encoded public key length is 91
 
 ### Additions and Improvements
 - Avoid sending added block events to transaction pool, and processing incoming transactions during initial sync [#4457](https://github.com/hyperledger/besu/pull/4457)

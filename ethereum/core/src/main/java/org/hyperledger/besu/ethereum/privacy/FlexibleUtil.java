@@ -50,9 +50,9 @@ public class FlexibleUtil {
     }
     if (numberOfParticipants == 0) return Collections.emptyList();
     // Method selector + offset +  number of participants + (offset * number of participants)
-    final Bytes mungedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
+    final Bytes encodedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
 
-    return getParticipantsFromMungedParticipants(mungedParticipants, numberOfParticipants);
+    return getParticipantsFromEncodedParticipants(encodedParticipants, numberOfParticipants);
   }
 
   public static List<String> decodeList(final Bytes rlpEncodedList) {
@@ -65,28 +65,29 @@ public class FlexibleUtil {
       return new ArrayList<>();
     }
 
-    final Bytes mungedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
+    final Bytes encodedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
 
-    return getParticipantsFromMungedParticipants(mungedParticipants, lengthOfList);
+    return getParticipantsFromEncodedParticipants(encodedParticipants, lengthOfList);
   }
 
-  private static List<String> getParticipantsFromMungedParticipants(
-      final Bytes mungedParticipants, final int numberOfParticipants) {
+  private static List<String> getParticipantsFromEncodedParticipants(
+      final Bytes encodedParticipants, final int numberOfParticipants) {
     final List<String> participants = new ArrayList<>();
     // The participant value is enclosed in the closest multiple of 32 (for instance, 91 would be
     // enclosed in 96)
-    final int sliceSize = mungedParticipants.size() / numberOfParticipants;
+    final int sliceSize = encodedParticipants.size() / numberOfParticipants;
     // All the participants have to have the same size, so it is enough to check the first one
     final int participantSize;
     try {
-      participantSize = mungedParticipants.slice(0, 32).toBigInteger().intValue();
+      participantSize = encodedParticipants.slice(0, 32).toBigInteger().intValue();
     } catch (final Exception exception) {
       return participants;
     }
 
-    for (int i = 0; i <= mungedParticipants.size() - sliceSize; i += sliceSize) {
-      // The size of each participant (as of now, either 32 or 91) is stored in 32 bytes
-      participants.add(mungedParticipants.slice(i + 32, participantSize).toBase64String());
+    for (int i = 0; i <= encodedParticipants.size() - sliceSize; i += sliceSize) {
+      // The size of each participant (as of now, either 32 or 91 because of the enclave public key
+      // size for NaCl and EC) is stored in 32 bytes
+      participants.add(encodedParticipants.slice(i + 32, participantSize).toBase64String());
     }
 
     return participants;
