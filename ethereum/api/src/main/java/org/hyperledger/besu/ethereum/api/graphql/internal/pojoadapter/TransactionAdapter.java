@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -168,18 +169,25 @@ public class TransactionAdapter extends AdapterBase {
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = transactionWithMetadata.getTransaction().getHash();
+
+    final Optional<BlockHeader> maybeBlockHeader =
+        transactionWithMetadata.getBlockNumber().flatMap(query::getBlockHeaderByNumber);
+
+    if (maybeBlockHeader.isEmpty()) {
+      throw new RuntimeException(
+          "Cannot get block ("
+              + transactionWithMetadata.getBlockNumber()
+              + ") for transaction "
+              + transactionWithMetadata.getTransaction().getHash());
+    }
+
     final Optional<TransactionReceiptWithMetadata> maybeTransactionReceiptWithMetadata =
         query.transactionReceiptByTransactionHash(hash);
     final List<LogAdapter> results = new ArrayList<>();
     if (maybeTransactionReceiptWithMetadata.isPresent()) {
       final List<LogWithMetadata> logs =
-          LogWithMetadata.generate(
-              maybeTransactionReceiptWithMetadata.get().getReceipt(),
-              transactionWithMetadata.getBlockNumber().get(),
-              transactionWithMetadata.getBlockHash().get(),
-              hash,
-              transactionWithMetadata.getTransactionIndex().get(),
-              false);
+          query.matchingLogs(
+              maybeBlockHeader.get().getBlockHash(), transactionWithMetadata, () -> true);
       for (final LogWithMetadata log : logs) {
         results.add(new LogAdapter(log));
       }

@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -83,16 +84,24 @@ public class PrivacyQueries {
     final long blockNumber = blockHeader.get().getNumber();
     final boolean removed = !blockchainQueries.blockIsOnCanonicalChain(blockHash);
 
+    final AtomicInteger logIndexOffset = new AtomicInteger();
     return IntStream.range(0, privateTransactionReceiptList.size())
         .mapToObj(
-            i ->
-                LogWithMetadata.generate(
-                    privateTransactionReceiptList.get(i),
-                    blockNumber,
-                    blockHash,
-                    privateTransactionMetadataList.get(i).getPrivateMarkerTransactionHash(),
-                    findPMTIndex(pmtHashList.get(i)),
-                    removed))
+            i -> {
+              final List<LogWithMetadata> result =
+                  LogWithMetadata.generate(
+                      logIndexOffset.intValue(),
+                      privateTransactionReceiptList.get(i),
+                      blockNumber,
+                      blockHash,
+                      privateTransactionMetadataList.get(i).getPrivateMarkerTransactionHash(),
+                      findPMTIndex(pmtHashList.get(i)),
+                      removed);
+
+              logIndexOffset.addAndGet(privateTransactionReceiptList.get(i).getLogs().size());
+
+              return result;
+            })
         .flatMap(Collection::stream)
         .filter(query::matches)
         .collect(Collectors.toList());
