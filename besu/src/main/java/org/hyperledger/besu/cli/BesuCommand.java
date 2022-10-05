@@ -1399,8 +1399,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     registerConverters();
     handleUnstableOptions();
     preparePlugins();
+
+    final int exitCode =
+        parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
+
     detectJemalloc();
-    return parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
+
+    return exitCode;
   }
 
   @Override
