@@ -1,5 +1,13 @@
 # Changelog
 
+## 22.10.0-RC1
+
+### Additions and Improvements
+### Bug Fixes
+### Download Links
+
+###
+
 ## 22.7.5
 
 ### Additions and Improvements
@@ -9,7 +17,12 @@
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
 
 ### Bug Fixes
+- Fixed logIndex value returned by eth_getLogs RPC call [#4355](https://github.com/hyperledger/besu/pull/4355)
+
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.zip / sha256: 0efd783c7ce8fcd1ffa55735d071d5ffeb71741007c1025ccafd0221c903a392
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.tar.gz / sha256: 0fce71402b0b6e8251a0bd21cdde9f2e7e015d66224a13f6bd83e3889d6fbb87
+
 
 ## 22.7.4
 

@@ -48,6 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -753,43 +754,33 @@ public class BlockchainQueries {
   public List<LogWithMetadata> matchingLogs(
       final Hash blockHash, final LogsQuery query, final Supplier<Boolean> isQueryAlive) {
     try {
-      final Optional<BlockHeader> blockHeader =
-          BackendQuery.runIfAlive(
-              "matchingLogs - getBlockHeader",
-              () -> blockchain.getBlockHeader(blockHash),
-              isQueryAlive);
+      final Optional<BlockHeader> blockHeader = getBlockHeader(blockHash, isQueryAlive);
       if (blockHeader.isEmpty()) {
         return Collections.emptyList();
       }
       // receipts and transactions should exist if the header exists, so throwing is ok.
-      final List<TransactionReceipt> receipts =
-          BackendQuery.runIfAlive(
-              "matchingLogs - getTxReceipts",
-              () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
-              isQueryAlive);
-      final List<Transaction> transactions =
-          BackendQuery.runIfAlive(
-              "matchingLogs - getBlockBody",
-              () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
-              isQueryAlive);
+      final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
+      final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
       final long number = blockHeader.get().getNumber();
-      final boolean removed =
-          BackendQuery.runIfAlive(
-              "matchingLogs - blockIsOnCanonicalChain",
-              () -> !blockchain.blockIsOnCanonicalChain(blockHash),
-              isQueryAlive);
+      final boolean removed = getRemoved(blockHash, isQueryAlive);
+
+      final AtomicInteger logIndexOffset = new AtomicInteger();
       return IntStream.range(0, receipts.size())
           .mapToObj(
               i -> {
                 try {
                   BackendQuery.stopIfExpired(isQueryAlive);
-                  return LogWithMetadata.generate(
-                      receipts.get(i),
-                      number,
-                      blockHash,
-                      transactions.get(i).getHash(),
-                      i,
-                      removed);
+                  final List<LogWithMetadata> result =
+                      LogWithMetadata.generate(
+                          logIndexOffset.intValue(),
+                          receipts.get(i),
+                          number,
+                          blockHash,
+                          transactions.get(i).getHash(),
+                          i,
+                          removed);
+                  logIndexOffset.addAndGet(receipts.get(i).getLogs().size());
+                  return result;
                 } catch (final Exception e) {
                   throw new RuntimeException(e);
                 }
@@ -797,6 +788,47 @@ public class BlockchainQueries {
           .flatMap(Collection::stream)
           .filter(query::matches)
           .collect(Collectors.toList());
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public List<LogWithMetadata> matchingLogs(
+      final Hash blockHash,
+      final TransactionWithMetadata transactionWithMetaData,
+      final Supplier<Boolean> isQueryAlive) {
+    if (transactionWithMetaData.getTransactionIndex().isEmpty()) {
+      throw new RuntimeException(
+          "Cannot find logs because transaction "
+              + transactionWithMetaData.getTransaction().getHash()
+              + " does not have a transaction index");
+    }
+
+    try {
+      final Optional<BlockHeader> blockHeader = getBlockHeader(blockHash, isQueryAlive);
+      if (blockHeader.isEmpty()) {
+        return Collections.emptyList();
+      }
+      // receipts and transactions should exist if the header exists, so throwing is ok.
+      final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
+      final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
+      final long number = blockHeader.get().getNumber();
+      final boolean removed = getRemoved(blockHash, isQueryAlive);
+
+      final int transactionIndex = transactionWithMetaData.getTransactionIndex().get();
+      final int logIndexOffset =
+          logIndexOffset(
+              transactionWithMetaData.getTransaction().getHash(), receipts, transactions);
+
+      return LogWithMetadata.generate(
+          logIndexOffset,
+          receipts.get(transactionIndex),
+          number,
+          blockHash,
+          transactions.get(transactionIndex).getHash(),
+          transactionIndex,
+          removed);
+
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
@@ -916,5 +948,51 @@ public class BlockchainQueries {
 
   private boolean outsideBlockchainRange(final long blockNumber) {
     return blockNumber > headBlockNumber() || blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER;
+  }
+
+  private Boolean getRemoved(final Hash blockHash, final Supplier<Boolean> isQueryAlive)
+      throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - blockIsOnCanonicalChain",
+        () -> !blockchain.blockIsOnCanonicalChain(blockHash),
+        isQueryAlive);
+  }
+
+  private List<Transaction> getTransactions(
+      final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - getBlockBody",
+        () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
+        isQueryAlive);
+  }
+
+  private List<TransactionReceipt> getReceipts(
+      final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - getTxReceipts",
+        () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
+        isQueryAlive);
+  }
+
+  private Optional<BlockHeader> getBlockHeader(
+      final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - getBlockHeader", () -> blockchain.getBlockHeader(blockHash), isQueryAlive);
+  }
+
+  private int logIndexOffset(
+      final Hash transactionHash,
+      final List<TransactionReceipt> receipts,
+      final List<Transaction> transactions) {
+    int logIndexOffset = 0;
+    for (int i = 0; i < receipts.size(); i++) {
+      if (transactions.get(i).getHash().equals(transactionHash)) {
+        break;
+      }
+
+      logIndexOffset += receipts.get(i).getLogs().size();
+    }
+
+    return logIndexOffset;
   }
 }
