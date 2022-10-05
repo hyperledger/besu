@@ -41,35 +41,32 @@ public class FlexibleUtil {
   }
 
   public static List<String> getParticipantsFromParameter(final Bytes input) {
-    try {
-      final int numberOfParticipants = UInt256.fromBytes(input.slice(4 + 32, 32)).toInt();
+    if (input.size() < 68) return new ArrayList<>();
+    final int numberOfParticipants = UInt256.fromBytes(input.slice(4 + 32, 32)).toInt();
 
-      // Method selector + offset +  number of participants + (offset * number of participants)
-      final Bytes encodedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
+    // Method selector + offset +  number of participants + (offset * number of participants)
+    final Bytes encodedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
 
-      return getParticipantsFromEncodedParticipants(encodedParticipants, numberOfParticipants);
-    } catch (final Exception exception) {
-      return new ArrayList<>();
-    }
+    return getParticipantsFromEncodedParticipants(encodedParticipants, numberOfParticipants);
   }
 
   public static List<String> decodeList(final Bytes rlpEncodedList) {
-    try {
-      // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
-      final int lengthOfList =
-          UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
+    if (rlpEncodedList.size() < 64) return new ArrayList<>();
 
-      final Bytes encodedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
+    // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
+    final int lengthOfList =
+        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
 
-      return getParticipantsFromEncodedParticipants(encodedParticipants, lengthOfList);
-    } catch (final Exception exception) {
-      return new ArrayList<>();
-    }
+    final Bytes encodedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
+
+    return getParticipantsFromEncodedParticipants(encodedParticipants, lengthOfList);
   }
 
   private static List<String> getParticipantsFromEncodedParticipants(
       final Bytes encodedParticipants, final int numberOfParticipants) {
     final List<String> participants = new ArrayList<>();
+
+    if (numberOfParticipants == 0) return participants;
     // The participant value is enclosed in the closest multiple of 32 (for instance, 91 would be
     // enclosed in 96)
     final int sliceSize = encodedParticipants.size() / numberOfParticipants;
