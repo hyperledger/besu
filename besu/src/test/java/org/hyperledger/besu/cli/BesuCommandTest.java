@@ -2330,28 +2330,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
-    parseCommand("--fast-sync-min-peers", "5");
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSetToml() throws IOException {
-    final Path toml = createTempFile("toml", "fast-sync-min-peers=5\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void rpcApisPropertyWithInvalidEntryMustDisplayError() {
     parseCommand("--rpc-http-api", "BOB");
 
