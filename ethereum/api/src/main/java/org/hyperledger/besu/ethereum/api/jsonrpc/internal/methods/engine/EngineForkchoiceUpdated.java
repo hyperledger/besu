@@ -72,6 +72,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
+    LOG.debug("Forkchoice parameters {}", forkChoice);
+
     Optional<Hash> maybeFinalizedHash =
         Optional.ofNullable(forkChoice.getFinalizedBlockHash())
             .filter(finalized -> !finalized.isZero());
