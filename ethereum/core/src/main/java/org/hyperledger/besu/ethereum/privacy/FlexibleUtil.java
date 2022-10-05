@@ -77,7 +77,12 @@ public class FlexibleUtil {
     // enclosed in 96)
     final int sliceSize = encodedParticipants.size() / numberOfParticipants;
     // All the participants have to have the same size, so it is enough to check the first one
-    final int participantSize = UInt256.fromBytes(encodedParticipants.slice(0, 32)).toInt();
+    final int participantSize;
+    try {
+      participantSize = UInt256.fromBytes(encodedParticipants.slice(0, 32)).toInt();
+    } catch (final Exception exception) {
+      return participants;
+    }
 
     for (int i = 0; i <= encodedParticipants.size() - sliceSize; i += sliceSize) {
       // The size of each participant (as of now, either 32 or 91 because of the enclave public key
