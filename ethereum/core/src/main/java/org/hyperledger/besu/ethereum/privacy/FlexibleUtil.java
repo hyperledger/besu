@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagemen
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,32 +41,30 @@ public class FlexibleUtil {
   }
 
   public static List<String> getParticipantsFromParameter(final Bytes input) {
-    final int numberOfParticipants;
     try {
-      numberOfParticipants = UInt256.fromBytes(input.slice(4 + 32, 32)).toInt();
-    } catch (final Exception exception) {
-      return Collections.emptyList();
-    }
-    if (numberOfParticipants == 0) return Collections.emptyList();
-    // Method selector + offset +  number of participants + (offset * number of participants)
-    final Bytes encodedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
+      final int numberOfParticipants = UInt256.fromBytes(input.slice(4 + 32, 32)).toInt();
 
-    return getParticipantsFromEncodedParticipants(encodedParticipants, numberOfParticipants);
+      // Method selector + offset +  number of participants + (offset * number of participants)
+      final Bytes encodedParticipants = input.slice(4 + 32 + 32 + (32 * numberOfParticipants));
+
+      return getParticipantsFromEncodedParticipants(encodedParticipants, numberOfParticipants);
+    } catch (final Exception exception) {
+      return new ArrayList<>();
+    }
   }
 
   public static List<String> decodeList(final Bytes rlpEncodedList) {
-    // first 32 bytes is dynamic list offset
-    if (rlpEncodedList.size() < 64) return new ArrayList<>();
-    // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
-    final int lengthOfList =
-        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
-    if (lengthOfList == 0 || rlpEncodedList.size() < 64 + lengthOfList * 32) {
+    try {
+      // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
+      final int lengthOfList =
+          UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
+
+      final Bytes encodedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
+
+      return getParticipantsFromEncodedParticipants(encodedParticipants, lengthOfList);
+    } catch (final Exception exception) {
       return new ArrayList<>();
     }
-
-    final Bytes encodedParticipants = rlpEncodedList.slice(32 + 32 + (32 * lengthOfList));
-
-    return getParticipantsFromEncodedParticipants(encodedParticipants, lengthOfList);
   }
 
   private static List<String> getParticipantsFromEncodedParticipants(
@@ -76,13 +73,19 @@ public class FlexibleUtil {
     // The participant value is enclosed in the closest multiple of 32 (for instance, 91 would be
     // enclosed in 96)
     final int sliceSize = encodedParticipants.size() / numberOfParticipants;
+
     // All the participants have to have the same size, so it is enough to check the first one
-    final int participantSize;
-    try {
-      participantSize = UInt256.fromBytes(encodedParticipants.slice(0, 32)).toInt();
-    } catch (final Exception exception) {
-      return participants;
-    }
+    final int participantSize = UInt256.fromBytes(encodedParticipants.slice(0, 32)).toInt();
+
+    final int mod32ParticipantsSize = participantSize % 32;
+    final int participantSizeBytes32Wrapped =
+        mod32ParticipantsSize != 0
+            ? (32 - mod32ParticipantsSize) + participantSize
+            : participantSize;
+
+    // Each slice should have a size of 32 bytes (because of the size of each element) + the actual
+    // participant size wrapped in a 32 byte long multiple (96 for 91)
+    if (sliceSize != 32 + participantSizeBytes32Wrapped) return participants;
 
     for (int i = 0; i <= encodedParticipants.size() - sliceSize; i += sliceSize) {
       // The size of each participant (as of now, either 32 or 91 because of the enclave public key
