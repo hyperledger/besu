@@ -5386,4 +5386,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");
   }
+
+  @Test
+  public void logWarnIfFastSyncMinPeersUsedWithFullSync(){
+    parseCommand("--sync-mode","FULL","--fast-sync-min-peers", "1");
+    assertThat(commandErrorOutput.toString(UTF_8))
+            .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
+
+  }
 }
