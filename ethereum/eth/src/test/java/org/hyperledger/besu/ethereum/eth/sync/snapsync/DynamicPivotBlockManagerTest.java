@@ -90,8 +90,7 @@ public class DynamicPivotBlockManagerTest {
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
         .thenReturn(completedFuture(downloadPivotBlockHeaderState));
-
-    when(syncState.bestChainHeight()).thenReturn(1000L);
+    when(fastSyncActions.getBestChainHeight()).thenReturn(1000L);
 
     when(snapSyncState.getPivotBlockNumber()).thenReturn(OptionalLong.of(939));
     dynamicPivotBlockManager.check(
@@ -100,7 +99,7 @@ public class DynamicPivotBlockManagerTest {
           assertThat(newBlockFound).isFalse();
         });
 
-    when(syncState.bestChainHeight()).thenReturn(1066L);
+    when(fastSyncActions.getBestChainHeight()).thenReturn(1066L);
 
     dynamicPivotBlockManager.check(
         (blockHeader, newBlockFound) -> {

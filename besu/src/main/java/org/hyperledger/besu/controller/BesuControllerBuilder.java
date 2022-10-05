@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
+import org.hyperledger.besu.consensus.merge.ForkchoiceStateSupplier;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
@@ -409,7 +409,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
     final PivotBlockSelector pivotBlockSelector =
-        createPivotSelector(protocolContext, ethContext, syncState, metricsSystem);
+        createPivotSelector(
+            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -495,6 +496,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private PivotBlockSelector createPivotSelector(
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
@@ -506,19 +508,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-      final FinalizedBlockHashSupplier finalizedBlockHashSupplier =
-          new FinalizedBlockHashSupplier();
+      final ForkchoiceStateSupplier forkchoiceStateSupplier = new ForkchoiceStateSupplier();
       final long subscriptionId =
-          mergeContext.addNewForkchoiceMessageListener(finalizedBlockHashSupplier);
+          mergeContext.addNewForkchoiceMessageListener(forkchoiceStateSupplier);
 
-      final Runnable unsubscribeFinalizedBlockHashListener =
+      final Runnable unsubscribeForkchoiceUpdateListener =
           () -> {
             mergeContext.removeNewForkchoiceMessageListener(subscriptionId);
-            LOG.info("Initial sync done, unsubscribe finalized block hash supplier");
+            LOG.info("Initial sync done, unsubscribe forkchoice state supplier");
           };
 
       return new PivotSelectorFromFinalizedBlock(
-          genesisConfigOptions, finalizedBlockHashSupplier, unsubscribeFinalizedBlockHashListener);
+          protocolContext,
+          protocolSchedule,
+          ethContext,
+          metricsSystem,
+          genesisConfigOptions,
+          forkchoiceStateSupplier,
+          unsubscribeForkchoiceUpdateListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);

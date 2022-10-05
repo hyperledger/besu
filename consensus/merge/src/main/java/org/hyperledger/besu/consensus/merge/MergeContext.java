@@ -42,6 +42,11 @@ public interface MergeContext extends ConsensusContext {
 
   void removeNewForkchoiceMessageListener(final long subscriberId);
 
+  void fireNewUnverifiedForkchoiceMessageEvent(
+      final Hash headBlockHash,
+      final Optional<Hash> maybeFinalizedBlockHash,
+      final Hash safeBlockHash);
+
   Difficulty getTerminalTotalDifficulty();
 
   void setFinalized(final BlockHeader blockHeader);
@@ -61,9 +66,4 @@ public interface MergeContext extends ConsensusContext {
   void putPayloadById(final PayloadIdentifier payloadId, final Block block);
 
   Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId);
-
-  void fireNewUnverifiedForkchoiceMessageEvent(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash);
 }

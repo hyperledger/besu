@@ -22,8 +22,49 @@ import java.util.Optional;
 
 public interface ForkchoiceMessageListener {
 
-  void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash);
+  void onNewForkchoiceMessage(final ForkchoiceEvent event);
+
+  class ForkchoiceEvent {
+    private final Hash headBlockHash;
+    private final Optional<Hash> maybeFinalizedBlockHash;
+    private final Hash safeBlockHash;
+
+    public ForkchoiceEvent(
+        final Hash headBlockHash,
+        final Optional<Hash> maybeFinalizedBlockHash,
+        final Hash safeBlockHash) {
+      this.headBlockHash = headBlockHash;
+      this.maybeFinalizedBlockHash = maybeFinalizedBlockHash;
+      this.safeBlockHash = safeBlockHash;
+    }
+
+    public boolean hasValidFinalizedBlockHash() {
+      return maybeFinalizedBlockHash.isPresent()
+          && !maybeFinalizedBlockHash.get().equals(Hash.ZERO);
+    }
+
+    public Hash getHeadBlockHash() {
+      return headBlockHash;
+    }
+
+    public Optional<Hash> getMaybeFinalizedBlockHash() {
+      return maybeFinalizedBlockHash;
+    }
+
+    public Hash getSafeBlockHash() {
+      return safeBlockHash;
+    }
+
+    @Override
+    public String toString() {
+      return "ForkchoiceEvent{"
+          + "headBlockHash="
+          + headBlockHash
+          + ", maybeFinalizedBlockHash="
+          + maybeFinalizedBlockHash
+          + ", safeBlockHash="
+          + safeBlockHash
+          + '}';
+    }
+  }
 }

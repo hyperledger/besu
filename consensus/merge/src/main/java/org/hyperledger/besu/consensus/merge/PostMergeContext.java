@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -159,8 +160,9 @@ public class PostMergeContext implements MergeContext {
       final Hash headBlockHash,
       final Optional<Hash> maybeFinalizedBlockHash,
       final Hash safeBlockHash) {
-    newForkchoiceMessageCallbackSubscribers.forEach(
-        cb -> cb.onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash));
+    final ForkchoiceEvent event =
+        new ForkchoiceEvent(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+    newForkchoiceMessageCallbackSubscribers.forEach(cb -> cb.onNewForkchoiceMessage(event));
   }
 
   @Override

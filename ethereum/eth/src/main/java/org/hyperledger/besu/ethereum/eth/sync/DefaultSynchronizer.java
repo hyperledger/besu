@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
@@ -332,14 +331,9 @@ public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListe
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
+  public void onNewForkchoiceMessage(final ForkchoiceEvent event) {
     if (this.blockPropagationManager.isPresent()) {
-      this.blockPropagationManager
-          .get()
-          .onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+      this.blockPropagationManager.get().onNewForkchoiceMessage(event);
     }
   }
 }

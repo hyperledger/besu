@@ -88,6 +88,10 @@ public class FastSyncActions {
     return syncState;
   }
 
+  public long getBestChainHeight() {
+    return pivotBlockSelector.getBestChainHeight();
+  }
+
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
     return fastSyncState.hasPivotBlockHeader()
         ? completedFuture(fastSyncState)
@@ -169,14 +173,18 @@ public class FastSyncActions {
     return RetryingGetHeaderFromPeerByHashTask.byHash(
             protocolSchedule, ethContext, hash, metricsSystem)
         .getHeader()
-        .thenApply(
-            blockHeader -> {
-              debugLambda(
-                  LOG,
-                  "Successfully downloaded pivot block header by hash {}",
-                  blockHeader::toLogString);
-              return new FastSyncState(blockHeader);
-            });
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", hash);
+              } else {
+                debugLambda(
+                    LOG,
+                    "Successfully downloaded pivot block header by hash {}",
+                    blockHeader::toLogString);
+              }
+            })
+        .thenApply(FastSyncState::new);
   }
 
   public boolean isBlockchainBehind(final long blockNumber) {

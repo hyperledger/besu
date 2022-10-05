@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
 import org.hyperledger.besu.consensus.merge.MergeStateHandler;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
@@ -73,15 +72,10 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash
-            .get()
-            .equals(
-                Hash.ZERO)) { // forkchoices send finalized as 0 after ttd, but before an epoch is
+  public void onNewForkchoiceMessage(final ForkchoiceEvent event) {
+    if (event
+        .hasValidFinalizedBlockHash()) { // forkchoices send finalized as 0 after ttd, but before an
+      // epoch is
       // finalized
       this.finalized.set(true);
     }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener.ForkchoiceEvent;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -22,23 +22,20 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FinalizedBlockHashSupplier
-    implements Supplier<Optional<Hash>>, ForkchoiceMessageListener {
-  private static final Logger LOG = LoggerFactory.getLogger(FinalizedBlockHashSupplier.class);
+public class ForkchoiceStateSupplier
+    implements Supplier<Optional<ForkchoiceEvent>>, ForkchoiceMessageListener {
+  private static final Logger LOG = LoggerFactory.getLogger(ForkchoiceStateSupplier.class);
 
-  private volatile Optional<Hash> lastAnnouncedFinalizedBlockHash = Optional.empty();
+  private volatile Optional<ForkchoiceEvent> maybeLastForkchoiceUpdate = Optional.empty();
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    lastAnnouncedFinalizedBlockHash = maybeFinalizedBlockHash;
-    LOG.debug("New finalized block hash announced {}", lastAnnouncedFinalizedBlockHash);
+  public void onNewForkchoiceMessage(final ForkchoiceEvent event) {
+    maybeLastForkchoiceUpdate = Optional.of(event);
+    LOG.debug("New forkchoice announced {}", maybeLastForkchoiceUpdate);
   }
 
   @Override
-  public Optional<Hash> get() {
-    return lastAnnouncedFinalizedBlockHash;
+  public Optional<ForkchoiceEvent> get() {
+    return maybeLastForkchoiceUpdate;
   }
 }

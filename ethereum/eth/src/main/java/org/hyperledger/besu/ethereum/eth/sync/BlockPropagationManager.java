@@ -713,11 +713,8 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+  public void onNewForkchoiceMessage(final ForkchoiceEvent event) {
+    if (event.hasValidFinalizedBlockHash()) {
       stop();
     }
   }
