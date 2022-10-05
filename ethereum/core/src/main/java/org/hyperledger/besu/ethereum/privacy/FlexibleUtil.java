@@ -74,14 +74,13 @@ public class FlexibleUtil {
     // All the participants have to have the same size, so it is enough to check the first one
     final int participantSize = UInt256.fromBytes(encodedParticipants.slice(0, 32)).toInt();
 
+    // Each slice should have a size of 32 bytes (because of the size value of each participant) +
+    // the actual participant wrapped in a 32 byte long multiple (96 for 91)
     final int mod32ParticipantsSize = participantSize % 32;
     final int participantSizeBytes32Wrapped =
         mod32ParticipantsSize != 0
             ? (32 - mod32ParticipantsSize) + participantSize
             : participantSize;
-
-    // Each slice should have a size of 32 bytes (because of the size of each element) + the actual
-    // participant size wrapped in a 32 byte long multiple (96 for 91)
     if (sliceSize != 32 + participantSizeBytes32Wrapped) return participants;
 
     for (int i = 0; i <= encodedParticipants.size() - sliceSize; i += sliceSize) {
