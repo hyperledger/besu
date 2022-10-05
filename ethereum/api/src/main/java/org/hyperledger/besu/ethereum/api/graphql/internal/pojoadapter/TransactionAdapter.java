@@ -24,12 +24,14 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
@@ -37,13 +39,33 @@ import org.apache.tuweni.bytes.Bytes;
 @SuppressWarnings("unused") // reflected by GraphQL
 public class TransactionAdapter extends AdapterBase {
   private final TransactionWithMetadata transactionWithMetadata;
+  private Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata;
 
-  public TransactionAdapter(final TransactionWithMetadata transactionWithMetadata) {
+  public TransactionAdapter(final @Nonnull TransactionWithMetadata transactionWithMetadata) {
     this.transactionWithMetadata = transactionWithMetadata;
+  }
+
+  private Optional<TransactionReceiptWithMetadata> getReceipt(
+      final DataFetchingEnvironment environment) {
+    if (transactionReceiptWithMetadata == null) {
+      final BlockchainQueries query = getBlockchainQueries(environment);
+      final Transaction transaction = transactionWithMetadata.getTransaction();
+      if (transaction == null) {
+        transactionReceiptWithMetadata = Optional.empty();
+      } else {
+        transactionReceiptWithMetadata =
+            query.transactionReceiptByTransactionHash(transaction.getHash());
+      }
+    }
+    return transactionReceiptWithMetadata;
   }
 
   public Optional<Hash> getHash() {
     return Optional.of(transactionWithMetadata.getTransaction().getHash());
+  }
+
+  public Optional<Integer> getType() {
+    return Optional.of(transactionWithMetadata.getTransaction().getType().ordinal());
   }
 
   public Optional<Long> getNonce() {
@@ -57,13 +79,12 @@ public class TransactionAdapter extends AdapterBase {
 
   public Optional<AccountAdapter> getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final Optional<Long> txBlockNumber = transactionWithMetadata.getBlockNumber();
-    final Optional<Long> bn = Optional.ofNullable(environment.getArgument("block"));
-    if (!txBlockNumber.isPresent() && !bn.isPresent()) {
-      return Optional.empty();
+    Long blockNumber = environment.getArgument("block");
+    if (blockNumber == null) {
+      blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
     return query
-        .getWorldState(bn.orElseGet(txBlockNumber::get))
+        .getWorldState(blockNumber)
         .map(
             mutableWorldState ->
                 new AccountAdapter(
@@ -72,20 +93,20 @@ public class TransactionAdapter extends AdapterBase {
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final Optional<Long> txBlockNumber = transactionWithMetadata.getBlockNumber();
-    final Optional<Long> bn = Optional.ofNullable(environment.getArgument("block"));
-    if (!txBlockNumber.isPresent() && !bn.isPresent()) {
-      return Optional.empty();
+    Long blockNumber = environment.getArgument("block");
+    if (blockNumber == null) {
+      blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
 
     return query
-        .getWorldState(bn.orElseGet(txBlockNumber::get))
+        .getWorldState(blockNumber)
         .flatMap(
-            ws ->
-                transactionWithMetadata
-                    .getTransaction()
-                    .getTo()
-                    .map(addr -> new AccountAdapter(ws.get(addr))));
+            ws -> {
+              return transactionWithMetadata
+                  .getTransaction()
+                  .getTo()
+                  .map(address -> new AccountAdapter(address, ws.get(address)));
+            });
   }
 
   public Optional<Wei> getValue() {
@@ -94,6 +115,19 @@ public class TransactionAdapter extends AdapterBase {
 
   public Optional<Wei> getGasPrice() {
     return transactionWithMetadata.getTransaction().getGasPrice();
+  }
+
+  public Optional<Wei> getMaxPriorityFeePerGas() {
+    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
+  }
+
+  public Optional<Wei> getMaxFeePerGas() {
+    return transactionWithMetadata.getTransaction().getMaxFeePerGas();
+  }
+
+  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
   }
 
   public Optional<Long> getGas() {
@@ -112,9 +146,7 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Long> getStatus(final DataFetchingEnvironment environment) {
-    return Optional.ofNullable(transactionWithMetadata.getTransaction())
-        .map(Transaction::getHash)
-        .flatMap(rpt -> getBlockchainQueries(environment).transactionReceiptByTransactionHash(rpt))
+    return getReceipt(environment)
         .map(TransactionReceiptWithMetadata::getReceipt)
         .flatMap(
             receipt ->
@@ -124,23 +156,11 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<Long> getGasUsed(final DataFetchingEnvironment environment) {
-    final BlockchainQueries query = getBlockchainQueries(environment);
-    final Optional<TransactionReceiptWithMetadata> rpt =
-        query.transactionReceiptByTransactionHash(
-            transactionWithMetadata.getTransaction().getHash());
-    return rpt.map(TransactionReceiptWithMetadata::getGasUsed);
+    return getReceipt(environment).map(TransactionReceiptWithMetadata::getGasUsed);
   }
 
   public Optional<Long> getCumulativeGasUsed(final DataFetchingEnvironment environment) {
-    final BlockchainQueries query = getBlockchainQueries(environment);
-    final Optional<TransactionReceiptWithMetadata> rpt =
-        query.transactionReceiptByTransactionHash(
-            transactionWithMetadata.getTransaction().getHash());
-    if (rpt.isPresent()) {
-      final TransactionReceipt receipt = rpt.get().getReceipt();
-      return Optional.of(receipt.getCumulativeGasUsed());
-    }
-    return Optional.empty();
+    return getReceipt(environment).map(rpt -> rpt.getReceipt().getCumulativeGasUsed());
   }
 
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
@@ -152,7 +172,7 @@ public class TransactionAdapter extends AdapterBase {
         final BlockchainQueries query = getBlockchainQueries(environment);
         final Optional<Long> txBlockNumber = transactionWithMetadata.getBlockNumber();
         final Optional<Long> bn = Optional.ofNullable(environment.getArgument("block"));
-        if (!txBlockNumber.isPresent() && !bn.isPresent()) {
+        if (txBlockNumber.isEmpty() && bn.isEmpty()) {
           return Optional.empty();
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
@@ -207,5 +227,29 @@ public class TransactionAdapter extends AdapterBase {
       return Optional.ofNullable(transaction.getPayload());
     }
     return Optional.of(Bytes.EMPTY);
+  }
+
+  public List<AccessListEntryAdapter> getAccessList() {
+    return transactionWithMetadata
+        .getTransaction()
+        .getAccessList()
+        .map(l -> l.stream().map(AccessListEntryAdapter::new).collect(Collectors.toList()))
+        .orElse(List.of());
+  }
+
+  public Optional<Bytes> getRaw() {
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    transactionWithMetadata.getTransaction().writeTo(rlpOutput);
+    return Optional.of(rlpOutput.encoded());
+  }
+
+  public Optional<Bytes> getRawReceipt(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(
+            receipt -> {
+              final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+              receipt.getReceipt().writeTo(rlpOutput);
+              return rlpOutput.encoded();
+            });
   }
 }
