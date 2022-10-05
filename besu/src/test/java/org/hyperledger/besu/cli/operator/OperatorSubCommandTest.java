@@ -206,78 +206,35 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void shouldFailIfDuplicateFiles() {
-    final URL configFilePath = this.getClass().getResource("/operator/config_generate_keys.json");
-    parseCommand(
-        cmd(
-                OperatorSubCommand.COMMAND_NAME,
-                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
-                "--config-file",
-                configFilePath.getPath(),
-                "--to",
-                tmpOutputDirectoryPath.toString())
-            .args(
-                cmd("--private-key-file-name", "dup.test", "--public-key-file-name", "dup.test")
-                    .argsArray())
-            .argsArray());
-
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .endsWith("Output file paths must be unique.");
+    String[] args =
+        new String[] {"--private-key-file-name", "dup.test", "--public-key-file-name", "dup.test"};
+    runCmdAndAssertErrorMsg(
+        "/operator/config_generate_keys.json",
+        tmpOutputDirectoryPath.toString(),
+        args,
+        "Output file paths must be unique.");
   }
 
   @Test
-  public void shouldFailIfPublicKeysAreWrongType() throws IOException {
-    final URL configFilePath =
-        this.getClass().getResource("/operator/config_import_keys_invalid_keys.json");
-    parseCommand(
-        cmd(
-                OperatorSubCommand.COMMAND_NAME,
-                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
-                "--config-file",
-                configFilePath.getPath(),
-                "--to",
-                tmpOutputDirectoryPath.toString())
-            .args(cmd().argsArray())
-            .argsArray());
-
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .endsWith("Invalid key json of type: OBJECT");
+  public void shouldFailIfPublicKeysAreWrongType() {
+    runCmdAndAssertErrorMsg(
+        "/operator/config_import_keys_invalid_keys.json", "Invalid key json of type: OBJECT");
   }
 
   @Test
   public void shouldFailIfOutputDirectoryNonEmpty() throws IOException {
-    final URL configFilePath = this.getClass().getResource("/operator/config_generate_keys.json");
-    parseCommand(
-        cmd(
-                OperatorSubCommand.COMMAND_NAME,
-                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
-                "--config-file",
-                configFilePath.getPath(),
-                "--to",
-                FileSystems.getDefault().getPath(".").toString())
-            .args(cmd().argsArray())
-            .argsArray());
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .endsWith("Output directory already exists.");
+    runCmdAndAssertErrorMsg(
+        "/operator/config_generate_keys.json",
+        FileSystems.getDefault().getPath(".").toString(),
+        new String[0],
+        "Output directory already exists.");
   }
 
   @Test
   public void shouldFailIfInvalidEcCurveIsSet() {
-
-    final URL configFilePath =
-        this.getClass().getResource("/operator/config_generate_keys_ec_invalid.json");
-    parseCommand(
-        cmd(
-                OperatorSubCommand.COMMAND_NAME,
-                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
-                "--config-file",
-                configFilePath.getPath(),
-                "--to",
-                tmpOutputDirectoryPath.toString())
-            .args(cmd().argsArray())
-            .argsArray());
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .endsWith(
-            "Invalid parameter for ecCurve in genesis config: abcd is not in the list of valid elliptic curves [secp256k1, secp256r1]");
+    runCmdAndAssertErrorMsg(
+        "/operator/config_generate_keys_ec_invalid.json",
+        "Invalid parameter for ecCurve in genesis config: abcd is not in the list of valid elliptic curves [secp256k1, secp256r1]");
   }
 
   @Test
@@ -294,40 +251,15 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void shouldFailIfImportedKeysAreFromDifferentEllipticCurve() {
-    final URL configFilePath =
-        this.getClass().getResource("/operator/config_import_keys_secp256r1_invalid_keys.json");
-    parseCommand(
-        cmd(
-                OperatorSubCommand.COMMAND_NAME,
-                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
-                "--config-file",
-                configFilePath.getPath(),
-                "--to",
-                tmpOutputDirectoryPath.toString())
-            .args(cmd().argsArray())
-            .argsArray());
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .endsWith(
-            "0xb295c4242fb40c6e8ac7b831c916846050f191adc560b8098ba6ad513079571ec1be6e5e1a715857a13a91963097962e048c36c5863014b59e8f67ed3f667680 is not a valid public key for elliptic curve secp256r1");
+    runCmdAndAssertErrorMsg(
+        "/operator/config_import_keys_secp256r1_invalid_keys.json",
+        "0xb295c4242fb40c6e8ac7b831c916846050f191adc560b8098ba6ad513079571ec1be6e5e1a715857a13a91963097962e048c36c5863014b59e8f67ed3f667680 is not a valid public key for elliptic curve secp256r1");
   }
 
   @Test
   public void shouldFailIfNoConfigSection() {
-
-    final URL configFilePath =
-        this.getClass().getResource("/operator/config_no_config_section.json");
-    parseCommand(
-        cmd(
-                OperatorSubCommand.COMMAND_NAME,
-                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
-                "--config-file",
-                configFilePath.getPath(),
-                "--to",
-                tmpOutputDirectoryPath.toString())
-            .args(cmd().argsArray())
-            .argsArray());
-    assertThat(commandErrorOutput.toString(UTF_8).trim())
-        .endsWith("Missing config section in config file");
+    runCmdAndAssertErrorMsg(
+        "/operator/config_no_config_section.json", "Missing config section in config file");
   }
 
   @Test
@@ -461,6 +393,31 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
         checkPublicKey(nodeFolder, signatureAlgorithm.get());
       }
     }
+  }
+
+  private void runCmdAndAssertErrorMsg(final String configPath, final String expectedErrorMessage) {
+    runCmdAndAssertErrorMsg(
+        configPath, tmpOutputDirectoryPath.toString(), new String[0], expectedErrorMessage);
+  }
+
+  private void runCmdAndAssertErrorMsg(
+      final String configPath,
+      final String outPutDirectory,
+      final String[] args,
+      final String expectedErrorMessage) {
+    final URL configFilePath = this.getClass().getResource(configPath);
+    parseCommand(
+        cmd(
+                OperatorSubCommand.COMMAND_NAME,
+                OperatorSubCommand.GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME,
+                "--config-file",
+                configFilePath.getPath(),
+                "--to",
+                outPutDirectory)
+            .args(cmd(args).argsArray())
+            .argsArray());
+
+    assertThat(commandErrorOutput.toString(UTF_8).trim()).endsWith(expectedErrorMessage);
   }
 
   private void checkPublicKey(final File dir, final SignatureAlgorithm signatureAlgorithm)
