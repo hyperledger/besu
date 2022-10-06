@@ -508,15 +508,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-      final UnverifiedForkchoiceSupplier forkchoiceStateSupplier =
+      final UnverifiedForkchoiceSupplier unverifiedForkchoiceSupplier =
           new UnverifiedForkchoiceSupplier();
       final long subscriptionId =
-          mergeContext.addNewUnverifiedForkchoiceListener(forkchoiceStateSupplier);
+          mergeContext.addNewUnverifiedForkchoiceListener(unverifiedForkchoiceSupplier);
 
-      final Runnable unsubscribeForkchoiceUpdateListener =
+      final Runnable unsubscribeForkchoiceListener =
           () -> {
             mergeContext.removeNewUnverifiedForkchoiceListener(subscriptionId);
-            LOG.info("Initial sync done, unsubscribe forkchoice state supplier");
+            LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
       return new PivotSelectorFromFinalizedBlock(
@@ -525,8 +525,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           ethContext,
           metricsSystem,
           genesisConfigOptions,
-          forkchoiceStateSupplier,
-          unsubscribeForkchoiceUpdateListener);
+          unverifiedForkchoiceSupplier,
+          unsubscribeForkchoiceListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
