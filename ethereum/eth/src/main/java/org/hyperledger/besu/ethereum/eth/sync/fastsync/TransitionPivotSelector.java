@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -31,13 +31,13 @@ public class TransitionPivotSelector implements PivotBlockSelector {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionPivotSelector.class);
 
   private final Difficulty totalTerminalDifficulty;
-  private final Supplier<Optional<Hash>> finalizedBlockHashSupplier;
+  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceSupplier;
   private final PivotBlockSelector pivotSelectorFromPeers;
   private final PivotBlockSelector pivotSelectorFromFinalizedBlock;
 
   public TransitionPivotSelector(
       final GenesisConfigOptions genesisConfig,
-      final Supplier<Optional<Hash>> finalizedBlockHashSupplier,
+      final Supplier<Optional<ForkchoiceEvent>> forkchoiceSupplier,
       final PivotBlockSelector pivotSelectorFromPeers,
       final PivotBlockSelector pivotSelectorFromFinalizedBlock) {
     this.totalTerminalDifficulty =
@@ -48,7 +48,7 @@ public class TransitionPivotSelector implements PivotBlockSelector {
                 () ->
                     new IllegalArgumentException(
                         "This class can only be used when TTD is present"));
-    this.finalizedBlockHashSupplier = finalizedBlockHashSupplier;
+    this.forkchoiceSupplier = forkchoiceSupplier;
     this.pivotSelectorFromPeers = pivotSelectorFromPeers;
     this.pivotSelectorFromFinalizedBlock = pivotSelectorFromFinalizedBlock;
   }
@@ -62,7 +62,7 @@ public class TransitionPivotSelector implements PivotBlockSelector {
 
     Difficulty bestPeerEstDifficulty = peer.chainState().getEstimatedTotalDifficulty();
 
-    if (finalizedBlockHashSupplier.get().isPresent()) {
+    if (forkchoiceSupplier.get().isPresent()) {
       LOG.trace("A finalized block is present, use it as pivot");
       return pivotSelectorFromFinalizedBlock.selectNewPivotBlock(peer);
     }
