@@ -50,8 +50,6 @@ import org.junit.Test;
 
 public class FastSyncDownloaderTest {
 
-  //  private static final CompletableFuture<FastSyncState> COMPLETE =
-  //      completedFuture(FastSyncState.EMPTY_SYNC_STATE);
 
   @SuppressWarnings("unchecked")
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
@@ -88,8 +86,6 @@ public class FastSyncDownloaderTest {
     final FastSyncState selectPivotBlockState = new FastSyncState(50);
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(50).buildHeader();
     final FastSyncState downloadPivotBlockHeaderState = new FastSyncState(pivotBlockHeader);
-    //
-    // when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE)).thenReturn(COMPLETE);
     when(fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE))
         .thenReturn(completedFuture(selectPivotBlockState));
     when(fastSyncActions.downloadPivotBlockHeader(selectPivotBlockState))
@@ -103,7 +99,6 @@ public class FastSyncDownloaderTest {
 
     final CompletableFuture<FastSyncState> result = downloader.start();
 
-    //    verify(fastSyncActions).waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE);
     verify(fastSyncActions).selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
     verify(fastSyncActions).downloadPivotBlockHeader(selectPivotBlockState);
     verify(storage).storeState(downloadPivotBlockHeaderState);
@@ -120,7 +115,6 @@ public class FastSyncDownloaderTest {
     final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().number(50).buildHeader();
     final FastSyncState fastSyncState = new FastSyncState(pivotBlockHeader);
     final CompletableFuture<FastSyncState> complete = completedFuture(fastSyncState);
-    //    when(fastSyncActions.waitForSuitablePeers(fastSyncState)).thenReturn(complete);
     when(fastSyncActions.selectPivotBlock(fastSyncState)).thenReturn(complete);
     when(fastSyncActions.downloadPivotBlockHeader(fastSyncState)).thenReturn(complete);
     when(fastSyncActions.createChainDownloader(fastSyncState)).thenReturn(chainDownloader);
@@ -141,7 +135,6 @@ public class FastSyncDownloaderTest {
 
     final CompletableFuture<FastSyncState> result = resumedDownloader.start();
 
-    //    verify(fastSyncActions).waitForSuitablePeers(fastSyncState);
     verify(fastSyncActions).selectPivotBlock(fastSyncState);
     verify(fastSyncActions).downloadPivotBlockHeader(fastSyncState);
     verify(storage).storeState(fastSyncState);
@@ -152,21 +145,6 @@ public class FastSyncDownloaderTest {
     verifyNoMoreInteractions(fastSyncActions, worldStateDownloader, storage);
     assertThat(result).isCompletedWithValue(fastSyncState);
   }
-
-  //  @Test
-  //  public void shouldAbortIfWaitForSuitablePeersFails() {
-  //    when(fastSyncActions.waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE))
-  //        .thenReturn(
-  //            CompletableFuture.failedFuture(new
-  // FastSyncException(FastSyncError.UNEXPECTED_ERROR)));
-  //
-  //    final CompletableFuture<FastSyncState> result = downloader.start();
-  //
-  //    assertCompletedExceptionally(result, FastSyncError.UNEXPECTED_ERROR);
-  //
-  //    verify(fastSyncActions).waitForSuitablePeers(FastSyncState.EMPTY_SYNC_STATE);
-  //    verifyNoMoreInteractions(fastSyncActions);
-  //  }
 
   @Test
   public void shouldAbortIfSelectPivotBlockFails() {
