@@ -33,7 +33,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -55,21 +54,18 @@ public class NewPooledTransactionHashesMessageProcessor {
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
-  private final Supplier<Boolean> shouldProcessMessages;
 
   public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem,
-      final Supplier<Boolean> shouldProcessMessages) {
+      final MetricsSystem metricsSystem) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
-    this.shouldProcessMessages = shouldProcessMessages;
     this.totalSkippedNewPooledTransactionHashesMessageCounter =
         new RunnableCounter(
             metricsSystem.createCounter(
@@ -110,26 +106,24 @@ public class NewPooledTransactionHashesMessageProcessor {
           incomingTransactionHashes::size,
           incomingTransactionHashes::toString);
 
-      if (shouldProcessMessages.get()) {
-        final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
-            scheduledTasks.computeIfAbsent(
-                peer,
-                ethPeer -> {
-                  ethContext
-                      .getScheduler()
-                      .scheduleFutureTask(
-                          new FetcherCreatorTask(peer),
-                          transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
+      final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
+          scheduledTasks.computeIfAbsent(
+              peer,
+              ethPeer -> {
+                ethContext
+                    .getScheduler()
+                    .scheduleFutureTask(
+                        new FetcherCreatorTask(peer),
+                        transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
 
-                  return new BufferedGetPooledTransactionsFromPeerFetcher(
-                      ethContext, peer, transactionPool, transactionTracker, metricsSystem);
-                });
+                return new BufferedGetPooledTransactionsFromPeerFetcher(
+                    ethContext, peer, transactionPool, transactionTracker, metricsSystem);
+              });
 
-        bufferedTask.addHashes(
-            incomingTransactionHashes.stream()
-                .filter(hash -> transactionPool.getTransactionByHash(hash).isEmpty())
-                .collect(Collectors.toList()));
-      }
+      bufferedTask.addHashes(
+          incomingTransactionHashes.stream()
+              .filter(hash -> transactionPool.getTransactionByHash(hash).isEmpty())
+              .collect(Collectors.toList()));
     } catch (final RLPException ex) {
       if (peer != null) {
         LOG.debug(
