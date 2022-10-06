@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -454,7 +454,7 @@ public class FastSyncActionsTest {
     when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
 
     final Optional<ForkchoiceEvent> finalizedEvent =
-        Optional.of(new ForkchoiceEvent(null, blockchain.getBlockHashByNumber(2L), null));
+        Optional.of(new ForkchoiceEvent(null, null, blockchain.getBlockHashByNumber(2L)));
 
     fastSyncActions =
         createFastSyncActions(
@@ -471,7 +471,7 @@ public class FastSyncActionsTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.downloadPivotBlockHeader(
-            new FastSyncState(finalizedEvent.get().getMaybeFinalizedBlockHash().get()));
+            new FastSyncState(finalizedEvent.get().getFinalizedBlockHash().get()));
     assertThat(result).isNotCompleted();
 
     final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);

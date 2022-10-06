@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -70,8 +70,7 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidFinalizedBlockHash()) {
       return Optional.of(
-          selectLastFinalizedBlockAsPivot(
-              maybeForkchoice.get().getMaybeFinalizedBlockHash().get()));
+          selectLastFinalizedBlockAsPivot(maybeForkchoice.get().getFinalizedBlockHash()));
     }
     LOG.debug("No finalized block hash announced yet");
     return Optional.empty();

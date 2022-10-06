@@ -113,11 +113,10 @@ public class PandaPrinterTest {
     PandaPrinter p = new PandaPrinter(Optional.of(Difficulty.of(9)), Difficulty.of(BigInteger.TEN));
     assertThat(p.finalizedBeenDisplayed).isFalse();
     MergeContext mergeContext = new PostMergeContext(Difficulty.ZERO);
-    mergeContext.addNewForkchoiceMessageListener(p);
-    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
-        Hash.ZERO, Optional.of(Hash.ZERO), Hash.ZERO);
-    mergeContext.fireNewUnverifiedForkchoiceMessageEvent(
-        Hash.ZERO, Optional.of(Hash.fromHexStringLenient("0x1337")), Hash.ZERO);
+    mergeContext.addNewUnverifiedForkchoiceListener(p);
+    mergeContext.fireNewUnverifiedForkchoiceEvent(Hash.ZERO, Hash.ZERO, Hash.ZERO);
+    mergeContext.fireNewUnverifiedForkchoiceEvent(
+        Hash.ZERO, Hash.ZERO, Hash.fromHexStringLenient("0x1337"));
     assertThat(p.finalizedBeenDisplayed).isTrue();
   }
 

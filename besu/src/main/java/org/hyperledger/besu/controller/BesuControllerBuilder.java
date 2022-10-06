@@ -19,8 +19,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.ForkchoiceStateSupplier;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceStateSupplier;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -508,13 +508,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-      final ForkchoiceStateSupplier forkchoiceStateSupplier = new ForkchoiceStateSupplier();
+      final UnverifiedForkchoiceStateSupplier forkchoiceStateSupplier =
+          new UnverifiedForkchoiceStateSupplier();
       final long subscriptionId =
-          mergeContext.addNewForkchoiceMessageListener(forkchoiceStateSupplier);
+          mergeContext.addNewUnverifiedForkchoiceListener(forkchoiceStateSupplier);
 
       final Runnable unsubscribeForkchoiceUpdateListener =
           () -> {
-            mergeContext.removeNewForkchoiceMessageListener(subscriptionId);
+            mergeContext.removeNewUnverifiedForkchoiceListener(subscriptionId);
             LOG.info("Initial sync done, unsubscribe forkchoice state supplier");
           };
 

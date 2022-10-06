@@ -33,7 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, BlockAddedObserver {
+public class PandaPrinter
+    implements InSyncListener, UnverifiedForkchoiceListener, BlockAddedObserver {
 
   private static PandaPrinter INSTANCE;
 
@@ -143,7 +144,7 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
   }
 
   @Override
-  public void onNewForkchoiceMessage(final ForkchoiceEvent event) {
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
     if (event.hasValidFinalizedBlockHash()) {
       printFinalized();
     }

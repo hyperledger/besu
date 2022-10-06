@@ -14,22 +14,21 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener.ForkchoiceEvent;
-
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ForkchoiceStateSupplier
-    implements Supplier<Optional<ForkchoiceEvent>>, ForkchoiceMessageListener {
-  private static final Logger LOG = LoggerFactory.getLogger(ForkchoiceStateSupplier.class);
+public class UnverifiedForkchoiceStateSupplier
+    implements Supplier<Optional<ForkchoiceEvent>>, UnverifiedForkchoiceListener {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(UnverifiedForkchoiceStateSupplier.class);
 
   private volatile Optional<ForkchoiceEvent> maybeLastForkchoiceUpdate = Optional.empty();
 
   @Override
-  public void onNewForkchoiceMessage(final ForkchoiceEvent event) {
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
     maybeLastForkchoiceUpdate = Optional.of(event);
     LOG.debug("New forkchoice announced {}", maybeLastForkchoiceUpdate);
   }

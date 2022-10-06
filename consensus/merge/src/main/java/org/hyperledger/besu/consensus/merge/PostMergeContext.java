@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -53,8 +52,8 @@ public class PostMergeContext implements MergeContext {
       new AtomicReference<>(Optional.empty());
   private final Subscribers<MergeStateHandler> newMergeStateCallbackSubscribers =
       Subscribers.create();
-  private final Subscribers<ForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
-      Subscribers.create();
+  private final Subscribers<UnverifiedForkchoiceListener>
+      newUnverifiedForkchoiceCallbackSubscribers = Subscribers.create();
 
   private final EvictingQueue<PayloadTuple> blocksInProgress =
       EvictingQueue.create(MAX_BLOCKS_IN_PROGRESS);
@@ -145,24 +144,22 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public long addNewForkchoiceMessageListener(
-      final ForkchoiceMessageListener forkchoiceMessageListener) {
-    return newForkchoiceMessageCallbackSubscribers.subscribe(forkchoiceMessageListener);
+  public long addNewUnverifiedForkchoiceListener(
+      final UnverifiedForkchoiceListener unverifiedForkchoiceListener) {
+    return newUnverifiedForkchoiceCallbackSubscribers.subscribe(unverifiedForkchoiceListener);
   }
 
   @Override
-  public void removeNewForkchoiceMessageListener(final long subscriberId) {
-    newForkchoiceMessageCallbackSubscribers.unsubscribe(subscriberId);
+  public void removeNewUnverifiedForkchoiceListener(final long subscriberId) {
+    newUnverifiedForkchoiceCallbackSubscribers.unsubscribe(subscriberId);
   }
 
   @Override
-  public void fireNewUnverifiedForkchoiceMessageEvent(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
+  public void fireNewUnverifiedForkchoiceEvent(
+      final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash) {
     final ForkchoiceEvent event =
-        new ForkchoiceEvent(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
-    newForkchoiceMessageCallbackSubscribers.forEach(cb -> cb.onNewForkchoiceMessage(event));
+        new ForkchoiceEvent(headBlockHash, safeBlockHash, finalizedBlockHash);
+    newUnverifiedForkchoiceCallbackSubscribers.forEach(cb -> cb.onNewUnverifiedForkchoice(event));
   }
 
   @Override
