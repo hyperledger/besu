@@ -50,7 +50,6 @@ import org.junit.Test;
 
 public class FastSyncDownloaderTest {
 
-
   @SuppressWarnings("unchecked")
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
 
