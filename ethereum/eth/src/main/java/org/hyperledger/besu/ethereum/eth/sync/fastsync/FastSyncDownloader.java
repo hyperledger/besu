@@ -76,15 +76,16 @@ public class FastSyncDownloader<REQUEST> {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("FastSyncDownloader already running");
     }
+    LOG.info("Starting sync");
     return start(initialFastSyncState);
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.info("Starting sync.");
     if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       LOG.info("Clearing bonsai flat account db");
       worldStateStorage.clearFlatDatabase();
     }
+    LOG.debug("Start sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
 
@@ -108,7 +109,7 @@ public class FastSyncDownloader<REQUEST> {
     if (rootCause instanceof FastSyncException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof StalledDownloadException) {
-      LOG.info("Re-pivoting to newer block.");
+      LOG.debug("Stalled sync re-pivoting to newer block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else if (rootCause instanceof CancellationException) {
       return CompletableFuture.failedFuture(error);
