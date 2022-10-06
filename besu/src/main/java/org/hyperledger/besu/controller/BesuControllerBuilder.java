@@ -508,10 +508,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final long subscriptionId =
           mergeContext.addNewUnverifiedForkchoiceListener(unverifiedForkchoiceSupplier);
 
-      final Runnable unsubscribeFinalizedBlockHashListener =
+      final Runnable unsubscribeForkchoiceListener =
           () -> {
             mergeContext.removeNewUnverifiedForkchoiceListener(subscriptionId);
-            LOG.info("Initial sync done, unsubscribe finalized block hash supplier");
+            LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
       return new TransitionPivotSelector(
@@ -521,7 +521,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           new PivotSelectorFromFinalizedBlock(
               genesisConfigOptions,
               unverifiedForkchoiceSupplier,
-              unsubscribeFinalizedBlockHashListener));
+              unsubscribeForkchoiceListener));
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return pivotSelectorFromPeers;
