@@ -18,7 +18,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
@@ -67,7 +70,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -482,8 +484,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
-    private Supplier<List<Bytes>> forkIdSupplier;
     private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
+    private Blockchain blockchain;
+    private List<Long> forks;
 
     public P2PNetwork build() {
       validate();
@@ -524,10 +527,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(metricsSystem != null, "MetricsSystem must be set.");
       checkState(storageProvider != null, "StorageProvider must be set.");
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
-      checkState(forkIdSupplier != null, "ForkIdSupplier must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
+      final ForkIdManager forkIdManager = new ForkIdManager(blockchain, forks, false);
 
       return new VertxPeerDiscoveryAgent(
           vertx,
@@ -537,7 +540,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
           natService,
           metricsSystem,
           storageProvider,
-          forkIdSupplier);
+          forkIdManager);
     }
 
     private RlpxAgent createRlpxAgent(
@@ -630,15 +633,21 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
 
-    public Builder forkIdSupplier(final Supplier<List<Bytes>> forkIdSupplier) {
-      checkNotNull(forkIdSupplier);
-      this.forkIdSupplier = forkIdSupplier;
-      return this;
-    }
-
     public Builder p2pTLSConfiguration(final Optional<TLSConfiguration> p2pTLSConfiguration) {
       checkNotNull(p2pTLSConfiguration);
       this.p2pTLSConfiguration = p2pTLSConfiguration;
+      return this;
+    }
+
+    public Builder blockchain(final MutableBlockchain blockchain) {
+      checkNotNull(blockchain);
+      this.blockchain = blockchain;
+      return this;
+    }
+
+    public Builder forks(final List<Long> forks) {
+      checkNotNull(forks);
+      this.forks = forks;
       return this;
     }
   }

@@ -42,7 +42,6 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -337,7 +336,6 @@ public class P2PNetworkTest {
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+        .storageProvider(new InMemoryKeyValueStorageProvider());
   }
 }

@@ -22,6 +22,7 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
@@ -84,6 +85,7 @@ public abstract class PeerDiscoveryAgent {
   private final PeerPermissions peerPermissions;
   private final NatService natService;
   private final MetricsSystem metricsSystem;
+  private final ForkIdManager forkIdManager;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -112,7 +114,7 @@ public abstract class PeerDiscoveryAgent {
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
-      final Supplier<List<Bytes>> forkIdSupplier) {
+      final ForkIdManager forkIdManager) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -130,7 +132,8 @@ public abstract class PeerDiscoveryAgent {
     this.id = nodeKey.getPublicKey().getEncodedBytes();
 
     this.storageProvider = storageProvider;
-    this.forkIdSupplier = forkIdSupplier;
+    this.forkIdManager = forkIdManager;
+    this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
   }
 
   protected abstract TimerUtil createTimer();
@@ -268,6 +271,7 @@ public abstract class PeerDiscoveryAgent {
         .peerPermissions(peerPermissions)
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
+        .forkIdManager(forkIdManager)
         .build();
   }
 

@@ -51,7 +51,6 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -387,7 +386,7 @@ public class P2PPlainNetworkTest {
   }
 
   private byte[] buildPaddedMessage(final int messageSize) {
-    byte[] bytes = new byte[messageSize];
+    final byte[] bytes = new byte[messageSize];
     Arrays.fill(bytes, (byte) 9);
     return bytes;
   }
@@ -440,7 +439,7 @@ public class P2PPlainNetworkTest {
       final Path targetFilePath = createTemporaryFile("nsscfg");
       Files.write(targetFilePath, updated.getBytes(Charsets.UTF_8));
       ret = targetFilePath;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Error populating nss config file", e);
     }
     return ret;
@@ -451,7 +450,7 @@ public class P2PPlainNetworkTest {
     try {
       tempFile = File.createTempFile("temp", suffix);
       tempFile.deleteOnExit();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException("Error creating temporary file", e);
     }
     return tempFile.toPath();
@@ -506,7 +505,7 @@ public class P2PPlainNetworkTest {
               .withCrlPath(toPath(String.format(crl, name)));
           break;
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     return Optional.of(builder.build());
@@ -520,7 +519,6 @@ public class P2PPlainNetworkTest {
         .p2pTLSConfiguration(p2pTLSEnabled(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS))
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Arrays.asList(Capability.create("eth", 63)))
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+        .storageProvider(new InMemoryKeyValueStorageProvider());
   }
 }

@@ -26,6 +26,7 @@ import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,8 @@ public class EthPeers {
 
   private Comparator<EthPeer> bestPeerComparator;
 
+  private final Map<String, Long> registeredMap = new HashMap<>();
+
   public EthPeers(
       final String protocolName,
       final Clock clock,
@@ -107,11 +110,31 @@ public class EthPeers {
             maxMessageSize,
             clock,
             permissioningProviders);
-    final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
-    LOG.debug(
-        "Adding new EthPeer {} {}",
-        peer.getShortNodeId(),
-        ethPeer == null ? "for the first time" : "");
+    connections.putIfAbsent(peerConnection, peer);
+    final String key = peerConnection.getPeerInfo().getClientId().substring(0, 4);
+    registeredMap.compute(
+        key,
+        (k, v) -> {
+          if (v != null) {
+            return Long.valueOf(v.longValue() + 1L);
+          } else {
+            return Long.valueOf(1L);
+          }
+        });
+    LOG.info(
+        "Adding new EthPeer {}, {} useful peers connected, useful geth peers: {}\n{}",
+        peer,
+        usefulPeersCount(),
+        usefulGethPeers(),
+        registeredMap);
+  }
+
+  private int usefulGethPeers() {
+    return (int)
+        streamAllPeers()
+            .filter(p -> p.getReputation().getScore() > 100)
+            .filter(p -> p.getConnection().getPeerInfo().getClientId().startsWith("Geth"))
+            .count();
   }
 
   public void registerDisconnect(final PeerConnection connection) {
@@ -192,6 +215,11 @@ public class EthPeers {
 
   public int peerCount() {
     return connections.size();
+  }
+
+  private int usefulPeersCount() {
+    removeDisconnectedPeers();
+    return (int) streamAllPeers().filter(p -> p.getReputation().getScore() > 100).count();
   }
 
   public int getMaxPeers() {

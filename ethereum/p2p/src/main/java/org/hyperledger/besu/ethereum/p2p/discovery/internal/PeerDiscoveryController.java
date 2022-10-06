@@ -21,6 +21,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent;
@@ -36,6 +38,7 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +59,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.EnrField;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +111,7 @@ public class PeerDiscoveryController {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryController.class);
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
+
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
   private final Cache<Bytes, DiscoveryPeer> bondingPeers =
@@ -128,6 +133,7 @@ public class PeerDiscoveryController {
   private final DiscoveryProtocolLogger discoveryProtocolLogger;
   private final LabelledMetric<Counter> interactionCounter;
   private final LabelledMetric<Counter> interactionRetryCounter;
+  private final ForkIdManager forkIdManager;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -147,6 +153,10 @@ public class PeerDiscoveryController {
 
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
+  private long numENRResponses;
+  private long pass;
+  private long fail;
+
   private PeerDiscoveryController(
       final NodeKey nodeKey,
       final DiscoveryPeer localPeer,
@@ -161,7 +171,8 @@ public class PeerDiscoveryController {
       final PeerPermissions peerPermissions,
       final Subscribers<PeerBondedObserver> peerBondedObservers,
       final MetricsSystem metricsSystem,
-      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests) {
+      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
+      final ForkIdManager forkIdManager) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -199,6 +210,8 @@ public class PeerDiscoveryController {
     this.cachedEnrRequests =
         maybeCacheForEnrRequests.orElse(
             CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
+
+    this.forkIdManager = forkIdManager;
   }
 
   public static Builder builder() {
@@ -319,11 +332,11 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
-                  bondingPeers.invalidate(peer.getId());
-                  addToPeerTable(peer);
-                  recursivePeerRefreshState.onBondingComplete(peer);
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
+                  requestENR(peer); // TODO: for now always request ENR -> make this configuerable
+                  bondingPeers.invalidate(peer.getId());
+                  addToPeerTable(peer); // This is done for any dicovered peer, for any network
                 });
         break;
       case NEIGHBORS:
@@ -357,11 +370,42 @@ public class PeerDiscoveryController {
       case ENR_RESPONSE:
         // Currently there is no use case where an ENRResponse will be sent otherwise
         // logic can be added here to query and store the response ENRs
-        packet
-            .getPacketData(ENRResponsePacketData.class)
-            .filter(p -> p.getEnr().getNodeId().equals(sender.getId()))
-            .ifPresent(p -> LOG.debug("Received NodeRecord: {}", p.getEnr().asEnr()));
-
+        final Optional<ENRResponsePacketData> packetData =
+            packet.getPacketData(ENRResponsePacketData.class);
+        final NodeRecord enr = packetData.get().getEnr();
+        final Bytes pkey = (Bytes) enr.get(EnrField.PKEY_SECP256K1);
+        // pkey contains the compressed public key. bytes 1 to 33 should be equal to the x component
+        // of the public key
+        if (pkey != null) {
+          if (!Arrays.equals(pkey.toArray(), 1, 33, sender.getId().toArray(), 0, 32)) {
+            LOG.info(
+                "Peer {} has sent an ENR response containing the wrong pkey ({})",
+                sender.getId(),
+                pkey);
+          }
+        }
+        @SuppressWarnings("unchecked")
+        final List<List<Bytes>> rawFforkId = (List<List<Bytes>>) enr.get("eth");
+        this.numENRResponses++;
+        if (rawFforkId != null) {
+          final ForkId forkId = new ForkId(rawFforkId.get(0).get(0), rawFforkId.get(0).get(1));
+          if (forkIdManager.peerCheck(forkId)) {
+            notifyPeerBonded(peer, System.currentTimeMillis());
+            recursivePeerRefreshState.onBondingComplete(peer);
+            LOG.debug("Peer {} PASSED fork id check. ForkId received: {}", sender.getId(), forkId);
+            this.pass++;
+          } else {
+            LOG.debug("Peer {} FAILED fork id check. ForkId received: {}", sender.getId(), forkId);
+            this.fail++;
+          }
+          if (Math.floorMod(this.numENRResponses, 100L) == 0L) {
+            LOG.info("ForkIds: \ntotal {}\npass {}\nfail {}\n", numENRResponses, pass, fail);
+          }
+        } else {
+          // if the peer hasn't sent the ForkId try to connect to it anyways
+          notifyPeerBonded(peer, System.currentTimeMillis());
+          recursivePeerRefreshState.onBondingComplete(peer);
+        }
         break;
     }
   }
@@ -400,7 +444,6 @@ public class PeerDiscoveryController {
 
     if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
       peer.setStatus(PeerDiscoveryStatus.BONDED);
-      notifyPeerBonded(peer, now);
     }
 
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
@@ -506,6 +549,33 @@ public class PeerDiscoveryController {
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
         new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false, true);
+    dispatchInteraction(peer, peerInteractionState);
+  }
+
+  /**
+   * Initiates an enr request cycle with a peer.
+   *
+   * @param peer The targeted peer.
+   */
+  @VisibleForTesting
+  void requestENR(final DiscoveryPeer peer) {
+    peer.setStatus(PeerDiscoveryStatus.ENR_REQUESTED);
+
+    final Consumer<PeerInteractionState> action =
+        interaction -> {
+          final ENRRequestPacketData data = ENRRequestPacketData.create();
+          createPacket(
+              PacketType.ENR_REQUEST,
+              data,
+              enrRequestPacket -> {
+                sendPacket(peer, enrRequestPacket);
+              });
+        };
+
+    // The filter condition will be updated as soon as the action is performed.
+    final PeerInteractionState peerInteractionState =
+        new PeerInteractionState(
+            action, peer.getId(), PacketType.ENR_REQUEST, packet -> false, true);
     dispatchInteraction(peer, peerInteractionState);
   }
 
@@ -759,6 +829,7 @@ public class PeerDiscoveryController {
 
     private Cache<Bytes, Packet> cachedEnrRequests =
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
+    private ForkIdManager forkIdManager;
 
     private Builder() {}
 
@@ -783,7 +854,8 @@ public class PeerDiscoveryController {
           peerPermissions,
           peerBondedObservers,
           metricsSystem,
-          Optional.of(cachedEnrRequests));
+          Optional.of(cachedEnrRequests),
+          forkIdManager);
     }
 
     private void validate() {
@@ -793,6 +865,7 @@ public class PeerDiscoveryController {
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
       validateRequiredDependency(metricsSystem, "MetricsSystem");
       validateRequiredDependency(peerBondedObservers, "PeerBondedObservers");
+      validateRequiredDependency(forkIdManager, "ForkIdManager");
     }
 
     private void validateRequiredDependency(final Object object, final String name) {
@@ -879,6 +952,12 @@ public class PeerDiscoveryController {
     public Builder cacheForEnrRequests(final Cache<Bytes, Packet> cacheToUse) {
       checkNotNull(cacheToUse);
       this.cachedEnrRequests = cacheToUse;
+      return this;
+    }
+
+    public Builder forkIdManager(final ForkIdManager forkIdManager) {
+      checkNotNull(forkIdManager);
+      this.forkIdManager = forkIdManager;
       return this;
     }
   }
