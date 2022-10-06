@@ -6,7 +6,6 @@
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
 - Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
 - Improve UX of initial sync logs, pushing not relevant logs to debug level [#4486](https://github.com/hyperledger/besu/pull/4486)
-- Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
 
 ### Bug Fixes
 
