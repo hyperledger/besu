@@ -4,6 +4,7 @@
 
 ### Additions and Improvements
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
+- Improved RLP processing to handle zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
 
 ### Bug Fixes
 
@@ -17,7 +18,6 @@
 - Avoid sending added block events to transaction pool, and processing incoming transactions during initial sync [#4457](https://github.com/hyperledger/besu/pull/4457)
 - When building a new proposal, keep the best block built until now instead of the last one [#4455](https://github.com/hyperledger/besu/pull/4455)
 - Add Mainnet to merged networks [#4463](https://github.com/hyperledger/besu/pull/4463)
-- Improved RLP processing to handle zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388).
 
 ### Bug Fixes
 - Fixed logIndex value returned by eth_getLogs RPC call [#4355](https://github.com/hyperledger/besu/pull/4355)
