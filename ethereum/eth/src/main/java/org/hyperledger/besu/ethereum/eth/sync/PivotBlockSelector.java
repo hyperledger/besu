@@ -32,4 +32,6 @@ public interface PivotBlockSelector {
   default long getMinRequiredBlockNumber() {
     return 0L;
   }
+
+  long getBestChainHeight();
 }

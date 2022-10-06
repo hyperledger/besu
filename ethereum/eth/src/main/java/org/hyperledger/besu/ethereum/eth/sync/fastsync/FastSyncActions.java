@@ -88,6 +88,10 @@ public class FastSyncActions {
     return syncState;
   }
 
+  public long getBestChainHeight() {
+    return pivotBlockSelector.getBestChainHeight();
+  }
+
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
     return fastSyncState.hasPivotBlockHeader()
         ? completedFuture(fastSyncState)

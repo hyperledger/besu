@@ -459,7 +459,14 @@ public class FastSyncActionsTest {
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
-            new PivotSelectorFromFinalizedBlock(genesisConfig, () -> finalizedEvent, () -> {}));
+            new PivotSelectorFromFinalizedBlock(
+                blockchainSetupUtil.getProtocolContext(),
+                blockchainSetupUtil.getProtocolSchedule(),
+                ethContext,
+                metricsSystem,
+                genesisConfig,
+                () -> finalizedEvent,
+                () -> {}));
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
