@@ -5,7 +5,7 @@
 ### Breaking Changes
 - Flexible Privacy Groups (early access) support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
   * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
-  * For the EC encryptor, the encoded public key length is 91
+  * For the EC encryptor, the encoded public key length is 91 bytes
 
 ### Additions and Improvements
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
