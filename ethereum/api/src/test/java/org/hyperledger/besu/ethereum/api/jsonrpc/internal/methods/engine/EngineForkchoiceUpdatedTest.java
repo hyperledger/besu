@@ -474,12 +474,10 @@ public class EngineForkchoiceUpdatedTest {
 
     // assert that listeners are always notified
     verify(mergeContext)
-        .fireNewUnverifiedForkchoiceMessageEvent(
+        .fireNewUnverifiedForkchoiceEvent(
             fcuParam.getHeadBlockHash(),
-            fcuParam.getFinalizedBlockHash().isZero()
-                ? Optional.empty()
-                : Optional.of(fcuParam.getFinalizedBlockHash()),
-            fcuParam.getSafeBlockHash());
+            fcuParam.getSafeBlockHash(),
+            fcuParam.getFinalizedBlockHash());
 
     verify(engineCallListener, times(1)).executionEngineCalled();
 

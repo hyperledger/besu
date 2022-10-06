@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -34,7 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, BlockAddedObserver {
+public class PandaPrinter
+    implements InSyncListener, UnverifiedForkchoiceListener, BlockAddedObserver {
 
   private static PandaPrinter INSTANCE;
 
@@ -144,11 +144,8 @@ public class PandaPrinter implements InSyncListener, ForkchoiceMessageListener, 
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+    if (event.hasValidFinalizedBlockHash()) {
       printFinalized();
     }
   }
