@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -29,33 +29,38 @@ import org.slf4j.LoggerFactory;
 public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromFinalizedBlock.class);
-
   private final GenesisConfigOptions genesisConfig;
-  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceSupplier;
+  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
 
   public PivotSelectorFromFinalizedBlock(
       final GenesisConfigOptions genesisConfig,
-      final Supplier<Optional<ForkchoiceEvent>> forkchoiceSupplier,
+      final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {
     this.genesisConfig = genesisConfig;
-    this.forkchoiceSupplier = forkchoiceSupplier;
+    this.forkchoiceStateSupplier = forkchoiceStateSupplier;
     this.cleanupAction = cleanupAction;
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
-    final Optional<ForkchoiceEvent> maybeForkchoiceEvent = forkchoiceSupplier.get();
-    if (maybeForkchoiceEvent.isPresent()) {
+  public Optional<FastSyncState> selectNewPivotBlock() {
+    final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
+    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidFinalizedBlockHash()) {
       return Optional.of(
-          selectLastFinalizedBlockAsPivot(maybeForkchoiceEvent.get().getFinalizedBlockHash()));
+          selectLastFinalizedBlockAsPivot(maybeForkchoice.get().getFinalizedBlockHash()));
     }
-    LOG.trace("No finalized block hash announced yet");
+    LOG.debug("No finalized block hash announced yet");
     return Optional.empty();
   }
 
+  @Override
+  public CompletableFuture<Void> prepareRetry() {
+    // nothing to do
+    return CompletableFuture.completedFuture(null);
+  }
+
   private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
-    LOG.trace("Returning finalized block hash as pivot: {}", finalizedHash);
+    LOG.debug("Returning finalized block hash {} as pivot", finalizedHash);
     return new FastSyncState(finalizedHash);
   }
 

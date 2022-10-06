@@ -63,7 +63,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromFinalizedBlock;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.TransitionPivotSelector;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -408,7 +407,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
 
-    final PivotBlockSelector pivotBlockSelector = createPivotSelector(protocolContext);
+    final PivotBlockSelector pivotBlockSelector =
+        createPivotSelector(protocolContext, ethContext, syncState);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -493,9 +493,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return toUse;
   }
 
-  private PivotBlockSelector createPivotSelector(final ProtocolContext protocolContext) {
+  private PivotBlockSelector createPivotSelector(
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState) {
 
-    final PivotSelectorFromPeers pivotSelectorFromPeers = new PivotSelectorFromPeers(syncConfig);
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
@@ -514,15 +516,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
-      return new TransitionPivotSelector(
-          genesisConfigOptions,
-          unverifiedForkchoiceSupplier,
-          pivotSelectorFromPeers,
-          new PivotSelectorFromFinalizedBlock(
-              genesisConfigOptions, unverifiedForkchoiceSupplier, unsubscribeForkchoiceListener));
+      return new PivotSelectorFromFinalizedBlock(
+          genesisConfigOptions, unverifiedForkchoiceSupplier, unsubscribeForkchoiceListener);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
-      return pivotSelectorFromPeers;
+      return new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem);
     }
   }
 
