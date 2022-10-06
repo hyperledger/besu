@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
@@ -30,23 +31,24 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromFinalizedBlock.class);
 
   private final GenesisConfigOptions genesisConfig;
-  private final Supplier<Optional<Hash>> finalizedBlockHashSupplier;
+  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceSupplier;
   private final Runnable cleanupAction;
 
   public PivotSelectorFromFinalizedBlock(
       final GenesisConfigOptions genesisConfig,
-      final Supplier<Optional<Hash>> finalizedBlockHashSupplier,
+      final Supplier<Optional<ForkchoiceEvent>> forkchoiceSupplier,
       final Runnable cleanupAction) {
     this.genesisConfig = genesisConfig;
-    this.finalizedBlockHashSupplier = finalizedBlockHashSupplier;
+    this.forkchoiceSupplier = forkchoiceSupplier;
     this.cleanupAction = cleanupAction;
   }
 
   @Override
   public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
-    final Optional<Hash> maybeHash = finalizedBlockHashSupplier.get();
-    if (maybeHash.isPresent()) {
-      return Optional.of(selectLastFinalizedBlockAsPivot(maybeHash.get()));
+    final Optional<ForkchoiceEvent> maybeForkchoiceEvent = forkchoiceSupplier.get();
+    if (maybeForkchoiceEvent.isPresent()) {
+      return Optional.of(
+          selectLastFinalizedBlockAsPivot(maybeForkchoiceEvent.get().getFinalizedBlockHash()));
     }
     LOG.trace("No finalized block hash announced yet");
     return Optional.empty();

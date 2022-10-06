@@ -19,8 +19,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.FinalizedBlockHashSupplier;
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -503,24 +503,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           "TTD difficulty is present, creating initial sync phase with transition to PoS support");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-      final FinalizedBlockHashSupplier finalizedBlockHashSupplier =
-          new FinalizedBlockHashSupplier();
+      final UnverifiedForkchoiceSupplier unverifiedForkchoiceSupplier =
+          new UnverifiedForkchoiceSupplier();
       final long subscriptionId =
-          mergeContext.addNewForkchoiceMessageListener(finalizedBlockHashSupplier);
+          mergeContext.addNewUnverifiedForkchoiceListener(unverifiedForkchoiceSupplier);
 
       final Runnable unsubscribeFinalizedBlockHashListener =
           () -> {
-            mergeContext.removeNewForkchoiceMessageListener(subscriptionId);
+            mergeContext.removeNewUnverifiedForkchoiceListener(subscriptionId);
             LOG.info("Initial sync done, unsubscribe finalized block hash supplier");
           };
 
       return new TransitionPivotSelector(
           genesisConfigOptions,
-          finalizedBlockHashSupplier,
+          unverifiedForkchoiceSupplier,
           pivotSelectorFromPeers,
           new PivotSelectorFromFinalizedBlock(
               genesisConfigOptions,
-              finalizedBlockHashSupplier,
+              unverifiedForkchoiceSupplier,
               unsubscribeFinalizedBlockHashListener));
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
