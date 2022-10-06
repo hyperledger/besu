@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -59,7 +60,8 @@ public class FullImportBlockStepTest {
   public void shouldImportBlock() {
     final Block block = gen.block();
 
-    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED)).thenReturn(true);
+    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED))
+        .thenReturn(new BlockImportResult(true));
     importBlocksStep.accept(block);
 
     verify(protocolSchedule).getByBlockNumber(block.getHeader().getNumber());
@@ -70,7 +72,8 @@ public class FullImportBlockStepTest {
   public void shouldThrowExceptionWhenValidationFails() {
     final Block block = gen.block();
 
-    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED)).thenReturn(false);
+    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED))
+        .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(block))
         .isInstanceOf(InvalidBlockException.class);
   }

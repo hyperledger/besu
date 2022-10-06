@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -120,7 +121,7 @@ public class IbftRoundTest {
 
     when(blockCreator.createBlock(anyLong())).thenReturn(proposedBlock);
 
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
+    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
     subscribers.subscribe(minedBlockObserver);
   }
