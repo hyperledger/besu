@@ -69,6 +69,11 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return waitForPeers(syncConfig.getFastSyncMinimumPeerCount());
   }
 
+  @Override
+  public long getBestChainHeight() {
+    return syncState.bestChainHeight();
+  }
+
   private Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
         peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
