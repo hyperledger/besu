@@ -20,10 +20,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UnverifiedForkchoiceStateSupplier
+public class UnverifiedForkchoiceSupplier
     implements Supplier<Optional<ForkchoiceEvent>>, UnverifiedForkchoiceListener {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(UnverifiedForkchoiceStateSupplier.class);
+  private static final Logger LOG = LoggerFactory.getLogger(UnverifiedForkchoiceSupplier.class);
 
   private volatile Optional<ForkchoiceEvent> maybeLastForkchoiceUpdate = Optional.empty();
 

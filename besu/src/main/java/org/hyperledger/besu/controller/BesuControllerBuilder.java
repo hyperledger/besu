@@ -20,7 +20,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceStateSupplier;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -508,8 +508,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-      final UnverifiedForkchoiceStateSupplier forkchoiceStateSupplier =
-          new UnverifiedForkchoiceStateSupplier();
+      final UnverifiedForkchoiceSupplier forkchoiceStateSupplier =
+          new UnverifiedForkchoiceSupplier();
       final long subscriptionId =
           mergeContext.addNewUnverifiedForkchoiceListener(forkchoiceStateSupplier);
 

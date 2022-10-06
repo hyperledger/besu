@@ -240,9 +240,9 @@ public final class EthProtocolManagerTest {
       mergePeerFilter.mergeStateChanged(
           true, Optional.empty(), Optional.of(blockchain.getChainHead().getTotalDifficulty()));
       mergePeerFilter.onNewUnverifiedForkchoice(
-          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1)))));
+          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(1))));
       mergePeerFilter.onNewUnverifiedForkchoice(
-          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(2)))));
+          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(2))));
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
       assertThat(workPeer.isDisconnected()).isTrue();
