@@ -14,14 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public interface PivotBlockSelector {
 
-  Optional<FastSyncState> selectNewPivotBlock(EthPeer peer);
+  Optional<FastSyncState> selectNewPivotBlock();
+
+  CompletableFuture<Void> prepareRetry();
 
   default void close() {
     // do nothing by default
