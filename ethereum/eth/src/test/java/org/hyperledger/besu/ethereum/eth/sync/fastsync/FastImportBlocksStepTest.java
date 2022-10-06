@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -82,7 +83,7 @@ public class FastImportBlocksStepTest {
               blockWithReceipts.getReceipts(),
               FULL,
               LIGHT))
-          .thenReturn(true);
+          .thenReturn(new BlockImportResult(true));
     }
     importBlocksStep.accept(blocksWithReceipts);
 
@@ -99,7 +100,7 @@ public class FastImportBlocksStepTest {
 
     when(blockImporter.fastImportBlock(
             protocolContext, block, blockWithReceipts.getReceipts(), FULL, LIGHT))
-        .thenReturn(false);
+        .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(singletonList(blockWithReceipts)))
         .isInstanceOf(InvalidBlockException.class);
   }
