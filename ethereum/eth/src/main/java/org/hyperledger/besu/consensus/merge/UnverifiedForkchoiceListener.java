@@ -16,14 +16,7 @@
 
 package org.hyperledger.besu.consensus.merge;
 
-import org.hyperledger.besu.datatypes.Hash;
+public interface UnverifiedForkchoiceListener {
 
-import java.util.Optional;
-
-public interface ForkchoiceMessageListener {
-
-  void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash);
+  void onNewUnverifiedForkchoice(final ForkchoiceEvent event);
 }

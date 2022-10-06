@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListener {
+public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -332,14 +332,9 @@ public class DefaultSynchronizer implements Synchronizer, ForkchoiceMessageListe
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
     if (this.blockPropagationManager.isPresent()) {
-      this.blockPropagationManager
-          .get()
-          .onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash);
+      this.blockPropagationManager.get().onNewUnverifiedForkchoice(event);
     }
   }
 }
