@@ -215,7 +215,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
-      protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
+      protocolContext.getConsensusContext(MergeContext.class).addNewUnverifiedForkchoiceListener(sync);
     }
 
     return sync;
