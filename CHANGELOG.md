@@ -9,8 +9,10 @@
 ### Additions and Improvements
 
 ### Bug Fixes
-
+- Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
+- 
 ### Download Links
+
 
 ## 22.10.0-RC1
 
