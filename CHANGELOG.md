@@ -1,11 +1,13 @@
 # Changelog
 
 ## 22.7.6
+Hotfix release of the 22.7.x series to address [#4495](https://github.com/hyperledger/besu/issues/4495) which could result in failed block proposals on merge networks.
 
 ### Additions and Improvements
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
 
 ### Bug Fixes
+- Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
 
 ### Download Links
 
