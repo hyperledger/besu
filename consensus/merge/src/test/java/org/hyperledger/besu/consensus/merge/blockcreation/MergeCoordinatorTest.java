@@ -360,11 +360,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void reorgAroundLogBloomCacheUpdate() {
     // generate 5 blocks, remember them in order, all need to be parented correctly.
-    // coordinator.rememberBlock(genesisState.getBlock());
     BlockHeader prevParent = genesisState.getBlock().getHeader();
 
     AtomicReference<BlockAddedEvent> lastBlockAddedEvent = new AtomicReference<>();
-    // TransactionLogBloomCacher toSpy =
     blockchain.observeBlockAdded(
         new BlockAddedObserver() {
           @Override
