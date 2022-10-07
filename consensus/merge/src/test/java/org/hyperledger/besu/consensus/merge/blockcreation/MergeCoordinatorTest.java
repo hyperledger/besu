@@ -30,8 +30,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
@@ -44,6 +42,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -64,7 +63,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.testutil.TestClock;
@@ -73,6 +71,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -360,36 +359,53 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Test
   public void reorgAroundLogBloomCacheUpdate() {
-    //generate 5 blocks, remember them in order, all need to be parented correctly.
-    coordinator.rememberBlock(genesisState.getBlock());
+    // generate 5 blocks, remember them in order, all need to be parented correctly.
+    // coordinator.rememberBlock(genesisState.getBlock());
     BlockHeader prevParent = genesisState.getBlock().getHeader();
 
-    //TransactionLogBloomCacher toSpy =
-    blockchain.observeBlockAdded(new BlockAddedObserver() {
-      @Override
-      public void onBlockAdded(final BlockAddedEvent event) {
-         LOG.info(event.toString());
-      }
-    });
-    for (int i = 0; i <=5; i++) {
-      BlockHeader nextBlock = nextBlockHeader(prevParent, genesisState.getBlock().getHeader().getTimestamp()+i*1000);
+    AtomicReference<BlockAddedEvent> lastBlockAddedEvent = new AtomicReference<>();
+    // TransactionLogBloomCacher toSpy =
+    blockchain.observeBlockAdded(
+        new BlockAddedObserver() {
+          @Override
+          public void onBlockAdded(final BlockAddedEvent event) {
+            LOG.info(event.toString());
+            lastBlockAddedEvent.set(event);
+          }
+        });
+    for (int i = 0; i <= 5; i++) {
+      BlockHeader nextBlock =
+          nextBlockHeader(
+              prevParent, genesisState.getBlock().getHeader().getTimestamp() + i * 1000);
       coordinator.rememberBlock(new Block(nextBlock, BlockBody.empty()));
       prevParent = nextBlock;
     }
-    coordinator.updateForkChoice(prevParent, Hash.ZERO, Hash.ZERO, Optional.empty());
-    //generate from 3' down to some other head. Remeber those.
+
+    coordinator.updateForkChoice(
+        prevParent,
+        genesisState.getBlock().getHash(),
+        genesisState.getBlock().getHash(),
+        Optional.empty());
+    Hash expectedCommonAncestor = blockchain.getBlockHeader(2).get().getBlockHash();
+
+    // generate from 3' down to some other head. Remeber those.
     BlockHeader forkPoint = blockchain.getBlockHeader(2).get();
     prevParent = forkPoint;
-    for (int i = 3; i <=5; i++) {
-      BlockHeader nextPrime = nextBlockHeader(prevParent, genesisState.getBlock().getHeader().getTimestamp()+i*1000);
+    for (int i = 3; i <= 5; i++) {
+      BlockHeader nextPrime =
+          nextBlockHeader(
+              prevParent, genesisState.getBlock().getHeader().getTimestamp() + i * 1001);
       coordinator.rememberBlock(new Block(nextPrime, BlockBody.empty()));
       prevParent = nextPrime;
     }
-    coordinator.updateForkChoice(prevParent, Hash.ZERO, Hash.ZERO, Optional.empty());
-    //assert that block 3's bloom filter HAS changed.
-    //assert that a query on logs for 3' returns
-
-
+    coordinator.updateForkChoice(
+        prevParent,
+        genesisState.getBlock().getHash(),
+        genesisState.getBlock().getHash(),
+        Optional.empty());
+    assertThat(lastBlockAddedEvent.get().getCommonAncestorHash()).isEqualTo(expectedCommonAncestor);
+    assertThat(lastBlockAddedEvent.get().getEventType()).isEqualTo(EventType.CHAIN_REORG);
+    assertThat(lastBlockAddedEvent.get().getBlock().getHash()).isEqualTo(prevParent.getBlockHash());
   }
 
   @Test
@@ -691,13 +707,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private BlockHeader nextBlockHeader(
       final BlockHeader parentHeader, final long... optionalTimestamp) {
+
     return headerGenerator
         .difficulty(Difficulty.ZERO)
         .parentHash(parentHeader.getHash())
         .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
         .number(parentHeader.getNumber() + 1)
         .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
- //       .logsBloom(new LogsBloomFilter(Bytes.fromHexStringLenient("0x"+(optionalTimestamp[0]))))
+        //       .logsBloom(LogsBloomFilter.builder().insertLog(new Log(Address.ZERO,
+        // Bytes.minimalBytes(optionalTimestamp[0]),
+        //         Lists.emptyList())).build())
         .timestamp(
             optionalTimestamp.length > 0 ? optionalTimestamp[0] : parentHeader.getTimestamp() + 12)
         .baseFeePerGas(

@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -277,22 +276,23 @@ public class TransactionLogBloomCacherTest {
     ArrayList<BlockHeader> retval = new ArrayList<>();
     retval.add(parent);
     BlockHeader lastParent = parent;
-    for(int i=0; i<chainLength; i++) {
-      BlockHeader head = createBlock(i+1, Optional.empty(), Optional.of(lastParent));
+    for (int i = 0; i < chainLength; i++) {
+      BlockHeader head = createBlock(i + 1, Optional.empty(), Optional.of(lastParent));
       retval.add(head);
       lastParent = head;
     }
     return retval;
   }
 
-  private BlockHeader createBlock(final long number, final Optional<String> message, final Optional<BlockHeader> parent) {
+  private BlockHeader createBlock(
+      final long number, final Optional<String> message, final Optional<BlockHeader> parent) {
     final Address testAddress =
         Address.fromHexString(message.orElse(String.format("%02X", number)));
     final Bytes testMessage = Bytes.fromHexString(String.format("%02X", number));
     final Log testLog = new Log(testAddress, testMessage, List.of());
     final BlockHeader fakeHeader =
         new BlockHeader(
-            parent.isPresent()? parent.get().getBlockHash(): Hash.EMPTY,
+            parent.isPresent() ? parent.get().getBlockHash() : Hash.EMPTY,
             Hash.EMPTY,
             Address.ZERO,
             Hash.EMPTY,
