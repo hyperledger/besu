@@ -204,39 +204,8 @@ public class TransactionLogBloomCacherTest {
     forkBranch.add(firstBranch.get(0));
     forkBranch.add(firstBranch.get(1));
     for (int i = 2; i < 5; i++) {
-      forkBranch.add(createBlock(i, Optional.of("111111111111111111111111"), Optional.empty()));
+      forkBranch.add(createBlock(i, Optional.of("111111111111111111111111")));
     }
-
-    transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), blockchain.getBlockHeader(1), Optional.of(logBloom));
-    assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
-    for (int i = 0; i < 5; i++) {
-      assertThat(forkBranch.get(i).getLogsBloom().toArray())
-          .containsExactly(readLogBloomCache(logBloom, i));
-    }
-
-    transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(1).get(), Optional.empty(), Optional.of(logBloom));
-    assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
-
-    assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
-  }
-
-  @Test
-  public void shouldUpdateCacheWhenChainReorgByNumberFired() throws IOException {
-    final File logBloom = cacheDir.newFile("logBloom-0.cache");
-    BlockHeader genesisHeader = createBlock(0);
-    final List<BlockHeader> firstBranch = chainBlocksTo(genesisHeader, 5);
-
-    transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
-    assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
-    for (int i = 0; i < 5; i++) {
-      assertThat(firstBranch.get(i).getLogsBloom().toArray())
-          .containsExactly(readLogBloomCache(logBloom, i));
-    }
-
-    final List<BlockHeader> forkBranch = chainBlocksTo(firstBranch.get(1), 3);
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
         blockchain.getBlockHeader(4).get(), blockchain.getBlockHeader(1), Optional.of(logBloom));
@@ -269,30 +238,17 @@ public class TransactionLogBloomCacherTest {
   }
 
   private BlockHeader createBlock(final long number) {
-    return createBlock(number, Optional.empty(), Optional.empty());
+    return createBlock(number, Optional.empty());
   }
 
-  private List<BlockHeader> chainBlocksTo(final BlockHeader parent, final int chainLength) {
-    ArrayList<BlockHeader> retval = new ArrayList<>();
-    retval.add(parent);
-    BlockHeader lastParent = parent;
-    for (int i = 0; i < chainLength; i++) {
-      BlockHeader head = createBlock(i + 1, Optional.empty(), Optional.of(lastParent));
-      retval.add(head);
-      lastParent = head;
-    }
-    return retval;
-  }
-
-  private BlockHeader createBlock(
-      final long number, final Optional<String> message, final Optional<BlockHeader> parent) {
+  private BlockHeader createBlock(final long number, final Optional<String> message) {
     final Address testAddress =
         Address.fromHexString(message.orElse(String.format("%02X", number)));
     final Bytes testMessage = Bytes.fromHexString(String.format("%02X", number));
     final Log testLog = new Log(testAddress, testMessage, List.of());
     final BlockHeader fakeHeader =
         new BlockHeader(
-            parent.isPresent() ? parent.get().getBlockHash() : Hash.EMPTY,
+            Hash.EMPTY,
             Hash.EMPTY,
             Address.ZERO,
             Hash.EMPTY,

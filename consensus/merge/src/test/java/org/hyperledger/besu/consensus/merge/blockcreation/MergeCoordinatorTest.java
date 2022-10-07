@@ -714,9 +714,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
         .number(parentHeader.getNumber() + 1)
         .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
-        //       .logsBloom(LogsBloomFilter.builder().insertLog(new Log(Address.ZERO,
-        // Bytes.minimalBytes(optionalTimestamp[0]),
-        //         Lists.emptyList())).build())
         .timestamp(
             optionalTimestamp.length > 0 ? optionalTimestamp[0] : parentHeader.getTimestamp() + 12)
         .baseFeePerGas(

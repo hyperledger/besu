@@ -126,12 +126,6 @@ public class BlockchainQueriesLogCacheTest {
             Optional.of(scheduler));
   }
 
-  public void reorgSetup() {
-    // add 5 blocks
-    // add 3 blocks parented to 3 above.
-
-  }
-
   /**
    * Tests fours sets of a three block range where the seam (where the segment changes) is in all
    * possible positions in the range.
