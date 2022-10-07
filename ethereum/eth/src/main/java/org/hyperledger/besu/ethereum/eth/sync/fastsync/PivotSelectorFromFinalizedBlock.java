@@ -14,12 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
+import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -28,32 +38,52 @@ import org.slf4j.LoggerFactory;
 public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromFinalizedBlock.class);
-
+  private final ProtocolContext protocolContext;
+  private final ProtocolSchedule protocolSchedule;
+  private final EthContext ethContext;
+  private final MetricsSystem metricsSystem;
   private final GenesisConfigOptions genesisConfig;
-  private final Supplier<Optional<Hash>> finalizedBlockHashSupplier;
+  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
 
+  private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
+
   public PivotSelectorFromFinalizedBlock(
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final EthContext ethContext,
+      final MetricsSystem metricsSystem,
       final GenesisConfigOptions genesisConfig,
-      final Supplier<Optional<Hash>> finalizedBlockHashSupplier,
+      final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {
+    this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
+    this.ethContext = ethContext;
+    this.metricsSystem = metricsSystem;
     this.genesisConfig = genesisConfig;
-    this.finalizedBlockHashSupplier = finalizedBlockHashSupplier;
+    this.forkchoiceStateSupplier = forkchoiceStateSupplier;
     this.cleanupAction = cleanupAction;
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock(final EthPeer peer) {
-    final Optional<Hash> maybeHash = finalizedBlockHashSupplier.get();
-    if (maybeHash.isPresent()) {
-      return Optional.of(selectLastFinalizedBlockAsPivot(maybeHash.get()));
+  public Optional<FastSyncState> selectNewPivotBlock() {
+    final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
+    if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidFinalizedBlockHash()) {
+      return Optional.of(
+          selectLastFinalizedBlockAsPivot(maybeForkchoice.get().getFinalizedBlockHash()));
     }
-    LOG.trace("No finalized block hash announced yet");
+    LOG.debug("No finalized block hash announced yet");
     return Optional.empty();
   }
 
+  @Override
+  public CompletableFuture<Void> prepareRetry() {
+    // nothing to do
+    return CompletableFuture.completedFuture(null);
+  }
+
   private FastSyncState selectLastFinalizedBlockAsPivot(final Hash finalizedHash) {
-    LOG.trace("Returning finalized block hash as pivot: {}", finalizedHash);
+    LOG.debug("Returning finalized block hash {} as pivot", finalizedHash);
     return new FastSyncState(finalizedHash);
   }
 
@@ -65,5 +95,68 @@ public class PivotSelectorFromFinalizedBlock implements PivotBlockSelector {
   @Override
   public long getMinRequiredBlockNumber() {
     return genesisConfig.getTerminalBlockNumber().orElse(0L);
+  }
+
+  @Override
+  public long getBestChainHeight() {
+    final long localChainHeight = protocolContext.getBlockchain().getChainHeadBlockNumber();
+
+    return Math.max(
+        forkchoiceStateSupplier
+            .get()
+            .map(ForkchoiceEvent::getHeadBlockHash)
+            .map(
+                headBlockHash ->
+                    maybeCachedHeadBlockHeader
+                        .filter(
+                            cachedBlockHeader -> cachedBlockHeader.getHash().equals(headBlockHash))
+                        .map(BlockHeader::getNumber)
+                        .orElseGet(
+                            () -> {
+                              LOG.debug(
+                                  "Downloading chain head block header by hash {}", headBlockHash);
+                              try {
+                                return waitForPeers(1)
+                                    .thenCompose(unused -> downloadBlockHeader(headBlockHash))
+                                    .thenApply(
+                                        blockHeader -> {
+                                          maybeCachedHeadBlockHeader = Optional.of(blockHeader);
+                                          return blockHeader.getNumber();
+                                        })
+                                    .get();
+                              } catch (Throwable t) {
+                                LOG.debug(
+                                    "Error trying to download chain head block header by hash {}",
+                                    headBlockHash,
+                                    t);
+                              }
+                              return null;
+                            }))
+            .orElse(0L),
+        localChainHeight);
+  }
+
+  private CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
+    return RetryingGetHeaderFromPeerByHashTask.byHash(
+            protocolSchedule, ethContext, hash, metricsSystem)
+        .getHeader()
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", hash);
+              } else {
+                debugLambda(
+                    LOG,
+                    "Successfully downloaded pivot block header by hash {}",
+                    blockHeader::toLogString);
+              }
+            });
+  }
+
+  private CompletableFuture<Void> waitForPeers(final int count) {
+
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(ethContext, count, metricsSystem);
+    return waitForPeersTask.run();
   }
 }

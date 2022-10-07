@@ -75,14 +75,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
 
-    Optional<Hash> maybeFinalizedHash =
-        Optional.ofNullable(forkChoice.getFinalizedBlockHash())
-            .filter(finalized -> !finalized.isZero());
-
     mergeContext
         .get()
-        .fireNewUnverifiedForkchoiceMessageEvent(
-            forkChoice.getHeadBlockHash(), maybeFinalizedHash, forkChoice.getSafeBlockHash());
+        .fireNewUnverifiedForkchoiceEvent(
+            forkChoice.getHeadBlockHash(),
+            forkChoice.getSafeBlockHash(),
+            forkChoice.getFinalizedBlockHash());
 
     if (mergeContext.get().isSyncing()) {
       return syncingResponse(requestId, forkChoice);

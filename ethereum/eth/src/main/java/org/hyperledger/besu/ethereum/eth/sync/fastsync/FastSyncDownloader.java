@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
@@ -93,8 +94,7 @@ public class FastSyncDownloader<REQUEST> {
       final FastSyncState fastSyncState,
       final Function<FastSyncState, CompletableFuture<FastSyncState>> onNewPivotBlock) {
     return exceptionallyCompose(
-        fastSyncActions
-            .waitForSuitablePeers(fastSyncState)
+        CompletableFuture.completedFuture(fastSyncState)
             .thenCompose(fastSyncActions::selectPivotBlock)
             .thenCompose(fastSyncActions::downloadPivotBlockHeader)
             .thenApply(this::updateMaxTrailingPeers)
@@ -113,6 +113,10 @@ public class FastSyncDownloader<REQUEST> {
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else if (rootCause instanceof CancellationException) {
       return CompletableFuture.failedFuture(error);
+    } else if (rootCause instanceof MaxRetriesReachedException) {
+      LOG.debug(
+          "A download operation reached the max number of retries, re-pivoting to newer block");
+      return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
       LOG.error(
           "Encountered an unexpected error during fast sync. Restarting fast sync in "
