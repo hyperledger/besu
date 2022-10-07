@@ -79,12 +79,12 @@ public class RequestManager {
         Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
             .ifPresentOrElse(
                 responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
-                // disconnect on incorrect requestIds
+                // Consider incorrect requestIds to be a useless response; too
+                // many of these and we will disconnect.
                 () -> {
-                  LOG.debug(
-                      "Request ID incorrect (BREACH_OF_PROTOCOL), disconnecting peer {}", peer);
-                  peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+                  peer.recordUselessResponse("Request ID incorrect");
                 });
+
       } else {
         // otherwise iterate through all of them
         streams.forEach(stream -> stream.processMessage(ethMessage.getData()));
