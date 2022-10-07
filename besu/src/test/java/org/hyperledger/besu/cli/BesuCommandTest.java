@@ -2294,28 +2294,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
-    parseCommand("--fast-sync-min-peers", "5");
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSetToml() throws IOException {
-    final Path toml = createTempFile("toml", "fast-sync-min-peers=5\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void rpcApisPropertyWithInvalidEntryMustDisplayError() {
     parseCommand("--rpc-http-api", "BOB");
 
@@ -5349,5 +5327,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");
+  }
+
+  @Test
+  public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
+    parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
   }
 }

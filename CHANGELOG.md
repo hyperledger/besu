@@ -1,4 +1,16 @@
 # Changelog
+## 22.10.0-RC2
+
+### Breaking Changes
+- Flexible Privacy Groups (early access) support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+  * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
+  * For the EC encryptor, the encoded public key length is 91
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
 
 ## 22.7.6
 
@@ -19,7 +31,8 @@
 ### Bug Fixes
 
 ### Download Links
-
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.zip / sha256: 16fd47533aa2986491143e5f4a052c0aa4866ebfa415abbf3ca868e4fbeac6ce
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.tar.gz / sha256: 48fd3480e4380580ed9187302be987e9eca2b445935ec6a509e7269898d8a4a8
 ###
 
 ## 22.7.5
@@ -39,7 +52,6 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.t
 
 ## 22.7.4
 
-
 ### Bug Fixes
 - Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
 - Add Toml configuration file support for _--Xplugin-rocksdb-high-spec-enabled_ flag [#4438](https://github.com/hyperledger/besu/pull/4438)
@@ -47,7 +59,6 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.t
 ### Download Links
 - https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.zip / sha256: 4f2a0c20bee7f266ec1dcb45fa90ae1ca42f4b22e9b21a601b7705357259aea9
 - https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.tar.gz / sha256: a60efc4d515ac94710bbc6d61a24f409b03fcfc02323bee2a2d75c883fc99dce
-
 
 ## 22.7.3
 
