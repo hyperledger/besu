@@ -1,4 +1,11 @@
 # Changelog
+## 22.10.0-RC2
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
 
 ## 22.10.0-RC1
 
@@ -14,7 +21,8 @@
 ### Bug Fixes
 
 ### Download Links
-
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.zip / sha256: 16fd47533aa2986491143e5f4a052c0aa4866ebfa415abbf3ca868e4fbeac6ce
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.tar.gz / sha256: 48fd3480e4380580ed9187302be987e9eca2b445935ec6a509e7269898d8a4a8
 ###
 
 ## 22.7.5
