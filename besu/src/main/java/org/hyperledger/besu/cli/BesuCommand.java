@@ -1929,11 +1929,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
 
-    CommandLineUtils.checkOptionDependencies(
-        logger,
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--sync-mode",
-        SyncMode.isFullSync(syncMode),
+        "--fast-sync-min-peers can't be used with FULL sync-mode",
+        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
         singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -1966,14 +1965,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void configure() throws Exception {
     checkPortClash();
 
-    syncMode =
-        Optional.ofNullable(syncMode)
-            .orElse(
-                genesisFile == null
-                        && !privacyOptionGroup.isPrivacyEnabled
-                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                    ? SyncMode.FAST
-                    : SyncMode.FULL);
+    syncMode = getDefaultSyncModeIfNotSet(syncMode);
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -3290,5 +3282,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (KeyManagementException | NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private SyncMode getDefaultSyncModeIfNotSet(final SyncMode syncMode) {
+    return Optional.ofNullable(syncMode)
+        .orElse(
+            genesisFile == null
+                    && !privacyOptionGroup.isPrivacyEnabled
+                    && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
+                ? SyncMode.FAST
+                : SyncMode.FULL);
   }
 }
