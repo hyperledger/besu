@@ -34,6 +34,7 @@ public enum RpcMethod {
   CLIQUE_GET_SIGNER_METRICS("clique_getSignerMetrics"),
   DEBUG_ACCOUNT_AT("debug_accountAt"),
   DEBUG_METRICS("debug_metrics"),
+  DEBUG_SET_HEAD("debug_setHead"),
   DEBUG_STORAGE_RANGE_AT("debug_storageRangeAt"),
   DEBUG_TRACE_BLOCK("debug_traceBlock"),
   DEBUG_TRACE_BLOCK_BY_HASH("debug_traceBlockByHash"),
