@@ -7,7 +7,7 @@ Hotfix release of the 22.7.x series to address [#4495](https://github.com/hyperl
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
 
 ### Bug Fixes
-- Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
+- Corrects emission of blockadded events when rewinding during a re-org. [#4497](https://github.com/hyperledger/besu/issues/4497)
 
 ### Download Links
 
