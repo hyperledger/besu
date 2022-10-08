@@ -119,10 +119,6 @@ allprojects {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
-    maven {
-      url 'https://repository.apache.org/content/repositories/orgapachetuweni-1024'
-      content { includeGroupByRegex('org\\.apache\\..*') }
-    }
     mavenCentral()
   }
 
