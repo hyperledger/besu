@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorageFactory;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateKeyValueStorage;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
@@ -36,6 +36,7 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   private final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
+  private final BonsaiWorldStateKeyValueStorageFactory bonsaiWorldStateKeyValueStorageFactory;
   private final KeyValueStorage privateWorldStatePreimageStorage;
   private final boolean isWorldStateIterable;
   private final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
@@ -43,9 +44,11 @@ public class KeyValueStorageProvider implements StorageProvider {
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
+      final BonsaiWorldStateKeyValueStorageFactory bonsaiWorldStateKeyValueStorageFactory,
       final boolean segmentIsolationSupported) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
+    this.bonsaiWorldStateKeyValueStorageFactory = bonsaiWorldStateKeyValueStorageFactory;
     this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
   }
@@ -54,10 +57,12 @@ public class KeyValueStorageProvider implements StorageProvider {
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final KeyValueStorage privateWorldStatePreimageStorage,
+      final BonsaiWorldStateKeyValueStorageFactory bonsaiWorldStateKeyValueStorageFactory,
       final boolean segmentIsolationSupported) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
+    this.bonsaiWorldStateKeyValueStorageFactory = bonsaiWorldStateKeyValueStorageFactory;
     this.isWorldStateIterable = segmentIsolationSupported;
   }
 
@@ -71,7 +76,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this);
+      return bonsaiWorldStateKeyValueStorageFactory.create(this);
     } else {
       return new WorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

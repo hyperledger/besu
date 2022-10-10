@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorageFactory;
 import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
@@ -636,7 +637,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 (BonsaiWorldStateKeyValueStorage) worldStateStorage,
                 dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             storageProvider,
-            blockchain);
+            blockchain,
+            new BonsaiWorldStateKeyValueStorageFactory(false));
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

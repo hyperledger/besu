@@ -53,10 +53,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
       final StorageProvider provider,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final BonsaiWorldStateKeyValueStorageFactory worldStateKeyValueFactory) {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
+    this.worldStateStorage = worldStateKeyValueFactory.create(provider);
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
