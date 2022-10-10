@@ -1188,10 +1188,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
     @Option(
+        hidden = true,
         names = {"--tx-pool-hashes-max-size"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
-            "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+            "deprecated option,  Maximum number of pending transaction hashes (default: ${DEFAULT-VALUE})",
         arity = "1")
     @SuppressWarnings("unused")
     private final Integer pooledTransactionHashesSize = null;
