@@ -19,6 +19,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfigur
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccount;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -233,8 +234,11 @@ public class PrivacyNodeFactory {
     final BesuNodeConfigurationBuilder besuNodeConfigurationBuilder =
         new BesuNodeConfigurationBuilder();
     if (multiTenancyEnabled) {
-      besuNodeConfigurationBuilder.jsonRpcAuthenticationConfiguration(
-          "authentication/auth_priv.toml");
+      final String authPrivTomlPath =
+          EnclaveEncryptorType.EC.equals(privacyAccount.getEnclaveEncryptorType())
+              ? "authentication/auth_priv_ec_pubkey.toml"
+              : "authentication/auth_priv.toml";
+      besuNodeConfigurationBuilder.jsonRpcAuthenticationConfiguration(authPrivTomlPath);
     }
     return create(
         new PrivacyNodeConfiguration(
@@ -252,7 +256,9 @@ public class PrivacyNodeFactory {
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }
@@ -279,7 +285,9 @@ public class PrivacyNodeFactory {
                 .webSocketEnabled()
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }

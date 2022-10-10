@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -107,7 +108,7 @@ public class QbftRound {
     final Optional<PreparedCertificate> bestPreparedCertificate =
         roundChangeArtifacts.getBestPreparedPeer();
 
-    Block blockToPublish;
+    final Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
       blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
@@ -278,9 +279,9 @@ public class QbftRound {
           blockToImport.getHash());
     }
     LOG.trace("Importing proposed block with extraData={}", extraData);
-    final boolean result =
+    final BlockImportResult result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
-    if (!result) {
+    if (!result.isImported()) {
       LOG.error(
           "Failed to import proposed block to chain. block={} extraData={} blockHeader={}",
           blockNumber,

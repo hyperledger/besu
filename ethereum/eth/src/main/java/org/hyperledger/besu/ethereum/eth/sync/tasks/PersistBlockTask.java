@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractEthTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -46,7 +47,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
   private final EthContext ethContext;
   private final Block block;
   private final HeaderValidationMode validateHeaders;
-  private boolean blockImported;
+  private BlockImportResult blockImportResult;
 
   private PersistBlockTask(
       final ProtocolSchedule protocolSchedule,
@@ -61,7 +62,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
     this.ethContext = ethContext;
     this.block = block;
     this.validateHeaders = headerValidationMode;
-    blockImported = false;
+    blockImportResult = new BlockImportResult(false);
   }
 
   public static PersistBlockTask create(
@@ -198,8 +199,8 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
           protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       debugLambda(LOG, "Running import task for block {}", block::toLogString);
-      blockImported = blockImporter.importBlock(protocolContext, block, validateHeaders);
-      if (!blockImported) {
+      blockImportResult = blockImporter.importBlock(protocolContext, block, validateHeaders);
+      if (!blockImportResult.isImported()) {
         result.completeExceptionally(
             new InvalidBlockException(
                 "Failed to import block", block.getHeader().getNumber(), block.getHash()));
@@ -213,19 +214,26 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
 
   @Override
   protected void cleanup() {
-    if (blockImported) {
-      final double timeInS = getTaskTimeInSec();
-      LOG.info(
-          String.format(
-              "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
-              block.getHeader().getNumber(),
-              block.getBody().getTransactions().size(),
-              block.getBody().getOmmers().size(),
-              block.getHeader().getGasUsed(),
-              (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-              block.getHash().toHexString(),
-              timeInS,
-              ethContext.getEthPeers().peerCount()));
+    final double timeInS = getTaskTimeInSec();
+    switch (blockImportResult.getStatus()) {
+      case IMPORTED:
+        LOG.info(
+            String.format(
+                "Imported #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d",
+                block.getHeader().getNumber(),
+                block.getBody().getTransactions().size(),
+                block.getBody().getOmmers().size(),
+                block.getHeader().getGasUsed(),
+                (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+                block.getHash().toHexString(),
+                timeInS,
+                ethContext.getEthPeers().peerCount()));
+        break;
+      case ALREADY_IMPORTED:
+        LOG.info("Block {} is already imported", block.toLogString());
+        break;
+      default:
+        break;
     }
   }
 }

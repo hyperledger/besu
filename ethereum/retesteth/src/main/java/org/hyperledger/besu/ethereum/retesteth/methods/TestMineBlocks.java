@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWBlockCreator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
@@ -81,7 +82,9 @@ public class TestMineBlocks implements JsonRpcMethod {
 
     final BlockImporter blockImporter =
         protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getBlockImporter();
-    return blockImporter.importBlock(
-        protocolContext, block, headerValidationMode, headerValidationMode);
+    final BlockImportResult result =
+        blockImporter.importBlock(
+            protocolContext, block, headerValidationMode, headerValidationMode);
+    return result.isImported();
   }
 }

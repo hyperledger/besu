@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
@@ -141,9 +142,9 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBlockImporter();
-    final boolean blockImported =
+    final BlockImportResult blockImportResult =
         importer.importBlock(protocolContext, block, HeaderValidationMode.FULL);
-    if (blockImported) {
+    if (blockImportResult.isImported()) {
       notifyNewBlockListeners(block);
       final double taskTimeInSec = stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
       LOG.info(
@@ -160,7 +161,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
       LOG.error("Illegal block mined, could not be imported to local chain.");
     }
 
-    return blockImported;
+    return blockImportResult.isImported();
   }
 
   public void cancel() {
