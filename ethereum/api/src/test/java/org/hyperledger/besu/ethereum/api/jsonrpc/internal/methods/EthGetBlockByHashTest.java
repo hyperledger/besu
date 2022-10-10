@@ -77,7 +77,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenHashParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("hash", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -85,7 +85,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenBoolParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH, "maybe")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
     verifyNoMoreInteractions(blockchainQueries);
   }
 

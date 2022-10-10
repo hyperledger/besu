@@ -120,7 +120,7 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNumberParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("invalid", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -128,7 +128,7 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenBoolParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("0", "maybe")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
