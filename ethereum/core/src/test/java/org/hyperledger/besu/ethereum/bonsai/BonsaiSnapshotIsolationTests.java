@@ -342,7 +342,8 @@ public class BonsaiSnapshotIsolationTests {
                           1024 /* MAX_OPEN_FILES*/,
                           4 /*MAX_BACKGROUND_COMPACTIONS*/,
                           4 /*BACKGROUND_THREAD_COUNT*/,
-                          8388608 /*CACHE_CAPACITY*/),
+                          8388608 /*CACHE_CAPACITY*/,
+                          false),
                   Arrays.asList(KeyValueSegmentIdentifier.values()),
                   2,
                   RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
