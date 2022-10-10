@@ -115,6 +115,9 @@ jobs:
           distribution: adopt
           java-version: 17
           cache: gradle
+      - name: Install TLS certs
+        run: |
+          apt-get update && apt-get install -y tls-certificates
       - name: Cache classes
         uses: actions/cache@v3
         with:
