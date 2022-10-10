@@ -20,7 +20,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.cli.config.NetworkName.isMergedNetwork;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
@@ -508,12 +507,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. (default pre-merge: "
-              + FAST_SYNC_MIN_PEER_COUNT
-              + " and post-merge: "
-              + FAST_SYNC_MIN_PEER_COUNT_POST_MERGE
-              + ")")
-  private final Integer fastSyncMinPeerCount = null;
+          "Minimum number of peers required before starting fast sync. Has only effect on PoW networks. (default: ${DEFAULT-VALUE})")
+  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
 
   @Option(
       names = {"--network"},
@@ -1218,16 +1213,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
         arity = "1")
     private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
-
-    @Option(
-        names = {"--tx-pool-future-max-by-account"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        converter = PercentageConverter.class,
-        description =
-            "Maximum per account of currently unexecutable future transactions that can occupy the txpool (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer maxFutureTransactionsByAccount =
-        TransactionPoolConfiguration.MAX_FUTURE_TRANSACTION_BY_ACCOUNT;
   }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -1944,11 +1929,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
 
-    CommandLineUtils.checkOptionDependencies(
-        logger,
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--sync-mode",
-        SyncMode.isFullSync(syncMode),
+        "--fast-sync-min-peers can't be used with FULL sync-mode",
+        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
         singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -1969,19 +1953,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
       logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
     }
+
+    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
+      logger.warn(
+          DEPRECATION_WARNING_MSG,
+          "--tx-pool-future-max-by-account",
+          "--tx-pool-limit-by-account-percentage");
+    }
   }
 
   private void configure() throws Exception {
     checkPortClash();
 
-    syncMode =
-        Optional.ofNullable(syncMode)
-            .orElse(
-                genesisFile == null
-                        && !privacyOptionGroup.isPrivacyEnabled
-                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                    ? SyncMode.FAST
-                    : SyncMode.FULL);
+    syncMode = getDefaultSyncModeIfNotSet(syncMode);
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -2798,19 +2782,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
-    Integer fastSyncMinPeers = fastSyncMinPeerCount;
-    if (fastSyncMinPeers == null) {
-      if (isMergedNetwork(network)) {
-        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT_POST_MERGE;
-      } else {
-        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT;
-      }
-    }
-
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeers)
+        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
         .build();
   }
 
@@ -2820,7 +2795,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
-        .txPoolMaxFutureTransactionByAccount(txPoolOptionGroup.maxFutureTransactionsByAccount)
         .txFeeCap(txFeeCap)
         .build();
   }
@@ -3308,5 +3282,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (KeyManagementException | NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private SyncMode getDefaultSyncModeIfNotSet(final SyncMode syncMode) {
+    return Optional.ofNullable(syncMode)
+        .orElse(
+            genesisFile == null
+                    && !privacyOptionGroup.isPrivacyEnabled
+                    && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
+                ? SyncMode.FAST
+                : SyncMode.FULL);
   }
 }

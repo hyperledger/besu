@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayload;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -62,17 +63,26 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
+    final EngineQosTimer engineQosTimer = new EngineQosTimer(consensusEngineServer);
+
     if (mergeCoordinator.isPresent()) {
       return mapOf(
-          new EngineGetPayload(consensusEngineServer, protocolContext, blockResultFactory),
+          new EngineGetPayload(
+              consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
           new EngineNewPayload(
-              consensusEngineServer, protocolContext, mergeCoordinator.get(), ethPeers),
+              consensusEngineServer,
+              protocolContext,
+              mergeCoordinator.get(),
+              ethPeers,
+              engineQosTimer),
           new EngineForkchoiceUpdated(
-              consensusEngineServer, protocolContext, mergeCoordinator.get()),
-          new EngineExchangeTransitionConfiguration(consensusEngineServer, protocolContext));
+              consensusEngineServer, protocolContext, mergeCoordinator.get(), engineQosTimer),
+          new EngineExchangeTransitionConfiguration(
+              consensusEngineServer, protocolContext, engineQosTimer));
     } else {
       return mapOf(
-          new EngineExchangeTransitionConfiguration(consensusEngineServer, protocolContext));
+          new EngineExchangeTransitionConfiguration(
+              consensusEngineServer, protocolContext, engineQosTimer));
     }
   }
 }

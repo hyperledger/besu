@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
@@ -28,9 +29,12 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
-import java.util.function.Supplier;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TransactionPoolFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolFactory.class);
 
   public static TransactionPool createTransactionPool(
       final ProtocolSchedule protocolSchedule,
@@ -38,7 +42,7 @@ public class TransactionPoolFactory {
       final EthContext ethContext,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<Boolean> shouldProcessTransactions,
+      final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration) {
 
@@ -58,7 +62,7 @@ public class TransactionPoolFactory {
         protocolContext,
         ethContext,
         metricsSystem,
-        shouldProcessTransactions,
+        syncState,
         miningParameters,
         transactionPoolConfiguration,
         pendingTransactions,
@@ -72,7 +76,7 @@ public class TransactionPoolFactory {
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
-      final Supplier<Boolean> shouldProcessTransactions,
+      final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -100,7 +104,7 @@ public class TransactionPoolFactory {
             ethContext.getScheduler(),
             new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
-    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
+
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
         new NewPooledTransactionHashesMessageHandler(
             ethContext.getScheduler(),
@@ -109,16 +113,47 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metricsSystem,
-                shouldProcessTransactions),
+                metricsSystem),
             transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+
+    if (syncState.isInitialSyncPhaseDone()) {
+      enableTransactionPool(
+          protocolContext,
+          ethContext,
+          transactionTracker,
+          transactionPool,
+          transactionsMessageHandler,
+          pooledTransactionsMessageHandler);
+    } else {
+      syncState.subscribeCompletionReached(
+          () -> {
+            enableTransactionPool(
+                protocolContext,
+                ethContext,
+                transactionTracker,
+                transactionPool,
+                transactionsMessageHandler,
+                pooledTransactionsMessageHandler);
+          });
+    }
+
+    return transactionPool;
+  }
+
+  private static void enableTransactionPool(
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final PeerTransactionTracker transactionTracker,
+      final TransactionPool transactionPool,
+      final TransactionsMessageHandler transactionsMessageHandler,
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    LOG.info("Enabling transaction pool");
+    ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
+    protocolContext.getBlockchain().observeBlockAdded(transactionPool);
+    ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);
     ethContext
         .getEthMessages()
         .subscribe(EthPV65.NEW_POOLED_TRANSACTION_HASHES, pooledTransactionsMessageHandler);
-
-    protocolContext.getBlockchain().observeBlockAdded(transactionPool);
-    ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
-    return transactionPool;
   }
 
   private static AbstractPendingTransactionsSorter createPendingTransactionsSorter(

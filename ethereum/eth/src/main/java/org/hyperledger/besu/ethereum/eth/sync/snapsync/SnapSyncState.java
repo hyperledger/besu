@@ -18,9 +18,14 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SnapSyncState extends FastSyncState {
+  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncState.class);
 
   private boolean isHealInProgress;
+  private boolean isWaitingBlockchain;
 
   public SnapSyncState(final FastSyncState fastSyncState) {
     super(
@@ -35,6 +40,15 @@ public class SnapSyncState extends FastSyncState {
 
   public void setHealStatus(final boolean healStatus) {
     isHealInProgress = healStatus;
+  }
+
+  public boolean isWaitingBlockchain() {
+    return isWaitingBlockchain;
+  }
+
+  public void setWaitingBlockchain(final boolean waitingBlockchain) {
+    LOG.debug("Set waiting blockchain to {}", waitingBlockchain);
+    isWaitingBlockchain = waitingBlockchain;
   }
 
   public boolean isExpired(final SnapDataRequest request) {
