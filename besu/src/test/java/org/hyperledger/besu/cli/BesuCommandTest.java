@@ -824,6 +824,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         tomlResult.getArray(tomlKey);
       } else if (optionSpec.type().equals(Double.class)) {
         tomlResult.getDouble(tomlKey);
+      } else if (optionSpec.type().equals(Float.class)) {
+        tomlResult.getDouble(tomlKey);
       } else if (Number.class.isAssignableFrom(optionSpec.type())) {
         tomlResult.getLong(tomlKey);
       } else if (Wei.class.isAssignableFrom(optionSpec.type())) {
@@ -845,7 +847,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
+  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);
@@ -1707,7 +1709,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeersOption() {
+  public void checkValidDefaultFastSyncMinPeers() {
     parseCommand("--sync-mode", "FAST");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
@@ -1719,56 +1721,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeersPreMergeOption() {
-    parseCommand("--sync-mode", "FAST", "--network", "CLASSIC");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkValidDefaultFastSyncMinPeersPostMergeOption() {
-    parseCommand("--sync-mode", "FAST", "--network", "GOERLI");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(1);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void parsesValidFastSyncMinPeersOption() {
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesValidFastSyncMinPeersOptionPreMerge() {
-    parseCommand("--sync-mode", "FAST", "--network", "CLASSIC", "--fast-sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesValidFastSyncMinPeersOptionPostMerge() {
-    parseCommand("--sync-mode", "FAST", "--network", "GOERLI", "--fast-sync-min-peers", "11");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
@@ -2334,28 +2288,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--privacy-enabled", "--privacy-tls-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
-    parseCommand("--fast-sync-min-peers", "5");
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSetToml() throws IOException {
-    final Path toml = createTempFile("toml", "fast-sync-min-peers=5\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -5395,5 +5327,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");
+  }
+
+  @Test
+  public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
+    parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
   }
 }

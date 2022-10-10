@@ -15,7 +15,8 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.merge.PandaPrinter;
+import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -39,6 +41,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -47,8 +51,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
@@ -61,9 +67,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   private final BesuControllerBuilder preMergeBesuControllerBuilder;
   private final MergeBesuControllerBuilder mergeBesuControllerBuilder;
+
+  private static final Logger LOG = LoggerFactory.getLogger(TransitionBesuControllerBuilder.class);
 
   public TransitionBesuControllerBuilder(
       final BesuControllerBuilder preMergeBesuControllerBuilder,
@@ -118,6 +129,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
                 transitionProtocolSchedule,
                 protocolContext,
+                ethProtocolManager.ethContext(),
                 transactionPool,
                 transitionMiningParameters,
                 syncState,
@@ -176,6 +188,41 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     return new NoopPluginServiceFactory();
   }
 
+  @Override
+  protected Synchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorage worldStateStorage,
+      final ProtocolContext protocolContext,
+      final Optional<Pruner> maybePruner,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector) {
+
+    DefaultSynchronizer sync =
+        (DefaultSynchronizer)
+            super.createSynchronizer(
+                protocolSchedule,
+                worldStateStorage,
+                protocolContext,
+                maybePruner,
+                ethContext,
+                syncState,
+                ethProtocolManager,
+                pivotBlockSelector);
+    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
+
+    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
+      LOG.info(
+          "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
+      protocolContext
+          .getConsensusContext(MergeContext.class)
+          .addNewUnverifiedForkchoiceListener(sync);
+    }
+
+    return sync;
+  }
+
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 
@@ -190,11 +237,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext
                 .getBlockchain()
                 .setBlockChoiceRule((newBlockHeader, currentBlockHeader) -> -1);
-
-            if (priorState.filter(prior -> !prior).isPresent()) {
-              // only print pandas if we had a prior merge state, and it was false
-              PandaPrinter.printOnFirstCrossing();
-            }
 
           } else if (composedCoordinator.isMiningBeforeMerge()) {
             // if our merge state is set to mine pre-merge and we are mining, start mining
@@ -219,7 +261,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   public BesuController build() {
     BesuController controller = super.build();
-    PandaPrinter.hasTTD();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
   }

@@ -18,9 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -30,8 +32,10 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -289,6 +293,62 @@ public class BonsaiWorldStateKeyValueStorageTest {
     updater.commit();
 
     assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isTrue();
+  }
+
+  @Test
+  public void getAccountStateTrieNode_callFallbackMechanismForInvalidNode() {
+
+    PeerTrieNodeFinder peerTrieNodeFinder = mock(PeerTrieNodeFinder.class);
+
+    final Bytes location = Bytes.fromHexString("0x01");
+    final Bytes bytesInDB = Bytes.fromHexString("0x123456");
+
+    final Hash hashToFind = Hash.hash(Bytes.of(1));
+    final Bytes bytesToFind = Bytes.fromHexString("0x123457");
+
+    final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
+
+    when(peerTrieNodeFinder.getAccountStateTrieNode(location, hashToFind))
+        .thenReturn(Optional.of(bytesToFind));
+    storage.useFallbackNodeFinder(Optional.of(peerTrieNodeFinder));
+
+    storage.updater().putAccountStateTrieNode(location, Hash.hash(bytesInDB), bytesInDB).commit();
+
+    Optional<Bytes> accountStateTrieNodeResult =
+        storage.getAccountStateTrieNode(location, hashToFind);
+
+    verify(peerTrieNodeFinder).getAccountStateTrieNode(location, hashToFind);
+    assertThat(accountStateTrieNodeResult).contains(bytesToFind);
+  }
+
+  @Test
+  public void getAccountStorageTrieNode_callFallbackMechanismForInvalidNode() {
+
+    PeerTrieNodeFinder peerTrieNodeFinder = mock(PeerTrieNodeFinder.class);
+
+    final Hash account = Hash.hash(Bytes32.ZERO);
+    final Bytes location = Bytes.fromHexString("0x01");
+    final Bytes bytesInDB = Bytes.fromHexString("0x123456");
+
+    final Hash hashToFind = Hash.hash(Bytes.of(1));
+    final Bytes bytesToFind = Bytes.fromHexString("0x123457");
+
+    final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
+
+    when(peerTrieNodeFinder.getAccountStorageTrieNode(account, location, hashToFind))
+        .thenReturn(Optional.of(bytesToFind));
+    storage.useFallbackNodeFinder(Optional.of(peerTrieNodeFinder));
+
+    storage
+        .updater()
+        .putAccountStorageTrieNode(account, location, Hash.hash(bytesInDB), bytesInDB)
+        .commit();
+
+    Optional<Bytes> accountStateTrieNodeResult =
+        storage.getAccountStorageTrieNode(account, location, hashToFind);
+
+    verify(peerTrieNodeFinder).getAccountStorageTrieNode(account, location, hashToFind);
+    assertThat(accountStateTrieNodeResult).contains(bytesToFind);
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {

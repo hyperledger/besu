@@ -97,7 +97,7 @@ public class TransactionLogBloomCacher {
     if (!cachingStatus.isCaching()) {
       try {
         cachingStatus.cachingCount.incrementAndGet();
-        LOG.info(
+        LOG.debug(
             "Generating transaction log bloom cache from block {} to block {} in {}",
             start,
             stop,
@@ -107,7 +107,7 @@ public class TransactionLogBloomCacher {
           return cachingStatus;
         }
         for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
-          LOG.info("Caching segment at {}", blockNum);
+          LOG.trace("Caching segment at {}", blockNum);
           final File cacheFile = calculateCacheFileName(blockNum, cacheDir);
           blockchain
               .getBlockHeader(blockNum)
@@ -121,7 +121,7 @@ public class TransactionLogBloomCacher {
         LOG.error("Unhandled caching exception", e);
       } finally {
         cachingStatus.cachingCount.decrementAndGet();
-        LOG.info("Caching request complete");
+        LOG.trace("Caching request complete");
       }
     }
 
