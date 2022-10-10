@@ -52,7 +52,7 @@ public class Capability {
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeBytes(wrap(getName().getBytes(StandardCharsets.US_ASCII)));
-    out.writeUnsignedByte(getVersion());
+    out.writeUnsignedInt(getVersion());
     out.endList();
   }
 

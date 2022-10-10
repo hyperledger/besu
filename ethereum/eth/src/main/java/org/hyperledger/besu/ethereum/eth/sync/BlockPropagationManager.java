@@ -18,7 +18,8 @@ import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -71,7 +72,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockPropagationManager implements ForkchoiceMessageListener {
+public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -713,11 +714,8 @@ public class BlockPropagationManager implements ForkchoiceMessageListener {
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent() && !maybeFinalizedBlockHash.get().equals(Hash.ZERO)) {
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+    if (event.hasValidFinalizedBlockHash()) {
       stop();
     }
   }

@@ -1,9 +1,9 @@
 {
-  "request": "{account(address: \"0xdeaff00ddeaff00ddeaff00ddeaff00ddeaff00d\") { balance } }",
+  "request": "{ pending { account(address: \"0xdeaff00ddeaff00ddeaff00ddeaff00ddeaff00d\") { balance } } }",
   "response": {
-    "data" : {
-      "account" : {
-        "balance" : "0x0"
+    "data": {
+      "pending": {
+        "account": null
       }
     }
   },

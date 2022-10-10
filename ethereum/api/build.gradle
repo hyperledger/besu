@@ -66,6 +66,7 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.antlr:antlr4-runtime'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'

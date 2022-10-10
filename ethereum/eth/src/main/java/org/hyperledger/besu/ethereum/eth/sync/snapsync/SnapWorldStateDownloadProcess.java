@@ -229,7 +229,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "world_state_download")
               .thenProcess(
-                  "checkNewPivotBlock",
+                  "checkNewPivotBlock-Account",
                   tasks -> {
                     pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
@@ -252,7 +252,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   "world_state_download")
               .inBatches(snapSyncConfiguration.getStorageCountPerRequest())
               .thenProcess(
-                  "checkNewPivotBlock",
+                  "checkNewPivotBlock-Storage",
                   tasks -> {
                     pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
@@ -278,7 +278,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "world_state_download")
               .thenProcess(
-                  "checkNewPivotBlock",
+                  "checkNewPivotBlock-BigStorage",
                   tasks -> {
                     pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
@@ -317,7 +317,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                                   .distinct()
                                   .count())
               .thenProcess(
-                  "checkNewPivotBlock",
+                  "checkNewPivotBlock-Code",
                   tasks -> {
                     pivotBlockManager.check(
                         (blockHeader, newBlockFound) ->
@@ -353,7 +353,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   bufferCapacity)
               .inBatches(snapSyncConfiguration.getTrienodeCountPerRequest())
               .thenProcess(
-                  "checkNewPivotBlock",
+                  "checkNewPivotBlock-TrieNode",
                   tasks -> {
                     pivotBlockManager.check(
                         (blockHeader, newBlockFound) ->

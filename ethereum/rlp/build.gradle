@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.internal.rlp'
       )
   }
 }
@@ -32,6 +33,8 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'com.google.guava:guava'
+
 
   jmh project(':util')
 
