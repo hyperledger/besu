@@ -8,7 +8,7 @@ on:
 jobs:
   spotless:
     runs-on: ubuntu-22.04
-    container: tmio/besu-build:1.0
+    container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
