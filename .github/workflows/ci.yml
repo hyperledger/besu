@@ -98,6 +98,7 @@ jobs:
           echo "::set-output name=json::${INDEX_JSON}"
   run-parallel-tests:
     runs-on: ubuntu-22.04
+    container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
     needs:
@@ -109,15 +110,6 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
-      - name: Set up Java
-        uses: actions/setup-java@v2
-        with:
-          distribution: adopt
-          java-version: 17
-          cache: gradle
-      - name: Install TLS certs
-        run: |
-          apt-get update && apt-get install -y tls-certificates
       - name: Cache classes
         uses: actions/cache@v3
         with:
