@@ -271,8 +271,8 @@ class TLSContextFactoryTest {
 
     if (testSuccess) {
       client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0));
-      final boolean allMessagesServerExchanged = serverLatch.await(10, TimeUnit.SECONDS);
-      final boolean allMessagesClientExchanged = clientLatch.await(10, TimeUnit.SECONDS);
+      final boolean allMessagesServerExchanged = serverLatch.await(20, TimeUnit.SECONDS);
+      final boolean allMessagesClientExchanged = clientLatch.await(20, TimeUnit.SECONDS);
       assertThat(allMessagesClientExchanged && allMessagesServerExchanged).isTrue();
     } else {
       try {
