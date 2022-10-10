@@ -311,11 +311,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public boolean addMaintainedConnectionPeer(final Peer peer) {
-    final boolean localNodeIsReady =
-        localNode.isReady()
-            && localNode.getPeer() != null
-            && localNode.getPeer().getEnodeURL() != null;
-    if (!localNodeIsReady
+    if (!localNode.isReady()
         || peer.getEnodeURL().getNodeId().equals(localNode.getPeer().getEnodeURL().getNodeId())) {
       return false;
     }
