@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorageFactory;
 import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -27,7 +28,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -71,13 +72,14 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         new TrieLogManager(
             blockchain, new BonsaiWorldStateKeyValueStorage(inMemoryKeyValueStorageProvider)),
         inMemoryKeyValueStorageProvider,
-        blockchain);
+        blockchain,
+        new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(DataStorageFormat.FOREST),
+        provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG),
         provider.createWorldStatePreimageStorage());
   }
 

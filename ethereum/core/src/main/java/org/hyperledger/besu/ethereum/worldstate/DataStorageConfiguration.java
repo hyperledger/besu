@@ -22,14 +22,18 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
+  boolean DEFAULT_BONSAI_LIGHT_MODE_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .isBonsaiLightModeEnabled(DEFAULT_BONSAI_LIGHT_MODE_ENABLED)
           .build();
 
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
+
+  Boolean isBonsaiLightModeEnabled();
 }

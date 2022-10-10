@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataReques
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -106,7 +106,8 @@ public class WorldStateDownloaderBenchmark {
 
     final StorageProvider storageProvider =
         createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
-    worldStateStorage = storageProvider.createWorldStateStorage(DataStorageFormat.FOREST);
+    worldStateStorage =
+        storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG);
 
     pendingRequests = new InMemoryTasksPriorityQueues<>();
     worldStateDownloader =

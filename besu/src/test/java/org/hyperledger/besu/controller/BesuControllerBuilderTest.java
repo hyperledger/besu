@@ -122,7 +122,7 @@ public class BesuControllerBuilderTest {
             any(), anyString(), anyString(), anyString()))
         .thenReturn(labels -> null);
 
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
+    when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
     when(storageProvider.isWorldStateIterable()).thenReturn(true);
@@ -159,15 +159,15 @@ public class BesuControllerBuilderTest {
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))
+    final DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .isBonsaiLightModeEnabled(DataStorageConfiguration.DEFAULT_BONSAI_LIGHT_MODE_ENABLED)
+            .build();
+    when(storageProvider.createWorldStateStorage(dataStorageConfiguration))
         .thenReturn(bonsaiWorldStateStorage);
-    besuControllerBuilder
-        .isPruningEnabled(true)
-        .dataStorageConfiguration(
-            ImmutableDataStorageConfiguration.builder()
-                .dataStorageFormat(DataStorageFormat.BONSAI)
-                .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .build());
+    besuControllerBuilder.isPruningEnabled(true).dataStorageConfiguration(dataStorageConfiguration);
     besuControllerBuilder.build();
 
     verify(storageProvider, never())
@@ -183,6 +183,8 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.FOREST)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                .isBonsaiLightModeEnabled(
+                    DataStorageConfiguration.DEFAULT_BONSAI_LIGHT_MODE_ENABLED)
                 .build());
     besuControllerBuilder.build();
 

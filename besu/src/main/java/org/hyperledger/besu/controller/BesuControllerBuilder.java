@@ -289,7 +289,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final WorldStateStorage worldStateStorage =
-        storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
+        storageProvider.createWorldStateStorage(dataStorageConfiguration);
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
@@ -638,7 +638,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =
