@@ -16,7 +16,7 @@ done
 
 for target in ${targets}; do
 
-    web3j solidity generate \
+    web3j generate solidity \
         -b build/${target}.bin \
         -a build/${target}.abi \
         -o ../java \

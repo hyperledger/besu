@@ -35,6 +35,7 @@ dependencies {
 
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
+  implementation 'com.google.guava:guava'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

@@ -45,9 +45,9 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
 
   private static final String RAW_FIRST_PARTICIPANT = "0x5aa68ac0";
   private static final String RAW_ADD_PARTICIPANT =
-      "0xb4926e25000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000012a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
+      "0x965a25ef00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000202a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
   private static final String RAW_REMOVE_PARTICIPANT =
-      "0xfd0177972a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
+      "0x1f52a8ee000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000202a8d9b56a0fe9cd94d60be4413bcb721d3a7be27ed8e28b3a6346df874ee141b";
   private static final String RAW_LOCK = "0xf83d08ba";
   private static final String RAW_UNLOCK = "0xa69df4b5";
   private static final String RAW_CAN_EXECUTE = "0x78b90337";
@@ -73,28 +73,28 @@ public class PrivacyGroupTest extends AcceptanceTestBase {
         .validTransactionReceipt(contractAddress)
         .verify(defaultPrivacyGroupManagementContract);
     // 0x0b0235be
-    assertThat(RAW_FIRST_PARTICIPANT)
-        .isEqualTo(defaultPrivacyGroupManagementContract.getParticipants().encodeFunctionCall());
+    assertThat(defaultPrivacyGroupManagementContract.getParticipants().encodeFunctionCall())
+        .isEqualTo(RAW_FIRST_PARTICIPANT);
     // 0xf744b089
-    assertThat(RAW_ADD_PARTICIPANT)
-        .isEqualTo(
+    assertThat(
             defaultPrivacyGroupManagementContract
                 .addParticipants(Collections.singletonList(secondParticipant.raw()))
-                .encodeFunctionCall());
+                .encodeFunctionCall())
+        .isEqualTo(RAW_ADD_PARTICIPANT);
     // 0xf744b089
-    assertThat(RAW_REMOVE_PARTICIPANT)
-        .isEqualTo(
+    assertThat(
             defaultPrivacyGroupManagementContract
                 .removeParticipant(secondParticipant.raw())
-                .encodeFunctionCall());
-    assertThat(RAW_LOCK)
-        .isEqualTo(defaultPrivacyGroupManagementContract.lock().encodeFunctionCall());
-    assertThat(RAW_UNLOCK)
-        .isEqualTo(defaultPrivacyGroupManagementContract.unlock().encodeFunctionCall());
-    assertThat(RAW_CAN_EXECUTE)
-        .isEqualTo(defaultPrivacyGroupManagementContract.canExecute().encodeFunctionCall());
-    assertThat(RAW_GET_VERSION)
-        .isEqualTo(defaultPrivacyGroupManagementContract.getVersion().encodeFunctionCall());
+                .encodeFunctionCall())
+        .isEqualTo(RAW_REMOVE_PARTICIPANT);
+    assertThat(defaultPrivacyGroupManagementContract.lock().encodeFunctionCall())
+        .isEqualTo(RAW_LOCK);
+    assertThat(defaultPrivacyGroupManagementContract.unlock().encodeFunctionCall())
+        .isEqualTo(RAW_UNLOCK);
+    assertThat(defaultPrivacyGroupManagementContract.canExecute().encodeFunctionCall())
+        .isEqualTo(RAW_CAN_EXECUTE);
+    assertThat(defaultPrivacyGroupManagementContract.getVersion().encodeFunctionCall())
+        .isEqualTo(RAW_GET_VERSION);
   }
 
   @Test

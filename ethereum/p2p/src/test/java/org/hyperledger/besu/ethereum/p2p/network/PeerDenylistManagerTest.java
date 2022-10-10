@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
@@ -34,10 +35,11 @@ public class PeerDenylistManagerTest {
   private final Peer localNode = generatePeer();
   private final PeerDenylistManager peerDenylistManager;
   private final PeerPermissionsDenylist denylist;
+  private final MaintainedPeers maintainedPeers = new MaintainedPeers();
 
   public PeerDenylistManagerTest() {
     denylist = PeerPermissionsDenylist.create();
-    peerDenylistManager = new PeerDenylistManager(denylist);
+    peerDenylistManager = new PeerDenylistManager(denylist, maintainedPeers);
   }
 
   @Test
@@ -66,6 +68,16 @@ public class PeerDenylistManagerTest {
 
     checkPermissions(denylist, peer.getPeer(), true);
     peerDenylistManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, true);
+    checkPermissions(denylist, peer.getPeer(), true);
+  }
+
+  @Test
+  public void doesNotDenylistMaintainedPeer() {
+    final PeerConnection peer = generatePeerConnection();
+    maintainedPeers.add(peer.getPeer());
+
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.BREACH_OF_PROTOCOL, false);
     checkPermissions(denylist, peer.getPeer(), true);
   }
 
