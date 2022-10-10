@@ -76,8 +76,8 @@ public class JsonRpcParameter {
       } catch (final JsonProcessingException e) {
         throw new InvalidJsonRpcParameters(
             String.format(
-                "Invalid json rpc parameter at index %d. Supplied value was: '%s', expected type: '%s'",
-                index, rawParam, paramClass.getName()),
+                "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
+                index, rawParam, rawParam.getClass().getName(), paramClass.getName()),
             e);
       }
     }

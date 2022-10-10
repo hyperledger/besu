@@ -8,6 +8,7 @@
 
 ### Additions and Improvements
 - Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
+- Increased level of detail in JSON-RPC error log messages [#4510](https://github.com/hyperledger/besu/pull/4510)
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
