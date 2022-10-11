@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -307,7 +308,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, times(retries.intValue() + 1)) // +1 is the empty block
+    verify(mergeContext, atLeast(retries.intValue()))
         .putPayloadById(eq(payloadId), block.capture());
   }
 
