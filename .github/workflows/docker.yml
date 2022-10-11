@@ -61,6 +61,9 @@ jobs:
           architecture: arm64
           java-version: 17
           cache: gradle
+      - name: Docker login
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       - name: buildDocker
         uses: gradle/gradle-build-action@v2
         env:
