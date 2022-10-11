@@ -1762,6 +1762,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
               + "or specify mining is enabled (--miner-enabled)");
     }
+    if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
+        || unstableMiningOptions.getPosBlockCreationMaxTime()
+            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
+      throw new ParameterException(
+          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
+    }
   }
 
   protected void validateP2PInterface(final String p2pInterface) {
