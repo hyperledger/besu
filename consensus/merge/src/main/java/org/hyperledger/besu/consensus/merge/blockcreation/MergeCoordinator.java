@@ -231,14 +231,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         LOG,
         "Block creation started for payload id {}, remaining time is {}ms",
         payloadIdentifier::toHexString,
-        miningParameters::getPosBlockCreationTimeout);
+        miningParameters::getPosBlockCreationMaxTime);
 
     lastBlockCreation =
         ethContext
             .getScheduler()
             .scheduleComputationTask(
                 () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
-            .orTimeout(miningParameters.getPosBlockCreationTimeout(), TimeUnit.MILLISECONDS)
+            .orTimeout(miningParameters.getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
             .exceptionally(
                 throwable -> {
                   debugLambda(

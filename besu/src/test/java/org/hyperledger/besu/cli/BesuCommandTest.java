@@ -36,6 +36,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
@@ -226,7 +227,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   // Testing default values
   @Test
-  public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() throws Exception {
+  public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() {
     parseCommand();
 
     final int maxPeers = 25;
@@ -5326,5 +5327,36 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
+  }
+
+  @Test
+  public void posBlockCreationMaxTimeDefaultValue() {
+    parseCommand();
+    assertThat(getPosBlockCreationMaxTimeValue()).isEqualTo(DEFAULT_POS_BLOCK_CREATION_MAX_TIME);
+  }
+
+  @Test
+  public void posBlockCreationMaxTimeOption() {
+    parseCommand("--Xpos-block-creation-max-time", "7000");
+    assertThat(getPosBlockCreationMaxTimeValue()).isEqualTo(7000L);
+  }
+
+  private long getPosBlockCreationMaxTimeValue() {
+    final ArgumentCaptor<MiningParameters> miningArg =
+        ArgumentCaptor.forClass(MiningParameters.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    return miningArg.getValue().getPosBlockCreationMaxTime();
+  }
+
+  @Test
+  public void posBlockCreationMaxTimeOutOfAllowedRange() {
+    parseCommand("--Xpos-block-creation-max-time", "17000");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xpos-block-creation-max-time must be positive and ≤ 12000");
   }
 }
