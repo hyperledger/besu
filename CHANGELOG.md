@@ -8,6 +8,7 @@
 - `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3).
 
 ### Additions and Improvements
+- Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
