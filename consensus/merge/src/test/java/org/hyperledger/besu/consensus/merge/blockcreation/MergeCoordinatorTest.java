@@ -26,7 +26,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,9 +71,10 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
@@ -135,12 +135,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(10).build(),
+          ImmutableTransactionPoolConfiguration.builder()
+              .txPoolMaxSize(10)
+              .txPoolLimitByAccountPercentage(100.0f)
+              .build(),
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           MergeCoordinatorTest::mockBlockHeader);
 
-  final Transaction localTransaction0 = createTransaction(0);
+  CompletableFuture<Object> blockCreationTask = CompletableFuture.completedFuture(null);
 
   @Before
   public void setUp() {
@@ -155,7 +158,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     when(ethScheduler.scheduleComputationTask(any()))
-        .thenAnswer(i -> CompletableFuture.completedFuture(i.getArgument(0, Supplier.class).get()));
+        .thenAnswer(
+            i -> {
+              blockCreationTask = CompletableFuture.supplyAsync(i.getArgument(0));
+              return blockCreationTask;
+            });
 
     MergeConfigOptions.setMergeEnabled(true);
     this.coordinator =
@@ -170,8 +177,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   @Test
   public void coinbaseShouldMatchSuggestedFeeRecipient() {
-    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
-
     doAnswer(
             invocation -> {
               coordinator.finalizeProposalById(invocation.getArgument(0, PayloadIdentifier.class));
@@ -195,16 +200,17 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
-  public void shouldRetryBlockCreationOnRecoverableError() {
-    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
+  public void shouldContinueBuildingBlockUntilFinalizeIsCalled()
+      throws InterruptedException, ExecutionException {
+    final AtomicLong retries = new AtomicLong(0);
     doAnswer(
             invocation -> {
-              if (invocation.getArgument(1, Block.class).getBody().getTransactions().isEmpty()) {
-                doThrow(new StorageException("lock"))
-                    .doCallRealMethod()
-                    .when(blockchain)
-                    .getBlockHeader(any());
+              if (retries.getAndIncrement() < 5) {
+                // a new transaction every time a block is built
+                transactions.addLocalTransaction(
+                    createTransaction(retries.get() - 1), Optional.empty());
               } else {
+                // when we have 5 transactions finalize block creation
                 coordinator.finalizeProposalById(
                     invocation.getArgument(0, PayloadIdentifier.class));
               }
@@ -213,7 +219,47 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .when(mergeContext)
         .putPayloadById(any(), any());
 
-    transactions.addLocalTransaction(localTransaction0, Optional.empty());
+    var payloadId =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.ZERO,
+            suggestedFeeRecipient);
+
+    blockCreationTask.get();
+
+    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+
+    verify(mergeContext, times(retries.intValue())).putPayloadById(eq(payloadId), block.capture());
+
+    assertThat(block.getAllValues().size()).isEqualTo(retries.intValue());
+    for (int i = 0; i < retries.intValue(); i++) {
+      assertThat(block.getAllValues().get(i).getBody().getTransactions()).hasSize(i);
+    }
+  }
+
+  @Test
+  public void shouldRetryBlockCreationOnRecoverableError()
+      throws InterruptedException, ExecutionException {
+    doAnswer(
+            invocation -> {
+              if (invocation.getArgument(1, Block.class).getBody().getTransactions().isEmpty()) {
+                // this is called by the first empty block
+                doThrow(new StorageException("lock")) // first fail
+                    .doCallRealMethod() // then work
+                    .when(blockchain)
+                    .getBlockHeader(any());
+              } else {
+                // stop block creation loop when we see a not empty block
+                coordinator.finalizeProposalById(
+                    invocation.getArgument(0, PayloadIdentifier.class));
+              }
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any(), any());
+
+    transactions.addLocalTransaction(createTransaction(0), Optional.empty());
 
     var payloadId =
         coordinator.preparePayload(
@@ -222,10 +268,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient);
 
+    blockCreationTask.get();
+
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
     verify(mergeContext, times(2)).putPayloadById(eq(payloadId), block.capture());
-    verify(ethScheduler, times(1)).scheduleComputationTask(any());
 
     assertThat(block.getAllValues().size()).isEqualTo(2);
     assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
@@ -233,23 +280,16 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
-  public void shouldStopRetryBlockCreationIfTimeExpired() {
-    when(mergeContext.getFinalized()).thenReturn(Optional.empty());
-    doReturn(1L).when(miningParameters).getPosBlockCreationMaxTime();
-    reset(ethContext, ethScheduler);
-    when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(ethScheduler.scheduleComputationTask(any()))
-        .thenReturn(
-            CompletableFuture.supplyAsync(
-                () -> {
-                  try {
-                    Thread.sleep(1000L);
-                  } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                  }
-                  return CompletableFuture.failedFuture(new RuntimeException());
-                }))
-        .thenAnswer(i -> fail("Must not be called twice"));
+  public void shouldStopRetryBlockCreationIfTimeExpired() throws InterruptedException {
+    final AtomicLong retries = new AtomicLong(0);
+    doReturn(100L).when(miningParameters).getPosBlockCreationMaxTime();
+    doAnswer(
+            invocation -> {
+              retries.incrementAndGet();
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any(), any());
 
     var payloadId =
         coordinator.preparePayload(
@@ -258,10 +298,17 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient);
 
+    try {
+      blockCreationTask.get();
+      fail("Timeout expected");
+    } catch (ExecutionException e) {
+      assertThat(e).hasCauseInstanceOf(TimeoutException.class);
+    }
+
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), block.capture());
-    verify(ethScheduler, times(1)).scheduleComputationTask(any());
+    verify(mergeContext, times(retries.intValue() + 1)) // +1 is the empty block
+        .putPayloadById(eq(payloadId), block.capture());
   }
 
   @Test
