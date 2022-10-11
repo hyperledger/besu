@@ -349,12 +349,10 @@ jobs:
         with:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ github.sha }}
-      - name: pull test image
-        run: docker pull quorumengineering/acctests:latest
       - name: ethereum acceptance tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: acceptanceTests --scan
+          arguments: acceptanceTest --scan
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
