@@ -49,7 +49,7 @@ jobs:
         if: ${{ github.actor != 'dependabot[bot]' && (contains('refs/heads/release-', github.ref) || github.ref == 'refs/heads/main') }}
         run: ./gradlew --no-daemon "-Pbranch=${{ github.head_ref || github.ref_name }}" dockerUpload
   buildArm64Docker:
-    runs-on: besu
+    runs-on: [self-hosted, macOS, ARM64, MacStadium]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
