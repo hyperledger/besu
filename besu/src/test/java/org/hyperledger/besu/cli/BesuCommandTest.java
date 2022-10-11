@@ -30,7 +30,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
@@ -4257,13 +4256,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             DEPRECATION_WARNING_MSG,
             "--privacy-onchain-groups-enabled",
             "--privacy-flexible-groups-enabled");
-  }
-
-  @Test
-  public void txPoolHashesMaxSizeOptionIsDeprecated() {
-    parseCommand("--tx-pool-hashes-max-size", "1024");
-
-    verify(mockLogger).warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
   }
 
   @Test
