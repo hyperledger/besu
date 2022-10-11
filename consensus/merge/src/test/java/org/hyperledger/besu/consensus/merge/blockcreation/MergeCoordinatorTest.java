@@ -21,7 +21,9 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -170,6 +172,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void coinbaseShouldMatchSuggestedFeeRecipient() {
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
 
+    doAnswer(
+            invocation -> {
+              coordinator.finalizeProposalById(invocation.getArgument(0, PayloadIdentifier.class));
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any(), any());
+
     var payloadId =
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
@@ -185,13 +195,23 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
-  public void shouldRetryBlockCreationIfStillHaveTime() {
+  public void shouldRetryBlockCreationOnRecoverableError() {
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
-    reset(ethContext, ethScheduler);
-    when(ethContext.getScheduler()).thenReturn(ethScheduler);
-    when(ethScheduler.scheduleComputationTask(any()))
-        .thenReturn(CompletableFuture.failedFuture(new StorageException("lock")))
-        .thenAnswer(i -> CompletableFuture.completedFuture(i.getArgument(0, Supplier.class).get()));
+    doAnswer(
+            invocation -> {
+              if (invocation.getArgument(1, Block.class).getBody().getTransactions().isEmpty()) {
+                doThrow(new StorageException("lock"))
+                    .doCallRealMethod()
+                    .when(blockchain)
+                    .getBlockHeader(any());
+              } else {
+                coordinator.finalizeProposalById(
+                    invocation.getArgument(0, PayloadIdentifier.class));
+              }
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any(), any());
 
     transactions.addLocalTransaction(localTransaction0, Optional.empty());
 
@@ -205,7 +225,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
     verify(mergeContext, times(2)).putPayloadById(eq(payloadId), block.capture());
-    verify(ethScheduler, times(2)).scheduleComputationTask(any());
+    verify(ethScheduler, times(1)).scheduleComputationTask(any());
 
     assertThat(block.getAllValues().size()).isEqualTo(2);
     assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
