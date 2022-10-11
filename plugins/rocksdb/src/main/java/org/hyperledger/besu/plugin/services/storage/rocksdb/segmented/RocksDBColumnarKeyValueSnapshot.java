@@ -43,6 +43,12 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
     this.snapTx = new RocksDBSnapshotTransaction(db, segment.get(), metrics);
   }
 
+  private RocksDBColumnarKeyValueSnapshot(
+      final OptimisticTransactionDB db, final RocksDBSnapshotTransaction snapTx) {
+    this.db = db;
+    this.snapTx = snapTx;
+  }
+
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
     return snapTx.get(key);
@@ -90,5 +96,10 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   @Override
   public KeyValueStorageTransaction getSnapshotTransaction() {
     return snapTx;
+  }
+
+  @Override
+  public SnappedKeyValueStorage cloneFromSnapshot() {
+    return new RocksDBColumnarKeyValueSnapshot(db, snapTx.copy());
   }
 }

@@ -26,7 +26,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage {
-  private final SnapshotUpdater updater;
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final SnappedKeyValueStorage accountStorage,
@@ -35,14 +34,16 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final SnappedKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage) {
     super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
-    this.updater =
-        new SnapshotUpdater(
-            accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
   }
 
   @Override
   public BonsaiUpdater updater() {
-    return updater;
+    return new SnapshotUpdater(
+        (SnappedKeyValueStorage) accountStorage,
+        (SnappedKeyValueStorage) codeStorage,
+        (SnappedKeyValueStorage) storageStorage,
+        (SnappedKeyValueStorage) trieBranchStorage,
+        trieLogStorage);
   }
 
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {

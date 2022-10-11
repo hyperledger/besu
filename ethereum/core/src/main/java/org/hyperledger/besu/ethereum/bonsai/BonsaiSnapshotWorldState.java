@@ -26,7 +26,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
  * creation and/or point-in-time queries since the snapshot worldstate is fully isolated from the
  * main BonsaiPersistedWorldState.
  */
-public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
+public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     implements SnapshotMutableWorldState {
   //  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldState.class);
 
@@ -60,18 +60,20 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
 
   @Override
   public MutableWorldState copy() {
-    // The copy method interface doesn't make much sense in this context since
-    // this class is a snapshot based copy of the worldstate and *is* an
-    // independent/isolated version of the worldstate, so just return ourselves.
-    return this;
+    // return a clone-based copy of worldstate storage
+    return new BonsaiSnapshotWorldState(
+        archive,
+        new BonsaiSnapshotWorldStateKeyValueStorage(
+            accountSnap.cloneFromSnapshot(),
+            codeSnap.cloneFromSnapshot(),
+            storageSnap.cloneFromSnapshot(),
+            trieBranchSnap.cloneFromSnapshot(),
+            worldStateStorage.trieLogStorage));
   }
 
   @Override
   public void close() throws Exception {
-    // TODO: close and free snapshot transactions
-    this.accountSnap.getSnapshotTransaction().rollback();
-    this.codeSnap.getSnapshotTransaction().rollback();
-    this.storageSnap.getSnapshotTransaction().rollback();
-    this.trieBranchSnap.getSnapshotTransaction().rollback();
+    // TODO: consider releasing snapshot or marking for release
+    // no-op.
   }
 }

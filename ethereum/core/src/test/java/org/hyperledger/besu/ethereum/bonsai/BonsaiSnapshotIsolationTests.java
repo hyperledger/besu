@@ -180,6 +180,76 @@ public class BonsaiSnapshotIsolationTests {
   }
 
   @Test
+  public void testSnapshotCloneIsolation() {
+    Address testAddress = Address.fromHexString("0xdeadbeef");
+    Address altTestAddress = Address.fromHexString("0xd1ffbeef");
+
+    // create a snapshot worldstate, and then clone it:
+    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash()).get();
+    var isolatedClone =
+        archive.getMutableSnapshot(genesisState.getBlock().getHash()).get(); // isolated.copy();
+
+    // execute a block with a single transaction on the first snapshot:
+    var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
+    var res = executeBlock(isolated, firstBlock);
+    isolated.persist(firstBlock.getHeader());
+
+    assertThat(res.isSuccessful()).isTrue();
+    Runnable checkIsolatedState =
+        () -> {
+          assertThat(isolated.rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+          assertThat(isolated.get(testAddress)).isNotNull();
+          assertThat(isolated.get(altTestAddress)).isNull();
+          assertThat(isolated.get(testAddress).getBalance())
+              .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+        };
+    checkIsolatedState.run();
+
+    // assert clone is isolated and unmodified:
+    assertThat(isolatedClone.get(testAddress)).isNull();
+    assertThat(isolatedClone.rootHash())
+        .isEqualTo(genesisState.getBlock().getHeader().getStateRoot());
+
+    // assert clone isolated block execution
+    var cloneForkBlock = forTransactions(List.of(burnTransaction(sender1, 0L, altTestAddress)));
+    var altRes = executeBlock(isolatedClone, cloneForkBlock);
+    isolatedClone.persist(cloneForkBlock.getHeader());
+
+    assertThat(altRes.isSuccessful()).isTrue();
+    assertThat(isolatedClone.rootHash()).isEqualTo(cloneForkBlock.getHeader().getStateRoot());
+    assertThat(isolatedClone.get(altTestAddress)).isNotNull();
+    assertThat(isolatedClone.get(testAddress)).isNull();
+    assertThat(isolatedClone.get(altTestAddress).getBalance())
+        .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(isolatedClone.rootHash()).isEqualTo(cloneForkBlock.getHeader().getStateRoot());
+
+    // re-check isolated state remains unchanged:
+    checkIsolatedState.run();
+
+    // assert that the actual persisted worldstate remains unchanged:
+    var persistedWorldState = archive.getMutable();
+    assertThat(persistedWorldState.rootHash())
+        .isEqualTo(genesisState.getBlock().getHeader().getStateRoot());
+    assertThat(persistedWorldState.get(testAddress)).isNull();
+    assertThat(persistedWorldState.get(altTestAddress)).isNull();
+
+    // assert that trieloglayers exist for both of the isolated states:
+    var firstBlockTrieLog = archive.getTrieLogManager().getTrieLogLayer(firstBlock.getHash());
+    assertThat(firstBlockTrieLog).isNotEmpty();
+    assertThat(firstBlockTrieLog.get().getAccount(testAddress)).isNotEmpty();
+    assertThat(firstBlockTrieLog.get().getAccount(altTestAddress)).isEmpty();
+    var cloneForkTrieLog = archive.getTrieLogManager().getTrieLogLayer(cloneForkBlock.getHash());
+    assertThat(cloneForkTrieLog.get().getAccount(testAddress)).isEmpty();
+    assertThat(cloneForkTrieLog.get().getAccount(altTestAddress)).isNotEmpty();
+  }
+
+  @Test
+  public void assertSnapshotDoesNotClose() {
+    // TODO: add unit test to assert snapshot does not close on clone if parent tx is closed
+
+  }
+
+  @Test
   public void testSnapshotRollToTrieLogBlockHash() {
     // assert we can roll a snapshot to a specific worldstate without mutating head
     Address testAddress = Address.fromHexString("0xdeadbeef");
@@ -232,12 +302,13 @@ public class BonsaiSnapshotIsolationTests {
     try (var shouldCloseSnapshot =
         archive.getMutableSnapshot(genesisState.getBlock().getHash()).get()) {
 
-      var tx1 = burnTransaction(sender1, 0L, Address.ZERO);
+      var tx1 = burnTransaction(sender1, 0L, testAddress);
       Block oneTx = forTransactions(List.of(tx1));
 
       var res = executeBlock(shouldCloseSnapshot, oneTx);
-
       assertThat(res.isSuccessful()).isTrue();
+      shouldCloseSnapshot.persist(oneTx.getHeader());
+
       assertThat(shouldCloseSnapshot.get(testAddress)).isNotNull();
       assertThat(shouldCloseSnapshot.get(testAddress).getBalance())
           .isEqualTo(Wei.of(1_000_000_000_000_000_000L));

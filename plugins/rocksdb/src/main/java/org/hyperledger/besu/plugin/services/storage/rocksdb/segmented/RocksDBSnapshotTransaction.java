@@ -60,6 +60,20 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     this.readOptions = new ReadOptions().setSnapshot(snapshot);
   }
 
+  private RocksDBSnapshotTransaction(
+      final OptimisticTransactionDB db,
+      final ColumnFamilyHandle columnFamilyHandle,
+      final RocksDBMetrics metrics,
+      final Snapshot snapshot) {
+    this.metrics = metrics;
+    this.db = db;
+    this.columnFamilyHandle = columnFamilyHandle;
+    this.snapshot = snapshot;
+    this.writeOptions = new WriteOptions();
+    this.snapTx = db.beginTransaction(writeOptions);
+    this.readOptions = new ReadOptions().setSnapshot(snapshot);
+  }
+
   public Optional<byte[]> get(final byte[] key) {
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(snapTx.get(columnFamilyHandle, readOptions, key));
@@ -122,8 +136,16 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     }
   }
 
+  public RocksDBSnapshotTransaction copy() {
+    // TODO: if we use snapshot as the basis of a cloned state, we need to ensure close() of this
+    // Transaction
+    // does not release and close the snapshot in use by the cloned state.
+    return new RocksDBSnapshotTransaction(db, columnFamilyHandle, metrics, snapshot);
+  }
+
   @Override
   public void close() {
+    db.releaseSnapshot(snapshot);
     snapshot.close();
     snapTx.close();
     writeOptions.close();
