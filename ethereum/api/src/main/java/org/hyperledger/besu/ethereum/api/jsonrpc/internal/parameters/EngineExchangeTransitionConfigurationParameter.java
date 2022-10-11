@@ -39,20 +39,21 @@ public class EngineExchangeTransitionConfigurationParameter {
     return terminalTotalDifficulty;
   }
 
+  @JsonProperty("terminalTotalDifficulty")
+  public String getTerminalTotalDifficultyAsHexString() {
+    return terminalTotalDifficulty.toShortHexString();
+  }
+
   public Hash getTerminalBlockHash() {
     return terminalBlockHash;
   }
 
-  public long getTerminalBlockNumber() {
-    return terminalBlockNumber;
+  @JsonProperty("terminalBlockHash")
+  public String getTerminalBlockHashAsHexString() {
+    return terminalBlockHash.toShortHexString();
   }
 
-  @Override
-  public String toString() {
-    return "EngineExchangeTransitionConfigurationParameter{" +
-            "terminalTotalDifficulty=" + terminalTotalDifficulty.toShortHexString() +
-            ", terminalBlockHash=" + terminalBlockHash.toShortHexString() +
-            ", terminalBlockNumber=" + terminalBlockNumber +
-            '}';
+  public long getTerminalBlockNumber() {
+    return terminalBlockNumber;
   }
 }
