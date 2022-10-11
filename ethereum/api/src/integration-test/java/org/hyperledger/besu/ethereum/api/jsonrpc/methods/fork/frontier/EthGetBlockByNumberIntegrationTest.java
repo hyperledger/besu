@@ -410,7 +410,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   /** The Tag | Quantity is the first parameter, either a String or a number */
@@ -422,7 +422,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   /**
