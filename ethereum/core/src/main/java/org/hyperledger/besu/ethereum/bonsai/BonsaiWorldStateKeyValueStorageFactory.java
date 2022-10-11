@@ -27,10 +27,8 @@ public class BonsaiWorldStateKeyValueStorageFactory {
   }
 
   public BonsaiWorldStateKeyValueStorage create(final StorageProvider storageProvider) {
-    if (dataStorageConfiguration.isBonsaiLightModeEnabled()) {
-      return new BonsaiWorldStateKeyValueStorage(storageProvider);
-    } else {
-      return new BonsaiLightWorldStateKeyValueStorage(storageProvider);
-    }
+    return dataStorageConfiguration.isBonsaiLightModeEnabled()
+        ? new BonsaiLightWorldStateKeyValueStorage(storageProvider)
+        : new BonsaiWorldStateKeyValueStorage(storageProvider);
   }
 }
