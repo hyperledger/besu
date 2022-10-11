@@ -6,6 +6,7 @@
   * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
   * For the EC encryptor, the encoded public key length is 91
 - `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3).
+- Block creation now returns `BlockCreationResult` which contains the new `Block` and `TransactionSelectionResults`. 
 
 ### Additions and Improvements
 - Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
