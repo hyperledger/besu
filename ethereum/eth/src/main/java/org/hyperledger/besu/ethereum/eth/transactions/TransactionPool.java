@@ -317,28 +317,25 @@ public class TransactionPool implements BlockAddedObserver {
           "EIP-1559 transaction are not allowed yet");
     }
 
-    return protocolContext
-        .getWorldStateArchive()
-        .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
-        .map(
-            worldState -> {
-              try {
-                final Account senderAccount = worldState.get(transaction.getSender());
-                return new ValidationResultAndAccount(
-                    senderAccount,
-                    getTransactionValidator()
-                        .validateForSender(
-                            transaction,
-                            senderAccount,
-                            TransactionValidationParams.transactionPool()));
-              } catch (MerkleTrieException ex) {
-                LOG.debug(
-                    "MerkleTrieException while validating transaction for sender {}",
-                    transaction.getSender());
-                return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
-              }
-            })
-        .orElseGet(() -> ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+    try (var worldState =
+        protocolContext
+            .getWorldStateArchive()
+            .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
+            .orElseThrow()) {
+      final Account senderAccount = worldState.get(transaction.getSender());
+      return new ValidationResultAndAccount(
+          senderAccount,
+          getTransactionValidator()
+              .validateForSender(
+                  transaction, senderAccount, TransactionValidationParams.transactionPool()));
+    } catch (MerkleTrieException ex) {
+      LOG.debug(
+          "MerkleTrieException while validating transaction for sender {}",
+          transaction.getSender());
+      return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    } catch (Exception ex) {
+      return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    }
   }
 
   private boolean strictReplayProtectionShouldBeEnforceLocally(

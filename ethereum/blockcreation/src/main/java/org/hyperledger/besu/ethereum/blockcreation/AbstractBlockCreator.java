@@ -148,15 +148,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
-    try {
+
+    try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
       final ProcessableBlockHeader processableBlockHeader =
           createPendingBlockHeader(timestamp, maybePrevRandao);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
-
-      throwIfStopped();
-
-      final MutableWorldState disposableWorldState = duplicateWorldStateAtParent();
 
       throwIfStopped();
 
@@ -252,21 +249,18 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private MutableWorldState duplicateWorldStateAtParent() {
     final Hash parentStateRoot = parentHeader.getStateRoot();
-    final MutableWorldState worldState =
-        protocolContext
-            .getWorldStateArchive()
-            .getMutable(parentStateRoot, parentHeader.getHash(), false)
-            .orElseThrow(
-                () -> {
-                  LOG.info("Unable to create block because world state is not available");
-                  return new CancellationException(
-                      "World state not available for block "
-                          + parentHeader.getNumber()
-                          + " with state root "
-                          + parentStateRoot);
-                });
-
-    return worldState.copy();
+    return protocolContext
+        .getWorldStateArchive()
+        .getMutable(parentStateRoot, parentHeader.getHash(), false)
+        .orElseThrow(
+            () -> {
+              LOG.info("Unable to create block because world state is not available");
+              return new CancellationException(
+                  "World state not available for block "
+                      + parentHeader.getNumber()
+                      + " with state root "
+                      + parentStateRoot);
+            });
   }
 
   private List<BlockHeader> selectOmmers() {

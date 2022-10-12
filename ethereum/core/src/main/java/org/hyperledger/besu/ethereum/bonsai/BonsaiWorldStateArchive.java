@@ -17,7 +17,6 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -107,58 +106,35 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(
-      final long blockNumber, final boolean isPersistingState) {
-    final Optional<Hash> blockHashByNumber = blockchain.getBlockHashByNumber(blockNumber);
-    if (blockHashByNumber.isPresent()) {
-      return getMutable(null, blockHashByNumber.get(), isPersistingState);
-    }
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
-    if (!isPersistingState) {
-      final Optional<MutableWorldState> layeredWorldState =
-          trieLogManager.getBonsaiLayeredWorldState(blockHash);
-      if (layeredWorldState.isPresent()) {
-        return layeredWorldState;
-      } else {
-        final BlockHeader header = blockchain.getBlockHeader(blockHash).get();
-        final BlockHeader currentHeader = blockchain.getChainHeadHeader();
-        if ((currentHeader.getNumber() - header.getNumber())
-            >= trieLogManager.getMaxLayersToLoad()) {
-          LOG.warn(
-              "Exceeded the limit of back layers that can be loaded ({})",
-              trieLogManager.getMaxLayersToLoad());
-          return Optional.empty();
-        }
-        final Optional<TrieLogLayer> trieLogLayer = trieLogManager.getTrieLogLayer(blockHash);
-        if (trieLogLayer.isPresent()) {
-          return Optional.of(
-              new BonsaiLayeredWorldState(
-                  blockchain,
-                  this,
-                  Optional.empty(),
-                  header.getNumber(),
-                  fromPlugin(header.getStateRoot()),
-                  trieLogLayer.get()));
-        }
-      }
+      final Hash rootHash, final Hash blockHash, final boolean shouldPersistState) {
+    if (!shouldPersistState) {
+      return blockchain
+          .getBlockHeader(blockHash)
+          .filter(
+              header -> {
+                if (blockchain.getChainHeadHeader().getNumber() - header.getNumber()
+                    >= trieLogManager.getMaxLayersToLoad()) {
+                  LOG.warn(
+                      "Exceeded the limit of back layers that can be loaded ({})",
+                      trieLogManager.getMaxLayersToLoad());
+                  return false;
+                }
+                return true;
+              })
+          .flatMap(__ -> getMutableSnapshot(blockHash))
+          .map(MutableWorldState.class::cast);
     } else {
       return getMutable(rootHash, blockHash);
     }
-    return Optional.empty();
   }
 
   @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    return rollMutableStateToBlockHash(persistedState, blockHash)
-        .map(MutableWorldState.class::cast);
+    return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  private <T extends BonsaiPersistedWorldState> Optional<T> rollMutableStateToBlockHash(
-      final T mutableState, final Hash blockHash) {
+  private Optional<MutableWorldState> rollMutableStateToBlockHash(
+      final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {

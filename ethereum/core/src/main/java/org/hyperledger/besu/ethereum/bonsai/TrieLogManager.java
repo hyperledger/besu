@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -130,7 +131,19 @@ public class TrieLogManager {
 
   public synchronized void scrubLayeredCache(final long newMaxHeight) {
     final long waterline = newMaxHeight - RETAINED_LAYERS;
-    layeredWorldStatesByHash.entrySet().removeIf(entry -> entry.getValue().getHeight() < waterline);
+    layeredWorldStatesByHash.values().stream()
+        .filter(layer -> layer.getHeight() < waterline)
+        .collect(Collectors.toList())
+        .stream()
+        .forEach(
+            layer -> {
+              layeredWorldStatesByHash.remove(layer);
+              try {
+                layer.close();
+              } catch (Exception e) {
+                LOG.warn("Error closing bonsai worldstate layer", e);
+              }
+            });
   }
 
   public long getMaxLayersToLoad() {

@@ -172,7 +172,7 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(archive.getMutable().get(testAddress)).isNull();
 
     // roll the persisted world state to the new trie log from the persisted snapshot
-    var ws = archive.getMutable(firstBlock.getHeader().getNumber(), true);
+    var ws = archive.getMutable(null, firstBlock.getHash());
     assertThat(ws).isPresent();
     assertThat(ws.get().get(testAddress)).isNotNull();
     assertThat(ws.get().get(testAddress).getBalance())
@@ -270,7 +270,7 @@ public class BonsaiSnapshotIsolationTests {
 
     // roll chain and worldstate to block 2
     blockchain.rewindToBlock(2L);
-    var block1State = archive.getMutable(2L, true);
+    var block1State = archive.getMutable(null, block2.getHash());
 
     // BonsaiPersistedWorldState should be at block 2
     assertThat(block1State.get().get(testAddress)).isNotNull();
