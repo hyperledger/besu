@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
@@ -73,23 +72,23 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
   protected final MergeContext mergeContext;
   protected final ProtocolContext protocolContext;
-  protected final EthContext ethContext;
+  protected final ProposalBuilderExecutor blockBuilderExecutor;
   protected final BackwardSyncContext backwardSyncContext;
   protected final ProtocolSchedule protocolSchedule;
 
-  private final Map<PayloadIdentifier, BlockCreationJob> blockCreationJobs =
+  private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTask =
       new ConcurrentHashMap<>();
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
+      final ProposalBuilderExecutor blockBuilderExecutor,
       final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
-    this.ethContext = ethContext;
+    this.blockBuilderExecutor = blockBuilderExecutor;
     this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
     this.miningParameters = miningParams;
     this.backwardSyncContext = backwardSyncContext;
@@ -184,13 +183,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 prevRandao,
       final Address feeRecipient) {
 
+    // we assume that preparePayload is always called sequentially, since the RPC Engine calls
+    // are sequential, if this assumption changes then more synchronization should be added to
+    // shared data structures
+
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(
             parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient);
+
+    if (blockCreationTask.containsKey(payloadIdentifier)) {
+      LOG.debug(
+          "Block proposal for the same payload id {} already present, nothing to do",
+          payloadIdentifier);
+      return payloadIdentifier;
+    }
+
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
-    blockCreationJobs.put(payloadIdentifier, new BlockCreationJob(mergeBlockCreator));
+    blockCreationTask.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator));
 
     // put the empty block in first
     final Block emptyBlock =
@@ -219,11 +230,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     LOG.debug("Finalizing block proposal for payload id {}", payloadId);
-    blockCreationJobs.computeIfPresent(
+    blockCreationTask.computeIfPresent(
         payloadId,
-        (pid, blockCreationJob) -> {
-          blockCreationJob.cancel();
-          return blockCreationJob;
+        (pid, blockCreationTask) -> {
+          blockCreationTask.cancel();
+          return blockCreationTask;
         });
   }
 
@@ -242,21 +253,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier::toHexString,
         miningParameters::getPosBlockCreationMaxTime);
 
-    ethContext
-        .getScheduler()
-        .scheduleComputationTask(
-            () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
+    blockBuilderExecutor
+        .buildProposal(() -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
         .orTimeout(miningParameters.getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
-        .exceptionally(
-            throwable -> {
-              debugLambda(
-                  LOG,
-                  "Exception building block for payload id {}",
-                  payloadIdentifier::toHexString,
-                  () -> logException(throwable));
-              return null;
-            })
-        .thenRun(() -> blockCreationJobs.remove(payloadIdentifier));
+        .whenComplete(
+            (unused, throwable) -> {
+              if (throwable != null) {
+                debugLambda(
+                    LOG,
+                    "Exception building block for payload id {}, reason {}",
+                    payloadIdentifier::toHexString,
+                    () -> logException(throwable));
+              }
+              blockCreationTask.computeIfPresent(
+                  payloadIdentifier,
+                  (pid, blockCreationTask) -> {
+                    blockCreationTask.cancel();
+                    return null;
+                  });
+            });
   }
 
   private Void retryBlockCreationUntilUseful(
@@ -768,14 +783,18 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean isBlockCreationCancelled(final PayloadIdentifier payloadId) {
-    return blockCreationJobs.get(payloadId).cancelled.get();
+    final BlockCreationTask job = blockCreationTask.get(payloadId);
+    if (job == null) {
+      return true;
+    }
+    return job.cancelled.get();
   }
 
-  private static class BlockCreationJob {
+  private static class BlockCreationTask {
     final MergeBlockCreator blockCreator;
     final AtomicBoolean cancelled;
 
-    public BlockCreationJob(final MergeBlockCreator blockCreator) {
+    public BlockCreationTask(final MergeBlockCreator blockCreator) {
       this.blockCreator = blockCreator;
       this.cancelled = new AtomicBoolean(false);
     }
@@ -784,5 +803,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       cancelled.set(true);
       blockCreator.cancel();
     }
+  }
+
+  public interface ProposalBuilderExecutor {
+    CompletableFuture<Void> buildProposal(final Runnable task);
   }
 }

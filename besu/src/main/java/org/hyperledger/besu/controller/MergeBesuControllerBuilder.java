@@ -46,6 +46,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -140,10 +145,12 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     this.syncState.set(syncState);
 
+    final ExecutorService blockBuilderExecutor = createBlockBuilderExecutor();
+
     return new MergeCoordinator(
         protocolContext,
         protocolSchedule,
-        ethContext,
+        job -> CompletableFuture.runAsync(job, blockBuilderExecutor),
         transactionPool.getPendingTransactions(),
         miningParameters,
         backwardSyncContext);
@@ -221,5 +228,22 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       LOG.debug("unable to validate peers with terminal difficulty blocks");
     }
     return retval;
+  }
+
+  private static ThreadPoolExecutor createBlockBuilderExecutor() {
+    // a dedicated executor for PoS block proposal, we want one thread always ready to build a
+    // block, and we do not want to queue request since block creation is a high priority task.
+    // There should be only one block creation job at time, but in case of two consecutive proposal
+    // we allow for additional threads to be created
+    var threadPool =
+        new ThreadPoolExecutor(
+            1,
+            2,
+            1,
+            TimeUnit.MINUTES,
+            new SynchronousQueue<>(),
+            r -> new Thread("PoS-Block-Creation"));
+    threadPool.prestartCoreThread();
+    return threadPool;
   }
 }
