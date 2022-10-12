@@ -34,7 +34,7 @@ public class MiningParameters {
 
   public static final int DEFAULT_MAX_OMMERS_DEPTH = 8;
 
-  public static final long DEFAULT_POS_BLOCK_CREATION_TIMEOUT_MS = Duration.ofSeconds(7).toMillis();
+  public static final long DEFAULT_POS_BLOCK_CREATION_MAX_TIME = Duration.ofSeconds(12).toMillis();
 
   private final Optional<Address> coinbase;
   private final Optional<AtomicLong> targetGasLimit;
@@ -51,7 +51,7 @@ public class MiningParameters {
   private final long remoteSealersTimeToLive;
   private final long powJobTimeToLive;
   private final int maxOmmerDepth;
-  private final long posBlockCreationTimeout;
+  private final long posBlockCreationMaxTime;
 
   private MiningParameters(
       final Address coinbase,
@@ -69,7 +69,7 @@ public class MiningParameters {
       final long remoteSealersTimeToLive,
       final long powJobTimeToLive,
       final int maxOmmerDepth,
-      final long posBlockCreationTimeout) {
+      final long posBlockCreationMaxTime) {
     this.coinbase = Optional.ofNullable(coinbase);
     this.targetGasLimit = Optional.ofNullable(targetGasLimit).map(AtomicLong::new);
     this.minTransactionGasPrice = minTransactionGasPrice;
@@ -85,7 +85,7 @@ public class MiningParameters {
     this.remoteSealersTimeToLive = remoteSealersTimeToLive;
     this.powJobTimeToLive = powJobTimeToLive;
     this.maxOmmerDepth = maxOmmerDepth;
-    this.posBlockCreationTimeout = posBlockCreationTimeout;
+    this.posBlockCreationMaxTime = posBlockCreationMaxTime;
   }
 
   public Optional<Address> getCoinbase() {
@@ -148,8 +148,8 @@ public class MiningParameters {
     return maxOmmerDepth;
   }
 
-  public long getPosBlockCreationTimeout() {
-    return posBlockCreationTimeout;
+  public long getPosBlockCreationMaxTime() {
+    return posBlockCreationMaxTime;
   }
 
   @Override
@@ -170,7 +170,7 @@ public class MiningParameters {
         && remoteSealersTimeToLive == that.remoteSealersTimeToLive
         && remoteSealersLimit == that.remoteSealersLimit
         && powJobTimeToLive == that.powJobTimeToLive
-        && posBlockCreationTimeout == that.posBlockCreationTimeout;
+        && posBlockCreationMaxTime == that.posBlockCreationMaxTime;
   }
 
   @Override
@@ -189,7 +189,7 @@ public class MiningParameters {
         remoteSealersLimit,
         remoteSealersTimeToLive,
         powJobTimeToLive,
-        posBlockCreationTimeout);
+        posBlockCreationMaxTime);
   }
 
   @Override
@@ -225,8 +225,8 @@ public class MiningParameters {
         + remoteSealersTimeToLive
         + ", powJobTimeToLive="
         + powJobTimeToLive
-        + ", posBlockCreationTimeout="
-        + posBlockCreationTimeout
+        + ", posBlockCreationMaxTime="
+        + posBlockCreationMaxTime
         + '}';
   }
 
@@ -247,8 +247,7 @@ public class MiningParameters {
     private long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
     private long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
     private int maxOmmerDepth = DEFAULT_MAX_OMMERS_DEPTH;
-
-    private long posBlockCreationTimeout = DEFAULT_POS_BLOCK_CREATION_TIMEOUT_MS;
+    private long posBlockCreationMaxTime = DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 
     public Builder() {
       // zero arg
@@ -273,7 +272,7 @@ public class MiningParameters {
       this.remoteSealersTimeToLive = existing.getRemoteSealersTimeToLive();
       this.powJobTimeToLive = existing.getPowJobTimeToLive();
       this.maxOmmerDepth = existing.getMaxOmmerDepth();
-      this.posBlockCreationTimeout = existing.getPosBlockCreationTimeout();
+      this.posBlockCreationMaxTime = existing.getPosBlockCreationMaxTime();
     }
 
     public Builder coinbase(final Address address) {
@@ -351,8 +350,8 @@ public class MiningParameters {
       return this;
     }
 
-    public Builder posBlockCreationTimeout(final long posBlockCreationTimeoutMillis) {
-      this.posBlockCreationTimeout = posBlockCreationTimeoutMillis;
+    public Builder posBlockCreationMaxTime(final long posBlockCreationMaxTime) {
+      this.posBlockCreationMaxTime = posBlockCreationMaxTime;
       return this;
     }
 
@@ -373,7 +372,7 @@ public class MiningParameters {
           remoteSealersTimeToLive,
           powJobTimeToLive,
           maxOmmerDepth,
-          posBlockCreationTimeout);
+          posBlockCreationMaxTime);
     }
   }
 }
