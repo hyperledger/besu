@@ -70,7 +70,7 @@ public class AddressScalarTest {
 
   @Test
   public void parseLiteralErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(3 / 4))
+    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(3.4f))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
