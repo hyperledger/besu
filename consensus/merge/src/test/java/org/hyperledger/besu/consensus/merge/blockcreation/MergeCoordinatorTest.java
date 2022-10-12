@@ -215,7 +215,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldStopRetryBlockCreationIfTimeExpired() {
     when(mergeContext.getFinalized()).thenReturn(Optional.empty());
-    doReturn(1L).when(miningParameters).getPosBlockCreationTimeout();
+    doReturn(1L).when(miningParameters).getPosBlockCreationMaxTime();
     reset(ethContext, ethScheduler);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     when(ethScheduler.scheduleComputationTask(any()))
