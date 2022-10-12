@@ -27,10 +27,7 @@ import graphql.schema.GraphQLScalarType;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BytesScalarTest {
 
   private GraphQLScalarType scalar;
@@ -42,13 +39,13 @@ public class BytesScalarTest {
 
   @Test
   public void parseValueTest() {
-    final String result = (String) scalar.getCoercing().parseValue(value);
-    assertThat(result).isEqualTo(str);
+    final var result = scalar.getCoercing().parseValue(str);
+    assertThat(result).isEqualTo(value);
   }
 
   @Test
   public void parseValueErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseValue(str))
+    assertThatThrownBy(() -> scalar.getCoercing().parseValue(3.2f))
         .isInstanceOf(CoercingParseValueException.class);
   }
 
@@ -60,7 +57,7 @@ public class BytesScalarTest {
 
   @Test
   public void serializeErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().serialize(str))
+    assertThatThrownBy(() -> scalar.getCoercing().serialize(3.2f))
         .isInstanceOf(CoercingSerializeException.class);
   }
 
@@ -72,7 +69,7 @@ public class BytesScalarTest {
 
   @Test
   public void parseLiteralErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(str))
+    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(3.2f))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
