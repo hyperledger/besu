@@ -44,78 +44,78 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
   public static Collection<String> specs() {
     final List<String> specs = new ArrayList<>();
 
-    //    specs.add("eth_blockNumber");
-    //
-    //    specs.add("eth_call_Block8");
-    //    specs.add("eth_call_Block8_invalidHexBytesData");
-    //    specs.add("eth_call_BlockLatest");
-    //    specs.add("eth_call_from_contract");
-    //
-    //    specs.add("eth_estimateGas_transfer");
-    //    specs.add("eth_estimateGas_noParams");
-    //    specs.add("eth_estimateGas_contractDeploy");
-    //    specs.add("eth_estimateGas_from_contract");
-    //
-    //    specs.add("eth_gasPrice");
-    //
-    //    specs.add("eth_getBalance_0x19");
-    //    specs.add("eth_getBalance_invalidAccountBlockNumber");
-    //    specs.add("eth_getBalance_invalidAccountLatest");
-    //    specs.add("eth_getBalance_latest");
-    //    specs.add("eth_getBalance_toobig_bn");
-    //    specs.add("eth_getBalance_without_addr");
-    //
-    //    specs.add("eth_getBlock_byHash");
-    //    specs.add("eth_getBlock_byHash_InvalidHexBytes32Hash");
-    //    specs.add("eth_getBlock_byHashInvalid");
-    //    specs.add("eth_getBlock_byNumber");
-    //    specs.add("eth_getBlock_byNumberInvalid");
-    //    specs.add("eth_getBlock_wrongParams");
-    //
-    //    specs.add("eth_getBlockTransactionCount_byHash");
-    //    specs.add("eth_getBlockTransactionCount_byNumber");
-    //
-    //    specs.add("eth_getCode");
-    //    specs.add("eth_getCode_noCode");
-    //
-    //    specs.add("eth_getLogs_emptyListParam");
-    //    specs.add("eth_getLogs_matchTopic");
-    //    specs.add("eth_getLogs_matchAnyTopic");
-    //    specs.add("eth_getLogs_range");
-    //
-    //    specs.add("eth_getStorageAt");
-    //    specs.add("eth_getStorageAt_illegalRangeGreaterThan");
-    //
-    //    specs.add("eth_getTransaction_byBlockHashAndIndex");
-    //    specs.add("eth_getTransaction_byBlockNumberAndIndex");
-    //    specs.add("eth_getTransaction_byBlockNumberAndInvalidIndex");
-    //    specs.add("eth_getTransaction_byHash");
-    //    specs.add("eth_getTransaction_byHashNull");
-    //
-    //    specs.add("eth_getTransactionCount");
-    //
-    //    specs.add("eth_getTransactionReceipt");
-    //
-    //    specs.add("eth_sendRawTransaction_contractCreation");
-    //    specs.add("eth_sendRawTransaction_messageCall");
-    //    specs.add("eth_sendRawTransaction_nonceTooLow");
-    //    specs.add("eth_sendRawTransaction_transferEther");
-    //    specs.add("eth_sendRawTransaction_unsignedTransaction");
-    //
-    //    specs.add("eth_syncing");
-    //
-    //    specs.add("graphql_blocks_byFrom");
-    //    specs.add("graphql_blocks_byRange");
-    //    specs.add("graphql_blocks_byWrongRange");
-    //
-    //    specs.add("graphql_pending");
-    //
-    //    specs.add("graphql_tooComplex");
-    //    specs.add("graphql_tooComplexSchema");
-    //
-    //    specs.add("graphql_variable_address");
-    //    specs.add("graphql_variable_bytes");
-    //    specs.add("graphql_variable_bytes32");
+    specs.add("eth_blockNumber");
+
+    specs.add("eth_call_Block8");
+    specs.add("eth_call_Block8_invalidHexBytesData");
+    specs.add("eth_call_BlockLatest");
+    specs.add("eth_call_from_contract");
+
+    specs.add("eth_estimateGas_transfer");
+    specs.add("eth_estimateGas_noParams");
+    specs.add("eth_estimateGas_contractDeploy");
+    specs.add("eth_estimateGas_from_contract");
+
+    specs.add("eth_gasPrice");
+
+    specs.add("eth_getBalance_0x19");
+    specs.add("eth_getBalance_invalidAccountBlockNumber");
+    specs.add("eth_getBalance_invalidAccountLatest");
+    specs.add("eth_getBalance_latest");
+    specs.add("eth_getBalance_toobig_bn");
+    specs.add("eth_getBalance_without_addr");
+
+    specs.add("eth_getBlock_byHash");
+    specs.add("eth_getBlock_byHash_InvalidHexBytes32Hash");
+    specs.add("eth_getBlock_byHashInvalid");
+    specs.add("eth_getBlock_byNumber");
+    specs.add("eth_getBlock_byNumberInvalid");
+    specs.add("eth_getBlock_wrongParams");
+
+    specs.add("eth_getBlockTransactionCount_byHash");
+    specs.add("eth_getBlockTransactionCount_byNumber");
+
+    specs.add("eth_getCode");
+    specs.add("eth_getCode_noCode");
+
+    specs.add("eth_getLogs_emptyListParam");
+    specs.add("eth_getLogs_matchTopic");
+    specs.add("eth_getLogs_matchAnyTopic");
+    specs.add("eth_getLogs_range");
+
+    specs.add("eth_getStorageAt");
+    specs.add("eth_getStorageAt_illegalRangeGreaterThan");
+
+    specs.add("eth_getTransaction_byBlockHashAndIndex");
+    specs.add("eth_getTransaction_byBlockNumberAndIndex");
+    specs.add("eth_getTransaction_byBlockNumberAndInvalidIndex");
+    specs.add("eth_getTransaction_byHash");
+    specs.add("eth_getTransaction_byHashNull");
+
+    specs.add("eth_getTransactionCount");
+
+    specs.add("eth_getTransactionReceipt");
+
+    specs.add("eth_sendRawTransaction_contractCreation");
+    specs.add("eth_sendRawTransaction_messageCall");
+    specs.add("eth_sendRawTransaction_nonceTooLow");
+    specs.add("eth_sendRawTransaction_transferEther");
+    specs.add("eth_sendRawTransaction_unsignedTransaction");
+
+    specs.add("eth_syncing");
+
+    specs.add("graphql_blocks_byFrom");
+    specs.add("graphql_blocks_byRange");
+    specs.add("graphql_blocks_byWrongRange");
+
+    specs.add("graphql_pending");
+
+    specs.add("graphql_tooComplex");
+    specs.add("graphql_tooComplexSchema");
+
+    specs.add("graphql_variable_address");
+    specs.add("graphql_variable_bytes");
+    specs.add("graphql_variable_bytes32");
     specs.add("graphql_variable_long");
 
     return specs;
