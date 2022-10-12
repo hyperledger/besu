@@ -14,7 +14,8 @@
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
-- 
+- Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
+
 ### Download Links
 
 
