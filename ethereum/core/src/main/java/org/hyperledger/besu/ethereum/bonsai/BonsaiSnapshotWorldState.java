@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -26,9 +27,8 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
  * creation and/or point-in-time queries since the snapshot worldstate is fully isolated from the
  * main BonsaiPersistedWorldState.
  */
-public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
+public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
     implements SnapshotMutableWorldState {
-  //  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldState.class);
 
   private final SnappedKeyValueStorage accountSnap;
   private final SnappedKeyValueStorage codeSnap;
@@ -59,6 +59,17 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
   }
 
   @Override
+  public void persist(final BlockHeader blockHeader) {
+    super.persist(blockHeader);
+    // persist roothash to snapshot tx
+    trieBranchSnap
+        .getSnapshotTransaction()
+        .put(
+            BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY,
+            worldStateRootHash.toArrayUnsafe());
+  }
+
+  @Override
   public MutableWorldState copy() {
     // return a clone-based copy of worldstate storage
     return new BonsaiSnapshotWorldState(
@@ -73,7 +84,9 @@ public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
 
   @Override
   public void close() throws Exception {
-    // TODO: consider releasing snapshot or marking for release
-    // no-op.
+    accountSnap.close();
+    codeSnap.close();
+    storageSnap.close();
+    trieBranchSnap.close();
   }
 }

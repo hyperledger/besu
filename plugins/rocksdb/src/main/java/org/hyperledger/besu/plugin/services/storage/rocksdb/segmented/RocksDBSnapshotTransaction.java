@@ -138,14 +138,15 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   public RocksDBSnapshotTransaction copy() {
     // TODO: if we use snapshot as the basis of a cloned state, we need to ensure close() of this
-    // Transaction
-    // does not release and close the snapshot in use by the cloned state.
+    // transaction does not release and close the snapshot in use by the cloned state.
     return new RocksDBSnapshotTransaction(db, columnFamilyHandle, metrics, snapshot);
   }
 
   @Override
   public void close() {
+    // TODO: this is unsafe since another transaction might be using this snapshot
     db.releaseSnapshot(snapshot);
+
     snapshot.close();
     snapTx.close();
     writeOptions.close();

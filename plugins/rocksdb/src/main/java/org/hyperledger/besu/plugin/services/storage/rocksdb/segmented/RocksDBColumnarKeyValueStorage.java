@@ -256,7 +256,7 @@ public class RocksDBColumnarKeyValueStorage
     columnHandlesByName.values().stream()
         .filter(e -> e.equals(segmentHandle))
         .findAny()
-        .ifPresent(segmentIdentifier -> segmentIdentifier.reset());
+        .ifPresent(RocksDbSegmentIdentifier::reset);
   }
 
   @Override

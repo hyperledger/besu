@@ -186,13 +186,11 @@ public class BonsaiSnapshotIsolationTests {
 
     // create a snapshot worldstate, and then clone it:
     var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash()).get();
-    var isolatedClone =
-        archive.getMutableSnapshot(genesisState.getBlock().getHash()).get(); // isolated.copy();
+    var isolatedClone = isolated.copy();
 
     // execute a block with a single transaction on the first snapshot:
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(isolated, firstBlock);
-    isolated.persist(firstBlock.getHeader());
 
     assertThat(res.isSuccessful()).isTrue();
     Runnable checkIsolatedState =
@@ -211,9 +209,11 @@ public class BonsaiSnapshotIsolationTests {
         .isEqualTo(genesisState.getBlock().getHeader().getStateRoot());
 
     // assert clone isolated block execution
-    var cloneForkBlock = forTransactions(List.of(burnTransaction(sender1, 0L, altTestAddress)));
+    var cloneForkBlock =
+        forTransactions(
+            List.of(burnTransaction(sender1, 0L, altTestAddress)),
+            genesisState.getBlock().getHeader());
     var altRes = executeBlock(isolatedClone, cloneForkBlock);
-    isolatedClone.persist(cloneForkBlock.getHeader());
 
     assertThat(altRes.isSuccessful()).isTrue();
     assertThat(isolatedClone.rootHash()).isEqualTo(cloneForkBlock.getHeader().getStateRoot());
@@ -331,8 +331,11 @@ public class BonsaiSnapshotIsolationTests {
   }
 
   private Block forTransactions(final List<Transaction> transactions) {
-    return TestBlockCreator.forHeader(
-            blockchain.getChainHeadHeader(), protocolContext, protocolSchedule, sorter)
+    return forTransactions(transactions, blockchain.getChainHeadHeader());
+  }
+
+  private Block forTransactions(final List<Transaction> transactions, final BlockHeader forHeader) {
+    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, sorter)
         .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis());
   }
 
