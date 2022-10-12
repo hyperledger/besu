@@ -19,7 +19,7 @@ import static java.util.Collections.singletonList;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
+import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeBase;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
@@ -37,7 +37,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class DatabaseMigrationAcceptanceTest
-    extends org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest {
+    extends AbstractPreexistingNodeBase {
   private final long expectedChainHeight;
   private BesuNode node;
   private final List<AccountData> testAccounts;
@@ -88,7 +88,7 @@ public class DatabaseMigrationAcceptanceTest
             DatabaseMigrationAcceptanceTest.class
                 .getResource(String.format("%s/besu-db-archive.tar.gz", dataPath))
                 .toURI());
-    AbstractPreexistingNodeTest.extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
+    AbstractPreexistingNodeBase.extract(databaseArchive, hostDataPath.toAbsolutePath().toString());
     node = besu.createNode(testName, this::configureNode);
     cluster.start(node);
   }
