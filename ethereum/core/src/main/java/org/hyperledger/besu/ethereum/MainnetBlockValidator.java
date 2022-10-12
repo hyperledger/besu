@@ -151,7 +151,9 @@ public class MainnetBlockValidator implements BlockValidator {
     if (result.causedBy().isPresent()) {
       LOG.info("{}. Block {}, caused by {}", reason, invalidBlock.toLogString(), result.causedBy());
       // TODO: if it's an internal error, don't add it
-      badBlockManager.addBadBlock(invalidBlock);
+      if (!result.internalError()) {
+        badBlockManager.addBadBlock(invalidBlock);
+      }
       return new Result(reason, result.causedBy().get());
     } else {
       LOG.info("{}. Block {}", reason, invalidBlock.toLogString());

@@ -107,6 +107,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
           "Failed to decode transactions from block parameter");
     }
 
@@ -115,6 +116,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
           "Field extraData must not be null");
     }
 
@@ -141,11 +143,12 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     // ensure the block hash matches the blockParam hash
     // this must be done before any other check
     if (!newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
-      LOG.debug(
+      String errorMessage =
           String.format(
               "Computed block hash %s does not match block hash parameter %s",
-              newBlockHeader.getBlockHash(), blockParam.getBlockHash()));
-      return respondWith(reqId, blockParam, null, INVALID_BLOCK_HASH);
+              newBlockHeader.getBlockHash(), blockParam.getBlockHash());
+      LOG.debug(errorMessage);
+      return respondWithInvalid(reqId, blockParam, null, INVALID_BLOCK_HASH, errorMessage);
     }
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
@@ -153,13 +156,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
     if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
-      return respondWith(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator
               .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
               .orElse(Hash.ZERO),
-          INVALID);
+          INVALID,
+          "Block already present in bad block manager.");
     }
 
     Optional<BlockHeader> parentHeader =
@@ -170,6 +174,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
           "block timestamp not greater than parent");
     }
 
@@ -200,6 +205,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           Hash.ZERO,
+          INVALID,
           newBlockHeader.getHash() + " did not descend from terminal block");
     }
 
@@ -228,7 +234,11 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       }
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
       return respondWithInvalid(
-          reqId, blockParam, latestValidAncestor.get(), executionResult.errorMessage.get());
+          reqId,
+          blockParam,
+          latestValidAncestor.get(),
+          INVALID,
+          executionResult.errorMessage.get());
     }
   }
 
@@ -237,6 +247,10 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       final EnginePayloadParameter param,
       final Hash latestValidHash,
       final EngineStatus status) {
+    if (INVALID.equals(status) || INVALID_BLOCK_HASH.equals(status)) {
+      throw new IllegalArgumentException(
+          "Don't call respondWith() with invalid status of " + status.toString());
+    }
     debugLambda(
         LOG,
         "New payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}",
@@ -256,7 +270,12 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       final Object requestId,
       final EnginePayloadParameter param,
       final Hash latestValidHash,
+      final EngineStatus invalidStatus,
       final String validationError) {
+    if (!INVALID.equals(invalidStatus) && !INVALID_BLOCK_HASH.equals(invalidStatus)) {
+      throw new IllegalArgumentException(
+          "Don't call respondWithInvalid() with non-invalid status of " + invalidStatus.toString());
+    }
     final String invalidBlockLogMessage =
         String.format(
             "Invalid new payload: number: %s, hash: %s, parentHash: %s, latestValidHash: %s, status: %s, validationError: %s",
@@ -264,7 +283,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             param.getBlockHash(),
             param.getParentHash(),
             latestValidHash == null ? null : latestValidHash.toHexString(),
-            INVALID.name(),
+            invalidStatus.name(),
             validationError);
     // always log invalid at DEBUG
     LOG.debug(invalidBlockLogMessage);
@@ -275,7 +294,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
     return new JsonRpcSuccessResponse(
         requestId,
-        new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
+        new EnginePayloadStatusResult(
+            invalidStatus, latestValidHash, Optional.of(validationError)));
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {
