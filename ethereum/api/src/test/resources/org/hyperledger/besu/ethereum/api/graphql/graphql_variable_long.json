@@ -1,0 +1,12 @@
+{
+  "variables": "{ \"address\": \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", \"blockNumber\": \"0x1e\"}",
+  "request": "query getAddressBalanceAtBlock($address :Address!, $blockNumber: Long) { account(address:$address, blockNumber: $blockNumber) { balance} }",
+  "response": {
+    "data": {
+        "account": {
+          "balance": "0x12c"
+        }
+    }
+  },
+  "statusCode": 200
+}
