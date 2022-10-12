@@ -42,11 +42,8 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TransactionDecoder {
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionDecoder.class);
 
   @FunctionalInterface
   interface Decoder {
