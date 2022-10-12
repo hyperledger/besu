@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -264,6 +265,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     while (!isBlockCreationCancelled(payloadIdentifier)) {
       try {
         recoverableBlockCreation(payloadIdentifier, blockCreator, System.currentTimeMillis());
+      } catch (final CancellationException ce) {
+        debugLambda(
+            LOG,
+            "Block creation for payload id {} has been cancelled, reason {}",
+            payloadIdentifier::toString,
+            () -> logException(ce));
+        return null;
       } catch (final Throwable e) {
         LOG.warn(
             "Something went wrong creating block for payload id {}, error {}",
@@ -307,12 +315,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
       mergeContext.putPayloadById(payloadIdentifier, bestBlock);
-      LOG.info(
+      debugLambda(
+          LOG,
           "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
-          bestBlock.toLogString(),
-          payloadIdentifier.toHexString(),
-          bestBlock.getBody().getTransactions().size(),
-          System.currentTimeMillis() - startedAt);
+          bestBlock::toLogString,
+          payloadIdentifier::toString,
+          bestBlock.getBody().getTransactions()::size,
+          () -> System.currentTimeMillis() - startedAt);
     } else {
       LOG.warn(
           "Block {} built for proposal identified by {}, is not valid reason {}",
