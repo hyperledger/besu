@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
@@ -176,6 +175,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
+    final String warningMessage = "Sync to block " + block.toLogString() + " failed";
 
     if (mergeContext.get().isSyncing() || parentHeader.isEmpty()) {
       LOG.debug(
@@ -187,8 +187,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           .appendNewPayloadToSync(block)
           .exceptionally(
               exception -> {
-                LOG.warn(
-                    "Sync to block " + block.toLogString() + " failed", exception.getMessage());
+                LOG.warn(warningMessage, exception.getMessage());
                 return null;
               });
       return respondWith(reqId, blockParam, null, SYNCING);
@@ -251,24 +250,28 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   }
 
   // engine api calls are synchronous, no need for volatile
-  private long lastInvalidWarn = System.currentTimeMillis();
+  private long lastInvalidWarn = 0;
 
   JsonRpcResponse respondWithInvalid(
       final Object requestId,
       final EnginePayloadParameter param,
       final Hash latestValidHash,
       final String validationError) {
+    final String invalidBlockLogMessage =
+        String.format(
+            "Invalid new payload: number: %s, hash: %s, parentHash: %s, latestValidHash: %s, status: %s, validationError: %s",
+            param.getBlockNumber(),
+            param.getBlockHash(),
+            param.getParentHash(),
+            latestValidHash == null ? null : latestValidHash.toHexString(),
+            INVALID.name(),
+            validationError);
+    // always log invalid at DEBUG
+    LOG.debug(invalidBlockLogMessage);
+    // periodically log at WARN
     if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastInvalidWarn = System.currentTimeMillis();
-      warnLambda(
-          LOG,
-          "Invalid new payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}, validationError: {}",
-          () -> param.getBlockNumber(),
-          () -> param.getBlockHash(),
-          () -> param.getParentHash(),
-          () -> latestValidHash == null ? null : latestValidHash.toHexString(),
-          INVALID::name,
-          () -> validationError);
+      LOG.warn(invalidBlockLogMessage);
     }
     return new JsonRpcSuccessResponse(
         requestId,

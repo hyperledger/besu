@@ -90,8 +90,9 @@ public class LogsSubscriptionServiceTest {
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
 
     final int txIndex = 1;
-    final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
+    final int logIndexInTransaction = 1;
+    final int logIndexInBlock = 3; // third log in the block
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndexInTransaction);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -104,7 +105,8 @@ public class LogsSubscriptionServiceTest {
 
     assertThat(logResults).hasSize(1);
     final LogResult result = logResults.get(0);
-    assertLogResultMatches(result, block, receipts, txIndex, logIndex, false);
+    assertLogResultMatches(
+        result, block, receipts, txIndex, logIndexInTransaction, logIndexInBlock, false);
   }
 
   @Test
@@ -115,8 +117,8 @@ public class LogsSubscriptionServiceTest {
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
 
     final int txIndex = 1;
-    final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
+    final int logListIndex = 1;
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logListIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -138,9 +140,11 @@ public class LogsSubscriptionServiceTest {
 
     assertThat(logResults).hasSize(2);
     final LogResult firstLog = logResults.get(0);
-    assertLogResultMatches(firstLog, block, receipts, txIndex, logIndex, false);
+    // third log in the block
+    assertLogResultMatches(firstLog, block, receipts, txIndex, logListIndex, 3, false);
     final LogResult secondLog = logResults.get(1);
-    assertLogResultMatches(secondLog, block, receipts, txIndex, logIndex, true);
+    // third log in the block, but was removed
+    assertLogResultMatches(secondLog, block, receipts, txIndex, logListIndex, 3, true);
   }
 
   @Test
@@ -151,8 +155,8 @@ public class LogsSubscriptionServiceTest {
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
 
     final int txIndex = 1;
-    final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
+    final int logListIndex = 1;
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logListIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -181,12 +185,12 @@ public class LogsSubscriptionServiceTest {
 
     assertThat(logResults).hasSize(3);
     final LogResult originalLog = logResults.get(0);
-    assertLogResultMatches(originalLog, block, receipts, txIndex, logIndex, false);
+    assertLogResultMatches(originalLog, block, receipts, txIndex, logListIndex, 3, false);
     final LogResult removedLog = logResults.get(1);
-    assertLogResultMatches(removedLog, block, receipts, txIndex, logIndex, true);
+    assertLogResultMatches(removedLog, block, receipts, txIndex, logListIndex, 3, true);
     final LogResult updatedLog = logResults.get(2);
     assertLogResultMatches(
-        updatedLog, newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), 0, 0, false);
+        updatedLog, newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), 0, 0, 0, false);
   }
 
   @Test
@@ -218,6 +222,9 @@ public class LogsSubscriptionServiceTest {
 
     // Verify all logs are emitted
     assertThat(logResults).hasSize(targetBlocks.size() * txCount);
+
+    final List<Integer> expectedLogIndex = Arrays.asList(0, 2);
+
     for (int i = 0; i < targetBlocks.size(); i++) {
       final BlockWithReceipts targetBlock = targetBlocks.get(i);
       for (int j = 0; j < txCount; j++) {
@@ -228,6 +235,7 @@ public class LogsSubscriptionServiceTest {
             targetBlock.getReceipts(),
             j,
             0,
+            expectedLogIndex.get(j),
             false);
       }
     }
@@ -259,7 +267,7 @@ public class LogsSubscriptionServiceTest {
 
       assertThat(logResults).hasSize(1);
       final LogResult result = logResults.get(0);
-      assertLogResultMatches(result, block, receipts, txIndex, logIndex, false);
+      assertLogResultMatches(result, block, receipts, txIndex, logIndex, 3, false);
     }
   }
 
@@ -332,10 +340,11 @@ public class LogsSubscriptionServiceTest {
       final Block block,
       final List<TransactionReceipt> receipts,
       final int txIndex,
+      final int logListIndex,
       final int logIndex,
       final boolean isRemoved) {
     final Transaction expectedTransaction = block.getBody().getTransactions().get(txIndex);
-    final Log expectedLog = receipts.get(txIndex).getLogsList().get(logIndex);
+    final Log expectedLog = receipts.get(txIndex).getLogsList().get(logListIndex);
 
     assertThat(result.getLogIndex()).isEqualTo(Quantity.create(logIndex));
     assertThat(result.getTransactionIndex()).isEqualTo(Quantity.create(txIndex));
