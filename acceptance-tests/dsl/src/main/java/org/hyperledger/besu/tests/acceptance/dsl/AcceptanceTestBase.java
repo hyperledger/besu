@@ -47,6 +47,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningT
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -62,10 +63,12 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+@RunWith(ShardedTestRunner.class)
 public class AcceptanceTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBase.class);

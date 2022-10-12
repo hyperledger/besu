@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
+import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeBase;
 import org.hyperledger.besu.tests.acceptance.database.DatabaseMigrationAcceptanceTest;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
@@ -47,7 +47,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
+public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeBase {
 
   private final Path backupPath;
   private final Path restorePath;
