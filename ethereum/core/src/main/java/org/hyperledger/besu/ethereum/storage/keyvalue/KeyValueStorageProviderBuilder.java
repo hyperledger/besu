@@ -30,6 +30,7 @@ public class KeyValueStorageProviderBuilder {
   private BesuConfiguration commonConfiguration;
   private MetricsSystem metricsSystem;
   private boolean isGoQuorumCompatibilityMode;
+  private boolean isLightNodeEnabled;
 
   public KeyValueStorageProviderBuilder withStorageFactory(
       final KeyValueStorageFactory storageFactory) {
@@ -51,6 +52,11 @@ public class KeyValueStorageProviderBuilder {
   public KeyValueStorageProviderBuilder isGoQuorumCompatibilityMode(
       final boolean isGoQuorumCompatibilityMode) {
     this.isGoQuorumCompatibilityMode = isGoQuorumCompatibilityMode;
+    return this;
+  }
+
+  public KeyValueStorageProviderBuilder isLightNodeEnabled(final boolean isLightNodeEnabled) {
+    this.isLightNodeEnabled = isLightNodeEnabled;
     return this;
   }
 
@@ -79,7 +85,8 @@ public class KeyValueStorageProviderBuilder {
       return new KeyValueStorageProvider(
           segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
           worldStatePreImageStorage,
-          storageFactory.isSegmentIsolationSupported());
+          storageFactory.isSegmentIsolationSupported(),
+          isLightNodeEnabled);
     }
   }
 }

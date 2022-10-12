@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.cli.options.stable;
 
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_LIGHT_MODE_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
@@ -34,7 +33,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
       "--bonsai-maximum-back-layers-to-load";
-  private static final String BONSAI_LIGHT_MODE_ENABLED = "--bonsai-light-mode-enabled";
 
   // Use Bonsai DB
   @Option(
@@ -52,15 +50,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private final Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
-  @Option(
-      names = {BONSAI_LIGHT_MODE_ENABLED},
-      paramLabel = "<BOOLEAN>",
-      hidden = true,
-      description =
-          "Enable Bonsai light mode with reduced storage. Requires pairing with full sync node (default: ${DEFAULT-VALUE}).",
-      arity = "1")
-  private final Boolean bonsaiLightModeEnabled = DEFAULT_BONSAI_LIGHT_MODE_ENABLED;
-
   public static DataStorageOptions create() {
     return new DataStorageOptions();
   }
@@ -70,7 +59,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
-        .isBonsaiLightModeEnabled(bonsaiLightModeEnabled)
         .build();
   }
 
@@ -80,7 +68,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         DATA_STORAGE_FORMAT,
         dataStorageFormat.toString(),
         BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
-        BONSAI_LIGHT_MODE_ENABLED,
         bonsaiMaxLayersToLoad.toString());
   }
 }

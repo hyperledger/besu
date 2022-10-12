@@ -60,6 +60,7 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
+import org.hyperledger.besu.cli.options.unstable.LightNodeOptions;
 import org.hyperledger.besu.cli.options.unstable.MergeOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
@@ -1294,8 +1295,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Path staticNodesFile = null;
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
-
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
+  @Mixin private LightNodeOptions lightNodeOptions;
 
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
@@ -2139,7 +2140,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
-        .maxPeers(p2PDiscoveryOptionGroup.maxPeers);
+        .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
+        .lightNodeOptions(lightNodeOptions);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2769,6 +2771,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
+              .isLightNodeEnabled(lightNodeOptions.getLightNodeEnabled())
               .isGoQuorumCompatibilityMode(isGoQuorumCompatibilityMode.booleanValue())
               .build();
     }

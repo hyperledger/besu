@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.cli.options.unstable.LightNodeOptions;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -141,6 +142,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  protected LightNodeOptions lightNodeOptions;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -269,6 +271,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder lightNodeOptions(final LightNodeOptions lightNodeOptions) {
+    this.lightNodeOptions = lightNodeOptions;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -289,7 +296,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
     final WorldStateStorage worldStateStorage =
-        storageProvider.createWorldStateStorage(dataStorageConfiguration);
+        storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule);
@@ -638,7 +645,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(dataStorageConfiguration));
+            new BonsaiWorldStateKeyValueStorageFactory(lightNodeOptions.getLightNodeEnabled()));
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

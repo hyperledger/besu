@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKey
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -36,12 +36,14 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
+  // TODO JF Do we need light node mode for this?
   public InMemoryKeyValueStorageProvider() {
     super(
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        true);
+        true,
+        false);
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -73,13 +75,13 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
             blockchain, new BonsaiWorldStateKeyValueStorage(inMemoryKeyValueStorageProvider)),
         inMemoryKeyValueStorageProvider,
         blockchain,
-        new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+        new BonsaiWorldStateKeyValueStorageFactory(false));
   }
 
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG),
+        provider.createWorldStateStorage(DataStorageFormat.BONSAI),
         provider.createWorldStatePreimageStorage());
   }
 

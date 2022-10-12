@@ -28,7 +28,7 @@ public class GoQuorumKeyValueStorageProvider extends KeyValueStorageProvider {
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final boolean segmentIsolationSupported) {
-    super(storageCreator, worldStatePreimageStorage, segmentIsolationSupported);
+    super(storageCreator, worldStatePreimageStorage, segmentIsolationSupported, false);
   }
 
   public GoQuorumKeyValueStorageProvider(
@@ -40,7 +40,8 @@ public class GoQuorumKeyValueStorageProvider extends KeyValueStorageProvider {
         storageCreator,
         worldStatePreimageStorage,
         privateWorldStatePreimageStorage,
-        segmentIsolationSupported);
+        segmentIsolationSupported,
+        false);
   }
 
   @Override

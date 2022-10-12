@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -115,7 +114,7 @@ public class LogRollingTests {
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(provider)),
             provider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+            new BonsaiWorldStateKeyValueStorageFactory(false));
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -139,7 +138,7 @@ public class LogRollingTests {
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(secondProvider)),
             secondProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+            new BonsaiWorldStateKeyValueStorageFactory(false));
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(

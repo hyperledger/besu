@@ -15,19 +15,17 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 
 public class BonsaiWorldStateKeyValueStorageFactory {
 
-  private final DataStorageConfiguration dataStorageConfiguration;
+  private final boolean isLightNode;
 
-  public BonsaiWorldStateKeyValueStorageFactory(
-      final DataStorageConfiguration dataStorageConfiguration) {
-    this.dataStorageConfiguration = dataStorageConfiguration;
+  public BonsaiWorldStateKeyValueStorageFactory(final boolean isLightNode) {
+    this.isLightNode = isLightNode;
   }
 
   public BonsaiWorldStateKeyValueStorage create(final StorageProvider storageProvider) {
-    return dataStorageConfiguration.isBonsaiLightModeEnabled()
+    return isLightNode
         ? new BonsaiLightWorldStateKeyValueStorage(storageProvider)
         : new BonsaiWorldStateKeyValueStorage(storageProvider);
   }
