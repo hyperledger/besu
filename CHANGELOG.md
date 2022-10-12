@@ -7,7 +7,7 @@
   * For the EC encryptor, the encoded public key length is 91
 
 ### Additions and Improvements
-- Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake.
+- Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake, by trying to decrypt EIP-8 formatted messages first.
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
