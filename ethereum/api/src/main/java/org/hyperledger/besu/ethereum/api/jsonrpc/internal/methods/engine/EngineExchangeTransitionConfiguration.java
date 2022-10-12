@@ -30,9 +30,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +47,8 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   static final Difficulty FALLBACK_TTD_DEFAULT =
       Difficulty.fromHexString(
           "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc00");
+
+  private static final Supplier<ObjectMapper> mapperSupplier = Suppliers.memoize(ObjectMapper::new);
 
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx,
@@ -69,7 +74,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     traceLambda(
         LOG,
         "received transitionConfiguration: {}",
-        () -> Json.encodePrettily(remoteTransitionConfiguration));
+        () -> {
+          try {
+            return mapperSupplier.get().writeValueAsString(remoteTransitionConfiguration);
+          } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+          }
+        });
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader =
         mergeContextOptional.flatMap(MergeContext::getTerminalPoWBlock);

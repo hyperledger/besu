@@ -5,13 +5,20 @@
 - Flexible Privacy Groups (early access) support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
   * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
   * For the EC encryptor, the encoded public key length is 91
+- `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3)
+- `--Xmerge-support` option remove (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
 
 ### Additions and Improvements
-- Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake, by trying to decrypt EIP-8 formatted messages first.
+- Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake, by trying to decrypt EIP-8 formatted messages first [#4508](https://github.com/hyperledger/besu/pull/4508).
+- Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
+- Increased level of detail in JSON-RPC parameter error log messages [#4510](https://github.com/hyperledger/besu/pull/4510)
+
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
-- 
+- Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
+- Avoid a cyclic reference while printing EngineExchangeTransitionConfigurationParameter [#4357](https://github.com/hyperledger/besu/pull/4357)
+
 ### Download Links
 
 
@@ -20,9 +27,7 @@
 ### Additions and Improvements
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
 - Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
-- Optimize pivot block selector on PoS networks [#4488](https://github.com/hyperledger/besu/pull/4488)
 - Improve UX of initial sync logs, pushing not relevant logs to debug level [#4486](https://github.com/hyperledger/besu/pull/4486)
-- Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
 - Optimize pivot block selector on PoS networks [#4488](https://github.com/hyperledger/besu/pull/4488)
 - Optimize Snap sync on PoS networks [#4462](https://github.com/hyperledger/besu/pull/4462)
 
