@@ -36,6 +36,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
+  implementation 'com.google.guava:guava'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 

@@ -3,7 +3,7 @@
   "response": {
     "errors": [
       {
-        "message": "Validation error of type MissingFieldArgument: Missing field argument address @ 'pending/account'",
+        "message": "Validation error (MissingFieldArgument@[pending/account]) : Missing field argument 'address'",
         "locations": [
           {
             "line": 1,

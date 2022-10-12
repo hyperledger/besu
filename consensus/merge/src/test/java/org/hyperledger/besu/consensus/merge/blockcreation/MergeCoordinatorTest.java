@@ -41,6 +41,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
+import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -68,6 +71,7 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -80,6 +84,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
@@ -87,6 +93,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinatorTest.class);
   private static final SECPPrivateKey PRIVATE_KEY1 =
       SIGNATURE_ALGORITHM
           .get()
@@ -348,6 +355,55 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext).setFinalized(firstFinalizedHeader);
     verify(blockchain).setSafeBlock(firstFinalizedBlock.getHash());
     verify(mergeContext).setSafeBlock(firstFinalizedHeader);
+  }
+
+  @Test
+  public void reorgAroundLogBloomCacheUpdate() {
+    // generate 5 blocks, remember them in order, all need to be parented correctly.
+    BlockHeader prevParent = genesisState.getBlock().getHeader();
+
+    AtomicReference<BlockAddedEvent> lastBlockAddedEvent = new AtomicReference<>();
+    blockchain.observeBlockAdded(
+        new BlockAddedObserver() {
+          @Override
+          public void onBlockAdded(final BlockAddedEvent event) {
+            LOG.info(event.toString());
+            lastBlockAddedEvent.set(event);
+          }
+        });
+    for (int i = 0; i <= 5; i++) {
+      BlockHeader nextBlock =
+          nextBlockHeader(
+              prevParent, genesisState.getBlock().getHeader().getTimestamp() + i * 1000);
+      coordinator.rememberBlock(new Block(nextBlock, BlockBody.empty()));
+      prevParent = nextBlock;
+    }
+
+    coordinator.updateForkChoice(
+        prevParent,
+        genesisState.getBlock().getHash(),
+        genesisState.getBlock().getHash(),
+        Optional.empty());
+    Hash expectedCommonAncestor = blockchain.getBlockHeader(2).get().getBlockHash();
+
+    // generate from 3' down to some other head. Remeber those.
+    BlockHeader forkPoint = blockchain.getBlockHeader(2).get();
+    prevParent = forkPoint;
+    for (int i = 3; i <= 5; i++) {
+      BlockHeader nextPrime =
+          nextBlockHeader(
+              prevParent, genesisState.getBlock().getHeader().getTimestamp() + i * 1001);
+      coordinator.rememberBlock(new Block(nextPrime, BlockBody.empty()));
+      prevParent = nextPrime;
+    }
+    coordinator.updateForkChoice(
+        prevParent,
+        genesisState.getBlock().getHash(),
+        genesisState.getBlock().getHash(),
+        Optional.empty());
+    assertThat(lastBlockAddedEvent.get().getCommonAncestorHash()).isEqualTo(expectedCommonAncestor);
+    assertThat(lastBlockAddedEvent.get().getEventType()).isEqualTo(EventType.CHAIN_REORG);
+    assertThat(lastBlockAddedEvent.get().getBlock().getHash()).isEqualTo(prevParent.getBlockHash());
   }
 
   @Test
@@ -649,6 +705,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   private BlockHeader nextBlockHeader(
       final BlockHeader parentHeader, final long... optionalTimestamp) {
+
     return headerGenerator
         .difficulty(Difficulty.ZERO)
         .parentHash(parentHeader.getHash())
