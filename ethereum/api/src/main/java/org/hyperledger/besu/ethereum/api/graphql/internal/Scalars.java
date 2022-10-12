@@ -44,14 +44,13 @@ public class Scalars {
               return null;
             }
           } else if (input instanceof StringValue) {
-            String inputValue = ((StringValue) input).getValue();
-            if (inputValue != null) {
-              return Address.fromHexStringStrict(inputValue);
-            } else {
+            return convertImpl(((StringValue) input).getValue());
+          } else if (input instanceof String) {
+            try {
+              return Address.fromHexStringStrict((String) input);
+            } catch (IllegalArgumentException iae) {
               return null;
             }
-          } else if (input instanceof String) {
-            return Address.fromHexStringStrict((String) input);
           } else {
             return null;
           }
@@ -94,11 +93,15 @@ public class Scalars {
 
         String convertImpl(final Object input) {
           if (input instanceof String) {
-            return (String) input;
+            try {
+              return Bytes.fromHexStringLenient((String) input).toShortHexString();
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
           } else if (input instanceof Bytes) {
             return ((Bytes) input).toShortHexString();
           } else if (input instanceof StringValue) {
-            return ((StringValue) input).getValue();
+            return convertImpl(((StringValue) input).getValue());
           } else if (input instanceof IntValue) {
             return UInt256.valueOf(((IntValue) input).getValue()).toShortHexString();
           } else {
@@ -151,7 +154,11 @@ public class Scalars {
               throw new CoercingParseLiteralException(
                   "Bytes value '" + input + "' is not prefixed with 0x");
             }
-            return Bytes.fromHexStringLenient((String) input);
+            try {
+              return Bytes.fromHexStringLenient((String) input);
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
           } else {
             return null;
           }
@@ -208,7 +215,11 @@ public class Scalars {
               throw new CoercingParseLiteralException(
                   "Bytes32 value '" + input + "' is not prefixed with 0x");
             } else {
-              return Bytes32.fromHexStringLenient((String) input);
+              try {
+                return Bytes32.fromHexStringLenient((String) input);
+              } catch (IllegalArgumentException iae) {
+                return null;
+              }
             }
           } else {
             return null;

@@ -1,11 +1,16 @@
 {
-  "variables": "{ \"address\": \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", \"blockNumber\": \"0x1e\"}",
-  "request": "query getAddressBalanceAtBlock($address :Address!, $blockNumber: Long) { account(address:$address, blockNumber: $blockNumber) { balance} }",
+  "variables": "{ \"block1\": \"0x1d\", \"block2\": \"0x1e\"}",
+  "request": "query getBlockRange($block1 :Long, $block2: Long) { blocks(from: $block1, to: $block2) { hash } }",
   "response": {
     "data": {
-        "account": {
-          "balance": "0x12c"
+      "blocks": [
+        {
+          "hash": "0xf8cfa377bd766cdf22edb388dd08cc149e85d24f2796678c835f3c54ab930803"
+        },
+        {
+          "hash": "0xc8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6"
         }
+      ]
     }
   },
   "statusCode": 200
