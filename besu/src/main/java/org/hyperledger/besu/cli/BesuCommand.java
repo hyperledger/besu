@@ -59,7 +59,6 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
-import org.hyperledger.besu.cli.options.unstable.MergeOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -282,7 +281,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
-  private final MergeOptions mergeOptions = MergeOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
@@ -1521,7 +1519,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Launcher", unstableLauncherOptions)
-            .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .build();
@@ -1761,6 +1758,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
               + "or specify mining is enabled (--miner-enabled)");
+    }
+    if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
+        || unstableMiningOptions.getPosBlockCreationMaxTime()
+            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
+      throw new ParameterException(
+          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
     }
   }
 
@@ -2096,6 +2099,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
                 .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
                 .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
+                .posBlockCreationMaxTime(unstableMiningOptions.getPosBlockCreationMaxTime())
                 .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
