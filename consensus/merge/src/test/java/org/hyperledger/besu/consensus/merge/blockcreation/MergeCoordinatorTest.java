@@ -72,6 +72,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -306,10 +307,52 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       assertThat(e).hasCauseInstanceOf(TimeoutException.class);
     }
 
+    verify(mergeContext, atLeast(retries.intValue())).putPayloadById(eq(payloadId), any());
+  }
+
+  @Test
+  public void shouldStopInProgressBlockCreationIfFinalizedIsCalled()
+      throws InterruptedException, ExecutionException {
+    final CountDownLatch waitForBlockCreationInProgress = new CountDownLatch(1);
+
+    doAnswer(
+            invocation ->
+                // this is called by the first empty block
+                doAnswer(
+                        i -> {
+                          waitForBlockCreationInProgress.countDown();
+                          // simulate a long running task
+                          try {
+                            Thread.sleep(1000);
+                          } catch (Exception e) {
+                            throw new RuntimeException(e);
+                          }
+                          return i.callRealMethod();
+                        })
+                    .when(blockchain)
+                    .getBlockHeader(any()))
+        .when(mergeContext)
+        .putPayloadById(any(), any());
+
+    var payloadId =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            System.currentTimeMillis() / 1000,
+            Bytes32.ZERO,
+            suggestedFeeRecipient);
+
+    waitForBlockCreationInProgress.await();
+    coordinator.finalizeProposalById(payloadId);
+
+    blockCreationTask.get();
+
+    // check that we only the empty block has been built
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(mergeContext, atLeast(retries.intValue()))
-        .putPayloadById(eq(payloadId), block.capture());
+    verify(mergeContext, times(1)).putPayloadById(eq(payloadId), block.capture());
+
+    assertThat(block.getAllValues().size()).isEqualTo(1);
+    assertThat(block.getAllValues().get(0).getBody().getTransactions()).hasSize(0);
   }
 
   @Test

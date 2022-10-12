@@ -46,8 +46,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,8 +76,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   protected final BackwardSyncContext backwardSyncContext;
   protected final ProtocolSchedule protocolSchedule;
 
-  private CompletableFuture<Void> lastBlockCreation = CompletableFuture.completedFuture(null);
-  private final AtomicBoolean blockCreationCancelled = new AtomicBoolean(false);
+  private final Map<PayloadIdentifier, BlockCreationJob> blockCreationJobs =
+      new ConcurrentHashMap<>();
 
   public MergeCoordinator(
       final ProtocolContext protocolContext,
@@ -187,6 +189,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
+    blockCreationJobs.put(payloadIdentifier, new BlockCreationJob(mergeBlockCreator));
+
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp);
@@ -214,8 +218,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     LOG.debug("Finalizing block proposal for payload id {}", payloadId);
-    blockCreationCancelled.set(true);
-    lastBlockCreation.cancel(true);
+    blockCreationJobs.computeIfPresent(
+        payloadId,
+        (pid, blockCreationJob) -> {
+          blockCreationJob.cancel();
+          return blockCreationJob;
+        });
   }
 
   private void tryToBuildBetterBlock(
@@ -233,28 +241,27 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         payloadIdentifier::toHexString,
         miningParameters::getPosBlockCreationMaxTime);
 
-    lastBlockCreation =
-        ethContext
-            .getScheduler()
-            .scheduleComputationTask(
-                () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
-            .orTimeout(miningParameters.getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
-            .exceptionally(
-                throwable -> {
-                  debugLambda(
-                      LOG,
-                      "Exception building block for payload id {}",
-                      payloadIdentifier::toHexString,
-                      () -> logException(throwable));
-                  return null;
-                });
+    ethContext
+        .getScheduler()
+        .scheduleComputationTask(
+            () -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
+        .orTimeout(miningParameters.getPosBlockCreationMaxTime(), TimeUnit.MILLISECONDS)
+        .exceptionally(
+            throwable -> {
+              debugLambda(
+                  LOG,
+                  "Exception building block for payload id {}",
+                  payloadIdentifier::toHexString,
+                  () -> logException(throwable));
+              return null;
+            })
+        .thenRun(() -> blockCreationJobs.remove(payloadIdentifier));
   }
 
   private Void retryBlockCreationUntilUseful(
       final PayloadIdentifier payloadIdentifier, final Supplier<Block> blockCreator) {
 
-    blockCreationCancelled.set(false);
-    while (!blockCreationCancelled.get()) {
+    while (!isBlockCreationCancelled(payloadIdentifier)) {
       try {
         recoverableBlockCreation(payloadIdentifier, blockCreator, System.currentTimeMillis());
       } catch (final Throwable e) {
@@ -276,7 +283,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     try {
       newBlockFound(blockCreator.get(), payloadIdentifier, startedAt);
     } catch (final Throwable throwable) {
-      if (canRetryBlockCreation(throwable)) {
+      if (canRetryBlockCreation(throwable) && !isBlockCreationCancelled(payloadIdentifier)) {
         debugLambda(
             LOG,
             "Retrying block creation for payload id {} after recoverable error {}",
@@ -291,8 +298,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private void newBlockFound(
       final Block bestBlock, final PayloadIdentifier payloadIdentifier, final long startedAt) {
+
+    if (isBlockCreationCancelled(payloadIdentifier)) return;
+
     final var resultBest = validateBlock(bestBlock);
     if (resultBest.blockProcessingOutputs.isPresent()) {
+
+      if (isBlockCreationCancelled(payloadIdentifier)) return;
+
       mergeContext.putPayloadById(payloadIdentifier, bestBlock);
       LOG.info(
           "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
@@ -357,7 +370,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public Result validateBlock(final Block block) {
-
     final var chain = protocolContext.getBlockchain();
     chain
         .getBlockHeader(block.getHeader().getParentHash())
@@ -744,5 +756,24 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     throwable.printStackTrace(pw);
     pw.flush();
     return sw.toString();
+  }
+
+  private boolean isBlockCreationCancelled(final PayloadIdentifier payloadId) {
+    return blockCreationJobs.get(payloadId).cancelled.get();
+  }
+
+  private static class BlockCreationJob {
+    final MergeBlockCreator blockCreator;
+    final AtomicBoolean cancelled;
+
+    public BlockCreationJob(final MergeBlockCreator blockCreator) {
+      this.blockCreator = blockCreator;
+      this.cancelled = new AtomicBoolean(false);
+    }
+
+    public void cancel() {
+      cancelled.set(true);
+      blockCreator.cancel();
+    }
   }
 }
