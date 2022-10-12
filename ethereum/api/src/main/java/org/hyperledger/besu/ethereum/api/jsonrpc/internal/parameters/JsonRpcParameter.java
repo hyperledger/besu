@@ -74,7 +74,11 @@ public class JsonRpcParameter {
         final String json = mapper.writeValueAsString(rawParam);
         param = mapper.readValue(json, paramClass);
       } catch (final JsonProcessingException e) {
-        throw new InvalidJsonRpcParameters("Invalid json rpc parameter at index " + index, e);
+        throw new InvalidJsonRpcParameters(
+            String.format(
+                "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
+                index, rawParam, rawParam.getClass().getName(), paramClass.getName()),
+            e);
       }
     }
 
