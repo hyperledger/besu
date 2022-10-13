@@ -16,14 +16,14 @@ package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.hyperledger.besu.testutil.ShardedTestRunner;
+import org.hyperledger.besu.testutil.ParameterizedShardedTestRunner;
 
 import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@RunWith(ShardedTestRunner.class)
+@RunWith(ParameterizedShardedTestRunner.class)
 public class BftMiningAcceptanceTest extends ParameterizedBftTestBase {
 
   public BftMiningAcceptanceTest(
