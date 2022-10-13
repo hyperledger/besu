@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import graphql.language.IntValue;
@@ -28,156 +27,239 @@ import graphql.schema.GraphQLScalarType;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt256Value;
 
 public class Scalars {
 
-  private static final Coercing<Object, Object> ADDRESS_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
+  private Scalars() {}
+
+  private static final Coercing<Address, String> ADDRESS_COERCING =
+      new Coercing<Address, String>() {
+        Address convertImpl(final Object input) {
           if (input instanceof Address) {
-            return input.toString();
+            return (Address) input;
+          } else if (input instanceof Bytes) {
+            if (((Bytes) input).size() <= 20) {
+              return Address.wrap((Bytes) input);
+            } else {
+              return null;
+            }
+          } else if (input instanceof StringValue) {
+            return convertImpl(((StringValue) input).getValue());
+          } else if (input instanceof String) {
+            try {
+              return Address.fromHexStringStrict((String) input);
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
+          } else {
+            return null;
           }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an Address");
         }
 
         @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Address) {
-            return input.toString();
+        public String serialize(final Object input) throws CoercingSerializeException {
+          Address result = convertImpl(input);
+          if (result != null) {
+            return result.toHexString();
+          } else {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an Address");
           }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an Address");
+        }
+
+        @Override
+        public Address parseValue(final Object input) throws CoercingParseValueException {
+          Address result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an Address");
+          }
         }
 
         @Override
         public Address parseLiteral(final Object input) throws CoercingParseLiteralException {
-          if (!(input instanceof StringValue)) {
-            throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
-          }
-          String inputValue = ((StringValue) input).getValue();
-          try {
-            return Address.fromHexStringStrict(inputValue);
-          } catch (final IllegalArgumentException e) {
+          Address result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
             throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
           }
         }
       };
 
-  private static final Coercing<Object, Object> BIG_INT_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof UInt256Value) {
-            return ((UInt256Value) input).toShortHexString();
-          }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an BigInt");
-        }
+  private static final Coercing<String, String> BIG_INT_COERCING =
+      new Coercing<String, String>() {
 
-        @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof UInt256Value) {
-            return ((UInt256Value) input).toShortHexString();
-          }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an BigInt");
-        }
-
-        @Override
-        public UInt256 parseLiteral(final Object input) throws CoercingParseLiteralException {
-          try {
-            if (input instanceof StringValue) {
-              return UInt256.fromHexString(((StringValue) input).getValue());
-            } else if (input instanceof IntValue) {
-              return UInt256.valueOf(((IntValue) input).getValue());
+        String convertImpl(final Object input) {
+          if (input instanceof String) {
+            try {
+              return Bytes.fromHexStringLenient((String) input).toShortHexString();
+            } catch (IllegalArgumentException iae) {
+              return null;
             }
-          } catch (final IllegalArgumentException e) {
-            // fall through
+          } else if (input instanceof Bytes) {
+            return ((Bytes) input).toShortHexString();
+          } else if (input instanceof StringValue) {
+            return convertImpl(((StringValue) input).getValue());
+          } else if (input instanceof IntValue) {
+            return UInt256.valueOf(((IntValue) input).getValue()).toShortHexString();
+          } else {
+            return null;
           }
-          throw new CoercingParseLiteralException("Value is not any BigInt : '" + input + "'");
         }
-      };
 
-  private static final Coercing<Object, Object> BYTES_COERCING =
-      new Coercing<Object, Object>() {
         @Override
         public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof Bytes) {
-            return input.toString();
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an BigInt");
           }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes");
         }
 
         @Override
         public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Bytes) {
-            return input.toString();
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an BigInt");
           }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an Bytes");
+        }
+
+        @Override
+        public String parseLiteral(final Object input) throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseLiteralException("Value is not any BigInt : '" + input + "'");
+          }
+        }
+      };
+
+  private static final Coercing<Bytes, String> BYTES_COERCING =
+      new Coercing<Bytes, String>() {
+
+        Bytes convertImpl(final Object input) {
+          if (input instanceof Bytes) {
+            return (Bytes) input;
+          } else if (input instanceof StringValue) {
+            return convertImpl(((StringValue) input).getValue());
+          } else if (input instanceof String) {
+            if (!Quantity.isValid((String) input)) {
+              throw new CoercingParseLiteralException(
+                  "Bytes value '" + input + "' is not prefixed with 0x");
+            }
+            try {
+              return Bytes.fromHexStringLenient((String) input);
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(final Object input) throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result.toHexString();
+          } else {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes");
+          }
+        }
+
+        @Override
+        public Bytes parseValue(final Object input) throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an Bytes");
+          }
         }
 
         @Override
         public Bytes parseLiteral(final Object input) throws CoercingParseLiteralException {
-          if (!(input instanceof StringValue)) {
-            throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
-          }
-          String inputValue = ((StringValue) input).getValue();
-          if (!Quantity.isValid(inputValue)) {
-            throw new CoercingParseLiteralException(
-                "Bytes value '" + inputValue + "' is not prefixed with 0x");
-          }
-          try {
-            return Bytes.fromHexStringLenient(inputValue);
-          } catch (final IllegalArgumentException e) {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
             throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
           }
         }
       };
 
-  private static final Coercing<Object, Object> BYTES32_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof Hash) {
-            return ((Hash) input).toString();
-          }
+  private static final Coercing<Bytes32, String> BYTES32_COERCING =
+      new Coercing<Bytes32, String>() {
+
+        Bytes32 convertImpl(final Object input) {
           if (input instanceof Bytes32) {
-            return input.toString();
+            return (Bytes32) input;
+          } else if (input instanceof Bytes) {
+            if (((Bytes) input).size() <= 32) {
+              return Bytes32.leftPad((Bytes) input);
+            } else {
+              return null;
+            }
+          } else if (input instanceof StringValue) {
+            return convertImpl((((StringValue) input).getValue()));
+          } else if (input instanceof String) {
+            if (!Quantity.isValid((String) input)) {
+              throw new CoercingParseLiteralException(
+                  "Bytes32 value '" + input + "' is not prefixed with 0x");
+            } else {
+              try {
+                return Bytes32.fromHexStringLenient((String) input);
+              } catch (IllegalArgumentException iae) {
+                return null;
+              }
+            }
+          } else {
+            return null;
           }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes32");
         }
 
         @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Bytes32) {
-            return input.toString();
+        public String serialize(final Object input) throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes32");
+          } else {
+            return result.toHexString();
           }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an Bytes32");
+        }
+
+        @Override
+        public Bytes32 parseValue(final Object input) throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an Bytes32");
+          } else {
+            return result;
+          }
         }
 
         @Override
         public Bytes32 parseLiteral(final Object input) throws CoercingParseLiteralException {
-          if (!(input instanceof StringValue)) {
+          var result = convertImpl(input);
+          if (result == null) {
             throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
-          }
-          String inputValue = ((StringValue) input).getValue();
-          if (!Quantity.isValid(inputValue)) {
-            throw new CoercingParseLiteralException(
-                "Bytes32 value '" + inputValue + "' is not prefixed with 0x");
-          }
-          try {
-            return Bytes32.fromHexStringLenient(inputValue);
-          } catch (final IllegalArgumentException e) {
-            throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
+          } else {
+            return result;
           }
         }
       };
 
-  private static final Coercing<Object, Object> LONG_COERCING =
-      new Coercing<Object, Object>() {
+  private static final Coercing<Number, Number> LONG_COERCING =
+      new Coercing<Number, Number>() {
         @Override
         public Number serialize(final Object input) throws CoercingSerializeException {
           if (input instanceof Number) {
@@ -210,7 +292,7 @@ public class Scalars {
         }
 
         @Override
-        public Object parseLiteral(final Object input) throws CoercingParseLiteralException {
+        public Number parseLiteral(final Object input) throws CoercingParseLiteralException {
           try {
             if (input instanceof IntValue) {
               return ((IntValue) input).getValue().longValue();
