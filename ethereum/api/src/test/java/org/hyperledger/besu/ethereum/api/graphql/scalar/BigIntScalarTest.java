@@ -27,17 +27,13 @@ import graphql.schema.GraphQLScalarType;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class BigIntScalarTest {
 
   private GraphQLScalarType scalar;
 
   private final String str = "0x10";
   private final UInt256 value = UInt256.fromHexString(str);
-  private final StringValue strValue = StringValue.newStringValue(str).build();
   private final StringValue invalidStrValue = StringValue.newStringValue("0xgh").build();
 
   @Test
@@ -48,7 +44,7 @@ public class BigIntScalarTest {
 
   @Test
   public void parseValueErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseValue(str))
+    assertThatThrownBy(() -> scalar.getCoercing().parseValue(3.2))
         .isInstanceOf(CoercingParseValueException.class);
   }
 
@@ -60,19 +56,19 @@ public class BigIntScalarTest {
 
   @Test
   public void serializeErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().serialize(str))
+    assertThatThrownBy(() -> scalar.getCoercing().serialize(3.2))
         .isInstanceOf(CoercingSerializeException.class);
   }
 
   @Test
   public void parseLiteralTest() {
-    final UInt256 result = (UInt256) scalar.getCoercing().parseLiteral(strValue);
-    assertThat(result).isEqualTo(value);
+    final String result = (String) scalar.getCoercing().parseLiteral(value);
+    assertThat(result).isEqualTo(str);
   }
 
   @Test
   public void parseLiteralErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(str))
+    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(3.2))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 
