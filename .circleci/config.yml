@@ -196,7 +196,7 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor: xl_machine_executor
+    executor:   besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
@@ -235,7 +235,7 @@ jobs:
 
   acceptanceTests:
     parallelism: 6
-    executor: xl_machine_executor
+    executor:   besu_executor_xl
     steps:
       - prepare
       - attach_workspace:
