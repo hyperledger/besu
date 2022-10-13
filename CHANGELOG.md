@@ -17,6 +17,7 @@
 - Increased level of detail in JSON-RPC parameter error log messages [#4510](https://github.com/hyperledger/besu/pull/4510)
 - New unstable configuration options to set the maximum time, in milliseconds, a PoS block creation jobs is allowed to run [#4519](https://github.com/hyperledger/besu/pull/4519)
 - Tune EthScheduler thread pools to avoid to recreate too many threads [#4529](https://github.com/hyperledger/besu/pull/4529)
+- RocksDB snapshot based worldstate and plugin-api addition of Snapshot interfaces [#4409](https://github.com/hyperledger/besu/pull/4409)
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
@@ -88,6 +89,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.t
 ### Additions and Improvements
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 - Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
+<<<<<<< HEAD
 - Resets engine QoS timer with every call to the engine API instead of only when ExchangeTransitionConfiguration is called [#4411](https://github.com/hyperledger/besu/issues/4411)
 - ExchangeTransitionConfiguration mismatch will only submit a debug log not a warning anymore [#4411](https://github.com/hyperledger/besu/issues/4411)
 - Upgrade besu-native to 0.6.1 and include linux arm64 build of bls12-381 [#4416](https://github.com/hyperledger/besu/pull/4416)
