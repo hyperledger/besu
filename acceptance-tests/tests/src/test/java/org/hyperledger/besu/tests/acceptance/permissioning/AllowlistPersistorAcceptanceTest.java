@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALL
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,9 @@ import java.util.Collections;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class AllowlistPersistorAcceptanceTest extends AcceptanceTestBase {
 
   private static final String ENODE_ONE =

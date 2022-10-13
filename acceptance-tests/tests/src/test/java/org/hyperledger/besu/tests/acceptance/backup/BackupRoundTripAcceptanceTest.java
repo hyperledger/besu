@@ -22,12 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeBase;
+import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
 import org.hyperledger.besu.tests.acceptance.database.DatabaseMigrationAcceptanceTest;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
+import org.hyperledger.besu.testutil.ParameterizedShardedTestRunner;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -43,11 +44,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Parameterized.class)
-public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeBase {
+@RunWith(ParameterizedShardedTestRunner.class)
+public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
 
   private final Path backupPath;
   private final Path restorePath;

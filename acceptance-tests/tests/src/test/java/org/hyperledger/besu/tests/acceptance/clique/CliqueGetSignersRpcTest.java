@@ -18,11 +18,14 @@ import static org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.Cliqu
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 @Ignore
 public class CliqueGetSignersRpcTest extends AcceptanceTestBase {
   private BesuNode minerNode1;

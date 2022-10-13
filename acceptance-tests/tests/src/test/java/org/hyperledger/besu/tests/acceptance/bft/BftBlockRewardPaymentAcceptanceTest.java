@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,7 +34,9 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class BftBlockRewardPaymentAcceptanceTest extends ParameterizedBftTestBase {
 
   private static final Amount BLOCK_REWARD = Amount.wei(new BigInteger("5000000000000000000", 10));

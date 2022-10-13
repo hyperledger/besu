@@ -21,6 +21,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.net.ServerSocket;
 import java.util.Optional;
@@ -32,7 +33,9 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class BootNodesGenesisSetupTest extends AcceptanceTestBase {
   private static final String CURVE_NAME = "secp256k1";
   private static final String ALGORITHM = SignatureAlgorithm.ALGORITHM;

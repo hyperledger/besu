@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -27,7 +28,9 @@ import java.util.stream.Stream;
 import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class BesuEventsPluginTest extends AcceptanceTestBase {
   private BesuNode pluginNode;
   private BesuNode minerNode;

@@ -20,12 +20,15 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.pubsub.Subscription;
 import org.hyperledger.besu.tests.acceptance.dsl.pubsub.WebSocket;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import io.vertx.core.Vertx;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private Vertx vertx;

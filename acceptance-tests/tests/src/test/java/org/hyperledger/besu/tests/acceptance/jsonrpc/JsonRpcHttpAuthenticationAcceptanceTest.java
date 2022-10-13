@@ -19,6 +19,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -27,7 +28,9 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class JsonRpcHttpAuthenticationAcceptanceTest extends AcceptanceTestBase {
   private Cluster authenticatedCluster;
   private BesuNode nodeUsingAuthFile;

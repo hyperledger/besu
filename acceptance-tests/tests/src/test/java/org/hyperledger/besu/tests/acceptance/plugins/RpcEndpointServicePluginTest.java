@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,7 +33,9 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class RpcEndpointServicePluginTest extends AcceptanceTestBase {
 
   private BesuNode node;
