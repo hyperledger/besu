@@ -284,25 +284,29 @@ public class TransactionLogBloomCacher {
       final long blockNumber, final boolean overrideCacheCheck) {
     if (!cachingStatus.isCaching()) {
       scheduler.scheduleFutureTask(
-          () -> {
-            long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
-            while (currentSegment >= 0) {
-              try {
-                if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
-                  final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
-                  final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-                  if (overrideCacheCheck
-                      || !cacheFile.isFile()
-                      || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
-                    generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
-                  }
-                  cachedSegments.put(currentSegment, true);
-                }
-              } finally {
-                currentSegment--;
-              }
-            }
-          },
+          () ->
+              scheduler.scheduleComputationTask(
+                  () -> {
+                    long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+                    while (currentSegment >= 0) {
+                      try {
+                        if (overrideCacheCheck
+                            || !cachedSegments.getOrDefault(currentSegment, false)) {
+                          final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
+                          final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
+                          if (overrideCacheCheck
+                              || !cacheFile.isFile()
+                              || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                            generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                          }
+                          cachedSegments.put(currentSegment, true);
+                        }
+                      } finally {
+                        currentSegment--;
+                      }
+                    }
+                    return null;
+                  }),
           Duration.ofSeconds(1));
     }
   }

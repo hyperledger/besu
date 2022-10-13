@@ -77,7 +77,17 @@ public class AutoTransactionLogBloomCachingService {
 
       transactionLogBloomCacher
           .getScheduler()
-          .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
+          .scheduleFutureTask(
+              () ->
+                  // run long tasks in the computation executor
+                  transactionLogBloomCacher
+                      .getScheduler()
+                      .scheduleComputationTask(
+                          () -> {
+                            transactionLogBloomCacher.cacheAll();
+                            return null;
+                          }),
+              Duration.ofMinutes(1));
     } catch (final IOException e) {
       LOG.error("Unhandled caching exception.", e);
     }
