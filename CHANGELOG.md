@@ -22,6 +22,7 @@
 - Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
 - Avoid a cyclic reference while printing EngineExchangeTransitionConfigurationParameter [#4357](https://github.com/hyperledger/besu/pull/4357)
 - In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
+- Fixed default fromBlock value and improved parameter interpetation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
 
 ### Download Links
 

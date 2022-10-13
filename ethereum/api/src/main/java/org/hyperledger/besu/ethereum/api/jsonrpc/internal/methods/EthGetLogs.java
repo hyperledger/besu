@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -58,9 +59,9 @@ public class EthGetLogs implements JsonRpcMethod {
                         blockHash, filter.getLogsQuery(), requestContext::isAlive))
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
-                  final long toBlockNumber =
-                      filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
+                  final long fromBlockNumber = interpretBlockParam(filter.getFromBlock());
+                  final long toBlockNumber = interpretBlockParam(filter.getToBlock());
+
                   return blockchain.matchingLogs(
                       fromBlockNumber,
                       toBlockNumber,
@@ -70,5 +71,27 @@ public class EthGetLogs implements JsonRpcMethod {
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));
+  }
+
+  private long interpretBlockParam(final BlockParameter block) {
+    if (block.isFinalized()) {
+      return blockchain
+          .finalizedBlockHeader()
+          .orElseThrow(() -> new IllegalArgumentException("Finalized block not found."))
+          .getNumber();
+    } else if (block.isLatest()) {
+      return blockchain.headBlockNumber();
+    } else if (block.isPending()) {
+      // Pending not implemented, returns latest
+      return blockchain.headBlockNumber();
+    } else if (block.isSafe()) {
+      return blockchain
+          .safeBlockHeader()
+          .orElseThrow(() -> new IllegalArgumentException("Safe block not found."))
+          .getNumber();
+    } else {
+      // Alternate cases (numeric input or "earliest")
+      return block.getNumber().get();
+    }
   }
 }
