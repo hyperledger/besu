@@ -214,7 +214,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           LOG,
           "Built empty block proposal {} for payload {}",
           emptyBlock::toLogString,
-          payloadIdentifier::toShortHexString);
+          payloadIdentifier::toString);
     } else {
       LOG.warn(
           "failed to execute empty block proposal {}, reason {}",
@@ -247,11 +247,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final Supplier<Block> blockCreator =
         () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp);
 
-    debugLambda(
-        LOG,
+    LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
-        payloadIdentifier::toHexString,
-        miningParameters::getPosBlockCreationMaxTime);
+        payloadIdentifier,
+        miningParameters.getPosBlockCreationMaxTime());
 
     blockBuilderExecutor
         .buildProposal(() -> retryBlockCreationUntilUseful(payloadIdentifier, blockCreator))
@@ -262,7 +261,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 debugLambda(
                     LOG,
                     "Exception building block for payload id {}, reason {}",
-                    payloadIdentifier::toHexString,
+                    payloadIdentifier::toString,
                     () -> logException(throwable));
               }
               blockCreationTask.computeIfPresent(
@@ -290,7 +289,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       } catch (final Throwable e) {
         LOG.warn(
             "Something went wrong creating block for payload id {}, error {}",
-            payloadIdentifier.toHexString(),
+            payloadIdentifier,
             logException(e));
         return null;
       }
@@ -310,7 +309,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         debugLambda(
             LOG,
             "Retrying block creation for payload id {} after recoverable error {}",
-            payloadIdentifier::toHexString,
+            payloadIdentifier::toString,
             () -> logException(throwable));
         recoverableBlockCreation(payloadIdentifier, blockCreator, startedAt);
       } else {
@@ -341,7 +340,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       LOG.warn(
           "Block {} built for proposal identified by {}, is not valid reason {}",
           bestBlock.getHash(),
-          payloadIdentifier.toHexString(),
+          payloadIdentifier.toString(),
           resultBest.errorMessage);
     }
   }
