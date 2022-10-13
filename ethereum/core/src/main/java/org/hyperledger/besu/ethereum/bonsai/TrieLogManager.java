@@ -137,7 +137,7 @@ public class TrieLogManager {
         .stream()
         .forEach(
             layer -> {
-              layeredWorldStatesByHash.remove(layer);
+              layeredWorldStatesByHash.remove(layer.getTrieLog().getBlockHash());
               try {
                 layer.close();
               } catch (Exception e) {
