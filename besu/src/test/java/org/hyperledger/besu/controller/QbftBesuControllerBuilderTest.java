@@ -105,7 +105,7 @@ public class QbftBesuControllerBuilderTest {
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()));
-    when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))
+    when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorage);
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));

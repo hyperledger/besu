@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -86,7 +85,7 @@ public class BonsaiWorldStateArchiveTest {
             new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 1),
             storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+            new BonsaiWorldStateKeyValueStorageFactory(false));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -100,7 +99,7 @@ public class BonsaiWorldStateArchiveTest {
                 blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
             storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+            new BonsaiWorldStateKeyValueStorageFactory(false));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -116,7 +115,7 @@ public class BonsaiWorldStateArchiveTest {
                 blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
             storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+            new BonsaiWorldStateKeyValueStorageFactory(false));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
 
@@ -149,7 +148,7 @@ public class BonsaiWorldStateArchiveTest {
                 layeredWorldStatesByHash),
             storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(DataStorageConfiguration.DEFAULT_CONFIG));
+            new BonsaiWorldStateKeyValueStorageFactory(false));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -178,8 +177,7 @@ public class BonsaiWorldStateArchiveTest {
                     layeredWorldStatesByHash),
                 storageProvider,
                 blockchain,
-                new BonsaiWorldStateKeyValueStorageFactory(
-                    DataStorageConfiguration.DEFAULT_CONFIG)));
+                new BonsaiWorldStateKeyValueStorageFactory(false)));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
@@ -224,8 +222,7 @@ public class BonsaiWorldStateArchiveTest {
                     layeredWorldStatesByHash),
                 storageProvider,
                 blockchain,
-                new BonsaiWorldStateKeyValueStorageFactory(
-                    DataStorageConfiguration.DEFAULT_CONFIG)));
+                new BonsaiWorldStateKeyValueStorageFactory(false)));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
@@ -277,8 +274,7 @@ public class BonsaiWorldStateArchiveTest {
                     layeredWorldStatesByHash),
                 storageProvider,
                 blockchain,
-                new BonsaiWorldStateKeyValueStorageFactory(
-                    DataStorageConfiguration.DEFAULT_CONFIG)));
+                new BonsaiWorldStateKeyValueStorageFactory(false)));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 

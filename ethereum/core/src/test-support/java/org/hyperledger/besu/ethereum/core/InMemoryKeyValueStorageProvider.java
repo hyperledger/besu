@@ -81,7 +81,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
   public static MutableWorldState createInMemoryWorldState() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     return new DefaultMutableWorldState(
-        provider.createWorldStateStorage(DataStorageFormat.BONSAI),
+        provider.createWorldStateStorage(DataStorageFormat.FOREST),
         provider.createWorldStatePreimageStorage());
   }
 
