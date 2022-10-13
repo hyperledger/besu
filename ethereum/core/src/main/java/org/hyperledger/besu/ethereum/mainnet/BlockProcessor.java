@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +65,17 @@ public interface BlockProcessor {
 
     default Optional<Throwable> causedBy() {
       return Optional.empty();
+    }
+
+    default boolean internalError() {
+      if (causedBy().isPresent()) {
+        Throwable t = causedBy().get();
+        // As new "internal only" types of exception are discovered, add them here.
+        if (t instanceof StorageException) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
