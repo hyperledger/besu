@@ -16,10 +16,13 @@ package org.hyperledger.besu.tests.acceptance.jsonrpc;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class Web3Sha3AcceptanceTest extends AcceptanceTestBase {
 
   private Node node;

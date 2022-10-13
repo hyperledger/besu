@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,11 +32,13 @@ import java.util.Locale;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.NetVersion;
 import org.web3j.protocol.ipc.UnixIpcService;
 
+@RunWith(ShardedTestRunner.class)
 public class Web3JSupportAcceptanceTest extends AcceptanceTestBase {
 
   private Node node;

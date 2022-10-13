@@ -17,12 +17,15 @@ package org.hyperledger.besu.tests.acceptance.bootstrap;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class StaticNodesAcceptanceTest extends AcceptanceTestBase {
 
   private Node otherNode;

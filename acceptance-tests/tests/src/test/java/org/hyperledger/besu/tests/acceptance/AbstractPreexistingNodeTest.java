@@ -42,12 +42,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
-public class AbstractPreexistingNodeBase extends AcceptanceTestBase {
+public class AbstractPreexistingNodeTest extends AcceptanceTestBase {
   protected final String testName;
   protected final String dataPath;
   protected Path hostDataPath;
 
-  public AbstractPreexistingNodeBase(final String testName, final String dataPath) {
+  public AbstractPreexistingNodeTest(final String testName, final String dataPath) {
     this.testName = testName;
     this.dataPath = dataPath;
   }

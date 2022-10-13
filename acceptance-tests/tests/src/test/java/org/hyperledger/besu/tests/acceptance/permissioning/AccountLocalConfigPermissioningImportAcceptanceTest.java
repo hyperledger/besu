@@ -20,6 +20,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class AccountLocalConfigPermissioningImportAcceptanceTest extends AcceptanceTestBase {
 
   @Rule public TemporaryFolder folder = new TemporaryFolder();

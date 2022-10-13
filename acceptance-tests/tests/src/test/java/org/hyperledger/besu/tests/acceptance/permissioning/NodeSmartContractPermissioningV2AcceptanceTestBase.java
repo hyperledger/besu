@@ -26,9 +26,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurati
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissioning.PermissionedNodeBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.NodeSmartContractPermissioningV2Transactions;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.IOException;
 
+import org.junit.runner.RunWith;
+
+@RunWith(ShardedTestRunner.class)
 class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestBase {
 
   private final NodeSmartContractPermissioningV2Transactions smartContractNodePermissioningV2;

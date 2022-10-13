@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -26,7 +27,9 @@ import javax.annotation.Nonnull;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class NodesSmartContractPermissioningStaticNodesAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {
 

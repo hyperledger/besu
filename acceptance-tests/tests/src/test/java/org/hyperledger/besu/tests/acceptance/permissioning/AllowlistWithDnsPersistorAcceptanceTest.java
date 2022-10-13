@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -33,7 +34,9 @@ import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
 
   public static final String ENODE_PREFIX =

@@ -16,11 +16,14 @@ package org.hyperledger.besu.tests.acceptance.clique;
 
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import java.io.IOException;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class CliqueProposalRpcAcceptanceTest extends AcceptanceTestBase {
 
   @Test

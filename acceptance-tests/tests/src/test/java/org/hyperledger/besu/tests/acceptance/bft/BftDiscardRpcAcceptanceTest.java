@@ -15,9 +15,12 @@
 package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class BftDiscardRpcAcceptanceTest extends ParameterizedBftTestBase {
 
   public BftDiscardRpcAcceptanceTest(

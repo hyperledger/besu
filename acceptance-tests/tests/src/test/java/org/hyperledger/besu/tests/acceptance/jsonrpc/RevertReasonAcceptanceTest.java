@@ -20,11 +20,14 @@ import static org.hyperledger.besu.tests.web3j.generated.RevertReason.FUNC_REVER
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.web3j.generated.RevertReason;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
+@RunWith(ShardedTestRunner.class)
 public class RevertReasonAcceptanceTest extends AcceptanceTestBase {
 
   private BesuNode minerNode;

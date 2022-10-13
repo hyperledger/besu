@@ -19,9 +19,12 @@ package org.hyperledger.besu.tests.acceptance.bft.pki;
 
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(ShardedTestRunner.class)
 public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
 
   public PkiQbftAcceptanceTest(

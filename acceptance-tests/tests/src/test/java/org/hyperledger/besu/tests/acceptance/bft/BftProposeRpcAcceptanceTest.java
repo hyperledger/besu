@@ -16,11 +16,14 @@ package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
+import org.hyperledger.besu.testutil.ShardedTestRunner;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 // These tests prove the ibft_proposeValidatorVote and ibft_getValidatorsByBlockNumber (implicitly)
 // JSON RPC calls.
+@RunWith(ShardedTestRunner.class)
 public class BftProposeRpcAcceptanceTest extends ParameterizedBftTestBase {
 
   public BftProposeRpcAcceptanceTest(
