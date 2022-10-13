@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
+import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
@@ -42,15 +43,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
@@ -71,7 +70,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     return createTransitionMiningCoordinator(
         protocolSchedule,
         protocolContext,
-        ethProtocolManager.ethContext(),
         transactionPool,
         miningParameters,
         syncState,
@@ -82,7 +80,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             ethProtocolManager.ethContext(),
             syncState,
             BackwardChain.from(
-                storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))));
+                storageProvider, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))),
+        metricsSystem);
   }
 
   @Override
@@ -137,20 +136,24 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   protected MiningCoordinator createTransitionMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final EthContext ethContext,
       final TransactionPool transactionPool,
       final MiningParameters miningParameters,
       final SyncState syncState,
-      final BackwardSyncContext backwardSyncContext) {
+      final BackwardSyncContext backwardSyncContext,
+      final MetricsSystem metricsSystem) {
 
     this.syncState.set(syncState);
 
-    final ExecutorService blockBuilderExecutor = createBlockBuilderExecutor();
+    final ExecutorService blockBuilderExecutor =
+        MonitoredExecutors.newCachedThreadPool("PoS-Block-Builder", 1, metricsSystem);
 
     return new MergeCoordinator(
         protocolContext,
         protocolSchedule,
-        job -> CompletableFuture.runAsync(job, blockBuilderExecutor),
+        task -> {
+          LOG.debug("Block builder executor status {}", blockBuilderExecutor);
+          return CompletableFuture.runAsync(task, blockBuilderExecutor);
+        },
         transactionPool.getPendingTransactions(),
         miningParameters,
         backwardSyncContext);
@@ -228,22 +231,5 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       LOG.debug("unable to validate peers with terminal difficulty blocks");
     }
     return retval;
-  }
-
-  private static ThreadPoolExecutor createBlockBuilderExecutor() {
-    // a dedicated executor for PoS block proposal, we want one thread always ready to build a
-    // block, and we do not want to queue request since block creation is a high priority task.
-    // There should be only one block creation job at time, but in case of two consecutive proposal
-    // we allow for additional threads to be created
-    var threadPool =
-        new ThreadPoolExecutor(
-            1,
-            2,
-            1,
-            TimeUnit.MINUTES,
-            new SynchronousQueue<>(),
-            r -> new Thread("PoS-Block-Creation"));
-    threadPool.prestartCoreThread();
-    return threadPool;
   }
 }
