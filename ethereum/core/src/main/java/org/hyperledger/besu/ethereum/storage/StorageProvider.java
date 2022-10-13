@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.io.Closeable;
 
@@ -34,6 +35,8 @@ public interface StorageProvider extends Closeable {
   WorldStatePreimageStorage createWorldStatePreimageStorage();
 
   KeyValueStorage getStorageBySegmentIdentifier(SegmentIdentifier segment);
+
+  SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(SegmentIdentifier segment);
 
   WorldStateStorage createPrivateWorldStateStorage();
 
