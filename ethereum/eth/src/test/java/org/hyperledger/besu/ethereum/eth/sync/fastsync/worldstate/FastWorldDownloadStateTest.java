@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -84,7 +85,18 @@ public class FastWorldDownloadStateTest {
   public void setUp() {
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+          new BonsaiWorldStateKeyValueStorage(
+              new InMemoryKeyValueStorageProvider()
+                  .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+              new InMemoryKeyValueStorageProvider()
+                  .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+              new InMemoryKeyValueStorageProvider()
+                  .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+              new InMemoryKeyValueStorageProvider()
+                  .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+              new InMemoryKeyValueStorageProvider()
+                  .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+              Optional.empty());
     } else {
       worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }

@@ -31,10 +31,11 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorageFactory;
 import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
+import org.hyperledger.besu.ethereum.bonsai.light.BonsaiLightPersistedWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -638,14 +639,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateStorage worldStateStorage, final Blockchain blockchain) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+            new BonsaiWorldStateKeyValueStorage(storageProvider);
         return new BonsaiWorldStateArchive(
             new TrieLogManager(
                 blockchain,
                 (BonsaiWorldStateKeyValueStorage) worldStateStorage,
                 dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(lightNodeOptions.getLightNodeEnabled()));
+            worldStateKeyValueStorage,
+            lightNodeOptions.getLightNodeEnabled()
+                ? BonsaiLightPersistedWorldState::new
+                : BonsaiPersistedWorldState::new);
       case FOREST:
       default:
         final WorldStatePreimageStorage preimageStorage =

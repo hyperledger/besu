@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorageFactory;
 import org.hyperledger.besu.ethereum.bonsai.TrieLogManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -36,7 +36,6 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
-  // TODO JF Do we need light node mode for this?
   public InMemoryKeyValueStorageProvider() {
     super(
         segmentIdentifier -> new InMemoryKeyValueStorage(),
@@ -73,9 +72,9 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     return new BonsaiWorldStateArchive(
         new TrieLogManager(
             blockchain, new BonsaiWorldStateKeyValueStorage(inMemoryKeyValueStorageProvider)),
-        inMemoryKeyValueStorageProvider,
         blockchain,
-        new BonsaiWorldStateKeyValueStorageFactory(false));
+        new BonsaiWorldStateKeyValueStorage(inMemoryKeyValueStorageProvider),
+        BonsaiPersistedWorldState::new);
   }
 
   public static MutableWorldState createInMemoryWorldState() {

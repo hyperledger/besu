@@ -111,10 +111,22 @@ public class LogRollingTests {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     archive =
         new BonsaiWorldStateArchive(
-            new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(provider)),
-            provider,
+            new TrieLogManager(
+                blockchain,
+                new BonsaiWorldStateKeyValueStorage(
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty())),
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(provider),
+            BonsaiPersistedWorldState::new);
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -135,10 +147,23 @@ public class LogRollingTests {
     final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
     secondArchive =
         new BonsaiWorldStateArchive(
-            new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(secondProvider)),
-            secondProvider,
+            new TrieLogManager(
+                blockchain,
+                new BonsaiWorldStateKeyValueStorage(
+                    secondProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    secondProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.CODE_STORAGE),
+                    secondProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    secondProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    secondProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty())),
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(secondProvider),
+            BonsaiPersistedWorldState::new);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(

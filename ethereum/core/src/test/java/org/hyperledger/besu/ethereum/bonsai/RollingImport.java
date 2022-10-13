@@ -26,6 +26,7 @@ import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -40,10 +41,22 @@ public class RollingImport {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     final BonsaiWorldStateArchive archive =
         new BonsaiWorldStateArchive(
-            new TrieLogManager(null, new BonsaiWorldStateKeyValueStorage(provider)),
-            provider,
+            new TrieLogManager(
+                null,
+                new BonsaiWorldStateKeyValueStorage(
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    provider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty())),
             null,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(provider),
+            BonsaiPersistedWorldState::new);
     final InMemoryKeyValueStorage accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);

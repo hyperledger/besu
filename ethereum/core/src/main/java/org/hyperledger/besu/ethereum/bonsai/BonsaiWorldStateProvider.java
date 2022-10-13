@@ -14,19 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
+public interface BonsaiWorldStateProvider {
 
-public class BonsaiWorldStateKeyValueStorageFactory {
-
-  private final boolean isLightNode;
-
-  public BonsaiWorldStateKeyValueStorageFactory(final boolean isLightNode) {
-    this.isLightNode = isLightNode;
-  }
-
-  public BonsaiWorldStateKeyValueStorage create(final StorageProvider storageProvider) {
-    return isLightNode
-        ? new BonsaiLightWorldStateKeyValueStorage(storageProvider)
-        : new BonsaiWorldStateKeyValueStorage(storageProvider);
-  }
+  BonsaiPersistedWorldState create(
+      BonsaiWorldStateArchive worldStateArchive,
+      BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage);
 }

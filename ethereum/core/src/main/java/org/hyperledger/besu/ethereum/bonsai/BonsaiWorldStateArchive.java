@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -52,13 +51,13 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   public BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
-      final StorageProvider provider,
       final Blockchain blockchain,
-      final BonsaiWorldStateKeyValueStorageFactory worldStateKeyValueFactory) {
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiWorldStateProvider persistedStateFactory) {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateStorage = worldStateKeyValueFactory.create(provider);
-    this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
+    this.worldStateStorage = worldStateStorage;
+    this.persistedState = persistedStateFactory.create(this, worldStateStorage);
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
 

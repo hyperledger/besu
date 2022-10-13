@@ -82,10 +82,24 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 1),
-            storageProvider,
+            new TrieLogManager(
+                blockchain,
+                new BonsaiWorldStateKeyValueStorage(
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.CODE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty()),
+                1),
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            BonsaiPersistedWorldState::new);
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -96,10 +110,23 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(
-                blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
-            storageProvider,
+                blockchain,
+                new BonsaiWorldStateKeyValueStorage(
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.CODE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty()),
+                512),
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            BonsaiPersistedWorldState::new);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -112,10 +139,23 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
             new TrieLogManager(
-                blockchain, new BonsaiWorldStateKeyValueStorage(storageProvider), 512),
-            storageProvider,
+                blockchain,
+                new BonsaiWorldStateKeyValueStorage(
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.CODE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty()),
+                512),
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            BonsaiPersistedWorldState::new);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
 
@@ -143,12 +183,23 @@ public class BonsaiWorldStateArchiveTest {
         new BonsaiWorldStateArchive(
             new TrieLogManager(
                 blockchain,
-                new BonsaiWorldStateKeyValueStorage(storageProvider),
+                new BonsaiWorldStateKeyValueStorage(
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.CODE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                    storageProvider.getStorageBySegmentIdentifier(
+                        KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                    Optional.empty()),
                 12,
                 layeredWorldStatesByHash),
-            storageProvider,
             blockchain,
-            new BonsaiWorldStateKeyValueStorageFactory(false));
+            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            BonsaiPersistedWorldState::new);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
@@ -172,12 +223,23 @@ public class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateArchive(
                 new TrieLogManager(
                     blockchain,
-                    new BonsaiWorldStateKeyValueStorage(storageProvider),
+                    new BonsaiWorldStateKeyValueStorage(
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.CODE_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                        Optional.empty()),
                     12,
                     layeredWorldStatesByHash),
-                storageProvider,
                 blockchain,
-                new BonsaiWorldStateKeyValueStorageFactory(false)));
+                new BonsaiWorldStateKeyValueStorage(storageProvider),
+                BonsaiPersistedWorldState::new));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
@@ -217,12 +279,23 @@ public class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateArchive(
                 new TrieLogManager(
                     blockchain,
-                    new BonsaiWorldStateKeyValueStorage(storageProvider),
+                    new BonsaiWorldStateKeyValueStorage(
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.CODE_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                        Optional.empty()),
                     12,
                     layeredWorldStatesByHash),
-                storageProvider,
                 blockchain,
-                new BonsaiWorldStateKeyValueStorageFactory(false)));
+                new BonsaiWorldStateKeyValueStorage(storageProvider),
+                BonsaiPersistedWorldState::new));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 
@@ -269,12 +342,23 @@ public class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateArchive(
                 new TrieLogManager(
                     blockchain,
-                    new BonsaiWorldStateKeyValueStorage(storageProvider),
+                    new BonsaiWorldStateKeyValueStorage(
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.CODE_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+                        storageProvider.getStorageBySegmentIdentifier(
+                            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+                        Optional.empty()),
                     12,
                     layeredWorldStatesByHash),
-                storageProvider,
                 blockchain,
-                new BonsaiWorldStateKeyValueStorageFactory(false)));
+                new BonsaiWorldStateKeyValueStorage(storageProvider),
+                BonsaiPersistedWorldState::new));
     var updater = spy(bonsaiWorldStateArchive.getUpdater());
     when(bonsaiWorldStateArchive.getUpdater()).thenReturn(updater);
 

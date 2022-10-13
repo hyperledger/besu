@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -352,6 +353,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
-    return new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+    return new BonsaiWorldStateKeyValueStorage(
+        new InMemoryKeyValueStorageProvider()
+            .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+        new InMemoryKeyValueStorageProvider()
+            .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+        new InMemoryKeyValueStorageProvider()
+            .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+        new InMemoryKeyValueStorageProvider()
+            .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+        new InMemoryKeyValueStorageProvider()
+            .getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+        Optional.empty());
   }
 }
