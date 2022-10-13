@@ -26,9 +26,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthGetLogs implements JsonRpcMethod {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
 
   private final BlockchainQueries blockchain;
 
@@ -50,6 +57,7 @@ public class EthGetLogs implements JsonRpcMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
+    final AtomicReference<Exception> ex = new AtomicReference<>();
     final List<LogWithMetadata> matchingLogs =
         filter
             .getBlockHash()
@@ -59,8 +67,15 @@ public class EthGetLogs implements JsonRpcMethod {
                         blockHash, filter.getLogsQuery(), requestContext::isAlive))
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = interpretBlockParam(filter.getFromBlock());
-                  final long toBlockNumber = interpretBlockParam(filter.getToBlock());
+                  final long fromBlockNumber;
+                  final long toBlockNumber;
+                  try {
+                    fromBlockNumber = interpretBlockParam(filter.getFromBlock());
+                    toBlockNumber = interpretBlockParam(filter.getToBlock());
+                  } catch (final Exception e) {
+                    ex.set(e);
+                    return Collections.emptyList();
+                  }
 
                   return blockchain.matchingLogs(
                       fromBlockNumber,
@@ -69,15 +84,21 @@ public class EthGetLogs implements JsonRpcMethod {
                       requestContext::isAlive);
                 });
 
+    if (ex.get() != null) {
+      LOG.debug("eth_getLogs call failed: ", ex.get());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+    }
+
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));
   }
 
-  private long interpretBlockParam(final BlockParameter block) {
+  private long interpretBlockParam(final BlockParameter block) throws Exception {
     if (block.isFinalized()) {
       return blockchain
           .finalizedBlockHeader()
-          .orElseThrow(() -> new IllegalArgumentException("Finalized block not found."))
+          .orElseThrow(() -> new Exception("Finalized block not found."))
           .getNumber();
     } else if (block.isLatest()) {
       return blockchain.headBlockNumber();
@@ -87,7 +108,7 @@ public class EthGetLogs implements JsonRpcMethod {
     } else if (block.isSafe()) {
       return blockchain
           .safeBlockHeader()
-          .orElseThrow(() -> new IllegalArgumentException("Safe block not found."))
+          .orElseThrow(() -> new Exception("Safe block not found."))
           .getNumber();
     } else {
       // Alternate cases (numeric input or "earliest")

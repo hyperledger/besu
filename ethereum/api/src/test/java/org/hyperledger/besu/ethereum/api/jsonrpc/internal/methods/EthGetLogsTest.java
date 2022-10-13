@@ -30,6 +30,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -84,7 +87,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(blockNumber), eq(blockNumber), any(), any());
     verify(blockchainQueries, never()).headBlockNumber();
@@ -100,7 +104,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries)
         .matchingLogs(eq(latestBlockNumber), eq(latestBlockNumber), any(), any());
@@ -120,7 +125,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(blockNumber), eq(blockNumber), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
@@ -136,7 +142,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
 
@@ -154,7 +161,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(genesisBlock), eq(latestBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
@@ -171,7 +179,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
@@ -188,7 +197,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
@@ -206,7 +216,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(genesisBlock), eq(latestBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
@@ -229,11 +240,32 @@ public class EthGetLogsTest {
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
-    method.response(request);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries)
         .matchingLogs(eq(safeBlockNumber), eq(finalizedBlockNumber), any(), any());
     verify(blockchainQueries, never()).headBlockNumber();
+  }
+
+  @Test
+  public void shouldFailIfNoSafeBlock() {
+    final JsonRpcRequestContext request = buildRequest("safe", "finalized");
+
+    when(blockchainQueries.safeBlockHeader()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+  }
+
+  @Test
+  public void shouldFailIfNoFinalizedBlock() {
+    final JsonRpcRequestContext request = buildRequest("finalized", "safe");
+
+    when(blockchainQueries.finalizedBlockHeader()).thenReturn(Optional.empty());
+
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
   }
 
   private JsonRpcRequestContext buildRequest(final long fromBlock, final long toBlock) {
