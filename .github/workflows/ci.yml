@@ -330,7 +330,6 @@ jobs:
           retention-days: 1
   run-parallel-acceptance-tests:
     runs-on: ubuntu-22.04
-    container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run acceptance test suite in parallel"
     needs:
