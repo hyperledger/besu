@@ -22,7 +22,9 @@
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
 - Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
 - Avoid a cyclic reference while printing EngineExchangeTransitionConfigurationParameter [#4357](https://github.com/hyperledger/besu/pull/4357)
+- Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
 - In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
+
 
 ### Download Links
 
