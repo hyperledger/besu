@@ -2302,7 +2302,17 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     // PicoCLI uses longest option name for message when option has multiple names, so here plural.
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--rpc-http-apis'");
+        .contains("Invalid value for option '--rpc-http-apis': invalid entries found [BOB]");
+  }
+
+  @Test
+  public void rpcWsApisPropertyWithInvalidEntryMustDisplayError() {
+    parseCommand("--rpc-ws-api", "BOB");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--rpc-ws-apis': invalid entries found [BOB]");
   }
 
   @Test
