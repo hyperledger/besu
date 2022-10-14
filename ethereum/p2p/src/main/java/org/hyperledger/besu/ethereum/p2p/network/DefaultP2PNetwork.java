@@ -146,7 +146,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
-  private final Duration shutdownTimeout = Duration.ofMinutes(1);
+  private final Duration shutdownTimeout = Duration.ofSeconds(15);
   private DNSDaemon dnsDaemon;
 
   /**
