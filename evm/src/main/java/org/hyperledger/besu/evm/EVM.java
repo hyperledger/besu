@@ -75,14 +75,16 @@ public class EVM {
   // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
-      byte opcode;
+      int opcode;
       try {
-        opcode = code[frame.getPC()];
+        opcode = code[frame.getPC()] & 0xff;
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
         opcode = 0;
       }
-      frame.setCurrentOperation(operations.get(opcode));
+      Operation currentOperation = operationArray[opcode];
+      frame.setCurrentOperation(currentOperation);
       operationTracer.traceExecution(
           frame,
           () -> {
