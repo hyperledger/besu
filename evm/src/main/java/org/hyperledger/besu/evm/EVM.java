@@ -69,16 +69,20 @@ public class EVM {
     return gasCalculator;
   }
 
+  // Note to maintainers: lots of Java idioms and OO principals are being set aside in the
+  // name of performance. This is one of the hottest sections of code.
+  //
+  // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
-        byte opcode;
-        try {
-            opcode = code[frame.getPC()];
-        } catch (ArrayIndexOutOfBoundsException aiiobe) {
-            opcode = 0;
-        }
-        frame.setCurrentOperation(operations.get(opcode));
+      byte opcode;
+      try {
+        opcode = code[frame.getPC()];
+      } catch (ArrayIndexOutOfBoundsException aiiobe) {
+        opcode = 0;
+      }
+      frame.setCurrentOperation(operations.get(opcode));
       operationTracer.traceExecution(
           frame,
           () -> {
