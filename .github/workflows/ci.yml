@@ -110,6 +110,11 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 17
       - name: Cache classes
         uses: actions/cache@v3
         with:
@@ -342,6 +347,12 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 17
+          cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
         with:
