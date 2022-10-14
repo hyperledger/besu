@@ -17,10 +17,10 @@ jobs:
           distribution: adopt
           java-version: 17
           cache: gradle
-      - name: hadoLint_openjdk_11
-        run: docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
-      - name: hadoLint_openjdk_11_debug
-        run: docker run --rm -i hadolint/hadolint < docker/openjdk-11-debug/Dockerfile
+      - name: hadoLint_openjdk_17
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - name: hadoLint_openjdk_17_debug
+        run: docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
       - name: hadoLint_openjdk_latest
         run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
       - name: hadoLint_graalvm
