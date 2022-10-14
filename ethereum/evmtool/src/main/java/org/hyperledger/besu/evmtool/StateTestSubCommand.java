@@ -19,6 +19,24 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Stopwatch;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -42,27 +60,6 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.Level;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -241,10 +238,13 @@ public class StateTestSubCommand implements Runnable {
         worldStateUpdater.commit();
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        final UInt256 gasUsed =
-            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
+        final var gasUsed = transaction.getGasLimit() - result.getGasRemaining();
+        final var timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+        final var mGps = gasUsed * 1000.0f / timeNs;
+
+        summaryLine.put("Mgps", String.format("%.3f", mGps));
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
-        summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
+        summaryLine.put("time", timeNs);
 
         // Check the world state root hash.
         summaryLine.put("test", test);
