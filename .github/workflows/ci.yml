@@ -329,7 +329,7 @@ jobs:
           path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
   run-parallel-acceptance-tests:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, macOS, ARM64, MacStadium]
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run acceptance test suite in parallel"
     needs:
