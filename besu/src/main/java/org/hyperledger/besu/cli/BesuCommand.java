@@ -1844,7 +1844,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       invalidHttpApis.removeAll(AVAILABLE_APIS);
       throw new ParameterException(
           this.commandLine,
-          "Invalid value for option '--rpc-http-apis': invalid entries found "
+          "Invalid value for option '--rpc-http-api': invalid entries found "
               + invalidHttpApis.toString());
     }
 
@@ -1853,7 +1853,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       invalidWsApis.removeAll(AVAILABLE_APIS);
       throw new ParameterException(
           this.commandLine,
-          "Invalid value for option '--rpc-ws-apis': invalid entries found "
+          "Invalid value for option '--rpc-ws-api': invalid entries found "
               + invalidWsApis.toString());
     }
 
