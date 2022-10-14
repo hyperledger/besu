@@ -75,14 +75,14 @@ public class CliqueGetSignerMetricsTest {
   public void exceptionWhenInvalidStartBlockSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("INVALID")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenInvalidEndBlockSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("1", "INVALID")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test

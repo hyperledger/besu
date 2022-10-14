@@ -120,7 +120,8 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNumberParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("invalid", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessage(
+            "Invalid json rpc parameter at index 0. Supplied value was: 'invalid' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter'");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -128,7 +129,8 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenBoolParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("0", "maybe")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 1");
+        .hasMessage(
+            "Invalid json rpc parameter at index 1. Supplied value was: 'maybe' of type: 'java.lang.String' - expected type: 'java.lang.Boolean'");
     verifyNoMoreInteractions(blockchainQueries);
   }
 

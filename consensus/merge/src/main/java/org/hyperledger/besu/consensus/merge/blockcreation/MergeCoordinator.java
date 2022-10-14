@@ -214,7 +214,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator) {
 
-    long remainingTime = miningParameters.getPosBlockCreationTimeout();
+    long remainingTime = miningParameters.getPosBlockCreationMaxTime();
     final Supplier<Block> blockCreator =
         () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp);
     // start working on a full block and update the payload value and candidate when it's ready

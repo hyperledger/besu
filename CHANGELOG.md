@@ -1,16 +1,32 @@
 # Changelog
+## 22.10.0
+### Breaking Changes
+- Version 22.10.0 will require Java 17 to build and run.
+
 ## 22.10.0-RC2
 
 ### Breaking Changes
 - Flexible Privacy Groups (early access) support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
   * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
   * For the EC encryptor, the encoded public key length is 91
+- `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3)
+- `--Xmerge-support` option remove (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
 
 ### Additions and Improvements
+- Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
+- Increased level of detail in JSON-RPC parameter error log messages [#4510](https://github.com/hyperledger/besu/pull/4510)
+- New unstable configuration options to set the maximum time, in milliseconds, a PoS block creation jobs is allowed to run [#4519](https://github.com/hyperledger/besu/pull/4519)
+- Tune EthScheduler thread pools to avoid to recreate too many threads [#4529](https://github.com/hyperledger/besu/pull/4529)
+- RocksDB snapshot based worldstate and plugin-api addition of Snapshot interfaces [#4409](https://github.com/hyperledger/besu/pull/4409)
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
-- 
+- Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
+- Avoid a cyclic reference while printing EngineExchangeTransitionConfigurationParameter [#4357](https://github.com/hyperledger/besu/pull/4357)
+- Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
+- In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
+
+
 ### Download Links
 
 
@@ -19,9 +35,7 @@
 ### Additions and Improvements
 - Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
 - Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
-- Optimize pivot block selector on PoS networks [#4488](https://github.com/hyperledger/besu/pull/4488)
 - Improve UX of initial sync logs, pushing not relevant logs to debug level [#4486](https://github.com/hyperledger/besu/pull/4486)
-- Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
 - Optimize pivot block selector on PoS networks [#4488](https://github.com/hyperledger/besu/pull/4488)
 - Optimize Snap sync on PoS networks [#4462](https://github.com/hyperledger/besu/pull/4462)
 
@@ -75,6 +89,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.t
 ### Additions and Improvements
 - Allow free gas networks in the London fee market [#4061](https://github.com/hyperledger/besu/issues/4061)
 - Upgrade besu-native to 0.6.0 and use Blake2bf native implementation if available by default [#4264](https://github.com/hyperledger/besu/pull/4264)
+<<<<<<< HEAD
 - Resets engine QoS timer with every call to the engine API instead of only when ExchangeTransitionConfiguration is called [#4411](https://github.com/hyperledger/besu/issues/4411)
 - ExchangeTransitionConfiguration mismatch will only submit a debug log not a warning anymore [#4411](https://github.com/hyperledger/besu/issues/4411)
 - Upgrade besu-native to 0.6.1 and include linux arm64 build of bls12-381 [#4416](https://github.com/hyperledger/besu/pull/4416)
