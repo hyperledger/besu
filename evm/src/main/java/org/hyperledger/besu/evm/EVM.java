@@ -77,13 +77,13 @@ public class EVM {
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
-      int opcode;
+      Operation currentOperation;
       try {
-        opcode = code[frame.getPC()] & 0xff;
+        int opcode = code[frame.getPC()] & 0xff;
+        currentOperation = operationArray[opcode];
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
-        opcode = 0;
+        currentOperation = endOfScriptStop;
       }
-      Operation currentOperation = operationArray[opcode];
       frame.setCurrentOperation(currentOperation);
       operationTracer.traceExecution(
           frame,
