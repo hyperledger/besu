@@ -90,12 +90,17 @@ public class MonitoredExecutors {
 
   public static ExecutorService newCachedThreadPool(
       final String name, final MetricsSystem metricsSystem) {
+    return newCachedThreadPool(name, 0, metricsSystem);
+  }
+
+  public static ExecutorService newCachedThreadPool(
+      final String name, final int corePoolSize, final MetricsSystem metricsSystem) {
     return newMonitoredExecutor(
         name,
         metricsSystem,
         (rejectedExecutionHandler, threadFactory) ->
             new ThreadPoolExecutor(
-                0,
+                corePoolSize,
                 Integer.MAX_VALUE,
                 60L,
                 TimeUnit.SECONDS,
