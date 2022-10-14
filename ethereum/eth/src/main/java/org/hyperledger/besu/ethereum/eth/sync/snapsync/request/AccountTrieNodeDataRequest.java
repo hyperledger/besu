@@ -57,6 +57,9 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }
+    NodeDeletionProcessor deletion = new NodeDeletionProcessor(worldStateStorage, updater);
+    deletion.startFromAccountNode(getLocation(), getNodeHash(), data);
+
     updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
     return 1;
   }

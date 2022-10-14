@@ -46,6 +46,8 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
       final Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
+    NodeDeletionProcessor deletion = new NodeDeletionProcessor(worldStateStorage, updater);
+    deletion.startFromStorageNode(accountHash, getLocation(), getNodeHash(), data);
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;
   }
