@@ -217,4 +217,9 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
     return mergeCoordinator.getLatestValidHashOfBadBlock(blockHash);
   }
+
+  @Override
+  public void finalizeProposalById(final PayloadIdentifier payloadId) {
+    mergeCoordinator.finalizeProposalById(payloadId);
+  }
 }

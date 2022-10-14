@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
 
@@ -239,6 +240,7 @@ public class TransitionControllerBuilderTest {
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
     builder.storageProvider(storageProvider);
+    builder.metricsSystem(new NoOpMetricsSystem());
     var coordinator =
         builder.createMiningCoordinator(
             transitionProtocolSchedule,
