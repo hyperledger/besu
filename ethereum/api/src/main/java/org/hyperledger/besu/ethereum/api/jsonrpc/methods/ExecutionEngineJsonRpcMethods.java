@@ -68,7 +68,11 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     if (mergeCoordinator.isPresent()) {
       return mapOf(
           new EngineGetPayload(
-              consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer),
+              consensusEngineServer,
+              protocolContext,
+              mergeCoordinator.get(),
+              blockResultFactory,
+              engineQosTimer),
           new EngineNewPayload(
               consensusEngineServer,
               protocolContext,
