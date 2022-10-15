@@ -6,7 +6,7 @@ on:
 
 env:
   GRADLE_OPTS: "-Xmx4g -Dorg.gradle.daemon=false"
-  total-runners: 8
+  total-runners: 24
 
 jobs:
   compile:
@@ -335,8 +335,7 @@ jobs:
           path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
   run-parallel-acceptance-tests:
-    runs-on: [self-hosted, macOS, ARM64, MacStadium]
-    container: hyperledger/besu-build:1.0
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run acceptance test suite in parallel"
     needs:
