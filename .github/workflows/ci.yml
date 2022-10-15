@@ -110,6 +110,12 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 17
+          cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
         with:
@@ -330,6 +336,7 @@ jobs:
           retention-days: 1
   run-parallel-acceptance-tests:
     runs-on: [self-hosted, macOS, ARM64, MacStadium]
+    container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run acceptance test suite in parallel"
     needs:
@@ -342,6 +349,12 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: adopt
+          java-version: 17
+          cache: gradle
       - name: Cache classes
         uses: actions/cache@v3
         with:
