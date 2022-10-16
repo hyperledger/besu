@@ -24,6 +24,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class AddOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult addSuccess = new OperationResult(3, null);
+
   public AddOperation(final GasCalculator gasCalculator) {
     super(0x01, "ADD", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -45,5 +47,22 @@ public class AddOperation extends AbstractFixedCostOperation {
     }
 
     return successResponse;
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
+    final BigInteger value0 = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
+    final BigInteger value1 = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
+
+    final BigInteger result = value0.add(value1);
+
+    byte[] resultArray = result.toByteArray();
+    int length = resultArray.length;
+    if (length > 32) {
+      frame.pushStackItem(Bytes.wrap(resultArray, length - 32, 32));
+    } else {
+      frame.pushStackItem(Bytes.wrap(resultArray));
+    }
+
+    return addSuccess;
   }
 }

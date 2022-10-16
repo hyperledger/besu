@@ -74,10 +74,12 @@ public class DebugOperationTracer implements OperationTracer {
             pc,
             Optional.of(opcode),
             gasRemaining,
-            operationResult.getGasCost(),
+            operationResult.getGasCost() == 0
+                ? OptionalLong.empty()
+                : OptionalLong.of(operationResult.getGasCost()),
             frame.getGasRefund(),
             depth,
-            operationResult.getHaltReason(),
+            Optional.ofNullable(operationResult.getHaltReason()),
             frame.getRecipientAddress(),
             frame.getApparentValue(),
             pc == 0 ? inputData.copy() : inputData,

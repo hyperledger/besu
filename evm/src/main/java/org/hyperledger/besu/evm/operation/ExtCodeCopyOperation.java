@@ -25,9 +25,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class ExtCodeCopyOperation extends AbstractOperation {
@@ -60,14 +57,13 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
 
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Account account = frame.getWorldUpdater().get(address);
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, code);
-    return new OperationResult(OptionalLong.of(cost), Optional.empty());
+    return new OperationResult(cost, null);
   }
 }

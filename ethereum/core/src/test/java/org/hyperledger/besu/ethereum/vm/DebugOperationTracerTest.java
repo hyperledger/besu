@@ -36,8 +36,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -62,7 +60,7 @@ public class DebugOperationTracerTest {
       new AbstractOperation(0x02, "MUL", 2, 1, 1, null) {
         @Override
         public OperationResult execute(final MessageFrame frame, final EVM evm) {
-          return new OperationResult(OptionalLong.of(20L), Optional.empty());
+          return new OperationResult(20L, null);
         }
       };
 
@@ -145,7 +143,7 @@ public class DebugOperationTracerTest {
     final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
     final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(true, false, false));
     assertThat(traceFrame.getStorage()).isPresent();
-    assertThat(traceFrame.getStorage().get()).isEqualTo(updatedStorage);
+    assertThat(traceFrame.getStorage()).contains(updatedStorage);
   }
 
   @Test
@@ -163,10 +161,7 @@ public class DebugOperationTracerTest {
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
     tracer.traceExecution(
-        frame,
-        () ->
-            new OperationResult(
-                OptionalLong.of(50L), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS)));
+        frame, () -> new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
 
     final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
     assertThat(traceFrame.getExceptionalHaltReason())
