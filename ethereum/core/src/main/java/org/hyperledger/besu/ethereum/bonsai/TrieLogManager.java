@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 public class TrieLogManager {
 
-  private static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
+  public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogManager.class);
 
