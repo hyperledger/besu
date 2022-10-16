@@ -352,7 +352,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: zulu
-          architecture: arm7
+          architecture: aarch64
           java-version: 17
           cache: gradle
       - name: Cache classes
