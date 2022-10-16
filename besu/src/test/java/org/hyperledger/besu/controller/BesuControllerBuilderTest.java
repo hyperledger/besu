@@ -131,9 +131,11 @@ public class BesuControllerBuilderTest {
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
-    BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
-        mock(BonsaiWorldStateKeyValueStorage.Updater.class);
+    BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater =
+        mock(BonsaiWorldStateKeyValueStorage.BonsaiUpdater.class);
     when(bonsaiUpdater.getTrieLogStorageTransaction())
+        .thenReturn(mock(KeyValueStorageTransaction.class));
+    when(bonsaiUpdater.getTrieBranchStorageTransaction())
         .thenReturn(mock(KeyValueStorageTransaction.class));
     when(bonsaiWorldStateStorage.updater()).thenReturn(bonsaiUpdater);
     besuControllerBuilder = visitWithMockConfigs(new MainnetBesuControllerBuilder());
