@@ -45,8 +45,7 @@ public class BaseFeeOperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    assertThat(result.getGasCost().isPresent()).isTrue();
-    assertThat(result.getGasCost().getAsLong()).isEqualTo(gasCalculator.getBaseTierGasCost());
+    assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
     assertSuccessResult(result);
   }
 
@@ -55,7 +54,7 @@ public class BaseFeeOperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(eq(UInt256.fromBytes(Bytes32.leftPad(Bytes.ofUnsignedLong(5L)))));
+    verify(frame).pushStackItem(UInt256.fromBytes(Bytes32.leftPad(Bytes.ofUnsignedLong(5L))));
     assertSuccessResult(result);
   }
 
@@ -69,13 +68,13 @@ public class BaseFeeOperationTest {
 
   private void assertSuccessResult(final OperationResult result) {
     assertThat(result).isNotNull();
-    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getHaltReason()).isNull();
   }
 
   private void assertExceptionalHalt(
       final OperationResult result, final ExceptionalHaltReason reason) {
     assertThat(result).isNotNull();
-    assertThat(result.getHaltReason()).contains(reason);
+    assertThat(result.getHaltReason()).isEqualTo(reason);
   }
 
   private MessageFrame createMessageFrame(final long initialGas, final Optional<Wei> baseFee) {
