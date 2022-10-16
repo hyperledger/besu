@@ -351,7 +351,8 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v2
         with:
-          distribution: adopt
+          distribution: zulu
+          architecture: arm7
           java-version: 17
           cache: gradle
       - name: Cache classes
