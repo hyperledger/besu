@@ -294,10 +294,16 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final Hash blockHash) {
-    return getWorldState(blockHash)
-        .map(worldState -> worldState.get(address))
-        .map(Account::getNonce)
-        .orElse(0L);
+    try (final var worldState =
+        getWorldState(blockHash)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Missing worldstate for stateroot " + blockHash.toShortHexString()))) {
+      return Optional.of(worldState.get(address)).map(Account::getNonce).orElse(0L);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   /**
@@ -843,7 +849,7 @@ public class BlockchainQueries {
   public Optional<WorldState> getWorldState(final long blockNumber) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
-
+    // TODO: try-with-resources on callers.
     return getWorldState(blockHash);
   }
 
@@ -919,7 +925,16 @@ public class BlockchainQueries {
 
   private <T> Optional<T> fromWorldState(
       final Hash blockHash, final Function<WorldState, T> getter) {
-    return getWorldState(blockHash).map(getter);
+    try (var ws =
+        getWorldState(blockHash)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Missing worldstate for stateroot " + blockHash.toShortHexString()))) {
+      return Optional.of(ws).map(getter);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   private <T> Optional<T> fromAccount(

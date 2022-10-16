@@ -22,9 +22,9 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 /**
- * This class is similar to BonsaiSnapshotWorldState however it extends BonsaiPersistedWorldstate directly
- * such that it commits/perists directly to the transaction state. The primary difference here is that we
- * use RocksDBSnapshotTransaction (off-heap mem) to accumulate changes rather than
+ * This class is similar to BonsaiSnapshotWorldState however it extends BonsaiPersistedWorldstate
+ * directly such that it commits/perists directly to the transaction state. The primary difference
+ * here is that we use RocksDBSnapshotTransaction (off-heap mem) to accumulate changes rather than
  * BonsaiWorldStateUpdater (on-heap mem)
  */
 public class BonsaiSnapshotPersistedWorldState extends BonsaiPersistedWorldState
