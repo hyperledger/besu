@@ -90,7 +90,7 @@ public class IbftRound {
   }
 
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds);
+    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
     final BftExtraData extraData = bftExtraDataCodec.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
@@ -107,7 +107,7 @@ public class IbftRound {
     final Block blockToPublish;
     if (!bestBlockFromRoundChange.isPresent()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp);
+      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());

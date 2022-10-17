@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -66,6 +67,7 @@ public class EngineGetPayloadTest {
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
+  @Mock private MergeMiningCoordinator mergeMiningCoordinator;
 
   @Mock private EngineCallListener engineCallListener;
 
@@ -73,7 +75,9 @@ public class EngineGetPayloadTest {
   public void before() {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlock));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    this.method = new EngineGetPayload(vertx, protocolContext, factory, engineCallListener);
+    this.method =
+        new EngineGetPayload(
+            vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
   }
 
   @Test

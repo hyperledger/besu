@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
 import java.util.List;
@@ -239,6 +240,59 @@ public class MainnetBlockValidatorTest {
               @Override
               public boolean isSuccessful() {
                 return true;
+              }
+            });
+    when(blockBodyValidator.validateBody(
+            eq(protocolContext),
+            eq(badBlock),
+            any(),
+            any(),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
+        .thenReturn(true);
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
+    mainnetBlockValidator.validateAndProcessBlock(
+        protocolContext,
+        badBlock,
+        HeaderValidationMode.DETACHED_ONLY,
+        HeaderValidationMode.DETACHED_ONLY);
+    assertThat(badBlockManager.getBadBlocks()).isEmpty();
+  }
+
+  @Test
+  public void shouldNotCacheWhenInternalError() {
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
+    when(blockHeaderValidator.validateHeader(
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
+        .thenReturn(true);
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
+        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
+        .thenReturn(
+            new BlockProcessor.Result() {
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
+              @SuppressWarnings("unchecked")
+              @Override
+              public List<TransactionReceipt> getPrivateReceipts() {
+                return Collections.EMPTY_LIST;
+              }
+
+              @Override
+              public boolean isSuccessful() {
+                return false;
+              }
+
+              @Override
+              public Optional<Throwable> causedBy() {
+                return Optional.of(new StorageException("database bedlam"));
               }
             });
     when(blockBodyValidator.validateBody(
