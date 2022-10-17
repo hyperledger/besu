@@ -11,7 +11,7 @@
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
-- Do not add static node to maintained connection list if local node is not yet ready.
+- Initiate connection to maintained peers soon after startup.
 
 ### Download Links
 
