@@ -92,7 +92,8 @@ public class EVM {
   // name of performance. This is one of the hottest sections of code.
   //
   // Please benchmark before refactoring.
-  public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
+  public void runToHalt(final MessageFrame frame, final OperationTracer tracing) {
+    var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
@@ -107,13 +108,15 @@ public class EVM {
         currentOperation = endOfScriptStop;
       }
       frame.setCurrentOperation(currentOperation);
-      operationTracer.tracePreExecution(frame);
+      if (operationTracer != null) {
+        operationTracer.tracePreExecution(frame);
+      }
 
       OperationResult result;
       try {
 
         switch (opcode) {
-            //case 0x00: // STOP
+            // case 0x00: // STOP
             //  result = StopOperation.staticOperation(frame);
             //  break;
           case 0x01: // ADD
@@ -122,25 +125,25 @@ public class EVM {
           case 0x02: // MUL
             result = MulOperation.staticOperation(frame);
             break;
-            //case 0x03: // SUB
+            // case 0x03: // SUB
             //  result = SubOperation.staticOperation(frame);
             //  break;
-            //case 0x04: // DIV
+            // case 0x04: // DIV
             //  result = DivOperation.staticOperation(frame);
             //  break;
-            //case 0x05: // SDIV
+            // case 0x05: // SDIV
             //  result = SDivOperation.staticOperation(frame);
             //  break;
-            //case 0x06: // MOD
+            // case 0x06: // MOD
             //  result = ModOperation.staticOperation(frame);
             //  break;
           case 0x07: // SMOD
             result = SModOperation.staticOperation(frame);
             break;
-            //case 0x08: // ADDMOD
+            // case 0x08: // ADDMOD
             //  result = AddModOperation.staticOperation(frame);
             //  break;
-            //case 0x09: // MULMOD
+            // case 0x09: // MULMOD
             //  result = MulModOperation.staticOperation(frame);
             //  break;
             // case 0x0a: //EXP requires gasCalculator access, so it is skipped
@@ -159,10 +162,10 @@ public class EVM {
           case 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
-            //case 0x10: // LT
+            // case 0x10: // LT
             //  result = LtOperation.staticOperation(frame);
             //  break;
-            //case 0x11: // GT
+            // case 0x11: // GT
             //  result = GtOperation.staticOperation(frame);
             //  break;
           case 0x12: // SLT
@@ -281,7 +284,9 @@ public class EVM {
       } catch (final UnderflowException ue) {
         result = UNDERFLOW_RESPONSE;
       }
-      operationTracer.tracePostExecution(frame, result);
+      if (operationTracer != null) {
+        operationTracer.tracePostExecution(frame, result);
+      }
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
