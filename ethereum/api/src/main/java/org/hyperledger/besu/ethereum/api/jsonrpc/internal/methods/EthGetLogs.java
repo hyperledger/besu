@@ -69,8 +69,19 @@ public class EthGetLogs implements JsonRpcMethod {
                   final long fromBlockNumber;
                   final long toBlockNumber;
                   try {
-                    fromBlockNumber = filter.getFromBlock().getBlockNumber(blockchain);
-                    toBlockNumber = filter.getToBlock().getBlockNumber(blockchain);
+                    fromBlockNumber =
+                        filter
+                            .getFromBlock()
+                            .getBlockNumber(blockchain)
+                            .orElseThrow(
+                                () ->
+                                    new Exception("fromBlock not found: " + filter.getFromBlock()));
+                    toBlockNumber =
+                        filter
+                            .getToBlock()
+                            .getBlockNumber(blockchain)
+                            .orElseThrow(
+                                () -> new Exception("toBlock not found: " + filter.getToBlock()));
                   } catch (final Exception e) {
                     ex.set(e);
                     return Collections.emptyList();
