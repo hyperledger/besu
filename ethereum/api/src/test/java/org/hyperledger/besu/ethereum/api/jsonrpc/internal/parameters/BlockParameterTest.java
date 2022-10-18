@@ -115,6 +115,30 @@ public class BlockParameterTest {
   }
 
   @Test
+  public void upperCaseStringShouldBeHandled() {
+    final BlockParameter blockParameter = new BlockParameter("LATEST");
+    assertThat(blockParameter.getNumber()).isEmpty();
+    assertThat(blockParameter.isLatest()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isNumeric()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
+  public void mixedCaseStringShouldBeHandled() {
+    final BlockParameter blockParameter = new BlockParameter("lATest");
+    assertThat(blockParameter.getNumber()).isEmpty();
+    assertThat(blockParameter.isLatest()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isNumeric()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
   public void invalidValueShouldThrowException() {
     assertThatThrownBy(() -> new BlockParameter("invalid"))
         .isInstanceOf(NumberFormatException.class)

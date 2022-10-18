@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -70,8 +69,8 @@ public class EthGetLogs implements JsonRpcMethod {
                   final long fromBlockNumber;
                   final long toBlockNumber;
                   try {
-                    fromBlockNumber = interpretBlockParam(filter.getFromBlock());
-                    toBlockNumber = interpretBlockParam(filter.getToBlock());
+                    fromBlockNumber = filter.getFromBlock().getBlockNumber(blockchain);
+                    toBlockNumber = filter.getToBlock().getBlockNumber(blockchain);
                   } catch (final Exception e) {
                     ex.set(e);
                     return Collections.emptyList();
@@ -92,27 +91,5 @@ public class EthGetLogs implements JsonRpcMethod {
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));
-  }
-
-  private long interpretBlockParam(final BlockParameter block) throws Exception {
-    if (block.isFinalized()) {
-      return blockchain
-          .finalizedBlockHeader()
-          .orElseThrow(() -> new Exception("Finalized block not found."))
-          .getNumber();
-    } else if (block.isLatest()) {
-      return blockchain.headBlockNumber();
-    } else if (block.isPending()) {
-      // Pending not implemented, returns latest
-      return blockchain.headBlockNumber();
-    } else if (block.isSafe()) {
-      return blockchain
-          .safeBlockHeader()
-          .orElseThrow(() -> new Exception("Safe block not found."))
-          .getNumber();
-    } else {
-      // Alternate cases (numeric input or "earliest")
-      return block.getNumber().get();
-    }
   }
 }

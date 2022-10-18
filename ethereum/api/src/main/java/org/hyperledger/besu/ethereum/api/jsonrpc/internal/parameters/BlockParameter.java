@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Objects;
@@ -97,6 +98,28 @@ public class BlockParameter {
 
   public boolean isNumeric() {
     return this.type == BlockParameterType.NUMERIC;
+  }
+
+  public long getBlockNumber(final BlockchainQueries blockchain) throws Exception {
+    if (this.isFinalized()) {
+      return blockchain
+          .finalizedBlockHeader()
+          .orElseThrow(() -> new Exception("Finalized block not found."))
+          .getNumber();
+    } else if (this.isLatest()) {
+      return blockchain.headBlockNumber();
+    } else if (this.isPending()) {
+      // Pending not implemented, returns latest
+      return blockchain.headBlockNumber();
+    } else if (this.isSafe()) {
+      return blockchain
+          .safeBlockHeader()
+          .orElseThrow(() -> new Exception("Safe block not found."))
+          .getNumber();
+    } else {
+      // Alternate cases (numeric input or "earliest")
+      return this.getNumber().get();
+    }
   }
 
   @Override

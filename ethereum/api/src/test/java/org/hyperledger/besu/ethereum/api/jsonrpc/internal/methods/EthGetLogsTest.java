@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -228,7 +229,7 @@ public class EthGetLogsTest {
   public void shouldQuerySafeToFinalized() {
     final long finalizedBlockNumber = 50L;
     final long safeBlockNumber = 25L;
-    final JsonRpcRequestContext request = buildRequest("safe", "Finalized");
+    final JsonRpcRequestContext request = buildRequest("safe", "finalized");
 
     final BlockHeader finalizedBlockHeader = mock(BlockHeader.class);
     final BlockHeader safeBlockHeader = mock(BlockHeader.class);
@@ -245,6 +246,8 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries)
         .matchingLogs(eq(safeBlockNumber), eq(finalizedBlockNumber), any(), any());
+    verify(blockchainQueries, times(1)).finalizedBlockHeader();
+    verify(blockchainQueries, times(1)).safeBlockHeader();
     verify(blockchainQueries, never()).headBlockNumber();
   }
 
