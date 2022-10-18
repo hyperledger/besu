@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -205,7 +206,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     // put the empty block in first
     final Block emptyBlock =
-        mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp);
+        mergeBlockCreator
+            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp)
+            .getBlock();
 
     Result result = validateBlock(emptyBlock);
     if (result.blockProcessingOutputs.isPresent()) {
@@ -244,7 +247,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator) {
 
-    final Supplier<Block> blockCreator =
+    final Supplier<BlockCreationResult> blockCreator =
         () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp);
 
     LOG.debug(
@@ -274,7 +277,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private Void retryBlockCreationUntilUseful(
-      final PayloadIdentifier payloadIdentifier, final Supplier<Block> blockCreator) {
+      final PayloadIdentifier payloadIdentifier, final Supplier<BlockCreationResult> blockCreator) {
 
     while (!isBlockCreationCancelled(payloadIdentifier)) {
       try {
@@ -299,11 +302,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private void recoverableBlockCreation(
       final PayloadIdentifier payloadIdentifier,
-      final Supplier<Block> blockCreator,
+      final Supplier<BlockCreationResult> blockCreator,
       final long startedAt) {
 
     try {
-      evaluateNewBlock(blockCreator.get(), payloadIdentifier, startedAt);
+      evaluateNewBlock(blockCreator.get().getBlock(), payloadIdentifier, startedAt);
     } catch (final Throwable throwable) {
       if (canRetryBlockCreation(throwable) && !isBlockCreationCancelled(payloadIdentifier)) {
         debugLambda(

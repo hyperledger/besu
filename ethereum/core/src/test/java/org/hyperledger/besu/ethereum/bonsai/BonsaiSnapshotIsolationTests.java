@@ -336,7 +336,8 @@ public class BonsaiSnapshotIsolationTests {
 
   private Block forTransactions(final List<Transaction> transactions, final BlockHeader forHeader) {
     return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, sorter)
-        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis());
+        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
+        .getBlock();
   }
 
   private BlockProcessor.Result executeBlock(final MutableWorldState ws, final Block block) {

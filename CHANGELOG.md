@@ -3,6 +3,9 @@
 ### Breaking Changes
 - Version 22.10.0 will require Java 17 to build and run.
 
+### Additions and Improvements
+- Block creation now returns `BlockCreationResult` which contains the new `Block` and `TransactionSelectionResults`.
+
 ## 22.10.0-RC2
 
 ### Breaking Changes
