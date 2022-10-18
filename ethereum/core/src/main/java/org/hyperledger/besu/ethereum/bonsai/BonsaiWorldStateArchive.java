@@ -33,13 +33,13 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -54,33 +54,48 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   private final TrieLogManager trieLogManager;
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private final boolean useSnapshots;
 
   public BonsaiWorldStateArchive(final StorageProvider provider, final Blockchain blockchain) {
     this(
         (BonsaiWorldStateKeyValueStorage)
             provider.createWorldStateStorage(DataStorageFormat.BONSAI),
         blockchain,
-        Optional.empty());
+        Optional.empty(),
+        provider.isWorldStateSnappable());
   }
 
   public BonsaiWorldStateArchive(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad) {
+    // overload while snapshots are an experimental option:
+    this(worldStateStorage, blockchain, maxLayersToLoad, false);
+  }
+
+  public BonsaiWorldStateArchive(
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final Blockchain blockchain,
+      final Optional<Long> maxLayersToLoad,
+      final boolean useSnapshots) {
     this(
         new TrieLogManager(blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
         worldStateStorage,
-        blockchain);
+        blockchain,
+        useSnapshots);
   }
 
+  @VisibleForTesting
   BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final boolean useSnapshots) {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
+    this.useSnapshots = useSnapshots;
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
 
@@ -140,8 +155,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                 return true;
               })
           .map(BlockHeader::getHash)
-          .flatMap(
-              snapshotOrLayeredWorldState(worldStateStorage instanceof SnappableKeyValueStorage))
+          // TODO: plumb --Xuse-bonsai-snapshots in here rather than instanceof.
+          .flatMap(snapshotOrLayeredWorldState(useSnapshots))
           .map(MutableWorldState.class::cast);
     } else {
       return getMutable(rootHash, blockHash);

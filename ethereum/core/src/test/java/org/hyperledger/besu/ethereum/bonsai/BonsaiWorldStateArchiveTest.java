@@ -157,7 +157,8 @@ public class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateArchive(
                 new TrieLogManager(blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
-                blockchain));
+                blockchain,
+                false));
 
     var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
     var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
@@ -200,7 +201,8 @@ public class BonsaiWorldStateArchiveTest {
             new BonsaiWorldStateArchive(
                 new TrieLogManager(blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
-                blockchain));
+                blockchain,
+                false));
     var worldState = (BonsaiPersistedWorldState) bonsaiWorldStateArchive.getMutable();
     var updater = spy(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState));
     when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);

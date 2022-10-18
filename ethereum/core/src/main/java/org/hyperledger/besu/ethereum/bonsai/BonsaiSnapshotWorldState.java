@@ -23,7 +23,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 /**
  * This class takes a snapshot of the worldstate as the basis of a mutable worldstate. It is able to
- * commit/perist as a trielog layer only. This is useful for async blockchain opperations like block
+ * commit/perist as a trielog layer only. This is useful for async blockchain operations like block
  * creation and/or point-in-time queries since the snapshot worldstate is fully isolated from the
  * main BonsaiPersistedWorldState.
  */
