@@ -39,6 +39,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -74,10 +75,49 @@ public class BlockTransactionSelector {
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
 
+  public static class TransactionValidationResult {
+    private final Transaction transaction;
+    private final ValidationResult<TransactionInvalidReason> validationResult;
+
+    public TransactionValidationResult(
+        final Transaction transaction,
+        final ValidationResult<TransactionInvalidReason> validationResult) {
+      this.transaction = transaction;
+      this.validationResult = validationResult;
+    }
+
+    public Transaction getTransaction() {
+      return transaction;
+    }
+
+    public ValidationResult<TransactionInvalidReason> getValidationResult() {
+      return validationResult;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      TransactionValidationResult that = (TransactionValidationResult) o;
+      return Objects.equals(transaction, that.transaction)
+          && Objects.equals(validationResult, that.validationResult);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(transaction, validationResult);
+    }
+  }
+
   public static class TransactionSelectionResults {
 
     private final List<Transaction> transactions = Lists.newArrayList();
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
+    private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
 
     private void update(
@@ -93,6 +133,12 @@ public class BlockTransactionSelector {
           () -> cumulativeGasUsed);
     }
 
+    private void updateWithInvalidTransaction(
+        final Transaction transaction,
+        final ValidationResult<TransactionInvalidReason> validationResult) {
+      invalidTransactions.add(new TransactionValidationResult(transaction, validationResult));
+    }
+
     public List<Transaction> getTransactions() {
       return transactions;
     }
@@ -103,6 +149,30 @@ public class BlockTransactionSelector {
 
     public long getCumulativeGasUsed() {
       return cumulativeGasUsed;
+    }
+
+    public List<TransactionValidationResult> getInvalidTransactions() {
+      return invalidTransactions;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      TransactionSelectionResults that = (TransactionSelectionResults) o;
+      return cumulativeGasUsed == that.cumulativeGasUsed
+          && transactions.equals(that.transactions)
+          && receipts.equals(that.receipts)
+          && invalidTransactions.equals(that.invalidTransactions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(transactions, receipts, invalidTransactions, cumulativeGasUsed);
     }
 
     public String toTraceLog() {
@@ -162,7 +232,7 @@ public class BlockTransactionSelector {
     traceLambda(
         LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
     pendingTransactions.selectTransactions(
-        pendingTransaction -> evaluateTransaction(pendingTransaction));
+        pendingTransaction -> evaluateTransaction(pendingTransaction, false));
     traceLambda(
         LOG, "Transaction selection result result {}", transactionSelectionResult::toTraceLog);
     return transactionSelectionResult;
@@ -175,7 +245,7 @@ public class BlockTransactionSelector {
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
-    transactions.forEach(this::evaluateTransaction);
+    transactions.forEach(transaction -> evaluateTransaction(transaction, true));
     return transactionSelectionResult;
   }
 
@@ -188,7 +258,8 @@ public class BlockTransactionSelector {
    * the space remaining in the block.
    *
    */
-  private TransactionSelectionResult evaluateTransaction(final Transaction transaction) {
+  private TransactionSelectionResult evaluateTransaction(
+      final Transaction transaction, final boolean reportFutureNonceTransactionsAsInvalid) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
     }
@@ -260,6 +331,11 @@ public class BlockTransactionSelector {
       traceLambda(LOG, "Selected {} for block creation", transaction::toTraceLog);
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
+      final var isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
+      if (!isIncorrectNonce || reportFutureNonceTransactionsAsInvalid) {
+        transactionSelectionResult.updateWithInvalidTransaction(
+            transaction, effectiveResult.getValidationResult());
+      }
       return transactionSelectionResultForInvalidResult(
           transaction, effectiveResult.getValidationResult());
     }
@@ -270,9 +346,7 @@ public class BlockTransactionSelector {
       final Transaction transaction,
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
     // If the transaction has an incorrect nonce, leave it in the pool and continue
-    if (invalidReasonValidationResult
-        .getInvalidReason()
-        .equals(TransactionInvalidReason.INCORRECT_NONCE)) {
+    if (isIncorrectNonce(invalidReasonValidationResult)) {
       traceLambda(
           LOG,
           "Incorrect nonce for transaction {} keeping it in the pool",
@@ -333,6 +407,10 @@ public class BlockTransactionSelector {
         transactionReceiptFactory.create(
             transaction.getType(), result, worldState, cumulativeGasUsed),
         gasUsedByTransaction);
+  }
+
+  private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
+    return result.getInvalidReason().equals(TransactionInvalidReason.INCORRECT_NONCE);
   }
 
   private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(

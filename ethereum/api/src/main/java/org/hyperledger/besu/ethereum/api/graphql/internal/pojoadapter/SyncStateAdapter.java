@@ -37,12 +37,4 @@ public class SyncStateAdapter {
   public Optional<Long> getHighestBlock() {
     return Optional.of(syncStatus.getHighestBlock());
   }
-
-  public Optional<Long> getPulledStates() {
-    return syncStatus.getPulledStates();
-  }
-
-  public Optional<Long> getKnownStates() {
-    return syncStatus.getKnownStates();
-  }
 }

@@ -6,32 +6,33 @@
 
 <!-- besu-maintainers group has maintainer access to besu repo -->
 
-| Name             | Github           | LFID             |
-| ---------------- | ---------------- | ---------------- |
-| Adrian Sutton    | ajsutton         | ajsutton         |
-| Antony Denyer    | antonydenyer     | antonydenyer     |
-| Antoine Toulme   | atoulme          | atoulme          |
-| Byron Gravenorst | bgravenorst      | bgravenorst      |
-| Daniel Lehrner   | daniellehrner    | daniellehrner    |
-| Diego López León | diega            | diega            |
-| Fabio Di Fabio   | fab-10           | fab-10           |
-| Frank Li         | frankisawesome   | frankliawesome   |
+| Name              | Github          | LFID            |
+|-------------------|-----------------|-----------------|
+| Ameziane Hamlat   | ahamlat         | ahamlat         |
+| Adrian Sutton     | ajsutton        | ajsutton        |
+| Antony Denyer     | antonydenyer    | antonydenyer    |
+| Antoine Toulme    | atoulme         | atoulme         |
+| Byron Gravenorst  | bgravenorst     | bgravenorst     |
+| Daniel Lehrner    | daniellehrner   | daniellehrner   |
+| Diego López León  | diega           | diega           |
+| Fabio Di Fabio    | fab-10          | fab-10          |
+| Frank Li          | frankisawesome  | frankliawesome  |
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
-| Gary Schulte     | garyschulte      | GarySchulte      | 
-| Jiri Peinlich    | gezero           | JiriPeinlich     |
-| Justin Florentine| jflo             | RoboCopsGoneMad  |
-| Jason Frame      | jframe           | jframe           |
-| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
-| Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
-| Sally MacFarlane | macfarla         | macfarla         |
-| Mark Terry       | mark-terry       | m.terry          |
-| Karim Taam       | matkt            | matkt            |
-| Meredith Baxter  | mbaxter          | mbaxter          |
-| Nicolas Massart  | NicolasMassart   | NicolasMassart   |
-| Stefan Pingel    | pinges           | pinges           |
-| Danno Ferrin     | shemnon          | shemnon          |
-| Simon Dudley     | siladu           | siladu           |
-| Usman Saleem     | usmansaleem      | usmansaleem      |
+| Gary Schulte      | garyschulte     | GarySchulte     | 
+| Jiri Peinlich     | gezero          | JiriPeinlich    |
+| Justin Florentine | jflo            | RoboCopsGoneMad |
+| Jason Frame       | jframe          | jframe          |
+| Joshua Fernandes  | joshuafernandes | joshuafernandes |
+| Lucas Saldanha    | lucassaldanha   | lucassaldanha   |
+| Sally MacFarlane  | macfarla        | macfarla        |
+| Mark Terry        | mark-terry      | m.terry         |
+| Karim Taam        | matkt           | matkt           |
+| Meredith Baxter   | mbaxter         | mbaxter         |
+| Nicolas Massart   | NicolasMassart  | NicolasMassart  |
+| Stefan Pingel     | pinges          | pinges          |
+| Danno Ferrin      | shemnon         | shemnon         |
+| Simon Dudley      | siladu          | siladu          |
+| Usman Saleem      | usmansaleem     | usmansaleem     |
 
 
 ## Emeritus Maintainers

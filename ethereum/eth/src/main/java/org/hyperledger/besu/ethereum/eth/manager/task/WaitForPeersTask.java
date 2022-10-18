@@ -45,7 +45,7 @@ public class WaitForPeersTask extends AbstractEthTask<Void> {
   protected void executeTask() {
     final EthPeers ethPeers = ethContext.getEthPeers();
     if (ethPeers.peerCount() >= targetPeerCount) {
-      // We already hit our target
+      LOG.debug("We already hit our target of at least {} peers connected", targetPeerCount);
       result.complete(null);
       return;
     }

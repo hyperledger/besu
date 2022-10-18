@@ -113,6 +113,11 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("graphql_tooComplex");
     specs.add("graphql_tooComplexSchema");
 
+    specs.add("graphql_variable_address");
+    specs.add("graphql_variable_bytes");
+    specs.add("graphql_variable_bytes32");
+    specs.add("graphql_variable_long");
+
     return specs;
   }
 
@@ -128,7 +133,13 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
             EthGraphQLHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
-    final RequestBody requestBody = RequestBody.create(rawRequestBody, GRAPHQL);
+    final String rawVariables = spec.getString("variables");
+    final RequestBody requestBody =
+        rawVariables == null
+            ? RequestBody.create(rawRequestBody, GRAPHQL)
+            : RequestBody.create(
+                "{ \"query\":\"" + rawRequestBody + "\", \"variables\": " + rawVariables + "}",
+                JSON);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
     importBlocks(1, BLOCKS.size());

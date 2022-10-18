@@ -1,4 +1,66 @@
 # Changelog
+## 22.10.0
+### Breaking Changes
+- Version 22.10.0 will require Java 17 to build and run.
+
+### Additions and Improvements
+- Block creation now returns `BlockCreationResult` which contains the new `Block` and `TransactionSelectionResults`.
+
+## 22.10.0-RC2
+
+### Breaking Changes
+- Flexible Privacy Groups (early access) support to Tessera's EC encryptor (contracts modified) [#4282](https://github.com/hyperledger/besu/pull/4282)
+  * Before this change, the `bytes32` type was used for the enclave public keys, just supporting encryptors with public keys of that length (like the default NaCl)
+  * For the EC encryptor, the encoded public key length is 91
+- `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3)
+- `--Xmerge-support` option remove (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
+
+### Additions and Improvements
+- Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
+- Increased level of detail in JSON-RPC parameter error log messages [#4510](https://github.com/hyperledger/besu/pull/4510)
+- New unstable configuration options to set the maximum time, in milliseconds, a PoS block creation jobs is allowed to run [#4519](https://github.com/hyperledger/besu/pull/4519)
+- Tune EthScheduler thread pools to avoid to recreate too many threads [#4529](https://github.com/hyperledger/besu/pull/4529)
+- RocksDB snapshot based worldstate and plugin-api addition of Snapshot interfaces [#4409](https://github.com/hyperledger/besu/pull/4409)
+- Continuously try to build better block proposals until timeout or GetPayload is called [#4516](https://github.com/hyperledger/besu/pull/4516)
+
+### Bug Fixes
+- Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
+- Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
+- Avoid a cyclic reference while printing EngineExchangeTransitionConfigurationParameter [#4357](https://github.com/hyperledger/besu/pull/4357)
+- Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
+- In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
+
+### Download Links
+
+
+## 22.10.0-RC1
+
+### Additions and Improvements
+- Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
+- Refactor unverified forkchoice event [#4487](https://github.com/hyperledger/besu/pull/4487)
+- Improve UX of initial sync logs, pushing not relevant logs to debug level [#4486](https://github.com/hyperledger/besu/pull/4486)
+- Optimize pivot block selector on PoS networks [#4488](https://github.com/hyperledger/besu/pull/4488)
+- Optimize Snap sync on PoS networks [#4462](https://github.com/hyperledger/besu/pull/4462)
+
+### Bug Fixes
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.zip / sha256: 16fd47533aa2986491143e5f4a052c0aa4866ebfa415abbf3ca868e4fbeac6ce
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.tar.gz / sha256: 48fd3480e4380580ed9187302be987e9eca2b445935ec6a509e7269898d8a4a8
+###
+
+## 22.7.6
+Hotfix release of the 22.7.x series to address [#4495](https://github.com/hyperledger/besu/issues/4495) which could result in failed block proposals on merge networks.
+
+### Additions and Improvements
+- Bring GraphQL into compliance with execution-api specs [#4112](https://github.com/hyperledger/besu/pull/4112)
+
+### Bug Fixes
+- Corrects emission of blockadded events when rewinding during a re-org. [#4497](https://github.com/hyperledger/besu/issues/4497)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.6/besu-22.7.6.zip / sha256: ae05040027b96ba458a08cfee8577dafe1d85a3afce793f00f798cedb3ab547d
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.6/besu-22.7.6.tar.gz / sha256: 9e538852f16fd39b884c4c342beaad813e33ab24890634c01eee3d37dc1da893
 
 ## 22.7.5
 
@@ -8,10 +70,14 @@
 - Add Mainnet to merged networks [#4463](https://github.com/hyperledger/besu/pull/4463)
 
 ### Bug Fixes
+- Fixed logIndex value returned by eth_getLogs RPC call [#4355](https://github.com/hyperledger/besu/pull/4355)
+
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.zip / sha256: b5d7b255b249beea0f46ec397122823c75f2373083a71a9f7b4c98b2b0f94997
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.5/besu-22.7.5.tar.gz / sha256: 91e3cbc16c46c53f7bf55bdd968553d0fb4087bff1e244cb03ac175ac54cf718
+
 
 ## 22.7.4
-
 
 ### Bug Fixes
 - Remove records that track transactions by sender when they are empty to same memory in the transaction pool [#4415](https://github.com/hyperledger/besu/pull/4415)
@@ -20,7 +86,6 @@
 ### Download Links
 - https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.zip / sha256: 4f2a0c20bee7f266ec1dcb45fa90ae1ca42f4b22e9b21a601b7705357259aea9
 - https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.4/besu-22.7.4.tar.gz / sha256: a60efc4d515ac94710bbc6d61a24f409b03fcfc02323bee2a2d75c883fc99dce
-
 
 ## 22.7.3
 

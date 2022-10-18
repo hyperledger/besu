@@ -38,8 +38,12 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class MonitoredExecutors {
 
   public static ExecutorService newFixedThreadPool(
-      final String name, final int workerCount, final MetricsSystem metricsSystem) {
-    return newFixedThreadPool(name, 0, workerCount, new LinkedBlockingQueue<>(), metricsSystem);
+      final String name,
+      final int minWorkerCount,
+      final int workerCount,
+      final MetricsSystem metricsSystem) {
+    return newFixedThreadPool(
+        name, minWorkerCount, workerCount, new LinkedBlockingQueue<>(), metricsSystem);
   }
 
   public static ExecutorService newBoundedThreadPool(
@@ -47,7 +51,7 @@ public class MonitoredExecutors {
       final int workerCount,
       final int queueSize,
       final MetricsSystem metricsSystem) {
-    return newBoundedThreadPool(name, 0, workerCount, queueSize, metricsSystem);
+    return newBoundedThreadPool(name, 1, workerCount, queueSize, metricsSystem);
   }
 
   public static ExecutorService newBoundedThreadPool(
@@ -77,8 +81,8 @@ public class MonitoredExecutors {
             new ThreadPoolExecutor(
                 minWorkerCount,
                 maxWorkerCount,
-                0L,
-                TimeUnit.MILLISECONDS,
+                60L,
+                TimeUnit.SECONDS,
                 workingQueue,
                 threadFactory,
                 rejectedExecutionHandler));
@@ -86,12 +90,17 @@ public class MonitoredExecutors {
 
   public static ExecutorService newCachedThreadPool(
       final String name, final MetricsSystem metricsSystem) {
+    return newCachedThreadPool(name, 0, metricsSystem);
+  }
+
+  public static ExecutorService newCachedThreadPool(
+      final String name, final int corePoolSize, final MetricsSystem metricsSystem) {
     return newMonitoredExecutor(
         name,
         metricsSystem,
         (rejectedExecutionHandler, threadFactory) ->
             new ThreadPoolExecutor(
-                0,
+                corePoolSize,
                 Integer.MAX_VALUE,
                 60L,
                 TimeUnit.SECONDS,

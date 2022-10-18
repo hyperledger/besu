@@ -117,11 +117,10 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(
-          "Downloading world state from peers for block {} ({}). State root {} pending request "
-              + snapTaskCollection.size(),
-          header.getNumber(),
-          header.getHash(),
-          stateRoot);
+          "Downloading world state from peers for block {}. State root {} pending request {}",
+          header.toLogString(),
+          stateRoot,
+          snapTaskCollection.size());
 
       final SnapsyncMetricsManager snapsyncMetricsManager =
           new SnapsyncMetricsManager(metricsSystem);
@@ -149,6 +148,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final DynamicPivotBlockManager dynamicPivotBlockManager =
           new DynamicPivotBlockManager(
+              ethContext,
               fastSyncActions,
               snapSyncState,
               snapSyncConfiguration.getPivotBlockWindowValidity(),

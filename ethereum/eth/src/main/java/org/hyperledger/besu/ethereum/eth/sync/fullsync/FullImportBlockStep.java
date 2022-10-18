@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -58,7 +59,9 @@ public class FullImportBlockStep implements Consumer<Block> {
     final String blockHash = block.getHash().toHexString();
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockNumber).getBlockImporter();
-    if (!importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED)) {
+    final BlockImportResult blockImportResult =
+        importer.importBlock(protocolContext, block, HeaderValidationMode.SKIP_DETACHED);
+    if (!blockImportResult.isImported()) {
       throw new InvalidBlockException("Failed to import block", blockNumber, block.getHash());
     }
     gasAccumulator += block.getHeader().getGasUsed();
