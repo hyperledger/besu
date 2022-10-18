@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class InvalidOperation extends AbstractOperation {
 
   public static final int OPCODE = 0xFE;
+  public static final OperationResult INVALID_RESULT =
+      new OperationResult(0, ExceptionalHaltReason.INVALID_OPERATION);
   protected final OperationResult invalidResult;
 
   public InvalidOperation(final GasCalculator gasCalculator) {

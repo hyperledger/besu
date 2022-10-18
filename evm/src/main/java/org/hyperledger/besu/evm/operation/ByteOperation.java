@@ -23,11 +23,13 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class ByteOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult byteSuccess = new OperationResult(3, null);
+
   public ByteOperation(final GasCalculator gasCalculator) {
     super(0x1A, "BYTE", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
-  private UInt256 getByte(final UInt256 seq, final UInt256 offset) {
+  private static UInt256 getByte(final UInt256 seq, final UInt256 offset) {
     if (!offset.fitsInt()) {
       return UInt256.ZERO;
     }
@@ -46,6 +48,10 @@ public class ByteOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -54,6 +60,6 @@ public class ByteOperation extends AbstractFixedCostOperation {
 
     frame.pushStackItem(result);
 
-    return successResponse;
+    return byteSuccess;
   }
 }

@@ -27,15 +27,30 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddOperation;
+import org.hyperledger.besu.evm.operation.AndOperation;
+import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
+import org.hyperledger.besu.evm.operation.IsZeroOperation;
+import org.hyperledger.besu.evm.operation.MulOperation;
+import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
+import org.hyperledger.besu.evm.operation.OrOperation;
+import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
+import org.hyperledger.besu.evm.operation.SGtOperation;
+import org.hyperledger.besu.evm.operation.SLtOperation;
+import org.hyperledger.besu.evm.operation.SModOperation;
+import org.hyperledger.besu.evm.operation.SarOperation;
+import org.hyperledger.besu.evm.operation.ShlOperation;
+import org.hyperledger.besu.evm.operation.ShrOperation;
+import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
+import org.hyperledger.besu.evm.operation.XorOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Objects;
@@ -143,10 +158,95 @@ public class EVM {
       try {
 
         switch (opcode) {
-          case 0x01:
+//          case 0x00: // STOP
+//            result = StopOperation.staticOperation(frame);
+//            break;
+          case 0x01: // ADD
             result = AddOperation.staticOperation(frame);
             break;
-          case 0x60:
+          case 0x02: // MUL
+            result = MulOperation.staticOperation(frame);
+            break;
+//          case 0x03: // SUB
+//            result = SubOperation.staticOperation(frame);
+//            break;
+//          case 0x04: // DIV
+//            result = DivOperation.staticOperation(frame);
+//            break;
+//          case 0x05: // SDIV
+//            result = SDivOperation.staticOperation(frame);
+//            break;
+//          case 0x06: // MOD
+//            result = ModOperation.staticOperation(frame);
+//            break;
+          case 0x07: // SMOD
+            result = SModOperation.staticOperation(frame);
+            break;
+//          case 0x08: // ADDMOD
+//            result = AddModOperation.staticOperation(frame);
+//            break;
+//          case 0x09: // MULMOD
+//            result = MulModOperation.staticOperation(frame);
+//            break;
+            // case 0x0a: //EXP requires gasCalculator access, so it is skipped
+          case 0x0b: // SIGNEXTEND
+            result = SignExtendOperation.staticOperation(frame);
+            break;
+          case 0x0c:
+            result = InvalidOperation.INVALID_RESULT;
+            break;
+          case 0x0d:
+            result = InvalidOperation.INVALID_RESULT;
+            break;
+          case 0x0e:
+            result = InvalidOperation.INVALID_RESULT;
+            break;
+          case 0x0f:
+            result = InvalidOperation.INVALID_RESULT;
+            break;
+//          case 0x10: // LT
+//            result = LtOperation.staticOperation(frame);
+//            break;
+//          case 0x11: // GT
+//            result = GtOperation.staticOperation(frame);
+//            break;
+          case 0x12: // SLT
+            result = SLtOperation.staticOperation(frame);
+            break;
+          case 0x13: // SGT
+            result = SGtOperation.staticOperation(frame);
+            break;
+          case 0x15: // ISZERO
+            result = IsZeroOperation.staticOperation(frame);
+            break;
+          case 0x16: // AND
+            result = AndOperation.staticOperation(frame);
+            break;
+          case 0x17: // OR
+            result = OrOperation.staticOperation(frame);
+            break;
+          case 0x18: // XOR
+            result = XorOperation.staticOperation(frame);
+            break;
+          case 0x19: // NOT
+            result = NotOperation.staticOperation(frame);
+            break;
+          case 0x1a: // BYTE
+            result = ByteOperation.staticOperation(frame);
+            break;
+          case 0x1b: // SHL
+            result = ShlOperation.staticOperation(frame);
+            break;
+          case 0x1c: // SHR
+            result = ShrOperation.staticOperation(frame);
+            break;
+          case 0x1d: // SAR
+            result = SarOperation.staticOperation(frame);
+            break;
+          case 0x50: // POP
+            result = PopOperation.staticOperation(frame);
+            break;
+          case 0x60: // PUSH1-32
           case 0x61:
           case 0x62:
           case 0x63:
@@ -180,7 +280,7 @@ public class EVM {
           case 0x7f:
             result = PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
             break;
-          case 0x80:
+          case 0x80: // DUP1-16
           case 0x81:
           case 0x82:
           case 0x83:
@@ -198,7 +298,7 @@ public class EVM {
           case 0x8f:
             result = DupOperation.staticOperation(frame, opcode - DupOperation.DUP_BASE);
             break;
-          case 0x90:
+          case 0x90: // SWAP1-16
           case 0x91:
           case 0x92:
           case 0x93:
@@ -216,7 +316,7 @@ public class EVM {
           case 0x9f:
             result = SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
             break;
-          default:
+          default: // unoptimized operations
             frame.setCurrentOperation(currentOperation);
             result = currentOperation.execute(frame, this);
             break;

@@ -120,6 +120,7 @@ allprojects {
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
     mavenCentral()
+    mavenLocal()
   }
 
   dependencies { errorprone 'com.google.errorprone:error_prone_core' }
@@ -261,8 +262,8 @@ allprojects {
   }
 
   javadoc {
-    options.addStringOption('Xdoclint:all', '-quiet')
-    options.addStringOption('Xwerror', '-html5')
+    //    options.addStringOption('Xdoclint:all', '-quiet')
+    //    options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
 
