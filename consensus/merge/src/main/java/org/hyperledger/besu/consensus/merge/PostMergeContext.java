@@ -215,7 +215,7 @@ public class PostMergeContext implements MergeContext {
               debugLambda(
                   LOG,
                   "New proposal for payloadId {} {} is better than the previous one {}",
-                  payloadId::toHexString,
+                  payloadId::toString,
                   () -> logBlockProposal(newBlock),
                   () -> logBlockProposal(currBestBlock));
               blocksInProgress.removeAll(
@@ -228,7 +228,7 @@ public class PostMergeContext implements MergeContext {
       debugLambda(
           LOG,
           "Current best proposal for payloadId {} {}",
-          payloadId::toHexString,
+          payloadId::toString,
           () -> retrieveBlockById(payloadId).map(bb -> logBlockProposal(bb)).orElse("N/A"));
     }
   }

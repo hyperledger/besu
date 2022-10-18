@@ -68,10 +68,7 @@ public class TransactionPendingResult implements TransactionResult {
   private final String publicKey;
   private final String raw;
   private final String to;
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String type;
-
   private final String value;
   private final String v;
   private final String r;
@@ -97,7 +94,7 @@ public class TransactionPendingResult implements TransactionResult {
     this.to = transaction.getTo().map(Address::toHexString).orElse(null);
     this.type =
         transactionType.equals(TransactionType.FRONTIER)
-            ? null
+            ? Quantity.create(0)
             : Quantity.create(transactionType.getSerializedType());
     this.value = Quantity.create(transaction.getValue());
     this.v = Quantity.create(transaction.getV());
