@@ -14,6 +14,9 @@
   * For the EC encryptor, the encoded public key length is 91
 - `--tx-pool-hashes-max-size` option removed (deprecated in 22.1.3)
 - `--Xmerge-support` option remove (deprecated in 22.4.2) [#4518](https://github.com/hyperledger/besu/pull/4518)
+- Breaking API changes in the `OperationTracer` interface to enable performance work.
+  * The `traceExecution` method has been replaced with `tracePreExecution` and `tracePostExecution` methods, called just before and just after operation execution. 
+  * See `DebugOperationTracer` and `StandardJsonTracer` for migration examples.
 
 ### Additions and Improvements
 - Improved RLP processing of zero-length string as 0x80 [#4283](https://github.com/hyperledger/besu/pull/4283) [#4388](https://github.com/hyperledger/besu/issues/4388)
@@ -22,6 +25,7 @@
 - Tune EthScheduler thread pools to avoid to recreate too many threads [#4529](https://github.com/hyperledger/besu/pull/4529)
 - RocksDB snapshot based worldstate and plugin-api addition of Snapshot interfaces [#4409](https://github.com/hyperledger/besu/pull/4409)
 - Continuously try to build better block proposals until timeout or GetPayload is called [#4516](https://github.com/hyperledger/besu/pull/4516)
+- EVM performance has increased 20%-100% depending on the particulars of the contract. [#4540](https://github.com/hyperledger/besu/pull/4540)
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
