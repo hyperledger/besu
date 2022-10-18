@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -22,12 +23,31 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BlockCreator {
-  Block createBlock(final long timestamp);
+  class BlockCreationResult {
+    private final Block block;
+    private final TransactionSelectionResults transactionSelectionResults;
 
-  Block createBlock(
+    public BlockCreationResult(
+        final Block block, final TransactionSelectionResults transactionSelectionResults) {
+      this.block = block;
+      this.transactionSelectionResults = transactionSelectionResults;
+    }
+
+    public Block getBlock() {
+      return block;
+    }
+
+    public TransactionSelectionResults getTransactionSelectionResults() {
+      return transactionSelectionResults;
+    }
+  }
+
+  BlockCreationResult createBlock(final long timestamp);
+
+  BlockCreationResult createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);
 
-  Block createBlock(
+  BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp);
