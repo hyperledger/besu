@@ -16,6 +16,7 @@ package org.hyperledger.besu.config;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -30,6 +31,10 @@ public class GenesisAllocation {
 
   public String getAddress() {
     return address;
+  }
+
+  public Optional<String> getPrivateKey() {
+    return Optional.ofNullable(JsonUtil.getString(data, "privatekey", null));
   }
 
   public String getBalance() {
