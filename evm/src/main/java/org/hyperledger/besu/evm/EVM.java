@@ -93,53 +93,6 @@ public class EVM {
   //
   // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
-    if (operationTracer == OperationTracer.NO_TRACING) {
-      runToHaltUntraced(frame);
-      return;
-    }
-
-    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    Operation[] operationArray = operations.getOperations();
-    while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
-      Operation currentOperation;
-      try {
-        int opcode = code[frame.getPC()] & 0xff;
-        currentOperation = operationArray[opcode];
-      } catch (ArrayIndexOutOfBoundsException aiiobe) {
-        currentOperation = endOfScriptStop;
-      }
-      frame.setCurrentOperation(currentOperation);
-      operationTracer.traceExecution(
-          frame,
-          () -> {
-            OperationResult result;
-            final Operation operation = frame.getCurrentOperation();
-            try {
-              result = operation.execute(frame, this);
-            } catch (final OverflowException oe) {
-              result = OVERFLOW_RESPONSE;
-            } catch (final UnderflowException ue) {
-              result = UNDERFLOW_RESPONSE;
-            }
-            final ExceptionalHaltReason haltReason = result.getHaltReason();
-            if (haltReason != null) {
-              LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
-              frame.setExceptionalHaltReason(Optional.of(haltReason));
-              frame.setState(State.EXCEPTIONAL_HALT);
-            }
-            frame.decrementRemainingGas(result.getGasCost());
-            if (frame.getState() == State.CODE_EXECUTING) {
-              final int currentPC = frame.getPC();
-              final int opSize = result.getPcIncrement();
-              frame.setPC(currentPC + opSize);
-            }
-
-            return result;
-          });
-    }
-  }
-
-  public void runToHaltUntraced(final MessageFrame frame) {
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
@@ -153,41 +106,43 @@ public class EVM {
         opcode = 0;
         currentOperation = endOfScriptStop;
       }
+      frame.setCurrentOperation(currentOperation);
+      operationTracer.tracePreExecution(frame);
 
       OperationResult result;
       try {
 
         switch (opcode) {
-//          case 0x00: // STOP
-//            result = StopOperation.staticOperation(frame);
-//            break;
+            //case 0x00: // STOP
+            //  result = StopOperation.staticOperation(frame);
+            //  break;
           case 0x01: // ADD
             result = AddOperation.staticOperation(frame);
             break;
           case 0x02: // MUL
             result = MulOperation.staticOperation(frame);
             break;
-//          case 0x03: // SUB
-//            result = SubOperation.staticOperation(frame);
-//            break;
-//          case 0x04: // DIV
-//            result = DivOperation.staticOperation(frame);
-//            break;
-//          case 0x05: // SDIV
-//            result = SDivOperation.staticOperation(frame);
-//            break;
-//          case 0x06: // MOD
-//            result = ModOperation.staticOperation(frame);
-//            break;
+            //case 0x03: // SUB
+            //  result = SubOperation.staticOperation(frame);
+            //  break;
+            //case 0x04: // DIV
+            //  result = DivOperation.staticOperation(frame);
+            //  break;
+            //case 0x05: // SDIV
+            //  result = SDivOperation.staticOperation(frame);
+            //  break;
+            //case 0x06: // MOD
+            //  result = ModOperation.staticOperation(frame);
+            //  break;
           case 0x07: // SMOD
             result = SModOperation.staticOperation(frame);
             break;
-//          case 0x08: // ADDMOD
-//            result = AddModOperation.staticOperation(frame);
-//            break;
-//          case 0x09: // MULMOD
-//            result = MulModOperation.staticOperation(frame);
-//            break;
+            //case 0x08: // ADDMOD
+            //  result = AddModOperation.staticOperation(frame);
+            //  break;
+            //case 0x09: // MULMOD
+            //  result = MulModOperation.staticOperation(frame);
+            //  break;
             // case 0x0a: //EXP requires gasCalculator access, so it is skipped
           case 0x0b: // SIGNEXTEND
             result = SignExtendOperation.staticOperation(frame);
@@ -204,12 +159,12 @@ public class EVM {
           case 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
-//          case 0x10: // LT
-//            result = LtOperation.staticOperation(frame);
-//            break;
-//          case 0x11: // GT
-//            result = GtOperation.staticOperation(frame);
-//            break;
+            //case 0x10: // LT
+            //  result = LtOperation.staticOperation(frame);
+            //  break;
+            //case 0x11: // GT
+            //  result = GtOperation.staticOperation(frame);
+            //  break;
           case 0x12: // SLT
             result = SLtOperation.staticOperation(frame);
             break;
@@ -326,6 +281,7 @@ public class EVM {
       } catch (final UnderflowException ue) {
         result = UNDERFLOW_RESPONSE;
       }
+      operationTracer.tracePostExecution(frame, result);
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);

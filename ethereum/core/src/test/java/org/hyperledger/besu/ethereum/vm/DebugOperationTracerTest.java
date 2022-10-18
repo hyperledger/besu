@@ -160,8 +160,8 @@ public class DebugOperationTracerTest {
 
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
-    tracer.traceExecution(
-        frame, () -> new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
+    tracer.tracePostExecution(
+        frame, new OperationResult(50L, ExceptionalHaltReason.INSUFFICIENT_GAS));
 
     final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
     assertThat(traceFrame.getExceptionalHaltReason())
@@ -175,7 +175,9 @@ public class DebugOperationTracerTest {
 
   private TraceFrame traceFrame(final MessageFrame frame, final TraceOptions traceOptions) {
     final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions);
-    tracer.traceExecution(frame, () -> anOperation.execute(frame, null));
+    tracer.tracePreExecution(frame);
+    OperationResult operationResult = anOperation.execute(frame, null);
+    tracer.tracePostExecution(frame, operationResult);
     return getOnlyTraceFrame(tracer);
   }
 

@@ -55,21 +55,25 @@ public class StandardJsonTracer implements OperationTracer {
 
   final Joiner commaJoiner = Joiner.on(',');
 
+  private List<String> preExecuteStack;
+
   @Override
-  public void traceExecution(
-      final MessageFrame messageFrame, final ExecuteOperation executeOperation) {
+  public void tracePreExecution(final MessageFrame messageFrame) {
+    preExecuteStack = new ArrayList<>(messageFrame.stackSize());
+    for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
+      preExecuteStack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
+    }
+  }
+
+  @Override
+  public void tracePostExecution(
+      final MessageFrame messageFrame, final Operation.OperationResult executeResult) {
     final Operation currentOp = messageFrame.getCurrentOperation();
     final int pc = messageFrame.getPC();
     final int opcode = currentOp.getOpcode();
     final String remainingGas = shortNumber(messageFrame.getRemainingGas());
-    final List<String> stack = new ArrayList<>(messageFrame.stackSize());
-    for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
-      stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
-    }
     final Bytes returnData = messageFrame.getReturnData();
     final int depth = messageFrame.getMessageStackDepth() + 1;
-
-    final Operation.OperationResult executeResult = executeOperation.execute();
 
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
@@ -87,7 +91,7 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"memory\":\"0x\",");
       sb.append("\"memSize\":").append(messageFrame.memoryByteSize()).append(",");
     }
-    sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
+    sb.append("\"stack\":[").append(commaJoiner.join(preExecuteStack)).append("],");
     sb.append("\"returnData\":")
         .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "null")
         .append(",");
