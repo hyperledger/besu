@@ -94,6 +94,11 @@ public class EthPeers {
         "pending_peer_requests_current",
         "Number of peer requests currently pending because peers are busy",
         pendingRequests::size);
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.ETHEREUM,
+        "peer_count",
+        "The current number of peers connected",
+        () -> (int) streamAvailablePeers().count());
   }
 
   public void registerConnection(

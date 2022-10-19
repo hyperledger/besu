@@ -52,6 +52,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -167,12 +168,28 @@ public final class DefaultP2PNetworkTest {
   }
 
   @Test
+  public void checkMaintainedConnectionPeers_doesNotConnectToSelf() {
+    final DefaultP2PNetwork network = network();
+    network.start();
+
+    final Optional<EnodeURL> maybeSelfEnode = network.getLocalEnode();
+    final Peer selfPeer = PeerTestHelper.createPeer(maybeSelfEnode.get());
+    maintainedPeers.add(selfPeer);
+
+    verify(rlpxAgent, times(0)).connect(selfPeer);
+
+    network.checkMaintainedConnectionPeers();
+    verify(rlpxAgent, times(0)).connect(selfPeer);
+  }
+
+  @Test
   public void checkMaintainedConnectionPeers_unconnectedPeer() {
     final DefaultP2PNetwork network = network();
     final Peer peer = PeerTestHelper.createPeer();
-    maintainedPeers.add(peer);
 
     network.start();
+
+    maintainedPeers.add(peer);
 
     verify(rlpxAgent, times(0)).connect(peer);
 
@@ -184,9 +201,10 @@ public final class DefaultP2PNetworkTest {
   public void checkMaintainedConnectionPeers_connectedPeer() {
     final DefaultP2PNetwork network = network();
     final Peer peer = PeerTestHelper.createPeer();
-    maintainedPeers.add(peer);
 
     network.start();
+
+    maintainedPeers.add(peer);
 
     // Don't connect to an already connected peer
     final CompletableFuture<PeerConnection> connectionFuture =
@@ -200,9 +218,10 @@ public final class DefaultP2PNetworkTest {
   public void checkMaintainedConnectionPeers_connectingPeer() {
     final DefaultP2PNetwork network = network();
     final Peer peer = PeerTestHelper.createPeer();
-    maintainedPeers.add(peer);
 
     network.start();
+
+    maintainedPeers.add(peer);
 
     // Don't connect when connection is already pending.
     final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();

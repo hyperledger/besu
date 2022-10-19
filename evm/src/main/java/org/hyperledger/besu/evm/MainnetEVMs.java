@@ -133,6 +133,9 @@ public abstract class MainnetEVMs {
 
   public static void registerFrontierOperations(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
+    for (int i = 0; i < 255; i++) {
+      registry.put(new InvalidOperation(i, gasCalculator));
+    }
     registry.put(new AddOperation(gasCalculator));
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
