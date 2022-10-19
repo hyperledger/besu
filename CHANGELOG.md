@@ -23,8 +23,8 @@
 - Tune EthScheduler thread pools to avoid recreating too many threads [#4529](https://github.com/hyperledger/besu/pull/4529)
 - RocksDB snapshot based worldstate and plugin-api addition of Snapshot interfaces [#4409](https://github.com/hyperledger/besu/pull/4409)
 - Continuously try to build better block proposals until timeout or GetPayload is called [#4516](https://github.com/hyperledger/besu/pull/4516)
+- Upgrade RocksDB database version from 6.29.5 to 7.6.0 [#4517](https://github.com/hyperledger/besu/pull/4517)
 - Avoid connecting to self when using static-nodes [#4521](https://github.com/hyperledger/besu/pull/4521)
-
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
