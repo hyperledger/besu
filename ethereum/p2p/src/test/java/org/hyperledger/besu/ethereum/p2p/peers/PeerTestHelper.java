@@ -27,6 +27,10 @@ public class PeerTestHelper {
     return DefaultPeer.fromEnodeURL(enode());
   }
 
+  public static Peer createPeer(final EnodeURL enodeURL) {
+    return DefaultPeer.fromEnodeURL(enodeURL);
+  }
+
   public static Peer createPeer(final Bytes nodeId) {
     return DefaultPeer.fromEnodeURL(enodeBuilder().nodeId(nodeId).build());
   }
