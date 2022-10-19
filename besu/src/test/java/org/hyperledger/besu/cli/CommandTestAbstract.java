@@ -116,20 +116,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
-import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.RunLast;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class CommandTestAbstract {
-
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
-
+  protected final PrintStream originalOut = System.out;
+  protected final PrintStream originalErr = System.err;
   protected final ByteArrayOutputStream commandOutput = new ByteArrayOutputStream();
-  private final PrintStream outPrintStream = new PrintStream(commandOutput);
-
   protected final ByteArrayOutputStream commandErrorOutput = new ByteArrayOutputStream();
-  private final PrintStream errPrintStream = new PrintStream(commandErrorOutput);
   private final HashMap<String, String> environment = new HashMap<>();
 
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
@@ -321,17 +317,22 @@ public abstract class CommandTestAbstract {
         .load(pkiKeyStoreConfigurationArgumentCaptor.capture());
   }
 
+  @Before
+  public void setUpStreams() {
+    commandOutput.reset();
+    commandErrorOutput.reset();
+    System.setOut(new PrintStream(commandOutput));
+    System.setErr(new PrintStream(commandErrorOutput));
+  }
+
   // Display outputs for debug purpose
   @After
   public void displayOutput() throws IOException {
     TEST_LOGGER.info("Standard output {}", commandOutput.toString(UTF_8));
     TEST_LOGGER.info("Standard error {}", commandErrorOutput.toString(UTF_8));
 
-    outPrintStream.close();
-    commandOutput.close();
-
-    errPrintStream.close();
-    commandErrorOutput.close();
+    System.setOut(originalOut);
+    System.setErr(originalErr);
     besuCommands.forEach(TestBesuCommand::close);
   }
 
@@ -382,8 +383,9 @@ public abstract class CommandTestAbstract {
 
     // parse using Ansi.OFF to be able to assert on non formatted output results
     besuCommand.parse(
-        new RunLast().useOut(outPrintStream).useAnsi(Ansi.OFF),
-        besuCommand.exceptionHandler().useErr(errPrintStream).useAnsi(Ansi.OFF),
+        new RunLast(),
+        besuCommand.parameterExceptionHandler(),
+        besuCommand.executionExceptionHandler(),
         in,
         args);
     return besuCommand;
