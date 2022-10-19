@@ -359,8 +359,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (!localNode.isReady()) {
       return;
     }
+    final EnodeURL localEnodeURL = localNode.getPeer().getEnodeURL();
     maintainedPeers
         .streamPeers()
+        .filter(peer -> !peer.getEnodeURL().getNodeId().equals(localEnodeURL.getNodeId()))
         .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
         .forEach(rlpxAgent::connect);
   }

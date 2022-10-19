@@ -27,10 +27,7 @@ import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class AddressScalarTest {
 
   private GraphQLScalarType scalar;
@@ -43,13 +40,13 @@ public class AddressScalarTest {
 
   @Test
   public void parseValueTest() {
-    final String result = (String) scalar.getCoercing().parseValue(addr);
-    assertThat(result).isEqualTo(addrStr);
+    final Address result = (Address) scalar.getCoercing().parseValue(addrStr);
+    assertThat(result).isEqualTo(addr);
   }
 
   @Test
   public void parseValueErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseValue(addrStr))
+    assertThatThrownBy(() -> scalar.getCoercing().parseValue(3.4f))
         .isInstanceOf(CoercingParseValueException.class);
   }
 
@@ -61,7 +58,7 @@ public class AddressScalarTest {
 
   @Test
   public void serializeErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().serialize(addrStr))
+    assertThatThrownBy(() -> scalar.getCoercing().serialize(3.4f))
         .isInstanceOf(CoercingSerializeException.class);
   }
 
@@ -73,7 +70,7 @@ public class AddressScalarTest {
 
   @Test
   public void parseLiteralErrorTest() {
-    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(addrStr))
+    assertThatThrownBy(() -> scalar.getCoercing().parseLiteral(3.4f))
         .isInstanceOf(CoercingParseLiteralException.class);
   }
 

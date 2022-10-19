@@ -28,7 +28,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
@@ -36,9 +35,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,14 +52,14 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private final int defaultVersion;
   private Integer databaseVersion;
   private Boolean isSegmentIsolationSupported;
-  private SegmentedKeyValueStorage<?> segmentedStorage;
+  private RocksDBColumnarKeyValueStorage segmentedStorage;
   private KeyValueStorage unsegmentedStorage;
   private RocksDBConfiguration rocksDBConfiguration;
 
   private final Supplier<RocksDBFactoryConfiguration> configuration;
   private final List<SegmentIdentifier> segments;
 
-  RocksDBKeyValueStorageFactory(
+  public RocksDBKeyValueStorageFactory(
       final Supplier<RocksDBFactoryConfiguration> configuration,
       final List<SegmentIdentifier> segments,
       final int defaultVersion,
@@ -121,11 +120,15 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                 segments.stream()
                     .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
                     .collect(Collectors.toList());
+
             segmentedStorage =
                 new RocksDBColumnarKeyValueStorage(
                     rocksDBConfiguration, segmentsForVersion, metricsSystem, rocksDBMetricsFactory);
           }
-          return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+          final RocksDbSegmentIdentifier rocksSegment =
+              segmentedStorage.getSegmentIdentifierByName(segment);
+          return new SegmentedKeyValueStorageAdapter<>(
+              segment, segmentedStorage, () -> segmentedStorage.takeSnapshot(rocksSegment));
         }
       default:
         {

@@ -46,4 +46,8 @@ public class OperationRegistry {
 
     return operation;
   }
+
+  public Operation[] getOperations() {
+    return operations;
+  }
 }

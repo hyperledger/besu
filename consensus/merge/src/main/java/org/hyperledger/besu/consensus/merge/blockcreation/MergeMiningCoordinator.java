@@ -75,6 +75,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash);
 
+  void finalizeProposalById(final PayloadIdentifier payloadId);
+
   class ForkchoiceResult {
     public enum Status {
       VALID,
