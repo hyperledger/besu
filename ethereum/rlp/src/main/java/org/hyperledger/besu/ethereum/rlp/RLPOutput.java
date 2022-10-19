@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.rlp;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -187,7 +188,7 @@ public interface RLPOutput {
    *     {@code b < 0} or {@code b > 0xFF}.
    */
   default void writeUnsignedByte(final int b) {
-    writeBytes(Bytes.of(b));
+    processZeroByte(Long.valueOf(b), a -> writeBytes(Bytes.of(b)));
   }
 
   /**
@@ -198,7 +199,7 @@ public interface RLPOutput {
    *     if either {@code s < 0} or {@code s > 0xFFFF}.
    */
   default void writeUnsignedShort(final int s) {
-    writeBytes(Bytes.ofUnsignedShort(s));
+    processZeroByte(Long.valueOf(s), a -> writeBytes(Bytes.ofUnsignedShort(s).trimLeadingZeros()));
   }
 
   /**
@@ -209,7 +210,7 @@ public interface RLPOutput {
    *     either {@code i < 0} or {@code i > 0xFFFFFFFFL}.
    */
   default void writeUnsignedInt(final long i) {
-    writeBytes(Bytes.ofUnsignedInt(i));
+    processZeroByte(i, a -> writeBytes(Bytes.ofUnsignedInt(i).trimLeadingZeros()));
   }
 
   /**
@@ -290,4 +291,19 @@ public interface RLPOutput {
    * @param bytes An already RLP encoded value to write as next item of this output.
    */
   void writeRaw(Bytes bytes);
+
+  /**
+   * Check if the incoming value is 0 and writes it as 0x80, per the spec.
+   *
+   * @param input The value to check
+   * @param writer The consumer to write the non-zero output
+   */
+  private void processZeroByte(final Long input, final Consumer<Long> writer) {
+    // If input == 0, encode 0 value as 0x80
+    if (input == 0) {
+      writeRaw(Bytes.of(0x80));
+    } else {
+      writer.accept(input);
+    }
+  }
 }

@@ -20,9 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.cli.config.NetworkName.isMergedNetwork;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
@@ -61,7 +59,6 @@ import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
-import org.hyperledger.besu.cli.options.unstable.MergeOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -284,7 +281,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
-  private final MergeOptions mergeOptions = MergeOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
@@ -508,12 +504,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--fast-sync-min-peers"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Minimum number of peers required before starting fast sync. (default pre-merge: "
-              + FAST_SYNC_MIN_PEER_COUNT
-              + " and post-merge: "
-              + FAST_SYNC_MIN_PEER_COUNT_POST_MERGE
-              + ")")
-  private final Integer fastSyncMinPeerCount = null;
+          "Minimum number of peers required before starting fast sync. Has only effect on PoW networks. (default: ${DEFAULT-VALUE})")
+  private final Integer fastSyncMinPeerCount = FAST_SYNC_MIN_PEER_COUNT;
 
   @Option(
       names = {"--network"},
@@ -1193,15 +1185,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
 
     @Option(
-        names = {"--tx-pool-hashes-max-size"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        description =
-            "Maximum number of pending transaction hashes that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    @SuppressWarnings("unused")
-    private final Integer pooledTransactionHashesSize = null;
-
-    @Option(
         names = {"--tx-pool-retention-hours"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
@@ -1536,7 +1519,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
             .put("Launcher", unstableLauncherOptions)
-            .put("Merge", mergeOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .build();
@@ -1777,6 +1759,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Unable to mine with Stratum if mining is disabled. Either disable Stratum mining (remove --miner-stratum-enabled) "
               + "or specify mining is enabled (--miner-enabled)");
     }
+    if (unstableMiningOptions.getPosBlockCreationMaxTime() <= 0
+        || unstableMiningOptions.getPosBlockCreationMaxTime()
+            > MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
+      throw new ParameterException(
+          this.commandLine, "--Xpos-block-creation-max-time must be positive and ≤ 12000");
+    }
   }
 
   protected void validateP2PInterface(final String p2pInterface) {
@@ -1934,11 +1922,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--Xminer-remote-sealers-limit",
             "--Xminer-remote-sealers-hashrate-ttl"));
 
-    CommandLineUtils.checkOptionDependencies(
-        logger,
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--sync-mode",
-        SyncMode.isFullSync(syncMode),
+        "--fast-sync-min-peers can't be used with FULL sync-mode",
+        !SyncMode.isFullSync(getDefaultSyncModeIfNotSet(syncMode)),
         singletonList("--fast-sync-min-peers"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
@@ -1955,30 +1942,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--privacy-onchain-groups-enabled",
           "--privacy-flexible-groups-enabled");
     }
-
-    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
-      logger.warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
-    }
-
-    if (txPoolOptionGroup.pooledTransactionHashesSize != null) {
-      logger.warn(
-          DEPRECATION_WARNING_MSG,
-          "--tx-pool-future-max-by-account",
-          "--tx-pool-limit-by-account-percentage");
-    }
   }
 
   private void configure() throws Exception {
     checkPortClash();
 
-    syncMode =
-        Optional.ofNullable(syncMode)
-            .orElse(
-                genesisFile == null
-                        && !privacyOptionGroup.isPrivacyEnabled
-                        && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
-                    ? SyncMode.FAST
-                    : SyncMode.FULL);
+    syncMode = getDefaultSyncModeIfNotSet(syncMode);
 
     ethNetworkConfig = updateNetworkConfig(network);
 
@@ -2130,6 +2099,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .remoteSealersTimeToLive(unstableMiningOptions.getRemoteSealersTimeToLive())
                 .powJobTimeToLive(unstableMiningOptions.getPowJobTimeToLive())
                 .maxOmmerDepth(unstableMiningOptions.getMaxOmmersDepth())
+                .posBlockCreationMaxTime(unstableMiningOptions.getPosBlockCreationMaxTime())
                 .build())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
@@ -2795,19 +2765,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
-    Integer fastSyncMinPeers = fastSyncMinPeerCount;
-    if (fastSyncMinPeers == null) {
-      if (isMergedNetwork(network)) {
-        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT_POST_MERGE;
-      } else {
-        fastSyncMinPeers = FAST_SYNC_MIN_PEER_COUNT;
-      }
-    }
-
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(fastSyncMinPeers)
+        .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
         .build();
   }
 
@@ -3304,5 +3265,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (KeyManagementException | NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private SyncMode getDefaultSyncModeIfNotSet(final SyncMode syncMode) {
+    return Optional.ofNullable(syncMode)
+        .orElse(
+            genesisFile == null
+                    && !privacyOptionGroup.isPrivacyEnabled
+                    && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
+                ? SyncMode.FAST
+                : SyncMode.FULL);
   }
 }

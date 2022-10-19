@@ -27,12 +27,12 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,13 +95,19 @@ public class BlockAdapterBase extends AdapterBase {
       blockNumber = bn;
     }
 
-    return Optional.ofNullable(query.getWorldState(blockNumber).get().get(header.getCoinbase()))
+    return query
+        .getWorldState(blockNumber)
+        .map(ws -> ws.get(header.getCoinbase()))
         .map(account -> (AdapterBase) new AccountAdapter(account))
         .or(() -> Optional.of(new EmptyAccountAdapter(header.getCoinbase())));
   }
 
   public Optional<Bytes> getExtraData() {
     return Optional.of(header.getExtraData());
+  }
+
+  public Optional<Wei> getBaseFeePerGas() {
+    return header.getBaseFee();
   }
 
   public Optional<Long> getGasLimit() {
@@ -112,8 +118,8 @@ public class BlockAdapterBase extends AdapterBase {
     return Optional.of(header.getGasUsed());
   }
 
-  public Optional<UInt256> getTimestamp() {
-    return Optional.of(UInt256.valueOf(header.getTimestamp()));
+  public Optional<Long> getTimestamp() {
+    return Optional.of(header.getTimestamp());
   }
 
   public Optional<Bytes> getLogsBloom() {
@@ -141,13 +147,13 @@ public class BlockAdapterBase extends AdapterBase {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final long bn = header.getNumber();
-    final WorldState ws = query.getWorldState(bn).get();
-
-    if (ws != null) {
-      final Address addr = environment.getArgument("address");
-      return Optional.of(new AccountAdapter(ws.get(addr)));
-    }
-    return Optional.empty();
+    return query
+        .getWorldState(bn)
+        .map(
+            ws -> {
+              final Address address = environment.getArgument("address");
+              return new AccountAdapter(ws.get(address));
+            });
   }
 
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
@@ -155,7 +161,7 @@ public class BlockAdapterBase extends AdapterBase {
     final Map<String, Object> filter = environment.getArgument("filter");
 
     @SuppressWarnings("unchecked")
-    final List<Address> addrs = (List<Address>) filter.get("addresses");
+    final List<Address> addresses = (List<Address>) filter.get("addresses");
     @SuppressWarnings("unchecked")
     final List<List<Bytes32>> topics = (List<List<Bytes32>>) filter.get("topics");
 
@@ -168,7 +174,7 @@ public class BlockAdapterBase extends AdapterBase {
       }
     }
     final LogsQuery query =
-        new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
+        new LogsQuery.Builder().addresses(addresses).topics(transformedTopics).build();
 
     final BlockchainQueries blockchain = getBlockchainQueries(environment);
 
@@ -198,6 +204,10 @@ public class BlockAdapterBase extends AdapterBase {
     final UInt256 gasPrice = (UInt256) callData.get("gasPrice");
     final UInt256 value = (UInt256) callData.get("value");
     final Bytes data = (Bytes) callData.get("data");
+    final Optional<Wei> maxFeePerGas =
+        Optional.ofNullable((UInt256) callData.get("maxFeePerGas")).map(Wei::of);
+    final Optional<Wei> maxPriorityFeePerGas =
+        Optional.ofNullable((UInt256) callData.get("maxPriorityFeePerGas")).map(Wei::of);
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
@@ -221,7 +231,15 @@ public class BlockAdapterBase extends AdapterBase {
       valueParam = Wei.of(value);
     }
     final CallParameter param =
-        new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
+        new CallParameter(
+            from,
+            to,
+            gasParam,
+            gasPriceParam,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            valueParam,
+            data);
 
     final Optional<TransactionSimulatorResult> opt =
         transactionSimulator.process(
@@ -240,5 +258,24 @@ public class BlockAdapterBase extends AdapterBase {
       return Optional.of(callResult);
     }
     return Optional.empty();
+  }
+
+  Optional<Bytes> getRawHeader() {
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    header.writeTo(rlpOutput);
+    return Optional.of(rlpOutput.encoded());
+  }
+
+  Optional<Bytes> getRaw(final DataFetchingEnvironment environment) {
+    final BlockchainQueries query = getBlockchainQueries(environment);
+    return query
+        .getBlockchain()
+        .getBlockBody(header.getBlockHash())
+        .map(
+            blockBody -> {
+              final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+              blockBody.writeTo(rlpOutput);
+              return rlpOutput.encoded();
+            });
   }
 }

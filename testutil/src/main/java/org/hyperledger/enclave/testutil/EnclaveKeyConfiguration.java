@@ -33,10 +33,6 @@ public class EnclaveKeyConfiguration {
     this.enclaveEncryptorType = enclaveEncryptorType;
   }
 
-  public EnclaveKeyConfiguration(final String[] pubKeyPaths, final String[] privKeyPaths) {
-    this(pubKeyPaths, privKeyPaths, EnclaveEncryptorType.NACL);
-  }
-
   public String[] getPubKeyPaths() {
     return pubKeyPaths;
   }

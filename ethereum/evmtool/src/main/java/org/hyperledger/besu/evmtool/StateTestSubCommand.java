@@ -62,7 +62,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -241,10 +240,13 @@ public class StateTestSubCommand implements Runnable {
         worldStateUpdater.commit();
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        final UInt256 gasUsed =
-            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining());
+        final var gasUsed = transaction.getGasLimit() - result.getGasRemaining();
+        final var timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+        final var mGps = gasUsed * 1000.0f / timeNs;
+
+        summaryLine.put("Mgps", String.format("%.3f", mGps));
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
-        summaryLine.put("time", timer.elapsed(TimeUnit.NANOSECONDS));
+        summaryLine.put("time", timeNs);
 
         // Check the world state root hash.
         summaryLine.put("test", test);

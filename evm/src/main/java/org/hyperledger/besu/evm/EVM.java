@@ -69,60 +69,50 @@ public class EVM {
     return gasCalculator;
   }
 
+  // Note to maintainers: lots of Java idioms and OO principals are being set aside in the
+  // name of performance. This is one of the hottest sections of code.
+  //
+  // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer operationTracer) {
+    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
-      executeNextOperation(frame, operationTracer);
-    }
-  }
-
-  private void executeNextOperation(
-      final MessageFrame frame, final OperationTracer operationTracer) {
-    frame.setCurrentOperation(operationAtOffset(frame.getCode(), frame.getPC()));
-    operationTracer.traceExecution(
-        frame,
-        () -> {
-          OperationResult result;
-          final Operation operation = frame.getCurrentOperation();
-          try {
-            result = operation.execute(frame, this);
-          } catch (final OverflowException oe) {
-            result = OVERFLOW_RESPONSE;
-          } catch (final UnderflowException ue) {
-            result = UNDERFLOW_RESPONSE;
-          }
-          logState(frame, result.getGasCost().orElse(0L));
-          final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
-          if (haltReason.isPresent()) {
-            LOG.trace("MessageFrame evaluation halted because of {}", haltReason.get());
-            frame.setExceptionalHaltReason(haltReason);
-            frame.setState(State.EXCEPTIONAL_HALT);
-          } else if (result.getGasCost().isPresent()) {
-            frame.decrementRemainingGas(result.getGasCost().getAsLong());
-          }
-          if (frame.getState() == State.CODE_EXECUTING) {
-            final int currentPC = frame.getPC();
-            final int opSize = result.getPcIncrement();
-            frame.setPC(currentPC + opSize);
-          }
-
-          return result;
-        });
-  }
-
-  private static void logState(final MessageFrame frame, final long currentGasCost) {
-    if (LOG.isTraceEnabled()) {
-      final StringBuilder builder = new StringBuilder();
-      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
-      builder.append("Operation: ").append(frame.getCurrentOperation().getName()).append("\n");
-      builder.append("PC: ").append(frame.getPC()).append("\n");
-      builder.append("Gas cost: ").append(currentGasCost).append("\n");
-      builder.append("Gas Remaining: ").append(frame.getRemainingGas()).append("\n");
-      builder.append("Depth: ").append(frame.getMessageStackDepth()).append("\n");
-      builder.append("Stack:");
-      for (int i = 0; i < frame.stackSize(); ++i) {
-        builder.append("\n\t").append(i).append(" ").append(frame.getStackItem(i));
+      Operation currentOperation;
+      try {
+        int opcode = code[frame.getPC()] & 0xff;
+        currentOperation = operationArray[opcode];
+      } catch (ArrayIndexOutOfBoundsException aiiobe) {
+        currentOperation = endOfScriptStop;
       }
-      LOG.trace(builder.toString());
+      frame.setCurrentOperation(currentOperation);
+      operationTracer.traceExecution(
+          frame,
+          () -> {
+            OperationResult result;
+            final Operation operation = frame.getCurrentOperation();
+            try {
+              result = operation.execute(frame, this);
+            } catch (final OverflowException oe) {
+              result = OVERFLOW_RESPONSE;
+            } catch (final UnderflowException ue) {
+              result = UNDERFLOW_RESPONSE;
+            }
+            final Optional<ExceptionalHaltReason> haltReason = result.getHaltReason();
+            if (haltReason.isPresent()) {
+              LOG.trace("MessageFrame evaluation halted because of {}", haltReason.get());
+              frame.setExceptionalHaltReason(haltReason);
+              frame.setState(State.EXCEPTIONAL_HALT);
+            } else if (result.getGasCost().isPresent()) {
+              frame.decrementRemainingGas(result.getGasCost().getAsLong());
+            }
+            if (frame.getState() == State.CODE_EXECUTING) {
+              final int currentPC = frame.getPC();
+              final int opSize = result.getPcIncrement();
+              frame.setPC(currentPC + opSize);
+            }
+
+            return result;
+          });
     }
   }
 

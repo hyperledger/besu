@@ -49,6 +49,7 @@ import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -69,7 +70,7 @@ import org.slf4j.LoggerFactory;
 public class GraphQLDataFetchers {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphQLDataFetchers.class);
-
+  private final Integer highestEthVersion;
   private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
 
   public GraphQLDataFetchers(
@@ -87,8 +88,6 @@ public class GraphQLDataFetchers {
             .max();
     highestEthVersion = version.isPresent() ? version.getAsInt() : null;
   }
-
-  private final Integer highestEthVersion;
 
   DataFetcher<Optional<Integer>> getProtocolVersionDataFetcher() {
     return dataFetchingEnvironment -> Optional.of(highestEthVersion);
@@ -134,15 +133,30 @@ public class GraphQLDataFetchers {
 
   DataFetcher<Optional<Wei>> getGasPriceDataFetcher() {
     return dataFetchingEnvironment -> {
-      GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
-      BlockchainQueries blockchainQueries =
+      final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
+      final BlockchainQueries blockchainQueries =
           graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES);
-      MiningCoordinator miningCoordinator =
+      final MiningCoordinator miningCoordinator =
           graphQLContext.get(GraphQLContextType.MINING_COORDINATOR);
       return blockchainQueries
           .gasPrice()
           .map(Wei::of)
           .or(() -> Optional.of(miningCoordinator.getMinTransactionGasPrice()));
+    };
+  }
+
+  public DataFetcher<Optional<BigInteger>> getChainIdDataFetcher() {
+    return dataFetchingEnvironment -> {
+      final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
+      return graphQLContext.get(GraphQLContextType.CHAIN_ID);
+    };
+  }
+
+  public DataFetcher<Wei> getMaxPriorityFeePerGasDataFetcher() {
+    return dataFetchingEnvironment -> {
+      final BlockchainQueries blockchainQuery =
+          dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
+      return blockchainQuery.gasPriorityFee().orElse(Wei.ZERO);
     };
   }
 
@@ -225,7 +239,7 @@ public class GraphQLDataFetchers {
         final Optional<WorldState> ows = blockchainQuery.getWorldState(latestBn);
         return ows.flatMap(
             ws -> {
-              Account account = ws.get(addr);
+              final Account account = ws.get(addr);
               if (account == null) {
                 return Optional.of(new EmptyAccountAdapter(addr));
               }
