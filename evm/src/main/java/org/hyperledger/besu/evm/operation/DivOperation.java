@@ -25,6 +25,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DivOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult divSuccess = new OperationResult(5, null);
+
   public DivOperation(final GasCalculator gasCalculator) {
     super(0x04, "DIV", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
@@ -32,6 +34,11 @@ public class DivOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
+
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
@@ -53,6 +60,6 @@ public class DivOperation extends AbstractFixedCostOperation {
       }
     }
 
-    return successResponse;
+    return divSuccess;
   }
 }

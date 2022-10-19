@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -38,14 +39,14 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.base.Stopwatch;
@@ -146,15 +147,13 @@ public class EvmToolCommand implements Runnable {
   private final Integer repeat = 0;
 
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
-  private PrintStream out = System.out;
+  private PrintWriter out =
+      new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
 
-  void parse(
-      final CommandLine.AbstractParseResultHandler<List<Object>> resultHandler,
-      final CommandLine.DefaultExceptionHandler<List<Object>> exceptionHandler,
-      final String[] args) {
+  void parse(final CommandLine.IExecutionStrategy resultHandler, final String[] args) {
 
-    out = resultHandler.out();
     final CommandLine commandLine = new CommandLine(this);
+    out = commandLine.getOut();
     commandLine.addMixin("Dagger Options", daggerOptions);
 
     // add sub commands here
@@ -162,7 +161,7 @@ public class EvmToolCommand implements Runnable {
     commandLine.registerConverter(Bytes.class, Bytes::fromHexString);
     commandLine.registerConverter(Wei.class, (arg) -> Wei.of(Long.parseUnsignedLong(arg)));
 
-    commandLine.parseWithHandlers(resultHandler, exceptionHandler, args);
+    commandLine.setExecutionStrategy(resultHandler).execute(args);
   }
 
   @Override
@@ -259,9 +258,7 @@ public class EvmToolCommand implements Runnable {
               out.println(messageFrame.getExceptionalHaltReason().get());
             }
             if (messageFrame.getRevertReason().isPresent()) {
-              out.println(
-                  new String(
-                      messageFrame.getRevertReason().get().toArray(), StandardCharsets.UTF_8));
+              out.println(new String(messageFrame.getRevertReason().get().toArray(), UTF_8));
             }
           }
           if (messageFrameStack.isEmpty()) {

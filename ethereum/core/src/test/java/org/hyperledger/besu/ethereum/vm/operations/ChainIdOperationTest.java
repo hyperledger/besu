@@ -72,7 +72,6 @@ public class ChainIdOperationTest {
   @Test
   public void shouldCalculateGasPrice() {
     final OperationResult result = operation.execute(messageFrame, null);
-    assertThat(result.getGasCost().isPresent()).isTrue();
-    assertThat(result.getGasCost().getAsLong()).isEqualTo(expectedGas);
+    assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }
 }
