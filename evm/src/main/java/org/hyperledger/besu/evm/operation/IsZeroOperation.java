@@ -22,6 +22,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class IsZeroOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult isZeroSuccess = new OperationResult(3, null);
+
   public IsZeroOperation(final GasCalculator gasCalculator) {
     super(0x15, "ISZERO", 1, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -29,10 +31,14 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value = UInt256.fromBytes(frame.popStackItem());
 
     frame.pushStackItem(value.isZero() ? UInt256.ONE : UInt256.ZERO);
 
-    return successResponse;
+    return isZeroSuccess;
   }
 }
