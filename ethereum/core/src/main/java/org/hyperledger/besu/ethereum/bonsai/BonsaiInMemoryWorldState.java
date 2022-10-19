@@ -38,7 +38,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   }
 
   public Hash rootHash(final BonsaiWorldStateUpdater localUpdater) {
-    final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
     try {
       final Hash calculatedRootHash = calculateRootHash(updater, localUpdater);
       return Hash.wrap(calculatedRootHash);

@@ -24,10 +24,11 @@ import java.util.OptionalLong;
 
 public class InvalidOperation extends AbstractOperation {
 
+  public static final int OPCODE = 0xFE;
   protected final OperationResult invalidOperation;
 
   public InvalidOperation(final GasCalculator gasCalculator) {
-    this(0xFE, gasCalculator);
+    this(OPCODE, gasCalculator);
   }
 
   public InvalidOperation(final int opcode, final GasCalculator gasCalculator) {
