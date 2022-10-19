@@ -14,14 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static java.lang.Math.min;
-
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import java.util.Optional;
-import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -31,7 +26,7 @@ public class PushOperation extends AbstractFixedCostOperation {
 
   private final int length;
 
-  private final OperationResult pushResponse;
+  static final OperationResult pushSuccess = new OperationResult(3, null);
 
   public PushOperation(final int length, final GasCalculator gasCalculator) {
     super(
@@ -43,18 +38,27 @@ public class PushOperation extends AbstractFixedCostOperation {
         gasCalculator,
         gasCalculator.getVeryLowTierGasCost());
     this.length = length;
-    pushResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty(), length + 1);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final int pc = frame.getPC();
-    final Bytes code = frame.getCode().getBytes();
+    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    return staticOperation(frame, code, frame.getPC(), length);
+  }
 
-    final int copyLength = min(length, code.size() - pc - 1);
-    frame.pushStackItem(code.slice(pc + 1, copyLength));
-
-    return pushResponse;
+  public static OperationResult staticOperation(
+      final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+    int copyStart = pc + 1;
+    Bytes push;
+    if (code.length <= copyStart) {
+      push = Bytes.EMPTY;
+    } else {
+      final int copyLength = Math.min(pushSize, code.length - pc - 1);
+      push = Bytes.wrap(code, copyStart, copyLength);
+    }
+    frame.pushStackItem(push);
+    frame.setPC(pc + pushSize);
+    return pushSuccess;
   }
 }

@@ -21,18 +21,14 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class ReturnDataCopyOperation extends AbstractOperation {
 
   protected static final OperationResult INVALID_RETURN_DATA_BUFFER_ACCESS =
-      new OperationResult(
-          OptionalLong.of(0), Optional.of(ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS));
+      new OperationResult(0L, ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS);
   protected static final OperationResult OUT_OF_BOUNDS =
-      new OperationResult(OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.OUT_OF_BOUNDS));
+      new OperationResult(0L, ExceptionalHaltReason.OUT_OF_BOUNDS);
 
   public ReturnDataCopyOperation(final GasCalculator gasCalculator) {
     super(0x3E, "RETURNDATACOPY", 3, 0, 1, gasCalculator);
@@ -57,12 +53,11 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);
 
-    return new OperationResult(OptionalLong.of(cost), Optional.empty());
+    return new OperationResult(cost, null);
   }
 }

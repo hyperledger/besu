@@ -100,7 +100,7 @@ public class JumpOperationTest {
     frame.setPC(CURRENT_PC);
 
     final OperationResult result = operation.execute(frame, evm);
-    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
@@ -115,7 +115,7 @@ public class JumpOperationTest {
     frame.setPC(CURRENT_PC);
 
     final OperationResult result = operation.execute(frame, evm);
-    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
@@ -130,7 +130,7 @@ public class JumpOperationTest {
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
     final OperationResult result = operation.execute(frameDestinationGreaterThanCodeSize, evm);
-    assertThat(result.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
     final Bytes badJump = Bytes.fromHexString("0x60045600");
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
@@ -140,7 +140,7 @@ public class JumpOperationTest {
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
     final OperationResult result2 = operation.execute(frameDestinationEqualsToCodeSize, evm);
-    assertThat(result2.getHaltReason()).contains(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+    assertThat(result2.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   }
 
   @Test
@@ -158,7 +158,7 @@ public class JumpOperationTest {
     longContract.setPC(255);
 
     final OperationResult result = operation.execute(longContract, evm);
-    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
@@ -174,7 +174,7 @@ public class JumpOperationTest {
     frame.setPC(CURRENT_PC);
 
     OperationResult result = operation.execute(frame, evm);
-    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getHaltReason()).isNull();
     Mockito.verify(getsCached, times(1)).calculateJumpDests();
 
     // do it again to prove we don't recalc, and we hit the cache
@@ -187,7 +187,7 @@ public class JumpOperationTest {
     frame.setPC(CURRENT_PC);
 
     result = operation.execute(frame, evm);
-    assertThat(result.getHaltReason()).isEmpty();
+    assertThat(result.getHaltReason()).isNull();
     Mockito.verify(getsCached, times(1)).calculateJumpDests();
   }
 }
