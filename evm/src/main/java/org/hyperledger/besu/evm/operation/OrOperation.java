@@ -22,6 +22,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class OrOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult orSuccess = new OperationResult(3, null);
+
   public OrOperation(final GasCalculator gasCalculator) {
     super(0x17, "OR", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -29,6 +31,10 @@ public class OrOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -36,6 +42,6 @@ public class OrOperation extends AbstractFixedCostOperation {
 
     frame.pushStackItem(result);
 
-    return successResponse;
+    return orSuccess;
   }
 }

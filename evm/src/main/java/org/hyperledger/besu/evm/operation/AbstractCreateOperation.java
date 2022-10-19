@@ -26,17 +26,13 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public abstract class AbstractCreateOperation extends AbstractOperation {
 
   protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(
-          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+      new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
   protected AbstractCreateOperation(
       final int opcode,
@@ -57,11 +53,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final long cost = cost(frame);
     if (frame.isStatic()) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas() < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
@@ -78,7 +72,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       spawnChildMessage(frame, evm);
     }
 
-    return new OperationResult(OptionalLong.of(cost), Optional.empty());
+    return new OperationResult(cost, null);
   }
 
   protected abstract long cost(final MessageFrame frame);
