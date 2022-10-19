@@ -260,7 +260,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       + parentHeader.getNumber()
                       + " with state root "
                       + parentStateRoot);
-            });
+            })
+        // TODO: only copy if this is from layered worldstate
+        .copy();
   }
 
   private List<BlockHeader> selectOmmers() {

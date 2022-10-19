@@ -300,7 +300,7 @@ public class BlockchainQueries {
                 () ->
                     new IllegalArgumentException(
                         "Missing worldstate for stateroot " + blockHash.toShortHexString()))) {
-      return Optional.of(worldState.get(address)).map(Account::getNonce).orElse(0L);
+      return Optional.ofNullable(worldState.get(address)).map(Account::getNonce).orElse(0L);
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

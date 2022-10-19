@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -70,7 +71,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad) {
     // overload while snapshots are an experimental option:
-    this(worldStateStorage, blockchain, maxLayersToLoad, false);
+    this(
+        worldStateStorage,
+        blockchain,
+        maxLayersToLoad,
+        DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS);
   }
 
   public BonsaiWorldStateArchive(
@@ -156,8 +161,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
               })
           .map(BlockHeader::getHash)
           // TODO: plumb --Xuse-bonsai-snapshots in here rather than instanceof.
-          .flatMap(snapshotOrLayeredWorldState(useSnapshots))
-          .map(MutableWorldState.class::cast);
+          .flatMap(snapshotOrLayeredWorldState(useSnapshots));
     } else {
       return getMutable(rootHash, blockHash);
     }
