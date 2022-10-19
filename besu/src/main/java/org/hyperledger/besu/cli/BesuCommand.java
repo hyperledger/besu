@@ -27,6 +27,7 @@ import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
 import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -1854,11 +1855,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
 
     if (!jsonRPCHttpOptionGroup.rpcHttpApis.stream().allMatch(configuredApis)) {
-      throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-http-apis'");
+      List<String> invalidHttpApis = new ArrayList<String>(jsonRPCHttpOptionGroup.rpcHttpApis);
+      invalidHttpApis.removeAll(VALID_APIS);
+      throw new ParameterException(
+          this.commandLine,
+          "Invalid value for option '--rpc-http-api': invalid entries found "
+              + invalidHttpApis.toString());
     }
 
     if (!jsonRPCWebsocketOptionGroup.rpcWsApis.stream().allMatch(configuredApis)) {
-      throw new ParameterException(this.commandLine, "Invalid value for option '--rpc-ws-apis'");
+      List<String> invalidWsApis = new ArrayList<String>(jsonRPCWebsocketOptionGroup.rpcWsApis);
+      invalidWsApis.removeAll(VALID_APIS);
+      throw new ParameterException(
+          this.commandLine,
+          "Invalid value for option '--rpc-ws-api': invalid entries found "
+              + invalidWsApis.toString());
     }
 
     final boolean validHttpApiMethods =
