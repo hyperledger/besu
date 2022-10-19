@@ -21,7 +21,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand.HashSubCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
-import java.io.PrintStream;
+import java.io.PrintWriter;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import picocli.CommandLine.Command;
@@ -48,9 +48,9 @@ public class PasswordSubCommand implements Runnable {
   @Spec
   private CommandSpec spec;
 
-  final PrintStream out;
+  final PrintWriter out;
 
-  public PasswordSubCommand(final PrintStream out) {
+  public PasswordSubCommand(final PrintWriter out) {
     this.out = out;
   }
 
@@ -82,7 +82,7 @@ public class PasswordSubCommand implements Runnable {
     public void run() {
       checkNotNull(parentCommand);
 
-      parentCommand.out.print(BCrypt.hashpw(password, BCrypt.gensalt()));
+      parentCommand.out.println(BCrypt.hashpw(password, BCrypt.gensalt()));
     }
   }
 }

@@ -42,7 +42,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -94,13 +94,13 @@ public class BlocksSubCommand implements Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
-  private final PrintStream out;
+  private final PrintWriter out;
 
   public BlocksSubCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-      final PrintStream out) {
+      final PrintWriter out) {
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;

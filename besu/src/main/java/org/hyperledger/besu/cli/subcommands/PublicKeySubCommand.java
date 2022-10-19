@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
@@ -67,9 +67,9 @@ public class PublicKeySubCommand implements Runnable {
   @Spec
   private CommandSpec spec; // Picocli injects reference to command spec
 
-  private final PrintStream out;
+  private final PrintWriter out;
 
-  public PublicKeySubCommand(final PrintStream out) {
+  public PublicKeySubCommand(final PrintWriter out) {
     this.out = out;
   }
 

@@ -29,8 +29,6 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine.RunLast;
 
 public final class Besu {
-  private static final int SUCCESS_EXIT_CODE = 0;
-  private static final int ERROR_EXIT_CODE = 1;
 
   public static void main(final String... args) {
     final Logger logger = setupLogging();
@@ -46,11 +44,15 @@ public final class Besu {
             new BesuPluginContextImpl(),
             System.getenv());
 
-    besuCommand.parse(
-        new RunLast().andExit(SUCCESS_EXIT_CODE),
-        besuCommand.exceptionHandler().andExit(ERROR_EXIT_CODE),
-        System.in,
-        args);
+    int exitCode =
+        besuCommand.parse(
+            new RunLast(),
+            besuCommand.parameterExceptionHandler(),
+            besuCommand.executionExceptionHandler(),
+            System.in,
+            args);
+
+    System.exit(exitCode);
   }
 
   private static Logger setupLogging() {
