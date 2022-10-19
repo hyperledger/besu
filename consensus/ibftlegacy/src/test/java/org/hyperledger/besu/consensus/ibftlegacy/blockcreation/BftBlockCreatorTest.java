@@ -117,7 +117,7 @@ public class BftBlockCreatorTest {
             0.8,
             parentHeader);
 
-    final Block block = blockCreator.createBlock(Instant.now().getEpochSecond());
+    final Block block = blockCreator.createBlock(Instant.now().getEpochSecond()).getBlock();
 
     final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.ibftProposedBlockValidator(0).build();
