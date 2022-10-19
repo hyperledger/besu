@@ -189,9 +189,6 @@ public class ECIESHandshaker implements Handshaker {
     try {
       // Decrypt the message with our private key.
       try {
-        bytes = EncryptedMessage.decryptMsg(bytes, nodeKey);
-        version4 = false;
-      } catch (final Exception ex) {
         // Assume new format
         final int size = bufferedBytes.readUnsignedShort();
         if (buf.writerIndex() >= size) {
@@ -203,8 +200,11 @@ public class ECIESHandshaker implements Handshaker {
           bytes = EncryptedMessage.decryptMsgEIP8(encryptedMsg, nodeKey);
           version4 = true;
         } else {
-          throw new HandshakeException("Failed to decrypt handshake message", ex);
+          throw new HandshakeException("Failed to decrypt handshake message");
         }
+      } catch (final Exception ex) {
+        bytes = EncryptedMessage.decryptMsg(bytes, nodeKey);
+        version4 = false;
       }
     } catch (final InvalidCipherTextException e) {
       status.set(Handshaker.HandshakeStatus.FAILED);
