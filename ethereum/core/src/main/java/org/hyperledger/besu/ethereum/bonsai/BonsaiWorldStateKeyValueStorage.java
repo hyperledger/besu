@@ -108,6 +108,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
                         this::getAccountStateTrieNode, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
+        response.ifPresent(
+            bytes -> {
+              final KeyValueStorageTransaction keyValueStorageTransaction =
+                  accountStorage.startTransaction();
+              keyValueStorageTransaction.put(accountHash.toArrayUnsafe(), bytes.toArrayUnsafe());
+              keyValueStorageTransaction.commit();
+            });
       }
     }
     return response;
@@ -199,6 +206,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
                     accountValue.getStorageRoot())
                 .get(slotHash)
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+        final KeyValueStorageTransaction keyValueStorageTransaction =
+            storageStorage.startTransaction();
+        response.ifPresent(
+            bytes -> {
+              keyValueStorageTransaction.put(
+                  Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), bytes.toArrayUnsafe());
+              keyValueStorageTransaction.commit();
+            });
       }
     }
     return response;
