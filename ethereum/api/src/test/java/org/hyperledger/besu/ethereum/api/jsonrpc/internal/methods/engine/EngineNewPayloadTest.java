@@ -235,6 +235,8 @@ public class EngineNewPayloadTest {
 
     fromErrorResp(resp);
     verify(engineCallListener, times(1)).executionEngineCalled();
+    verify(mergeCoordinator, times(0)).addBadBlock(any());
+    // verify mainnetBlockValidator does not add to bad block manager
   }
 
   @Test
@@ -362,7 +364,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(res.getError()).isNull();
+    assertThat(res.getError()).isEqualTo("Block already present in bad block manager.");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 22.7.7
+
+### Additions and Improvements
+- Tune EthScheduler thread pools to avoid recreating too many threads [#4529](https://github.com/hyperledger/besu/issues/4529)
+- Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake, by trying to decrypt EIP-8 formatted messages first [#4508](https://github.com/hyperledger/besu/pull/4508).
+- The block variable was keeping too much memory while waiting for future to finish [#4489](https://github.com/hyperledger/besu/issues/4489)
+
+### Bug Fixes
+- Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
+- update appache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
+- In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
+
+### Download Links
+
 ## 22.7.6
 Hotfix release of the 22.7.x series to address [#4495](https://github.com/hyperledger/besu/issues/4495) which could result in failed block proposals on merge networks.
 
