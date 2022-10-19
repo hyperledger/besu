@@ -1,4 +1,9 @@
 # Changelog
+## 22.10.0
+### Breaking Changes
+- Version 22.10.0 will require Java 17 to build and run.
+
+### Additions and Improvements
 
 ## 22.10.0-RC2
 
