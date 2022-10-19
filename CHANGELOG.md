@@ -1,10 +1,4 @@
 # Changelog
-## 22.10.0
-### Breaking Changes
-- Version 22.10.0 will require Java 17 to build and run.
-
-### Additions and Improvements
-- Block creation now returns `BlockCreationResult` which contains the new `Block` and `TransactionSelectionResults`.
 
 ## 22.10.0-RC2
 
@@ -56,7 +50,22 @@
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.zip / sha256: 16fd47533aa2986491143e5f4a052c0aa4866ebfa415abbf3ca868e4fbeac6ce
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/22.10.0-RC1/besu-22.10.0-RC1.tar.gz / sha256: 48fd3480e4380580ed9187302be987e9eca2b445935ec6a509e7269898d8a4a8
-###
+
+## 22.7.7
+
+### Additions and Improvements
+- Tune EthScheduler thread pools to avoid recreating too many threads [#4529](https://github.com/hyperledger/besu/issues/4529)
+- Reduce the number of runtime exceptions (SecurityModuleException) and unnecessary executions during ECIES handshake, by trying to decrypt EIP-8 formatted messages first [#4508](https://github.com/hyperledger/besu/pull/4508).
+- The block variable was keeping too much memory while waiting for future to finish [#4489](https://github.com/hyperledger/besu/issues/4489)
+
+### Bug Fixes
+- Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
+- update appache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
+- In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.7/besu-22.7.7.zip / sha256: 79b2b1518605603d8268f873f2576617ca8340d89c045e0eda6896f40defea0d
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.7.7/besu-22.7.7.tar.gz / sha256: 161c52ba9be8508767e80dbce796b4ad2cc5b649f7ed15387c6359d1e15753f6
 
 ## 22.7.6
 Hotfix release of the 22.7.x series to address [#4495](https://github.com/hyperledger/besu/issues/4495) which could result in failed block proposals on merge networks.
