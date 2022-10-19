@@ -186,9 +186,10 @@ public final class DefaultP2PNetworkTest {
   public void checkMaintainedConnectionPeers_unconnectedPeer() {
     final DefaultP2PNetwork network = network();
     final Peer peer = PeerTestHelper.createPeer();
-    maintainedPeers.add(peer);
 
     network.start();
+
+    maintainedPeers.add(peer);
 
     verify(rlpxAgent, times(0)).connect(peer);
 
@@ -200,9 +201,10 @@ public final class DefaultP2PNetworkTest {
   public void checkMaintainedConnectionPeers_connectedPeer() {
     final DefaultP2PNetwork network = network();
     final Peer peer = PeerTestHelper.createPeer();
-    maintainedPeers.add(peer);
 
     network.start();
+
+    maintainedPeers.add(peer);
 
     // Don't connect to an already connected peer
     final CompletableFuture<PeerConnection> connectionFuture =
@@ -216,9 +218,10 @@ public final class DefaultP2PNetworkTest {
   public void checkMaintainedConnectionPeers_connectingPeer() {
     final DefaultP2PNetwork network = network();
     final Peer peer = PeerTestHelper.createPeer();
-    maintainedPeers.add(peer);
 
     network.start();
+
+    maintainedPeers.add(peer);
 
     // Don't connect when connection is already pending.
     final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
