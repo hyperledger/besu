@@ -52,6 +52,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -164,6 +165,21 @@ public final class DefaultP2PNetworkTest {
     assertThat(maintainedPeers.contains(peer)).isFalse();
     verify(rlpxAgent, times(1)).disconnect(peer.getId(), DisconnectReason.REQUESTED);
     verify(discoveryAgent, times(1)).dropPeer(peer);
+  }
+
+  @Test
+  public void checkMaintainedConnectionPeers_doesNotConnectToSelf() {
+    final DefaultP2PNetwork network = network();
+    network.start();
+
+    final Optional<EnodeURL> maybeSelfEnode = network.getLocalEnode();
+    final Peer selfPeer = PeerTestHelper.createPeer(maybeSelfEnode.get());
+    maintainedPeers.add(selfPeer);
+
+    verify(rlpxAgent, times(0)).connect(selfPeer);
+
+    network.checkMaintainedConnectionPeers();
+    verify(rlpxAgent, times(0)).connect(selfPeer);
   }
 
   @Test
