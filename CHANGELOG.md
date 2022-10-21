@@ -4,6 +4,7 @@
 - Version 22.10.0 will require Java 17 to build and run.
 
 ### Additions and Improvements
+- Updated jackson-databind library to version 2.13.4.2 addressing [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003)
 
 ## 22.10.0-RC2
 
