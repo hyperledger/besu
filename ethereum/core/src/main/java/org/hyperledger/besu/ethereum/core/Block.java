@@ -69,9 +69,10 @@ public class Block {
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
+    final List<Withdrawal> withdrawals = in.readList(Withdrawal::readFrom);
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers));
+    return new Block(header, new BlockBody(transactions, ommers, withdrawals));
   }
 
   @Override

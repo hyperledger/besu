@@ -392,7 +392,8 @@ public class EngineNewPayloadTest {
         header.getReceiptsRoot(),
         header.getLogsBloom(),
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
-        txs);
+        txs,
+        Collections.emptyList());
   }
 
   private EnginePayloadStatusResult fromSuccessResp(final JsonRpcResponse resp) {

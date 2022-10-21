@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -58,6 +59,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   static final int MAX_GENERATION = 6;
 
   protected final MainnetTransactionProcessor transactionProcessor;
+  protected final WithdrawalProcessor withdrawalProcessor = new WithdrawalProcessor();
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -87,6 +89,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
+      final List<Withdrawal> withdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -125,6 +128,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
+
       worldStateUpdater.commit();
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
@@ -133,6 +137,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
+
+    final WorldUpdater worldStateUpdater = worldState.updater();
+
+    for (final Withdrawal withdrawal : withdrawals) {
+      withdrawalProcessor.processWithdrawal(withdrawal, worldStateUpdater);
+    }
+    worldStateUpdater.commit();
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.

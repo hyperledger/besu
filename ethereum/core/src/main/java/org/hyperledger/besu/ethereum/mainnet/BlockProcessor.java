@@ -22,8 +22,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
+import java.util.Collections;
 import java.util.List;
 
 /** Processes a block. */
@@ -112,12 +114,30 @@ public interface BlockProcessor {
    * @param privateMetadataUpdater the updater used to update the private metadata for the block
    * @return the block processing result
    */
+  default BlockProcessingResult processBlock(
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final PrivateMetadataUpdater privateMetadataUpdater) {
+    return processBlock(
+        blockchain,
+        worldState,
+        blockHeader,
+        transactions,
+        ommers,
+        Collections.emptyList(),
+        privateMetadataUpdater);
+  }
+
   BlockProcessingResult processBlock(
       Blockchain blockchain,
       MutableWorldState worldState,
       BlockHeader blockHeader,
       List<Transaction> transactions,
       List<BlockHeader> ommers,
+      List<Withdrawal> withdrawals,
       PrivateMetadataUpdater privateMetadataUpdater);
 
   /**

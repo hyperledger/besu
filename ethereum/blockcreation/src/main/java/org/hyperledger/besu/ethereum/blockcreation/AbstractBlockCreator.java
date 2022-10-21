@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -200,7 +201,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       final Block block =
-          new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+          new Block(
+              blockHeader,
+              new BlockBody(transactionResults.getTransactions(), ommers, Collections.emptyList()));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

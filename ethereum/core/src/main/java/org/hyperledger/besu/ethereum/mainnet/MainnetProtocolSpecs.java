@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessor;
 import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockValidator;
@@ -753,10 +754,17 @@ public abstract class MainnetProtocolSpecs {
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
+        final List<Withdrawal> withdrawals,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-          blockchain, worldState, blockHeader, transactions, ommers, privateMetadataUpdater);
+          blockchain,
+          worldState,
+          blockHeader,
+          transactions,
+          ommers,
+          withdrawals,
+          privateMetadataUpdater);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

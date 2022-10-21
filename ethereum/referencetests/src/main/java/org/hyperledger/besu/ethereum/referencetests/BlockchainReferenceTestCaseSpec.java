@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -157,6 +158,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("baseFeePerGas") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
+        @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -175,6 +177,7 @@ public class BlockchainReferenceTestCaseSpec {
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexString(nonce).getLong(0),
+          Hash.fromHexString(withdrawalsRoot),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -250,7 +253,8 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+              input.readList(Withdrawal::readFrom));
       return new Block(header, body);
     }
   }
