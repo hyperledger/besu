@@ -42,7 +42,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -116,6 +118,21 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           INVALID,
           "Failed to decode transactions from block parameter");
     }
+    final List<Withdrawal> withdrawals;
+    try {
+      withdrawals =
+          blockParam.getWithdrawals().stream()
+              .map(Bytes::fromHexString)
+              .map(WithdrawalDecoder::decodeOpaqueBytes)
+              .collect(Collectors.toList());
+    } catch (final RLPException | IllegalArgumentException e) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          "Failed to decode withdrawals from block parameter");
+    }
 
     if (blockParam.getExtraData() == null) {
       return respondWithInvalid(
@@ -144,6 +161,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
+            BodyValidation.withdrawalsRoot(withdrawals),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -185,7 +203,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     final var block =
-        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
+        new Block(
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), withdrawals));
 
     if (parentHeader.isEmpty()) {
       debugLambda(

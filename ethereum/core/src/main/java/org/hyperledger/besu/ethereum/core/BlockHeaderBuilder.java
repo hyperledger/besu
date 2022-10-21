@@ -64,6 +64,8 @@ public class BlockHeaderBuilder {
 
   private BlockHeaderFunctions blockHeaderFunctions;
 
+  private Hash withdrawalsRoot = Hash.EMPTY;
+
   // A nonce can be any value so we use the OptionalLong
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
@@ -111,9 +113,15 @@ public class BlockHeaderBuilder {
             .extraData(fromBuilder.extraData)
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
-            .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
+            .blockHeaderFunctions(fromBuilder.blockHeaderFunctions)
+            .withdrawalsRoot(fromBuilder.withdrawalsRoot);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
+  }
+
+  private BlockHeaderBuilder withdrawalsRoot(final Hash withdrawalsRoot) {
+    this.withdrawalsRoot = withdrawalsRoot;
+    return this;
   }
 
   public BlockHeader buildBlockHeader() {
@@ -136,6 +144,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         nonce.getAsLong(),
+        withdrawalsRoot,
         blockHeaderFunctions);
   }
 
@@ -171,7 +180,8 @@ public class BlockHeaderBuilder {
         timestamp,
         extraData,
         baseFee,
-        mixHashOrPrevRandao);
+        mixHashOrPrevRandao,
+        withdrawalsRoot);
   }
 
   private void validateBlockHeader() {

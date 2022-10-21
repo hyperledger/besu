@@ -178,4 +178,6 @@ public interface BlockHeader {
   default Optional<Bytes32> getPrevRandao() {
     return Optional.empty();
   }
+
+  Hash getWithdrawalRoot();
 }

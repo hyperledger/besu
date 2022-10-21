@@ -62,7 +62,8 @@ public class KeccakHasherTest {
           timestamp,
           extraData,
           baseFee,
-          random);
+          random,
+          Hash.EMPTY);
     }
   }
 
