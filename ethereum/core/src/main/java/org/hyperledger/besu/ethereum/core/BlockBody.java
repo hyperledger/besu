@@ -24,14 +24,19 @@ import java.util.Objects;
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
+      new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
+  private final List<Withdrawal> withdrawals;
 
-  public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
+  public BlockBody(
+      final List<Transaction> transactions,
+      final List<BlockHeader> ommers,
+      final List<Withdrawal> withdrawals) {
     this.transactions = transactions;
     this.ommers = ommers;
+    this.withdrawals = withdrawals;
   }
 
   public static BlockBody empty() {
@@ -52,6 +57,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   @Override
   public List<BlockHeader> getOmmers() {
     return ommers;
+  }
+
+  public List<Withdrawal> getWithdrawals() {
+    return withdrawals;
   }
 
   /**
@@ -75,7 +84,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final BlockBody body =
         new BlockBody(
             input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+            input.readList(Withdrawal::readFrom));
     input.leaveList();
     return body;
   }
@@ -89,12 +99,14 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       return false;
     }
     final BlockBody other = (BlockBody) obj;
-    return transactions.equals(other.transactions) && ommers.equals(other.ommers);
+    return transactions.equals(other.transactions)
+        && ommers.equals(other.ommers)
+        && withdrawals.equals(other.withdrawals);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers);
+    return Objects.hash(transactions, ommers, withdrawals);
   }
 
   @Override
@@ -103,6 +115,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     sb.append("BlockBody{");
     sb.append("transactions=").append(transactions).append(", ");
     sb.append("ommers=").append(ommers);
+    sb.append("withdrawals=").append(withdrawals);
     return sb.append("}").toString();
   }
 }

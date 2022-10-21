@@ -37,6 +37,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   protected final long gasUsed;
 
   protected final Bytes extraData;
+  protected final Hash withdrawalRoot;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -53,7 +54,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long timestamp,
       final Bytes extraData,
       final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao) {
+      final Bytes32 mixHashOrPrevRandao,
+      final Hash withdrawalRoot) {
     super(
         parentHash,
         coinbase,
@@ -70,6 +72,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
+    this.withdrawalRoot = withdrawalRoot;
   }
 
   /**
@@ -133,5 +136,9 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Bytes getExtraData() {
     return extraData;
+  }
+
+  public Hash getWithdrawalRoot() {
+    return withdrawalRoot;
   }
 }
