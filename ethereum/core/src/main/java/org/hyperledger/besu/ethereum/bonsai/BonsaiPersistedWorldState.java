@@ -239,8 +239,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             .keySet()
             .forEach(
                 k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
+        entriesToDelete.keySet().forEach(storageTrie::remove);
         if (entriesToDelete.size() == 256) {
-          entriesToDelete.keySet().forEach(storageTrie::remove);
           entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
         } else {
           break;
