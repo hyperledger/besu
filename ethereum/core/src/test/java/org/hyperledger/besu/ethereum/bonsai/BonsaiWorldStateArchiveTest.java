@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.LayeredTrieLogManager.LayeredWorldStateCache;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -43,7 +44,6 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
@@ -102,7 +102,6 @@ public class BonsaiWorldStateArchiveTest {
   }
 
   @Test
-  @Ignore("TODO: refactor test to account for snapshot mutable worldstate instead of layered")
   public void testGetMutableWhenLoadLessThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
@@ -134,7 +133,8 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(
-                new TrieLogManager(blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
+                new LayeredTrieLogManager(
+                    blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
                 false));
@@ -160,7 +160,8 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(
-                new TrieLogManager(blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
+                new LayeredTrieLogManager(
+                    blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
                 false));
@@ -192,19 +193,22 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash = mock(HashMap.class);
+    final Map<Bytes32, LayeredWorldStateCache> layeredWorldStatesByHash = mock(HashMap.class);
     when(layeredWorldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainA.getHash())))
-        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
+        .thenReturn(
+            new LayeredWorldStateCache(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS)));
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainB.getHash())))
-        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
+        .thenReturn(
+            new LayeredWorldStateCache(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS)));
 
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
 
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(
-                new TrieLogManager(blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
+                new LayeredTrieLogManager(
+                    blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
                 false));
@@ -242,17 +246,20 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    final Map<Bytes32, BonsaiLayeredWorldState> layeredWorldStatesByHash = mock(HashMap.class);
+    final Map<Bytes32, LayeredWorldStateCache> layeredWorldStatesByHash = mock(HashMap.class);
     when(layeredWorldStatesByHash.containsKey(any(Bytes32.class))).thenReturn(true);
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainA.getHash())))
-        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
+        .thenReturn(
+            new LayeredWorldStateCache(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS)));
     when(layeredWorldStatesByHash.get(eq(blockHeaderChainB.getHash())))
-        .thenReturn(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS));
+        .thenReturn(
+            new LayeredWorldStateCache(mock(BonsaiLayeredWorldState.class, Answers.RETURNS_MOCKS)));
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateArchive(
-                new TrieLogManager(blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
+                new LayeredTrieLogManager(
+                    blockchain, worldStateStorage, 12L, layeredWorldStatesByHash),
                 worldStateStorage,
                 blockchain,
                 false));

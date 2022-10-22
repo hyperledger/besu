@@ -18,14 +18,13 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.datatypes.Hash.fromPlugin;
-import static org.hyperledger.besu.ethereum.bonsai.TrieLogManager.RETAINED_LAYERS;
+import static org.hyperledger.besu.ethereum.bonsai.LayeredTrieLogManager.RETAINED_LAYERS;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -52,7 +51,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final Blockchain blockchain;
 
-  private final TrieLogManager trieLogManager;
+  private final LayeredTrieLogManager trieLogManager;
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final boolean useSnapshots;
@@ -84,7 +83,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Optional<Long> maxLayersToLoad,
       final boolean useSnapshots) {
     this(
-        new TrieLogManager(blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
+        new LayeredTrieLogManager(
+            blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
         worldStateStorage,
         blockchain,
         useSnapshots);
@@ -92,7 +92,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @VisibleForTesting
   BonsaiWorldStateArchive(
-      final TrieLogManager trieLogManager,
+      final LayeredTrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final boolean useSnapshots) {
@@ -108,14 +108,14 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     LOG.debug("New block add event {}", event);
     if (event.isNewCanonicalHead()) {
       final BlockHeader eventBlockHeader = event.getBlock().getHeader();
-      trieLogManager.updateLayeredWorldState(
+      trieLogManager.updateCachedLayers(
           eventBlockHeader.getParentHash(), eventBlockHeader.getHash());
     }
   }
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    final Optional<MutableWorldState> layeredWorldState =
+    final Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> layeredWorldState =
         trieLogManager.getBonsaiLayeredWorldState(blockHash);
     if (layeredWorldState.isPresent()) {
       return Optional.of(layeredWorldState.get());
@@ -133,7 +133,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
-  public Optional<MutableWorldState> getMutableSnapshot(final Hash blockHash) {
+  public Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> getMutableSnapshot(
+      final Hash blockHash) {
     // TODO: decide whether we want to use BonsaiSnapshotWorldState or
     // BonsaiSnapshotPersistedWorldState
     return rollMutableStateToBlockHash(
@@ -143,7 +144,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(
+  public Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash, final boolean shouldPersistState) {
     if (!shouldPersistState) {
       return blockchain
@@ -160,22 +161,21 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
                 return true;
               })
           .map(BlockHeader::getHash)
-          // TODO: plumb --Xuse-bonsai-snapshots in here rather than instanceof.
           .flatMap(snapshotOrLayeredWorldState(useSnapshots));
     } else {
       return getMutable(rootHash, blockHash);
     }
   }
 
-  private Function<Hash, Optional<MutableWorldState>> snapshotOrLayeredWorldState(
-      final boolean useSnapshots) {
+  private Function<Hash, Optional<org.hyperledger.besu.ethereum.core.MutableWorldState>>
+      snapshotOrLayeredWorldState(final boolean useSnapshots) {
     if (useSnapshots) {
       // use snapshots:
       return this::getMutableSnapshot;
     } else {
       // otherwise use layered worldstate:
       return blockHash -> {
-        final Optional<MutableWorldState> layeredWorldState =
+        final Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> layeredWorldState =
             trieLogManager.getBonsaiLayeredWorldState(blockHash);
         if (layeredWorldState.isPresent()) {
           return layeredWorldState;
@@ -205,12 +205,14 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
+  public Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> getMutable(
+      final Hash rootHash, final Hash blockHash) {
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  private Optional<MutableWorldState> rollMutableStateToBlockHash(
-      final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
+  private Optional<org.hyperledger.besu.ethereum.core.MutableWorldState>
+      rollMutableStateToBlockHash(
+          final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {
@@ -293,11 +295,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public MutableWorldState getMutable() {
+  public org.hyperledger.besu.ethereum.core.MutableWorldState getMutable() {
     return persistedState;
   }
 
-  public TrieLogManager getTrieLogManager() {
+  public LayeredTrieLogManager getTrieLogManager() {
     return trieLogManager;
   }
 
