@@ -192,7 +192,8 @@ public class BesuEventsImplTest {
     syncState.setSyncTarget(
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
-            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null));
+            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
+            null));
   }
 
   private void clearSyncTarget() {
@@ -484,7 +485,8 @@ public class BesuEventsImplTest {
   }
 
   private Block generateBlock() {
-    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody body =
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 

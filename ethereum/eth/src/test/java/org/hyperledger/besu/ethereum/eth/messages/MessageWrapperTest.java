@@ -41,6 +41,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -285,7 +286,8 @@ public class MessageWrapperTest {
         @JsonProperty("Uncles") final List<TestBlockHeader> uncles) {
       super(
           transactions.stream().collect(toUnmodifiableList()),
-          uncles.stream().collect(toUnmodifiableList()));
+          uncles.stream().collect(toUnmodifiableList()),
+          Collections.emptyList());
     }
   }
 
@@ -308,6 +310,7 @@ public class MessageWrapperTest {
         @JsonProperty("extraData") final String extraData,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
+        @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("hash") final String __) {
       super(
           Hash.fromHexString(parentHash),
@@ -326,6 +329,7 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          Hash.fromHexString(withdrawalsRoot),
           new MainnetBlockHeaderFunctions());
     }
   }

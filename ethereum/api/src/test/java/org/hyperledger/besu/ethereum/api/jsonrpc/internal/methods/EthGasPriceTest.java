@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -161,6 +162,7 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                Hash.EMPTY,
                 null),
             new BlockBody(
                 List.of(
@@ -174,7 +176,8 @@ public class EthGasPriceTest {
                         Bytes.EMPTY,
                         Address.ZERO,
                         Optional.empty())),
-                List.of())));
+                List.of(),
+                Collections.emptyList())));
   }
 
   private Object createEmptyBlock(final Long height) {
@@ -197,8 +200,9 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                Hash.EMPTY,
                 null),
-            new BlockBody(List.of(), List.of())));
+            new BlockBody(List.of(), List.of(), Collections.emptyList())));
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

@@ -82,7 +82,8 @@ public class BlockBroadcasterTest {
   }
 
   private Block generateBlock() {
-    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody body =
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 }
