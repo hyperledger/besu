@@ -329,7 +329,7 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
-          Hash.fromHexString(withdrawalsRoot),
+          withdrawalsRoot == null ? Hash.EMPTY : Hash.fromHexString(withdrawalsRoot),
           new MainnetBlockHeaderFunctions());
     }
   }

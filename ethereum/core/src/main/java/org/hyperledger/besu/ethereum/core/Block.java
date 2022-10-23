@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,7 +70,8 @@ public class Block {
     final BlockHeader header = BlockHeader.readFrom(in, hashFunction);
     final List<Transaction> transactions = in.readList(Transaction::readFrom);
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
-    final List<Withdrawal> withdrawals = in.readList(Withdrawal::readFrom);
+    final List<Withdrawal> withdrawals =
+        in.isEndOfCurrentList() ? Collections.emptyList() : in.readList(Withdrawal::readFrom);
     in.leaveList();
 
     return new Block(header, new BlockBody(transactions, ommers, withdrawals));
