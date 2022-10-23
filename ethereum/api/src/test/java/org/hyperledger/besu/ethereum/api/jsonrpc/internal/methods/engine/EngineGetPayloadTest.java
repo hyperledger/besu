@@ -62,7 +62,9 @@ public class EngineGetPayloadTest {
   private static final BlockHeader mockHeader =
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
-      new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+      new Block(
+          mockHeader,
+          new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
 
   @Mock private ProtocolContext protocolContext;
 

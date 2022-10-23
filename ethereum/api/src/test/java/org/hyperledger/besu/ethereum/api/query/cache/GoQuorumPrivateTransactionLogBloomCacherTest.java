@@ -107,7 +107,8 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
   @Test
   public void shouldUpdateCacheWhenBlockAdded() throws IOException {
 
-    final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody fakeBody =
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     when(blockchain.getBlockHeader(testBlockHeaderHash)).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(testBlockHeaderHash));
     when(blockchain.getTxReceipts(any())).thenReturn(Optional.of(Collections.emptyList()));
@@ -168,6 +169,7 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            Hash.EMPTY,
             new MainnetBlockHeaderFunctions(),
             Optional.of(testLogsBloomFilter));
     return fakeHeader;

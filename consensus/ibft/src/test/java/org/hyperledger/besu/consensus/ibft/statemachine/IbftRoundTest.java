@@ -119,7 +119,8 @@ public class IbftRoundTest {
     headerTestFixture.number(1);
 
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    proposedBlock =
+        new Block(header, new BlockBody(emptyList(), emptyList(), Collections.emptyList()));
 
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));
