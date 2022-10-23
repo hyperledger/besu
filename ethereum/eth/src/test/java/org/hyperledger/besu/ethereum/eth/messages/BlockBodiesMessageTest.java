@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -62,7 +63,9 @@ public final class BlockBodiesMessageTest {
               oneBlock.readList(Transaction::readFrom),
               oneBlock.readList(
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions())),
-              oneBlock.readList(Withdrawal::readFrom)));
+              oneBlock.isEndOfCurrentList()
+                  ? Collections.emptyList()
+                  : oneBlock.readList(Withdrawal::readFrom)));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
