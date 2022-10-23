@@ -251,7 +251,8 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 mixHashOrPrevRandao = input.readBytes32();
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
-    final Hash withdrawalHashRoot = Hash.wrap(input.readBytes32());
+    final Hash withdrawalHashRoot =
+        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : Hash.EMPTY;
     input.leaveList();
     return new BlockHeader(
         parentHash,

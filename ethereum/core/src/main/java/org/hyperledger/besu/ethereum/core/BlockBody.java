@@ -81,7 +81,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         new BlockBody(
             input.readList(Transaction::readFrom),
             input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
-            input.readList(Withdrawal::readFrom));
+            input.isEndOfCurrentList()
+                ? Collections.emptyList()
+                : input.readList(Withdrawal::readFrom));
     input.leaveList();
     return body;
   }

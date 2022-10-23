@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.common.io.Resources;
@@ -53,7 +54,12 @@ public final class ValidationTestUtils {
     final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final List<BlockHeader> ommers =
         input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
-    return new BlockBody(transactions, ommers, input.readList(Withdrawal::readFrom));
+    return new BlockBody(
+        transactions,
+        ommers,
+        input.isEndOfCurrentList()
+            ? Collections.emptyList()
+            : input.readList(Withdrawal::readFrom));
   }
 
   public static Block readBlock(final long num) throws IOException {
@@ -68,8 +74,9 @@ public final class ValidationTestUtils {
     final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final List<BlockHeader> ommers =
         input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
-    final BlockBody body =
-        new BlockBody(transactions, ommers, input.readList(Withdrawal::readFrom));
+    final List<Withdrawal> withdrawals =
+        input.isEndOfCurrentList() ? Collections.emptyList() : input.readList(Withdrawal::readFrom);
+    final BlockBody body = new BlockBody(transactions, ommers, withdrawals);
     return new Block(header, body);
   }
 }
