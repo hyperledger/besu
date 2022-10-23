@@ -43,7 +43,7 @@ public class VoteTallyCacheTestBase {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
     return new Block(
         headerBuilder.buildHeader(),
-        new BlockBody(Collections.emptyList(), Collections.emptyList()));
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
   }
 
   protected MutableBlockchain blockChain;

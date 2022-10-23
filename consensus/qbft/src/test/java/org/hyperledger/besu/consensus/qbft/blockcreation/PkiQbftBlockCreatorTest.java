@@ -121,7 +121,8 @@ public class PkiQbftBlockCreatorTest {
     final Block block =
         new Block(
             blockHeaderWithExtraData,
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+            new BlockBody(
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
     when(blockCreator.createBlock(eq(1L)))
         .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
 

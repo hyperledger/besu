@@ -55,6 +55,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleExcepti
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
+import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,7 +113,8 @@ public class QbftRoundIntegrationTest {
     headerTestFixture.extraData(qbftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    proposedBlock =
+        new Block(header, new BlockBody(emptyList(), emptyList(), Collections.emptyList()));
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 

@@ -32,6 +32,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TOTAL_DIFFICULTY;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TRANSACTION_ROOT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.WITHDRAWLS_ROOT;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -96,6 +97,7 @@ public class JsonRpcResponseUtils {
         values.containsKey(BASEFEE) ? Wei.of(unsignedInt256(values.get(BASEFEE))) : null;
     final Difficulty totalDifficulty = Difficulty.of(unsignedInt256(values.get(TOTAL_DIFFICULTY)));
     final int size = unsignedInt(values.get(SIZE));
+    final Hash withdrawalsRoot = hash(values.get(WITHDRAWLS_ROOT));
 
     final List<JsonNode> ommers = new ArrayList<>();
 
@@ -117,6 +119,7 @@ public class JsonRpcResponseUtils {
             baseFee,
             mixHash,
             nonce,
+            withdrawalsRoot,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(
