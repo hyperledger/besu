@@ -21,7 +21,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.plugin.api'
       )
   }
 }
@@ -64,7 +65,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = '04i5t63zL2UxFKrdlfGMMt099SejaywYvtkgpn9jUE0='
+  knownHash = 't1ECxSKuhCHrMq9uKYC9datxfFqqTpCPc6GFmUfC8Pg='
 }
 check.dependsOn('checkAPIChanges')
 

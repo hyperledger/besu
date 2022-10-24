@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.Quantity;
 
@@ -21,6 +22,7 @@ import java.math.BigInteger;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class PayloadIdentifier implements Quantity {
@@ -36,8 +38,16 @@ public class PayloadIdentifier implements Quantity {
     this.val = UInt64.valueOf(Math.abs(payloadId));
   }
 
-  public static PayloadIdentifier forPayloadParams(final Hash parentHash, final Long timestamp) {
-    return new PayloadIdentifier(((long) parentHash.toHexString().hashCode()) ^ timestamp);
+  public static PayloadIdentifier forPayloadParams(
+      final Hash parentHash,
+      final Long timestamp,
+      final Bytes32 prevRandao,
+      final Address feeRecipient) {
+    return new PayloadIdentifier(
+        timestamp
+            ^ ((long) parentHash.toHexString().hashCode()) << 8
+            ^ ((long) prevRandao.toHexString().hashCode()) << 16
+            ^ ((long) feeRecipient.toHexString().hashCode()) << 24);
   }
 
   @Override
@@ -80,5 +90,10 @@ public class PayloadIdentifier implements Quantity {
   @Override
   public int hashCode() {
     return val.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return toHexString();
   }
 }

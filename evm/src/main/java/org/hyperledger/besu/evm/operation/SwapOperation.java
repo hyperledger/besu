@@ -19,19 +19,19 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class SwapOperation extends AbstractFixedCostOperation {
+
+  public static final int SWAP_BASE = 0x8F;
+  static final OperationResult swapSuccess = new OperationResult(3, null);
 
   private final int index;
   protected final Operation.OperationResult underflowResponse;
 
   public SwapOperation(final int index, final GasCalculator gasCalculator) {
     super(
-        0x90 + index - 1,
+        SWAP_BASE + index,
         "SWAP" + index,
         index + 1,
         index + 1,
@@ -40,22 +40,20 @@ public class SwapOperation extends AbstractFixedCostOperation {
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;
     this.underflowResponse =
-        new Operation.OperationResult(
-            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    // getStackItem doesn't under/overflow.  Check explicitly.
-    if (frame.stackSize() < getStackItemsConsumed()) {
-      return underflowResponse;
-    }
+    return staticOperation(frame, index);
+  }
 
+  public static OperationResult staticOperation(final MessageFrame frame, final int index) {
     final Bytes tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));
     frame.setStackItem(index, tmp);
 
-    return successResponse;
+    return swapSuccess;
   }
 }

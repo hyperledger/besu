@@ -23,16 +23,13 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class SLoadOperation extends AbstractOperation {
 
-  private final OptionalLong warmCost;
-  private final OptionalLong coldCost;
+  private final long warmCost;
+  private final long coldCost;
 
   private final OperationResult warmSuccess;
   private final OperationResult coldSuccess;
@@ -40,11 +37,11 @@ public class SLoadOperation extends AbstractOperation {
   public SLoadOperation(final GasCalculator gasCalculator) {
     super(0x54, "SLOAD", 1, 1, 1, gasCalculator);
     final long baseCost = gasCalculator.getSloadOperationGasCost();
-    warmCost = OptionalLong.of(baseCost + gasCalculator.getWarmStorageReadCost());
-    coldCost = OptionalLong.of(baseCost + gasCalculator.getColdSloadCost());
+    warmCost = baseCost + gasCalculator.getWarmStorageReadCost();
+    coldCost = baseCost + gasCalculator.getColdSloadCost();
 
-    warmSuccess = new OperationResult(warmCost, Optional.empty());
-    coldSuccess = new OperationResult(coldCost, Optional.empty());
+    warmSuccess = new OperationResult(warmCost, null);
+    coldSuccess = new OperationResult(coldCost, null);
   }
 
   @Override
@@ -54,19 +51,18 @@ public class SLoadOperation extends AbstractOperation {
       final Address address = account.getAddress();
       final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
-      final OptionalLong cost = slotIsWarm ? warmCost : coldCost;
-      if (frame.getRemainingGas() < cost.orElse(0L)) {
-        return new OperationResult(cost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      final long cost = slotIsWarm ? warmCost : coldCost;
+      if (frame.getRemainingGas() < cost) {
+        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
 
         return slotIsWarm ? warmSuccess : coldSuccess;
       }
     } catch (final UnderflowException ufe) {
-      return new OperationResult(
-          warmCost, Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+      return new OperationResult(warmCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(warmCost, Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+      return new OperationResult(warmCost, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

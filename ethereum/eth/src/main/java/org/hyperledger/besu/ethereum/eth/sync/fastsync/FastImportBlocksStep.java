@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
@@ -96,11 +97,13 @@ public class FastImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
   protected boolean importBlock(final BlockWithReceipts blockWithReceipts) {
     final BlockImporter importer =
         protocolSchedule.getByBlockNumber(blockWithReceipts.getNumber()).getBlockImporter();
-    return importer.fastImportBlock(
-        protocolContext,
-        blockWithReceipts.getBlock(),
-        blockWithReceipts.getReceipts(),
-        headerValidationPolicy.getValidationModeForNextBlock(),
-        ommerValidationPolicy.getValidationModeForNextBlock());
+    final BlockImportResult blockImportResult =
+        importer.fastImportBlock(
+            protocolContext,
+            blockWithReceipts.getBlock(),
+            blockWithReceipts.getReceipts(),
+            headerValidationPolicy.getValidationModeForNextBlock(),
+            ommerValidationPolicy.getValidationModeForNextBlock());
+    return blockImportResult.isImported();
   }
 }

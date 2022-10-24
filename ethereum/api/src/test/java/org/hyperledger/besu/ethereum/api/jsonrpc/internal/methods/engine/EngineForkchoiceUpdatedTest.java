@@ -227,7 +227,11 @@ public class EngineForkchoiceUpdatedTest {
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString());
     var mockPayloadId =
-        PayloadIdentifier.forPayloadParams(mockHeader.getHash(), payloadParams.getTimestamp());
+        PayloadIdentifier.forPayloadParams(
+            mockHeader.getHash(),
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
             mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
@@ -470,12 +474,10 @@ public class EngineForkchoiceUpdatedTest {
 
     // assert that listeners are always notified
     verify(mergeContext)
-        .fireNewUnverifiedForkchoiceMessageEvent(
+        .fireNewUnverifiedForkchoiceEvent(
             fcuParam.getHeadBlockHash(),
-            fcuParam.getFinalizedBlockHash().isZero()
-                ? Optional.empty()
-                : Optional.of(fcuParam.getFinalizedBlockHash()),
-            fcuParam.getSafeBlockHash());
+            fcuParam.getSafeBlockHash(),
+            fcuParam.getFinalizedBlockHash());
 
     verify(engineCallListener, times(1)).executionEngineCalled();
 

@@ -25,6 +25,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class ShlOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult shlSuccess = new OperationResult(3, null);
+
   public ShlOperation(final GasCalculator gasCalculator) {
     super(0x1b, "SHL", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -32,6 +34,10 @@ public class ShlOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     Bytes shiftAmount = frame.popStackItem();
     if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
       frame.popStackItem();
@@ -46,6 +52,6 @@ public class ShlOperation extends AbstractFixedCostOperation {
         frame.pushStackItem(value.shiftLeft(shiftAmountInt));
       }
     }
-    return successResponse;
+    return shlSuccess;
   }
 }

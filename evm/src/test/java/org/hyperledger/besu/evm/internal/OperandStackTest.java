@@ -12,14 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.evm.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
-import org.hyperledger.besu.evm.internal.OperandStack;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -30,7 +29,7 @@ public class OperandStackTest {
   @Test
   public void construction() {
     final OperandStack stack = new OperandStack(1);
-    assertThat(stack.size()).isEqualTo(0);
+    assertThat(stack.size()).isZero();
   }
 
   @Test
@@ -89,7 +88,7 @@ public class OperandStackTest {
   public void set_NegativeOffset() {
     final OperandStack stack = new OperandStack(1);
     final Bytes32 operand = Bytes32.fromHexString("0x01");
-    assertThatThrownBy(() -> stack.set(-1, operand)).isInstanceOf(IndexOutOfBoundsException.class);
+    assertThatThrownBy(() -> stack.set(-1, operand)).isInstanceOf(UnderflowException.class);
   }
 
   @Test
@@ -97,7 +96,7 @@ public class OperandStackTest {
     final OperandStack stack = new OperandStack(1);
     stack.push(UInt256.fromHexString("0x01"));
     final Bytes32 operand = Bytes32.fromHexString("0x01");
-    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(IndexOutOfBoundsException.class);
+    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(OverflowException.class);
   }
 
   @Test

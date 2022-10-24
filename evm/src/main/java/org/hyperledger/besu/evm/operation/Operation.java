@@ -18,35 +18,29 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 public interface Operation {
 
   class OperationResult {
-    final OptionalLong gasCost;
-    final Optional<ExceptionalHaltReason> haltReason;
+    final long gasCost;
+    final ExceptionalHaltReason haltReason;
     final int pcIncrement;
 
-    public OperationResult(
-        final OptionalLong gasCost, final Optional<ExceptionalHaltReason> haltReason) {
+    public OperationResult(final long gasCost, final ExceptionalHaltReason haltReason) {
       this(gasCost, haltReason, 1);
     }
 
     public OperationResult(
-        final OptionalLong gasCost,
-        final Optional<ExceptionalHaltReason> haltReason,
-        final int pcIncrement) {
+        final long gasCost, final ExceptionalHaltReason haltReason, final int pcIncrement) {
       this.gasCost = gasCost;
       this.haltReason = haltReason;
       this.pcIncrement = pcIncrement;
     }
 
-    public OptionalLong getGasCost() {
+    public long getGasCost() {
       return gasCost;
     }
 
-    public Optional<ExceptionalHaltReason> getHaltReason() {
+    public ExceptionalHaltReason getHaltReason() {
       return haltReason;
     }
 

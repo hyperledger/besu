@@ -33,7 +33,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   PayloadIdentifier preparePayload(
       final BlockHeader parentHeader,
       final Long timestamp,
-      final Bytes32 random,
+      final Bytes32 prevRandao,
       final Address feeRecipient);
 
   @Override
@@ -74,6 +74,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   boolean isBadBlock(Hash blockHash);
 
   Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash);
+
+  void finalizeProposalById(final PayloadIdentifier payloadId);
 
   class ForkchoiceResult {
     public enum Status {
