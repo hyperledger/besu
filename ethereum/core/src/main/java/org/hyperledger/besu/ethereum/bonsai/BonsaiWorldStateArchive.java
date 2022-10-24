@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -118,7 +119,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
-    final Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> layeredWorldState =
+    final Optional<MutableWorldState> layeredWorldState =
         trieLogManager.getBonsaiLayeredWorldState(blockHash);
     if (layeredWorldState.isPresent()) {
       return Optional.of(layeredWorldState.get());
@@ -136,8 +137,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
-  public Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> getMutableSnapshot(
-      final Hash blockHash) {
+  public Optional<MutableWorldState> getMutableSnapshot(final Hash blockHash) {
     // TODO: decide whether we want to use BonsaiSnapshotWorldState or
     // BonsaiSnapshotPersistedWorldState
     return rollMutableStateToBlockHash(
@@ -147,7 +147,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> getMutable(
+  public Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash, final boolean shouldPersistState) {
     if (!shouldPersistState) {
       return blockchain
@@ -170,15 +170,15 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     }
   }
 
-  private Function<Hash, Optional<org.hyperledger.besu.ethereum.core.MutableWorldState>>
-      snapshotOrLayeredWorldState(final boolean useSnapshots) {
+  private Function<Hash, Optional<MutableWorldState>> snapshotOrLayeredWorldState(
+      final boolean useSnapshots) {
     if (useSnapshots) {
       // use snapshots:
       return this::getMutableSnapshot;
     } else {
       // otherwise use layered worldstate:
       return blockHash -> {
-        final Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> layeredWorldState =
+        final Optional<MutableWorldState> layeredWorldState =
             trieLogManager.getBonsaiLayeredWorldState(blockHash);
         if (layeredWorldState.isPresent()) {
           return layeredWorldState;
@@ -208,14 +208,12 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<org.hyperledger.besu.ethereum.core.MutableWorldState> getMutable(
-      final Hash rootHash, final Hash blockHash) {
+  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  private Optional<org.hyperledger.besu.ethereum.core.MutableWorldState>
-      rollMutableStateToBlockHash(
-          final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
+  private Optional<MutableWorldState> rollMutableStateToBlockHash(
+      final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
     } else {
@@ -283,10 +281,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
-          throw new RuntimeException(e);
+          LOG.debug("Archive rolling failed for block hash " + blockHash, e);
+          return Optional.empty();
         }
       } catch (final RuntimeException re) {
-        re.printStackTrace(System.out);
+        LOG.debug("Archive rolling failed for block hash " + blockHash, re);
         return Optional.empty();
       }
     }
@@ -298,7 +297,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public org.hyperledger.besu.ethereum.core.MutableWorldState getMutable() {
+  public MutableWorldState getMutable() {
     return persistedState;
   }
 
