@@ -51,7 +51,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   private final Blockchain blockchain;
 
-  private final LayeredTrieLogManager trieLogManager;
+  private final TrieLogManager trieLogManager;
   private final BonsaiPersistedWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final boolean useSnapshots;
@@ -83,8 +83,11 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
       final Optional<Long> maxLayersToLoad,
       final boolean useSnapshots) {
     this(
-        new LayeredTrieLogManager(
-            blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
+        useSnapshots
+            ? new SnapshotTrieLogManager(
+                blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS))
+            : new LayeredTrieLogManager(
+                blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS)),
         worldStateStorage,
         blockchain,
         useSnapshots);
@@ -92,7 +95,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
 
   @VisibleForTesting
   BonsaiWorldStateArchive(
-      final LayeredTrieLogManager trieLogManager,
+      final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final boolean useSnapshots) {
@@ -299,7 +302,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return persistedState;
   }
 
-  public LayeredTrieLogManager getTrieLogManager() {
+  public TrieLogManager getTrieLogManager() {
     return trieLogManager;
   }
 

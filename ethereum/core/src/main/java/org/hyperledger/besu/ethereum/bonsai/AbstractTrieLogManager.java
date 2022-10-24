@@ -1,8 +1,24 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.TrieLogManager.CachedLayer;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -16,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractTrieLogManager<T extends AbstractTrieLogManager.CachedLayer> {
+public abstract class AbstractTrieLogManager<T extends CachedLayer> implements TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
 
@@ -37,6 +53,7 @@ public abstract class AbstractTrieLogManager<T extends AbstractTrieLogManager.Ca
     this.maxLayersToLoad = maxLayersToLoad;
   }
 
+  @Override
   public synchronized void saveTrieLog(
       final BonsaiWorldStateArchive worldStateArchive,
       final BonsaiWorldStateUpdater localUpdater,
@@ -77,7 +94,7 @@ public abstract class AbstractTrieLogManager<T extends AbstractTrieLogManager.Ca
     return trieLog;
   }
 
-  public synchronized void scrubCachedLayers(final long newMaxHeight) {
+  synchronized void scrubCachedLayers(final long newMaxHeight) {
     final long waterline = newMaxHeight - RETAINED_LAYERS;
     cachedWorldStatesByHash.values().stream()
         .filter(layer -> layer.getHeight() < waterline)
@@ -111,6 +128,7 @@ public abstract class AbstractTrieLogManager<T extends AbstractTrieLogManager.Ca
         .put(blockHeader.getHash().toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
   }
 
+  @Override
   public Optional<MutableWorldState> getBonsaiLayeredWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.of(cachedWorldStatesByHash.get(blockHash).getMutableWorldState());
@@ -118,31 +136,17 @@ public abstract class AbstractTrieLogManager<T extends AbstractTrieLogManager.Ca
     return Optional.empty();
   }
 
+  @Override
   public long getMaxLayersToLoad() {
     return maxLayersToLoad;
   }
 
-  public abstract void addCachedLayer(
-      final BlockHeader blockHeader,
-      final Hash worldStateRootHash,
-      final TrieLogLayer trieLog,
-      final BonsaiWorldStateArchive worldStateArchive);
-
-  public abstract void updateCachedLayers(final Hash blockParentHash, final Hash blockHash);
-
+  @Override
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.of(cachedWorldStatesByHash.get(blockHash).getTrieLog());
     } else {
       return worldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
     }
-  }
-
-  public interface CachedLayer {
-    long getHeight();
-
-    TrieLogLayer getTrieLog();
-
-    MutableWorldState getMutableWorldState();
   }
 }
