@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -188,8 +188,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final Block emptyBlock =
         mergeBlockCreator.createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp);
 
-    Result result = validateBlock(emptyBlock);
-    if (result.blockProcessingOutputs.isPresent()) {
+    BlockProcessingResult result = validateBlock(emptyBlock);
+    if (result.getYield().isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
       debugLambda(
           LOG,
@@ -223,7 +223,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .thenAccept(
             bestBlock -> {
               final var resultBest = validateBlock(bestBlock);
-              if (resultBest.blockProcessingOutputs.isPresent()) {
+              if (resultBest.getYield().isPresent()) {
                 mergeContext.putPayloadById(payloadIdentifier, bestBlock);
                 LOG.info(
                     "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms",
@@ -326,7 +326,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Result validateBlock(final Block block) {
+  public BlockProcessingResult validateBlock(final Block block) {
 
     final var chain = protocolContext.getBlockchain();
     chain
@@ -353,12 +353,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Result rememberBlock(final Block block) {
+  public BlockProcessingResult rememberBlock(final Block block) {
     debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
     final var validationResult = validateBlock(block);
-    validationResult.blockProcessingOutputs.ifPresent(
-        result -> chain.storeBlock(block, result.receipts));
+    validationResult.getYield().ifPresent(result -> chain.storeBlock(block, result.getReceipts()));
     return validationResult;
   }
 

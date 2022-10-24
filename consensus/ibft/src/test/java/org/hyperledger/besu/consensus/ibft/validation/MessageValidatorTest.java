@@ -35,9 +35,9 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -99,7 +99,7 @@ public class MessageValidatorTest {
             mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
 
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(new BlockProcessingOutputs(null, null)));
 
     when(roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
             any(), any()))
@@ -154,7 +154,7 @@ public class MessageValidatorTest {
   @Test
   public void blockValidationFailureFailsValidation() {
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new Result("Failed"));
+        .thenReturn(new BlockProcessingResult("Failed"));
 
     final Proposal proposalMsg =
         messageFactory.createProposal(roundIdentifier, block, Optional.empty());

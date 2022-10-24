@@ -47,6 +47,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
         skipZeroBlockRewards);
   }
 
+  // TODO: lots of copypasta between this and ClassicBlockProcessor
   @Override
   protected boolean rewardCoinbase(
       final MutableWorldState worldState,

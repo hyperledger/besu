@@ -80,6 +80,7 @@ public class BlockHeaderValidator {
         .orElse(false);
   }
 
+  // TODO: once Java 17 use a record to return validity and rule violated
   private boolean applyRules(
       final BlockHeader header,
       final BlockHeader parent,

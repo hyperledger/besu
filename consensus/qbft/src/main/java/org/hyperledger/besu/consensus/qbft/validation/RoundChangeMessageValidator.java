@@ -81,7 +81,7 @@ public class RoundChangeMessageValidator {
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (validationResult.blockProcessingOutputs.isEmpty()) {
+    if (validationResult.getYield().isEmpty()) {
       LOG.info(
           "{}: block did not pass validation. Reason {}",
           ERROR_PREFIX,

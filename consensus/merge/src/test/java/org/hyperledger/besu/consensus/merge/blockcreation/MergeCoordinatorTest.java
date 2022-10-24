@@ -618,7 +618,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
     Block headBlock = new Block(headBlockHeader, BlockBody.empty());
-    assertThat(coordinator.rememberBlock(headBlock).blockProcessingOutputs).isPresent();
+    assertThat(coordinator.rememberBlock(headBlock).getYield()).isPresent();
 
     var res =
         coordinator.updateForkChoice(
@@ -672,7 +672,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private void sendNewPayloadAndForkchoiceUpdate(
       final Block block, final Optional<BlockHeader> finalizedHeader, final Hash safeHash) {
 
-    assertThat(coordinator.rememberBlock(block).blockProcessingOutputs).isPresent();
+    assertThat(coordinator.rememberBlock(block).getYield()).isPresent();
     assertThat(
             coordinator
                 .updateForkChoice(

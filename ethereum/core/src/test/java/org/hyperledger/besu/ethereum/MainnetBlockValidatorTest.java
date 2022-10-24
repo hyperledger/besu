@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -38,8 +37,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -141,25 +138,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return false;
-              }
-            });
+        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
@@ -182,25 +161,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return true;
-              }
-            });
+        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
@@ -223,25 +184,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return true;
-              }
-            });
+        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(badBlock),
@@ -272,29 +215,8 @@ public class MainnetBlockValidatorTest {
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return false;
-              }
-
-              @Override
-              public Optional<Throwable> causedBy() {
-                return Optional.of(new StorageException("database bedlam"));
-              }
-            });
+            new BlockProcessingResult(
+                BlockProcessingOutputs.empty(), new StorageException("database bedlam")));
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(badBlock),

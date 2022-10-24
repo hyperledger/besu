@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -133,12 +133,12 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public Result rememberBlock(final Block block) {
+  public BlockProcessingResult rememberBlock(final Block block) {
     return mergeCoordinator.rememberBlock(block);
   }
 
   @Override
-  public Result validateBlock(final Block block) {
+  public BlockProcessingResult validateBlock(final Block block) {
     return mergeCoordinator.validateBlock(block);
   }
 

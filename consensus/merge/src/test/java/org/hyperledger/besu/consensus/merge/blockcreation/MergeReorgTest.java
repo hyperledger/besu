@@ -24,7 +24,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -147,13 +147,15 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   }
 
   private void appendBlock(final Block block) {
-    final Result result = coordinator.validateBlock(block);
+    final BlockProcessingResult result = coordinator.validateBlock(block);
 
-    result.blockProcessingOutputs.ifPresentOrElse(
-        outputs -> blockchain.appendBlock(block, outputs.receipts),
-        () -> {
-          throw new RuntimeException(result.errorMessage.get());
-        });
+    result
+        .getYield()
+        .ifPresentOrElse(
+            outputs -> blockchain.appendBlock(block, outputs.getReceipts()),
+            () -> {
+              throw new RuntimeException(result.errorMessage.get());
+            });
   }
 
   private List<Block> subChain(
