@@ -129,7 +129,7 @@ public abstract class AbstractTrieLogManager<T extends CachedLayer> implements T
   }
 
   @Override
-  public Optional<MutableWorldState> getBonsaiLayeredWorldState(final Hash blockHash) {
+  public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       return Optional.of(cachedWorldStatesByHash.get(blockHash).getMutableWorldState());
     }

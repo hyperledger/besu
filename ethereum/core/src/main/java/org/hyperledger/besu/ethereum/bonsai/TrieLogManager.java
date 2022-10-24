@@ -29,7 +29,7 @@ public interface TrieLogManager {
       final Hash worldStateRootHash,
       final BlockHeader blockHeader);
 
-  Optional<MutableWorldState> getBonsaiLayeredWorldState(final Hash blockHash);
+  Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash);
 
   long getMaxLayersToLoad();
 
