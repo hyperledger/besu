@@ -498,19 +498,44 @@ public abstract class AbstractPendingTransactionsTestBase {
   }
 
   @Test
-  public void shouldTrackMaximumNonceForEachSender() {
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(0, KEYS1), Optional.empty());
-    assertMaximumNonceForSender(SENDER1, 1);
+  public void shouldTrackNextNonceForEachSender() {
+    // first sender consecutive txs: 0->1->2
+    final Account firstSender = mock(Account.class);
+    when(firstSender.getNonce()).thenReturn(0L);
+    when(firstSender.getAddress()).thenReturn(SENDER1);
+    assertNoNextNonceForSender(SENDER1);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(0, KEYS1), Optional.of(firstSender));
+    assertNextNonceForSender(SENDER1, 1);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(1, KEYS1), Optional.empty());
-    assertMaximumNonceForSender(SENDER1, 2);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(1, KEYS1), Optional.of(firstSender));
+    assertNextNonceForSender(SENDER1, 2);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(2, KEYS1), Optional.empty());
-    assertMaximumNonceForSender(SENDER1, 3);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(2, KEYS1), Optional.of(firstSender));
+    assertNextNonceForSender(SENDER1, 3);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(4, KEYS2), Optional.empty());
-    assertMaximumNonceForSender(SENDER2, 5);
-    assertMaximumNonceForSender(SENDER1, 3);
+    // second sender not in orders: 3->0->2->1
+    final Account secondSender = mock(Account.class);
+    when(secondSender.getNonce()).thenReturn(0L);
+    when(secondSender.getAddress()).thenReturn(SENDER2);
+    assertNoNextNonceForSender(SENDER2);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(3, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 0);
+
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(0, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 1);
+
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(2, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 1);
+
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(1, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 4);
   }
 
   @Test
@@ -575,7 +600,11 @@ public abstract class AbstractPendingTransactionsTestBase {
         .containsExactly(transaction4, transaction1, transaction2, transaction3);
   }
 
-  protected void assertMaximumNonceForSender(final Address sender1, final int i) {
+  private void assertNoNextNonceForSender(final Address sender) {
+    assertThat(transactions.getNextNonceForSender(sender)).isEqualTo(OptionalLong.empty());
+  }
+
+  protected void assertNextNonceForSender(final Address sender1, final int i) {
     assertThat(transactions.getNextNonceForSender(sender1)).isEqualTo(OptionalLong.of(i));
   }
 
@@ -698,16 +727,18 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void assertThatCorrectNonceIsReturned() {
+    final Account sender = mock(Account.class);
+    when(sender.getNonce()).thenReturn(1L);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, 4, 5);
+    addLocalTransactions(sender, 1, 2, 4);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
-    addLocalTransactions(3);
+    addLocalTransactions(sender, 3);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(6);
-    addLocalTransactions(6, 10);
+        .hasValue(5);
+    addLocalTransactions(sender, 5, 9);
 
     // assert that transactions are pruned by account from latest future nonces first
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
@@ -717,20 +748,22 @@ public abstract class AbstractPendingTransactionsTestBase {
 
   @Test
   public void assertThatCorrectNonceIsReturnedForSenderLimitedPool() {
+    final Account sender = mock(Account.class);
+    when(sender.getNonce()).thenReturn(1L);
     assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(senderLimitedTransactions, 1, 2, 4, 5);
+    addLocalTransactions(senderLimitedTransactions, sender, 1, 2, 4, 5);
     assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
-    addLocalTransactions(senderLimitedTransactions, 3);
+    addLocalTransactions(senderLimitedTransactions, sender, 3);
 
     // assert we have dropped previously added tx 5, and next nonce is now 5
     assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(5);
-    addLocalTransactions(senderLimitedTransactions, 6, 10);
+    addLocalTransactions(senderLimitedTransactions, sender, 6, 10);
 
-    // assert that we drop future nonces first:
+    // assert that we drop future nonce first
     assertThat(senderLimitedTransactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(5);
@@ -739,32 +772,32 @@ public abstract class AbstractPendingTransactionsTestBase {
   @Test
   public void assertThatCorrectNonceIsReturnedLargeGap() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, Long.MAX_VALUE);
+    final Account sender = mock(Account.class);
+    addLocalTransactions(sender, 0, 1, 2, Long.MAX_VALUE);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
-    addLocalTransactions(3);
+    addLocalTransactions(sender, 3);
   }
 
   @Test
   public void assertThatCorrectNonceIsReturnedWithRepeatedTXes() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, 4, 4, 4, 4, 4, 4, 4, 4);
+    final Account sender = mock(Account.class);
+    addLocalTransactions(sender, 0, 1, 2, 4, 4, 4, 4, 4, 4, 4, 4);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
-    addLocalTransactions(3);
+    addLocalTransactions(sender, 3);
   }
 
-  protected void addLocalTransactions(final long... nonces) {
-    addLocalTransactions(transactions, nonces);
+  protected void addLocalTransactions(final Account sender, final long... nonces) {
+    addLocalTransactions(transactions, sender, nonces);
   }
 
   protected void addLocalTransactions(
-      final AbstractPendingTransactionsSorter sorter, final long... nonces) {
+      final AbstractPendingTransactionsSorter sorter, final Account sender, final long... nonces) {
     for (final long nonce : nonces) {
-      final Account sender = mock(Account.class);
-      when(sender.getNonce()).thenReturn(1L);
       sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
     }
   }
