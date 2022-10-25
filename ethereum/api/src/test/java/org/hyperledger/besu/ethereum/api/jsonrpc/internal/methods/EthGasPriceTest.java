@@ -32,13 +32,12 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -162,19 +161,17 @@ public class EthGasPriceTest {
                 Hash.EMPTY,
                 0,
                 null),
-            new BlockBody(
-                List.of(
-                    new Transaction(
-                        0,
-                        Wei.of(height * 1000000L),
-                        0,
-                        Optional.empty(),
-                        Wei.ZERO,
-                        null,
-                        Bytes.EMPTY,
-                        Address.ZERO,
-                        Optional.empty())),
-                List.of())));
+            BlockBodies.of(
+                new Transaction(
+                    0,
+                    Wei.of(height * 1000000L),
+                    0,
+                    Optional.empty(),
+                    Wei.ZERO,
+                    null,
+                    Bytes.EMPTY,
+                    Address.ZERO,
+                    Optional.empty()))));
   }
 
   private Object createEmptyBlock(final Long height) {
@@ -198,7 +195,7 @@ public class EthGasPriceTest {
                 Hash.EMPTY,
                 0,
                 null),
-            new BlockBody(List.of(), List.of())));
+            BlockBodies.empty()));
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

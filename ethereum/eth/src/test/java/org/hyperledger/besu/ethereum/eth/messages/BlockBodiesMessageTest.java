@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -57,7 +58,7 @@ public final class BlockBodiesMessageTest {
       oneBlock.skipNext();
       bodies.add(
           // We know the test data to only contain Frontier blocks
-          new BlockBody(
+          BlockBodies.of(
               oneBlock.readList(Transaction::readFrom),
               oneBlock.readList(
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))));

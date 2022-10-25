@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -36,7 +37,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,8 +51,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
 
-  private static final BlockBody BODY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
+  private static final BlockBody BODY = BlockBodies.empty();
 
   private final Block block;
   private final List<GenesisAccount> genesisAccounts;

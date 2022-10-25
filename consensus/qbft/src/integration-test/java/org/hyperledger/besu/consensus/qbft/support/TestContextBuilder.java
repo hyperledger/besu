@@ -82,7 +82,7 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -360,8 +360,7 @@ public class TestContextBuilder {
     headerTestFixture.coinbase(coinbase);
 
     final BlockHeader genesisHeader = headerTestFixture.buildHeader();
-    return new Block(
-        genesisHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    return new Block(genesisHeader, BlockBodies.empty());
   }
 
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {

@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -408,14 +408,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void childTimestampExceedsParentsFails() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
-    Block parent = new Block(parentHeader, BlockBody.empty());
+    Block parent = new Block(parentHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
 
     BlockHeader childHeader = nextBlockHeader(parentHeader, parentHeader.getTimestamp());
-    Block child = new Block(childHeader, BlockBody.empty());
+    Block child = new Block(childHeader, BlockBodies.empty());
     coordinator.rememberBlock(child);
 
     ForkchoiceResult result =
@@ -440,10 +440,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void latestValidAncestorDescendsFromTerminal() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
-    Block parent = new Block(parentHeader, BlockBody.empty());
+    Block parent = new Block(parentHeader, BlockBodies.empty());
 
     // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
     var lvh = this.coordinator.getLatestValidAncestor(parentHeader);
@@ -452,7 +452,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
     BlockHeader childHeader = nextBlockHeader(parentHeader);
-    Block child = new Block(childHeader, BlockBody.empty());
+    Block child = new Block(childHeader, BlockBodies.empty());
     coordinator.validateBlock(child);
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
         .isTrue();
@@ -465,10 +465,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void latestValidAncestorDescendsFromFinalizedBlock() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader grandParentHeader = nextBlockHeader(terminalHeader);
-    Block grandParent = new Block(grandParentHeader, BlockBody.empty());
+    Block grandParent = new Block(grandParentHeader, BlockBodies.empty());
 
     // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
     var lvh = this.coordinator.getLatestValidAncestor(grandParentHeader);
@@ -477,12 +477,12 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     sendNewPayloadAndForkchoiceUpdate(grandParent, Optional.empty(), terminalHeader.getHash());
     BlockHeader parentHeader = nextBlockHeader(grandParentHeader);
-    Block parent = new Block(parentHeader, BlockBody.empty());
+    Block parent = new Block(parentHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         parent, Optional.of(grandParentHeader), grandParentHeader.getHash());
 
     BlockHeader childHeader = nextBlockHeader(parentHeader);
-    Block child = new Block(childHeader, BlockBody.empty());
+    Block child = new Block(childHeader, BlockBodies.empty());
     coordinator.validateBlock(child);
 
     assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
@@ -499,15 +499,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void updateForkChoiceShouldPersistFirstFinalizedBlockHash() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader firstFinalizedHeader = nextBlockHeader(terminalHeader);
-    Block firstFinalizedBlock = new Block(firstFinalizedHeader, BlockBody.empty());
+    Block firstFinalizedBlock = new Block(firstFinalizedHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         firstFinalizedBlock, Optional.empty(), terminalHeader.getHash());
 
     BlockHeader headBlockHeader = nextBlockHeader(firstFinalizedHeader);
-    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    Block headBlock = new Block(headBlockHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         headBlock, Optional.of(firstFinalizedHeader), firstFinalizedHeader.getHash());
 
@@ -535,7 +535,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       BlockHeader nextBlock =
           nextBlockHeader(
               prevParent, genesisState.getBlock().getHeader().getTimestamp() + i * 1000);
-      coordinator.rememberBlock(new Block(nextBlock, BlockBody.empty()));
+      coordinator.rememberBlock(new Block(nextBlock, BlockBodies.empty()));
       prevParent = nextBlock;
     }
 
@@ -553,7 +553,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
       BlockHeader nextPrime =
           nextBlockHeader(
               prevParent, genesisState.getBlock().getHeader().getTimestamp() + i * 1001);
-      coordinator.rememberBlock(new Block(nextPrime, BlockBody.empty()));
+      coordinator.rememberBlock(new Block(nextPrime, BlockBodies.empty()));
       prevParent = nextPrime;
     }
     coordinator.updateForkChoice(
@@ -570,20 +570,20 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void updateForkChoiceShouldPersistLastFinalizedBlockHash() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
-    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         prevFinalizedBlock, Optional.empty(), terminalHeader.getHash());
 
     BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
-    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         lastFinalizedBlock, Optional.of(prevFinalizedHeader), prevFinalizedHeader.getHash());
 
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
-    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    Block headBlock = new Block(headBlockHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         headBlock, Optional.of(lastFinalizedHeader), lastFinalizedHeader.getHash());
 
@@ -763,21 +763,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void invalidPayloadShouldReturnErrorAndUpdateForkchoiceState() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
-    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
+    Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(
         prevFinalizedBlock, Optional.empty(), terminalHeader.getHash());
 
     BlockHeader lastFinalizedHeader = nextBlockHeader(prevFinalizedHeader);
-    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBody.empty());
+    Block lastFinalizedBlock = new Block(lastFinalizedHeader, BlockBodies.empty());
 
     sendNewPayloadAndForkchoiceUpdate(
         lastFinalizedBlock, Optional.of(prevFinalizedHeader), prevFinalizedHeader.getHash());
 
     BlockHeader headBlockHeader = nextBlockHeader(lastFinalizedHeader);
-    Block headBlock = new Block(headBlockHeader, BlockBody.empty());
+    Block headBlock = new Block(headBlockHeader, BlockBodies.empty());
     assertThat(coordinator.rememberBlock(headBlock).blockProcessingOutputs).isPresent();
 
     var res =
@@ -802,14 +802,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void forkchoiceUpdateShouldIgnoreAncestorOfChainHead() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBodies.empty()), Optional.empty(), Hash.ZERO);
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
-    Block parent = new Block(parentHeader, BlockBody.empty());
+    Block parent = new Block(parentHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
 
     BlockHeader childHeader = nextBlockHeader(parentHeader);
-    Block child = new Block(childHeader, BlockBody.empty());
+    Block child = new Block(childHeader, BlockBodies.empty());
     sendNewPayloadAndForkchoiceUpdate(child, Optional.empty(), parent.getHash());
 
     ForkchoiceResult res =

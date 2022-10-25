@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -49,7 +49,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -178,8 +177,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           "block timestamp not greater than parent");
     }
 
-    final var block =
-        new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
+    final var block = new Block(newBlockHeader, BlockBodies.ofTransactions(transactions));
     final String warningMessage = "Sync to block " + block.toLogString() + " failed";
 
     if (mergeContext.get().isSyncing() || parentHeader.isEmpty()) {

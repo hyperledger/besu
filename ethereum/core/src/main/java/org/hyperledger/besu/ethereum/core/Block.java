@@ -71,7 +71,7 @@ public class Block {
     final List<BlockHeader> ommers = in.readList(rlp -> BlockHeader.readFrom(rlp, hashFunction));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers));
+    return new Block(header, BlockBodies.of(transactions, ommers));
   }
 
   @Override

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -52,7 +53,7 @@ public final class ValidationTestUtils {
     final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final List<BlockHeader> ommers =
         input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
-    return new BlockBody(transactions, ommers);
+    return BlockBodies.of(transactions, ommers);
   }
 
   public static Block readBlock(final long num) throws IOException {
@@ -67,7 +68,7 @@ public final class ValidationTestUtils {
     final List<Transaction> transactions = input.readList(Transaction::readFrom);
     final List<BlockHeader> ommers =
         input.readList(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
-    final BlockBody body = new BlockBody(transactions, ommers);
+    final BlockBody body = BlockBodies.of(transactions, ommers);
     return new Block(header, body);
   }
 }

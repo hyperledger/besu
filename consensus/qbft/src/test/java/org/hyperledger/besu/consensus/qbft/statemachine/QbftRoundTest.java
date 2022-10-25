@@ -54,7 +54,7 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.Tran
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -127,7 +127,7 @@ public class QbftRoundTest {
     headerTestFixture.number(1);
 
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    proposedBlock = new Block(header, BlockBodies.empty());
 
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));

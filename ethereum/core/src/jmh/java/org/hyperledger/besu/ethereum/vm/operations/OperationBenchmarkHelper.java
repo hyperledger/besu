@@ -19,7 +19,7 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
@@ -76,7 +76,7 @@ public class OperationBenchmarkHelper {
                   .number(i)
                   .difficulty(Difficulty.ONE)
                   .buildHeader(),
-              new BlockBody(emptyList(), emptyList())),
+              BlockBodies.empty()),
           emptyList());
     }
     final MessageFrame messageFrame =

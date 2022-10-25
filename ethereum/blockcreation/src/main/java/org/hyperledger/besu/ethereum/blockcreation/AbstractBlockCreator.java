@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -203,7 +203,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       final Block block =
-          new Block(blockHeader, new BlockBody(transactionResults.getTransactions(), ommers));
+          new Block(blockHeader, BlockBodies.of(transactionResults.getTransactions(), ommers));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

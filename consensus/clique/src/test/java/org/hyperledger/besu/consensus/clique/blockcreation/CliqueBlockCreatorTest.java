@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -115,7 +115,7 @@ public class CliqueBlockCreatorTest {
         new Block(
             TestHelpers.createCliqueSignedBlockHeader(
                 headerTestFixture, otherKeyPair, validatorList),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+            BlockBodies.empty());
     blockchain.appendBlock(emptyBlock, Lists.newArrayList());
   }
 

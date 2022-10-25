@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -94,11 +94,11 @@ public class ChainForTestCreator {
   }
 
   public static Block createEmptyBlock(final Long height) {
-    return new Block(prepareEmptyHeader(height), new BlockBody(List.of(), List.of()));
+    return new Block(prepareEmptyHeader(height), BlockBodies.empty());
   }
 
   private static Block createEmptyBlock(final Block parent) {
-    return new Block(prepareEmptyHeader(parent.getHeader()), new BlockBody(List.of(), List.of()));
+    return new Block(prepareEmptyHeader(parent.getHeader()), BlockBodies.empty());
   }
 
   private static BlockHeader prepareEmptyHeader(final Long number) {

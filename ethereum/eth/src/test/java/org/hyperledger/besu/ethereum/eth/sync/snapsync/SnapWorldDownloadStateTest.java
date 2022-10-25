@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
@@ -30,7 +29,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -325,9 +324,7 @@ public class SnapWorldDownloadStateTest {
     final BlockAddedObserver blockAddedListener = downloadState.getBlockAddedListener();
     blockAddedListener.onBlockAdded(
         BlockAddedEvent.createForHeadAdvancement(
-            new Block(
-                new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
+            new Block(new BlockHeaderTestFixture().number(500).buildHeader(), BlockBodies.empty()),
             Collections.emptyList(),
             Collections.emptyList()));
 
@@ -351,9 +348,7 @@ public class SnapWorldDownloadStateTest {
     final BlockAddedObserver blockAddedListener = downloadState.getBlockAddedListener();
     blockAddedListener.onBlockAdded(
         BlockAddedEvent.createForHeadAdvancement(
-            new Block(
-                new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
+            new Block(new BlockHeaderTestFixture().number(500).buildHeader(), BlockBodies.empty()),
             Collections.emptyList(),
             Collections.emptyList()));
 

@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -115,7 +115,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(10L);
     BlockHeader tddPenultimate = this.blockchain.getChainHeadHeader();
     // Add TTD block A to chain as child of N.
-    Block ttdA = new Block(terminalPowBlock(tddPenultimate, Difficulty.ONE), BlockBody.empty());
+    Block ttdA = new Block(terminalPowBlock(tddPenultimate, Difficulty.ONE), BlockBodies.empty());
     appendBlock(ttdA);
     assertThat(blockchain.getChainHead().getHeight()).isEqualTo(11L);
     assertThat(blockchain.getTotalDifficultyByHash(ttdA.getHash())).isPresent();
@@ -134,7 +134,8 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
     assertThat(blockchain.getChainHead().getHash())
         .isEqualTo(builtOnTTDA.get(builtOnTTDA.size() - 1).getHash());
 
-    Block ttdB = new Block(terminalPowBlock(tddPenultimate, Difficulty.of(2L)), BlockBody.empty());
+    Block ttdB =
+        new Block(terminalPowBlock(tddPenultimate, Difficulty.of(2L)), BlockBodies.empty());
     appendBlock(ttdB);
     List<Block> builtOnTTDB = subChain(ttdB.getHeader(), 10, Difficulty.of(0L));
     builtOnTTDB.stream().forEach(this::appendBlock);
@@ -177,7 +178,7 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
         headerGenerator.difficulty(each);
       }
       BlockHeader h = headerGenerator.buildHeader();
-      retval.add(new Block(h, BlockBody.empty()));
+      retval.add(new Block(h, BlockBodies.empty()));
       newParent = h;
     }
     return retval;

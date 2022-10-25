@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -122,8 +122,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
   }
 
   private BlockResult blockResult(final BlockHeader header) {
-    final Block block =
-        new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    final Block block = new Block(header, BlockBodies.empty());
     return new BlockResult(
         header,
         Collections.emptyList(),

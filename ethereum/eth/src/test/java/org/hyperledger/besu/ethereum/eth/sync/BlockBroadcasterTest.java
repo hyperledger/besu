@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-import java.util.Collections;
 import java.util.stream.Stream;
 
 import org.junit.Test;
@@ -82,7 +82,7 @@ public class BlockBroadcasterTest {
   }
 
   private Block generateBlock() {
-    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody body = BlockBodies.empty();
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 }

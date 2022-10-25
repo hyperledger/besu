@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.toMap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -74,7 +74,8 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     this.blocks =
         headers.stream()
             .filter(this::hasEmptyBody)
-            .collect(toMap(BlockHeader::getNumber, header -> new Block(header, BlockBody.empty())));
+            .collect(
+                toMap(BlockHeader::getNumber, header -> new Block(header, BlockBodies.empty())));
   }
 
   private boolean hasEmptyBody(final BlockHeader header) {

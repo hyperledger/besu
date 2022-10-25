@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -112,7 +113,7 @@ public class BlockchainQueriesLogCacheTest {
             0,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
-    final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody fakeBody = BlockBodies.empty();
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(testHash));
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));

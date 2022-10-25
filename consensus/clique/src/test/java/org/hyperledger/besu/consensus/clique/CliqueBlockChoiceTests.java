@@ -30,7 +30,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,7 +53,7 @@ public class CliqueBlockChoiceTests {
   private Block createEmptyBlock(final KeyPair blockSigner) {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, blockSigner, addresses);
-    return new Block(header, new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+    return new Block(header, BlockBodies.empty());
   }
 
   @Before

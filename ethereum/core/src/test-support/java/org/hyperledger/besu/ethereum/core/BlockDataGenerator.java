@@ -246,7 +246,7 @@ public class BlockDataGenerator {
   public Block block(final BlockOptions options) {
     final long blockNumber = options.getBlockNumber(positiveLong());
     final BlockBody body =
-        blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER ? BlockBody.empty() : body(options);
+        blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER ? BlockBodies.empty() : body(options);
     final BlockHeader header = header(blockNumber, body, options);
     return new Block(header, body);
   }
@@ -327,7 +327,7 @@ public class BlockDataGenerator {
       defaultTxs.add(transaction(options.getTransactionTypes()));
     }
 
-    return new BlockBody(options.getTransactions(defaultTxs), ommers);
+    return BlockBodies.of(options.getTransactions(defaultTxs), ommers);
   }
 
   private BlockHeader ommer() {

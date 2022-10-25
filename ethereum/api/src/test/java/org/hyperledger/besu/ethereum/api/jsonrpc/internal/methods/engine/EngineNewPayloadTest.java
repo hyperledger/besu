@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -168,8 +168,7 @@ public class EngineNewPayloadTest {
   @Test
   public void shouldReturnSuccessOnAlreadyPresent() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    Block mockBlock =
-        new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    Block mockBlock = new Block(mockHeader, BlockBodies.empty());
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
 

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -68,7 +69,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -479,7 +479,7 @@ public class BesuEventsImplTest {
   }
 
   private Block generateBlock() {
-    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody body = BlockBodies.empty();
     return new Block(new BlockHeaderTestFixture().buildHeader(), body);
   }
 

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -70,9 +71,9 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final BlockHeader header2 = new BlockHeaderTestFixture().number(2).buildHeader();
     final BlockHeader header3 = new BlockHeaderTestFixture().number(3).buildHeader();
 
-    final Block block1 = new Block(header1, BlockBody.empty());
-    final Block block2 = new Block(header2, BlockBody.empty());
-    final Block block3 = new Block(header3, BlockBody.empty());
+    final Block block1 = new Block(header1, BlockBodies.empty());
+    final Block block2 = new Block(header2, BlockBodies.empty());
+    final Block block3 = new Block(header3, BlockBodies.empty());
 
     final List<Block> blocks = asList(block1, block2, block3);
     final EthTask<List<Block>> task = createTask(blocks);

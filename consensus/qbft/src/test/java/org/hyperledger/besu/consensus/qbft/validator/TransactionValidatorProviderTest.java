@@ -30,7 +30,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collection;
@@ -77,7 +77,7 @@ public class TransactionValidatorProviderTest {
 
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
-    return new Block(headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList()));
+    return new Block(headerBuilder.buildHeader(), BlockBodies.empty());
   }
 
   @Test

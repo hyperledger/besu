@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -68,7 +68,7 @@ public class RewardTraceGeneratorTest {
 
   @Before
   public void setUp() {
-    final BlockBody blockBody = new BlockBody(Collections.emptyList(), List.of(ommerHeader));
+    final BlockBody blockBody = BlockBodies.of(ommerHeader);
     final BlockHeader blockHeader =
         gen.header(0x0A, blockBody, new BlockDataGenerator.BlockOptions());
     block = new Block(blockHeader, blockBody);

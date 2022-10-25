@@ -61,7 +61,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -123,7 +123,7 @@ public class QbftBlockHeightManagerTest {
 
     headerTestFixture.extraData(bftExtraDataCodec.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
-    createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    createdBlock = new Block(header, BlockBodies.empty());
   }
 
   @Before

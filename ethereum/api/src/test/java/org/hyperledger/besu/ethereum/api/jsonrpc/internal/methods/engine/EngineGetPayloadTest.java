@@ -34,11 +34,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResult;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -61,8 +60,7 @@ public class EngineGetPayloadTest {
           Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x42"));
   private static final BlockHeader mockHeader =
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
-  private static final Block mockBlock =
-      new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  private static final Block mockBlock = new Block(mockHeader, BlockBodies.empty());
 
   @Mock private ProtocolContext protocolContext;
 

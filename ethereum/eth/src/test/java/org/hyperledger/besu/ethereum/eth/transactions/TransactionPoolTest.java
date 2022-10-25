@@ -43,7 +43,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -1048,7 +1048,7 @@ public class TransactionPoolTest {
             .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
             .parentHash(blockchain.getChainHeadHash())
             .buildBlockHeader();
-    blockchain.appendBlock(new Block(header, BlockBody.empty()), emptyList());
+    blockchain.appendBlock(new Block(header, BlockBodies.empty()), emptyList());
   }
 
   @Test
@@ -1105,7 +1105,7 @@ public class TransactionPoolTest {
                 .parentHash(parentBlock.getHash())
                 .number(parentBlock.getNumber() + 1)
                 .buildHeader(),
-            new BlockBody(transactionList, emptyList()));
+            BlockBodies.ofTransactions(transactionList));
     final List<TransactionReceipt> transactionReceipts =
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))

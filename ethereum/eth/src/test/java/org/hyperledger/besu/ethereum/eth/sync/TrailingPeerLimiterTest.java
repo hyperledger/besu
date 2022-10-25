@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
@@ -113,9 +112,7 @@ public class TrailingPeerLimiterTest {
 
     final BlockAddedEvent blockAddedEvent =
         BlockAddedEvent.createForHeadAdvancement(
-            new Block(
-                new BlockHeaderTestFixture().number(500).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
+            new Block(new BlockHeaderTestFixture().number(500).buildHeader(), BlockBodies.empty()),
             Collections.emptyList(),
             Collections.emptyList());
     trailingPeerLimiter.onBlockAdded(blockAddedEvent);
@@ -131,9 +128,7 @@ public class TrailingPeerLimiterTest {
 
     final BlockAddedEvent blockAddedEvent =
         BlockAddedEvent.createForHeadAdvancement(
-            new Block(
-                new BlockHeaderTestFixture().number(599).buildHeader(),
-                new BlockBody(emptyList(), emptyList())),
+            new Block(new BlockHeaderTestFixture().number(599).buildHeader(), BlockBodies.empty()),
             Collections.emptyList(),
             Collections.emptyList());
     trailingPeerLimiter.onBlockAdded(blockAddedEvent);

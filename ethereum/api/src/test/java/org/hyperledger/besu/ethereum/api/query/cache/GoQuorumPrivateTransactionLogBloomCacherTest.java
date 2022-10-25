@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -107,7 +108,7 @@ public class GoQuorumPrivateTransactionLogBloomCacherTest {
   @Test
   public void shouldUpdateCacheWhenBlockAdded() throws IOException {
 
-    final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody fakeBody = BlockBodies.empty();
     when(blockchain.getBlockHeader(testBlockHeaderHash)).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(testBlockHeaderHash));
     when(blockchain.getTxReceipts(any())).thenReturn(Optional.of(Collections.emptyList()));

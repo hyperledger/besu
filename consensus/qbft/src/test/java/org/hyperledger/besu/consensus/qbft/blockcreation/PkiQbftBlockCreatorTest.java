@@ -34,12 +34,10 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.pki.cms.CmsCreator;
-
-import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -118,10 +116,7 @@ public class PkiQbftBlockCreatorTest {
         createExtraData(blockHeaderBuilder.buildHeader(), extraDataCodec);
     final BlockHeader blockHeaderWithExtraData =
         blockHeaderBuilder.extraData(extraDataCodec.encode(originalExtraData)).buildHeader();
-    final Block block =
-        new Block(
-            blockHeaderWithExtraData,
-            new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    final Block block = new Block(blockHeaderWithExtraData, BlockBodies.empty());
     when(blockCreator.createBlock(eq(1L)))
         .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
 

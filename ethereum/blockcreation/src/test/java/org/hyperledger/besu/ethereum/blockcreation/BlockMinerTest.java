@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationRes
 import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -41,7 +41,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Function;
 
-import com.google.common.collect.Lists;
 import org.junit.Test;
 
 public class BlockMinerTest {
@@ -50,9 +49,7 @@ public class BlockMinerTest {
   public void blockCreatedIsAddedToBlockChain() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
-    final Block blockToCreate =
-        new Block(
-            headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+    final Block blockToCreate = new Block(headerBuilder.buildHeader(), BlockBodies.empty());
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
@@ -91,9 +88,7 @@ public class BlockMinerTest {
   public void failureToImportDoesNotTriggerObservers() throws InterruptedException {
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
-    final Block blockToCreate =
-        new Block(
-            headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
+    final Block blockToCreate = new Block(headerBuilder.buildHeader(), BlockBodies.empty());
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 

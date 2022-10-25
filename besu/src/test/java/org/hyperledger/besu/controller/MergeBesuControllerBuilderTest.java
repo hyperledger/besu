@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -213,7 +213,7 @@ public class MergeBesuControllerBuilderTest {
             .gasLimit(genesisState.getBlock().getHeader().getGasLimit())
             .stateRoot(genesisState.getBlock().getHeader().getStateRoot())
             .buildHeader();
-    blockchain.appendBlock(new Block(parent, BlockBody.empty()), Collections.emptyList());
+    blockchain.appendBlock(new Block(parent, BlockBodies.empty()), Collections.emptyList());
 
     BlockHeader terminal =
         headerGenerator
@@ -224,7 +224,7 @@ public class MergeBesuControllerBuilderTest {
             .stateRoot(parent.getStateRoot())
             .buildHeader();
 
-    blockchain.appendBlock(new Block(terminal, BlockBody.empty()), Collections.emptyList());
+    blockchain.appendBlock(new Block(terminal, BlockBodies.empty()), Collections.emptyList());
     assertThat(mergeContext.isPostMerge()).isTrue();
   }
 

@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -283,7 +283,7 @@ public class EthGetFilterChangesIntegrationTest {
                 .parentHash(parentBlock.getHash())
                 .number(parentBlock.getNumber() + 1)
                 .buildHeader(),
-            new BlockBody(transactionList, emptyList()));
+            BlockBodies.ofTransactions(transactionList));
     final List<TransactionReceipt> transactionReceipts =
         transactionList.stream()
             .map(transaction -> new TransactionReceipt(1, 1, emptyList(), Optional.empty()))

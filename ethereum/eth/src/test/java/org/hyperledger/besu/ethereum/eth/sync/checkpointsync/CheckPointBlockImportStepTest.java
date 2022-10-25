@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -76,7 +76,7 @@ public class CheckPointBlockImportStepTest {
   }
 
   private Block generateBlock(final int blockNumber) {
-    final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
+    final BlockBody body = BlockBodies.empty();
     return new Block(new BlockHeaderTestFixture().number(blockNumber).buildHeader(), body);
   }
 }

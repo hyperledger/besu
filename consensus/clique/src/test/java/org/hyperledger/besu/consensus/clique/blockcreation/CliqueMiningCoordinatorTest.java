@@ -36,7 +36,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -249,6 +249,6 @@ public class CliqueMiningCoordinatorTest {
     headerTestFixture.number(blockNumber).parentHash(parentHash);
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerTestFixture, signer, validators);
-    return new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+    return new Block(header, BlockBodies.empty());
   }
 }

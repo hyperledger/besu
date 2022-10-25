@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -82,7 +83,7 @@ public class BlockchainReferenceTestCaseSpec {
   }
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
-    final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
+    final Block genesisBlock = new Block(genesisBlockHeader, BlockBodies.empty());
     return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
   }
 
@@ -248,7 +249,7 @@ public class BlockchainReferenceTestCaseSpec {
       final MainnetBlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       final BlockHeader header = BlockHeader.readFrom(input, blockHeaderFunctions);
       final BlockBody body =
-          new BlockBody(
+          BlockBodies.of(
               input.readList(Transaction::readFrom),
               input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
       return new Block(header, body);

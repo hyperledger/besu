@@ -30,7 +30,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
@@ -51,7 +51,7 @@ public class ProposalTest {
   private static final Block BLOCK =
       new Block(
           new BlockHeaderTestFixture().extraData(bftExtraDataCodec.encode(extraData)).buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+          BlockBodies.empty());
 
   @Test
   public void canRoundTripProposalMessage() {

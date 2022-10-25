@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -40,9 +40,7 @@ import org.junit.Test;
 public class AbstractMiningCoordinatorTest {
 
   private static final Block BLOCK =
-      new Block(
-          new BlockHeaderTestFixture().buildHeader(),
-          new BlockBody(Collections.emptyList(), Collections.emptyList()));
+      new Block(new BlockHeaderTestFixture().buildHeader(), BlockBodies.empty());
   private final Blockchain blockchain = mock(Blockchain.class);
   private final PoWMinerExecutor minerExecutor = mock(PoWMinerExecutor.class);
   private final SyncState syncState = mock(SyncState.class);

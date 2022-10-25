@@ -22,14 +22,12 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockBodies;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -66,17 +64,15 @@ public class BaseFeeBlockBodyValidatorTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(10L)));
     when(block.getBody())
         .thenReturn(
-            new BlockBody(
-                List.of(
-                    // eip1559 transaction
-                    new TransactionTestFixture()
-                        .maxFeePerGas(Optional.of(Wei.of(10L)))
-                        .maxPriorityFeePerGas(Optional.of(Wei.of(1L)))
-                        .type(TransactionType.EIP1559)
-                        .createTransaction(keyPair),
-                    // frontier transaction
-                    new TransactionTestFixture().gasPrice(Wei.of(10L)).createTransaction(keyPair)),
-                Collections.emptyList()));
+            BlockBodies.of(
+                // eip1559 transaction
+                new TransactionTestFixture()
+                    .maxFeePerGas(Optional.of(Wei.of(10L)))
+                    .maxPriorityFeePerGas(Optional.of(Wei.of(1L)))
+                    .type(TransactionType.EIP1559)
+                    .createTransaction(keyPair),
+                // frontier transaction
+                new TransactionTestFixture().gasPrice(Wei.of(10L)).createTransaction(keyPair)));
 
     assertThat(blockBodyValidator.validateTransactionGasPrice(block)).isTrue();
   }
@@ -86,11 +82,9 @@ public class BaseFeeBlockBodyValidatorTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(10L)));
     when(block.getBody())
         .thenReturn(
-            new BlockBody(
-                List.of(
-                    // underpriced frontier transaction
-                    new TransactionTestFixture().gasPrice(Wei.of(9L)).createTransaction(keyPair)),
-                Collections.emptyList()));
+            BlockBodies.of(
+                // underpriced frontier transaction
+                new TransactionTestFixture().gasPrice(Wei.of(9L)).createTransaction(keyPair)));
 
     assertThat(blockBodyValidator.validateTransactionGasPrice(block)).isFalse();
   }
@@ -100,15 +94,13 @@ public class BaseFeeBlockBodyValidatorTest {
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(10L)));
     when(block.getBody())
         .thenReturn(
-            new BlockBody(
-                List.of(
-                    // underpriced eip1559 transaction
-                    new TransactionTestFixture()
-                        .maxFeePerGas(Optional.of(Wei.of(1L)))
-                        .maxPriorityFeePerGas(Optional.of(Wei.of(10L)))
-                        .type(TransactionType.EIP1559)
-                        .createTransaction(keyPair)),
-                Collections.emptyList()));
+            BlockBodies.of(
+                // underpriced eip1559 transaction
+                new TransactionTestFixture()
+                    .maxFeePerGas(Optional.of(Wei.of(1L)))
+                    .maxPriorityFeePerGas(Optional.of(Wei.of(10L)))
+                    .type(TransactionType.EIP1559)
+                    .createTransaction(keyPair)));
 
     assertThat(blockBodyValidator.validateTransactionGasPrice(block)).isFalse();
   }
