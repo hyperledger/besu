@@ -123,7 +123,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 storageAccountUpdate ->
                     CompletableFuture.runAsync(
                         () ->
-                            updateAcountStorage(
+                            updateAccountStorage(
                                 stateUpdater, worldStateUpdater, storageAccountUpdate)))
             .toArray(size -> new CompletableFuture<?>[size]);
 
@@ -153,7 +153,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
     // now add the accounts
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
-            worldStateUpdater.getAccountsToUpdate().entrySet()) {
+        worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
@@ -190,7 +190,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     }
   }
 
-  private void updateAcountStorage(
+  private void updateAccountStorage(
       final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
       final BonsaiWorldStateUpdater worldStateUpdater,
       final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate) {
