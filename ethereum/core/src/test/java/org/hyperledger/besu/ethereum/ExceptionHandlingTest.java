@@ -90,8 +90,8 @@ public class ExceptionHandlingTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(Hash.ZERO, Hash.ZERO))
-        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+    // when(worldStateArchive.getMutable(Hash.ZERO, Hash.ZERO))
+    //  .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(
             new BlockProcessingResult(
