@@ -132,14 +132,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // for manicured tries and composting, trim and compost here
 
     // Third update the code.  This has the side effect of ensuring a code hash is calculated.
-    CompletableFuture<?>[] updateCodeFutures =
-        worldStateUpdater.getCodeToUpdate().entrySet().stream()
-            .map(
-                codeUpdate ->
-                    CompletableFuture.runAsync(() -> updateAccountCode(stateUpdater, codeUpdate)))
-            .toArray(size -> new CompletableFuture<?>[size]);
-
-    CompletableFuture.allOf(updateCodeFutures).join();
+    updateCode(stateUpdater, worldStateUpdater);
 
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
@@ -152,6 +145,36 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     // for manicured tries and composting, collect branches here (not implemented)
 
     // now add the accounts
+    addTheAccounts(stateUpdater, worldStateUpdater, accountTrie);
+
+    // TODO write to a cache and then generate a layer update from that and the
+    // DB tx updates.  Right now it is just DB updates.
+    accountTrie.commit(
+        (location, hash, value) ->
+            writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
+    final Bytes32 rootHash = accountTrie.getRootHash();
+    return Hash.wrap(rootHash);
+  }
+
+  private static void updateCode(
+      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater) {
+    for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
+        worldStateUpdater.getCodeToUpdate().entrySet()) {
+      final Bytes updatedCode = codeUpdate.getValue().getUpdated();
+      final Hash accountHash = Hash.hash(codeUpdate.getKey());
+      if (updatedCode == null || updatedCode.size() == 0) {
+        stateUpdater.removeCode(accountHash);
+      } else {
+        stateUpdater.putCode(accountHash, null, updatedCode);
+      }
+    }
+  }
+
+  private static void addTheAccounts(
+      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater,
+      final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
@@ -167,26 +190,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         stateUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue);
         accountTrie.put(addressHash, accountValue);
       }
-    }
-
-    // TODO write to a cache and then generate a layer update from that and the
-    // DB tx updates.  Right now it is just DB updates.
-    accountTrie.commit(
-        (location, hash, value) ->
-            writeTrieNode(stateUpdater.getTrieBranchStorageTransaction(), location, value));
-    final Bytes32 rootHash = accountTrie.getRootHash();
-    return Hash.wrap(rootHash);
-  }
-
-  private void updateAccountCode(
-      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater,
-      final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate) {
-    final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-    final Hash accountHash = Hash.hash(codeUpdate.getKey());
-    if (updatedCode == null || updatedCode.size() == 0) {
-      stateUpdater.removeCode(accountHash);
-    } else {
-      stateUpdater.putCode(accountHash, null, updatedCode);
     }
   }
 
