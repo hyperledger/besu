@@ -538,18 +538,43 @@ public class BaseFeePendingTransactionsTest {
 
   @Test
   public void shouldTrackMaximumNonceForEachSender() {
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(0, KEYS1), Optional.empty());
-    assertMaximumNonceForSender(SENDER1, 1);
+    // first sender consecutive txs: 0->1->2
+    final Account firstSender = mock(Account.class);
+    when(firstSender.getNonce()).thenReturn(0L);
+    when(firstSender.getAddress()).thenReturn(SENDER1);
+    assertNoNextNonceForSender(SENDER1);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(0, KEYS1), Optional.of(firstSender));
+    assertNextNonceForSender(SENDER1, 1);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(1, KEYS1), Optional.empty());
-    assertMaximumNonceForSender(SENDER1, 2);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(1, KEYS1), Optional.of(firstSender));
+    assertNextNonceForSender(SENDER1, 2);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(2, KEYS1), Optional.empty());
-    assertMaximumNonceForSender(SENDER1, 3);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(2, KEYS1), Optional.of(firstSender));
+    assertNextNonceForSender(SENDER1, 3);
 
-    transactions.addRemoteTransaction(transactionWithNonceAndSender(4, KEYS2), Optional.empty());
-    assertMaximumNonceForSender(SENDER2, 5);
-    assertMaximumNonceForSender(SENDER1, 3);
+    // second sender not in orders: 3->0->2->1
+    final Account secondSender = mock(Account.class);
+    when(secondSender.getNonce()).thenReturn(0L);
+    when(secondSender.getAddress()).thenReturn(SENDER2);
+    assertNoNextNonceForSender(SENDER2);
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(3, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 0);
+
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(0, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 1);
+
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(2, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 1);
+
+    transactions.addRemoteTransaction(
+        transactionWithNonceAndSender(1, KEYS2), Optional.of(secondSender));
+    assertNextNonceForSender(SENDER2, 4);
   }
 
   @Test
@@ -614,8 +639,12 @@ public class BaseFeePendingTransactionsTest {
         .containsExactly(transaction4, transaction1, transaction2, transaction3);
   }
 
-  private void assertMaximumNonceForSender(final Address sender1, final int i) {
-    assertThat(transactions.getNextNonceForSender(sender1)).isEqualTo(OptionalLong.of(i));
+  private void assertNoNextNonceForSender(final Address sender) {
+    assertThat(transactions.getNextNonceForSender(sender)).isEqualTo(OptionalLong.empty());
+  }
+
+  private void assertNextNonceForSender(final Address sender, final int i) {
+    assertThat(transactions.getNextNonceForSender(sender)).isEqualTo(OptionalLong.of(i));
   }
 
   private Transaction transactionWithNonceAndSender(final int nonce, final KeyPair keyPair) {

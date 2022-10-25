@@ -757,7 +757,7 @@ public class GasPricePendingTransactionsTest {
   @Test
   public void assertThatCorrectNonceIsReturnedLargeGap() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, Long.MAX_VALUE);
+    addLocalTransactions(0, 1, 2, Long.MAX_VALUE);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
@@ -767,7 +767,7 @@ public class GasPricePendingTransactionsTest {
   @Test
   public void assertThatCorrectNonceIsReturnedWithRepeatedTXes() {
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(1, 2, 4, 4, 4, 4, 4, 4, 4, 4);
+    addLocalTransactions(0, 1, 2, 4, 4, 4, 4, 4, 4, 4, 4);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);

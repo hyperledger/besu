@@ -285,20 +285,19 @@ public abstract class AbstractPendingTransactionsSorter {
       maybeReplacedTransaction = Optional.empty();
     }
 
-    txsSenderInfo.updateSenderAccount(maybeSenderAccount);
-    txsSenderInfo.addTransactionToTrack(transactionInfo);
+    txsSenderInfo.addTransactionToTrack(transactionInfo, maybeSenderAccount);
     traceLambda(LOG, "Tracked transaction by sender {}", txsSenderInfo::toTraceLog);
     maybeReplacedTransaction.ifPresent(this::removeTransaction);
     return ADDED;
   }
 
   protected void removeTransactionInfoTrackedBySenderAndNonce(
-      final TransactionInfo transactionInfo) {
+      final TransactionInfo transactionInfo, final boolean addedToBlock) {
     final Transaction transaction = transactionInfo.getTransaction();
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
         .ifPresent(
             transactionsForSender -> {
-              transactionsForSender.removeTrackedTransactionInfo(transactionInfo);
+              transactionsForSender.removeTrackedTransactionInfo(transactionInfo, addedToBlock);
               if (transactionsForSender.transactionCount() == 0) {
                 LOG.trace(
                     "Removing sender {} from transactionBySender since no more tracked transactions",
@@ -403,12 +402,11 @@ public abstract class AbstractPendingTransactionsSorter {
                           txInfo -> {
                             TransactionsForSenderInfo txsSenderInfo =
                                 transactionsBySender.get(txInfo.getSender());
-                            long nonceDistance =
-                                txInfo.getNonce() - txsSenderInfo.getSenderAccountNonce();
+                            long nonceDistance = txInfo.getNonce() - txsSenderInfo.getSenderNonce();
                             return "nonceDistance: "
                                 + nonceDistance
-                                + ", senderAccount: "
-                                + txsSenderInfo.getSenderAccount()
+                                + ", senderNonce: "
+                                + txsSenderInfo.getSenderNonce()
                                 + ", "
                                 + txInfo.toTraceLog();
                           })
