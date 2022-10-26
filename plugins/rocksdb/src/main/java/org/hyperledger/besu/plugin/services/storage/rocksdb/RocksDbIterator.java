@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
@@ -67,7 +67,24 @@ public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoClos
     final byte[] key = rocksIterator.key();
     final byte[] value = rocksIterator.value();
     rocksIterator.next();
-    return new Pair<>(key, value);
+    return Pair.of(key, value);
+  }
+
+  public byte[] nextKey() {
+    assertOpen();
+    try {
+      rocksIterator.status();
+    } catch (final RocksDBException e) {
+      LOG.error(
+          String.format("%s encountered a problem while iterating.", getClass().getSimpleName()),
+          e);
+    }
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+    final byte[] key = rocksIterator.key();
+    rocksIterator.next();
+    return key;
   }
 
   public Stream<Pair<byte[], byte[]>> toStream() {
@@ -75,6 +92,30 @@ public class RocksDbIterator implements Iterator<Pair<byte[], byte[]>>, AutoClos
     final Spliterator<Pair<byte[], byte[]>> spliterator =
         Spliterators.spliteratorUnknownSize(
             this,
+            Spliterator.IMMUTABLE
+                | Spliterator.DISTINCT
+                | Spliterator.NONNULL
+                | Spliterator.ORDERED
+                | Spliterator.SORTED);
+
+    return StreamSupport.stream(spliterator, false).onClose(this::close);
+  }
+
+  public Stream<byte[]> toStreamKeys() {
+    assertOpen();
+    final Spliterator<byte[]> spliterator =
+        Spliterators.spliteratorUnknownSize(
+            new Iterator<>() {
+              @Override
+              public boolean hasNext() {
+                return RocksDbIterator.this.hasNext();
+              }
+
+              @Override
+              public byte[] next() {
+                return RocksDbIterator.this.nextKey();
+              }
+            },
             Spliterator.IMMUTABLE
                 | Spliterator.DISTINCT
                 | Spliterator.NONNULL

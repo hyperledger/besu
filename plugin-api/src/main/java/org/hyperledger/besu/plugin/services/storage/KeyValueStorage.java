@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Responsible for storing values against keys.
@@ -64,12 +64,20 @@ public interface KeyValueStorage extends Closeable {
   Optional<byte[]> get(byte[] key) throws StorageException;
 
   /**
+   * Returns a stream of all keys and values.
+   *
+   * @return A stream of all keys and values in storage.
+   * @throws StorageException problem encountered during the retrieval attempt.
+   */
+  Stream<Pair<byte[], byte[]>> stream() throws StorageException;
+
+  /**
    * Returns a stream of all keys.
    *
    * @return A stream of all keys in storage.
    * @throws StorageException problem encountered during the retrieval attempt.
    */
-  Stream<Pair<byte[], byte[]>> stream() throws StorageException;
+  Stream<byte[]> streamKeys() throws StorageException;
 
   /**
    * Delete the value corresponding to the given key if a write lock can be instantly acquired on

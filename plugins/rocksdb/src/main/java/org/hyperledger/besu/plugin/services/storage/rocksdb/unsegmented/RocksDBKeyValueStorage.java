@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
@@ -123,8 +123,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return stream()
-        .filter(pair -> returnCondition.test(pair.getFirst()))
-        .map(Pair::getFirst)
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getKey)
         .collect(toUnmodifiableSet());
   }
 
@@ -136,10 +136,17 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
+  public Stream<byte[]> streamKeys() {
+    final RocksIterator rocksIterator = db.newIterator();
+    rocksIterator.seekToFirst();
+    return RocksDbIterator.create(rocksIterator).toStreamKeys();
+  }
+
+  @Override
   public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
     return stream()
-        .filter(pair -> returnCondition.test(pair.getFirst()))
-        .map(Pair::getSecond)
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getValue)
         .collect(toUnmodifiableSet());
   }
 

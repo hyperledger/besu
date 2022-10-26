@@ -30,7 +30,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -111,12 +110,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
     final AtomicInteger prunedKeys = new AtomicInteger(0);
-    try (final Stream<Pair<byte[], byte[]>> entry = keyValueStorage.stream()) {
+    try (final Stream<byte[]> entry = keyValueStorage.streamKeys()) {
       entry.forEach(
           key -> {
             lock.lock();
             try {
-              if (!inUseCheck.test(key.getFirst()) && keyValueStorage.tryDelete(key.getFirst())) {
+              if (!inUseCheck.test(key) && keyValueStorage.tryDelete(key)) {
                 prunedKeys.incrementAndGet();
               }
             } finally {
