@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -81,15 +82,28 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getFirst()))
+        .map(Pair::getFirst)
+        .collect(toUnmodifiableSet());
   }
 
   @Override
-  public Stream<byte[]> streamKeys() {
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getFirst()))
+        .map(Pair::getSecond)
+        .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(storage.asMap().keySet()).stream().map(Bytes::toArrayUnsafe);
+      return ImmutableSet.copyOf(storage.asMap().entrySet()).stream()
+          .map(
+              bytesEntry -> new Pair<>(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue()));
     } finally {
       lock.unlock();
     }

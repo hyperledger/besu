@@ -27,7 +27,10 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
+
 public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
+
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
   private final Supplier<SnappedKeyValueStorage> snapshotSupplier;
@@ -72,8 +75,13 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   }
 
   @Override
-  public Stream<byte[]> streamKeys() {
-    return storage.streamKeys(segmentHandle);
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return storage.getAllValuesFromKeysThat(segmentHandle, returnCondition);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
+    return storage.stream(segmentHandle);
   }
 
   @Override

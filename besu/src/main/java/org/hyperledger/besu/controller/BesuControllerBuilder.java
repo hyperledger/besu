@@ -487,6 +487,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethContext,
             syncState,
             dataDirectory,
+            storageProvider,
             clock,
             metricsSystem,
             getFullSyncTerminationCondition(protocolContext.getBlockchain()),

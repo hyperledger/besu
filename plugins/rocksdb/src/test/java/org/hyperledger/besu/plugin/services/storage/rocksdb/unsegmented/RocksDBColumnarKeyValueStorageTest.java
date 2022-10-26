@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import kotlin.Pair;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -114,21 +115,21 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
       tx.put(barSegment, bytesOf(6), bytesOf(6));
       tx.commit();
 
-      store
-          .streamKeys(fooSegment)
+      store.stream(fooSegment)
+          .map(Pair::getFirst)
           .forEach(
               key -> {
                 if (!Arrays.equals(key, bytesOf(3))) store.tryDelete(fooSegment, key);
               });
-      store
-          .streamKeys(barSegment)
+      store.stream(barSegment)
+          .map(Pair::getFirst)
           .forEach(
               key -> {
                 if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(barSegment, key);
               });
 
       for (final RocksDbSegmentIdentifier segment : Set.of(fooSegment, barSegment)) {
-        assertThat(store.streamKeys(segment).count()).isEqualTo(1);
+        assertThat(store.stream(segment).count()).isEqualTo(1);
       }
 
       assertThat(store.get(fooSegment, bytesOf(1))).isEmpty();
