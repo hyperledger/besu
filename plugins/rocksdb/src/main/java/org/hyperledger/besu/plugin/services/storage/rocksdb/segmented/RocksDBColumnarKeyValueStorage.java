@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -232,6 +232,13 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
+  public Stream<byte[]> streamKeys(final RocksDbSegmentIdentifier segmentHandle) {
+    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    rocksIterator.seekToFirst();
+    return RocksDbIterator.create(rocksIterator).toStreamKeys();
+  }
+
+  @Override
   public boolean tryDelete(final RocksDbSegmentIdentifier segmentHandle, final byte[] key) {
     try {
       db.delete(segmentHandle.get(), tryDeleteOptions, key);
@@ -249,8 +256,8 @@ public class RocksDBColumnarKeyValueStorage
   public Set<byte[]> getAllKeysThat(
       final RocksDbSegmentIdentifier segmentHandle, final Predicate<byte[]> returnCondition) {
     return stream(segmentHandle)
-        .filter(pair -> returnCondition.test(pair.getFirst()))
-        .map(Pair::getFirst)
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getKey)
         .collect(toUnmodifiableSet());
   }
 
@@ -258,8 +265,8 @@ public class RocksDBColumnarKeyValueStorage
   public Set<byte[]> getAllValuesFromKeysThat(
       final RocksDbSegmentIdentifier segmentHandle, final Predicate<byte[]> returnCondition) {
     return stream(segmentHandle)
-        .filter(pair -> returnCondition.test(pair.getFirst()))
-        .map(Pair::getSecond)
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getValue)
         .collect(toUnmodifiableSet());
   }
 

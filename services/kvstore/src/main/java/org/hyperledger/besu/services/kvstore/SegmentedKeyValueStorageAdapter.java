@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
 
@@ -82,6 +82,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     return storage.stream(segmentHandle);
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys() {
+    return storage.streamKeys(segmentHandle);
   }
 
   @Override
