@@ -730,15 +730,15 @@ public abstract class AbstractPendingTransactionsTestBase {
     final Account sender = mock(Account.class);
     when(sender.getNonce()).thenReturn(1L);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender())).isEmpty();
-    addLocalTransactions(sender, 1, 2, 4);
+    addLocalTransactions(sender, 1, 2, 4, 5);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
         .hasValue(3);
     addLocalTransactions(sender, 3);
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
         .isPresent()
-        .hasValue(5);
-    addLocalTransactions(sender, 5, 9);
+        .hasValue(6);
+    addLocalTransactions(sender, 6, 10);
 
     // assert that transactions are pruned by account from latest future nonces first
     assertThat(transactions.getNextNonceForSender(transaction1.getSender()))
