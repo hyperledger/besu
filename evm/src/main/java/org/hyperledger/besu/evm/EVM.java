@@ -114,7 +114,6 @@ public class EVM {
 
       OperationResult result;
       try {
-
         switch (opcode) {
             // case 0x00: // STOP
             //  result = StopOperation.staticOperation(frame);
@@ -292,12 +291,16 @@ public class EVM {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
         frame.setExceptionalHaltReason(Optional.of(haltReason));
         frame.setState(State.EXCEPTIONAL_HALT);
+      } else {
+        frame.decrementRemainingGas(result.getGasCost());
       }
-      frame.decrementRemainingGas(result.getGasCost());
       if (frame.getState() == State.CODE_EXECUTING) {
         final int currentPC = frame.getPC();
         final int opSize = result.getPcIncrement();
         frame.setPC(currentPC + opSize);
+      }
+      if (operationTracer != null) {
+        operationTracer.tracePostExecution(frame, result);
       }
     }
   }
