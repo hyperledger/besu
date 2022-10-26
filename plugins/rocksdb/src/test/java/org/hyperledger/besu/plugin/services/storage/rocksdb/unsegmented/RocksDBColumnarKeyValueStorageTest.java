@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -34,7 +35,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import kotlin.Pair;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -116,13 +116,13 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
       tx.commit();
 
       store.stream(fooSegment)
-          .map(Pair::getFirst)
+          .map(Pair::getKey)
           .forEach(
               key -> {
                 if (!Arrays.equals(key, bytesOf(3))) store.tryDelete(fooSegment, key);
               });
       store.stream(barSegment)
-          .map(Pair::getFirst)
+          .map(Pair::getKey)
           .forEach(
               key -> {
                 if (!Arrays.equals(key, bytesOf(4))) store.tryDelete(barSegment, key);

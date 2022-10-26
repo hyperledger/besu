@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -27,7 +28,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
 
 public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
 
@@ -82,6 +82,11 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     return storage.stream(segmentHandle);
+  }
+
+  @Override
+  public Stream<byte[]> streamKeys() {
+    return storage.streamKeys(segmentHandle);
   }
 
   @Override

@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -30,7 +31,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -84,7 +84,7 @@ public abstract class AbstractKeyValueStorageTest {
             .collect(toUnmodifiableList());
     keys.forEach(key -> tx.put(key, bytesFromHexString("0ABC")));
     tx.commit();
-    assertThat(store.stream().map(Pair::getFirst).collect(toUnmodifiableSet()))
+    assertThat(store.stream().map(Pair::getKey).collect(toUnmodifiableSet()))
         .containsExactlyInAnyOrder(keys.toArray(new byte[][] {}));
   }
 

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
@@ -23,7 +24,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import kotlin.Pair;
 
 /**
  * Service provided by Besu to facilitate persistent data storage.
@@ -62,6 +62,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   Stream<Pair<byte[], byte[]>> stream(final S segmentHandle);
 
+
+  Stream<byte[]> streamKeys(final S segmentHandle);
   /**
    * Delete the value corresponding to the given key in the given segment if a write lock can be
    * instantly acquired on the underlying storage. Do nothing otherwise.

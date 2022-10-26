@@ -15,11 +15,12 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbKeyIterator;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -111,7 +112,13 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   public Stream<byte[]> streamKeys() {
     final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
     rocksIterator.seekToFirst();
-    return RocksDbKeyIterator.create(rocksIterator).toStream();
+    return RocksDbIterator.create(rocksIterator).toStreamKeys();
+  }
+
+  public Stream<Pair<byte[],byte[]>> stream() {
+    final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
+    rocksIterator.seekToFirst();
+    return RocksDbIterator.create(rocksIterator).toStream();
   }
 
   @Override
