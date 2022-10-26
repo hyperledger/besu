@@ -247,7 +247,6 @@ public class BonsaiSnapshotIsolationTests {
 
   @Test
   public void assertSnapshotDoesNotClose() {
-    // TODO: add unit test to assert snapshot does not close on clone if parent tx is closed
     Address testAddress = Address.fromHexString("0xdeadbeef");
 
     // create a snapshot worldstate, and then clone it:

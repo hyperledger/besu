@@ -664,4 +664,13 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     accountsToUpdate.clear();
     super.reset();
   }
+
+  public boolean isDirty() {
+    return !(accountsToUpdate.isEmpty()
+        && updatedAccounts.isEmpty()
+        && deletedAccounts.isEmpty()
+        && storageToUpdate.isEmpty()
+        && storageToClear.isEmpty()
+        && codeToUpdate.isEmpty());
+  }
 }

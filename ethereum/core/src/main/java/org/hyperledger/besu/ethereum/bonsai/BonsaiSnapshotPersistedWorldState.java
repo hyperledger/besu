@@ -34,7 +34,6 @@ public class BonsaiSnapshotPersistedWorldState extends BonsaiPersistedWorldState
   private final SnappedKeyValueStorage codeSnap;
   private final SnappedKeyValueStorage storageSnap;
   private final SnappedKeyValueStorage trieBranchSnap;
-  private boolean isPersisted = false;
 
   private BonsaiSnapshotPersistedWorldState(
       final BonsaiWorldStateArchive archive,
@@ -61,9 +60,8 @@ public class BonsaiSnapshotPersistedWorldState extends BonsaiPersistedWorldState
 
   @Override
   public Hash rootHash() {
-    if (!isPersisted) {
+    if (updater.isDirty()) {
       this.worldStateRootHash = calculateRootHash(worldStateStorage.updater(), updater);
-      isPersisted = true;
     }
     return this.worldStateRootHash;
   }
