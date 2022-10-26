@@ -64,14 +64,16 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
       final OptimisticTransactionDB db,
       final ColumnFamilyHandle columnFamilyHandle,
       final RocksDBMetrics metrics,
-      final RocksDBSnapshot snapshot) {
+      final RocksDBSnapshot snapshot,
+      final Transaction snapTx,
+      final ReadOptions readOptions) {
     this.metrics = metrics;
     this.db = db;
     this.columnFamilyHandle = columnFamilyHandle;
     this.snapshot = snapshot;
     this.writeOptions = new WriteOptions();
-    this.snapTx = db.beginTransaction(writeOptions);
-    this.readOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
+    this.readOptions = readOptions;
+    this.snapTx = snapTx;
   }
 
   public Optional<byte[]> get(final byte[] key) {
@@ -143,7 +145,17 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   }
 
   public RocksDBSnapshotTransaction copy() {
-    return new RocksDBSnapshotTransaction(db, columnFamilyHandle, metrics, snapshot);
+    try {
+      var copyReadOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
+      var copySnapTx = db.beginTransaction(writeOptions);
+      copySnapTx.rebuildFromWriteBatch(snapTx.getWriteBatch().getWriteBatch());
+      return new RocksDBSnapshotTransaction(
+          db, columnFamilyHandle, metrics, snapshot, copySnapTx, copyReadOptions);
+    } catch (Exception ex) {
+      LOG.error("Failed to copy snapshot transaction", ex);
+      snapshot.unMarkSnapshot();
+      throw new StorageException(ex);
+    }
   }
 
   @Override

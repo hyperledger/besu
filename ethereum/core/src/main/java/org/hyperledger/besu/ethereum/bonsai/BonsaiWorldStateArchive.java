@@ -140,8 +140,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     // TODO: decide whether we want to use BonsaiSnapshotWorldState or
     // BonsaiSnapshotPersistedWorldState
     return rollMutableStateToBlockHash(
-            BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash)
-        //            BonsaiSnapshotPersistedWorldState.create(this, worldStateStorage), blockHash)
+            //            BonsaiSnapshotWorldState.create(this, worldStateStorage), blockHash)
+            BonsaiSnapshotPersistedWorldState.create(this, worldStateStorage), blockHash)
         .map(SnapshotMutableWorldState.class::cast);
   }
 

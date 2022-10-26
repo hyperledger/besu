@@ -63,6 +63,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -247,7 +248,38 @@ public class BonsaiSnapshotIsolationTests {
   @Test
   public void assertSnapshotDoesNotClose() {
     // TODO: add unit test to assert snapshot does not close on clone if parent tx is closed
+    Address testAddress = Address.fromHexString("0xdeadbeef");
 
+    // create a snapshot worldstate, and then clone it:
+    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash()).get();
+
+    // execute a block with a single transaction on the first snapshot:
+    var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
+    var res = executeBlock(isolated, firstBlock);
+
+    assertThat(res.isSuccessful()).isTrue();
+    Consumer<MutableWorldState> checkIsolatedState =
+        (ws) -> {
+          assertThat(ws.rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+          assertThat(ws.get(testAddress)).isNotNull();
+          assertThat(ws.get(testAddress).getBalance())
+              .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+        };
+    checkIsolatedState.accept(isolated);
+
+    var isolatedClone = isolated.copy();
+    checkIsolatedState.accept(isolatedClone);
+
+    try {
+      // close the first snapshot worldstate.  The second worldstate should still be able to read
+      // through its snapshot
+      isolated.close();
+    } catch (Exception ex) {
+      // meh
+    }
+
+    // copy of closed isolated worldstate should still pass check
+    checkIsolatedState.accept(isolatedClone);
   }
 
   @Test

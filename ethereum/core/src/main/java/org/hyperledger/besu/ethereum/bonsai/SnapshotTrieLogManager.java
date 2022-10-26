@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -68,6 +69,14 @@ public class SnapshotTrieLogManager
                 cachedWorldStatesByHash.put(
                     blockHeader.getHash(),
                     new CachedSnapshotWorldState(snapshot, trieLog, blockHeader.getNumber())));
+  }
+
+  @Override
+  public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
+    if (cachedWorldStatesByHash.containsKey(blockHash)) {
+      return Optional.of(cachedWorldStatesByHash.get(blockHash).getMutableWorldState().copy());
+    }
+    return Optional.empty();
   }
 
   @Override

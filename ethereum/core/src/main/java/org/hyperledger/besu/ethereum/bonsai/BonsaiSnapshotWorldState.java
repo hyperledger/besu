@@ -61,7 +61,7 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
   @Override
   public void persist(final BlockHeader blockHeader) {
     super.persist(blockHeader);
-    // persist roothash to snapshot tx
+    // persist roothash to trie branch snapshot tx
     trieBranchSnap
         .getSnapshotTransaction()
         .put(
@@ -72,6 +72,9 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
   @Override
   public MutableWorldState copy() {
     // return a clone-based copy of worldstate storage
+    // TODO: this is currently broken.  We need to clone the in-memory updater in addition to
+    // the storage transactions in order to get a true copy.
+
     return new BonsaiSnapshotWorldState(
         archive,
         new BonsaiSnapshotWorldStateKeyValueStorage(

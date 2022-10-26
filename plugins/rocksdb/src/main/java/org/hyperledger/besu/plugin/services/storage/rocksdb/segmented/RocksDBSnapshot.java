@@ -22,14 +22,15 @@ import org.rocksdb.Snapshot;
 
 /**
  * Wraps and reference counts a Snapshot object from an OptimisticTransactionDB such that it can be
- * used as the basis of multiple SnapshotTransactions, and released once it is no longer in use.
+ * used as the basis of multiple RocksDBSnapshotTransaction's, and released once it is no longer in
+ * use.
  */
-public class RocksDBSnapshot {
+class RocksDBSnapshot {
   private final OptimisticTransactionDB db;
   private final Snapshot dbSnapshot;
   private final AtomicInteger usages = new AtomicInteger(0);
 
-  public RocksDBSnapshot(final OptimisticTransactionDB db) {
+  RocksDBSnapshot(final OptimisticTransactionDB db) {
     this.db = db;
     this.dbSnapshot = db.getSnapshot();
   }
