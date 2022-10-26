@@ -22,6 +22,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class MulOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult mulSuccess = new OperationResult(5, null);
+
   public MulOperation(final GasCalculator gasCalculator) {
     super(0x02, "MUL", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
@@ -29,6 +31,11 @@ public class MulOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
+
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -36,6 +43,6 @@ public class MulOperation extends AbstractFixedCostOperation {
 
     frame.pushStackItem(result);
 
-    return successResponse;
+    return mulSuccess;
   }
 }

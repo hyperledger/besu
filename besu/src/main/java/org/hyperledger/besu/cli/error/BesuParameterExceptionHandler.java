@@ -14,50 +14,43 @@
  */
 package org.hyperledger.besu.cli.error;
 
-import java.util.List;
+import java.io.PrintWriter;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
 
-public class BesuExceptionHandler
-    extends CommandLine.AbstractHandler<List<Object>, BesuExceptionHandler>
-    implements CommandLine.IExceptionHandler2<List<Object>> {
+public class BesuParameterExceptionHandler implements CommandLine.IParameterExceptionHandler {
 
   private final Supplier<Level> levelSupplier;
 
-  public BesuExceptionHandler(final Supplier<Level> levelSupplier) {
+  public BesuParameterExceptionHandler(final Supplier<Level> levelSupplier) {
     this.levelSupplier = levelSupplier;
   }
 
   @Override
-  public List<Object> handleParseException(
-      final CommandLine.ParameterException ex, final String[] args) {
+  public int handleParseException(final CommandLine.ParameterException ex, final String[] args) {
+    final CommandLine cmd = ex.getCommandLine();
+    final PrintWriter err = cmd.getErr();
     final Level logLevel = levelSupplier.get();
     if (logLevel != null && Level.DEBUG.isMoreSpecificThan(logLevel)) {
-      ex.printStackTrace(err());
+      ex.printStackTrace(err);
     } else {
-      err().println(ex.getMessage());
+      err.println(ex.getMessage());
     }
 
-    CommandLine.UnmatchedArgumentException.printSuggestions(ex, err());
+    CommandLine.UnmatchedArgumentException.printSuggestions(ex, err);
 
     // don't print full help, just the instructions required to get it
-    ex.getCommandLine().getErr().println();
-    ex.getCommandLine().getErr().println("To display full help:");
-    ex.getCommandLine().getErr().println("besu [COMMAND] --help");
+    err.println();
+    err.println("To display full help:");
+    err.println("besu [COMMAND] --help");
 
-    return returnResultOrExit(null);
-  }
+    final CommandSpec spec = cmd.getCommandSpec();
 
-  @Override
-  public List<Object> handleExecutionException(
-      final CommandLine.ExecutionException ex, final CommandLine.ParseResult parseResult) {
-    return throwOrExit(ex);
-  }
-
-  @Override
-  protected BesuExceptionHandler self() {
-    return this;
+    return cmd.getExitCodeExceptionMapper() != null
+        ? cmd.getExitCodeExceptionMapper().getExitCode(ex)
+        : spec.exitCodeOnInvalidInput();
   }
 }
