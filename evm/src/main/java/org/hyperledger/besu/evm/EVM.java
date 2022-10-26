@@ -283,9 +283,6 @@ public class EVM {
       } catch (final UnderflowException ue) {
         result = UNDERFLOW_RESPONSE;
       }
-      if (operationTracer != null) {
-        operationTracer.tracePostExecution(frame, result);
-      }
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
