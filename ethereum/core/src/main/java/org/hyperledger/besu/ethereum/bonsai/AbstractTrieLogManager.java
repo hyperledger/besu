@@ -61,7 +61,7 @@ public abstract class AbstractTrieLogManager<T extends CachedLayer> implements T
       final BlockHeader blockHeader) {
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
-    // for example, like that in case of reorg we don't replace a trielog layer
+    // for example, in case of reorg we don't replace a trielog layer
     if (worldStateStorage.getTrieLog(blockHeader.getHash()).isEmpty()) {
       final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater =
           worldStateStorage.updater();

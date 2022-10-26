@@ -86,9 +86,6 @@ public class BonsaiSnapshotIsolationTests {
       key ->
           SignatureAlgorithmFactory.getInstance()
               .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
-  final Function<GenesisAllocation, Address> extractAddress =
-      ga -> Address.fromHexString(ga.getAddress());
-
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(GenesisConfigFile.development().getConfigOptions());
   private final GenesisState genesisState =

@@ -256,7 +256,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public org.hyperledger.besu.ethereum.core.MutableWorldState copy() {
+  public MutableWorldState copy() {
     final BonsaiPersistedWorldState bonsaiPersistedWorldState =
         ((BonsaiPersistedWorldState) archive.getMutable());
     BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =

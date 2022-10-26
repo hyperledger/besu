@@ -36,7 +36,7 @@ public interface StorageProvider extends Closeable {
 
   KeyValueStorage getStorageBySegmentIdentifier(SegmentIdentifier segment);
 
-  SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(final SegmentIdentifier segment);
+  SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(SegmentIdentifier segment);
 
   WorldStateStorage createPrivateWorldStateStorage();
 
