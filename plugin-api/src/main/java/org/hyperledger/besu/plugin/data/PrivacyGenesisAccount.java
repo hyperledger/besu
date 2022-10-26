@@ -17,7 +17,7 @@ package org.hyperledger.besu.plugin.data;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivacyGenesisAccount {
   /**
@@ -32,7 +32,7 @@ public interface PrivacyGenesisAccount {
    *
    * @return account storage
    */
-  Map<UInt256, UInt256> getStorage();
+  Map<Bytes32, Bytes32> getStorage();
 
   /**
    * The initial nonce assigned to the account.

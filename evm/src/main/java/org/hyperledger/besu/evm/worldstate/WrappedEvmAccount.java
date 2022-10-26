@@ -26,7 +26,6 @@ import java.util.NavigableMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class WrappedEvmAccount implements EvmAccount {
   private final MutableAccount mutableAccount;
@@ -86,12 +85,12 @@ public class WrappedEvmAccount implements EvmAccount {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key) {
+  public Bytes32 getStorageValue(final Bytes32 key) {
     return mutableAccount.getStorageValue(key);
   }
 
   @Override
-  public UInt256 getOriginalStorageValue(final UInt256 key) {
+  public Bytes32 getOriginalStorageValue(final Bytes32 key) {
     return mutableAccount.getOriginalStorageValue(key);
   }
 
