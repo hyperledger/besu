@@ -124,17 +124,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      final Optional<Bytes> value =
-          trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
-      if (value.isPresent()) {
-        return value
-            .filter(b -> Hash.hash(b).equals(nodeHash))
-            .or(
-                () ->
-                    maybeFallbackNodeFinder.flatMap(
-                        finder -> finder.getAccountStateTrieNode(location, nodeHash)));
-      }
-      return Optional.empty();
+      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
@@ -144,20 +134,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      final Optional<Bytes> value =
-          trieBranchStorage
+      return trieBranchStorage
               .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
               .map(Bytes::wrap);
-      if (value.isPresent()) {
-        return value
-            .filter(b -> Hash.hash(b).equals(nodeHash))
-            .or(
-                () ->
-                    maybeFallbackNodeFinder.flatMap(
-                        finder ->
-                            finder.getAccountStorageTrieNode(accountHash, location, nodeHash)));
-      }
-      return Optional.empty();
     }
   }
 

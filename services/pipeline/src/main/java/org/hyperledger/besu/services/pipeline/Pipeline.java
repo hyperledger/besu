@@ -154,7 +154,8 @@ public class Pipeline<I> {
             if (tracingEnabled) {
               taskSpan.setStatus(StatusCode.ERROR);
             }
-            LOG.debug("Unhandled exception in pipeline. Aborting.", t);
+            LOG.info("Unhandled exception in pipeline. Aborting."); //todo revert me before pr
+            LOG.debug("Unhandled exception in pipeline.", t);
             try {
               abort(t);
             } catch (final Throwable t2) {

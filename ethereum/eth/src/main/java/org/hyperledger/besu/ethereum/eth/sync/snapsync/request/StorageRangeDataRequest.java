@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findN
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -89,19 +90,27 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
-    final AtomicReference<Updater> updaterTmp = new AtomicReference<>(worldStateStorage.updater());
+    final AtomicReference<Updater> nodeUpdaterTmp =
+        new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          updaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
+          nodeUpdaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
           if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
-            updaterTmp.get().commit();
-            updaterTmp.set(worldStateStorage.updater());
+            nodeUpdaterTmp.get().commit();
+            nodeUpdaterTmp.set(worldStateStorage.updater());
           }
         };
 
-    stackTrie.commit(nodeUpdater);
+    final BonsaiWorldStateKeyValueStorage.Updater bonsaiWorldStateUpdater =
+        (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
+    final StackTrie.FlatDatabaseUpdater flatDatabaseUpdater =
+        (key, value) ->
+            bonsaiWorldStateUpdater.putStorageValueBySlotHash(accountHash, Hash.wrap(key), value);
 
-    updaterTmp.get().commit();
+    stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
+
+    bonsaiWorldStateUpdater.commit();
+    nodeUpdaterTmp.get().commit();
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
