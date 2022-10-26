@@ -1847,6 +1847,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  @Ignore
   public void launcherOptionIsParsedCorrectly() {
     final TestBesuCommand besuCommand =
         parseCommand("--Xlauncher", "true", "--Xlauncher-force", "true");

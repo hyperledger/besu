@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -22,7 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -61,7 +61,8 @@ public class MergeProtocolScheduleTest {
     assertThat(london.isSkipZeroBlockRewards()).isEqualTo(true);
 
     Bytes diffOp = Bytes.fromHexString("0x44");
-    var op = london.getEvm().operationAtOffset(Code.createLegacyCode(diffOp, Hash.hash(diffOp)), 0);
+    var op =
+        london.getEvm().operationAtOffset(CodeFactory.createCode(diffOp, Hash.hash(diffOp)), 0);
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 }

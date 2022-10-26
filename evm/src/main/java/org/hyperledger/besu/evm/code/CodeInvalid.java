@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,63 +13,62 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.referencetests;
+
+package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeFactory;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.tuweni.bytes.Bytes;
 
-/** A mock for representing EVM Code associated with an account. */
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class ReferenceTestCode implements Code {
+/**
+ * For code versions where code can be deemed "invalid" this represents a cachable instance of
+ * invalid code. Note that EXTCODE operations can still access invalid code.
+ */
+public class CodeInvalid implements Code {
 
-  private final Code code;
+  private final Hash codeHash;
+  private final Bytes codeBytes;
 
-  /**
-   * Public constructor.
-   *
-   * @param bytes - A hex string representation of the code.
-   */
-  @JsonCreator
-  public ReferenceTestCode(final String bytes) {
-    this.code =
-        CodeFactory.createCode(
-            Bytes.fromHexString(bytes),
-            Hash.hash(Bytes.fromHexString(bytes)),
-            CodeFactory.MAX_KNOWN_CODE_VERSION);
+  private final String invalidReason;
+
+  public CodeInvalid(final Hash codeHash, final Bytes codeBytes, final String invalidReason) {
+    this.codeHash = codeHash;
+    this.codeBytes = codeBytes;
+    this.invalidReason = invalidReason;
+  }
+
+  public String getInvalidReason() {
+    return invalidReason;
   }
 
   @Override
   public int getSize() {
-    return code.getSize();
+    return codeBytes.size();
   }
 
   @Override
   public Bytes getCodeBytes() {
-    return code.getCodeBytes();
+    return getContainerBytes();
   }
 
   @Override
   public Bytes getContainerBytes() {
-    return code.getContainerBytes();
+    return codeBytes;
   }
 
   @Override
   public Hash getCodeHash() {
-    return code.getCodeHash();
+    return codeHash;
   }
 
   @Override
   public boolean isJumpDestInvalid(final int jumpDestination) {
-    return code.isJumpDestInvalid(jumpDestination);
+    return false;
   }
 
   @Override
   public boolean isValid() {
-    return code.isValid();
+    return false;
   }
 }

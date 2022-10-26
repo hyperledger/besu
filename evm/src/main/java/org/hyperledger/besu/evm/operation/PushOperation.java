@@ -41,9 +41,8 @@ public class PushOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    final byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
     return staticOperation(frame, code, frame.getPC(), length);
   }
 

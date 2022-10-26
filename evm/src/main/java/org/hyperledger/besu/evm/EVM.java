@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -73,6 +74,7 @@ public class EVM {
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
   private final CodeCache codeCache;
+  private final int maxCodeVersion;
 
   public EVM(
       final OperationRegistry operations,
@@ -82,6 +84,7 @@ public class EVM {
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
     this.codeCache = new CodeCache(evmConfiguration);
+    this.maxCodeVersion = evmConfiguration.getMaxEofVersion();
   }
 
   public GasCalculator getGasCalculator() {
@@ -94,7 +97,7 @@ public class EVM {
   // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer tracing) {
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
-    byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -304,8 +307,8 @@ public class EVM {
 
   @VisibleForTesting
   public Operation operationAtOffset(final Code code, final int offset) {
-    final Bytes bytecode = code.getBytes();
-    // If the length of the program code is shorter than the offset halt execution.
+    final Bytes bytecode = code.getCodeBytes();
+    // If the length of the program code is shorter than the required offset, halt execution.
     if (offset >= bytecode.size()) {
       return endOfScriptStop;
     }
@@ -318,7 +321,7 @@ public class EVM {
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = new Code(codeBytes, codeHash);
+      result = CodeFactory.createCode(codeBytes, codeHash, maxCodeVersion);
       codeCache.put(codeHash, result);
     }
     return result;

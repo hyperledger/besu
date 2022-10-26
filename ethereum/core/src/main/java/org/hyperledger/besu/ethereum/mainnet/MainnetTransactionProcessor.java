@@ -33,10 +33,10 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
@@ -71,12 +71,12 @@ public class MainnetTransactionProcessor {
 
   private final AbstractMessageProcessor messageCallProcessor;
 
-  protected final int maxStackSize;
+  private final int maxStackSize;
 
-  protected final boolean clearEmptyAccounts;
+  private final boolean clearEmptyAccounts;
 
   protected final FeeMarket feeMarket;
-  protected final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
+  private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   /**
    * Applies a transaction to the current system state.
@@ -387,7 +387,7 @@ public class MainnetTransactionProcessor {
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
-                        .orElse(Code.EMPTY_CODE))
+                        .orElse(CodeV0.EMPTY_CODE))
                 .build();
       }
 
@@ -474,7 +474,7 @@ public class MainnetTransactionProcessor {
     return transactionValidator;
   }
 
-  protected static void clearEmptyAccounts(final WorldUpdater worldState) {
+  private static void clearEmptyAccounts(final WorldUpdater worldState) {
     new ArrayList<>(worldState.getTouchedAccounts())
         .stream().filter(Account::isEmpty).forEach(a -> worldState.deleteAccount(a.getAddress()));
   }

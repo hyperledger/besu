@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -50,7 +51,7 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptNotExplicitlySetInCodeReturnsAVirtualOperation() {
     final Bytes noEnd = Bytes.fromHexString("0x60203560003555606035604035556000");
-    final Code code = Code.createLegacyCode(noEnd, Hash.hash(noEnd));
+    final Code code = CodeFactory.createCode(noEnd, Hash.hash(noEnd), 0);
     final Operation operation = evm.operationAtOffset(code, code.getSize());
     assertThat(operation).isNotNull();
     assertThat(operation.isVirtualOperation()).isTrue();
@@ -59,7 +60,7 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptExplicitlySetInCodeDoesNotReturnAVirtualOperation() {
     final Bytes ends = Bytes.fromHexString("0x6020356000355560603560403555600000");
-    final Code code = Code.createLegacyCode(ends, Hash.hash(ends));
+    final Code code = CodeFactory.createCode(ends, Hash.hash(ends), 0);
     when(operationRegistry.get(anyByte())).thenReturn(new StopOperation(gasCalculator));
     final Operation operation = evm.operationAtOffset(code, code.getSize() - 1);
     assertThat(operation).isNotNull();

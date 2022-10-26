@@ -16,11 +16,13 @@
 package org.hyperledger.besu.evm.internal;
 
 public class EvmConfiguration {
-  public static final EvmConfiguration DEFAULT = new EvmConfiguration(32_000L);
+  public static final EvmConfiguration DEFAULT = new EvmConfiguration(32_000L, 0);
   private final long jumpDestCacheWeightKB;
+  private final int maxEofVersion;
 
-  public EvmConfiguration(final long jumpDestCacheWeightKB) {
+  public EvmConfiguration(final long jumpDestCacheWeightKB, final int maxEofVersion) {
     this.jumpDestCacheWeightKB = jumpDestCacheWeightKB;
+    this.maxEofVersion = maxEofVersion;
   }
 
   public long getJumpDestCacheWeightBytes() {
@@ -29,5 +31,9 @@ public class EvmConfiguration {
 
   public long getJumpDestCacheWeightKB() {
     return jumpDestCacheWeightKB;
+  }
+
+  public int getMaxEofVersion() {
+    return maxEofVersion;
   }
 }
