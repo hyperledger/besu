@@ -22,6 +22,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class StopOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult stopSuccess = new OperationResult(0, null);
+
   public StopOperation(final GasCalculator gasCalculator) {
     super(0x00, "STOP", 0, 0, 1, gasCalculator, gasCalculator.getZeroTierGasCost());
   }
@@ -29,8 +31,12 @@ public class StopOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     frame.setOutputData(Bytes.EMPTY);
-    return successResponse;
+    return stopSuccess;
   }
 }

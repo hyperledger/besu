@@ -79,10 +79,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String raw;
   private final String to;
   private final String transactionIndex;
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String type;
-
   private final String value;
   private final String v;
   private final String r;

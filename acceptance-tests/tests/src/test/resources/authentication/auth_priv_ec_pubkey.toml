@@ -1,0 +1,19 @@
+[Users.user]
+password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
+permissions = ["fakePermission", "*:*"]
+privacyPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAES8nC4qT/KdoAoTSF3qs/47DUsDihyVbWiRjZAiyvqp9eSDkqV1RzlM+58oOwnpFRwvWNZM+AxMVxT+MvxdsqMA=="
+
+[Users.user2]
+password = "$2a$10$0ikMUcSYugKmnXilimhc1eGNnfMRvKt2PxQJPo1oCemN16QL2NNo."
+permissions = ["fakePermission", "*:*"]
+privacyPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXIgZqRA25V+3nN+Do6b5r0jiUunub6ubjPhqwHpPxP44uUYh9RKCQNRnsqCJ9PjeTnC8R3ieJk7HWAlycU1bug=="
+
+[Users.user3]
+password = "$2a$10$Mydyzpul6CtgPRbUd6It2OpZDOfqOocpi6.UYhlyU5aphQHi1iQZq"
+permissions = ["fakePermission", "*:*"]
+privacyPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEFl85WnNPyzSEX+evc774xoqUQdjSnQMTE1uIyMOve+iVwjs6dUEUwz5teiKuUUf63a/qYe4n6SGnQ7HnmtDViQ=="
+
+[Users.failUser]
+password = "$2a$10$l3GA7K8g6rJ/Yv.YFSygCuI9byngpEzxgWS9qEg5emYDZomQW7fGC"
+permissions = ["fakePermission", "*:*"]
+privacyPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE30vyCv2v4EHwqnr0LEGaCX6GWfmYIIxLRw1PISeFsOk1tmY2hAYjEHkaZzu31SlFx0ickh10MEublBnrxCiJIA=="

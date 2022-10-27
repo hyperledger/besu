@@ -19,11 +19,10 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 public class DupOperation extends AbstractFixedCostOperation {
 
+  public static final int DUP_BASE = 0x7F;
+  static final OperationResult dupSuccess = new OperationResult(3, null);
   protected final Operation.OperationResult underflowResponse;
 
   private final int index;
@@ -39,20 +38,18 @@ public class DupOperation extends AbstractFixedCostOperation {
         gasCalculator.getVeryLowTierGasCost());
     this.index = index;
     this.underflowResponse =
-        new Operation.OperationResult(
-            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    // getStackItem won't throw under/overflows.  Check explicitly.
-    if (frame.stackSize() < getStackItemsConsumed()) {
-      return underflowResponse;
-    }
+    return staticOperation(frame, index);
+  }
 
+  public static OperationResult staticOperation(final MessageFrame frame, final int index) {
     frame.pushStackItem(frame.getStackItem(index - 1));
 
-    return successResponse;
+    return dupSuccess;
   }
 }

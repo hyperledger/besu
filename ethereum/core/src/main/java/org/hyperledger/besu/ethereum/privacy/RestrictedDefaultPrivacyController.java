@@ -134,7 +134,7 @@ public class RestrictedDefaultPrivacyController extends AbstractRestrictedPrivac
                 + privacyGroup.getType()
                 + " when "
                 + PrivacyGroup.Type.PANTHEON
-                + "was expected.");
+                + " was expected.");
       }
     }
     // legacy transaction

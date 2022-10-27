@@ -44,7 +44,7 @@ public class PrevRanDaoOperationTest {
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
-    assertThat(r.getHaltReason()).isNotPresent();
+    assertThat(r.getHaltReason()).isNull();
     verify(messageFrame).pushStackItem(prevRandao);
   }
 
@@ -60,7 +60,7 @@ public class PrevRanDaoOperationTest {
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
-    assertThat(r.getHaltReason()).isNotPresent();
+    assertThat(r.getHaltReason()).isNull();
     verify(messageFrame).pushStackItem(difficulty);
   }
 }

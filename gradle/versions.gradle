@@ -16,8 +16,13 @@
 dependencyManagement {
   dependencies {
 
-    dependencySet(group:'com.fasterxml.jackson.core', version:'2.13.3') {
-      entry 'jackson-databind'
+    dependencySet(group: 'org.antlr', version: '4.10.1') {
+      entry 'antlr4'
+      entry 'antlr4-runtime'
+    }
+
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
+    dependencySet(group:'com.fasterxml.jackson.core', version:'2.13.4') {
       entry 'jackson-datatype'
       entry 'jackson-datatype-jdk8'
     }
@@ -45,7 +50,7 @@ dependencyManagement {
 
     dependency 'com.google.guava:guava:31.1-jre'
 
-    dependency 'com.graphql-java:graphql-java:18.1'
+    dependency 'com.graphql-java:graphql-java:19.2'
 
     dependency 'com.splunk.logging:splunk-library-javalogging:1.11.5'
 
@@ -117,24 +122,24 @@ dependencyManagement {
 
     dependency 'org.apache.commons:commons-compress:1.21'
     dependency 'org.apache.commons:commons-lang3:3.12.0'
-    dependency 'org.apache.commons:commons-text:1.9'
+    dependency 'org.apache.commons:commons-text:1.10.0'
 
     dependency 'org.apache.logging.log4j:log4j-api:2.17.2'
     dependency 'org.apache.logging.log4j:log4j-core:2.17.2'
     dependency 'org.apache.logging.log4j:log4j-jul:2.17.2'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
 
-    dependency 'org.apache.tuweni:tuweni-bytes:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-config:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-concurrent:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-crypto:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-devp2p:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-io:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-net:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-rlp:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-toml:2.2.0'
-    dependency 'org.apache.tuweni:tuweni-units:2.2.0'
+    dependency 'org.apache.tuweni:tuweni-bytes:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-config:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-concurrent:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-crypto:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-devp2p:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-dns-discovery:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-io:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-net:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-rlp:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-toml:2.3.0'
+    dependency 'org.apache.tuweni:tuweni-units:2.3.0'
 
     dependency 'org.assertj:assertj-core:3.23.1'
 
@@ -180,7 +185,7 @@ dependencyManagement {
     dependency 'org.openjdk.jmh:jmh-core:1.34'
     dependency 'org.openjdk.jmh:jmh-generator-annprocess:1.34'
 
-    dependency 'org.rocksdb:rocksdbjni:6.29.5'
+    dependency 'org.rocksdb:rocksdbjni:7.6.0'
 
     dependency 'org.slf4j:slf4j-api:1.7.36'
 

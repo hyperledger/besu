@@ -65,7 +65,7 @@ public class QbftDiscardValidatorVoteTest {
   public void exceptionWhenInvalidAddressParameterSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("InvalidAddress")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   @Test

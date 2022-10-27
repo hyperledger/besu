@@ -91,4 +91,9 @@ public class PayloadIdentifier implements Quantity {
   public int hashCode() {
     return val.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return toHexString();
+  }
 }

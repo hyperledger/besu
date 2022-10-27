@@ -26,6 +26,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class SarOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult sarSuccess = new OperationResult(3, null);
+
   private static final UInt256 ALL_BITS = UInt256.MAX_VALUE;
 
   public SarOperation(final GasCalculator gasCalculator) {
@@ -35,7 +37,10 @@ public class SarOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
 
+  public static OperationResult staticOperation(final MessageFrame frame) {
     Bytes shiftAmount = frame.popStackItem();
     final Bytes value = leftPad(frame.popStackItem());
     final boolean negativeNumber = value.get(0) < 0;
@@ -58,6 +63,6 @@ public class SarOperation extends AbstractFixedCostOperation {
         frame.pushStackItem(result);
       }
     }
-    return successResponse;
+    return sarSuccess;
   }
 }

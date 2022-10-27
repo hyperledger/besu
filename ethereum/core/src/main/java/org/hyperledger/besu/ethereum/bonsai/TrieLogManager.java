@@ -74,7 +74,8 @@ public class TrieLogManager {
     // if it's only in memory we need to save it
     // for example, like that in case of reorg we don't replace a trielog layer
     if (worldStateStorage.getTrieLog(blockHeader.getHash()).isEmpty()) {
-      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = worldStateStorage.updater();
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater =
+          worldStateStorage.updater();
       boolean success = false;
       try {
         final TrieLogLayer trieLog =
@@ -167,7 +168,7 @@ public class TrieLogManager {
       final BlockHeader blockHeader,
       final Hash worldStateRootHash,
       final TrieLogLayer trieLog,
-      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater) {
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater) {
     debugLambda(
         LOG,
         "Persisting trie log for block hash {} and world state root {}",
