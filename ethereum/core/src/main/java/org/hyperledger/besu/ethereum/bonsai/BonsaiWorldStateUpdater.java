@@ -182,7 +182,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 (keyHash, entryValue) -> {
                   final Hash slotHash = Hash.wrap(keyHash);
                   if (!deletedStorageUpdates.containsKey(slotHash)) {
-                    final Bytes32 value = Bytes32.leftPad(Bytes.wrap(RLP.decodeOne(entryValue)));
+                    final Bytes32 value = Bytes32.leftPad(RLP.decodeOne(entryValue));
                     deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null, true));
                   }
                 });

@@ -147,7 +147,7 @@ public class PrivateStateGenesisAllocatorTest {
     Account managementProxy = worldState.get(FLEXIBLE_PRIVACY_PROXY);
     assertThat(managementProxy.getCode()).isEqualTo(PROXY_RUNTIME_BYTECODE);
     assertThat(managementProxy.getStorageValue(Bytes32.ZERO))
-        .isEqualTo(Bytes32.leftPad(Bytes.wrap(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT)));
+        .isEqualTo(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
 
     Account managementContract = worldState.get(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);
     assertThat(managementContract.getCode()).isEqualTo(DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
