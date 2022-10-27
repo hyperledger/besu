@@ -388,9 +388,16 @@ public class WebSocketServiceTest {
   }
 
   @Test
-  public void failWhenPortIsAlreadyInUse() {
+  public void failWhenPortIsAlreadyInUse()  {
     websocketConfiguration = WebSocketConfiguration.createDefault();
-    // firstWebsocketService is created using @Before
+      websocketConfiguration.setHost("0.0.0.0");
+      websocketConfiguration.setPort(8546);
+    final WebSocketService firstWebSocketService =
+        new WebSocketService(
+            vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
+
+    firstWebSocketService.start().join();
+
     final WebSocketService secondWebSocketService =
         new WebSocketService(
             vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
