@@ -48,7 +48,7 @@ public class ForkId {
   }
 
   public List<Bytes> getForkIdAsBytesList() {
-    List<Bytes> bytesList = new ArrayList<>();
+    final List<Bytes> bytesList = new ArrayList<>();
     bytesList.add(hash);
     bytesList.add(next);
 

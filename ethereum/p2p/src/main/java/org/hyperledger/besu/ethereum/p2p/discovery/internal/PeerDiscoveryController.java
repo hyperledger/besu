@@ -337,6 +337,7 @@ public class PeerDiscoveryController {
                   requestENR(peer); // TODO: for now always request ENR -> make this configuerable
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer); // This is done for any dicovered peer, for any network
+                  recursivePeerRefreshState.onBondingComplete(peer);
                 });
         break;
       case NEIGHBORS:
@@ -391,7 +392,6 @@ public class PeerDiscoveryController {
           final ForkId forkId = new ForkId(rawFforkId.get(0).get(0), rawFforkId.get(0).get(1));
           if (forkIdManager.peerCheck(forkId)) {
             notifyPeerBonded(peer, System.currentTimeMillis());
-            recursivePeerRefreshState.onBondingComplete(peer);
             LOG.debug("Peer {} PASSED fork id check. ForkId received: {}", sender.getId(), forkId);
             this.pass++;
           } else {
@@ -404,7 +404,6 @@ public class PeerDiscoveryController {
         } else {
           // if the peer hasn't sent the ForkId try to connect to it anyways
           notifyPeerBonded(peer, System.currentTimeMillis());
-          recursivePeerRefreshState.onBondingComplete(peer);
         }
         break;
     }

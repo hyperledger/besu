@@ -18,9 +18,11 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -30,6 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
@@ -52,6 +56,7 @@ import org.hyperledger.besu.nat.NatService;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -259,6 +264,10 @@ public class JsonRpcHttpServiceRpcApisTest {
             .setRlpx(RlpxConfiguration.create().setBindPort(0))
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(0));
 
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    final Block genesisBlock = mock(Block.class);
+    when(blockchain.getGenesisBlock()).thenReturn(genesisBlock);
+    when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
             .supportedCapabilities(Capability.create("eth", 63))
@@ -267,6 +276,8 @@ public class JsonRpcHttpServiceRpcApisTest {
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
             .storageProvider(new InMemoryKeyValueStorageProvider())
+            .blockchain(blockchain)
+            .forks(Collections.emptyList())
             .build();
 
     p2pNetwork.start();

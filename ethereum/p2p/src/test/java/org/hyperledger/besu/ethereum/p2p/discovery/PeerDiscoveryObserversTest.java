@@ -111,7 +111,7 @@ public class PeerDiscoveryObserversTest {
     agent.start(BROADCAST_TCP_PORT).join();
 
     final HashSet<Bytes> seenPeers = new HashSet<>();
-    List<DiscoveryPeer> discoveredPeers =
+    final List<DiscoveryPeer> discoveredPeers =
         events.stream()
             .map(PeerDiscoveryEvent::getPeer)
             // We emit some duplicate events when the tcp port differs (in terms of presence) for a
@@ -150,7 +150,7 @@ public class PeerDiscoveryObserversTest {
 
     // Start the agent and wait until each queue receives one event.
     agent.start(BROADCAST_TCP_PORT).join();
-    for (List<PeerBondedEvent> eventQueue : queues) {
+    for (final List<PeerBondedEvent> eventQueue : queues) {
       assertThat(eventQueue.size()).isEqualTo(1);
     }
 

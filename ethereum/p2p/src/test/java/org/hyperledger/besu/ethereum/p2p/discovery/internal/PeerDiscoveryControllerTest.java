@@ -32,6 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
@@ -1614,6 +1615,7 @@ public class PeerDiscoveryControllerTest {
               .peerBondedObservers(peerBondedObservers)
               .metricsSystem(new NoOpMetricsSystem())
               .cacheForEnrRequests(enrs)
+              .forkIdManager(mock(ForkIdManager.class))
               .build());
     }
   }
