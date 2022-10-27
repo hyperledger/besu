@@ -26,6 +26,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class SModOperation extends AbstractFixedCostOperation {
 
+  private static final OperationResult smodSuccess = new OperationResult(5, null);
+
   public SModOperation(final GasCalculator gasCalculator) {
     super(0x07, "SMOD", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
@@ -33,6 +35,10 @@ public class SModOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
@@ -63,6 +69,6 @@ public class SModOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
 
-    return successResponse;
+    return smodSuccess;
   }
 }

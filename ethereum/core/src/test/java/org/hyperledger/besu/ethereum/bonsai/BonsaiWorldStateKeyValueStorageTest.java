@@ -174,7 +174,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
         .getTrieBranchStorageTransaction()
         .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -214,7 +214,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
                 root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
 
     // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
         .getTrieBranchStorageTransaction()
         .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
@@ -244,8 +244,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final Bytes bytesC = Bytes.fromHexString("0x123456");
 
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    final BonsaiWorldStateKeyValueStorage.Updater updaterA = storage.updater();
-    final BonsaiWorldStateKeyValueStorage.Updater updaterB = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updaterA = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updaterB = storage.updater();
 
     updaterA.putCode(accountHashA, bytesA);
     updaterB.putCode(accountHashB, bytesA);
@@ -269,7 +269,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   public void isWorldStateAvailable_StateAvailableByRootHash() {
 
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     final Bytes rootHashKey = Bytes32.fromHexString("0x01");
     updater.getTrieBranchStorageTransaction().put(WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
     updater.commit();
@@ -281,7 +281,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   public void isWorldStateAvailable_afterCallingSaveWorldstate() {
 
     final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
-    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
 
     final Bytes blockHash = Bytes32.fromHexString("0x01");
     final Bytes32 nodeHashKey = Bytes32.fromHexString("0x02");
