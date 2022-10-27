@@ -2,7 +2,7 @@
  * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -13,17 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
+package org.hyperledger.besu.ethereum.core;
 
-package org.hyperledger.besu.consensus.merge;
-
-import org.hyperledger.besu.datatypes.Hash;
-
-import java.util.Optional;
-
-public interface ForkchoiceMessageListener {
-
-  void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash);
-}
+public interface SnapshotMutableWorldState extends MutableWorldState, AutoCloseable {}

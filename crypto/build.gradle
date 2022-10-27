@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.internal.crypto'
       )
   }
 }
@@ -39,6 +40,7 @@ dependencies {
   implementation 'org.hyperledger.besu:secp256k1'
   implementation 'org.hyperledger.besu:secp256r1'
   implementation 'org.hyperledger.besu:blake2bf'
+  implementation 'com.google.guava:guava'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

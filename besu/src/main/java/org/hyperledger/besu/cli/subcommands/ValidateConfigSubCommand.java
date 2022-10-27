@@ -22,7 +22,7 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.util.TomlConfigFileDefaultProvider;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 
 import picocli.CommandLine;
@@ -49,10 +49,10 @@ public class ValidateConfigSubCommand implements Runnable {
   @ParentCommand
   private BesuCommand parentCommand;
 
-  final PrintStream out;
+  final PrintWriter out;
   final CommandLine commandLine;
 
-  public ValidateConfigSubCommand(final CommandLine commandLine, final PrintStream out) {
+  public ValidateConfigSubCommand(final CommandLine commandLine, final PrintWriter out) {
     this.out = out;
     this.commandLine = commandLine;
   }
@@ -63,10 +63,10 @@ public class ValidateConfigSubCommand implements Runnable {
     try {
       new TomlConfigFileDefaultProvider(commandLine, dataPath.toFile()).loadConfigurationFromFile();
     } catch (Exception e) {
-      this.out.print(e);
+      this.out.println(e);
       return;
     }
-    this.out.print(
+    this.out.println(
         "TOML config file is valid on basic inspection. Further dependencies between related options are checked when Besu starts.");
   }
 }

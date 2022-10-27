@@ -230,7 +230,7 @@ public class PrivCreatePrivacyGroupTest {
         catchThrowableOfType(
             () -> privCreatePrivacyGroup.response(request), InvalidJsonRpcParameters.class);
 
-    assertThat(response.getMessage()).isEqualTo("Invalid json rpc parameter at index 0");
+    assertThat(response.getMessage()).contains("Invalid json rpc parameter at index 0");
   }
 
   @Test

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
+import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -37,15 +38,18 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
+  private final MergeMiningCoordinator mergeMiningCoordinator;
   private final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayload.class);
 
   public EngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
+      final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
+    this.mergeMiningCoordinator = mergeMiningCoordinator;
     this.blockResultFactory = blockResultFactory;
   }
 
@@ -59,7 +63,7 @@ public class EngineGetPayload extends ExecutionEngineJsonRpcMethod {
     engineCallListener.executionEngineCalled();
 
     final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
-
+    mergeMiningCoordinator.finalizeProposalById(payloadId);
     final Optional<Block> block = mergeContext.get().retrieveBlockById(payloadId);
     if (block.isPresent()) {
       var proposal = block.get();

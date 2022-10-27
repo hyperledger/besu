@@ -259,6 +259,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
 
+    // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer
+    // additions
+    checkMaintainedConnectionPeers();
+
     // Periodically check maintained connections
     final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
     peerConnectionScheduler.scheduleWithFixedDelay(
@@ -359,8 +363,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (!localNode.isReady()) {
       return;
     }
+    final EnodeURL localEnodeURL = localNode.getPeer().getEnodeURL();
     maintainedPeers
         .streamPeers()
+        .filter(peer -> !peer.getEnodeURL().getNodeId().equals(localEnodeURL.getNodeId()))
         .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
         .forEach(rlpxAgent::connect);
   }
@@ -494,7 +500,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       // Set up permissions
       // Fold peer reputation into permissions
       final PeerPermissionsDenylist misbehavingPeers = PeerPermissionsDenylist.create(500);
-      final PeerDenylistManager reputationManager = new PeerDenylistManager(misbehavingPeers);
+      final PeerDenylistManager reputationManager =
+          new PeerDenylistManager(misbehavingPeers, maintainedPeers);
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 
       final MutableLocalNode localNode =

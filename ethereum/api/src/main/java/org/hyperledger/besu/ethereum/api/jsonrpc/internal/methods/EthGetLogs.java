@@ -25,9 +25,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthGetLogs implements JsonRpcMethod {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
 
   private final BlockchainQueries blockchain;
 
@@ -49,6 +56,7 @@ public class EthGetLogs implements JsonRpcMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
+    final AtomicReference<Exception> ex = new AtomicReference<>();
     final List<LogWithMetadata> matchingLogs =
         filter
             .getBlockHash()
@@ -58,15 +66,39 @@ public class EthGetLogs implements JsonRpcMethod {
                         blockHash, filter.getLogsQuery(), requestContext::isAlive))
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
-                  final long toBlockNumber =
-                      filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
+                  final long fromBlockNumber;
+                  final long toBlockNumber;
+                  try {
+                    fromBlockNumber =
+                        filter
+                            .getFromBlock()
+                            .getBlockNumber(blockchain)
+                            .orElseThrow(
+                                () ->
+                                    new Exception("fromBlock not found: " + filter.getFromBlock()));
+                    toBlockNumber =
+                        filter
+                            .getToBlock()
+                            .getBlockNumber(blockchain)
+                            .orElseThrow(
+                                () -> new Exception("toBlock not found: " + filter.getToBlock()));
+                  } catch (final Exception e) {
+                    ex.set(e);
+                    return Collections.emptyList();
+                  }
+
                   return blockchain.matchingLogs(
                       fromBlockNumber,
                       toBlockNumber,
                       filter.getLogsQuery(),
                       requestContext::isAlive);
                 });
+
+    if (ex.get() != null) {
+      LOG.debug("eth_getLogs call failed: ", ex.get());
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+    }
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));

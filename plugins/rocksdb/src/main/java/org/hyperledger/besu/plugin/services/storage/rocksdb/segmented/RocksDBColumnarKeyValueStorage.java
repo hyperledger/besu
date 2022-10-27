@@ -51,11 +51,11 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
+import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.Status;
-import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
@@ -78,7 +78,7 @@ public class RocksDBColumnarKeyValueStorage
 
   private final DBOptions options;
   private final TransactionDBOptions txOptions;
-  private final TransactionDB db;
+  private final OptimisticTransactionDB db;
   private final AtomicBoolean closed = new AtomicBoolean(false);
   private final Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
   private final RocksDBMetrics metrics;
@@ -141,12 +141,8 @@ public class RocksDBColumnarKeyValueStorage
       txOptions = new TransactionDBOptions();
       final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
       db =
-          TransactionDB.open(
-              options,
-              txOptions,
-              configuration.getDatabaseDir().toString(),
-              columnDescriptors,
-              columnHandles);
+          OptimisticTransactionDB.open(
+              options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);
       metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
       final Map<Bytes, String> segmentsById =
           segments.stream()
@@ -212,6 +208,12 @@ public class RocksDBColumnarKeyValueStorage
     }
   }
 
+  public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
+      throws StorageException {
+    throwIfClosed();
+    return new RocksDBColumnarKeyValueSnapshot(db, segment, metrics);
+  }
+
   @Override
   public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
     throwIfClosed();
@@ -254,7 +256,7 @@ public class RocksDBColumnarKeyValueStorage
     columnHandlesByName.values().stream()
         .filter(e -> e.equals(segmentHandle))
         .findAny()
-        .ifPresent(segmentIdentifier -> segmentIdentifier.reset());
+        .ifPresent(RocksDbSegmentIdentifier::reset);
   }
 
   @Override
