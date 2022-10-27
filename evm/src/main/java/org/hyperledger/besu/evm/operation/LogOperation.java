@@ -25,9 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -47,11 +44,9 @@ public class LogOperation extends AbstractOperation {
 
     final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     if (frame.isStatic()) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas() < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
     final Address address = frame.getRecipientAddress();
@@ -65,6 +60,6 @@ public class LogOperation extends AbstractOperation {
     }
 
     frame.addLog(new Log(address, data, builder.build()));
-    return new OperationResult(OptionalLong.of(cost), Optional.empty());
+    return new OperationResult(cost, null);
   }
 }

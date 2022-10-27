@@ -24,7 +24,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.evm'
       )
   }
 }
@@ -35,6 +36,7 @@ dependencies {
   implementation project(':crypto')
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
+  implementation 'com.google.guava:guava'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 

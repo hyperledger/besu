@@ -112,7 +112,7 @@ public class FilterManagerLogFilterTest {
 
     final Hash blockAddedHash = recordBlockEvents(1).get(0).getBlock().getHash();
 
-    verify(blockchainQueries, never()).matchingLogs(any(), any(), any());
+    verify(blockchainQueries, never()).matchingLogs(any(Hash.class), any(LogsQuery.class), any());
     verify(privacyQueries).matchingLogs(eq(PRIVACY_GROUP_ID), eq(blockAddedHash), eq(logsQuery()));
   }
 

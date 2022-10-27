@@ -22,6 +22,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class GtOperation extends AbstractFixedCostOperation {
 
+  static final OperationResult gtSuccess = new OperationResult(3, null);
+
   public GtOperation(final GasCalculator gasCalculator) {
     super(0x11, "GT", 2, 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
@@ -29,6 +31,10 @@ public class GtOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
     final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
 
@@ -36,6 +42,6 @@ public class GtOperation extends AbstractFixedCostOperation {
 
     frame.pushStackItem(result);
 
-    return successResponse;
+    return gtSuccess;
   }
 }

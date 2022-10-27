@@ -22,7 +22,8 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.datatypes'
       )
   }
 }
@@ -34,6 +35,7 @@ dependencies {
 
   implementation project(':crypto')
   implementation project(':ethereum:rlp')
+  implementation 'com.google.guava:guava'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'

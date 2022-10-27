@@ -58,16 +58,14 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldCharge400Gas() {
     final OperationResult result = operation.execute(createMessageFrame(REQUESTED_ADDRESS), null);
-    assertThat(result.getGasCost().isPresent()).isTrue();
-    assertThat(result.getGasCost().getAsLong()).isEqualTo(400L);
+    assertThat(result.getGasCost()).isEqualTo(400L);
   }
 
   @Test
   public void istanbulShouldCharge700Gas() {
     final OperationResult result =
         operationIstanbul.execute(createMessageFrame(REQUESTED_ADDRESS), null);
-    assertThat(result.getGasCost().isPresent()).isTrue();
-    assertThat(result.getGasCost().getAsLong()).isEqualTo(700L);
+    assertThat(result.getGasCost()).isEqualTo(700L);
   }
 
   @Test

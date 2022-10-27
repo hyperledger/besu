@@ -8,6 +8,7 @@
 
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
+| Ameziane Hamlat   | ahamlat         | ahamlat          |
 | Adrian Sutton    | ajsutton         | ajsutton         |
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
@@ -15,8 +16,8 @@
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
-| Frank Li         | frankisawesome   | frankliawesome   |
 | Gary Schulte     | garyschulte      | GarySchulte      | 
+| Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
@@ -42,6 +43,7 @@
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
+| Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Trent Mohay      | rain-on          | trent.mohay      |

@@ -136,6 +136,8 @@ miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
 Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
+Xpos-block-creation-max-time=5
+
 # Pruning
 pruning-enabled=true
 pruning-blocks-retained=1024
@@ -166,7 +168,6 @@ privacy-flexible-groups-enabled=false
 tx-pool-retention-hours=999
 tx-pool-price-bump=13
 tx-pool-max-size=1234
-tx-pool-hashes-max-size=10000
 tx-pool-limit-by-account-percentage=0.017
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000

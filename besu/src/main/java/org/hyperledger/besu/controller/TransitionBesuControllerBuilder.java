@@ -17,7 +17,6 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.PandaPrinter;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -131,11 +129,11 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
                 transitionProtocolSchedule,
                 protocolContext,
-                ethProtocolManager.ethContext(),
                 transactionPool,
                 transitionMiningParameters,
                 syncState,
-                transitionBackwardsSyncContext));
+                transitionBackwardsSyncContext,
+                metricsSystem));
     initTransitionWatcher(protocolContext, composedCoordinator);
     return composedCoordinator;
   }
@@ -217,18 +215,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
-      protocolContext.getConsensusContext(MergeContext.class).addNewForkchoiceMessageListener(sync);
-      Optional<Difficulty> currentTotal =
-          protocolContext
-              .getBlockchain()
-              .getTotalDifficultyByHash(protocolContext.getBlockchain().getChainHeadHash());
-      PandaPrinter.init(
-          currentTotal, Difficulty.of(maybeForTTD.getTerminalTotalDifficulty().get()));
-      sync.subscribeInSync(PandaPrinter.getInstance());
-      protocolContext.getBlockchain().observeBlockAdded(PandaPrinter.getInstance());
       protocolContext
           .getConsensusContext(MergeContext.class)
-          .addNewForkchoiceMessageListener(PandaPrinter.getInstance());
+          .addNewUnverifiedForkchoiceListener(sync);
     }
 
     return sync;
@@ -248,11 +237,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
             protocolContext
                 .getBlockchain()
                 .setBlockChoiceRule((newBlockHeader, currentBlockHeader) -> -1);
-
-            if (priorState.filter(prior -> !prior).isPresent()) {
-              // only print pandas if we had a prior merge state, and it was false
-              PandaPrinter.getInstance().printOnFirstCrossing();
-            }
 
           } else if (composedCoordinator.isMiningBeforeMerge()) {
             // if our merge state is set to mine pre-merge and we are mining, start mining

@@ -1,9 +1,11 @@
 {
-  "request": "{account(address: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } }",
+  "request": "{ pending { account(address: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance } } }",
   "response": {
     "data" : {
-      "account" : {
-        "balance" : "0x140"
+      "pending" : {
+        "account": {
+          "balance": "0x140"
+        }
       }
     }
   },

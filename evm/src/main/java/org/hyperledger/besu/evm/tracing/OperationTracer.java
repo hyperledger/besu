@@ -24,9 +24,12 @@ import org.apache.tuweni.bytes.Bytes;
 
 public interface OperationTracer {
 
-  OperationTracer NO_TRACING = ((frame, executeOperation) -> executeOperation.execute());
+  OperationTracer NO_TRACING = new OperationTracer() {};
 
-  void traceExecution(MessageFrame frame, ExecuteOperation executeOperation);
+  default void tracePreExecution(final MessageFrame frame) {}
+
+  default void tracePostExecution(
+      final MessageFrame frame, final OperationResult operationResult) {}
 
   default void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {}

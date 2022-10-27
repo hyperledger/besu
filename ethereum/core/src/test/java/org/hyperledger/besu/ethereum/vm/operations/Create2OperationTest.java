@@ -180,8 +180,7 @@ public class Create2OperationTest {
   @Test
   public void shouldCalculateGasPrice() {
     final OperationResult result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isEmpty();
-    assertThat(result.getGasCost().isPresent()).isTrue();
-    assertThat(result.getGasCost().getAsLong()).isEqualTo(expectedGas);
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }
 }
