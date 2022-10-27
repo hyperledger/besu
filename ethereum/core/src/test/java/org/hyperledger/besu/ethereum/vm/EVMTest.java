@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -45,7 +46,7 @@ public class EVMTest {
 
   @Before
   public void setup() {
-    evm = new EVM(operationRegistry, gasCalculator, EvmConfiguration.DEFAULT);
+    evm = new EVM(operationRegistry, gasCalculator, EvmConfiguration.DEFAULT, EvmSpecVersion.PARIS);
   }
 
   @Test

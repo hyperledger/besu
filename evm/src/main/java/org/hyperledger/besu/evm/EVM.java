@@ -40,6 +40,7 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
+import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
@@ -74,17 +75,23 @@ public class EVM {
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
   private final CodeCache codeCache;
-  private final int maxCodeVersion;
+  private final EvmSpecVersion evmSpecVersion;
+
+  // Optimized operation flags
+  private final boolean enablePush0;
 
   public EVM(
       final OperationRegistry operations,
       final GasCalculator gasCalculator,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final EvmSpecVersion evmSpecVersion) {
     this.operations = operations;
     this.gasCalculator = gasCalculator;
     this.endOfScriptStop = new VirtualOperation(new StopOperation(gasCalculator));
     this.codeCache = new CodeCache(evmConfiguration);
-    this.maxCodeVersion = evmConfiguration.getMaxEofVersion();
+    this.evmSpecVersion = evmSpecVersion;
+
+    enablePush0 = EvmSpecVersion.SHANGHAI.ordinal() >= evmSpecVersion.ordinal();
   }
 
   public GasCalculator getGasCalculator() {
@@ -96,6 +103,8 @@ public class EVM {
   //
   // Please benchmark before refactoring.
   public void runToHalt(final MessageFrame frame, final OperationTracer tracing) {
+    evmSpecVersion.maybeWarnVersion();
+
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
@@ -206,6 +215,12 @@ public class EVM {
             break;
           case 0x50: // POP
             result = PopOperation.staticOperation(frame);
+            break;
+          case 0x5f: // PUSH0
+            result =
+                enablePush0
+                    ? Push0Operation.staticOperation(frame)
+                    : InvalidOperation.INVALID_RESULT;
             break;
           case 0x60: // PUSH1-32
           case 0x61:
@@ -321,7 +336,7 @@ public class EVM {
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = CodeFactory.createCode(codeBytes, codeHash, maxCodeVersion);
+      result = CodeFactory.createCode(codeBytes, codeHash, evmSpecVersion.getMaxEofVersion());
       codeCache.put(codeHash, result);
     }
     return result;

@@ -285,7 +285,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
   final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
-  private final EvmOptions unstableEvmOptions = EvmOptions.create(() -> commandLine);
+  private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
 
   // stable CLI options

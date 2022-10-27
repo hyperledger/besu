@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -85,7 +86,7 @@ public class JumpOperationTest {
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));
     registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT);
+    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT, EvmSpecVersion.PARIS);
   }
 
   @Test

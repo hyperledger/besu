@@ -18,19 +18,17 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 import picocli.CommandLine;
-import picocli.CommandLine.ParameterException;
 
 public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
   public static final String JUMPDEST_CACHE_WEIGHT = "--Xevm-jumpdest-cache-weight-kb";
-  public static final String MAX_EOF_VERSION = "--Xevm-max-eof-version";
 
-  private final Supplier<CommandLine> commandLine;
+  public static EvmOptions create() {
+    return new EvmOptions();
+  }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -45,43 +43,13 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   private Long jumpDestCacheWeightKilobytes =
       32_000L; // 10k contracts, (25k max contract size / 8 bit) + 32byte hash
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
-  @CommandLine.Option(
-      names = {MAX_EOF_VERSION},
-      description = "Maximum Ethereum Object Format version supported for contract code",
-      fallbackValue = "0",
-      defaultValue = "0",
-      hidden = true,
-      arity = "1")
-  void setEofVersion(final int maxEofVersion) {
-    if (maxEofVersion < 0 || maxEofVersion > 1) {
-      throw new ParameterException(
-          commandLine.get(), "Only EOF Versions 0 (legacy) and 1 are supported");
-    }
-    if (maxEofVersion == 1) {
-      System.out.println(
-          "**WARNING** EOF Version 1 is not final and not supported on any persistent chains");
-    }
-    this.maxEofVersion = maxEofVersion;
-  }
-
-  private int maxEofVersion = 0; // legacy code only
-
-  private EvmOptions(final Supplier<CommandLine> commandLine) {
-    this.commandLine = commandLine;
-  }
-
-  public static EvmOptions create(final Supplier<CommandLine> commandLine) {
-    return new EvmOptions(commandLine);
-  }
-
   @Override
   public EvmConfiguration toDomainObject() {
-    return new EvmConfiguration(jumpDestCacheWeightKilobytes, maxEofVersion);
+    return new EvmConfiguration(jumpDestCacheWeightKilobytes);
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(JUMPDEST_CACHE_WEIGHT, MAX_EOF_VERSION);
+    return List.of(JUMPDEST_CACHE_WEIGHT);
   }
 }
