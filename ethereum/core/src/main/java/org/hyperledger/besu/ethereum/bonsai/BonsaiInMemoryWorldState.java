@@ -56,10 +56,10 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     // second update account storage state.  This must be done before updating the accounts so
     // that we can get the storage state hash
 
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
-            worldStateUpdater.getStorageToUpdate().entrySet()) {
-      updateAccountStorage(worldStateUpdater, storageAccountUpdate);
-    }
+    worldStateUpdater.getStorageToUpdate().entrySet()
+            .parallelStream().forEach(addressMapEntry -> {
+              updateAccountStorage(worldStateUpdater, addressMapEntry);
+            });
 
     // for manicured tries and composting, trim and compost here
 
