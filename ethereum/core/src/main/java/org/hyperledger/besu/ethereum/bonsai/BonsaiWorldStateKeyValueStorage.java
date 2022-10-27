@@ -124,7 +124,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+      return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap).filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
@@ -136,7 +136,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     } else {
       return trieBranchStorage
               .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-              .map(Bytes::wrap);
+              .map(Bytes::wrap).filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
