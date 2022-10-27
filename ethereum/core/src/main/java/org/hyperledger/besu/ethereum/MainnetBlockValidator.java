@@ -25,13 +25,13 @@ import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,12 +95,12 @@ public class MainnetBlockValidator implements BlockValidator {
       }
       final BlockHeader parentHeader = maybeParentHeader.get();
 
-        if (!blockHeaderValidator.validateHeader(header, parentHeader, context,
-            headerValidationMode)) {
-          var retval = new BlockProcessingResult("header validation rule violated, see logs");
-          handleAndLogImportFailure(block, retval);
-          return retval;
-        }
+      if (!blockHeaderValidator.validateHeader(
+          header, parentHeader, context, headerValidationMode)) {
+        var retval = new BlockProcessingResult("header validation rule violated, see logs");
+        handleAndLogImportFailure(block, retval);
+        return retval;
+      }
 
       final Optional<MutableWorldState> maybeWorldState =
           context
@@ -138,7 +138,8 @@ public class MainnetBlockValidator implements BlockValidator {
         if (output instanceof GoQuorumBlockProcessingResult) {
           var privateOutput = (GoQuorumBlockProcessingResult) output;
           if (!privateOutput.getPrivateReceipts().isEmpty()) {
-            // replace the public receipts for marker transactions with the private receipts if we are
+            // replace the public receipts for marker transactions with the private receipts if we
+            // are
             // in
             // goQuorumCompatibilityMode. That can be done now because we have validated the block.
             final List<TransactionReceipt> privateTransactionReceipts =
@@ -159,7 +160,7 @@ public class MainnetBlockValidator implements BlockValidator {
         // private receipts, but we flatten it.
         return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
       }
-    }  catch (StorageException dbProblem) {
+    } catch (StorageException dbProblem) {
       var retval = new BlockProcessingResult(BlockProcessingOutputs.empty(), dbProblem);
       handleAndLogImportFailure(block, retval);
       return retval;
@@ -173,7 +174,8 @@ public class MainnetBlockValidator implements BlockValidator {
           "{}. Block {}, caused by {}",
           result.errorMessage,
           invalidBlock.toLogString(),
-          result.causedBy().isPresent() ? result.causedBy() : "none");
+          result.causedBy().get());
+      LOG.debug("with stack", result.causedBy().get());
       if (!result.isInternalError()) {
         badBlockManager.addBadBlock(invalidBlock);
       }

@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -46,7 +45,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Optional;
@@ -54,7 +52,6 @@ import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 
 public class BlockImportExceptionHandlingTest {
 
@@ -62,37 +59,42 @@ public class BlockImportExceptionHandlingTest {
       mock(MainnetTransactionProcessor.class);
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
-  private final BlockProcessor blockProcessor = new MainnetBlockProcessor(
-      transactionProcessor,
-      transactionReceiptFactory,
-      Wei.ZERO,
-      BlockHeader::getCoinbase,
-      true,
-      Optional.empty());
+  private final BlockProcessor blockProcessor =
+      new MainnetBlockProcessor(
+          transactionProcessor,
+          transactionReceiptFactory,
+          Wei.ZERO,
+          BlockHeader::getCoinbase,
+          true,
+          Optional.empty());
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
-  private final WorldStateStorage worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+  private final WorldStateStorage worldStateStorage =
+      new BonsaiWorldStateKeyValueStorage(storageProvider);
 
   private final WorldStateArchive worldStateArchive =
-      //contains a BonsaiPersistedWorldState which we need to spy on.
-      //do we need to also test with a DefaultWorldStateArchive?
-      spy(new BonsaiWorldStateArchive(
-          new TrieLogManager(blockchain, (BonsaiWorldStateKeyValueStorage) worldStateStorage, 1),
-          storageProvider,
-          blockchain));
+      // contains a BonsaiPersistedWorldState which we need to spy on.
+      // do we need to also test with a DefaultWorldStateArchive?
+      spy(
+          new BonsaiWorldStateArchive(
+              new TrieLogManager(
+                  blockchain, (BonsaiWorldStateKeyValueStorage) worldStateStorage, 1),
+              storageProvider,
+              blockchain));
 
-  private final BonsaiPersistedWorldState persisted = spy(new BonsaiPersistedWorldState(
-      (BonsaiWorldStateArchive) worldStateArchive,
-      (BonsaiWorldStateKeyValueStorage) worldStateStorage));
+  private final BonsaiPersistedWorldState persisted =
+      spy(
+          new BonsaiPersistedWorldState(
+              (BonsaiWorldStateArchive) worldStateArchive,
+              (BonsaiWorldStateKeyValueStorage) worldStateStorage));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private MainnetBlockValidator mainnetBlockValidator;
-  private Block badBlock;
 
   @Before
   public void setup() {
@@ -102,15 +104,6 @@ public class BlockImportExceptionHandlingTest {
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
-    badBlock =
-        new BlockDataGenerator()
-            .block(
-                BlockDataGenerator.BlockOptions.create()
-                    .setBlockNumber(2)
-                    .hasTransactions(false)
-                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
-
-
   }
 
   @Test
@@ -120,11 +113,13 @@ public class BlockImportExceptionHandlingTest {
     Mockito.doReturn(persisted).when(worldStateArchive).getMutable();
     Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getMutable(any(), any());
 
-    Block goodBlock = new BlockDataGenerator().block(
-            BlockDataGenerator.BlockOptions.create()
-                .setBlockNumber(0)
-                .hasTransactions(false)
-                .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+    Block goodBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockNumber(0)
+                    .hasTransactions(false)
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
@@ -137,7 +132,7 @@ public class BlockImportExceptionHandlingTest {
 
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
-            eq(badBlock),
+            eq(goodBlock),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
@@ -154,27 +149,29 @@ public class BlockImportExceptionHandlingTest {
   @Test
   public void shouldNotBadBlockWhenInternalErrorOnBlockLookup() {
 
-    Block goodBlock = new BlockDataGenerator().block(
-        BlockDataGenerator.BlockOptions.create()
-            .setBlockNumber(0)
-            .hasTransactions(false)
-            .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+    Block goodBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockNumber(0)
+                    .hasTransactions(false)
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenThrow(new StorageException("database problem"));
     when(blockHeaderValidator.validateHeader(
-        any(BlockHeader.class),
-        any(BlockHeader.class),
-        eq(protocolContext),
-        eq(HeaderValidationMode.DETACHED_ONLY)))
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
 
     when(blockBodyValidator.validateBody(
-        eq(protocolContext),
-        eq(badBlock),
-        any(),
-        any(),
-        eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(protocolContext),
+            eq(goodBlock),
+            any(),
+            any(),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
@@ -188,19 +185,27 @@ public class BlockImportExceptionHandlingTest {
   @Test
   public void shouldNotBadBlockWhenInternalErrorDuringValidateHeader() {
 
+    Block goodBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockNumber(0)
+                    .hasTransactions(false)
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     when(blockHeaderValidator.validateHeader(
-        any(BlockHeader.class),
-        any(BlockHeader.class),
-        eq(protocolContext),
-        eq(HeaderValidationMode.DETACHED_ONLY)))
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenThrow(new StorageException("database problem"));
 
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
-        badBlock,
+        goodBlock,
         HeaderValidationMode.DETACHED_ONLY,
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -208,27 +213,33 @@ public class BlockImportExceptionHandlingTest {
 
   @Test
   public void shouldNotBadBlockWhenInternalErrorDuringValidateBody() {
-    Block goodBlock = new BlockDataGenerator().block(
-        BlockDataGenerator.BlockOptions.create()
-            .setBlockNumber(0)
-            .hasTransactions(false)
-            .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+    Mockito.doNothing().when(persisted).persist(any());
+    Mockito.doReturn(persisted).when(worldStateArchive).getMutable();
+    Mockito.doReturn(Optional.of(persisted)).when(worldStateArchive).getMutable(any(), any());
+
+    Block goodBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockNumber(0)
+                    .hasTransactions(false)
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
 
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     when(blockHeaderValidator.validateHeader(
-        any(BlockHeader.class),
-        any(BlockHeader.class),
-        eq(protocolContext),
-        eq(HeaderValidationMode.DETACHED_ONLY)))
+            any(BlockHeader.class),
+            any(BlockHeader.class),
+            eq(protocolContext),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
 
     when(blockBodyValidator.validateBody(
-        eq(protocolContext),
-        eq(badBlock),
-        any(),
-        any(),
-        eq(HeaderValidationMode.DETACHED_ONLY)))
+            eq(protocolContext),
+            eq(goodBlock),
+            any(),
+            any(),
+            eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenThrow(new StorageException("database problem"));
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
     mainnetBlockValidator.validateAndProcessBlock(
@@ -238,5 +249,5 @@ public class BlockImportExceptionHandlingTest {
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
   }
-  //cover validate body failing on bad receipts
+  // cover validate body failing on bad receipts
 }

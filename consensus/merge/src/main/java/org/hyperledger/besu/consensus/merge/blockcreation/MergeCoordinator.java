@@ -347,8 +347,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 HeaderValidationMode.NONE,
                 false);
 
-    validationResult.errorMessage.ifPresent(errMsg -> addBadBlock(block));
-
     return validationResult;
   }
 
