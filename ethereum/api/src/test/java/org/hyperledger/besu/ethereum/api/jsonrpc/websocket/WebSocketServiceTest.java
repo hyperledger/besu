@@ -388,10 +388,10 @@ public class WebSocketServiceTest {
   }
 
   @Test
-  public void failWhenPortIsAlreadyInUse()  {
+  public void failWhenPortIsAlreadyInUse() {
     websocketConfiguration = WebSocketConfiguration.createDefault();
-      websocketConfiguration.setHost("0.0.0.0");
-      websocketConfiguration.setPort(8546);
+    websocketConfiguration.setHost("0.0.0.0");
+    websocketConfiguration.setPort(8546);
     final WebSocketService firstWebSocketService =
         new WebSocketService(
             vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
