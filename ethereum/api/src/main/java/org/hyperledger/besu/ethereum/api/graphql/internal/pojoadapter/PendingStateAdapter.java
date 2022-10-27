@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -49,8 +50,8 @@ public class PendingStateAdapter extends AdapterBase {
   }
 
   public List<TransactionAdapter> getTransactions() {
-    return pendingTransactions.getTransactionInfo().stream()
-        .map(AbstractPendingTransactionsSorter.TransactionInfo::getTransaction)
+    return pendingTransactions.getPendingTransactions().stream()
+        .map(PendingTransaction::getTransaction)
         .map(TransactionWithMetadata::new)
         .map(TransactionAdapter::new)
         .collect(Collectors.toList());
