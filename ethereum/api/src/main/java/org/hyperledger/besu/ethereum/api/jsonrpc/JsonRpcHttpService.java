@@ -219,6 +219,8 @@ public class JsonRpcHttpService {
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
+      NetworkUtility.checkPortsAvailable(config.getPort());
+
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
 

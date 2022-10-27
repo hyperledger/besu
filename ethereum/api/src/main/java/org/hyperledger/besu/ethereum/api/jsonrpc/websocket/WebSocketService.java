@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403Er
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -104,7 +105,7 @@ public class WebSocketService {
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
-
+    NetworkUtility.checkPortsAvailable(configuration.getPort());
     httpServer =
         vertx
             .createHttpServer(
