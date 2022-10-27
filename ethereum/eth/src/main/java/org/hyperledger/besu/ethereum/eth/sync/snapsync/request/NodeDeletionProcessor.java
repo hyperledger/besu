@@ -54,6 +54,14 @@ public class NodeDeletionProcessor {
     this.updater = (BonsaiWorldStateKeyValueStorage.Updater) updater;
   }
 
+  public void startFromStorageNode(
+          final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes data) {
+    deletePotentialOldChildren(new BonsaiStorageInnerNode(accountHash, location, nodeHash, data));
+  }
+
+  public void startFromAccountNode(final Bytes location, final Bytes32 nodeHash, final Bytes data) {
+    deletePotentialOldChildren(new BonsaiAccountInnerNode(location, nodeHash, data));
+  }
   public void deletePotentialOldChildren(final BonsaiStorageInnerNode newNode) {
     retrieveStoredInnerStorageNode(
             newNode.getAccountHash(), newNode.getLocation(), newNode.getNodeHash())
@@ -74,7 +82,6 @@ public class NodeDeletionProcessor {
               }
             });
   }
-
   public void deletePotentialOldChildren(final BonsaiAccountInnerNode newNode) {
     retrieveStoredInnerAccountNode(newNode.getLocation(), newNode.getNodeHash())
         .ifPresent(
@@ -131,14 +138,6 @@ public class NodeDeletionProcessor {
         .map(oldData -> new BonsaiStorageLeafNode(accountHash, location, nodeHash, oldData));
   }
 
-  public void startFromStorageNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes data) {
-    deletePotentialOldChildren(new BonsaiStorageInnerNode(accountHash, location, nodeHash, data));
-  }
-
-  public void startFromAccountNode(final Bytes location, final Bytes32 nodeHash, final Bytes data) {
-    deletePotentialOldChildren(new BonsaiAccountInnerNode(location, nodeHash, data));
-  }
 
   public abstract static class BonsaiNode {
     private final Bytes location;
