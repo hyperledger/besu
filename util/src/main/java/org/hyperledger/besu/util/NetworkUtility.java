@@ -14,19 +14,25 @@
  */
 package org.hyperledger.besu.util;
 
+import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NetworkUtility {
   public static final String INADDR_ANY = "0.0.0.0";
   public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
+
+  private static final Logger LOG = LoggerFactory.getLogger(NetworkUtility.class);
 
   private NetworkUtility() {}
 
@@ -96,6 +102,25 @@ public class NetworkUtility {
       throw new IllegalPortException(
           String.format(
               "%s port requires a value between 1 and 65535. Got %d.", portTypeName, port));
+    }
+  }
+
+  public static boolean isPortAvailableForTcp(final int port) {
+    try (final ServerSocket serverSocket = new ServerSocket()) {
+      serverSocket.setReuseAddress(true);
+      serverSocket.bind(new InetSocketAddress(port));
+      return true;
+    } catch (IOException ex) {
+      LOG.trace(String.format("Failed to open port %d for TCP", port), ex);
+    }
+    return false;
+  }
+
+  public static void checkPortsAvailable(final int tcpPort) {
+    if (!isPortAvailableForTcp(tcpPort)) {
+      throw new InvalidConfigurationException(
+          String.format(
+              "Port %d is already in use. Check for other processes using this port.", tcpPort));
     }
   }
 }
