@@ -17,19 +17,14 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 import static java.util.Collections.emptyList;
 import static java.util.function.Predicate.not;
 
-import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
-import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
-import org.hyperledger.enclave.testutil.EnclaveType;
-import org.hyperledger.enclave.testutil.TesseraTestHarness;
-
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
+import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,24 +149,7 @@ public class PrivacyCluster {
         .ifPresent(node.getConfiguration()::setGenesisConfig);
 
     if (!isBootNode) {
-      if (bootNode.getEnclave().getEnclaveType() == EnclaveType.TESSERA) {
-        final URI otherNode = bootNode.getEnclave().nodeUrl();
-        try {
-          // Substitute IP with hostname for test container network
-          final URI otherNodeHostname =
-              new URI(
-                  otherNode.getScheme()
-                      + "://"
-                      + bootNode.getName()
-                      + ":"
-                      + TesseraTestHarness.p2pPort);
-          node.addOtherEnclaveNode(otherNodeHostname);
-        } catch (Exception ex) {
-          throw new RuntimeException("Invalid node URI");
-        }
-      } else {
-        node.addOtherEnclaveNode(bootNode.getEnclave().nodeUrl());
-      }
+      node.addOtherEnclaveNode(bootNode.getEnclave().nodeUrl());
     }
 
     LOG.info(
