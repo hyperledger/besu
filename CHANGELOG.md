@@ -11,6 +11,8 @@
 ### Bug Fixes
 - Fixed default fromBlock value and improved parameter interpetation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
 - Corrects treating a block as bad on internal error during either validation or processing [#4512](https://github.com/hyperledger/besu/issues/4512)
+- Fix for NoSuchElementException for missing invalid reason when rejecting a local sent transaction [#4569](https://github.com/hyperledger/besu/pull/4569) 
+
 ## 22.10.0-RC2
 
 ### Breaking Changes
