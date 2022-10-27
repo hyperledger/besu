@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,92 +81,91 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldPersist) {
 
-    final BlockHeader header = block.getHeader();
+    try {
+      final BlockHeader header = block.getHeader();
 
-    final MutableBlockchain blockchain = context.getBlockchain();
-    final Optional<BlockHeader> maybeParentHeader =
-        blockchain.getBlockHeader(header.getParentHash());
-    if (maybeParentHeader.isEmpty()) {
-      var retval =
-          new BlockProcessingResult(
-              "Parent block with hash " + header.getParentHash() + " not present");
-      handleAndLogImportFailure(block, retval);
-      return retval;
-    }
-    final BlockHeader parentHeader = maybeParentHeader.get();
-
-    if (!blockHeaderValidator.validateHeader(header, parentHeader, context, headerValidationMode)) {
-      var retval = new BlockProcessingResult("header validation rule violated, see logs");
-      handleAndLogImportFailure(block, retval);
-      return retval;
-    }
-
-    final Optional<MutableWorldState> maybeWorldState =
-        context
-            .getWorldStateArchive()
-            .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
-
-    if (maybeWorldState.isEmpty()) {
-      var retval =
-          new BlockProcessingResult(
-              "Unable to process block because parent world state "
-                  + parentHeader.getStateRoot()
-                  + " is not available");
-      handleAndLogImportFailure(block, retval);
-      return retval;
-    }
-    final MutableWorldState worldState =
-        shouldPersist ? maybeWorldState.get() : maybeWorldState.get().copy();
-
-    var retval = processBlock(context, worldState, block);
-    if (retval.isFailed()) {
-      handleAndLogImportFailure(block, retval);
-      return retval;
-    } else {
-      // didn't fail, should have some output so it should be safe to narrow it.
-
-      var output = retval;
-
-      List<TransactionReceipt> receipts =
-          output.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
-      if (!blockBodyValidator.validateBody(
-          context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
-        handleAndLogImportFailure(block, output);
-        return output;
+      final MutableBlockchain blockchain = context.getBlockchain();
+      Optional<BlockHeader> maybeParentHeader = blockchain.getBlockHeader(header.getParentHash());
+      if (maybeParentHeader.isEmpty()) {
+        var retval =
+            new BlockProcessingResult(
+                "Parent block with hash " + header.getParentHash() + " not present");
+        handleAndLogImportFailure(block, retval);
+        return retval;
       }
-      if (output instanceof GoQuorumBlockProcessingResult) {
-        var privateOutput = (GoQuorumBlockProcessingResult) output;
-        if (!privateOutput.getPrivateReceipts().isEmpty()) {
-          // replace the public receipts for marker transactions with the private receipts if we are
-          // in
-          // goQuorumCompatibilityMode. That can be done now because we have validated the block.
-          final List<TransactionReceipt> privateTransactionReceipts =
-              privateOutput.getPrivateReceipts();
-          final ArrayList<TransactionReceipt> resultingList = new ArrayList<>(receipts.size());
-          for (int i = 0; i < receipts.size(); i++) {
-            if (privateTransactionReceipts.get(i) != null) {
-              resultingList.add(privateTransactionReceipts.get(i));
-            } else {
-              resultingList.add(receipts.get(i));
-            }
-          }
-          receipts = Collections.unmodifiableList(resultingList);
+      final BlockHeader parentHeader = maybeParentHeader.get();
+
+        if (!blockHeaderValidator.validateHeader(header, parentHeader, context,
+            headerValidationMode)) {
+          var retval = new BlockProcessingResult("header validation rule violated, see logs");
+          handleAndLogImportFailure(block, retval);
+          return retval;
         }
-      }
 
-      // it's almost like we have an intermediate BlockProcessingResult that has both public and
-      // private receipts, but we flatten it.
-      return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
+      final Optional<MutableWorldState> maybeWorldState =
+          context
+              .getWorldStateArchive()
+              .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
+
+      if (maybeWorldState.isEmpty()) {
+        var retval =
+            new BlockProcessingResult(
+                "Unable to process block because parent world state "
+                    + parentHeader.getStateRoot()
+                    + " is not available");
+        handleAndLogImportFailure(block, retval);
+        return retval;
+      }
+      final MutableWorldState worldState =
+          shouldPersist ? maybeWorldState.get() : maybeWorldState.get().copy();
+
+      var retval = processBlock(context, worldState, block);
+      if (retval.isFailed()) {
+        handleAndLogImportFailure(block, retval);
+        return retval;
+      } else {
+        // didn't fail, should have some output so it should be safe to narrow it.
+
+        var output = retval;
+
+        List<TransactionReceipt> receipts =
+            output.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
+        if (!blockBodyValidator.validateBody(
+            context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
+          handleAndLogImportFailure(block, output);
+          return output;
+        }
+        if (output instanceof GoQuorumBlockProcessingResult) {
+          var privateOutput = (GoQuorumBlockProcessingResult) output;
+          if (!privateOutput.getPrivateReceipts().isEmpty()) {
+            // replace the public receipts for marker transactions with the private receipts if we are
+            // in
+            // goQuorumCompatibilityMode. That can be done now because we have validated the block.
+            final List<TransactionReceipt> privateTransactionReceipts =
+                privateOutput.getPrivateReceipts();
+            final ArrayList<TransactionReceipt> resultingList = new ArrayList<>(receipts.size());
+            for (int i = 0; i < receipts.size(); i++) {
+              if (privateTransactionReceipts.get(i) != null) {
+                resultingList.add(privateTransactionReceipts.get(i));
+              } else {
+                resultingList.add(receipts.get(i));
+              }
+            }
+            receipts = Collections.unmodifiableList(resultingList);
+          }
+        }
+
+        // it's almost like we have an intermediate BlockProcessingResult that has both public and
+        // private receipts, but we flatten it.
+        return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
+      }
+    }  catch (StorageException dbProblem) {
+      var retval = new BlockProcessingResult(BlockProcessingOutputs.empty(), dbProblem);
+      handleAndLogImportFailure(block, retval);
+      return retval;
     }
   }
 
-  /*
-    private BlockValidationResult handleAndReportValidationFailure(final Block invalidBlock, final String reason) {
-      badBlockManager.addBadBlock(invalidBlock);
-      LOG.info("{}. Block {}", reason, invalidBlock.toLogString());
-      return new BlockValidationResult(reason);
-    }
-  */
   private void handleAndLogImportFailure(
       final Block invalidBlock, final BlockValidationResult result) {
     if (result.causedBy().isPresent()) {

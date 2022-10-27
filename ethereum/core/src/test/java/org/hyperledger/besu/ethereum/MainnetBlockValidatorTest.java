@@ -19,9 +19,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -29,11 +31,14 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -41,6 +46,7 @@ import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class MainnetBlockValidatorTest {
 
@@ -203,6 +209,10 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void shouldNotCacheWhenInternalError() {
+
+    MutableWorldState spyingOn = spy(worldStateArchive.getMutable());
+    Mockito.doThrow(new StorageException("database bedlam")).when(spyingOn).persist(any());
+
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     when(blockHeaderValidator.validateHeader(
@@ -213,10 +223,7 @@ public class MainnetBlockValidatorTest {
         .thenReturn(true);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
-    when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessingResult(
-                BlockProcessingOutputs.empty(), new StorageException("database bedlam")));
+
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(badBlock),
