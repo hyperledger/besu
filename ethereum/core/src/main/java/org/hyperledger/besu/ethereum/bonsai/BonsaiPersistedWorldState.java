@@ -381,7 +381,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         .orElse(null);
   }
 
-  private Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+  protected Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return worldStateStorage.getAccountStateTrieNode(location, nodeHash);
   }
 
@@ -390,7 +390,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     tx.put(location.toArrayUnsafe(), value.toArrayUnsafe());
   }
 
-  private Optional<Bytes> getStorageTrieNode(
+  protected Optional<Bytes> getStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return worldStateStorage.getAccountStorageTrieNode(accountHash, location, nodeHash);
   }
