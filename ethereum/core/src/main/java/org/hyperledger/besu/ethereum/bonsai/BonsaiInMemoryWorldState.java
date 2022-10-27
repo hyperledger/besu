@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
@@ -50,14 +49,14 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     return Hash.wrap(calculatedRootHash);
   }
 
-  protected Hash calculateRootHash(
-          final BonsaiWorldStateUpdater worldStateUpdater) {
+  protected Hash calculateRootHash(final BonsaiWorldStateUpdater worldStateUpdater) {
 
     // second update account storage state.  This must be done before updating the accounts so
     // that we can get the storage state hash
 
-    worldStateUpdater.getStorageToUpdate().entrySet()
-            .parallelStream().forEach(addressMapEntry -> {
+    worldStateUpdater.getStorageToUpdate().entrySet().parallelStream()
+        .forEach(
+            addressMapEntry -> {
               updateAccountStorage(worldStateUpdater, addressMapEntry);
             });
 
@@ -65,17 +64,17 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
     // next walk the account trie
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
-            new StoredMerklePatriciaTrie<>(
-                    this::getAccountStateTrieNode,
-                    worldStateRootHash,
-                    Function.identity(),
-                    Function.identity());
+        new StoredMerklePatriciaTrie<>(
+            this::getAccountStateTrieNode,
+            worldStateRootHash,
+            Function.identity(),
+            Function.identity());
 
     // for manicured tries and composting, collect branches here (not implemented)
 
     // now add the accounts
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
-            worldStateUpdater.getAccountsToUpdate().entrySet()) {
+        worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
@@ -95,27 +94,27 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
   }
 
   private void updateAccountStorage(
-          final BonsaiWorldStateUpdater worldStateUpdater,
-          final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate) {
+      final BonsaiWorldStateUpdater worldStateUpdater,
+      final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = Hash.hash(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
       final BonsaiValue<BonsaiAccount> accountValue =
-              worldStateUpdater.getAccountsToUpdate().get(updatedAddress);
+          worldStateUpdater.getAccountsToUpdate().get(updatedAddress);
       final BonsaiAccount accountOriginal = accountValue.getPrior();
       final Hash storageRoot =
-              (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
+          (accountOriginal == null) ? Hash.EMPTY_TRIE_HASH : accountOriginal.getStorageRoot();
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-              new StoredMerklePatriciaTrie<>(
-                      (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
-                      storageRoot,
-                      Function.identity(),
-                      Function.identity());
+          new StoredMerklePatriciaTrie<>(
+              (location, key) -> getStorageTrieNode(updatedAddressHash, location, key),
+              storageRoot,
+              Function.identity(),
+              Function.identity());
 
       // for manicured tries and composting, collect branches here (not implemented)
 
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
-              storageAccountUpdate.getValue().entrySet()) {
+          storageAccountUpdate.getValue().entrySet()) {
         final Hash keyHash = storageUpdate.getKey();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
