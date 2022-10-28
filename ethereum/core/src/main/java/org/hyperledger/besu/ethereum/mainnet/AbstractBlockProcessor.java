@@ -79,7 +79,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
   }
 
-  // TODO: separate out validation from processing.
   @Override
   public BlockProcessingResult processBlock(
       final Blockchain blockchain,

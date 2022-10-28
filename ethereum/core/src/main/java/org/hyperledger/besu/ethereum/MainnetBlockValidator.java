@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
@@ -154,8 +155,8 @@ public class MainnetBlockValidator implements BlockValidator {
 
         return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
       }
-    } catch (StorageException dbProblem) {
-      var retval = new BlockProcessingResult(BlockProcessingOutputs.empty(), dbProblem);
+    } catch (StorageException | MerkleTrieException ex) {
+      var retval = new BlockProcessingResult(BlockProcessingOutputs.empty(), ex);
       handleAndLogImportFailure(block, retval);
       return retval;
     }

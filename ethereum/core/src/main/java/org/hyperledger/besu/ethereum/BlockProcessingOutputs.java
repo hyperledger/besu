@@ -24,7 +24,6 @@ import java.util.List;
 
 public class BlockProcessingOutputs {
 
-  // TODO: replace with WorldState for immutability once BackwardsSync doesn't need to persist it
   private final MutableWorldState worldState;
   private final List<TransactionReceipt> receipts;
 
@@ -34,7 +33,6 @@ public class BlockProcessingOutputs {
     this.receipts = receipts;
   }
 
-  // TODO: remove this method once all implementors know how to separate validation from processing.
   public static BlockProcessingOutputs empty() {
     return new BlockProcessingOutputs(null, new ArrayList<>());
   }
