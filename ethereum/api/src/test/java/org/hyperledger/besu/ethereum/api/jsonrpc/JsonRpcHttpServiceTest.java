@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -2083,20 +2082,5 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     } finally {
       rpcMethods.remove(method.getName());
     }
-  }
-
-  @Test
-  public void failWhenPortIsAlreadyInUse() throws Exception {
-    final JsonRpcConfiguration config = createJsonRpcConfig();
-    config.setHost("0.0.0.0");
-    config.setPort(8545);
-    final JsonRpcHttpService firstServiceToAllocatePort = createJsonRpcHttpService(config);
-    final JsonRpcHttpService secondServiceToAllocatePort = createJsonRpcHttpService(config);
-    firstServiceToAllocatePort.start().join();
-
-    assertThatIllegalArgumentException()
-        .isThrownBy(() -> secondServiceToAllocatePort.start())
-        .withMessageContaining(
-            "Port 8545 is already in use. Check for other processes using this port.");
   }
 }

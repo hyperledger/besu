@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -385,26 +384,5 @@ public class WebSocketServiceTest {
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
     async.handler((result) -> websocketMethods.remove(method.getName()));
-  }
-
-  @Test
-  public void failWhenPortIsAlreadyInUse() {
-    websocketConfiguration = WebSocketConfiguration.createDefault();
-    websocketConfiguration.setHost("0.0.0.0");
-    websocketConfiguration.setPort(8546);
-    final WebSocketService firstWebSocketService =
-        new WebSocketService(
-            vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
-
-    firstWebSocketService.start().join();
-
-    final WebSocketService secondWebSocketService =
-        new WebSocketService(
-            vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
-
-    assertThatIllegalArgumentException()
-        .isThrownBy(() -> secondWebSocketService.start())
-        .withMessageContaining(
-            "Port 8546 is already in use. Check for other processes using this port.");
   }
 }
