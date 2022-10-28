@@ -21,8 +21,9 @@ import java.util.Optional;
 public enum TransactionAddedStatus {
   ALREADY_KNOWN(TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN),
   REJECTED_UNDERPRICED_REPLACEMENT(TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED),
-  NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER(),
-  LOWER_NONCE_INVALID_TRANSACTION_KNOWN(),
+  NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER(TransactionInvalidReason.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER),
+  LOWER_NONCE_INVALID_TRANSACTION_KNOWN(
+      TransactionInvalidReason.LOWER_NONCE_INVALID_TRANSACTION_EXISTS),
   ADDED();
 
   private final Optional<TransactionInvalidReason> invalidReason;
