@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class ToyAccount implements EvmAccount, MutableAccount {
 
@@ -46,7 +45,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   private Bytes code;
   private Supplier<Hash> codeHash =
       Suppliers.memoize(() -> code == null ? Hash.EMPTY : Hash.hash(code));
-  private final Map<UInt256, UInt256> storage = new HashMap<>();
+  private final Map<Bytes32, Bytes32> storage = new HashMap<>();
 
   public ToyAccount(final Address address, final long nonce, final Wei balance) {
     this(null, address, nonce, balance, Bytes.EMPTY);
@@ -96,7 +95,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key) {
+  public Bytes32 getStorageValue(final Bytes32 key) {
     if (storage.containsKey(key)) {
       return storage.get(key);
     } else {
@@ -105,11 +104,11 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
-  public UInt256 getOriginalStorageValue(final UInt256 key) {
+  public Bytes32 getOriginalStorageValue(final Bytes32 key) {
     if (parent != null) {
       return parent.getStorageValue(key);
     } else {
-      return UInt256.ZERO;
+      return Bytes32.ZERO;
     }
   }
 
@@ -141,7 +140,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
-  public void setStorageValue(final UInt256 key, final UInt256 value) {
+  public void setStorageValue(final Bytes32 key, final Bytes32 value) {
     storage.put(key, value);
   }
 
@@ -151,7 +150,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
-  public Map<UInt256, UInt256> getUpdatedStorage() {
+  public Map<Bytes32, Bytes32> getUpdatedStorage() {
     return storage;
   }
 }

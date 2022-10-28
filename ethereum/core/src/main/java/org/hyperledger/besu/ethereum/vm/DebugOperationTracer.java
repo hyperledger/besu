@@ -37,7 +37,6 @@ import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
@@ -75,7 +74,7 @@ public class DebugOperationTracer implements OperationTracer {
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
-    final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
+    final Optional<Map<Bytes32, Bytes32>> storage = captureStorage(frame);
     final Optional<Map<Address, Wei>> maybeRefunds =
         frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
     lastFrame =
@@ -189,12 +188,12 @@ public class DebugOperationTracer implements OperationTracer {
         });
   }
 
-  private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
+  private Optional<Map<Bytes32, Bytes32>> captureStorage(final MessageFrame frame) {
     if (!options.isStorageEnabled()) {
       return Optional.empty();
     }
     try {
-      final Map<UInt256, UInt256> storageContents =
+      final Map<Bytes32, Bytes32> storageContents =
           new TreeMap<>(
               frame
                   .getWorldUpdater()
