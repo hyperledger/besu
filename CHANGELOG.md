@@ -42,7 +42,6 @@
 - Initiate connection to maintained peers soon after startup. [#4469](https://github.com/hyperledger/besu/pull/4469)
 - Update apache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
 
-
 ### Download Links
 
 

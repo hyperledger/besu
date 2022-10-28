@@ -79,7 +79,7 @@ public class RoundChangeManagerTest {
 
     final BlockValidator blockValidator = mock(BlockValidator.class);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
 
     final RoundChangePayloadValidator.MessageValidatorForHeightFactory messageValidatorFactory =
         mock(RoundChangePayloadValidator.MessageValidatorForHeightFactory.class);
