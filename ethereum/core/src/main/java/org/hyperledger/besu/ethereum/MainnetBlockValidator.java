@@ -85,7 +85,8 @@ public class MainnetBlockValidator implements BlockValidator {
       final BlockHeader header = block.getHeader();
 
       final MutableBlockchain blockchain = context.getBlockchain();
-      Optional<BlockHeader> maybeParentHeader = blockchain.getBlockHeader(header.getParentHash());
+    final Optional<BlockHeader> maybeParentHeader =
+        blockchain.getBlockHeader(header.getParentHash());
       if (maybeParentHeader.isEmpty()) {
         var retval =
             new BlockProcessingResult(
@@ -119,29 +120,24 @@ public class MainnetBlockValidator implements BlockValidator {
       final MutableWorldState worldState =
           shouldPersist ? maybeWorldState.get() : maybeWorldState.get().copy();
 
-      var retval = processBlock(context, worldState, block);
-      if (retval.isFailed()) {
-        handleAndLogImportFailure(block, retval);
-        return retval;
+      var result = processBlock(context, worldState, block);
+      if (result.isFailed()) {
+        handleAndLogImportFailure(block, result);
+        return result;
       } else {
-        // didn't fail, should have some output so it should be safe to narrow it.
-
-        var output = retval;
-
         List<TransactionReceipt> receipts =
-            output.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
+            result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
         if (!blockBodyValidator.validateBody(
             context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
-          handleAndLogImportFailure(block, output);
-          return output;
+          handleAndLogImportFailure(block, result);
+          return result;
         }
-        if (output instanceof GoQuorumBlockProcessingResult) {
-          var privateOutput = (GoQuorumBlockProcessingResult) output;
+        if (result instanceof GoQuorumBlockProcessingResult) {
+          var privateOutput = (GoQuorumBlockProcessingResult) result;
           if (!privateOutput.getPrivateReceipts().isEmpty()) {
             // replace the public receipts for marker transactions with the private receipts if we
-            // are
-            // in
-            // goQuorumCompatibilityMode. That can be done now because we have validated the block.
+            // are in goQuorumCompatibilityMode. That can be done now because we have validated the
+            // block.
             final List<TransactionReceipt> privateTransactionReceipts =
                 privateOutput.getPrivateReceipts();
             final ArrayList<TransactionReceipt> resultingList = new ArrayList<>(receipts.size());

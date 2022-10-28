@@ -59,7 +59,6 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
 
-
   public BonsaiWorldStateArchive(
       final TrieLogManager trieLogManager,
       final StorageProvider provider,
@@ -67,7 +66,8 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.worldStateStorage = new BonsaiWorldStateKeyValueStorage(provider);
-    // TODO: possible concurrency issue, 'this' is not guaranteed to be complete when passing to another constructor
+    // TODO: possible concurrency issue, 'this' is not guaranteed to be complete when passing to
+    // another constructor
     this.persistedState = new BonsaiPersistedWorldState(this, worldStateStorage);
     blockchain.observeBlockAdded(this::blockAddedHandler);
   }
