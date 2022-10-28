@@ -20,32 +20,31 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class AccountStorageEntry {
 
-  private final UInt256 value;
-  private final Optional<UInt256> key;
+  private final Bytes32 value;
+  private final Optional<Bytes32> key;
   private final Bytes32 keyHash;
 
   private AccountStorageEntry(
-      final UInt256 value, final Bytes32 keyHash, final Optional<UInt256> key) {
+      final Bytes32 value, final Bytes32 keyHash, final Optional<Bytes32> key) {
     this.key = key;
     this.keyHash = keyHash;
     this.value = value;
   }
 
   public static AccountStorageEntry create(
-      final UInt256 value, final Bytes32 keyHash, final UInt256 key) {
+      final Bytes32 value, final Bytes32 keyHash, final Bytes32 key) {
     return create(value, keyHash, Optional.ofNullable(key));
   }
 
   public static AccountStorageEntry create(
-      final UInt256 value, final Bytes32 keyHash, final Optional<UInt256> key) {
+      final Bytes32 value, final Bytes32 keyHash, final Optional<Bytes32> key) {
     return new AccountStorageEntry(value, keyHash, key);
   }
 
-  public static AccountStorageEntry forKeyAndValue(final UInt256 key, final UInt256 value) {
+  public static AccountStorageEntry forKeyAndValue(final Bytes32 key, final Bytes32 value) {
     return create(value, Hash.hash(key), key);
   }
 
@@ -56,7 +55,7 @@ public class AccountStorageEntry {
    *
    * @return If available, returns the original key corresponding to this storage entry.
    */
-  public Optional<UInt256> getKey() {
+  public Optional<Bytes32> getKey() {
     return key;
   }
 
@@ -71,7 +70,7 @@ public class AccountStorageEntry {
     return keyHash;
   }
 
-  public UInt256 getValue() {
+  public Bytes32 getValue() {
     return value;
   }
 

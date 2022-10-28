@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -199,7 +199,7 @@ public class BlockchainQueriesTest {
   @Test
   public void getAccountStorageBlockNumber() {
     final List<Address> addresses = Arrays.asList(gen.address(), gen.address(), gen.address());
-    final List<UInt256> storageKeys =
+    final List<Bytes32> storageKeys =
         Arrays.asList(gen.storageKey(), gen.storageKey(), gen.storageKey());
     final BlockchainWithData data = setupBlockchain(3, addresses, storageKeys);
     final BlockchainQueries queries = data.blockchainQueries;
@@ -213,7 +213,7 @@ public class BlockchainQueriesTest {
             storageKeys.forEach(
                 storageKey -> {
                   final Account actualAccount0 = worldState0.get(address);
-                  final Optional<UInt256> result = queries.storageAt(address, storageKey, 2L);
+                  final Optional<Bytes32> result = queries.storageAt(address, storageKey, 2L);
                   assertThat(result).contains(actualAccount0.getStorageValue(storageKey));
                 }));
 
@@ -226,7 +226,7 @@ public class BlockchainQueriesTest {
             storageKeys.forEach(
                 storageKey -> {
                   final Account actualAccount1 = worldState1.get(address);
-                  final Optional<UInt256> result = queries.storageAt(address, storageKey, 1L);
+                  final Optional<Bytes32> result = queries.storageAt(address, storageKey, 1L);
                   assertThat(result).contains(actualAccount1.getStorageValue(storageKey));
                 }));
   }
@@ -540,7 +540,7 @@ public class BlockchainQueriesTest {
   }
 
   private BlockchainWithData setupBlockchain(
-      final int blocksToAdd, final List<Address> accountsToSetup, final List<UInt256> storageKeys) {
+      final int blocksToAdd, final List<Address> accountsToSetup, final List<Bytes32> storageKeys) {
     checkArgument(blocksToAdd >= 1, "Must add at least one block to the queries");
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
