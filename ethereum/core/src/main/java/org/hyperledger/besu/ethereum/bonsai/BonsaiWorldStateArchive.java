@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -263,7 +263,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
+      final List<Bytes32> accountStorageKeys) {
     // FIXME we can do proofs for layered tries and the persisted trie
     return Optional.empty();
   }

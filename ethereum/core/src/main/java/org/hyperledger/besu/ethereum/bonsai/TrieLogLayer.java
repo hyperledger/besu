@@ -141,8 +141,8 @@ public class TrieLogLayer {
         while (!input.isEndOfCurrentList()) {
           input.enterList();
           final Hash slotHash = Hash.wrap(input.readBytes32());
-          final Bytes32 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          final Bytes32 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
+          final Bytes32 oldValue = nullOrValue(input, RLPInput::readBytes32Scalar);
+          final Bytes32 newValue = nullOrValue(input, RLPInput::readBytes32Scalar);
           storageChanges.put(slotHash, new BonsaiValue<>(oldValue, newValue));
           input.leaveList();
         }

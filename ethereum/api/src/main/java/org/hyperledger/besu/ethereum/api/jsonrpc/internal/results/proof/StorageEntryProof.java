@@ -21,17 +21,17 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class StorageEntryProof {
 
-  private final UInt256 key;
+  private final Bytes32 key;
 
-  private final UInt256 value;
+  private final Bytes32 value;
 
   private final List<Bytes> storageProof;
 
-  public StorageEntryProof(final UInt256 key, final UInt256 value, final List<Bytes> storageProof) {
+  public StorageEntryProof(final Bytes32 key, final Bytes32 value, final List<Bytes> storageProof) {
     this.key = key;
     this.value = value;
     this.storageProof = storageProof;
