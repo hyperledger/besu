@@ -5381,7 +5381,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Port(s) '[8545]' already in use. Check for other processes using this port.");
+        .contains("Port(s) '[8545]' already in use. Check for other processes using the port(s).");
 
     serverSocket.close();
   }
