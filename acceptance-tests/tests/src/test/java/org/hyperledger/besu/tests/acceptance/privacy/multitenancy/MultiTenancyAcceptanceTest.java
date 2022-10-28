@@ -212,7 +212,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   public void privDistributeRawTransactionSuccessShouldReturnEnclaveKey()
       throws JsonProcessingException {
     final String enclaveResponseKeyBytes =
-        Bytes.wrap(Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY1)).toString();
+        Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY1).toString();
 
     retrievePrivacyGroupEnclaveStub();
     sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
