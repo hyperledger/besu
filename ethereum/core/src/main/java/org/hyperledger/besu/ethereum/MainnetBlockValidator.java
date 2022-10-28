@@ -85,8 +85,8 @@ public class MainnetBlockValidator implements BlockValidator {
       final BlockHeader header = block.getHeader();
 
       final MutableBlockchain blockchain = context.getBlockchain();
-    final Optional<BlockHeader> maybeParentHeader =
-        blockchain.getBlockHeader(header.getParentHash());
+      final Optional<BlockHeader> maybeParentHeader =
+          blockchain.getBlockHeader(header.getParentHash());
       if (maybeParentHeader.isEmpty()) {
         var retval =
             new BlockProcessingResult(
