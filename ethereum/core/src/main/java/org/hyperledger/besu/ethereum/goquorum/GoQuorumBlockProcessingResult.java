@@ -28,34 +28,6 @@ public class GoQuorumBlockProcessingResult extends BlockProcessingResult {
 
   public final Optional<BlockProcessingOutputs> privateYield;
 
-  public GoQuorumBlockProcessingResult(final BlockProcessingOutputs yield) {
-    super(yield);
-    this.privateYield = null;
-  }
-
-  public GoQuorumBlockProcessingResult(
-      final BlockProcessingOutputs yield, final boolean isPartial) {
-    super(yield, isPartial);
-    this.privateYield = null;
-  }
-
-  public GoQuorumBlockProcessingResult(
-      final BlockProcessingOutputs yield, final String errorMessage) {
-    super(yield, errorMessage);
-    this.privateYield = null;
-  }
-
-  public GoQuorumBlockProcessingResult(final BlockProcessingOutputs yield, final Throwable cause) {
-    super(yield, cause);
-    this.privateYield = null;
-  }
-
-  public GoQuorumBlockProcessingResult(
-      final BlockProcessingOutputs yield, final String errorMessage, final boolean isPartial) {
-    super(yield, errorMessage, isPartial);
-    this.privateYield = null;
-  }
-
   public GoQuorumBlockProcessingResult(
       final BlockProcessingOutputs mainnetYield, final BlockProcessingOutputs privateYield) {
     super(mainnetYield);
