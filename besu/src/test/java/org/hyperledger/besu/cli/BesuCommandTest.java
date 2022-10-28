@@ -100,6 +100,7 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -5370,5 +5371,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--Xpos-block-creation-max-time", "17000");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--Xpos-block-creation-max-time must be positive and ≤ 12000");
+  }
+
+  @Test
+  public void portInUseReportsError() throws IOException {
+    final ServerSocket serverSocket = new ServerSocket(8545);
+
+    parseCommand("--rpc-http-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Port(s) '[8545]' already in use. Check for other processes using this port.");
+
+    serverSocket.close();
   }
 }

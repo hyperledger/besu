@@ -15,6 +15,7 @@
 package org.hyperledger.besu.util;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -116,11 +117,19 @@ public class NetworkUtility {
     return false;
   }
 
-  public static void checkIfPortIsAvailable(final int tcpPort) {
-    if (!isPortAvailableForTcp(tcpPort)) {
-      throw new InvalidConfigurationException(
-          String.format(
-              "Port %d is already in use. Check for other processes using this port.", tcpPort));
+  public static boolean isPortAvailableForUdp(final int port) {
+    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
+      datagramSocket.setReuseAddress(true);
+      datagramSocket.bind(new InetSocketAddress(port));
+      return true;
+    } catch (IOException ex) {
+      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
     }
+    return false;
+  }
+
+  public static boolean isPortAvailable(final int port) {
+    if (isPortAvailableForTcp(port) && isPortAvailableForUdp(port)) return true;
+    return false;
   }
 }
