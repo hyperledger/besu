@@ -116,7 +116,7 @@ public class NetworkUtility {
     return false;
   }
 
-  public static void checkPortsAvailable(final int tcpPort) {
+  public static void checkIfPortIsAvailable(final int tcpPort) {
     if (!isPortAvailableForTcp(tcpPort)) {
       throw new InvalidConfigurationException(
           String.format(
