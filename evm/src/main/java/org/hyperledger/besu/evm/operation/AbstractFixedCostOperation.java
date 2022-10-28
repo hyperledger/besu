@@ -23,9 +23,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 abstract class AbstractFixedCostOperation extends AbstractOperation {
 
   protected final OperationResult successResponse;
@@ -44,16 +41,11 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
       final long fixedCost) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
     gasCost = fixedCost;
-    successResponse = new OperationResult(OptionalLong.of(gasCost), Optional.empty());
-    outOfGasResponse =
-        new OperationResult(
-            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    successResponse = new OperationResult(gasCost, null);
+    outOfGasResponse = new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     underflowResponse =
-        new OperationResult(
-            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
-    overflowResponse =
-        new OperationResult(
-            OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.TOO_MANY_STACK_ITEMS));
+        new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    overflowResponse = new OperationResult(gasCost, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
   }
 
   @Override

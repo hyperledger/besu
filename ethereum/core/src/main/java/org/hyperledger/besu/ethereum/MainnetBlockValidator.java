@@ -156,8 +156,6 @@ public class MainnetBlockValidator implements BlockValidator {
           }
         }
 
-        // it's almost like we have an intermediate BlockProcessingResult that has both public and
-        // private receipts, but we flatten it.
         return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
       }
     } catch (StorageException dbProblem) {

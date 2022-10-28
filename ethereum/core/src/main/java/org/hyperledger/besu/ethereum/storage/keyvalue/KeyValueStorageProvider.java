@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -86,6 +87,12 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public KeyValueStorage getStorageBySegmentIdentifier(final SegmentIdentifier segment) {
     return storageInstances.computeIfAbsent(segment, storageCreator);
+  }
+
+  @Override
+  public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
+      final SegmentIdentifier segment) {
+    return (SnappableKeyValueStorage) storageInstances.computeIfAbsent(segment, storageCreator);
   }
 
   @Override

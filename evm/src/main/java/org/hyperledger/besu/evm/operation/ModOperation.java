@@ -26,6 +26,8 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class ModOperation extends AbstractFixedCostOperation {
 
+  private static final OperationResult modSuccess = new OperationResult(5, null);
+
   public ModOperation(final GasCalculator gasCalculator) {
     super(0x06, "MOD", 2, 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
@@ -33,6 +35,10 @@ public class ModOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
     if (value1.isZero()) {
@@ -53,6 +59,6 @@ public class ModOperation extends AbstractFixedCostOperation {
       frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
 
-    return successResponse;
+    return modSuccess;
   }
 }

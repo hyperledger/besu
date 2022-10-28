@@ -46,6 +46,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
   }
 
+  public MergeMiningCoordinator getMergeCoordinator() {
+    return mergeCoordinator;
+  }
+
   @Override
   public void start() {
     if (isMiningBeforeMerge()) {
@@ -212,5 +216,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
     return mergeCoordinator.getLatestValidHashOfBadBlock(blockHash);
+  }
+
+  @Override
+  public void finalizeProposalById(final PayloadIdentifier payloadId) {
+    mergeCoordinator.finalizeProposalById(payloadId);
   }
 }

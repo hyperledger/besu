@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PkiQbftBlockCreator implements BlockCreator {
+
   private static final Logger LOG = LoggerFactory.getLogger(PkiQbftBlockCreator.class);
 
   private final BlockCreator blockCreator;
@@ -74,20 +75,21 @@ public class PkiQbftBlockCreator implements BlockCreator {
   }
 
   @Override
-  public Block createBlock(final long timestamp) {
-    final Block block = blockCreator.createBlock(timestamp);
-    return replaceCmsInBlock(block);
+  public BlockCreationResult createBlock(final long timestamp) {
+    final BlockCreationResult blockCreationResult = blockCreator.createBlock(timestamp);
+    return replaceCmsInBlock(blockCreationResult);
   }
 
   @Override
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp) {
-    final Block block = blockCreator.createBlock(transactions, ommers, timestamp);
-    return replaceCmsInBlock(block);
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(transactions, ommers, timestamp);
+    return replaceCmsInBlock(blockCreationResult);
   }
 
   @Override
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
@@ -97,7 +99,8 @@ public class PkiQbftBlockCreator implements BlockCreator {
         timestamp);
   }
 
-  private Block replaceCmsInBlock(final Block block) {
+  private BlockCreationResult replaceCmsInBlock(final BlockCreationResult blockCreationResult) {
+    final Block block = blockCreationResult.getBlock();
     final BlockHeader blockHeader = block.getHeader();
     final Hash hashWithoutCms =
         PkiQbftBlockHeaderFunctions.forCmsSignature(pkiQbftExtraDataCodec).hash(block.getHeader());
@@ -116,6 +119,8 @@ public class PkiQbftBlockCreator implements BlockCreator {
 
     LOG.debug("Created CMS with signed hash {} for block {}", hashWithoutCms, newHeader.getHash());
 
-    return new Block(newHeader, block.getBody());
+    return new BlockCreationResult(
+        new Block(newHeader, block.getBody()),
+        blockCreationResult.getTransactionSelectionResults());
   }
 }

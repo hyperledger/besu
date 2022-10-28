@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.QosTimer;
 
@@ -56,7 +56,7 @@ public class EngineQosTimerTest {
     final var spyTimer =
         spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> spyEngineQosTimer.logTimeoutWarning()));
     spyTimer.resetTimer();
-    when(spyEngineQosTimer.getQosTimer()).thenReturn(spyTimer);
+    doReturn(spyTimer).when(spyEngineQosTimer).getQosTimer();
 
     // call executionEngineCalled() 50 milliseconds hence to reset our QoS timer
     vertx.setTimer(50L, z -> spyEngineQosTimer.executionEngineCalled());
@@ -83,7 +83,7 @@ public class EngineQosTimerTest {
     final var spyTimer =
         spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> spyEngineQosTimer.logTimeoutWarning()));
     spyTimer.resetTimer();
-    when(spyEngineQosTimer.getQosTimer()).thenReturn(spyTimer);
+    doReturn(spyTimer).when(spyEngineQosTimer).getQosTimer();
 
     vertx.setTimer(
         100L,
