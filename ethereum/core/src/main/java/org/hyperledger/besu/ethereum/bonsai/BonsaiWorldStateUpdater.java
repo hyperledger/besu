@@ -45,7 +45,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
-  private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new ConcurrentHashMap<>();
+  private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate =
+      new ConcurrentHashMap<>();
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
