@@ -209,7 +209,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     } catch (final StorageException ex) {
       throw ex;
     } catch (final Exception ex) {
-      // TODO(tmm): How are we going to know this has exploded, and thus restart it?
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }

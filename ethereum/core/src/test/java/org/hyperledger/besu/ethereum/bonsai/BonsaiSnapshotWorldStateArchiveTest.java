@@ -90,6 +90,4 @@ public class BonsaiSnapshotWorldStateArchiveTest {
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash(), false)).isEmpty();
   }
-
-  // TODO: writeme
 }

@@ -81,8 +81,6 @@ public class BlockImportExceptionHandlingTest {
       // do we need to also test with a DefaultWorldStateArchive?
       spy(
           new BonsaiWorldStateArchive(
-              new TrieLogManager(
-                  blockchain, (BonsaiWorldStateKeyValueStorage) worldStateStorage, 1),
               storageProvider,
               blockchain));
 
