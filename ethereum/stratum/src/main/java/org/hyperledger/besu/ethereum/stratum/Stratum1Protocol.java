@@ -146,7 +146,7 @@ public class Stratum1Protocol implements StratumProtocol {
     Object[] params =
         new Object[] {
           jobIdSupplier.get(),
-          Bytes.wrap(currentInput.getPrePowHash()).toHexString(),
+          currentInput.getPrePowHash().toHexString(),
           Bytes.wrap(dagSeed).toHexString(),
           currentInput.getTarget().toHexString(),
           true

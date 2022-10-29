@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.gascalculator;
 import org.hyperledger.besu.evm.account.Account;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
@@ -56,13 +56,13 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final Account account, final Bytes32 key, final Bytes32 newValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
+    final Bytes32 currentValue = account.getStorageValue(key);
     if (currentValue.equals(newValue)) {
       return SLOAD_GAS;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
+      final Bytes32 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         return originalValue.isZero() ? SSTORE_SET_GAS : SSTORE_RESET_GAS;
       } else {
@@ -74,13 +74,13 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final Account account, final Bytes32 key, final Bytes32 newValue) {
 
-    final UInt256 currentValue = account.getStorageValue(key);
+    final Bytes32 currentValue = account.getStorageValue(key);
     if (currentValue.equals(newValue)) {
       return 0L;
     } else {
-      final UInt256 originalValue = account.getOriginalStorageValue(key);
+      final Bytes32 originalValue = account.getOriginalStorageValue(key);
       if (originalValue.equals(currentValue)) {
         if (originalValue.isZero()) {
           return 0L;

@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A specific state of the world.
@@ -101,12 +100,12 @@ public interface WorldState extends WorldView {
     }
 
     @Override
-    public UInt256 getStorageValue(final UInt256 key) {
+    public Bytes32 getStorageValue(final Bytes32 key) {
       return accountState.getStorageValue(key);
     }
 
     @Override
-    public UInt256 getOriginalStorageValue(final UInt256 key) {
+    public Bytes32 getOriginalStorageValue(final Bytes32 key) {
       return accountState.getOriginalStorageValue(key);
     }
 

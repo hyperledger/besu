@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.evm.account.Account;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Gas Calculator for Petersberg Hard Fork. Rollback EIP-1283.
@@ -33,24 +33,21 @@ public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
   /** Same as {#link {@link FrontierGasCalculator#STORAGE_RESET_REFUND_AMOUNT} */
   private static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
-  /**
-   * Same as {#link {@link FrontierGasCalculator#calculateStorageCost(Account, UInt256, UInt256)}
-   */
+  /** Same as {#link {@link GasCalculator#calculateStorageCost(Account, Bytes32, Bytes32)} */
   @Override
   public long calculateStorageCost(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final Account account, final Bytes32 key, final Bytes32 newValue) {
     return !newValue.isZero() && account.getStorageValue(key).isZero()
         ? STORAGE_SET_GAS_COST
         : STORAGE_RESET_GAS_COST;
   }
 
   /**
-   * Same as {#link {@link FrontierGasCalculator#calculateStorageRefundAmount(Account, UInt256,
-   * UInt256)}
+   * Same as {#link {@link GasCalculator#calculateStorageRefundAmount(Account, Bytes32, Bytes32)}
    */
   @Override
   public long calculateStorageRefundAmount(
-      final Account account, final UInt256 key, final UInt256 newValue) {
+      final Account account, final Bytes32 key, final Bytes32 newValue) {
     return newValue.isZero() && !account.getStorageValue(key).isZero()
         ? STORAGE_RESET_REFUND_AMOUNT
         : 0L;
