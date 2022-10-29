@@ -28,8 +28,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
@@ -137,9 +139,10 @@ public class BackwardSyncContextTest {
             invocation -> {
               final Object[] arguments = invocation.getArguments();
               Block block = (Block) arguments[1];
-              return new Result(
-                  new BlockValidator.BlockProcessingOutputs(
-                      new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
+              return new BlockProcessingResult(
+                  Optional.of(
+                      new BlockProcessingOutputs(
+                          new ReferenceTestWorldState(), blockDataGenerator.receipts(block))));
             });
 
     backwardChain = inMemoryBackwardChain();
@@ -295,7 +298,7 @@ public class BackwardSyncContextTest {
     backwardChain.prependAncestorsHeader(block.getHeader());
 
     doReturn(blockValidator).when(context).getBlockValidatorForBlock(any());
-    Result result = new Result("custom error");
+    BlockProcessingResult result = new BlockProcessingResult("custom error");
     doReturn(result).when(blockValidator).validateAndProcessBlock(any(), any(), any(), any());
 
     assertThatThrownBy(() -> context.saveBlock(block))
