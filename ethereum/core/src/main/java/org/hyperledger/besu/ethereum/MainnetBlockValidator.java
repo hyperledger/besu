@@ -131,7 +131,7 @@ public class MainnetBlockValidator implements BlockValidator {
         if (!blockBodyValidator.validateBody(
             context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
           handleAndLogImportFailure(block, result);
-          return result;
+          return new BlockProcessingResult("failed to validate output of imported block");
         }
         if (result instanceof GoQuorumBlockProcessingResult) {
           var privateOutput = (GoQuorumBlockProcessingResult) result;
