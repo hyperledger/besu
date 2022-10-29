@@ -45,14 +45,15 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
-  private Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new ConcurrentHashMap<>();
-  private Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
-  private Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
+  private final Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new ConcurrentHashMap<>();
+  private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private Map<Address, Map<Hash, BonsaiValue<Bytes32>>> storageToUpdate = new ConcurrentHashMap<>();
+  private final Map<Address, Map<Hash, BonsaiValue<Bytes32>>> storageToUpdate =
+      new ConcurrentHashMap<>();
 
   BonsaiWorldStateUpdater(final BonsaiWorldView world) {
     super(world);
@@ -60,13 +61,17 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   public BonsaiWorldStateUpdater copy() {
     final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView());
-    copy.accountsToUpdate = new ConcurrentHashMap<>(accountsToUpdate);
-    copy.codeToUpdate = new ConcurrentHashMap<>(codeToUpdate);
-    copy.storageToClear = Collections.synchronizedSet(storageToClear);
-    copy.storageToUpdate = new ConcurrentHashMap<>(storageToUpdate);
-    copy.updatedAccounts = new ConcurrentHashMap<>(updatedAccounts);
-    copy.deletedAccounts = Collections.synchronizedSet(deletedAccounts);
+    copy.cloneFromUpdater(this);
     return copy;
+  }
+
+  void cloneFromUpdater(final BonsaiWorldStateUpdater source) {
+    accountsToUpdate.putAll(source.getAccountsToUpdate());
+    codeToUpdate.putAll(source.codeToUpdate);
+    storageToClear.addAll(source.storageToClear);
+    storageToUpdate.putAll(source.storageToUpdate);
+    updatedAccounts.putAll(source.updatedAccounts);
+    deletedAccounts.addAll(source.deletedAccounts);
   }
 
   @Override
@@ -643,5 +648,14 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     codeToUpdate.clear();
     accountsToUpdate.clear();
     super.reset();
+  }
+
+  public boolean isDirty() {
+    return !(accountsToUpdate.isEmpty()
+        && updatedAccounts.isEmpty()
+        && deletedAccounts.isEmpty()
+        && storageToUpdate.isEmpty()
+        && storageToClear.isEmpty()
+        && codeToUpdate.isEmpty());
   }
 }

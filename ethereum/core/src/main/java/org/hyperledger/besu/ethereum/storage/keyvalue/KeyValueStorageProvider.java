@@ -35,11 +35,12 @@ import java.util.function.Function;
 
 public class KeyValueStorageProvider implements StorageProvider {
 
-  private final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
+  protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final KeyValueStorage privateWorldStatePreimageStorage;
   private final boolean isWorldStateIterable;
-  private final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
+  private final boolean isWorldStateSnappable;
+  protected final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
@@ -49,17 +50,20 @@ public class KeyValueStorageProvider implements StorageProvider {
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
+    this.isWorldStateSnappable = false;
   }
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final KeyValueStorage privateWorldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
+      final boolean segmentIsolationSupported,
+      final boolean storageSnapshotIsolationSupported) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
+    this.isWorldStateSnappable = storageSnapshotIsolationSupported;
   }
 
   @Override
@@ -92,7 +96,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
       final SegmentIdentifier segment) {
-    return (SnappableKeyValueStorage) storageInstances.computeIfAbsent(segment, storageCreator);
+    return (SnappableKeyValueStorage) getStorageBySegmentIdentifier(segment);
   }
 
   @Override
@@ -115,6 +119,11 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public boolean isWorldStateIterable() {
     return isWorldStateIterable;
+  }
+
+  @Override
+  public boolean isWorldStateSnappable() {
+    return isWorldStateSnappable;
   }
 
   @Override

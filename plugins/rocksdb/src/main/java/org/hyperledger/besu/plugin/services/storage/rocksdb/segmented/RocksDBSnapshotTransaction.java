@@ -29,7 +29,6 @@ import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
-import org.rocksdb.Snapshot;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
 import org.slf4j.Logger;
@@ -43,7 +42,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   private final OptimisticTransactionDB db;
   private final ColumnFamilyHandle columnFamilyHandle;
   private final Transaction snapTx;
-  private final Snapshot snapshot;
+  private final RocksDBSnapshot snapshot;
   private final WriteOptions writeOptions;
   private final ReadOptions readOptions;
 
@@ -54,24 +53,26 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     this.metrics = metrics;
     this.db = db;
     this.columnFamilyHandle = columnFamilyHandle;
-    this.snapshot = db.getSnapshot();
+    this.snapshot = new RocksDBSnapshot(db);
     this.writeOptions = new WriteOptions();
     this.snapTx = db.beginTransaction(writeOptions);
-    this.readOptions = new ReadOptions().setSnapshot(snapshot);
+    this.readOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
   }
 
   private RocksDBSnapshotTransaction(
       final OptimisticTransactionDB db,
       final ColumnFamilyHandle columnFamilyHandle,
       final RocksDBMetrics metrics,
-      final Snapshot snapshot) {
+      final RocksDBSnapshot snapshot,
+      final Transaction snapTx,
+      final ReadOptions readOptions) {
     this.metrics = metrics;
     this.db = db;
     this.columnFamilyHandle = columnFamilyHandle;
     this.snapshot = snapshot;
     this.writeOptions = new WriteOptions();
-    this.snapTx = db.beginTransaction(writeOptions);
-    this.readOptions = new ReadOptions().setSnapshot(snapshot);
+    this.readOptions = readOptions;
+    this.snapTx = snapTx;
   }
 
   public Optional<byte[]> get(final byte[] key) {
@@ -137,19 +138,24 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   }
 
   public RocksDBSnapshotTransaction copy() {
-    // TODO: if we use snapshot as the basis of a cloned state, we need to ensure close() of this
-    // transaction does not release and close the snapshot in use by the cloned state.
-    return new RocksDBSnapshotTransaction(db, columnFamilyHandle, metrics, snapshot);
+    try {
+      var copyReadOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
+      var copySnapTx = db.beginTransaction(writeOptions);
+      copySnapTx.rebuildFromWriteBatch(snapTx.getWriteBatch().getWriteBatch());
+      return new RocksDBSnapshotTransaction(
+          db, columnFamilyHandle, metrics, snapshot, copySnapTx, copyReadOptions);
+    } catch (Exception ex) {
+      LOG.error("Failed to copy snapshot transaction", ex);
+      snapshot.unMarkSnapshot();
+      throw new StorageException(ex);
+    }
   }
 
   @Override
   public void close() {
-    // TODO: this is unsafe since another transaction might be using this snapshot
-    db.releaseSnapshot(snapshot);
-
-    snapshot.close();
     snapTx.close();
     writeOptions.close();
     readOptions.close();
+    snapshot.unMarkSnapshot();
   }
 }

@@ -35,9 +35,6 @@ public interface WorldStateArchive {
 
   boolean isWorldStateAvailable(Hash rootHash, Hash blockHash);
 
-  @Deprecated
-  Optional<MutableWorldState> getMutable(long blockNumber, boolean isPersistingState);
-
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash, boolean isPersistingState);
 
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);

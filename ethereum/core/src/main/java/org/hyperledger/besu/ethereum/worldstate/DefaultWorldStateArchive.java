@@ -56,13 +56,6 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public Optional<MutableWorldState> getMutable(
-      final long blockNumber, final boolean isPersistingState) {
-    throw new UnsupportedOperationException(
-        "Get mutable by block number is not available with the forest mode");
-  }
-
-  @Override
-  public Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash, final boolean isPersistingState) {
     return getMutable(rootHash, blockHash);
   }
