@@ -144,21 +144,31 @@ public class TransactionSimulator {
       return Optional.empty();
     }
 
-    WorldUpdater updater;
-    try {
-      updater = getWorldUpdater(header);
-    } catch (final IllegalArgumentException e) {
+    try (var ws = getWorldState(header)) {
+
+      WorldUpdater updater = getEffectiveWorldStateUpdater(header, ws);
+
+      // in order to trace the state diff we need to make sure that
+      // the world updater always has a parent
+      if (operationTracer instanceof DebugOperationTracer) {
+        updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
+      }
+
+      return processWithWorldUpdater(
+          callParams, transactionValidationParams, operationTracer, header, updater);
+
+    } catch (final Exception e) {
       return Optional.empty();
     }
+  }
 
-    // in order to trace the state diff we need to make sure that
-    // the world updater always has a parent
-    if (operationTracer instanceof DebugOperationTracer) {
-      updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
-    }
-
-    return processWithWorldUpdater(
-        callParams, transactionValidationParams, operationTracer, header, updater);
+  public MutableWorldState getWorldState(final BlockHeader header) {
+    return worldStateArchive
+        .getMutable(header.getStateRoot(), header.getHash(), false)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Public world state not available for block " + header.getNumber()));
   }
 
   @Nonnull
@@ -303,20 +313,8 @@ public class TransactionSimulator {
     return Optional.ofNullable(transaction);
   }
 
-  public WorldUpdater getWorldUpdater(final BlockHeader header) {
-    final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
-
-    if (publicWorldState == null) {
-      throw new IllegalArgumentException(
-          "Public world state not available for block " + header.getNumber());
-    }
-
-    return getEffectiveWorldStateUpdater(header, publicWorldState);
-  }
-
   // return combined private/public world state updater if GoQuorum mode, otherwise the public state
-  private WorldUpdater getEffectiveWorldStateUpdater(
+  public WorldUpdater getEffectiveWorldStateUpdater(
       final BlockHeader header, final MutableWorldState publicWorldState) {
 
     if (maybePrivacyParameters.isPresent()

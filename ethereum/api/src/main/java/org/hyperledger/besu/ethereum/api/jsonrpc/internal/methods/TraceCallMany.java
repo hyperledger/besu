@@ -109,8 +109,10 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final BlockHeader blockHeader = maybeBlockHeader.get();
 
     final List<JsonNode> traceCallResults = new ArrayList<>();
-    final WorldUpdater updater = transactionSimulator.getWorldUpdater(blockHeader);
-    try {
+    try (var ws = transactionSimulator.getWorldState(blockHeader)) {
+      final WorldUpdater updater =
+          transactionSimulator.getEffectiveWorldStateUpdater(blockHeader, ws);
+
       Arrays.stream(transactionsAndTraceTypeParameters)
           .forEachOrdered(
               param -> {
