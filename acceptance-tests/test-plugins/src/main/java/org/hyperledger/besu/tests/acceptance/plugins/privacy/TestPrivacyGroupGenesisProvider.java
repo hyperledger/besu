@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class TestPrivacyGroupGenesisProvider implements PrivacyGroupGenesisProvider {
   private boolean genesisEnabled = false;
@@ -50,7 +50,7 @@ public class TestPrivacyGroupGenesisProvider implements PrivacyGroupGenesisProvi
               }
 
               @Override
-              public Map<UInt256, UInt256> getStorage() {
+              public Map<Bytes32, Bytes32> getStorage() {
                 return Collections.emptyMap();
               }
 

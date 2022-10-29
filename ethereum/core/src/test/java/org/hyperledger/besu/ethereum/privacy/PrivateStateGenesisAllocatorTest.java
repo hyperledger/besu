@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 
 public class PrivateStateGenesisAllocatorTest {
@@ -61,7 +61,7 @@ public class PrivateStateGenesisAllocatorTest {
                 }
 
                 @Override
-                public Map<UInt256, UInt256> getStorage() {
+                public Map<Bytes32, Bytes32> getStorage() {
                   return Collections.emptyMap();
                 }
 
@@ -146,8 +146,8 @@ public class PrivateStateGenesisAllocatorTest {
   private void assertManagementContractApplied() {
     Account managementProxy = worldState.get(FLEXIBLE_PRIVACY_PROXY);
     assertThat(managementProxy.getCode()).isEqualTo(PROXY_RUNTIME_BYTECODE);
-    assertThat(managementProxy.getStorageValue(UInt256.ZERO))
-        .isEqualTo(UInt256.fromBytes(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
+    assertThat(managementProxy.getStorageValue(Bytes32.ZERO))
+        .isEqualTo(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
 
     Account managementContract = worldState.get(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);
     assertThat(managementContract.getCode()).isEqualTo(DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);

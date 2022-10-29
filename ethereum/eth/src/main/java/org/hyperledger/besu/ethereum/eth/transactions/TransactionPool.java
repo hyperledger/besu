@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -117,8 +119,17 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
       if (!transactionAddedStatus.equals(ADDED)) {
-        duplicateTransactionCounter.labels(LOCAL).inc();
-        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
+        if (transactionAddedStatus.equals(ALREADY_KNOWN)) {
+          duplicateTransactionCounter.labels(LOCAL).inc();
+        }
+        return ValidationResult.invalid(
+            transactionAddedStatus
+                .getInvalidReason()
+                .orElseGet(
+                    () -> {
+                      LOG.warn("Missing invalid reason for status {}", transactionAddedStatus);
+                      return INTERNAL_ERROR;
+                    }));
       }
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBroadcaster.onTransactionsAdded(txs);

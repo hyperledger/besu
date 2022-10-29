@@ -25,7 +25,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -217,7 +217,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     // execute block and return result response
     final long startTimeMs = System.currentTimeMillis();
-    final BlockValidator.Result executionResult = mergeCoordinator.rememberBlock(block);
+    final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
 
     if (executionResult.errorMessage.isEmpty()) {
       logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);

@@ -45,7 +45,6 @@ import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A container object for all the states associated with a message.
@@ -320,7 +319,7 @@ public class MessageFrame {
                             .get(address)
                             .forEach(
                                 storageKeyBytes ->
-                                    account.getStorageValue(UInt256.fromBytes(storageKeyBytes)))));
+                                    account.getStorageValue(Bytes32.leftPad(storageKeyBytes)))));
   }
 
   /**
@@ -719,7 +718,7 @@ public class MessageFrame {
     maybeUpdatedMemory = Optional.of(new MemoryEntry(offset, value));
   }
 
-  public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
+  public void storageWasUpdated(final Bytes32 storageAddress, final Bytes value) {
     maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
   /**
