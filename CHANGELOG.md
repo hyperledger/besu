@@ -6,6 +6,7 @@
 
 ### Additions and Improvements
 - Updated jackson-databind library to version 2.13.4.2 addressing [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003)
+- Improve calculateRootHash method performance during Block processing [#4568](https://github.com/hyperledger/besu/pull/4568)
 
 ### Bug Fixes
 - Fixed default fromBlock value and improved parameter interpetation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)

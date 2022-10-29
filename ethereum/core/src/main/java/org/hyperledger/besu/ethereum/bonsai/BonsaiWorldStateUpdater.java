@@ -28,6 +28,7 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,9 +45,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView {
 
-  private Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new HashMap<>();
-  private Map<Address, BonsaiValue<Bytes>> codeToUpdate = new HashMap<>();
-  private Set<Address> storageToClear = new HashSet<>();
+  private Map<Address, BonsaiValue<BonsaiAccount>> accountsToUpdate = new ConcurrentHashMap<>();
+  private Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  private Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
@@ -59,12 +60,12 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   public BonsaiWorldStateUpdater copy() {
     final BonsaiWorldStateUpdater copy = new BonsaiWorldStateUpdater(wrappedWorldView());
-    copy.accountsToUpdate = new HashMap<>(accountsToUpdate);
-    copy.codeToUpdate = new HashMap<>(codeToUpdate);
-    copy.storageToClear = new HashSet<>(storageToClear);
+    copy.accountsToUpdate = new ConcurrentHashMap<>(accountsToUpdate);
+    copy.codeToUpdate = new ConcurrentHashMap<>(codeToUpdate);
+    copy.storageToClear = Collections.synchronizedSet(storageToClear);
     copy.storageToUpdate = new ConcurrentHashMap<>(storageToUpdate);
-    copy.updatedAccounts = new HashMap<>(updatedAccounts);
-    copy.deletedAccounts = new HashSet<>(deletedAccounts);
+    copy.updatedAccounts = new ConcurrentHashMap<>(updatedAccounts);
+    copy.deletedAccounts = Collections.synchronizedSet(deletedAccounts);
     return copy;
   }
 
