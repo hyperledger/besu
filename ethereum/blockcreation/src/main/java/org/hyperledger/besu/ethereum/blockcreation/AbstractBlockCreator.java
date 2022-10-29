@@ -260,7 +260,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       + " with state root "
                       + parentStateRoot);
             })
-        // TODO: only copy if this is from layered worldstate
         .copy();
   }
 

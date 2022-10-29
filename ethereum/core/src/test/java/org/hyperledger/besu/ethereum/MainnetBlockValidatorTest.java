@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class MainnetBlockValidatorTest {

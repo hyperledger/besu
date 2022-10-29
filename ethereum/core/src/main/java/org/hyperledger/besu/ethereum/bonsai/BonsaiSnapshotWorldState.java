@@ -23,8 +23,8 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 /**
  * This class extends BonsaiPersistedWorldstate directly such that it commits/perists directly to
- * the transaction state. A SnapshotMutableWorldState is used to accumulate changes to a non-persisting
- * mutable world state rather than writing worldstate changes directly.
+ * the transaction state. A SnapshotMutableWorldState is used to accumulate changes to a
+ * non-persisting mutable world state rather than writing worldstate changes directly.
  */
 public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     implements SnapshotMutableWorldState {

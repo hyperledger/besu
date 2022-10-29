@@ -29,13 +29,13 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -294,18 +294,9 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final Hash blockHash) {
-    try (final var worldState =
-        getWorldState(blockHash)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Missing worldstate for stateroot " + blockHash.toShortHexString()))) {
-      return Optional.ofNullable(worldState.get(address)).map(Account::getNonce).orElse(0L);
-    } catch (final Exception ex) {
-      RuntimeException unchecked =
-          (ex instanceof RuntimeException) ? (RuntimeException) ex : new RuntimeException(ex);
-      throw unchecked;
-    }
+    return mapWorldState(blockHash, worldState -> worldState.get(address))
+        .map(Account::getNonce)
+        .orElse(0L);
   }
 
   /**
@@ -843,29 +834,42 @@ public class BlockchainQueries {
   }
 
   /**
-   * Returns the world state for the corresponding block number
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash
+   *
+   * @param blockHash the block hash
+   * @return the world state at the block number
+   */
+  public <U> Optional<U> mapWorldState(
+      final Hash blockHash, final Function<MutableWorldState, ? extends U> mapper) {
+    return blockchain
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              try (var ws =
+                  worldStateArchive
+                      .getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false)
+                      .orElse(null)) {
+                if (ws != null) {
+                  return Optional.ofNullable(mapper.apply(ws));
+                }
+              } catch (Exception ex) {
+                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+              }
+              return Optional.empty();
+            });
+  }
+
+  /**
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block number
    *
    * @param blockNumber the block number
    * @return the world state at the block number
    */
-  public Optional<WorldState> getWorldState(final long blockNumber) {
+  public <U> Optional<U> mapWorldState(
+      final long blockNumber, final Function<MutableWorldState, ? extends U> mapper) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
-    // TODO: try-with-resources on callers.
-    return getWorldState(blockHash);
-  }
-
-  /**
-   * Returns the world state for the corresponding block hash
-   *
-   * @param blockHash the block hash
-   * @return the world state at the block hash
-   */
-  public Optional<WorldState> getWorldState(final Hash blockHash) {
-    final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
-    return header.flatMap(
-        blockHeader ->
-            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false));
+    return mapWorldState(blockHash, mapper);
   }
 
   public Optional<Long> gasPrice() {
@@ -926,17 +930,8 @@ public class BlockchainQueries {
   }
 
   private <T> Optional<T> fromWorldState(
-      final Hash blockHash, final Function<WorldState, T> getter) {
-    try (var ws =
-        getWorldState(blockHash)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Missing worldstate for stateroot " + blockHash.toShortHexString()))) {
-      return Optional.of(ws).map(getter);
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
+      final Hash blockHash, final Function<MutableWorldState, T> getter) {
+    return mapWorldState(blockHash, getter);
   }
 
   private <T> Optional<T> fromAccount(
