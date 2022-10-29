@@ -334,10 +334,14 @@ public class TransactionSimulator {
 
   public Optional<Boolean> doesAddressExistAtHead(final Address address) {
     final BlockHeader header = blockchain.getChainHeadHeader();
-    final MutableWorldState worldState =
-        worldStateArchive.getMutable(header.getStateRoot(), header.getHash(), false).orElse(null);
-
-    return doesAddressExist(worldState, address, header);
+    try (final MutableWorldState worldState =
+        worldStateArchive
+            .getMutable(header.getStateRoot(), header.getHash(), false)
+            .orElseThrow()) {
+      return doesAddressExist(worldState, address, header);
+    } catch (Exception ex) {
+      return Optional.empty();
+    }
   }
 
   public Optional<Boolean> doesAddressExist(

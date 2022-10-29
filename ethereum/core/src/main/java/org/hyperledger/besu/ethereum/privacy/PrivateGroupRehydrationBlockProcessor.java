@@ -19,6 +19,8 @@ import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMP
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -43,6 +45,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -80,7 +83,7 @@ public class PrivateGroupRehydrationBlockProcessor {
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
   }
 
-  public AbstractBlockProcessor.Result processBlock(
+  public BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final WorldStateArchive privateWorldStateArchive,
@@ -106,7 +109,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 + " remaining {}",
             transaction.getGasLimit(),
             remainingGasBudget);
-        return AbstractBlockProcessor.Result.failed();
+        return BlockProcessingResult.FAILED;
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
@@ -176,7 +179,7 @@ public class PrivateGroupRehydrationBlockProcessor {
               false,
               TransactionValidationParams.processingBlock());
       if (result.isInvalid()) {
-        return AbstractBlockProcessor.Result.failed();
+        return BlockProcessingResult.FAILED;
       }
 
       gasUsed = transaction.getGasLimit() - result.getGasRemaining() + gasUsed;
@@ -186,12 +189,12 @@ public class PrivateGroupRehydrationBlockProcessor {
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
-      return AbstractBlockProcessor.Result.failed();
+      return BlockProcessingResult.FAILED;
     }
 
     metadataUpdater.commit();
-
-    return AbstractBlockProcessor.Result.successful(receipts);
+    BlockProcessingOutputs yield = new BlockProcessingOutputs(worldState, receipts);
+    return new BlockProcessingResult(Optional.of(yield));
   }
 
   void storePrivateMetadata(

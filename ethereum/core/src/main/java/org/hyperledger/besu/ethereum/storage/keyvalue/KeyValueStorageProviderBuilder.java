@@ -80,7 +80,8 @@ public class KeyValueStorageProviderBuilder {
           segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
           worldStatePreImageStorage,
           privateWorldStatePreImageStorage,
-          storageFactory.isSegmentIsolationSupported());
+          storageFactory.isSegmentIsolationSupported(),
+          storageFactory.isSnapshotIsolationSupported());
     }
   }
 }
