@@ -836,7 +836,9 @@ public class BlockchainQueries {
   /**
    * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash
    *
+   * @param <U> return type of the operation on the MutableWorldState
    * @param blockHash the block hash
+   * @param mapper Function which performs an operation on a MutableWorldState
    * @return the world state at the block number
    */
   public <U> Optional<U> mapWorldState(
@@ -862,7 +864,9 @@ public class BlockchainQueries {
   /**
    * Wraps an operation on MutableWorldState with try-with-resources the corresponding block number
    *
+   * @param <U> return type of the operation on the MutableWorldState
    * @param blockNumber the block number
+   * @param mapper Function which performs an operation on a MutableWorldState returning type U
    * @return the world state at the block number
    */
   public <U> Optional<U> mapWorldState(

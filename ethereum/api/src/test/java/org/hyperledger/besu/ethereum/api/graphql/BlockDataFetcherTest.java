@@ -16,20 +16,15 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -77,14 +72,6 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     when(query.blockByNumber(ArgumentMatchers.anyLong()))
         .thenReturn(Optional.of(new BlockWithMetadata<>(header, null, null, null, 0)));
     when(header.getCoinbase()).thenReturn(testAddress);
-    doAnswer(
-            invocation ->
-                Optional.of(
-                    invocation
-                        .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
-                        .apply(mutableWorldState)))
-        .when(query)
-        .mapWorldState(any(), any());
 
     final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
     assertThat(maybeBlock).isPresent();
