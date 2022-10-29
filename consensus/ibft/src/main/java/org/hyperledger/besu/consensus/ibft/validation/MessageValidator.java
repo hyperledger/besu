@@ -81,7 +81,7 @@ public class MessageValidator {
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (validationResult.blockProcessingOutputs.isEmpty()) {
+    if (validationResult.isFailed()) {
       LOG.info(
           "Invalid Proposal message, block did not pass validation. Reason {}",
           validationResult.errorMessage);
