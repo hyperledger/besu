@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -698,7 +699,7 @@ public abstract class MainnetProtocolSpecs {
     }
 
     @Override
-    public Result processBlock(
+    public BlockProcessingResult processBlock(
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final BlockHeader blockHeader,

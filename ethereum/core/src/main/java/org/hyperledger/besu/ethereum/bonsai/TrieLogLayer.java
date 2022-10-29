@@ -36,7 +36,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * This class encapsulates the changes that are done to transition one block to the next. This
@@ -50,7 +50,7 @@ public class TrieLogLayer {
   private Hash blockHash;
   private final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
   private final Map<Address, BonsaiValue<Bytes>> code;
-  private final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
+  private final Map<Address, Map<Hash, BonsaiValue<Bytes32>>> storage;
   private boolean frozen = false;
 
   TrieLogLayer() {
@@ -92,7 +92,7 @@ public class TrieLogLayer {
   }
 
   void addStorageChange(
-      final Address address, final Hash slotHash, final UInt256 oldValue, final UInt256 newValue) {
+      final Address address, final Hash slotHash, final Bytes32 oldValue, final Bytes32 newValue) {
     checkState(!frozen, "Layer is Frozen");
     storage
         .computeIfAbsent(address, a -> new TreeMap<>())
@@ -136,13 +136,13 @@ public class TrieLogLayer {
       if (input.nextIsNull()) {
         input.skipNext();
       } else {
-        final Map<Hash, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
+        final Map<Hash, BonsaiValue<Bytes32>> storageChanges = new TreeMap<>();
         input.enterList();
         while (!input.isEndOfCurrentList()) {
           input.enterList();
           final Hash slotHash = Hash.wrap(input.readBytes32());
-          final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
+          final Bytes32 oldValue = nullOrValue(input, RLPInput::readBytes32Scalar);
+          final Bytes32 newValue = nullOrValue(input, RLPInput::readBytes32Scalar);
           storageChanges.put(slotHash, new BonsaiValue<>(oldValue, newValue));
           input.leaveList();
         }
@@ -190,16 +190,16 @@ public class TrieLogLayer {
         codeChange.writeRlp(output, RLPOutput::writeBytes);
       }
 
-      final Map<Hash, BonsaiValue<UInt256>> storageChanges = storage.get(address);
+      final Map<Hash, BonsaiValue<Bytes32>> storageChanges = storage.get(address);
       if (storageChanges == null) {
         output.writeNull();
       } else {
         output.startList();
-        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageChangeEntry :
+        for (final Map.Entry<Hash, BonsaiValue<Bytes32>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
           output.writeBytes(storageChangeEntry.getKey());
-          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
+          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeBytesScalar);
           output.endList();
         }
         output.endList();
@@ -220,7 +220,7 @@ public class TrieLogLayer {
     return code.entrySet().stream();
   }
 
-  public Stream<Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>>> streamStorageChanges() {
+  public Stream<Map.Entry<Address, Map<Hash, BonsaiValue<Bytes32>>>> streamStorageChanges() {
     return storage.entrySet().stream();
   }
 
@@ -228,7 +228,7 @@ public class TrieLogLayer {
     return storage.containsKey(address);
   }
 
-  public Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
+  public Stream<Map.Entry<Hash, BonsaiValue<Bytes32>>> streamStorageChanges(final Address address) {
     return storage.getOrDefault(address, Map.of()).entrySet().stream();
   }
 
@@ -249,13 +249,13 @@ public class TrieLogLayer {
     return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
   }
 
-  Optional<UInt256> getPriorStorageBySlotHash(final Address address, final Hash slotHash) {
+  Optional<Bytes32> getPriorStorageBySlotHash(final Address address, final Hash slotHash) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(slotHash))
         .map(BonsaiValue::getPrior);
   }
 
-  Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
+  Optional<Bytes32> getStorageBySlotHash(final Address address, final Hash slotHash) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(slotHash))
         .map(BonsaiValue::getUpdated);
@@ -294,11 +294,11 @@ public class TrieLogLayer {
       }
     }
     sb.append("Storage").append("\n");
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storage : storage.entrySet()) {
+    for (final Map.Entry<Address, Map<Hash, BonsaiValue<Bytes32>>> storage : storage.entrySet()) {
       sb.append(" : ").append(storage.getKey()).append("\n");
-      for (final Map.Entry<Hash, BonsaiValue<UInt256>> slot : storage.getValue().entrySet()) {
-        final UInt256 originalValue = slot.getValue().getPrior();
-        final UInt256 updatedValue = slot.getValue().getUpdated();
+      for (final Map.Entry<Hash, BonsaiValue<Bytes32>> slot : storage.getValue().entrySet()) {
+        final Bytes32 originalValue = slot.getValue().getPrior();
+        final Bytes32 updatedValue = slot.getValue().getUpdated();
         sb.append("   : ").append(slot.getKey()).append("\n");
         if (Objects.equals(originalValue, updatedValue)) {
           sb.append("     = ")
