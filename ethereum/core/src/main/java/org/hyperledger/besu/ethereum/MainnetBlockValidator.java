@@ -153,10 +153,11 @@ public class MainnetBlockValidator implements BlockValidator {
           }
         }
 
-        return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
+        return new BlockProcessingResult(
+            Optional.of(new BlockProcessingOutputs(worldState, receipts)));
       }
     } catch (StorageException | MerkleTrieException ex) {
-      var retval = new BlockProcessingResult(BlockProcessingOutputs.empty(), ex);
+      var retval = new BlockProcessingResult(Optional.empty(), ex);
       handleAndLogImportFailure(block, retval);
       return retval;
     }

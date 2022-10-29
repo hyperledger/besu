@@ -43,6 +43,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
 
@@ -126,8 +127,9 @@ public class ForwardSyncStepTest {
               final Object[] arguments = invocation.getArguments();
               Block block = (Block) arguments[1];
               return new BlockProcessingResult(
-                  new BlockProcessingOutputs(
-                      new ReferenceTestWorldState(), blockDataGenerator.receipts(block)));
+                  Optional.of(
+                      new BlockProcessingOutputs(
+                          new ReferenceTestWorldState(), blockDataGenerator.receipts(block))));
             });
   }
 

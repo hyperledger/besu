@@ -122,7 +122,7 @@ public class ProposalPayloadValidator {
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (validationResult.getYield().isEmpty()) {
+    if (!validationResult.isSuccessful()) {
       LOG.info(
           "{}: block did not pass validation. Reason {}",
           ERROR_PREFIX,

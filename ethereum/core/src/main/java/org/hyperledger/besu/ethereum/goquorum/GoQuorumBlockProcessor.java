@@ -97,7 +97,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
-        return new BlockProcessingResult(BlockProcessingOutputs.empty(), "insufficient gas");
+        return new BlockProcessingResult(Optional.empty(), "insufficient gas");
       }
 
       final WorldUpdater publicWorldStateUpdater = publicWorldState.updater();
@@ -126,7 +126,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
           final ValidationResult<TransactionInvalidReason> validationResult =
               validateTransaction(blockHeader, transaction, publicWorldStateUpdater);
           if (!validationResult.isValid()) {
-            return new BlockProcessingResult(BlockProcessingOutputs.empty(), e);
+            return new BlockProcessingResult(Optional.empty(), e);
           }
         }
       } else { // public Transaction
@@ -153,10 +153,11 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
           String errorMessage =
               MessageFormat.format(
                   "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
-                  result.getValidationResult().getInvalidReason(),
+                  result.getValidationResult().getErrorMessage(),
                   blockHeader.getHash().toHexString(),
                   transaction.getHash().toHexString());
-          return new BlockProcessingResult(BlockProcessingOutputs.empty(), errorMessage);
+          LOG.info(errorMessage);
+          return new BlockProcessingResult(Optional.empty(), errorMessage);
         }
 
         if (isGoQuorumPrivateTransaction) { // private transaction we are party to
@@ -200,7 +201,7 @@ public class GoQuorumBlockProcessor extends MainnetBlockProcessor {
 
     if (!rewardCoinbase(publicWorldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
-      return new BlockProcessingResult(BlockProcessingOutputs.empty(), "ommer too old");
+      return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
     // create the bloom for the private transactions in the block and store it

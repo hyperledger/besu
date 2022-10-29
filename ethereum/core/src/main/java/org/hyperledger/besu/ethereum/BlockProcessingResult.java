@@ -29,32 +29,37 @@ public class BlockProcessingResult extends BlockValidationResult {
 
   public static final BlockProcessingResult FAILED = new BlockProcessingResult("processing failed");
 
-  public BlockProcessingResult(final BlockProcessingOutputs yield) {
-    this.yield = Optional.ofNullable(yield);
-    this.isPartial = false;
-  }
-
-  public BlockProcessingResult(final BlockProcessingOutputs yield, final boolean isPartial) {
-    this.yield = Optional.ofNullable(yield);
-    this.isPartial = isPartial;
-  }
-
-  public BlockProcessingResult(final BlockProcessingOutputs yield, final String errorMessage) {
-    super(errorMessage);
-    this.yield = Optional.ofNullable(yield);
-    this.isPartial = false;
-  }
-
-  public BlockProcessingResult(final BlockProcessingOutputs yield, final Throwable cause) {
-    super(cause.getLocalizedMessage(), cause);
-    this.yield = Optional.ofNullable(yield);
+  public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield) {
+    this.yield = yield;
     this.isPartial = false;
   }
 
   public BlockProcessingResult(
-      final BlockProcessingOutputs yield, final String errorMessage, final boolean isPartial) {
+      final Optional<BlockProcessingOutputs> yield, final boolean isPartial) {
+    this.yield = yield;
+    this.isPartial = isPartial;
+  }
+
+  public BlockProcessingResult(
+      final Optional<BlockProcessingOutputs> yield, final String errorMessage) {
     super(errorMessage);
-    this.yield = Optional.ofNullable(yield);
+    this.yield = yield;
+    this.isPartial = false;
+  }
+
+  public BlockProcessingResult(
+      final Optional<BlockProcessingOutputs> yield, final Throwable cause) {
+    super(cause.getLocalizedMessage(), cause);
+    this.yield = yield;
+    this.isPartial = false;
+  }
+
+  public BlockProcessingResult(
+      final Optional<BlockProcessingOutputs> yield,
+      final String errorMessage,
+      final boolean isPartial) {
+    super(errorMessage);
+    this.yield = yield;
     this.isPartial = isPartial;
   }
 

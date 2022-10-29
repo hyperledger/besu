@@ -36,7 +36,6 @@ import org.hyperledger.besu.consensus.ibft.validation.SignedDataValidator;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -79,7 +78,7 @@ public class RoundChangeManagerTest {
 
     final BlockValidator blockValidator = mock(BlockValidator.class);
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
-        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     final RoundChangePayloadValidator.MessageValidatorForHeightFactory messageValidatorFactory =
         mock(RoundChangePayloadValidator.MessageValidatorForHeightFactory.class);

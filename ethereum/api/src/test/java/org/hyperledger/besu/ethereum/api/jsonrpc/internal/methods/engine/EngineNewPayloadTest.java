@@ -113,7 +113,8 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-        .thenReturn(new BlockProcessingResult(new BlockProcessingOutputs(null, List.of())));
+        .thenReturn(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -230,8 +231,7 @@ public class EngineNewPayloadTest {
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
         .thenReturn(
-            new BlockProcessingResult(
-                BlockProcessingOutputs.empty(), new StorageException("database bedlam")));
+            new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 

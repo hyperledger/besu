@@ -45,6 +45,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -193,7 +194,7 @@ public class PrivateGroupRehydrationBlockProcessor {
 
     metadataUpdater.commit();
     BlockProcessingOutputs yield = new BlockProcessingOutputs(worldState, receipts);
-    return new BlockProcessingResult(yield);
+    return new BlockProcessingResult(Optional.of(yield));
   }
 
   void storePrivateMetadata(

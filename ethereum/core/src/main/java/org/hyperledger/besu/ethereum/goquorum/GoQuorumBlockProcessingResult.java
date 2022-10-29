@@ -30,7 +30,7 @@ public class GoQuorumBlockProcessingResult extends BlockProcessingResult {
 
   public GoQuorumBlockProcessingResult(
       final BlockProcessingOutputs mainnetYield, final BlockProcessingOutputs privateYield) {
-    super(mainnetYield);
+    super(Optional.of(mainnetYield));
     this.privateYield = Optional.ofNullable(privateYield);
   }
 

@@ -36,6 +36,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,8 +92,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
-        return new BlockProcessingResult(
-            BlockProcessingOutputs.empty(), "provided gas insufficient");
+        return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
@@ -115,15 +115,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (result.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
-                "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
-                result.getValidationResult().getInvalidReason(),
+                "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
+                result.getValidationResult().getErrorMessage(),
                 blockHeader.getHash().toHexString(),
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
         if (worldState instanceof BonsaiPersistedWorldState) {
           ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
         }
-        return new BlockProcessingResult(BlockProcessingOutputs.empty(), errorMessage);
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
       worldStateUpdater.commit();
 
@@ -139,17 +139,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (worldState instanceof BonsaiPersistedWorldState) {
         ((BonsaiWorldStateUpdater) worldState.updater()).reset();
       }
-      return new BlockProcessingResult(BlockProcessingOutputs.empty(), "ommer too old");
+      return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
     try {
       worldState.persist(blockHeader);
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
-      return new BlockProcessingResult(BlockProcessingOutputs.empty(), e);
+      return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    return new BlockProcessingResult(new BlockProcessingOutputs(worldState, receipts));
+    return new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(worldState, receipts)));
   }
 
   protected boolean hasAvailableBlockBudget(

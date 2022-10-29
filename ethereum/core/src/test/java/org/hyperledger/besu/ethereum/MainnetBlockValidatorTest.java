@@ -137,7 +137,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
@@ -160,7 +160,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
@@ -183,7 +183,7 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(new BlockProcessingResult(BlockProcessingOutputs.empty()));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(badBlock),
