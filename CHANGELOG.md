@@ -3,6 +3,7 @@
 ### Breaking Changes
 - Version 22.10.0 will require Java 17 to build and run.
 - Internal and interface APIs relating to storage have migrated from `UInt256` to `Bytes32` [#4562](https://github.com/hyperledger/besu/pull/4562)
+- Fields `publicKey` and `raw` removed from RPC API `Transaction` result object.
 
 ### Additions and Improvements
 - Updated jackson-databind library to version 2.13.4.2 addressing [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003)
