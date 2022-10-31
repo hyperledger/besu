@@ -33,7 +33,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class StateDiffGenerator {
 
@@ -59,18 +59,18 @@ public class StateDiffGenerator {
 
       // calculate storage diff
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
-      for (final Map.Entry<UInt256, UInt256> entry :
+      for (final Map.Entry<Bytes32, Bytes32> entry :
           ((UpdateTrackingAccount<?>) updatedAccount)
               .getUpdatedStorage()
               .entrySet()) { // FIXME cast
-        final UInt256 newValue = entry.getValue();
+        final Bytes32 newValue = entry.getValue();
         if (rootAccount == null) {
-          if (!UInt256.ZERO.equals(newValue)) {
+          if (!Bytes32.ZERO.equals(newValue)) {
             storageDiff.put(
                 entry.getKey().toHexString(), new DiffNode(null, newValue.toHexString()));
           }
         } else {
-          final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
+          final Bytes32 originalValue = rootAccount.getStorageValue(entry.getKey());
           if (!originalValue.equals(newValue)) {
             storageDiff.put(
                 entry.getKey().toHexString(),
