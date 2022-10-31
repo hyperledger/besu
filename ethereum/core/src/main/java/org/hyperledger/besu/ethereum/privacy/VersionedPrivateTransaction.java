@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -34,7 +36,7 @@ public class VersionedPrivateTransaction {
         privateTransaction,
         result
             .map(value -> Bytes32.fromHexStringLenient(value.getOutput().toHexString()))
-            .orElse(Bytes32.ZERO));
+            .orElse(ZERO_32));
   }
 
   public VersionedPrivateTransaction(

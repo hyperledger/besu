@@ -109,10 +109,12 @@ public class EthGetFilterChangesTest {
   @Test
   public void shouldReturnHashesWhenFilterManagerFindsBlockFilterWithHashes() {
     final JsonRpcRequestContext request = requestWithParams("0x1");
-    when(filterManager.blockChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO));
+    when(filterManager.blockChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO_HASH));
 
     final List<String> expectedHashes =
-        Lists.newArrayList(Hash.ZERO).stream().map(Hash::toString).collect(Collectors.toList());
+        Lists.newArrayList(Hash.ZERO_HASH).stream()
+            .map(Hash::toString)
+            .collect(Collectors.toList());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedHashes);
 
     final JsonRpcResponse response = method.response(request);
@@ -136,10 +138,13 @@ public class EthGetFilterChangesTest {
   public void shouldReturnHashesWhenFilterManagerFindsPendingTransactionFilterWithHashes() {
     final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges(anyString())).thenReturn(null);
-    when(filterManager.pendingTransactionChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO));
+    when(filterManager.pendingTransactionChanges("0x1"))
+        .thenReturn(Lists.newArrayList(Hash.ZERO_HASH));
 
     final List<String> expectedHashes =
-        Lists.newArrayList(Hash.ZERO).stream().map(Hash::toString).collect(Collectors.toList());
+        Lists.newArrayList(Hash.ZERO_HASH).stream()
+            .map(Hash::toString)
+            .collect(Collectors.toList());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedHashes);
 
     final JsonRpcResponse response = method.response(request);
@@ -198,8 +203,8 @@ public class EthGetFilterChangesTest {
     return new LogWithMetadata(
         0,
         100L,
-        Hash.ZERO,
-        Hash.ZERO,
+        Hash.ZERO_HASH,
+        Hash.ZERO_HASH,
         0,
         Address.fromHexString("0x0"),
         Bytes.EMPTY,

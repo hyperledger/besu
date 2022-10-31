@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.datatypes.Hash.ZERO;
+import static org.hyperledger.besu.datatypes.Hash.ZERO_HASH;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -57,6 +57,6 @@ public class BlockHashLookup implements Function<Long, Hash> {
         hashByNumber.put(searchStartHeader.getNumber() - 1, searchStartHeader.getParentHash());
       }
     }
-    return hashByNumber.getOrDefault(blockNumber, ZERO);
+    return hashByNumber.getOrDefault(blockNumber, ZERO_HASH);
   }
 }

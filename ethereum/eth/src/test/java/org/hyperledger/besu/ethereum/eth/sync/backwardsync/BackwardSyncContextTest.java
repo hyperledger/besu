@@ -253,7 +253,7 @@ public class BackwardSyncContextTest {
     context.possiblyMoveHead(null);
     assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(LOCAL_HEIGHT);
 
-    context.updateHeads(Hash.ZERO, null);
+    context.updateHeads(Hash.ZERO_HASH, null);
     context.possiblyMoveHead(null);
 
     assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(LOCAL_HEIGHT);
@@ -316,7 +316,7 @@ public class BackwardSyncContextTest {
         .when(context)
         .prepareBackwardSyncFuture();
 
-    final var syncFuture = context.syncBackwardsUntil(Hash.ZERO);
+    final var syncFuture = context.syncBackwardsUntil(Hash.ZERO_HASH);
 
     try {
       syncFuture.get();

@@ -57,7 +57,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
   private final TransactionTestFixture transactionTestFixture = new TransactionTestFixture();
 
   private EthGetUncleByBlockHashAndIndex method;
-  private final Hash zeroHash = Hash.ZERO;
+  private final Hash zeroHash = Hash.ZERO_HASH;
 
   @Mock private BlockchainQueries blockchainQueries;
 
@@ -172,7 +172,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
     }
 
     final List<Hash> ommers = new ArrayList<>();
-    ommers.add(Hash.ZERO);
+    ommers.add(Hash.ZERO_HASH);
 
     return new BlockWithMetadata<>(header, transactions, ommers, header.getDifficulty(), 0);
   }
