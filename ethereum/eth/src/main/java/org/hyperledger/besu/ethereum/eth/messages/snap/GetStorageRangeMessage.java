@@ -110,13 +110,13 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
     if (input.nextIsNull()) {
       input.skipNext();
-      range.startKeyHash(Hash.ZERO);
+      range.startKeyHash(Hash.ZERO_HASH);
     } else {
       range.startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())));
     }
     if (input.nextIsNull()) {
       input.skipNext();
-      range.endKeyHash(Hash.ZERO);
+      range.endKeyHash(Hash.ZERO_HASH);
     } else {
       range.endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())));
     }

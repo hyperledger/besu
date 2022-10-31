@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -97,9 +99,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     while (iterator.hasNext()) {
       fullPath = Bytes.wrap(fullPath, iterator.next());
     }
-    return fullPath.isZero()
-        ? Bytes32.ZERO
-        : Bytes32.wrap(CompactEncoding.pathToBytes(fullPath), 0);
+    return fullPath.isZero() ? ZERO_32 : Bytes32.wrap(CompactEncoding.pathToBytes(fullPath), 0);
   }
 
   public interface LeafHandler<V> {

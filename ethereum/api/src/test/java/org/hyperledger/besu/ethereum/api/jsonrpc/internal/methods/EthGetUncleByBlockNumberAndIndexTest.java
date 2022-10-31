@@ -149,7 +149,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
     }
 
     final List<Hash> ommers = new ArrayList<>();
-    ommers.add(Hash.ZERO);
+    ommers.add(Hash.ZERO_HASH);
 
     return new BlockWithMetadata<>(header, transactions, ommers, header.getDifficulty(), 0);
   }

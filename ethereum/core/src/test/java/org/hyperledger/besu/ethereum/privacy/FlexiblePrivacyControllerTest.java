@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
@@ -231,7 +232,7 @@ public class FlexiblePrivacyControllerTest {
             Collections.emptyList(),
             0,
             0,
-            Bytes32.ZERO,
+            ZERO_32,
             ValidationResult.valid(),
             Optional.empty());
     when(privateTransactionSimulator.process(any(), any()))
@@ -339,7 +340,7 @@ public class FlexiblePrivacyControllerTest {
   private void mockingForFindPrivacyGroupByMembers() {
     final PrivacyGroupHeadBlockMap privacyGroupHeadBlockMap =
         new PrivacyGroupHeadBlockMap(
-            Map.of(Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID)), Hash.ZERO));
+            Map.of(Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID)), Hash.ZERO_HASH));
     when(privateStateStorage.getPrivacyGroupHeadBlockMap(any()))
         .thenReturn(Optional.of(privacyGroupHeadBlockMap));
   }
@@ -363,14 +364,14 @@ public class FlexiblePrivacyControllerTest {
     when(enclave.send(any(), any(), anyList())).thenReturn(key);
     final Map<Bytes32, Hash> bytes32HashMap = new HashMap<>();
     final Bytes32 pgBytes = Bytes32.wrap(Base64.decode(PRIVACY_GROUP_ID));
-    bytes32HashMap.put(pgBytes, Hash.ZERO);
-    when(blockchain.getChainHeadHash()).thenReturn(Hash.ZERO);
+    bytes32HashMap.put(pgBytes, Hash.ZERO_HASH);
+    when(blockchain.getChainHeadHash()).thenReturn(Hash.ZERO_HASH);
     final Optional<PrivacyGroupHeadBlockMap> privacyGroupHeadBlockMap =
         Optional.of(new PrivacyGroupHeadBlockMap(bytes32HashMap));
-    when(privateStateStorage.getPrivacyGroupHeadBlockMap(Hash.ZERO))
+    when(privateStateStorage.getPrivacyGroupHeadBlockMap(Hash.ZERO_HASH))
         .thenReturn(privacyGroupHeadBlockMap);
     final List<PrivateTransactionMetadata> privateTransactionMetadata =
-        List.of(new PrivateTransactionMetadata(Hash.ZERO, Hash.ZERO));
+        List.of(new PrivateTransactionMetadata(Hash.ZERO_HASH, Hash.ZERO_HASH));
     final PrivateBlockMetadata privateBlockMetadata =
         new PrivateBlockMetadata(privateTransactionMetadata);
     when(privateStateStorage.getPrivateBlockMetadata(any(), eq(pgBytes)))
@@ -395,7 +396,7 @@ public class FlexiblePrivacyControllerTest {
     final PrivateTransactionWithMetadata privateTransactionWithMetadata =
         new PrivateTransactionWithMetadata(
             buildPrivateTransaction(3).signAndBuild(KEY_PAIR),
-            new PrivateTransactionMetadata(Hash.ZERO, Hash.ZERO));
+            new PrivateTransactionMetadata(Hash.ZERO_HASH, Hash.ZERO_HASH));
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     privateTransactionWithMetadata.writeTo(bytesValueRLPOutput);
     final byte[] txPayload =

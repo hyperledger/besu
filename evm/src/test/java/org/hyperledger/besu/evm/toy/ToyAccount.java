@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.evm.toy;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -39,7 +41,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
 
   private Address address;
   private final Supplier<Hash> addressHash =
-      Suppliers.memoize(() -> address == null ? Hash.ZERO : Hash.hash(address));
+      Suppliers.memoize(() -> address == null ? Hash.ZERO_HASH : Hash.hash(address));
   private long nonce;
   private Wei balance;
   private Bytes code;
@@ -108,7 +110,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
     if (parent != null) {
       return parent.getStorageValue(key);
     } else {
-      return Bytes32.ZERO;
+      return ZERO_32;
     }
   }
 

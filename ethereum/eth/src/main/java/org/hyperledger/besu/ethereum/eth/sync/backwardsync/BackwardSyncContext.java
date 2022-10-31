@@ -111,12 +111,12 @@ public class BackwardSyncContext {
   }
 
   public synchronized void updateHeads(final Hash head, final Hash finalizedBlockHash) {
-    if (Hash.ZERO.equals(finalizedBlockHash)) {
+    if (Hash.ZERO_HASH.equals(finalizedBlockHash)) {
       this.maybeFinalized = Optional.empty();
     } else {
       this.maybeFinalized = Optional.ofNullable(finalizedBlockHash);
     }
-    if (Hash.ZERO.equals(head)) {
+    if (Hash.ZERO_HASH.equals(head)) {
       this.maybeHead = Optional.empty();
     } else {
       this.maybeHead = Optional.ofNullable(head);

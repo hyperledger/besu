@@ -39,7 +39,7 @@ public class EthGetBlockByHashTest {
   private EthGetBlockByHash method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getBlockByHash";
-  private final String ZERO_HASH = String.valueOf(Hash.ZERO);
+  private final String ZERO_HASH = String.valueOf(Hash.ZERO_HASH);
 
   @Before
   public void setUp() {
