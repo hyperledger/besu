@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
@@ -65,7 +67,7 @@ public class StateDiffGenerator {
               .entrySet()) { // FIXME cast
         final Bytes32 newValue = entry.getValue();
         if (rootAccount == null) {
-          if (!Bytes32.ZERO.equals(newValue)) {
+          if (!ZERO_32.equals(newValue)) {
             storageDiff.put(
                 entry.getKey().toHexString(), new DiffNode(null, newValue.toHexString()));
           }

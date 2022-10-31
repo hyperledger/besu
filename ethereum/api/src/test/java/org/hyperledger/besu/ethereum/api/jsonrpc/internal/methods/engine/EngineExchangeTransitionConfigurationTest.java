@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,7 +49,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
@@ -92,7 +92,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(1L)));
+                "0", Hash.ZERO_HASH.toHexString(), new UnsignedLongParameter(1L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
@@ -109,11 +109,11 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
+                "0", Hash.ZERO_HASH.toHexString(), new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
-    assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
+    assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO_HASH);
     assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
@@ -123,7 +123,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
+                "0", Hash.ZERO_HASH.toHexString(), new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty())
@@ -132,7 +132,7 @@ public class EngineExchangeTransitionConfigurationTest {
                 new BigInteger(
                     "115792089237316195423570985008687907853269984665640564039457584007913129638912",
                     10)));
-    assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO);
+    assertThat(result.getTerminalBlockHash()).isEqualTo(Hash.ZERO_HASH);
     assertThat(result.getTerminalBlockNumber()).isEqualTo(0L);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
@@ -181,11 +181,11 @@ public class EngineExchangeTransitionConfigurationTest {
   public void shouldAlwaysReturnResultsInHex() throws JsonProcessingException {
     var mapper = new ObjectMapper();
     var mockResult =
-        new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 0L);
+        new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO_HASH, 0L);
 
     assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x0");
     assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo("0x0");
-    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
+    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO_HASH.toHexString());
 
     String json = mapper.writeValueAsString(mockResult);
     var res = mapper.readValue(json, Map.class);
@@ -199,11 +199,11 @@ public class EngineExchangeTransitionConfigurationTest {
   public void shouldStripLeadingZeros() throws JsonProcessingException {
     var mapper = new ObjectMapper();
     var mockResult =
-        new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO, 100);
+        new EngineExchangeTransitionConfigurationResult(Difficulty.ZERO, Hash.ZERO_HASH, 100);
 
     assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x64");
     assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo("0x0");
-    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
+    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO_HASH.toHexString());
 
     String json = mapper.writeValueAsString(mockResult);
     var res = mapper.readValue(json, Map.class);
@@ -247,7 +247,7 @@ public class EngineExchangeTransitionConfigurationTest {
         0,
         Bytes.EMPTY,
         Wei.ZERO,
-        Bytes32.ZERO,
+        ZERO_32,
         0,
         new BlockHeaderFunctions() {
           @Override

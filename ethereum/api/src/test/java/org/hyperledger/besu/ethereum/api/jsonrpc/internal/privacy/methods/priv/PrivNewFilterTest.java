@@ -100,7 +100,7 @@ public class PrivNewFilterTest {
             null,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO,
+            Hash.ZERO_HASH,
             null,
             null);
 

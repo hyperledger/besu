@@ -72,7 +72,7 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
     final VoteTallyCache cache =
         new VoteTallyCache(blockChain, tallyUpdater, new EpochManager(30_000), blockInterface);
 
-    final Block orphanBlock = createEmptyBlock(4, Hash.ZERO);
+    final Block orphanBlock = createEmptyBlock(4, Hash.ZERO_HASH);
 
     assertThatExceptionOfType(UncheckedExecutionException.class)
         .isThrownBy(() -> cache.getVoteTallyAfterBlock(orphanBlock.getHeader()))

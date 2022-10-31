@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -125,7 +127,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public Bytes32 getStorageValue(final Address address, final Bytes32 key) {
-    return getStorageValueBySlotHash(address, Hash.hash(key)).orElse(Bytes32.ZERO);
+    return getStorageValueBySlotHash(address, Hash.hash(key)).orElse(ZERO_32);
   }
 
   @Override
@@ -190,7 +192,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
         final Account account = currentLayer.getNextWorldView().get().get(address);
         if (account != null) {
           account
-              .storageEntriesFrom(Hash.ZERO, Integer.MAX_VALUE)
+              .storageEntriesFrom(Hash.ZERO_HASH, Integer.MAX_VALUE)
               .forEach(
                   (k, v) -> {
                     if (!results.containsKey(k)) {

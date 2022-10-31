@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -302,7 +304,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       return storageTrie()
           .get(Hash.hash(key))
           .map(DefaultMutableWorldState::convertToBytes32)
-          .orElse(Bytes32.ZERO);
+          .orElse(ZERO_32);
     }
 
     @Override
