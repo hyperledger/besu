@@ -325,6 +325,11 @@ jobs:
           command: |
             docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
       - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless openjdk-17-jdk-headless
+            sudo update-java-alternatives -a
+      - run:
           name: build image
           command: |
             ./gradlew --no-daemon distDocker
