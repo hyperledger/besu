@@ -325,8 +325,8 @@ public class PeerDiscoveryAgentTest {
     agent.bond(genericPeer);
 
     // We should send an outgoing ping
-    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(4);
+    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    assertThat(remoteIncomingPackets).hasSize(2);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     // The remote peer will send a PING and we'll respond with a return PONG
@@ -359,8 +359,8 @@ public class PeerDiscoveryAgentTest {
     agent.bond(remotePeer);
 
     // We should send an outgoing ping
-    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(2);
+    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    assertThat(remoteIncomingPackets).hasSize(1);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     assertThat(firstMsg.fromAgent).isEqualTo(agent);
@@ -443,12 +443,12 @@ public class PeerDiscoveryAgentTest {
     otherNode.bond(localNode);
 
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(4);
+    assertThat(remoteIncomingPackets).hasSize(2);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     assertThat(firstMsg.fromAgent).isEqualTo(agent);
     // Check that peer received a return pong
-    final IncomingPacket secondMsg = remoteIncomingPackets.get(2);
+    final IncomingPacket secondMsg = remoteIncomingPackets.get(1);
     assertThat(secondMsg.packet.getType()).isEqualTo(PacketType.PONG);
     assertThat(secondMsg.fromAgent).isEqualTo(agent);
   }
@@ -506,7 +506,7 @@ public class PeerDiscoveryAgentTest {
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     // Check that peer received a return ping
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(2);
+    assertThat(remoteIncomingPackets).hasSize(1);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     assertThat(firstMsg.fromAgent).isEqualTo(agent);
@@ -667,13 +667,13 @@ public class PeerDiscoveryAgentTest {
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(3);
+    assertThat(remoteIncomingPackets).hasSize(2);
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     assertThat(firstMsg.fromAgent).isEqualTo(agent);
     // Then a neighbors request
-    final IncomingPacket secondMsg = remoteIncomingPackets.get(2);
+    final IncomingPacket secondMsg = remoteIncomingPackets.get(1);
     assertThat(secondMsg.packet.getType()).isEqualTo(PacketType.FIND_NEIGHBORS);
     assertThat(secondMsg.fromAgent).isEqualTo(agent);
   }
@@ -699,7 +699,7 @@ public class PeerDiscoveryAgentTest {
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(4);
+    assertThat(remoteIncomingPackets).hasSize(2);
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
@@ -740,14 +740,14 @@ public class PeerDiscoveryAgentTest {
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(3);
+    assertThat(remoteIncomingPackets).hasSize(2);
 
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
     assertThat(firstMsg.fromAgent).isEqualTo(agent);
     // Then a neighbors response
-    final IncomingPacket secondMsg = remoteIncomingPackets.get(2);
+    final IncomingPacket secondMsg = remoteIncomingPackets.get(1);
     assertThat(secondMsg.packet.getType()).isEqualTo(PacketType.NEIGHBORS);
     assertThat(secondMsg.fromAgent).isEqualTo(agent);
   }
@@ -776,7 +776,7 @@ public class PeerDiscoveryAgentTest {
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
-    assertThat(remoteIncomingPackets).hasSize(5);
+    assertThat(remoteIncomingPackets).hasSize(3);
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
@@ -786,7 +786,7 @@ public class PeerDiscoveryAgentTest {
     assertThat(secondMsg.packet.getType()).isEqualTo(PacketType.PONG);
     assertThat(secondMsg.fromAgent).isEqualTo(agent);
     // And a request FOR neighbors, but no response to its neighbors request
-    final IncomingPacket thirdMsg = remoteIncomingPackets.get(4);
+    final IncomingPacket thirdMsg = remoteIncomingPackets.get(2);
     assertThat(thirdMsg.packet.getType()).isEqualTo(PacketType.FIND_NEIGHBORS);
     assertThat(thirdMsg.fromAgent).isEqualTo(agent);
   }
