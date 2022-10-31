@@ -134,7 +134,7 @@ public class PeerDiscoveryController {
   private final LabelledMetric<Counter> interactionCounter;
   private final LabelledMetric<Counter> interactionRetryCounter;
   private final ForkIdManager forkIdManager;
-  private final boolean fileterOnEnrForkId;
+  private final boolean filterOnEnrForkId;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -170,7 +170,7 @@ public class PeerDiscoveryController {
       final MetricsSystem metricsSystem,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final ForkIdManager forkIdManager,
-      final boolean fileterOnEnrForkId) {
+      final boolean filterOnEnrForkId) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -210,7 +210,7 @@ public class PeerDiscoveryController {
             CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
 
     this.forkIdManager = forkIdManager;
-    this.fileterOnEnrForkId = fileterOnEnrForkId;
+    this.filterOnEnrForkId = filterOnEnrForkId;
   }
 
   public static Builder builder() {
@@ -222,6 +222,7 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
+    LOG.debug("Starting with filterOnEnrForkId = {}", filterOnEnrForkId);
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
@@ -335,7 +336,7 @@ public class PeerDiscoveryController {
                   addToPeerTable(peer);
                   Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                       .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
-                  if (fileterOnEnrForkId) {
+                  if (filterOnEnrForkId) {
                     requestENR(peer);
                   } else {
                     notifyPeerBonded(peer, System.currentTimeMillis());

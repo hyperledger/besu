@@ -417,6 +417,8 @@ public class RunnerBuilder {
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
           networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
+      discoveryConfiguration.setFilterOnEnrForkId(
+          networkingConfiguration.getDiscovery().isFilterOnEnrForkIdEnabled());
     } else {
       discoveryConfiguration.setActive(false);
     }
