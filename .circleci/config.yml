@@ -204,7 +204,7 @@ jobs:
       - run:
           name: Java_17
           command: |
-            sudo apt install openjdk-17-jdk-headless
+            sudo apt install openjdk-17-jre-headless openjdk-17-jdk-headless
       - run:
           name: IntegrationTests
           command: |
@@ -243,7 +243,7 @@ jobs:
       - run:
           name: Java_17
           command: |
-            sudo apt install openjdk-17-jdk-headless
+            sudo apt install openjdk-17-jre-headless openjdk-17-jdk-headless
       - run:
           name: AcceptanceTests
           no_output_timeout: 30m
