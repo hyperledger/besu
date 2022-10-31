@@ -359,7 +359,7 @@ public class BlockchainQueriesTest {
     final BlockchainWithData data = setupBlockchain(3);
     final BlockchainQueries queries = data.blockchainQueries;
     List<LogWithMetadata> logs =
-        queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build(), () -> true);
+        queries.matchingLogs(Hash.ZERO_HASH, new LogsQuery.Builder().build(), () -> true);
     assertThat(logs).isEmpty();
   }
 
@@ -368,7 +368,7 @@ public class BlockchainQueriesTest {
     final BlockchainWithData data = setupBlockchain(3);
     final BlockchainQueries queries = data.blockchainQueries;
 
-    final Optional<BlockHeader> ommerOptional = queries.getOmmer(Hash.ZERO, 0);
+    final Optional<BlockHeader> ommerOptional = queries.getOmmer(Hash.ZERO_HASH, 0);
 
     assertThat(ommerOptional).isEmpty();
   }

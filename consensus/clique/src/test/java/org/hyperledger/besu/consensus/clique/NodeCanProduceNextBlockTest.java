@@ -239,7 +239,7 @@ public class NodeCanProduceNextBlockTest {
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
-    headerBuilder.parentHash(Hash.ZERO).number(3);
+    headerBuilder.parentHash(Hash.ZERO_HASH).number(3);
     final BlockHeader parentHeader =
         TestHelpers.createCliqueSignedBlockHeader(headerBuilder, otherNodeKeyPair, validatorList);
 
@@ -262,7 +262,7 @@ public class NodeCanProduceNextBlockTest {
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
     cliqueProtocolContext = new ProtocolContext(blockChain, null, cliqueContext);
 
-    headerBuilder.parentHash(Hash.ZERO).number(3);
+    headerBuilder.parentHash(Hash.ZERO_HASH).number(3);
     final BlockHeader parentHeader = headerBuilder.buildHeader();
     assertThat(
             CliqueHelpers.addressIsAllowedToProduceNextBlock(

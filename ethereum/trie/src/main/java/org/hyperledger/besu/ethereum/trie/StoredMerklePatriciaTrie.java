@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import java.util.List;
@@ -223,7 +224,7 @@ public class StoredMerklePatriciaTrie<K extends Bytes, V> implements MerklePatri
   @Override
   public void visitLeafs(final TrieIterator.LeafHandler<V> handler) {
     final TrieIterator<V> visitor = new TrieIterator<>(handler, true);
-    root.accept(visitor, CompactEncoding.bytesToPath(Bytes32.ZERO));
+    root.accept(visitor, CompactEncoding.bytesToPath(ZERO_32));
   }
 
   @Override

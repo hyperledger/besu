@@ -72,7 +72,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingAPrepareMessageBeforeProposalFails() {
-    final Prepare prepareMsg = proposerMessageFactory.createPrepare(roundIdentifier, Hash.ZERO);
+    final Prepare prepareMsg =
+        proposerMessageFactory.createPrepare(roundIdentifier, Hash.ZERO_HASH);
 
     assertThat(validator.validatePrepare(prepareMsg.getSignedPayload())).isFalse();
   }
@@ -81,7 +82,7 @@ public class SignedDataValidatorTest {
   public void receivingACommitMessageBeforeProposalFails() {
     final Commit commitMsg =
         proposerMessageFactory.createCommit(
-            roundIdentifier, Hash.ZERO, proposerKey.sign(block.getHash()));
+            roundIdentifier, Hash.ZERO_HASH, proposerKey.sign(block.getHash()));
 
     assertThat(validator.validateCommit(commitMsg.getSignedPayload())).isFalse();
   }

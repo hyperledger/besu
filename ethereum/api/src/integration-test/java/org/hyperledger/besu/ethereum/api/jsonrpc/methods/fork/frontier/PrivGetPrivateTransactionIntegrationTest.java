@@ -151,7 +151,7 @@ public class PrivGetPrivateTransactionIntegrationTest {
     final PrivGetPrivateTransaction privGetPrivateTransaction =
         new PrivGetPrivateTransaction(privacyController, privacyIdProvider);
 
-    final Hash blockHash = Hash.ZERO;
+    final Hash blockHash = Hash.ZERO_HASH;
     final Transaction pmt = spy(privateMarkerTransaction());
     when(blockchain.getTransactionByHash(eq(pmt.getHash()))).thenReturn(Optional.of(pmt));
     when(blockchain.getTransactionLocation(eq(pmt.getHash())))

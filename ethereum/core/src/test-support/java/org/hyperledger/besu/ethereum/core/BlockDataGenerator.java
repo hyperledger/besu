@@ -226,7 +226,7 @@ public class BlockDataGenerator {
       final List<Address> accountsToSetup,
       final List<Bytes32> storageKeys) {
     final long blockNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
-    final Hash parentHash = Hash.ZERO;
+    final Hash parentHash = Hash.ZERO_HASH;
     return blockSequence(
         count, blockNumber, parentHash, worldStateArchive, accountsToSetup, storageKeys);
   }
@@ -239,7 +239,7 @@ public class BlockDataGenerator {
     options
         .setBlockNumber(BlockHeader.GENESIS_BLOCK_NUMBER)
         .setStateRoot(Hash.EMPTY_TRIE_HASH)
-        .setParentHash(Hash.ZERO);
+        .setParentHash(Hash.ZERO_HASH);
     return block(options);
   }
 

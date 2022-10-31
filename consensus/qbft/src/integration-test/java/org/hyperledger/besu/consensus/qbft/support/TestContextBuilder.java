@@ -355,7 +355,7 @@ public class TestContextBuilder {
     headerTestFixture.ommersHash(Hash.EMPTY_LIST_HASH);
     headerTestFixture.nonce(0);
     headerTestFixture.timestamp(0);
-    headerTestFixture.parentHash(Hash.ZERO);
+    headerTestFixture.parentHash(Hash.ZERO_HASH);
     headerTestFixture.gasLimit(5000);
     headerTestFixture.coinbase(coinbase);
 

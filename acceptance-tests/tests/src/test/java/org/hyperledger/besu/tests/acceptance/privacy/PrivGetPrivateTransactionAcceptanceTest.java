@@ -99,7 +99,7 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
 
   @Test
   public void nonExistentHashReturnsNull() {
-    alice.getBesu().verify(priv.getPrivateTransactionReturnsNull(Hash.ZERO));
+    alice.getBesu().verify(priv.getPrivateTransactionReturnsNull(Hash.ZERO_HASH));
   }
 
   @Test

@@ -69,7 +69,7 @@ public class LogRollingTests {
 
   private static final BlockHeader headerOne =
       new BlockHeader(
-          Hash.ZERO,
+          Hash.ZERO_HASH,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
           Hash.fromHexString("0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c"),
@@ -83,7 +83,7 @@ public class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO,
+          Hash.ZERO_HASH,
           0,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
@@ -102,7 +102,7 @@ public class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO,
+          Hash.ZERO_HASH,
           0,
           new MainnetBlockHeaderFunctions());
 

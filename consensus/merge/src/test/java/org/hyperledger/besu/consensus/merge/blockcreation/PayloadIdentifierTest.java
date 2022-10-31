@@ -43,7 +43,7 @@ public class PayloadIdentifierTest {
   public void conversionCoverage() {
     var idTest =
         PayloadIdentifier.forPayloadParams(
-            Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x42"));
+            Hash.ZERO_HASH, 1337L, Bytes32.random(), Address.fromHexString("0x42"));
     assertThat(new PayloadIdentifier(idTest.getAsBigInteger().longValue())).isEqualTo(idTest);
     assertThat(new PayloadIdentifier(idTest.getAsBigInteger().longValue())).isEqualTo(idTest);
   }

@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -283,7 +285,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   public Bytes32 getStorageValue(final Address address, final Bytes32 storageKey) {
     // TODO maybe log the read into the trie layer?
     final Hash slotHashBytes = Hash.hash(storageKey);
-    return getStorageValueBySlotHash(address, slotHashBytes).orElse(Bytes32.ZERO);
+    return getStorageValueBySlotHash(address, slotHashBytes).orElse(ZERO_32);
   }
 
   @Override
@@ -314,7 +316,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       final BonsaiValue<Bytes32> value = localAccountStorage.get(slotHash);
       if (value != null) {
         if (value.isCleared()) {
-          return Bytes32.ZERO;
+          return ZERO_32;
         }
         final Bytes32 updated = value.getUpdated();
         if (updated != null) {
@@ -327,7 +329,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
     }
     if (storageToClear.contains(address)) {
-      return Bytes32.ZERO;
+      return ZERO_32;
     }
     return getStorageValue(address, storageKey);
   }
@@ -629,9 +631,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
   }
 
   private boolean isSlotEquals(final Bytes32 expectedValue, final Bytes32 existingSlotValue) {
-    final Bytes32 sanitizedExpectedValue = (expectedValue == null) ? Bytes32.ZERO : expectedValue;
+    final Bytes32 sanitizedExpectedValue = (expectedValue == null) ? ZERO_32 : expectedValue;
     final Bytes32 sanitizedExistingSlotValue =
-        (existingSlotValue == null) ? Bytes32.ZERO : existingSlotValue;
+        (existingSlotValue == null) ? ZERO_32 : existingSlotValue;
     return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
   }
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -166,7 +167,7 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void streamAccounts_empty() {
     final MutableWorldState worldState = createEmpty();
-    final Stream<StreamableAccount> accounts = worldState.streamAccounts(Bytes32.ZERO, 10);
+    final Stream<StreamableAccount> accounts = worldState.streamAccounts(ZERO_32, 10);
     assertThat(accounts.count()).isEqualTo(0L);
   }
 
@@ -178,14 +179,14 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
 
     List<StreamableAccount> accounts =
-        worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
+        worldState.streamAccounts(ZERO_32, 10).collect(Collectors.toList());
     assertThat(accounts.size()).isEqualTo(1L);
     assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
     assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
 
     // Check again after persisting
     worldState.persist(null);
-    accounts = worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
+    accounts = worldState.streamAccounts(ZERO_32, 10).collect(Collectors.toList());
     assertThat(accounts.size()).isEqualTo(1L);
     assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
     assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
@@ -225,7 +226,7 @@ public class DefaultMutableWorldStateTest {
 
     // Get both accounts
     final List<StreamableAccount> allAccounts =
-        worldState.streamAccounts(Bytes32.ZERO, 2).collect(Collectors.toList());
+        worldState.streamAccounts(ZERO_32, 2).collect(Collectors.toList());
     assertThat(allAccounts.size()).isEqualTo(2L);
     assertThat(allAccounts.get(0).getAddress())
         .hasValue(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
@@ -660,18 +661,22 @@ public class DefaultMutableWorldStateTest {
     final Map<Bytes32, AccountStorageEntry> finalEntries = new TreeMap<>();
     finalSetOfEntries.forEach(entry -> finalEntries.put(entry.getKeyHash(), entry));
 
-    assertThat(account.storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
-    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
+    assertThat(account.storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
+    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(initialEntries);
 
     worldState.persist(null);
-    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
+    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(initialEntries);
 
     updater.commit();
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(finalEntries);
 
     worldState.persist(null);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(finalEntries);
   }
 }
