@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.evm.frame.Memory;
@@ -53,7 +55,7 @@ public class MemoryTest {
     memory.setBytes(0, 64, value);
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
   }
 
   @Test
@@ -62,7 +64,7 @@ public class MemoryTest {
     memory.setBytes(0, 96, value);
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
   }
 
   @Test
@@ -76,7 +78,7 @@ public class MemoryTest {
     memory.setBytes(0, 96, value);
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
     assertThat(memory.getWord(96)).isEqualTo(WORD4);
   }
 
@@ -91,7 +93,7 @@ public class MemoryTest {
     memory.setBytes(10, 96, value);
     assertThat(memory.getWord(10)).isEqualTo(WORD1);
     assertThat(memory.getWord(42)).isEqualTo(WORD2);
-    assertThat(memory.getWord(74)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(74)).isEqualTo(ZERO_32);
     // Word 4 got partially cleared because of the starting offset.
     assertThat(memory.getWord(106))
         .isEqualTo(
@@ -107,7 +109,7 @@ public class MemoryTest {
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
     memory.setBytes(0, 32, 64, value);
     assertThat(memory.getWord(0)).isEqualTo(WORD2);
-    assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(32)).isEqualTo(ZERO_32);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);
   }
 
@@ -118,8 +120,8 @@ public class MemoryTest {
 
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
     memory.setBytes(0, 94, 64, value);
-    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(0)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(32)).isEqualTo(ZERO_32);
     assertThat(memory.getWord(64)).isEqualTo(WORD3);
   }
 
@@ -130,9 +132,9 @@ public class MemoryTest {
 
     memory.setBytes(0, 96, Bytes.EMPTY);
 
-    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(0)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(32)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
   }
 
   @Test
@@ -142,9 +144,9 @@ public class MemoryTest {
 
     memory.setBytes(0, 0, 96, Bytes.EMPTY);
 
-    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(0)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(32)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
   }
 
   private static Bytes32 fillBytes32(final long value) {
@@ -166,14 +168,14 @@ public class MemoryTest {
     memory.setBytesRightAligned(0, 64, value);
     assertThat(memory.getWord(0)).isEqualTo(WORD1);
     assertThat(memory.getWord(32)).isEqualTo(WORD2);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
   }
 
   @Test
   public void shouldSetMemoryRightAlignedWhenLengthGreaterThanSourceLength() {
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
     memory.setBytesRightAligned(0, 96, value);
-    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(0)).isEqualTo(ZERO_32);
     assertThat(memory.getWord(32)).isEqualTo(WORD1);
     assertThat(memory.getWord(64)).isEqualTo(WORD2);
   }
@@ -187,7 +189,7 @@ public class MemoryTest {
 
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
     memory.setBytesRightAligned(0, 96, value);
-    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(0)).isEqualTo(ZERO_32);
     assertThat(memory.getWord(32)).isEqualTo(WORD1);
     assertThat(memory.getWord(64)).isEqualTo(WORD2);
     assertThat(memory.getWord(96)).isEqualTo(WORD4);
@@ -203,7 +205,7 @@ public class MemoryTest {
 
     final Bytes value = Bytes.concatenate(WORD1, WORD2);
     memory.setBytesRightAligned(10, 96, value);
-    assertThat(memory.getWord(10)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(10)).isEqualTo(ZERO_32);
     assertThat(memory.getWord(42)).isEqualTo(WORD1);
     assertThat(memory.getWord(74)).isEqualTo(WORD2);
     // Word 4 got partially set because of the starting offset.
@@ -220,8 +222,8 @@ public class MemoryTest {
 
     memory.setBytesRightAligned(0, 96, Bytes.EMPTY);
 
-    assertThat(memory.getWord(0)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(32)).isEqualTo(Bytes32.ZERO);
-    assertThat(memory.getWord(64)).isEqualTo(Bytes32.ZERO);
+    assertThat(memory.getWord(0)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(32)).isEqualTo(ZERO_32);
+    assertThat(memory.getWord(64)).isEqualTo(ZERO_32);
   }
 }

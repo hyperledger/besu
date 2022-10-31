@@ -62,7 +62,7 @@ public class TransactionValidatorProviderTest {
   @Before
   public void setup() {
     forksSchedule = new ForksSchedule<>(List.of(createContractForkSpec(0L, CONTRACT_ADDRESS)));
-    genesisBlock = createEmptyBlock(0, Hash.ZERO);
+    genesisBlock = createEmptyBlock(0, Hash.ZERO_HASH);
     blockChain = createInMemoryBlockchain(genesisBlock);
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
 

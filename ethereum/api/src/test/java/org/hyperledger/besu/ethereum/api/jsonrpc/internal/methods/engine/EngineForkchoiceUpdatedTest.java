@@ -115,11 +115,11 @@ public class EngineForkchoiceUpdatedTest {
         .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(false);
     assertSuccessWithPayloadForForkchoiceResult(
-        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, Hash.ZERO),
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO_HASH, Hash.ZERO_HASH),
         Optional.empty(),
         mock(ForkchoiceResult.class),
         INVALID,
-        Optional.of(Hash.ZERO));
+        Optional.of(Hash.ZERO_HASH));
   }
 
   @Test
@@ -132,7 +132,7 @@ public class EngineForkchoiceUpdatedTest {
 
     assertSuccessWithPayloadForForkchoiceResult(
         new EngineForkchoiceUpdatedParameter(
-            mockHeader.getHash(), Hash.ZERO, mockHeader.getParentHash()),
+            mockHeader.getHash(), Hash.ZERO_HASH, mockHeader.getParentHash()),
         Optional.empty(),
         mock(ForkchoiceResult.class),
         INVALID,
@@ -153,7 +153,7 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
     assertSuccessWithPayloadForForkchoiceResult(
-        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, Hash.ZERO),
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO_HASH, Hash.ZERO_HASH),
         Optional.empty(),
         ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
         VALID);
@@ -208,7 +208,7 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     assertSuccessWithPayloadForForkchoiceResult(
-        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
+        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO_HASH, mockParent.getHash()),
         Optional.empty(),
         ForkchoiceResult.withResult(Optional.of(mockParent), Optional.of(mockHeader)),
         VALID);
@@ -239,7 +239,7 @@ public class EngineForkchoiceUpdatedTest {
 
     var res =
         assertSuccessWithPayloadForForkchoiceResult(
-            new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, Hash.ZERO),
+            new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO_HASH, Hash.ZERO_HASH),
             Optional.of(payloadParams),
             ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
             VALID);
@@ -307,7 +307,7 @@ public class EngineForkchoiceUpdatedTest {
     var resp =
         resp(
             new EngineForkchoiceUpdatedParameter(
-                newHead.getBlockHash(), parent.getBlockHash(), Hash.ZERO),
+                newHead.getBlockHash(), parent.getBlockHash(), Hash.ZERO_HASH),
             Optional.empty());
 
     assertInvalidForkchoiceState(resp);
@@ -415,7 +415,7 @@ public class EngineForkchoiceUpdatedTest {
         (JsonRpcSuccessResponse)
             resp(
                 new EngineForkchoiceUpdatedParameter(
-                    mockHeader.getBlockHash(), Hash.ZERO, Hash.ZERO),
+                    mockHeader.getBlockHash(), Hash.ZERO_HASH, Hash.ZERO_HASH),
                 Optional.of(payloadParams));
 
     var forkchoiceRes = (EngineUpdateForkchoiceResult) resp.getResult();

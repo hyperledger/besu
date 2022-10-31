@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
@@ -71,7 +73,7 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldReturnZeroWhenAccountDoesNotExist() {
     final Bytes result = executeOperation(REQUESTED_ADDRESS);
-    assertThat(result).isEqualTo(Bytes32.ZERO);
+    assertThat(result).isEqualTo(ZERO_32);
   }
 
   @Test
@@ -83,12 +85,12 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldReturnZeroWhenAccountExistsButIsEmpty() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Bytes32.ZERO);
+    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(ZERO_32);
   }
 
   @Test
   public void shouldReturnZeroWhenPrecompiledContractHasNoBalance() {
-    assertThat(executeOperation(Address.ECREC)).isEqualTo(Bytes32.ZERO);
+    assertThat(executeOperation(Address.ECREC)).isEqualTo(ZERO_32);
   }
 
   @Test

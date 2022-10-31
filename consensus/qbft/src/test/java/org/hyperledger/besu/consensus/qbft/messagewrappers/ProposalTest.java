@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.messagewrappers;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
@@ -46,7 +48,7 @@ public class ProposalTest {
 
   private static final BftExtraData extraData =
       new BftExtraData(
-          Bytes32.ZERO, Collections.emptyList(), Optional.empty(), 1, Collections.emptyList());
+          ZERO_32, Collections.emptyList(), Optional.empty(), 1, Collections.emptyList());
 
   private static final Block BLOCK =
       new Block(

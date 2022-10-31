@@ -46,7 +46,7 @@ public class TransactionCompleteResultTest {
                     .createTransaction(gen.generateKeyPair()),
                 0L,
                 Optional.of(Wei.of(7L)),
-                Hash.ZERO,
+                Hash.ZERO_HASH,
                 0));
 
     assertThat(zeroPriorityFeeTx.getMaxFeePerGas()).isEqualTo("0x1");
@@ -59,7 +59,7 @@ public class TransactionCompleteResultTest {
     final Transaction transaction = gen.transaction(TransactionType.EIP1559);
     TransactionCompleteResult tcr =
         new TransactionCompleteResult(
-            new TransactionWithMetadata(transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO, 0));
+            new TransactionWithMetadata(transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO_HASH, 0));
     assertThat(tcr.getMaxFeePerGas()).isNotEmpty();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNotEmpty();
     assertThat(tcr.getGasPrice()).isNotEmpty();
@@ -73,7 +73,7 @@ public class TransactionCompleteResultTest {
     final Transaction transaction = gen.transaction(TransactionType.FRONTIER);
     TransactionCompleteResult tcr =
         new TransactionCompleteResult(
-            new TransactionWithMetadata(transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO, 0));
+            new TransactionWithMetadata(transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO_HASH, 0));
     assertThat(tcr.getMaxFeePerGas()).isNull();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
     assertThat(tcr.getGasPrice()).isNotEmpty();
@@ -87,7 +87,7 @@ public class TransactionCompleteResultTest {
     final Transaction transaction = gen.transaction(TransactionType.FRONTIER);
     TransactionCompleteResult tcr =
         new TransactionCompleteResult(
-            new TransactionWithMetadata(transaction, 0L, Optional.empty(), Hash.ZERO, 0));
+            new TransactionWithMetadata(transaction, 0L, Optional.empty(), Hash.ZERO_HASH, 0));
     assertThat(tcr.getMaxFeePerGas()).isNull();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
     assertThat(tcr.getGasPrice()).isNotEmpty();

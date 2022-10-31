@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -558,7 +560,7 @@ public class FastWorldStateDownloaderTest {
                 remoteWorldState.rootHash(),
                 Function.identity(),
                 Function.identity())
-            .entriesFrom(Bytes32.ZERO, 5).values().stream()
+            .entriesFrom(ZERO_32, 5).values().stream()
                 .map(RLP::input)
                 .map(StateTrieAccountValue::readFrom)
                 .map(StateTrieAccountValue::getStorageRoot)
@@ -974,9 +976,9 @@ public class FastWorldStateDownloaderTest {
       assertThat(actualAccount.getBalance()).isEqualTo(expectedAccount.getBalance());
 
       final Map<Bytes32, AccountStorageEntry> actualStorage =
-          actualAccount.storageEntriesFrom(Bytes32.ZERO, 500);
+          actualAccount.storageEntriesFrom(ZERO_32, 500);
       final Map<Bytes32, AccountStorageEntry> expectedStorage =
-          expectedAccount.storageEntriesFrom(Bytes32.ZERO, 500);
+          expectedAccount.storageEntriesFrom(ZERO_32, 500);
       assertThat(actualStorage).isEqualTo(expectedStorage);
     }
   }

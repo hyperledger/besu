@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -197,7 +199,7 @@ public class TransactionSmartContractPermissioningController
         encodeAddress(transaction.getSender()),
         encodeAddress(transaction.getTo()),
         transaction.getValue(),
-        transaction.getGasPrice().map(BaseUInt256Value::toBytes).orElse(Bytes32.ZERO),
+        transaction.getGasPrice().map(BaseUInt256Value::toBytes).orElse(ZERO_32),
         encodeLong(transaction.getGasLimit()),
         encodeBytes(transaction.getPayload()));
   }

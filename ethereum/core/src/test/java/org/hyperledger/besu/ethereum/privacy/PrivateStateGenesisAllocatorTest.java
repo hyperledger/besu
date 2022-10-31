@@ -16,6 +16,8 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE;
@@ -146,7 +148,7 @@ public class PrivateStateGenesisAllocatorTest {
   private void assertManagementContractApplied() {
     Account managementProxy = worldState.get(FLEXIBLE_PRIVACY_PROXY);
     assertThat(managementProxy.getCode()).isEqualTo(PROXY_RUNTIME_BYTECODE);
-    assertThat(managementProxy.getStorageValue(Bytes32.ZERO))
+    assertThat(managementProxy.getStorageValue(ZERO_32))
         .isEqualTo(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
 
     Account managementContract = worldState.get(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);

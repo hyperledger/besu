@@ -16,6 +16,8 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
@@ -190,7 +192,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
-            Bytes32.ZERO,
+            ZERO_32,
             suggestedFeeRecipient);
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
@@ -224,7 +226,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
-            Bytes32.ZERO,
+            ZERO_32,
             suggestedFeeRecipient);
 
     blockCreationTask.get();
@@ -266,7 +268,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
-            Bytes32.ZERO,
+            ZERO_32,
             suggestedFeeRecipient);
 
     blockCreationTask.get();
@@ -296,7 +298,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
-            Bytes32.ZERO,
+            ZERO_32,
             suggestedFeeRecipient);
 
     try {
@@ -337,7 +339,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         coordinator.preparePayload(
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
-            Bytes32.ZERO,
+            ZERO_32,
             suggestedFeeRecipient);
 
     waitForBlockCreationInProgress.await();
@@ -378,13 +380,13 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     var payloadId1 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(), timestamp, ZERO_32, suggestedFeeRecipient);
 
     final CompletableFuture<Void> task1 = blockCreationTask;
 
     var payloadId2 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(), timestamp, ZERO_32, suggestedFeeRecipient);
 
     assertThat(payloadId1).isEqualTo(payloadId2);
 
@@ -408,7 +410,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void childTimestampExceedsParentsFails() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
     Block parent = new Block(parentHeader, BlockBody.empty());
@@ -440,7 +442,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void latestValidAncestorDescendsFromTerminal() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
     Block parent = new Block(parentHeader, BlockBody.empty());
@@ -448,7 +450,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
     var lvh = this.coordinator.getLatestValidAncestor(parentHeader);
     assertThat(lvh).isPresent();
-    assertThat(lvh.get()).isEqualTo(Hash.ZERO);
+    assertThat(lvh.get()).isEqualTo(Hash.ZERO_HASH);
 
     sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
     BlockHeader childHeader = nextBlockHeader(parentHeader);
@@ -465,7 +467,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void latestValidAncestorDescendsFromFinalizedBlock() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader grandParentHeader = nextBlockHeader(terminalHeader);
     Block grandParent = new Block(grandParentHeader, BlockBody.empty());
@@ -473,7 +475,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
     var lvh = this.coordinator.getLatestValidAncestor(grandParentHeader);
     assertThat(lvh).isPresent();
-    assertThat(lvh.get()).isEqualTo(Hash.ZERO);
+    assertThat(lvh.get()).isEqualTo(Hash.ZERO_HASH);
 
     sendNewPayloadAndForkchoiceUpdate(grandParent, Optional.empty(), terminalHeader.getHash());
     BlockHeader parentHeader = nextBlockHeader(grandParentHeader);
@@ -499,7 +501,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void updateForkChoiceShouldPersistFirstFinalizedBlockHash() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader firstFinalizedHeader = nextBlockHeader(terminalHeader);
     Block firstFinalizedBlock = new Block(firstFinalizedHeader, BlockBody.empty());
@@ -570,7 +572,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void updateForkChoiceShouldPersistLastFinalizedBlockHash() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
     Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
@@ -763,7 +765,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void invalidPayloadShouldReturnErrorAndUpdateForkchoiceState() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader prevFinalizedHeader = nextBlockHeader(terminalHeader);
     Block prevFinalizedBlock = new Block(prevFinalizedHeader, BlockBody.empty());
@@ -787,7 +789,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             lastFinalizedBlock.getHash(),
             Optional.of(
                 new PayloadAttributes(
-                    headBlockHeader.getTimestamp() - 1, Hash.ZERO, Address.ZERO)));
+                    headBlockHeader.getTimestamp() - 1, Hash.ZERO_HASH, Address.ZERO)));
 
     assertThat(res.isValid()).isFalse();
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES);
@@ -802,7 +804,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   public void forkchoiceUpdateShouldIgnoreAncestorOfChainHead() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO_HASH);
 
     BlockHeader parentHeader = nextBlockHeader(terminalHeader);
     Block parent = new Block(parentHeader, BlockBody.empty());
@@ -815,10 +817,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     ForkchoiceResult res =
         coordinator.updateForkChoice(
             parentHeader,
-            Hash.ZERO,
+            Hash.ZERO_HASH,
             terminalHeader.getHash(),
             Optional.of(
-                new PayloadAttributes(parentHeader.getTimestamp() + 1, Hash.ZERO, Address.ZERO)));
+                new PayloadAttributes(parentHeader.getTimestamp() + 1, Hash.ZERO_HASH, Address.ZERO)));
 
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD);
     assertThat(res.getNewHead().isEmpty()).isTrue();
@@ -837,7 +839,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             coordinator
                 .updateForkChoice(
                     block.getHeader(),
-                    finalizedHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
+                    finalizedHeader.map(BlockHeader::getHash).orElse(Hash.ZERO_HASH),
                     safeHash,
                     Optional.empty())
                 .isValid())
@@ -894,7 +896,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 .number(0L)
                 .difficulty(hasTerminalPoW ? mockTTD : Difficulty.ZERO)
                 .buildHeader());
-    when(terminal.getParentHash()).thenReturn(Hash.ZERO);
+    when(terminal.getParentHash()).thenReturn(Hash.ZERO_HASH);
 
     // return decreasing numbered blocks:
     final var invocations = new AtomicLong(chainDepth);
@@ -911,7 +913,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     // mock total difficulty for isTerminalProofOfWorkBlock invocation:
     when(mockBlockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ZERO));
-    when(mockBlockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.empty());
+    when(mockBlockchain.getBlockHeader(Hash.ZERO_HASH)).thenReturn(Optional.empty());
 
     var mockContext = mock(MergeContext.class);
     when(mockContext.getTerminalTotalDifficulty()).thenReturn(mockTTD);

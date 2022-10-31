@@ -38,7 +38,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
   @Override
   AbstractPeerBlockValidator createValidator(final long blockNumber, final long buffer) {
     return new RequiredBlocksPeerValidator(
-        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, Hash.ZERO, buffer);
+        ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), blockNumber, Hash.ZERO_HASH, buffer);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
             ProtocolScheduleFixture.MAINNET,
             new NoOpMetricsSystem(),
             requiredBlockNumber,
-            Hash.ZERO,
+            Hash.ZERO_HASH,
             0);
 
     final RespondingEthPeer peer =

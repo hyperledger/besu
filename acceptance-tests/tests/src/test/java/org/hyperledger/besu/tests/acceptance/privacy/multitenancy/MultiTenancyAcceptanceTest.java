@@ -21,6 +21,8 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -250,7 +252,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     retrieveEeaPrivacyGroupEnclaveStub(validSignedPrivateTransaction);
     sendEnclaveStub(
-        Bytes32.ZERO.toBase64String()); // can be any value, as we are stubbing the enclave
+        ZERO_32.toBase64String()); // can be any value, as we are stubbing the enclave
     receiveEnclaveStubEea(validSignedPrivateTransaction);
 
     final String privateFrom = validSignedPrivateTransaction.getPrivateFrom().toBase64String();
