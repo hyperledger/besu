@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class DefaultWorldStateArchive implements WorldStateArchive {
   private final WorldStateStorage worldStateStorage;
@@ -99,7 +99,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
+      final List<Bytes32> accountStorageKeys) {
     return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
   }
 }

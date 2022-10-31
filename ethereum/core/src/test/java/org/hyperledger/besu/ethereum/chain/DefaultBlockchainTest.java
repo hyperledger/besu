@@ -222,7 +222,7 @@ public class DefaultBlockchainTest {
     final DefaultBlockchain blockchain = createMutableBlockchain(kvStore, genesisBlock);
 
     final BlockDataGenerator.BlockOptions options =
-        new BlockDataGenerator.BlockOptions().setBlockNumber(1L).setParentHash(Hash.ZERO);
+        new BlockDataGenerator.BlockOptions().setBlockNumber(1L).setParentHash(Hash.ZERO_HASH);
     final Block newBlock = gen.block(options);
     final List<TransactionReceipt> receipts = gen.receipts(newBlock);
     assertThatThrownBy(() -> blockchain.appendBlock(newBlock, receipts))

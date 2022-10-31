@@ -90,7 +90,7 @@ public class BlockHeaderValidationRulesetFactory {
     }
 
     var mixHashRule =
-        new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO);
+        new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO_HASH);
     var voteValidationRule = new VoteValidationRule();
     var cliqueTimestampRule = new TimestampMoreRecentThanParent(secondsBetweenBlocks);
 

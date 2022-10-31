@@ -2,9 +2,15 @@
 ## 22.10.0
 ### Breaking Changes
 - Version 22.10.0 will require Java 17 to build and run.
+- Internal and interface APIs relating to storage have migrated from `UInt256` to `Bytes32` [#4562](https://github.com/hyperledger/besu/pull/4562)
 
 ### Additions and Improvements
 - Updated jackson-databind library to version 2.13.4.2 addressing [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003)
+
+### Bug Fixes
+- Fixed default fromBlock value and improved parameter interpretation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
+- Fix for NoSuchElementException for missing invalid reason when rejecting a local sent transaction [#4569](https://github.com/hyperledger/besu/pull/4569) 
+- Corrects treating a block as bad on internal error during either validation or processing [#4512](https://github.com/hyperledger/besu/issues/4512)
 
 ## 22.10.0-RC2
 
@@ -37,7 +43,7 @@
 - Corrects treating a block as bad on internal error [#4512](https://github.com/hyperledger/besu/issues/4512)
 - In GraphQL update scalar parsing to be variable friendly [#4522](https://github.com/hyperledger/besu/pull/4522)
 - Initiate connection to maintained peers soon after startup. [#4469](https://github.com/hyperledger/besu/pull/4469)
-- Update apache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542) 
+- Update apache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
 
 ### Download Links
 

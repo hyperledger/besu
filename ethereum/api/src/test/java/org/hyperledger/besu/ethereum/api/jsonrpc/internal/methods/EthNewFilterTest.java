@@ -175,7 +175,7 @@ public class EthNewFilterTest {
             null,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO,
+            Hash.ZERO_HASH,
             null,
             null);
 

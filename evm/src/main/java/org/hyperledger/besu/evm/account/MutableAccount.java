@@ -19,7 +19,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A mutable world state account. */
 public interface MutableAccount extends Account {
@@ -94,7 +94,7 @@ public interface MutableAccount extends Account {
    * @param key the key to set.
    * @param value the value to set {@code key} to.
    */
-  void setStorageValue(UInt256 key, UInt256 value);
+  void setStorageValue(Bytes32 key, Bytes32 value);
 
   /** Clears out an account's storage. */
   void clearStorage();
@@ -104,5 +104,5 @@ public interface MutableAccount extends Account {
    *
    * @return a map of storage that has been modified.
    */
-  Map<UInt256, UInt256> getUpdatedStorage();
+  Map<Bytes32, Bytes32> getUpdatedStorage();
 }

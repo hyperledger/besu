@@ -111,12 +111,12 @@ public class BackwardSyncContext {
   }
 
   public synchronized void updateHeads(final Hash head, final Hash finalizedBlockHash) {
-    if (Hash.ZERO.equals(finalizedBlockHash)) {
+    if (Hash.ZERO_HASH.equals(finalizedBlockHash)) {
       this.maybeFinalized = Optional.empty();
     } else {
       this.maybeFinalized = Optional.ofNullable(finalizedBlockHash);
     }
-    if (Hash.ZERO.equals(head)) {
+    if (Hash.ZERO_HASH.equals(head)) {
       this.maybeHead = Optional.empty();
     } else {
       this.maybeHead = Optional.ofNullable(head);
@@ -309,12 +309,12 @@ public class BackwardSyncContext {
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
-    if (optResult.blockProcessingOutputs.isPresent()) {
+    if (optResult.getYield().isPresent()) {
       traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
-      optResult.blockProcessingOutputs.get().worldState.persist(block.getHeader());
+      optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()
           .getBlockchain()
-          .appendBlock(block, optResult.blockProcessingOutputs.get().receipts);
+          .appendBlock(block, optResult.getYield().get().getReceipts());
       possiblyMoveHead(block);
     } else {
       emitBadChainEvent(block);

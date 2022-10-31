@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
@@ -40,7 +41,6 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         Hash.wrap(
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     worldStateBlockHash =
-        Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
+        Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO_HASH)));
     updater = new BonsaiWorldStateUpdater(this);
   }
 
@@ -125,7 +125,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
               oldAccount.getStorageRoot(),
               Function.identity(),
               Function.identity());
-      Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+      Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(ZERO_32, 256);
       while (!entriesToDelete.isEmpty()) {
         entriesToDelete
             .keySet()
@@ -133,7 +133,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
                 k -> stateUpdater.removeStorageValueBySlotHash(Hash.hash(address), Hash.wrap(k)));
         if (entriesToDelete.size() == 256) {
           entriesToDelete.keySet().forEach(storageTrie::remove);
-          entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
+          entriesToDelete = storageTrie.entriesFrom(ZERO_32, 256);
         } else {
           break;
         }
@@ -142,7 +142,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
     // second update account storage state.  This must be done before updating the accounts so
     // that we can get the storage state hash
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
+    for (final Map.Entry<Address, Map<Hash, BonsaiValue<Bytes32>>> storageAccountUpdate :
         worldStateUpdater.getStorageToUpdate().entrySet()) {
       final Address updatedAddress = storageAccountUpdate.getKey();
       final Hash updatedAddressHash = Hash.hash(updatedAddress);
@@ -161,11 +161,11 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
 
         // for manicured tries and composting, collect branches here (not implemented)
 
-        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
+        for (final Map.Entry<Hash, BonsaiValue<Bytes32>> storageUpdate :
             storageAccountUpdate.getValue().entrySet()) {
           final Hash keyHash = storageUpdate.getKey();
-          final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
-          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+          final Bytes32 updatedStorage = storageUpdate.getValue().getUpdated();
+          if (updatedStorage == null || updatedStorage.equals(ZERO_32)) {
             stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
             storageTrie.remove(keyHash);
           } else {
@@ -372,19 +372,19 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   @Override
-  public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
-    return getStorageValueBySlotHash(address, Hash.hash(storageKey)).orElse(UInt256.ZERO);
+  public Bytes32 getStorageValue(final Address address, final Bytes32 storageKey) {
+    return getStorageValueBySlotHash(address, Hash.hash(storageKey)).orElse(ZERO_32);
   }
 
   @Override
-  public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
+  public Optional<Bytes32> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
     return worldStateStorage
         .getStorageValueBySlotHash(Hash.hash(address), slotHash)
-        .map(UInt256::fromBytes);
+        .map(Bytes32::leftPad);
   }
 
   @Override
-  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
+  public Bytes32 getPriorStorageValue(final Address address, final Bytes32 storageKey) {
     return getStorageValue(address, storageKey);
   }
 
@@ -396,6 +396,6 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
             rootHash,
             Function.identity(),
             Function.identity());
-    return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+    return storageTrie.entriesFrom(ZERO_32, Integer.MAX_VALUE);
   }
 }

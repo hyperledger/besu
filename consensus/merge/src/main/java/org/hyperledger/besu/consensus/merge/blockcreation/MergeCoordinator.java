@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -210,8 +210,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp)
             .getBlock();
 
-    Result result = validateBlock(emptyBlock);
-    if (result.blockProcessingOutputs.isPresent()) {
+    BlockProcessingResult result = validateBlock(emptyBlock);
+    if (result.getYield().isPresent()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
       debugLambda(
           LOG,
@@ -327,7 +327,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
     final var resultBest = validateBlock(bestBlock);
-    if (resultBest.blockProcessingOutputs.isPresent()) {
+    if (resultBest.getYield().isPresent()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
@@ -395,7 +395,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Result validateBlock(final Block block) {
+  public BlockProcessingResult validateBlock(final Block block) {
+
     final var chain = protocolContext.getBlockchain();
     chain
         .getBlockHeader(block.getHeader().getParentHash())
@@ -415,18 +416,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 HeaderValidationMode.NONE,
                 false);
 
-    validationResult.errorMessage.ifPresent(errMsg -> addBadBlock(block));
-
     return validationResult;
   }
 
   @Override
-  public Result rememberBlock(final Block block) {
+  public BlockProcessingResult rememberBlock(final Block block) {
     debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
     final var validationResult = validateBlock(block);
-    validationResult.blockProcessingOutputs.ifPresent(
-        result -> chain.storeBlock(block, result.receipts));
+    validationResult.getYield().ifPresent(result -> chain.storeBlock(block, result.getReceipts()));
     return validationResult;
   }
 
@@ -647,7 +645,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             header -> {
               // if block is PoW, return ZERO hash
               if (header.getDifficulty().greaterThan(Difficulty.ZERO)) {
-                return Hash.ZERO;
+                return Hash.ZERO_HASH;
               } else {
                 return header.getHash();
               }

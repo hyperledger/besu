@@ -110,8 +110,8 @@ public class TransactionTracerTest {
     when(blockHeader.getNumber()).thenReturn(12L);
     when(blockHeader.getHash()).thenReturn(blockHash);
     when(blockHeader.getParentHash()).thenReturn(previousBlockHash);
-    when(previousBlockHeader.getStateRoot()).thenReturn(Hash.ZERO);
-    when(worldStateArchive.getMutable(Hash.ZERO, null, false))
+    when(previousBlockHeader.getStateRoot()).thenReturn(Hash.ZERO_HASH);
+    when(worldStateArchive.getMutable(Hash.ZERO_HASH, null, false))
         .thenReturn(Optional.of(mutableWorldState));
     when(protocolSchedule.getByBlockNumber(12)).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);

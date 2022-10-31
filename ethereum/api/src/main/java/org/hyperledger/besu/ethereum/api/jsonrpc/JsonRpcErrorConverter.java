@@ -63,6 +63,10 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.GAS_PRICE_MUST_BE_ZERO;
       case ETHER_VALUE_NOT_SUPPORTED:
         return JsonRpcError.ETHER_VALUE_NOT_SUPPORTED;
+      case NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER:
+        return JsonRpcError.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+      case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
+        return JsonRpcError.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }

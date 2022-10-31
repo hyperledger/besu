@@ -134,7 +134,7 @@ public class EthGetTransactionByHashTest {
         org.hyperledger.besu.ethereum.core.Transaction.readFrom(
             Bytes.fromHexString(VALID_TRANSACTION));
     final TransactionWithMetadata transactionWithMetadata =
-        new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
+        new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO_HASH, 0);
 
     when(pendingTransactions.getTransactionByHash(eq(transaction.getHash())))
         .thenReturn(Optional.empty());
