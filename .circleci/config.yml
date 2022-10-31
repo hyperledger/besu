@@ -202,6 +202,10 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless
+      - run:
           name: IntegrationTests
           command: |
             ./gradlew --no-daemon integrationTest
@@ -237,6 +241,10 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
+          name: Java_17
+          command: |
+            sudo apt install openjdk-17-jre-headless
+      - run:
           name: AcceptanceTests
           no_output_timeout: 30m
           command: |
@@ -268,7 +276,7 @@ jobs:
           path: build/quorum-at
           destination: quorum-at-artifacts
       - store_test_results:
-          path: build/quorum-at/openjdk-latest/reports/xml-report
+          path: build/quorum-at/openjdk-17/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
