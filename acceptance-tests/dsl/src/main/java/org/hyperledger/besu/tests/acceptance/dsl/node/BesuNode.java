@@ -298,7 +298,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return port;
   }
 
-  private Optional<String> jsonRpcBaseUrl() {
+  public Optional<String> jsonRpcBaseUrl() {
     if (isJsonRpcEnabled()) {
       return Optional.of(
           HTTP + jsonRpcConfiguration.getHost() + ":" + portsProperties.getProperty(JSON_RPC));

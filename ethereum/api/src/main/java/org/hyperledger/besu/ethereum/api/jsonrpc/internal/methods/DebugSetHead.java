@@ -57,6 +57,6 @@ public class DebugSetHead extends AbstractBlockParameterMethod {
 
     protocolContext.getBlockchain().rewindToBlock(maybeBlockHash.get());
 
-    return new JsonRpcSuccessResponse(request.getRequest().getId());
+    return JsonRpcSuccessResponse.SUCCESS_RESULT;
   }
 }
