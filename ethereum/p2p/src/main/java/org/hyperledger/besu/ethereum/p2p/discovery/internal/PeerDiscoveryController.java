@@ -333,7 +333,7 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  if (!peerPermissions.isAllowedInPeerTable(peer)) {
+                  if (peerPermissions.isAllowedInPeerTable(peer)) {
                     addToPeerTable(peer);
                     Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                         .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
