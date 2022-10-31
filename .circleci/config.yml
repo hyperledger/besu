@@ -196,15 +196,11 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor:   besu_executor_xl
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
-      - run:
-          name: Java_17
-          command: |
-            sudo apt install openjdk-17-jre-headless
       - run:
           name: IntegrationTests
           command: |
@@ -235,15 +231,11 @@ jobs:
 
   acceptanceTests:
     parallelism: 6
-    executor:   besu_executor_xl
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
-      - run:
-          name: Java_17
-          command: |
-            sudo apt install openjdk-17-jre-headless
       - run:
           name: AcceptanceTests
           no_output_timeout: 30m
@@ -276,7 +268,7 @@ jobs:
           path: build/quorum-at
           destination: quorum-at-artifacts
       - store_test_results:
-          path: build/quorum-at/openjdk-17/reports/xml-report
+          path: build/quorum-at/openjdk-latest/reports/xml-report
 
   buildDocker:
     executor: besu_executor_med
