@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -43,6 +44,7 @@ abstract class TrieNodeDataRequest extends NodeDataRequest {
     final List<Node<Bytes>> nodes =
         TrieNodeDecoder.decodeNodes(getLocation().orElse(Bytes.EMPTY), getData());
     return nodes.stream()
+        .filter(bytesNode -> !(bytesNode instanceof NullNode))
         .flatMap(
             node -> {
               if (nodeIsHashReferencedDescendant(node)) {

@@ -83,7 +83,7 @@ public class StackTrie {
     commit(nodeUpdater, (key, value) -> {});
   }
 
-    public void commit(final NodeUpdater nodeUpdater, final FlatDatabaseUpdater flatDatabaseUpdater) {
+  public void commit(final NodeUpdater nodeUpdater, final FlatDatabaseUpdater flatDatabaseUpdater) {
 
     if (nbSegments.decrementAndGet() <= 0 && !elements.isEmpty()) {
 

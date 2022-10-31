@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.trie.Node;
+import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
@@ -85,6 +86,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
 
     final List<Node<Bytes>> nodes = TrieNodeDecoder.decodeNodes(location, data);
     return nodes.stream()
+        .filter(bytesNode -> !(bytesNode instanceof NullNode))
         .flatMap(
             node -> {
               if (nodeIsHashReferencedDescendant(node)) {

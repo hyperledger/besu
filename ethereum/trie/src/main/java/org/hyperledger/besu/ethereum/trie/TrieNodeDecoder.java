@@ -62,10 +62,6 @@ public class TrieNodeDecoder {
     final List<Node<Bytes>> toProcess = new ArrayList<>(node.getChildren());
     while (!toProcess.isEmpty()) {
       final Node<Bytes> currentNode = toProcess.remove(0);
-      if (Objects.equals(NullNode.instance(), currentNode)) {
-        // Skip null nodes
-        continue;
-      }
       nodes.add(currentNode);
 
       if (!currentNode.isReferencedByHash()) {

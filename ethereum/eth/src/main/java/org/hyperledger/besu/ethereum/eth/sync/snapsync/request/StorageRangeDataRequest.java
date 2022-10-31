@@ -44,6 +44,7 @@ import com.google.common.annotations.VisibleForTesting;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
     final StackTrie.FlatDatabaseUpdater flatDatabaseUpdater =
         (key, value) ->
-            bonsaiWorldStateUpdater.putStorageValueBySlotHash(accountHash, Hash.wrap(key), value);
+            bonsaiWorldStateUpdater.putStorageValueBySlotHash(
+                accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
 
     stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
 
