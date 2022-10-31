@@ -180,8 +180,8 @@ public class FastSyncDownloader<REQUEST> {
       final CompletableFuture<Void> worldStateFuture =
           worldStateDownloader.run(fastSyncActions, currentState);
       final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(currentState);
-      final CompletableFuture<Void> chainFuture = chainDownloader.start();
-
+//      final CompletableFuture<Void> chainFuture = chainDownloader.start();
+      final CompletableFuture<Void> chainFuture = CompletableFuture.completedFuture(null);
       // If either download fails, cancel the other one.
       chainFuture.exceptionally(
           error -> {
