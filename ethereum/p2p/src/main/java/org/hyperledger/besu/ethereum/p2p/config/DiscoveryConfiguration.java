@@ -32,6 +32,7 @@ public class DiscoveryConfiguration {
   private List<EnodeURL> bootnodes = new ArrayList<>();
   private String dnsDiscoveryURL;
   private boolean discoveryV5Enabled = false;
+  private boolean filterOnEnrForkId = false;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -118,8 +119,16 @@ public class DiscoveryConfiguration {
     return discoveryV5Enabled;
   }
 
+  public boolean isFilterOnEnrForkIdEnabled() {
+    return filterOnEnrForkId;
+  }
+
   public void setDiscoveryV5Enabled(final boolean discoveryV5Enabled) {
     this.discoveryV5Enabled = discoveryV5Enabled;
+  }
+
+  public void setFilterOnEnrForkId(final boolean filterOnEnrForkId) {
+    this.filterOnEnrForkId = filterOnEnrForkId;
   }
 
   @Override

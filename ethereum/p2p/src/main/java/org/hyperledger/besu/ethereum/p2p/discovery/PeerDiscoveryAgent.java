@@ -272,6 +272,7 @@ public abstract class PeerDiscoveryAgent {
         .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
         .forkIdManager(forkIdManager)
+        .filterOnEnrForkId((config.isFilterOnEnrForkIdEnabled()))
         .build();
   }
 
