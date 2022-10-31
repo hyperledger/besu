@@ -117,7 +117,7 @@ public class NetworkUtility {
     return false;
   }
 
-  public static boolean isPortAvailableForUdp(final int port) {
+  private static boolean isPortAvailableForUdp(final int port) {
     try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
       datagramSocket.setReuseAddress(true);
       datagramSocket.bind(new InetSocketAddress(port));
@@ -129,7 +129,6 @@ public class NetworkUtility {
   }
 
   public static boolean isPortAvailable(final int port) {
-    if (isPortAvailableForTcp(port) && isPortAvailableForUdp(port)) return true;
-    return false;
+    return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
   }
 }
