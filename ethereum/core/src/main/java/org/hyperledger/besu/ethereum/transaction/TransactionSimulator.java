@@ -162,7 +162,7 @@ public class TransactionSimulator {
     }
   }
 
-  public MutableWorldState getWorldState(final BlockHeader header) {
+  private MutableWorldState getWorldState(final BlockHeader header) {
     return worldStateArchive
         .getMutable(header.getStateRoot(), header.getHash(), false)
         .orElseThrow(

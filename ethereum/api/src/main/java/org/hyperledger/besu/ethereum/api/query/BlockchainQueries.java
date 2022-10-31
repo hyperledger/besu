@@ -933,17 +933,12 @@ public class BlockchainQueries {
                         (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
   }
 
-  private <T> Optional<T> fromWorldState(
-      final Hash blockHash, final Function<MutableWorldState, T> getter) {
-    return mapWorldState(blockHash, getter);
-  }
-
   private <T> Optional<T> fromAccount(
       final Address address,
       final Hash blockHash,
       final Function<Account, T> getter,
       final T noAccountValue) {
-    return fromWorldState(
+    return mapWorldState(
         blockHash,
         worldState ->
             Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));

@@ -109,35 +109,43 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final BlockHeader blockHeader = maybeBlockHeader.get();
 
     final List<JsonNode> traceCallResults = new ArrayList<>();
-    try (var ws = transactionSimulator.getWorldState(blockHeader)) {
-      final WorldUpdater updater =
-          transactionSimulator.getEffectiveWorldStateUpdater(blockHeader, ws);
 
-      Arrays.stream(transactionsAndTraceTypeParameters)
-          .forEachOrdered(
-              param -> {
-                final WorldUpdater localUpdater = updater.updater();
-                traceCallResults.add(
-                    getSingleCallResult(
-                        param.getTuple().getJsonCallParameter(),
-                        param.getTuple().getTraceTypeParameter(),
-                        blockHeader,
-                        localUpdater));
-                localUpdater.commit();
-              });
-    } catch (final TransactionInvalidException e) {
-      LOG.error("Invalid transaction simulator result");
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    } catch (final EmptySimulatorResultException e) {
-      LOG.error(
-          "Empty simulator result, call params: {}, blockHeader: {} ",
-          JsonCallParameterUtil.validateAndGetCallParams(requestContext),
-          blockHeader);
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    } catch (final Exception e) {
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    }
-    return traceCallResults;
+    return getBlockchainQueries()
+        .mapWorldState(
+            blockHeader.getBlockHash(),
+            ws -> {
+              final WorldUpdater updater =
+                  transactionSimulator.getEffectiveWorldStateUpdater(blockHeader, ws);
+              try {
+                Arrays.stream(transactionsAndTraceTypeParameters)
+                    .forEachOrdered(
+                        param -> {
+                          final WorldUpdater localUpdater = updater.updater();
+                          traceCallResults.add(
+                              getSingleCallResult(
+                                  param.getTuple().getJsonCallParameter(),
+                                  param.getTuple().getTraceTypeParameter(),
+                                  blockHeader,
+                                  localUpdater));
+                          localUpdater.commit();
+                        });
+              } catch (final TransactionInvalidException e) {
+                LOG.error("Invalid transaction simulator result");
+                return new JsonRpcErrorResponse(
+                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+              } catch (final EmptySimulatorResultException e) {
+                LOG.error(
+                    "Empty simulator result, call params: {}, blockHeader: {} ",
+                    JsonCallParameterUtil.validateAndGetCallParams(requestContext),
+                    blockHeader);
+                return new JsonRpcErrorResponse(
+                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+              } catch (final Exception e) {
+                return new JsonRpcErrorResponse(
+                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+              }
+              return traceCallResults;
+            });
   }
 
   private JsonNode getSingleCallResult(
