@@ -79,7 +79,8 @@ class DebugAccountAtTest {
   void testBlockNotFoundResponse() {
     Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -94,7 +95,8 @@ class DebugAccountAtTest {
     Mockito.when(blockchainQueries.blockByHash(any())).thenReturn(Optional.of(blockWithMetadata));
     Mockito.when(blockWithMetadata.getTransactions()).thenReturn(Collections.emptyList());
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -110,7 +112,8 @@ class DebugAccountAtTest {
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), -1, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), -1, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -126,7 +129,8 @@ class DebugAccountAtTest {
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 2, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), 2, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -142,7 +146,8 @@ class DebugAccountAtTest {
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -156,7 +161,8 @@ class DebugAccountAtTest {
   void testNoAccountFoundResponse() {
     setupMockTransaction();
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
 
@@ -185,7 +191,8 @@ class DebugAccountAtTest {
     Mockito.when(account.getBalance()).thenReturn(balance);
     Mockito.when(account.getCodeHash()).thenReturn(codeHash);
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO_HASH.toHexString(), 0, Address.ZERO.toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcSuccessResponse response =
@@ -215,6 +222,6 @@ class DebugAccountAtTest {
         .thenReturn(Collections.singletonList(transactionTrace));
     Mockito.when(transactionTrace.getTransaction()).thenReturn(transaction);
     Mockito.when(transactionWithMetadata.getTransaction()).thenReturn(transaction);
-    Mockito.when(transaction.getHash()).thenReturn(Hash.ZERO);
+    Mockito.when(transaction.getHash()).thenReturn(Hash.ZERO_HASH);
   }
 }

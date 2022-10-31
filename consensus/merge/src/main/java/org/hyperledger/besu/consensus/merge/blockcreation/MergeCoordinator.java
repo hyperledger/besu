@@ -645,7 +645,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             header -> {
               // if block is PoW, return ZERO hash
               if (header.getDifficulty().greaterThan(Difficulty.ZERO)) {
-                return Hash.ZERO;
+                return Hash.ZERO_HASH;
               } else {
                 return header.getHash();
               }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -212,7 +213,7 @@ public class DebugOperationTracerTest {
     when(worldUpdater.getAccount(frame.getRecipientAddress())).thenReturn(account);
 
     final Map<Bytes32, Bytes32> updatedStorage = new TreeMap<>();
-    updatedStorage.put(Bytes32.ZERO, Bytes32.leftPad(Bytes.ofUnsignedInt(233)));
+    updatedStorage.put(ZERO_32, Bytes32.leftPad(Bytes.ofUnsignedInt(233)));
     updatedStorage.put(
         Bytes32.leftPad(Bytes.ofUnsignedInt(1)), Bytes32.leftPad(Bytes.ofUnsignedInt(2424)));
     when(mutableAccount.getUpdatedStorage()).thenReturn(updatedStorage);

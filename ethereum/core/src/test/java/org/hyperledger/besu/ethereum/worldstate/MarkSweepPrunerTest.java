@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -95,12 +96,12 @@ public class MarkSweepPrunerTest {
         worldStateArchive.get(markBlock.getStateRoot(), markBlock.getHash()).get();
     // Traverse accounts and make sure all are accessible
     final int expectedAccounts = numAccounts * markBlockNumber;
-    final long accounts = markedState.streamAccounts(Bytes32.ZERO, expectedAccounts * 2).count();
+    final long accounts = markedState.streamAccounts(ZERO_32, expectedAccounts * 2).count();
     assertThat(accounts).isEqualTo(expectedAccounts);
     // Traverse storage to ensure that all storage is accessible
     markedState
-        .streamAccounts(Bytes32.ZERO, expectedAccounts * 2)
-        .forEach(a -> a.storageEntriesFrom(Bytes32.ZERO, 1000));
+        .streamAccounts(ZERO_32, expectedAccounts * 2)
+        .forEach(a -> a.storageEntriesFrom(ZERO_32, 1000));
 
     // All other state roots should have been removed
     for (int i = 0; i < numBlocks; i++) {
@@ -223,7 +224,7 @@ public class MarkSweepPrunerTest {
 
     // Collect storage roots and code
     stateTrie
-        .entriesFrom(Bytes32.ZERO, 1000)
+        .entriesFrom(ZERO_32, 1000)
         .forEach(
             (key, val) -> {
               final StateTrieAccountValue accountValue =

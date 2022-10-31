@@ -36,7 +36,7 @@ public class PrepareTest {
     final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
     final PreparePayload preparePayload =
-        new PreparePayload(new ConsensusRoundIdentifier(1, 1), Hash.ZERO);
+        new PreparePayload(new ConsensusRoundIdentifier(1, 1), Hash.ZERO_HASH);
 
     final SignedData<PreparePayload> signedPreparePayload =
         SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));

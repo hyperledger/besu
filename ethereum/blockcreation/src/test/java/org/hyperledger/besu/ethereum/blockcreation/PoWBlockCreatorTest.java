@@ -236,7 +236,7 @@ public class PoWBlockCreatorTest {
 
     final ProcessableBlockHeader header =
         BlockHeaderBuilder.create()
-            .parentHash(Hash.ZERO)
+            .parentHash(Hash.ZERO_HASH)
             .coinbase(BLOCK_1_COINBASE)
             .difficulty(Difficulty.ONE)
             .number(1)
@@ -306,7 +306,7 @@ public class PoWBlockCreatorTest {
 
     final ProcessableBlockHeader header =
         BlockHeaderBuilder.create()
-            .parentHash(Hash.ZERO)
+            .parentHash(Hash.ZERO_HASH)
             .coinbase(BLOCK_1_COINBASE)
             .difficulty(Difficulty.ONE)
             .number(1)

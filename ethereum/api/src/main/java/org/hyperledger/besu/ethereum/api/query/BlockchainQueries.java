@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -186,7 +187,7 @@ public class BlockchainQueries {
   public Optional<Bytes32> storageAt(
       final Address address, final Bytes32 storageIndex, final Hash blockHash) {
     return fromAccount(
-        address, blockHash, account -> account.getStorageValue(storageIndex), Bytes32.ZERO);
+        address, blockHash, account -> account.getStorageValue(storageIndex), ZERO_32);
   }
 
   /**

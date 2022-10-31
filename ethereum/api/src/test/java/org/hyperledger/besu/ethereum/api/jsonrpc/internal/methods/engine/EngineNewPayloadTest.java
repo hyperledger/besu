@@ -195,7 +195,7 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
+    assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO_HASH));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     verify(mergeCoordinator, atLeastOnce()).addBadBlock(any());
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -364,7 +364,7 @@ public class EngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
+    assertThat(res.getLatestValidHash()).contains(Hash.ZERO_HASH);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Block already present in bad block manager.");
     verify(engineCallListener, times(1)).executionEngineCalled();
