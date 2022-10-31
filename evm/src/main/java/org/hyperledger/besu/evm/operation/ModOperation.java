@@ -24,7 +24,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class ModOperation extends AbstractFixedCostOperation {
 

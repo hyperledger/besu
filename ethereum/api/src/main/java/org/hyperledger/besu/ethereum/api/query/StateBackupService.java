@@ -16,10 +16,9 @@
 
 package org.hyperledger.besu.ethereum.api.query;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.chain.Blockchain;

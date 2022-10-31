@@ -99,9 +99,7 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     while (iterator.hasNext()) {
       fullPath = Bytes.wrap(fullPath, iterator.next());
     }
-    return fullPath.isZero()
-        ? ZERO_32
-        : Bytes32.wrap(CompactEncoding.pathToBytes(fullPath), 0);
+    return fullPath.isZero() ? ZERO_32 : Bytes32.wrap(CompactEncoding.pathToBytes(fullPath), 0);
   }
 
   public interface LeafHandler<V> {

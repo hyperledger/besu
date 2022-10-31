@@ -234,7 +234,8 @@ public class EthCallTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO_HASH);
-    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO_HASH)).thenReturn(Optional.of(blockHeader));
+    when(blockchainQueries.getBlockHeaderByHash(Hash.ZERO_HASH))
+        .thenReturn(Optional.of(blockHeader));
 
     method.response(request);
 

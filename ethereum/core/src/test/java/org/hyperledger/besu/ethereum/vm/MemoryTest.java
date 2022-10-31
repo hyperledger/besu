@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.evm.frame.Memory;
 

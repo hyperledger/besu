@@ -208,7 +208,8 @@ public class EngineForkchoiceUpdatedTest {
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
 
     assertSuccessWithPayloadForForkchoiceResult(
-        new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO_HASH, mockParent.getHash()),
+        new EngineForkchoiceUpdatedParameter(
+            mockHeader.getHash(), Hash.ZERO_HASH, mockParent.getHash()),
         Optional.empty(),
         ForkchoiceResult.withResult(Optional.of(mockParent), Optional.of(mockHeader)),
         VALID);
@@ -239,7 +240,8 @@ public class EngineForkchoiceUpdatedTest {
 
     var res =
         assertSuccessWithPayloadForForkchoiceResult(
-            new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO_HASH, Hash.ZERO_HASH),
+            new EngineForkchoiceUpdatedParameter(
+                mockHeader.getHash(), Hash.ZERO_HASH, Hash.ZERO_HASH),
             Optional.of(payloadParams),
             ForkchoiceResult.withResult(Optional.empty(), Optional.of(mockHeader)),
             VALID);

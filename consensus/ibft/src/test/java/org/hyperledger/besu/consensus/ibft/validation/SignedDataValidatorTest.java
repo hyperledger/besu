@@ -72,7 +72,8 @@ public class SignedDataValidatorTest {
 
   @Test
   public void receivingAPrepareMessageBeforeProposalFails() {
-    final Prepare prepareMsg = proposerMessageFactory.createPrepare(roundIdentifier, Hash.ZERO_HASH);
+    final Prepare prepareMsg =
+        proposerMessageFactory.createPrepare(roundIdentifier, Hash.ZERO_HASH);
 
     assertThat(validator.validatePrepare(prepareMsg.getSignedPayload())).isFalse();
   }

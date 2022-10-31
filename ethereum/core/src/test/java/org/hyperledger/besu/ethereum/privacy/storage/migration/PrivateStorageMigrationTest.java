@@ -165,7 +165,8 @@ public class PrivateStorageMigrationTest {
     createPrivacyGroupHeadBlockInitialMapAndMetadata(PRIVACY_GROUP_BYTES, rootHashOtherThanZero);
 
     // final state root won't match the legacy state root
-    when(legacyPrivateStateStorage.getLatestStateRoot(any())).thenReturn(Optional.of(Hash.ZERO_HASH));
+    when(legacyPrivateStateStorage.getLatestStateRoot(any()))
+        .thenReturn(Optional.of(Hash.ZERO_HASH));
 
     assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
 

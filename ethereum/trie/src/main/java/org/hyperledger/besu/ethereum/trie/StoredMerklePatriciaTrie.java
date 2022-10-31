@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toUnmodifiableSet;
-
 import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 

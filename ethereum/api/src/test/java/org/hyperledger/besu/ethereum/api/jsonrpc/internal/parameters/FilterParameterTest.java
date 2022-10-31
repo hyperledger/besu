@@ -228,7 +228,8 @@ public class FilterParameterTest {
         requestUsingAlias.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameterUsingAlias.isValid()).isTrue();
-    assertThat(parsedFilterParameterUsingAlias.getBlockHash()).isEqualTo(Optional.of(Hash.ZERO_HASH));
+    assertThat(parsedFilterParameterUsingAlias.getBlockHash())
+        .isEqualTo(Optional.of(Hash.ZERO_HASH));
 
     // blockhash and blockHash should end up the same
     assertThat(parsedFilterParameter)

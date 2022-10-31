@@ -61,8 +61,7 @@ public class TaskGenerator {
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(
                 root ->
-                    RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, ZERO_32));
+                    RangeStorageEntriesCollector.collectEntries(collector, visitor, root, ZERO_32));
 
     final Hash rootHash = Hash.wrap(trie.getRootHash());
 
@@ -123,8 +122,7 @@ public class TaskGenerator {
         (TreeMap<Bytes32, Bytes>)
             storageTrie.entriesFrom(
                 root ->
-                    RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, ZERO_32));
+                    RangeStorageEntriesCollector.collectEntries(collector, visitor, root, ZERO_32));
 
     final StorageRangeDataRequest request =
         SnapDataRequest.createStorageRangeDataRequest(

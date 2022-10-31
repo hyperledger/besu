@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.proof;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
@@ -59,7 +58,8 @@ public class WorldStateRangeProofProviderTest {
         TrieGenerator.generateTrie(worldStateStorage, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO_HASH, MAX_RANGE, 10, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Hash.ZERO_HASH, MAX_RANGE, 10, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -88,7 +88,8 @@ public class WorldStateRangeProofProviderTest {
         TrieGenerator.generateTrie(worldStateStorage, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO_HASH, MAX_RANGE, 10, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Hash.ZERO_HASH, MAX_RANGE, 10, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
@@ -127,7 +128,8 @@ public class WorldStateRangeProofProviderTest {
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO_HASH, MAX_RANGE, 12, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Hash.ZERO_HASH, MAX_RANGE, 12, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
         RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -164,7 +166,8 @@ public class WorldStateRangeProofProviderTest {
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO_HASH, MAX_RANGE, 15, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Hash.ZERO_HASH, MAX_RANGE, 15, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
         RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -192,7 +195,8 @@ public class WorldStateRangeProofProviderTest {
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO_HASH, MAX_RANGE, 9, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Hash.ZERO_HASH, MAX_RANGE, 9, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
         RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =

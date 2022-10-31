@@ -14,11 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;

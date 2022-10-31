@@ -16,9 +16,8 @@
 
 package org.hyperledger.besu.evm.worldstate;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 
@@ -664,16 +663,20 @@ public class DefaultMutableWorldStateTest {
 
     assertThat(account.storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
     assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(initialEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(initialEntries);
 
     worldState.persist(null);
     assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(initialEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(initialEntries);
 
     updater.commit();
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(finalEntries);
 
     worldState.persist(null);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO_HASH, 10))
+        .isEqualTo(finalEntries);
   }
 }

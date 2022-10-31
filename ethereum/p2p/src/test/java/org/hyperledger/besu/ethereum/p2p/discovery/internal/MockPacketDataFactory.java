@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,7 +26,6 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 class MockPacketDataFactory {

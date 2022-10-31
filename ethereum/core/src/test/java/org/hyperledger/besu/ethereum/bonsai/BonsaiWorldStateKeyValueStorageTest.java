@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
@@ -173,7 +172,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO_HASH, 1));
+            trie.entriesFrom(
+                root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO_HASH, 1));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
@@ -197,7 +197,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final MerklePatriciaTrie<Bytes32, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO_HASH, 1));
+            trie.entriesFrom(
+                root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO_HASH, 1));
 
     final StateTrieAccountValue stateTrieAccountValue =
         StateTrieAccountValue.readFrom(RLP.input(accounts.firstEntry().getValue()));

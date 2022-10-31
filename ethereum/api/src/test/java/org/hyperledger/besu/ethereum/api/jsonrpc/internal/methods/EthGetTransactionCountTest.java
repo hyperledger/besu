@@ -151,6 +151,7 @@ class EthGetTransactionCountTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
     when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO_HASH);
-    when(blockchainQueries.getTransactionCount(address, Hash.ZERO_HASH)).thenReturn(transactionCount);
+    when(blockchainQueries.getTransactionCount(address, Hash.ZERO_HASH))
+        .thenReturn(transactionCount);
   }
 }

@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

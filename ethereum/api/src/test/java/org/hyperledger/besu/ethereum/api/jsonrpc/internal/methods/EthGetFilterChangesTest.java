@@ -112,7 +112,9 @@ public class EthGetFilterChangesTest {
     when(filterManager.blockChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO_HASH));
 
     final List<String> expectedHashes =
-        Lists.newArrayList(Hash.ZERO_HASH).stream().map(Hash::toString).collect(Collectors.toList());
+        Lists.newArrayList(Hash.ZERO_HASH).stream()
+            .map(Hash::toString)
+            .collect(Collectors.toList());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedHashes);
 
     final JsonRpcResponse response = method.response(request);
@@ -136,10 +138,13 @@ public class EthGetFilterChangesTest {
   public void shouldReturnHashesWhenFilterManagerFindsPendingTransactionFilterWithHashes() {
     final JsonRpcRequestContext request = requestWithParams("0x1");
     when(filterManager.blockChanges(anyString())).thenReturn(null);
-    when(filterManager.pendingTransactionChanges("0x1")).thenReturn(Lists.newArrayList(Hash.ZERO_HASH));
+    when(filterManager.pendingTransactionChanges("0x1"))
+        .thenReturn(Lists.newArrayList(Hash.ZERO_HASH));
 
     final List<String> expectedHashes =
-        Lists.newArrayList(Hash.ZERO_HASH).stream().map(Hash::toString).collect(Collectors.toList());
+        Lists.newArrayList(Hash.ZERO_HASH).stream()
+            .map(Hash::toString)
+            .collect(Collectors.toList());
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, expectedHashes);
 
     final JsonRpcResponse response = method.response(request);

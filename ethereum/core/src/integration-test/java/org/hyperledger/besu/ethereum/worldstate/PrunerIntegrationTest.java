@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 
@@ -146,8 +145,7 @@ public class PrunerIntegrationTest {
             worldStateArchive.get(stateRoot, blockHeader.getHash()).get();
         // Traverse accounts and make sure all are accessible
         final int expectedAccounts = accountsPerBlock * i;
-        final long accounts =
-            markedState.streamAccounts(ZERO_32, expectedAccounts * 2).count();
+        final long accounts = markedState.streamAccounts(ZERO_32, expectedAccounts * 2).count();
         assertThat(accounts).isEqualTo(expectedAccounts);
         // Traverse storage to ensure that all storage is accessible
         markedState

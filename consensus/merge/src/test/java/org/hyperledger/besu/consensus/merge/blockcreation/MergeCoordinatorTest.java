@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-
 import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
@@ -820,7 +819,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Hash.ZERO_HASH,
             terminalHeader.getHash(),
             Optional.of(
-                new PayloadAttributes(parentHeader.getTimestamp() + 1, Hash.ZERO_HASH, Address.ZERO)));
+                new PayloadAttributes(
+                    parentHeader.getTimestamp() + 1, Hash.ZERO_HASH, Address.ZERO)));
 
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD);
     assertThat(res.getNewHead().isEmpty()).isTrue();
