@@ -3128,20 +3128,25 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void checkIfRequiredPortsAreAvailable() {
-    List<Integer> unavailablePorts = new ArrayList<>();
+    final List<Integer> unavailablePorts = new ArrayList<>();
     getEffectivePorts().stream()
         .filter(Objects::nonNull)
         .filter(port -> port > 0)
         .forEach(
             port -> {
-              if (!NetworkUtility.isPortAvailable(port)) {
+              if (port.equals(p2PDiscoveryOptionGroup.p2pPort)
+                  && !NetworkUtility.isPortAvailable(port)) {
+                unavailablePorts.add(port);
+              }
+              if (!port.equals(p2PDiscoveryOptionGroup.p2pPort)
+                  && !NetworkUtility.isPortAvailableForTcp(port)) {
                 unavailablePorts.add(port);
               }
             });
     if (!unavailablePorts.isEmpty()) {
       throw new InvalidConfigurationException(
           "Port(s) '"
-              + unavailablePorts.toString()
+              + unavailablePorts
               + "' already in use. Check for other processes using the port(s).");
     }
   }
