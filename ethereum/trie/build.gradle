@@ -29,7 +29,6 @@ jar {
 
 dependencies {
   implementation project(':crypto')
-  implementation project(':datatypes')
   implementation project(':ethereum:rlp')
 
   implementation "org.immutables:value-annotations"

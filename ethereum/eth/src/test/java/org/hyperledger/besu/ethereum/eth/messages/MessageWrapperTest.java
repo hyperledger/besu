@@ -182,8 +182,8 @@ public class MessageWrapperTest {
                             new LogWithMetadata(
                                 0,
                                 0,
-                                Hash.ZERO_HASH,
-                                Hash.ZERO_HASH,
+                                Hash.ZERO,
+                                Hash.ZERO,
                                 0,
                                 Address.fromHexString("0x11"),
                                 Bytes.fromHexString("0x0100ff"),

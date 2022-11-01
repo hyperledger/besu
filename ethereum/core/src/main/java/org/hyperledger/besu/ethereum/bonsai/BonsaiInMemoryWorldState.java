@@ -16,6 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -96,7 +97,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
   private void updateAccountStorage(
       final BonsaiWorldStateUpdater worldStateUpdater,
-      final Map.Entry<Address, Map<Hash, BonsaiValue<Bytes32>>> storageAccountUpdate) {
+      final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = Hash.hash(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
@@ -114,7 +115,7 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
       // for manicured tries and composting, collect branches here (not implemented)
 
-      for (final Map.Entry<Hash, BonsaiValue<Bytes32>> storageUpdate :
+      for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
           storageAccountUpdate.getValue().entrySet()) {
         final Hash keyHash = storageUpdate.getKey();
         final Bytes32 updatedStorage = storageUpdate.getValue().getUpdated();

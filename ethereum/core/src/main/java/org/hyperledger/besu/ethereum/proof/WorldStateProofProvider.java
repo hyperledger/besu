@@ -40,6 +40,7 @@ import java.util.function.Function;
 import com.google.common.collect.Ordering;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStateProofProvider {
 
@@ -52,7 +53,7 @@ public class WorldStateProofProvider {
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,
-      final List<Bytes32> accountStorageKeys) {
+      final List<UInt256> accountStorageKeys) {
 
     if (!worldStateStorage.isWorldStateAvailable(worldStateRoot, null)) {
       return Optional.empty();
@@ -67,20 +68,20 @@ public class WorldStateProofProvider {
           .map(StateTrieAccountValue::readFrom)
           .map(
               account -> {
-                final SortedMap<Bytes32, Proof<Bytes>> storageProofs =
+                final SortedMap<UInt256, Proof<Bytes>> storageProofs =
                     getStorageProofs(accountHash, account, accountStorageKeys);
                 return new WorldStateProof(account, accountProof, storageProofs);
               });
     }
   }
 
-  private SortedMap<Bytes32, Proof<Bytes>> getStorageProofs(
+  private SortedMap<UInt256, Proof<Bytes>> getStorageProofs(
       final Hash accountHash,
       final StateTrieAccountValue account,
-      final List<Bytes32> accountStorageKeys) {
+      final List<UInt256> accountStorageKeys) {
     final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
         newAccountStorageTrie(accountHash, account.getStorageRoot());
-    final NavigableMap<Bytes32, Proof<Bytes>> storageProofs = new TreeMap<>();
+    final NavigableMap<UInt256, Proof<Bytes>> storageProofs = new TreeMap<>();
     accountStorageKeys.forEach(
         key -> storageProofs.put(key, storageTrie.getValueWithProof(Hash.hash(key))));
     return storageProofs;
@@ -113,7 +114,7 @@ public class WorldStateProofProvider {
       final Bytes32 endKeyHash,
       final Bytes32 rootHash,
       final List<Bytes> proofs,
-      final NavigableMap<Bytes32, Bytes> keys) {
+      final TreeMap<Bytes32, Bytes> keys) {
 
     // check if it's monotonic increasing
     if (!Ordering.natural().isOrdered(keys.keySet())) {

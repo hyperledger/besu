@@ -41,7 +41,7 @@ public class CommitTest {
     final CommitPayload commitPayload =
         new CommitPayload(
             new ConsensusRoundIdentifier(1, 1),
-            Hash.ZERO_HASH,
+            Hash.ZERO,
             SignatureAlgorithmFactory.getInstance()
                 .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0));
 

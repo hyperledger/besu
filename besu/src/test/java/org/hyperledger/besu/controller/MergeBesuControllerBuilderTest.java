@@ -104,17 +104,17 @@ public class MergeBesuControllerBuilderTest {
 
   @Before
   public void setup() {
-    when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO_HASH.toHexString());
+    when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
-    when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO_HASH.toHexString());
+    when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
     when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
-    when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO_HASH));
+    when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     when(storageProvider.createBlockchainStorage(any()))
         .thenReturn(

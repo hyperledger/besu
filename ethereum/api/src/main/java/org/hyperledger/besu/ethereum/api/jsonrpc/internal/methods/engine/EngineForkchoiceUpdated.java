@@ -94,7 +94,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
               INVALID,
               mergeCoordinator
                   .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
-                  .orElse(Hash.ZERO_HASH),
+                  .orElse(Hash.ZERO),
               null,
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
@@ -122,7 +122,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
           requestId,
           new EngineUpdateForkchoiceResult(
               INVALID,
-              Hash.ZERO_HASH,
+              Hash.ZERO,
               null,
               Optional.of(newHead.get() + " did not descend from terminal block")));
     }

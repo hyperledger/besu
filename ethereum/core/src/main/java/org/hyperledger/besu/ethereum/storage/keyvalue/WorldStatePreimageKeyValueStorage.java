@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStorage {
   private final KeyValueStorage keyValueStorage;
@@ -32,11 +33,12 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
   }
 
   @Override
-  public Optional<Bytes32> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
+  public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
     return keyValueStorage
         .get(trieKey.toArrayUnsafe())
         .filter(val -> val.length == Bytes32.SIZE)
-        .map(Bytes32::wrap);
+        .map(Bytes32::wrap)
+        .map(UInt256::fromBytes);
   }
 
   @Override
@@ -61,7 +63,7 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
 
     @Override
     public WorldStatePreimageStorage.Updater putStorageTrieKeyPreimage(
-        final Bytes32 trieKey, final Bytes32 preimage) {
+        final Bytes32 trieKey, final UInt256 preimage) {
       transaction.put(trieKey.toArrayUnsafe(), preimage.toArrayUnsafe());
       return this;
     }

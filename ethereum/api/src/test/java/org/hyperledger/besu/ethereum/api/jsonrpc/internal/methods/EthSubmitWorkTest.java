@@ -103,7 +103,7 @@ public class EthSubmitWorkTest {
     final JsonRpcRequestContext request =
         requestWithParams(
             Bytes.ofUnsignedLong(expectedFirstOutput.getNonce()).trimLeadingZeros().toHexString(),
-            expectedFirstOutput.getPowHash().toHexString(),
+            Bytes.wrap(expectedFirstOutput.getPowHash()).toHexString(),
             expectedFirstOutput.getMixHash().toHexString());
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), true);
