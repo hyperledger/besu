@@ -109,8 +109,8 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessful() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -137,8 +137,8 @@ public class TransactionSimulatorTest {
   public void shouldSetGasPriceToZeroWhenExceedingBalanceAllowed() {
     final CallParameter callParameter = legacyTransactionCallParameter(Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -168,8 +168,8 @@ public class TransactionSimulatorTest {
   public void shouldSetFeePerGasToZeroWhenExceedingBalanceAllowed() {
     final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ONE, Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, Wei.ONE);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -201,8 +201,8 @@ public class TransactionSimulatorTest {
   public void shouldNotSetGasPriceToZeroWhenExceedingBalanceIsNotAllowed() {
     final CallParameter callParameter = legacyTransactionCallParameter(Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -232,8 +232,8 @@ public class TransactionSimulatorTest {
   public void shouldNotSetFeePerGasToZeroWhenExceedingBalanceIsNotAllowed() {
     final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ONE, Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, Wei.ONE);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -265,8 +265,8 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultValuesWhenMissingOptionalFields() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L);
-    mockWorldStateForAccount(Hash.ZERO_HASH, Address.fromHexString("0x0"), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -291,8 +291,8 @@ public class TransactionSimulatorTest {
   public void shouldUseZeroNonceWhenAccountDoesNotExist() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L);
-    mockWorldStateForAbsentAccount(Hash.ZERO_HASH);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAbsentAccount(Hash.ZERO);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -317,8 +317,8 @@ public class TransactionSimulatorTest {
   public void shouldReturnFailureResultWhenProcessingFails() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L);
-    mockWorldStateForAccount(Hash.ZERO_HASH, Address.fromHexString("0x0"), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
+    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -343,10 +343,10 @@ public class TransactionSimulatorTest {
 
   @Test
   public void shouldReturnEmptyWhenBlockDoesNotExistByHash() {
-    when(blockchain.getBlockHeader(eq(Hash.ZERO_HASH))).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.empty());
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(legacyTransactionCallParameter(), Hash.ZERO_HASH);
+        transactionSimulator.process(legacyTransactionCallParameter(), Hash.ZERO);
 
     assertThat(result.isPresent()).isFalse();
   }
@@ -355,8 +355,8 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessfulByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -383,8 +383,8 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultValuesWhenMissingOptionalFieldsByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAccount(Hash.ZERO_HASH, Address.fromHexString("0x0"), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -409,8 +409,8 @@ public class TransactionSimulatorTest {
   public void shouldUseZeroNonceWhenAccountDoesNotExistByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAbsentAccount(Hash.ZERO_HASH);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAbsentAccount(Hash.ZERO);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -435,8 +435,8 @@ public class TransactionSimulatorTest {
   public void shouldReturnFailureResultWhenProcessingFailsByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAccount(Hash.ZERO_HASH, Address.fromHexString("0x0"), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
+    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -463,8 +463,8 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenEip1559TransactionProcessingIsSuccessful() {
     final CallParameter callParameter = eip1559TransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO_HASH, 1L, Wei.ONE);
-    mockWorldStateForAccount(Hash.ZERO_HASH, callParameter.getFrom(), 1L);
+    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -509,7 +509,7 @@ public class TransactionSimulatorTest {
   }
 
   private void mockBlockchainForBlockHeader(final Hash stateRoot, final long blockNumber) {
-    mockBlockchainForBlockHeader(stateRoot, blockNumber, Hash.ZERO_HASH);
+    mockBlockchainForBlockHeader(stateRoot, blockNumber, Hash.ZERO);
   }
 
   private void mockBlockchainForBlockHeader(

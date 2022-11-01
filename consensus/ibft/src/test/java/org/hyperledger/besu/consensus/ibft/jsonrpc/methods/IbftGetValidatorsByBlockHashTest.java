@@ -41,7 +41,7 @@ public class IbftGetValidatorsByBlockHashTest {
 
   private static final String ETH_METHOD = "ibft_getValidatorsByBlockHash";
   private static final String JSON_RPC_VERSION = "2.0";
-  private static final String ZERO_HASH = String.valueOf(Hash.ZERO_HASH);
+  private static final String ZERO_HASH = String.valueOf(Hash.ZERO);
 
   @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
@@ -62,7 +62,7 @@ public class IbftGetValidatorsByBlockHashTest {
 
   @Test
   public void shouldReturnListOfValidatorsFromBlock() {
-    when(blockchain.getBlockHeader(Hash.ZERO_HASH)).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
     final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
     when(bftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);

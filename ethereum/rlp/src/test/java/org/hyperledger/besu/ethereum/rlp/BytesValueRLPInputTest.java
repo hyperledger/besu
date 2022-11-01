@@ -626,7 +626,6 @@ public class BytesValueRLPInputTest {
             RLPInput::readBigIntegerScalar,
             RLPInput::readIntScalar,
             RLPInput::readLongScalar,
-            RLPInput::readBytes32Scalar,
             RLPInput::readUInt256Scalar);
 
     for (Function<RLPInput, Object> decoder : invalidDecoders) {

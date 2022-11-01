@@ -60,7 +60,7 @@ public final class GenesisStateTest {
     assertThat(header.getReceiptsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getOmmersHash()).isEqualTo(Hash.EMPTY_LIST_HASH);
     assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
-    assertThat(header.getParentHash()).isEqualTo(Hash.ZERO_HASH);
+    assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
     final MutableWorldState worldState = InMemoryKeyValueStorageProvider.createInMemoryWorldState();
     genesisState.writeStateTo(worldState);
     final Account first =
@@ -85,7 +85,7 @@ public final class GenesisStateTest {
     assertThat(header.getReceiptsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(header.getOmmersHash()).isEqualTo(Hash.EMPTY_LIST_HASH);
     assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
-    assertThat(header.getParentHash()).isEqualTo(Hash.ZERO_HASH);
+    assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
   }
 
   private void assertContractInvariants(final String sourceFile, final String blockHash)

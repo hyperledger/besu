@@ -48,7 +48,7 @@ public class PrivGetCodeTest {
   @Mock private BlockchainQueries mockBlockchainQueries;
   @Mock private PrivacyIdProvider privacyIdProvider;
 
-  private final Hash latestBlockHash = Hash.ZERO_HASH;
+  private final Hash latestBlockHash = Hash.ZERO;
   private final String enclavePublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
   private final String privacyGroupId = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
   private final Address contractAddress =

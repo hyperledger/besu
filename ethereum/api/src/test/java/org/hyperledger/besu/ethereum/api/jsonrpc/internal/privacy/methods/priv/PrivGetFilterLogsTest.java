@@ -145,8 +145,8 @@ public class PrivGetFilterLogsTest {
     return new LogWithMetadata(
         0,
         100L,
-        Hash.ZERO_HASH,
-        Hash.ZERO_HASH,
+        Hash.ZERO,
+        Hash.ZERO,
         0,
         Address.fromHexString("0x0"),
         Bytes.EMPTY,
