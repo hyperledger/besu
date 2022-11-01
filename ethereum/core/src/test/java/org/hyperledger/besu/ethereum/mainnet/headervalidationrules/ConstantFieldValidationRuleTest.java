@@ -38,7 +38,7 @@ public class ConstantFieldValidationRuleTest {
 
     assertThat(uut.validate(header, null)).isTrue();
 
-    blockHeaderBuilder.ommersHash(Hash.ZERO);
+    blockHeaderBuilder.ommersHash(Hash.ZERO_HASH);
     header = blockHeaderBuilder.buildHeader();
     assertThat(uut.validate(header, null)).isFalse();
   }

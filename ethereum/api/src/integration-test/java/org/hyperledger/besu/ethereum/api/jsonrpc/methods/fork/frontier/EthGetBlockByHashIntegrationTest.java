@@ -47,7 +47,7 @@ public class EthGetBlockByHashIntegrationTest {
   private final JsonRpcResponseUtils responseUtils = new JsonRpcResponseUtils();
   private final String ETH_METHOD = "eth_getBlockByHash";
   private final String JSON_RPC_VERSION = "2.0";
-  private final String ZERO_HASH = String.valueOf(Hash.ZERO);
+  private final String ZERO_HASH = String.valueOf(Hash.ZERO_HASH);
 
   @BeforeAll
   public static void setUpOnce() throws Exception {

@@ -17,6 +17,7 @@
 package org.hyperledger.besu.evm.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -204,12 +205,12 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
       return value;
     }
     if (storageWasCleared) {
-      return Bytes32.ZERO;
+      return ZERO_32;
     }
 
     // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? Bytes32.ZERO : account.getStorageValue(key);
+    return account == null ? ZERO_32 : account.getStorageValue(key);
   }
 
   @Override
@@ -217,7 +218,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     if (transactionBoundary) {
       return getStorageValue(key);
     } else if (storageWasCleared || account == null) {
-      return Bytes32.ZERO;
+      return ZERO_32;
     } else {
       return account.getOriginalStorageValue(key);
     }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -26,7 +27,7 @@ import org.apache.tuweni.bytes.DelegatingBytes32;
 /** A 32-bytes hash value as used in Ethereum blocks, that is the result of the KEC algorithm. */
 public class Hash extends DelegatingBytes32 implements org.hyperledger.besu.plugin.data.Hash {
 
-  public static final Hash ZERO = new Hash(Bytes32.ZERO);
+  public static final Hash ZERO_HASH = new Hash(ZERO_32);
 
   /**
    * Hash of an RLP encoded trie hash with no content, or

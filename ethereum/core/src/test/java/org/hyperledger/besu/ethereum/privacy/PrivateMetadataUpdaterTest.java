@@ -50,7 +50,7 @@ public class PrivateMetadataUpdaterTest {
   public void before() {
     blockHeader = mock(BlockHeader.class);
     privateStateStorage = new InMemoryPrivacyStorageProvider().createPrivateStateStorage();
-    final Hash hashBlockZero = Hash.ZERO;
+    final Hash hashBlockZero = Hash.ZERO_HASH;
     when(blockHeader.getParentHash()).thenReturn(hashBlockZero);
     updater = new PrivateMetadataUpdater(blockHeader, privateStateStorage);
     hashBlockOne =
@@ -69,7 +69,7 @@ public class PrivateMetadataUpdaterTest {
   @Test
   public void addingMetadataSuccessfull() {
     when(blockHeader.getHash()).thenReturn(hashBlockOne);
-    pmtHash = Hash.ZERO;
+    pmtHash = Hash.ZERO_HASH;
     final PrivateTransactionMetadata expected = new PrivateTransactionMetadata(pmtHash, stateRoot);
     updater.addPrivateTransactionMetadata(privacyGroupId, expected);
     updater.commit();
