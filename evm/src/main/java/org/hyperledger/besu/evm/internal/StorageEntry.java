@@ -16,18 +16,18 @@
 package org.hyperledger.besu.evm.internal;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class StorageEntry {
-  private final Bytes32 offset;
+  private final UInt256 offset;
   private final Bytes value;
 
-  public StorageEntry(final Bytes32 offset, final Bytes value) {
+  public StorageEntry(final UInt256 offset, final Bytes value) {
     this.offset = offset;
     this.value = value;
   }
 
-  public Bytes32 getOffset() {
+  public UInt256 getOffset() {
     return offset;
   }
 

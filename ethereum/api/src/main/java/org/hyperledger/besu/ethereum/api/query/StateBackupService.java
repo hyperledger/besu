@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -108,7 +107,7 @@ public class StateBackupService {
             this.backupDir = backupDir.orElse(this.backupDir);
             backupStatus.targetBlock = block;
             backupStatus.compressed = compress;
-            backupStatus.currentAccount = ZERO_32;
+            backupStatus.currentAccount = Bytes32.ZERO;
             scheduler.scheduleComputationTask(
                 () -> {
                   try {
@@ -186,7 +185,7 @@ public class StateBackupService {
         "Backup Block must be within blockchain");
     backupStatus.targetBlock = block;
     backupStatus.compressed = compress;
-    backupStatus.currentAccount = ZERO_32;
+    backupStatus.currentAccount = Bytes32.ZERO;
 
     backupChainData();
     backupLeaves();

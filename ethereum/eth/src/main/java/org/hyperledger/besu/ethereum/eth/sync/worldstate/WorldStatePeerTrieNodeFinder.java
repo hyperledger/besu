@@ -126,7 +126,7 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
   }
 
   public Optional<Bytes> findByGetTrieNodeData(
-      final Hash nodeHash, final Optional<Bytes> accountHash, final Bytes location) {
+      final Hash nodeHash, final Optional<Bytes32> accountHash, final Bytes location) {
     final BlockHeader chainHead = blockchain.getChainHeadHeader();
     final Map<Bytes, List<Bytes>> request = new HashMap<>();
     if (accountHash.isPresent()) {
@@ -141,7 +141,7 @@ public class WorldStatePeerTrieNodeFinder implements PeerTrieNodeFinder {
       final Map<Bytes, Bytes> response =
           getTrieNodeFromPeerTask.run().get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       final Bytes nodeValue =
-          response.get(Bytes.concatenate(accountHash.orElse(Bytes.EMPTY), path));
+          response.get(Bytes.concatenate(accountHash.map(Bytes::wrap).orElse(Bytes.EMPTY), path));
       if (nodeValue != null && Hash.hash(nodeValue).equals(nodeHash)) {
         LOG.debug("Found node {} with getTrieNode request", nodeHash);
         return Optional.of(nodeValue);

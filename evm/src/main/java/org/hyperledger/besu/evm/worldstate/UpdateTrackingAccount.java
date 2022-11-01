@@ -17,7 +17,6 @@
 package org.hyperledger.besu.evm.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -35,6 +34,7 @@ import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A implementation of {@link MutableAccount} that tracks updates made to the account since the
@@ -57,9 +57,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
   @Nullable private Hash updatedCodeHash;
 
-  // Only contains updated storage entries, but may contain entry with a value of 0 to signify
+  // Only contains updated storage entries, but may contains entry with a value of 0 to signify
   // deletion.
-  private final NavigableMap<Bytes32, Bytes32> updatedStorage;
+  private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
 
@@ -127,7 +127,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
    *     with a value of 0 to signify deletion.
    */
   @Override
-  public Map<Bytes32, Bytes32> getUpdatedStorage() {
+  public Map<UInt256, UInt256> getUpdatedStorage() {
     return updatedStorage;
   }
 
@@ -199,26 +199,26 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
-  public Bytes32 getStorageValue(final Bytes32 key) {
-    final Bytes32 value = updatedStorage.get(key);
+  public UInt256 getStorageValue(final UInt256 key) {
+    final UInt256 value = updatedStorage.get(key);
     if (value != null) {
       return value;
     }
     if (storageWasCleared) {
-      return ZERO_32;
+      return UInt256.ZERO;
     }
 
     // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? ZERO_32 : account.getStorageValue(key);
+    return account == null ? UInt256.ZERO : account.getStorageValue(key);
   }
 
   @Override
-  public Bytes32 getOriginalStorageValue(final Bytes32 key) {
+  public UInt256 getOriginalStorageValue(final UInt256 key) {
     if (transactionBoundary) {
       return getStorageValue(key);
     } else if (storageWasCleared || account == null) {
-      return ZERO_32;
+      return UInt256.ZERO;
     } else {
       return account.getOriginalStorageValue(key);
     }
@@ -246,7 +246,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
-  public void setStorageValue(final Bytes32 key, final Bytes32 value) {
+  public void setStorageValue(final UInt256 key, final UInt256 value) {
     updatedStorage.put(key, value);
   }
 

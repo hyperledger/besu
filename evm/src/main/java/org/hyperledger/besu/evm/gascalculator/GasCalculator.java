@@ -42,7 +42,7 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * Provides various gas cost lookups and calculations used during block processing.
@@ -353,7 +353,7 @@ public interface GasCalculator {
    * @param newValue the new value to be stored
    * @return the gas cost for the SSTORE operation
    */
-  long calculateStorageCost(Account account, Bytes32 key, Bytes32 newValue);
+  long calculateStorageCost(Account account, UInt256 key, UInt256 newValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
@@ -363,7 +363,7 @@ public interface GasCalculator {
    * @param newValue the new value to be stored
    * @return the gas refund for the SSTORE operation
    */
-  long calculateStorageRefundAmount(Account account, Bytes32 key, Bytes32 newValue);
+  long calculateStorageRefundAmount(Account account, UInt256 key, UInt256 newValue);
 
   /**
    * Returns the refund amount for deleting an account in a {@link SelfDestructOperation}.
