@@ -64,4 +64,14 @@ public interface KeyValueStorageFactory extends Closeable {
    *     <code>false</code> when keys of different segments can collide with each other.
    */
   boolean isSegmentIsolationSupported();
+
+  /**
+   * Whether storage supports repeatable reads AKA snapshots.
+   *
+   * @return <code>true</code> when the created storage supports snapshots <code>false</code> when
+   *     it does not.
+   */
+  default boolean isSnapshotIsolationSupported() {
+    return false;
+  }
 }
