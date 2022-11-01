@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -49,12 +48,13 @@ class NewPooledTransactionHashesMessageSender {
             transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
       try {
         final List<Hash> txHashes = toHashList(txBatch);
-        traceLambda(
-            LOG,
-            "Sending transaction hashes to peer {}, transaction hashes count {}, list {}",
-            peer::toString,
-            txHashes::size,
-            txHashes::toString);
+        LOG.atTrace()
+            .setMessage(
+                "Sending transaction hashes to peer {}, transaction hashes count {}, list {}")
+            .addArgument(peer::toString)
+            .addArgument(txHashes::size)
+            .addArgument(txHashes::toString)
+            .log();
 
         final NewPooledTransactionHashesMessage message =
             NewPooledTransactionHashesMessage.create(txBatch, capability);

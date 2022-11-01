@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -76,12 +74,12 @@ public class RetryingGetBlockFromPeersTask
     return executeSubTask(getBlockTask::run)
         .thenApply(
             peerResult -> {
-              debugLambda(
-                  LOG,
-                  "Got block {} from peer {}, attempt {}",
-                  peerResult.getResult()::toLogString,
-                  peerResult.getPeer()::toString,
-                  this::getRetryCount);
+              LOG.atDebug()
+                  .setMessage("Got block {} from peer {}, attempt {}")
+                  .addArgument(peerResult.getResult()::toLogString)
+                  .addArgument(peerResult.getPeer()::toString)
+                  .addArgument(this::getRetryCount)
+                  .log();
               result.complete(peerResult);
               return peerResult;
             });
@@ -95,18 +93,18 @@ public class RetryingGetBlockFromPeersTask
   @Override
   protected void handleTaskError(final Throwable error) {
     if (getRetryCount() < getMaxRetries()) {
-      debugLambda(
-          LOG,
-          "Failed to get block {} from peer {}, attempt {}, retrying later",
-          this::logBlockNumberMaybeHash,
-          this::getAssignedPeer,
-          this::getRetryCount);
+      LOG.atDebug()
+          .setMessage("Failed to get block {} from peer {}, attempt {}, retrying later")
+          .addArgument(this::logBlockNumberMaybeHash)
+          .addArgument(this::getAssignedPeer)
+          .addArgument(this::getRetryCount)
+          .log();
     } else {
-      debugLambda(
-          LOG,
-          "Failed to get block {} after {} retries",
-          this::logBlockNumberMaybeHash,
-          this::getRetryCount);
+      LOG.atDebug()
+          .setMessage("Failed to get block {} after {} retries")
+          .addArgument(this::logBlockNumberMaybeHash)
+          .addArgument(this::getRetryCount)
+          .log();
     }
     super.handleTaskError(error);
   }

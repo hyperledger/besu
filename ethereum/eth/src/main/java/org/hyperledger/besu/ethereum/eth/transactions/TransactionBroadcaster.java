@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
 import static org.hyperledger.besu.plugin.data.TransactionType.BLOB;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -119,15 +118,16 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       movePeersBetweenLists(sendOnlyHashPeers, sendMixedPeers, delta);
     }
 
-    traceLambda(
-        LOG,
-        "Sending full transactions to {} peers, transaction hashes only to {} peers and mixed to {} peers."
-            + " Peers w/o eth/65 {}, peers with eth/65 {}",
-        sendOnlyFullTransactionPeers::size,
-        sendOnlyHashPeers::size,
-        sendMixedPeers::size,
-        sendOnlyFullTransactionPeers::toString,
-        () -> sendOnlyHashPeers.toString() + sendMixedPeers.toString());
+    LOG.atTrace()
+        .setMessage(
+            "Sending full transactions to {} peers, transaction hashes only to {} peers and mixed to {} peers."
+                + " Peers w/o eth/65 {}, peers with eth/65 {}")
+        .addArgument(sendOnlyFullTransactionPeers::size)
+        .addArgument(sendOnlyHashPeers::size)
+        .addArgument(sendMixedPeers::size)
+        .addArgument(sendOnlyFullTransactionPeers::toString)
+        .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers.toString())
+        .log();
 
     sendToFullTransactionsPeers(
         transactionByBroadcastMode.get(FULL_BROADCAST), sendOnlyFullTransactionPeers);

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -83,13 +81,14 @@ public class DynamicPivotBlockManager {
                 final CompletableFuture<Void> searchForNewPivot;
 
                 if (distanceNextPivotBlock > pivotBlockDistanceBeforeCaching) {
-                  debugLambda(
-                      LOG,
-                      "Searching for a new pivot: current pivot {} best chain height {} distance next pivot {} last pivot block found {}",
-                      () -> currentPivotBlockNumber,
-                      () -> bestChainHeight,
-                      () -> distanceNextPivotBlock,
-                      this::logLastPivotBlockFound);
+                  LOG.atDebug()
+                      .setMessage(
+                          "Searching for a new pivot: current pivot {} best chain height {} distance next pivot {} last pivot block found {}")
+                      .addArgument(() -> currentPivotBlockNumber)
+                      .addArgument(() -> bestChainHeight)
+                      .addArgument(() -> distanceNextPivotBlock)
+                      .addArgument(this::logLastPivotBlockFound)
+                      .log();
 
                   searchForNewPivot =
                       CompletableFuture.completedFuture(FastSyncState.EMPTY_SYNC_STATE)
@@ -97,11 +96,12 @@ public class DynamicPivotBlockManager {
                           .thenCompose(
                               fss -> {
                                 if (isSamePivotBlock(fss)) {
-                                  debugLambda(
-                                      LOG,
-                                      "New pivot {} is equal to last found {}, nothing to do",
-                                      fss::getPivotBlockHash,
-                                      this::logLastPivotBlockFound);
+                                  LOG.atDebug()
+                                      .setMessage(
+                                          "New pivot {} is equal to last found {}, nothing to do")
+                                      .addArgument(fss::getPivotBlockHash)
+                                      .addArgument(this::logLastPivotBlockFound)
+                                      .log();
                                   return CompletableFuture.completedFuture(null);
                                 }
                                 return downloadNewPivotBlock(fss);
@@ -122,13 +122,14 @@ public class DynamicPivotBlockManager {
                           () -> {
                             final long distance = bestChainHeight - currentPivotBlockNumber;
                             if (distance > pivotBlockWindowValidity) {
-                              debugLambda(
-                                  LOG,
-                                  "Switch to new pivot: current pivot {} is distant {} from current best chain height {} last pivot block found {}",
-                                  () -> currentPivotBlockNumber,
-                                  () -> distance,
-                                  () -> bestChainHeight,
-                                  this::logLastPivotBlockFound);
+                              LOG.atDebug()
+                                  .setMessage(
+                                      "Switch to new pivot: current pivot {} is distant {} from current best chain height {} last pivot block found {}")
+                                  .addArgument(() -> currentPivotBlockNumber)
+                                  .addArgument(() -> distance)
+                                  .addArgument(() -> bestChainHeight)
+                                  .addArgument(this::logLastPivotBlockFound)
+                                  .log();
                               switchToNewPivotBlock(onNewPivotBlock);
                             }
                             // delay next check only if we are successful
@@ -150,7 +151,10 @@ public class DynamicPivotBlockManager {
         .thenAccept(
             fssWithHeader -> {
               lastPivotBlockFound = fssWithHeader.getPivotBlockHeader();
-              debugLambda(LOG, "Found new pivot block {}", this::logLastPivotBlockFound);
+              LOG.atDebug()
+                  .setMessage("Found new pivot block {}")
+                  .addArgument(this::logLastPivotBlockFound)
+                  .log();
             })
         .orTimeout(5, TimeUnit.MINUTES);
   }
@@ -180,11 +184,11 @@ public class DynamicPivotBlockManager {
     lastPivotBlockFound.ifPresentOrElse(
         blockHeader -> {
           if (syncState.getPivotBlockHeader().filter(blockHeader::equals).isEmpty()) {
-            debugLambda(
-                LOG,
-                "Setting new pivot block {} with state root {}",
-                blockHeader::toLogString,
-                blockHeader.getStateRoot()::toString);
+            LOG.atDebug()
+                .setMessage("Setting new pivot block {} with state root {}")
+                .addArgument(blockHeader::toLogString)
+                .addArgument(blockHeader.getStateRoot()::toString)
+                .log();
             syncState.setCurrentHeader(blockHeader);
             lastPivotBlockFound = Optional.empty();
           }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
@@ -52,24 +50,25 @@ public class ForwardSyncStep {
     if (blockHeaders.isEmpty()) {
       return CompletableFuture.completedFuture(null);
     } else {
-      debugLambda(
-          LOG,
-          "Requesting {} blocks {}->{} ({})",
-          blockHeaders::size,
-          () -> blockHeaders.get(0).getNumber(),
-          () -> blockHeaders.get(blockHeaders.size() - 1).getNumber(),
-          () -> blockHeaders.get(0).getHash().toHexString());
+      LOG.atDebug()
+          .setMessage("Requesting {} blocks {}->{} ({})")
+          .addArgument(blockHeaders::size)
+          .addArgument(() -> blockHeaders.get(0).getNumber())
+          .addArgument(() -> blockHeaders.get(blockHeaders.size() - 1).getNumber())
+          .addArgument(() -> blockHeaders.get(0).getHash().toHexString())
+          .log();
       return requestBodies(blockHeaders)
           .thenApply(this::saveBlocks)
           .exceptionally(
               throwable -> {
                 context.halveBatchSize();
-                debugLambda(
-                    LOG,
-                    "Getting {} blocks from peers failed with reason {}, reducing batch size to {}",
-                    blockHeaders::size,
-                    throwable::getMessage,
-                    context::getBatchSize);
+                LOG.atDebug()
+                    .setMessage(
+                        "Getting {} blocks from peers failed with reason {}, reducing batch size to {}")
+                    .addArgument(blockHeaders::size)
+                    .addArgument(throwable::getMessage)
+                    .addArgument(context::getBatchSize)
+                    .log();
                 return null;
               });
     }
@@ -113,12 +112,13 @@ public class ForwardSyncStep {
 
       if (parent.isEmpty()) {
         context.halveBatchSize();
-        debugLambda(
-            LOG,
-            "Parent block {} not found, while saving block {}, reducing batch size to {}",
-            block.getHeader().getParentHash()::toString,
-            block::toLogString,
-            context::getBatchSize);
+        LOG.atDebug()
+            .setMessage(
+                "Parent block {} not found, while saving block {}, reducing batch size to {}")
+            .addArgument(block.getHeader().getParentHash()::toString)
+            .addArgument(block::toLogString)
+            .addArgument(context::getBatchSize)
+            .log();
         return null;
       } else {
         context.saveBlock(block);

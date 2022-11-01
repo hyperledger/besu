@@ -17,7 +17,6 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -49,7 +48,10 @@ public class SyncStepStep {
   }
 
   private CompletableFuture<Block> requestBlock(final Hash targetHash) {
-    debugLambda(LOG, "Fetching block by hash {} from peers", targetHash::toString);
+    LOG.atDebug()
+        .setMessage("Fetching block by hash {} from peers")
+        .addArgument(targetHash::toString)
+        .log();
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
             context.getProtocolSchedule(),
@@ -66,7 +68,7 @@ public class SyncStepStep {
   }
 
   private Block saveBlock(final Block block) {
-    debugLambda(LOG, "Appending fetched block {}", block::toLogString);
+    LOG.atDebug().setMessage("Appending fetched block {}").addArgument(block::toLogString).log();
     backwardChain.appendTrustedBlock(block);
     return block;
   }

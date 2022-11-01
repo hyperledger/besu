@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
-
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer.DisconnectCallback;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -277,12 +275,13 @@ public class EthPeers {
         .findFirst()
         .ifPresent(
             peer -> {
-              infoLambda(
-                  LOG,
-                  "disconnecting peer {}. Waiting for better peers. Current {} of max {}",
-                  peer::toString,
-                  this::peerCount,
-                  this::getMaxPeers);
+              LOG.atInfo()
+                  .setMessage(
+                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                  .addArgument(peer::toString)
+                  .addArgument(this::peerCount)
+                  .addArgument(this::getMaxPeers)
+                  .log();
               peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
             });
   }

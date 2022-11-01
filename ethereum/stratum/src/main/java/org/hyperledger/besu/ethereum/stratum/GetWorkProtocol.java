@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
@@ -158,7 +156,10 @@ public class GetWorkProtocol implements StratumProtocol {
 
   @Override
   public void setCurrentWorkTask(final PoWSolverInputs input) {
-    debugLambda(LOG, "setting current stratum work task {}", input::toString);
+    LOG.atDebug()
+        .setMessage("setting current stratum work task {}")
+        .addArgument(input::toString)
+        .log();
     currentInput = input;
     final byte[] dagSeed =
         DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -136,13 +134,14 @@ public class BlockTransactionSelector {
       receipts.add(receipt);
       cumulativeGasUsed += gasUsed;
       cumulativeDataGasUsed += dataGasUsed;
-      traceLambda(
-          LOG,
-          "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}",
-          transaction::toTraceLog,
-          transactions::size,
-          () -> cumulativeGasUsed,
-          () -> cumulativeDataGasUsed);
+      LOG.atTrace()
+          .setMessage(
+              "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(transactions::size)
+          .addArgument(() -> cumulativeGasUsed)
+          .addArgument(() -> cumulativeDataGasUsed)
+          .log();
     }
 
     private void updateWithInvalidTransaction(
@@ -266,12 +265,16 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.debug("Transaction pool size {}", pendingTransactions.size());
-    traceLambda(
-        LOG, "Transaction pool content {}", () -> pendingTransactions.toTraceLog(false, false));
+    LOG.atTrace()
+        .setMessage("Transaction pool content {}")
+        .addArgument(() -> pendingTransactions.toTraceLog(false, false))
+        .log();
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction, false));
-    traceLambda(
-        LOG, "Transaction selection result result {}", transactionSelectionResult::toTraceLog);
+    LOG.atTrace()
+        .setMessage("Transaction selection result result {}")
+        .addArgument(transactionSelectionResult::toTraceLog)
+        .log();
     return transactionSelectionResult;
   }
 
@@ -302,10 +305,12 @@ public class BlockTransactionSelector {
     }
 
     if (transactionTooLargeForBlock(transaction)) {
-      traceLambda(
-          LOG, "Transaction {} too large to select for block creation", transaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Transaction {} too large to select for block creation")
+          .addArgument(transaction::toTraceLog)
+          .log();
       if (blockOccupancyAboveThreshold()) {
-        traceLambda(LOG, "Block occupancy above threshold, completing operation");
+        LOG.trace("Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
@@ -359,7 +364,10 @@ public class BlockTransactionSelector {
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
-      traceLambda(LOG, "Selected {} for block creation", transaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Selected {} for block creation")
+          .addArgument(transaction::toTraceLog)
+          .log();
       updateTransactionResultTracking(transaction, effectiveResult);
     } else {
       final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
@@ -416,19 +424,19 @@ public class BlockTransactionSelector {
     final TransactionInvalidReason invalidReason = invalidReasonValidationResult.getInvalidReason();
     // If the invalid reason is transient, then leave the transaction in the pool and continue
     if (isTransientValidationError(invalidReason)) {
-      traceLambda(
-          LOG,
-          "Transient validation error {} for transaction {} keeping it in the pool",
-          invalidReason::toString,
-          transaction::toTraceLog);
+      LOG.atTrace()
+          .setMessage("Transient validation error {} for transaction {} keeping it in the pool")
+          .addArgument(invalidReason::toString)
+          .addArgument(transaction::toTraceLog)
+          .log();
       return TransactionSelectionResult.CONTINUE;
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
-    traceLambda(
-        LOG,
-        "Delete invalid transaction {}, reason {}",
-        transaction::toTraceLog,
-        invalidReason::toString);
+    LOG.atTrace()
+        .setMessage("Delete invalid transaction {}, reason {}")
+        .addArgument(transaction::toTraceLog)
+        .addArgument(invalidReason::toString)
+        .log();
     return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
   }
 

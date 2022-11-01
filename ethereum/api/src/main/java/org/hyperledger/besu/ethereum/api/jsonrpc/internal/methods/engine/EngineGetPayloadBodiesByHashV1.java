@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -64,7 +62,11 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
 
     final Hash[] blockHashes = request.getRequiredParameter(0, Hash[].class);
 
-    traceLambda(LOG, "{} parameters: blockHashes {}", () -> getName(), () -> blockHashes);
+    LOG.atTrace()
+        .setMessage("{} parameters: blockHashes {}")
+        .addArgument(this::getName)
+        .addArgument(() -> blockHashes)
+        .log();
 
     if (blockHashes.length > getMaxRequestBlocks()) {
       return new JsonRpcErrorResponse(reqId, JsonRpcError.INVALID_RANGE_REQUEST_TOO_LARGE);
