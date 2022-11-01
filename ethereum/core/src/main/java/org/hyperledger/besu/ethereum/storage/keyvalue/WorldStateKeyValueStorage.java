@@ -110,8 +110,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
     final AtomicInteger prunedKeys = new AtomicInteger(0);
-    try (final Stream<byte[]> keys = keyValueStorage.streamKeys()) {
-      keys.forEach(
+    try (final Stream<byte[]> entry = keyValueStorage.streamKeys()) {
+      entry.forEach(
           key -> {
             lock.lock();
             try {
