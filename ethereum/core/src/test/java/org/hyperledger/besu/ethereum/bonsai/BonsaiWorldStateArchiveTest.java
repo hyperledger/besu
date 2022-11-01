@@ -146,7 +146,7 @@ public class BonsaiWorldStateArchiveTest {
         .containsInstanceOf(BonsaiPersistedWorldState.class);
 
     // verify is trying to get the trie log layer to rollback
-    verify(layeredWorldStatesByHash).containsKey(Hash.ZERO_HASH);
+    verify(layeredWorldStatesByHash).containsKey(Hash.ZERO);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -173,7 +173,7 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
 
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
-    when(blockchain.getBlockHeader(eq(Hash.ZERO_HASH))).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeader));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, blockHeader.getHash()))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -217,7 +217,7 @@ public class BonsaiWorldStateArchiveTest {
     when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
 
     // initial persisted state hash key
-    when(blockchain.getBlockHeader(eq(Hash.ZERO_HASH))).thenReturn(Optional.of(blockHeaderChainA));
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
     when(blockchain.getBlockHeader(eq(blockHeaderChainB.getHash())))
         .thenReturn(Optional.of(blockHeaderChainB));
     when(blockchain.getBlockHeader(eq(genesis.getHash()))).thenReturn(Optional.of(genesis));
@@ -268,7 +268,7 @@ public class BonsaiWorldStateArchiveTest {
     when(bonsaiWorldStateArchive.getUpdaterFromPersistedState(worldState)).thenReturn(updater);
 
     // initial persisted state hash key
-    when(blockchain.getBlockHeader(eq(Hash.ZERO_HASH))).thenReturn(Optional.of(blockHeaderChainA));
+    when(blockchain.getBlockHeader(eq(Hash.ZERO))).thenReturn(Optional.of(blockHeaderChainA));
     // fake trie log layer
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();

@@ -377,7 +377,7 @@ public class EthPeersTest {
   }
 
   private void useRequestSlot(final EthPeer peer) throws PeerNotConnected {
-    peer.getNodeData(singletonList(Hash.ZERO_HASH));
+    peer.getNodeData(singletonList(Hash.ZERO));
   }
 
   @SuppressWarnings("unchecked")

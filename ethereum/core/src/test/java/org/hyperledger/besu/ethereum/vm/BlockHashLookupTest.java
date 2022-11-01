@@ -83,7 +83,7 @@ public class BlockHashLookupTest {
 
   @Test
   public void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
-    Assertions.assertThat(lookup.apply(CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO_HASH);
+    Assertions.assertThat(lookup.apply(CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
@@ -93,7 +93,7 @@ public class BlockHashLookupTest {
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
             blockchain);
     Assertions.assertThat(lookupWithUnavailableParent.apply((long) CURRENT_BLOCK_NUMBER))
-        .isEqualTo(Hash.ZERO_HASH);
+        .isEqualTo(Hash.ZERO);
   }
 
   @Test

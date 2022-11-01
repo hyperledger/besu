@@ -161,7 +161,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           blockParam,
           mergeCoordinator
               .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
-              .orElse(Hash.ZERO_HASH),
+              .orElse(Hash.ZERO),
           INVALID,
           "Block already present in bad block manager.");
     }
@@ -204,7 +204,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       return respondWithInvalid(
           reqId,
           blockParam,
-          Hash.ZERO_HASH,
+          Hash.ZERO,
           INVALID,
           newBlockHeader.getHash() + " did not descend from terminal block");
     }

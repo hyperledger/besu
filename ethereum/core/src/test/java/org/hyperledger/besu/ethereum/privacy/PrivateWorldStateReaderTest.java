@@ -52,8 +52,8 @@ public class PrivateWorldStateReaderTest {
       Bytes32.wrap(Bytes.fromBase64String(PRIVACY_GROUP_ID));
   private final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
   private final Address contractAddress = Address.ZERO;
-  private final Hash blockHash = Hash.ZERO_HASH;
-  private final Hash stateRootHash = Hash.ZERO_HASH;
+  private final Hash blockHash = Hash.ZERO;
+  private final Hash stateRootHash = Hash.ZERO;
 
   @Mock private PrivateStateRootResolver privateStateRootResolver;
   @Mock private WorldStateArchive privateWorldStateArchive;

@@ -515,8 +515,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockBalance = "0x35";
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO_HASH);
-    when(blockchainQueries.accountBalance(eq(address), eq(Hash.ZERO_HASH)))
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.accountBalance(eq(address), eq(Hash.ZERO)))
         .thenReturn(Optional.of(Wei.fromHexString(mockBalance)));
 
     final String id = "123";
@@ -549,8 +549,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final Wei mockBalance = Wei.of(0);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO_HASH);
-    when(blockchainQueries.accountBalance(eq(address), eq(Hash.ZERO_HASH)))
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.accountBalance(eq(address), eq(Hash.ZERO)))
         .thenReturn(Optional.of(mockBalance));
 
     final String id = "123";
@@ -1866,8 +1866,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000001";
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO_HASH);
-    when(blockchainQueries.storageAt(eq(address), eq(UInt256.ZERO), eq(Hash.ZERO_HASH)))
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.storageAt(eq(address), eq(UInt256.ZERO), eq(Hash.ZERO)))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
     final String id = "88";
@@ -1903,8 +1903,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000006";
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.getBlockchain().getChainHead()).thenReturn(chainHead);
-    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO_HASH);
-    when(blockchainQueries.storageAt(eq(address), eq(UInt256.ONE), eq(Hash.ZERO_HASH)))
+    when(blockchainQueries.getBlockchain().getChainHead().getHash()).thenReturn(Hash.ZERO);
+    when(blockchainQueries.storageAt(eq(address), eq(UInt256.ONE), eq(Hash.ZERO)))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
     final String id = "88";

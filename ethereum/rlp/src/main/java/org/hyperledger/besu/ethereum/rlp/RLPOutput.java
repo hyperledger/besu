@@ -80,10 +80,6 @@ public interface RLPOutput {
     writeBytes(v.trimLeadingZeros());
   }
 
-  default void writeBytesScalar(final Bytes v) {
-    writeBytes(v.trimLeadingZeros());
-  }
-
   /**
    * Writes a RLP "null", that is an empty value.
    *
