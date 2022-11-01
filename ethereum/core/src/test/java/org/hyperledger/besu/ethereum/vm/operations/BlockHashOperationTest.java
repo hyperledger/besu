@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -50,17 +49,17 @@ public class BlockHashOperationTest {
 
   @Test
   public void shouldReturnZeroWhenArgIsBiggerThanALong() {
-    assertBlockHash(Bytes32.fromHexString("F".repeat(64)), ZERO_32, 100);
+    assertBlockHash(Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100);
   }
 
   @Test
   public void shouldReturnZeroWhenCurrentBlockIsGenesis() {
-    assertBlockHash(ZERO_32, ZERO_32, BlockHeader.GENESIS_BLOCK_NUMBER);
+    assertBlockHash(Bytes32.ZERO, Bytes32.ZERO, BlockHeader.GENESIS_BLOCK_NUMBER);
   }
 
   @Test
   public void shouldReturnZeroWhenRequestedBlockAheadOfCurrent() {
-    assertBlockHash(250, ZERO_32, 100);
+    assertBlockHash(250, Bytes32.ZERO, 100);
   }
 
   @Test
@@ -68,17 +67,17 @@ public class BlockHashOperationTest {
     final int requestedBlock = 10;
     // Our block is the one after the chain head (it's a new block), hence the + 1.
     final int importingBlockNumber = MAXIMUM_COMPLETE_BLOCKS_BEHIND + requestedBlock + 1;
-    assertBlockHash(requestedBlock, ZERO_32, importingBlockNumber);
+    assertBlockHash(requestedBlock, Bytes32.ZERO, importingBlockNumber);
   }
 
   @Test
   public void shouldReturnZeroWhenRequestedBlockGreaterThanImportingBlock() {
-    assertBlockHash(101, ZERO_32, 100);
+    assertBlockHash(101, Bytes32.ZERO, 100);
   }
 
   @Test
   public void shouldReturnZeroWhenRequestedBlockEqualToImportingBlock() {
-    assertBlockHash(100, ZERO_32, 100);
+    assertBlockHash(100, Bytes32.ZERO, 100);
   }
 
   @Test

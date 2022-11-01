@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
@@ -169,7 +168,7 @@ public class PrivateTransactionDataFixture {
   public static ReceiveResponse generateVersionedReceiveResponse(
       final PrivateTransaction privateTransaction) {
     final VersionedPrivateTransaction versionedPrivateTransaction =
-        new VersionedPrivateTransaction(privateTransaction, ZERO_32);
+        new VersionedPrivateTransaction(privateTransaction, Bytes32.ZERO);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     versionedPrivateTransaction.writeTo(rlpOutput);
     return new ReceiveResponse(
@@ -201,7 +200,7 @@ public class PrivateTransactionDataFixture {
     final PrivateTransactionWithMetadata privateTransactionWithMetadata =
         new PrivateTransactionWithMetadata(
             privateTransaction,
-            new PrivateTransactionMetadata(markerTransaction.getHash(), Hash.ZERO_HASH));
+            new PrivateTransactionMetadata(markerTransaction.getHash(), Hash.ZERO));
     return Collections.singletonList(privateTransactionWithMetadata);
   }
 
@@ -227,7 +226,7 @@ public class PrivateTransactionDataFixture {
       privateTransaction.writeTo(output);
     } else {
       final VersionedPrivateTransaction versionedPrivateTransaction =
-          new VersionedPrivateTransaction(privateTransaction, ZERO_32);
+          new VersionedPrivateTransaction(privateTransaction, Bytes32.ZERO);
       versionedPrivateTransaction.writeTo(output);
     }
     return output.encoded();

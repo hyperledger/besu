@@ -256,7 +256,7 @@ public class VmTraceGenerator {
           .ifPresent(
               stack ->
                   IntStream.range(0, currentTraceFrame.getStackItemsProduced())
-                      .mapToObj(i -> stack[stack.length - i - 1].trimLeadingZeros())
+                      .mapToObj(i -> Bytes.wrap(stack[stack.length - i - 1]).trimLeadingZeros())
                       .map(value -> Quantity.create(UInt256.fromHexString(value.toHexString())))
                       .forEach(report::addPush));
     }

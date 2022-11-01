@@ -108,7 +108,7 @@ public class QbftControllerTest {
     when(bftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
 
     when(chainHeadBlockHeader.getNumber()).thenReturn(3L);
-    when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO_HASH);
+    when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
 
     when(blockHeightManager.getParentBlockHeader()).thenReturn(chainHeadBlockHeader);
     when(blockHeightManager.getChainHeight()).thenReturn(4L); // one great than blockchain
@@ -208,7 +208,7 @@ public class QbftControllerTest {
     qbftController.start();
     long chainHeadHeight = chainHeadBlockHeader.getNumber();
     when(nextBlock.getNumber()).thenReturn(chainHeadHeight);
-    when(nextBlock.getHash()).thenReturn(Hash.ZERO_HASH);
+    when(nextBlock.getHash()).thenReturn(Hash.ZERO);
     final NewChainHead sameHeightBlock = new NewChainHead(nextBlock);
     qbftController.handleNewBlockEvent(sameHeightBlock);
     verify(blockHeightManagerFactory, times(1)).create(any()); // initial creation
