@@ -38,7 +38,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -59,7 +58,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
-import org.ethereum.beacon.discovery.schema.EnrField;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -333,8 +331,11 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  if (peerPermissions.isAllowedInPeerTable(peer)) {
+                  if (peerPermissions.isAllowedInPeerTable(
+                      peer)) { // TDOD: check what "isAllowedInPeerTable" is exactly supposed to be
+                    // used for
                     addToPeerTable(peer);
+                    recursivePeerRefreshState.onBondingComplete(peer);
                     Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                         .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                     if (filterOnEnrForkId) {
@@ -342,7 +343,6 @@ public class PeerDiscoveryController {
                     } else if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
                       peer.setStatus(PeerDiscoveryStatus.BONDED);
                       notifyPeerBonded(peer, System.currentTimeMillis());
-                      recursivePeerRefreshState.onBondingComplete(peer);
                     }
                   }
                 });
@@ -382,44 +382,46 @@ public class PeerDiscoveryController {
                   final Optional<ENRResponsePacketData> packetData =
                       packet.getPacketData(ENRResponsePacketData.class);
                   final NodeRecord enr = packetData.get().getEnr();
-                  final Bytes pkey = (Bytes) enr.get(EnrField.PKEY_SECP256K1);
+                  //                  final Bytes pkey = (Bytes) enr.get(EnrField.PKEY_SECP256K1);
                   // pkey contains the compressed public key. bytes 1 to 33 should be equal to the x
                   // component
                   // of the public key
-                  if (pkey != null) {
-                    if (!Arrays.equals(pkey.toArray(), 1, 33, sender.getId().toArray(), 0, 32)) {
-                      LOG.info(
-                          "Peer {} has sent an ENR response containing the wrong pkey ({})",
+                  //                  if (pkey != null) {
+                  //                    if (!Arrays.equals(pkey.toArray(), 1, 33,
+                  // sender.getId().toArray(), 0, 32)) {
+                  //                      LOG.info(
+                  //                          "Peer {} has sent an ENR response containing the wrong
+                  // pkey ({})",
+                  //                          sender.getId(),
+                  //                          pkey);
+                  //                      return;
+                  //                    }
+                  //                  } else {
+                  //                    return;
+                  //                  }
+                  @SuppressWarnings("unchecked")
+                  final List<List<Bytes>> rawForkId = (List<List<Bytes>>) enr.get("eth");
+                  if (rawForkId != null) {
+                    final ForkId forkId =
+                        new ForkId(rawForkId.get(0).get(0), rawForkId.get(0).get(1));
+                    if (forkIdManager.peerCheck(forkId)) {
+                      if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
+                        peer.setStatus(PeerDiscoveryStatus.BONDED);
+                        notifyPeerBonded(peer, System.currentTimeMillis());
+                      }
+                      LOG.debug(
+                          "Peer {} PASSED fork id check. ForkId received: {}",
                           sender.getId(),
-                          pkey);
+                          forkId);
+                    } else {
+                      LOG.debug(
+                          "Peer {} FAILED fork id check. ForkId received: {}",
+                          sender.getId(),
+                          forkId);
                     }
                   } else {
-                    @SuppressWarnings("unchecked")
-                    final List<List<Bytes>> rawForkId = (List<List<Bytes>>) enr.get("eth");
-                    if (rawForkId != null) {
-                      final ForkId forkId =
-                          new ForkId(rawForkId.get(0).get(0), rawForkId.get(0).get(1));
-                      if (forkIdManager.peerCheck(forkId)) {
-                        if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-                          peer.setStatus(PeerDiscoveryStatus.BONDED);
-                          notifyPeerBonded(peer, System.currentTimeMillis());
-                          recursivePeerRefreshState.onBondingComplete(peer);
-                        }
-                        LOG.debug(
-                            "Peer {} PASSED fork id check. ForkId received: {}",
-                            sender.getId(),
-                            forkId);
-                      } else {
-                        LOG.debug(
-                            "Peer {} FAILED fork id check. ForkId received: {}",
-                            sender.getId(),
-                            forkId);
-                      }
-                    } else {
-                      // if the peer hasn't sent the ForkId try to connect to it anyways
-                      notifyPeerBonded(peer, System.currentTimeMillis());
-                      recursivePeerRefreshState.onBondingComplete(peer);
-                    }
+                    // if the peer hasn't sent the ForkId try to connect to it anyways
+                    notifyPeerBonded(peer, System.currentTimeMillis());
                   }
                 });
         break;
