@@ -336,7 +336,7 @@ public class P2PNetworkTest {
   private DefaultP2PNetwork.Builder builder() {
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
     final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO);
+    when(blockMock.getHash()).thenReturn(Hash.ZERO_HASH);
     when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     return DefaultP2PNetwork.builder()
         .vertx(vertx)

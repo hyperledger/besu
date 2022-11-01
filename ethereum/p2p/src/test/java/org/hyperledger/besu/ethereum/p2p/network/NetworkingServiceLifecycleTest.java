@@ -79,7 +79,7 @@ public class NetworkingServiceLifecycleTest {
     final DefaultP2PNetwork.Builder builder = builder();
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
     final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO);
+    when(blockMock.getHash()).thenReturn(Hash.ZERO_HASH);
     when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     builder.blockchain(blockchainMock);
     builder.forks(Collections.emptyList());

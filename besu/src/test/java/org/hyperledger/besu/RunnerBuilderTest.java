@@ -122,7 +122,7 @@ public final class RunnerBuilderTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     final Block block = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(block);
-    when(block.getHash()).thenReturn(Hash.ZERO);
+    when(block.getHash()).thenReturn(Hash.ZERO_HASH);
 
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
