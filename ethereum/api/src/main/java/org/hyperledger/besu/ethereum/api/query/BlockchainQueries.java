@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -57,7 +56,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,8 +167,8 @@ public class BlockchainQueries {
    * @param blockNumber The blockNumber that is being queried.
    * @return The value at the storage index being queried.
    */
-  public Optional<Bytes32> storageAt(
-      final Address address, final Bytes32 storageIndex, final long blockNumber) {
+  public Optional<UInt256> storageAt(
+      final Address address, final UInt256 storageIndex, final long blockNumber) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
 
@@ -184,10 +183,10 @@ public class BlockchainQueries {
    * @param blockHash The blockHash that is being queried.
    * @return The value at the storage index being queried.
    */
-  public Optional<Bytes32> storageAt(
-      final Address address, final Bytes32 storageIndex, final Hash blockHash) {
+  public Optional<UInt256> storageAt(
+      final Address address, final UInt256 storageIndex, final Hash blockHash) {
     return fromAccount(
-        address, blockHash, account -> account.getStorageValue(storageIndex), ZERO_32);
+        address, blockHash, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
   }
 
   /**

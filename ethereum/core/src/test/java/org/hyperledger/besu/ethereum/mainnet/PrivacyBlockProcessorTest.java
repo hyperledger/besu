@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -53,6 +52,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,7 +96,7 @@ public class PrivacyBlockProcessorTest {
     final Blockchain blockchain = mock(Blockchain.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     final PrivacyGroupHeadBlockMap expected =
-        new PrivacyGroupHeadBlockMap(Collections.singletonMap(ZERO_32, Hash.EMPTY));
+        new PrivacyGroupHeadBlockMap(Collections.singletonMap(Bytes32.ZERO, Hash.EMPTY));
     final Block firstBlock = blockDataGenerator.block();
     final Block secondBlock =
         blockDataGenerator.block(
@@ -190,7 +190,7 @@ public class PrivacyBlockProcessorTest {
     when(mockWrappedEvmAccount.getMutable()).thenReturn(mockMutableAccount);
     when(mockWorldUpdater.createAccount(any())).thenReturn(mockWrappedEvmAccount);
     when(mockPrivateState.updater()).thenReturn(mockWorldUpdater);
-    when(mockPrivateState.rootHash()).thenReturn(Hash.ZERO_HASH);
+    when(mockPrivateState.rootHash()).thenReturn(Hash.ZERO);
     return mockPrivateState;
   }
 

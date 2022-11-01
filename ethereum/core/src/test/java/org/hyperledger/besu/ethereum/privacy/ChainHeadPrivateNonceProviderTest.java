@@ -69,7 +69,7 @@ public class ChainHeadPrivateNonceProviderTest {
   @Test
   public void determineNonceForPrivacyGroupRequestWhenPrivateStateDoesNotExist() {
     when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
-        .thenReturn(Hash.ZERO_HASH);
+        .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.empty());
 
@@ -83,7 +83,7 @@ public class ChainHeadPrivateNonceProviderTest {
     when(account.getNonce()).thenReturn(4L);
     when(worldState.get(any(Address.class))).thenReturn(account);
     when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
-        .thenReturn(Hash.ZERO_HASH);
+        .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(worldState));
 
@@ -95,7 +95,7 @@ public class ChainHeadPrivateNonceProviderTest {
   @Test
   public void determineNonceForPrivacyGroupRequestWhenAccountDoesNotExist() {
     when(privateStateRootResolver.resolveLastStateRoot(any(Bytes32.class), any(Hash.class)))
-        .thenReturn(Hash.ZERO_HASH);
+        .thenReturn(Hash.ZERO);
     when(privateWorldStateArchive.get(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(worldState));
 

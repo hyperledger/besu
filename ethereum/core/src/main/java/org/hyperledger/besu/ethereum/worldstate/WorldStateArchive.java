@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public interface WorldStateArchive {
   Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
@@ -49,5 +49,5 @@ public interface WorldStateArchive {
   Optional<Bytes> getNodeData(Hash hash);
 
   Optional<WorldStateProof> getAccountProof(
-      Hash worldStateRoot, Address accountAddress, List<Bytes32> accountStorageKeys);
+      Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
 }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -88,7 +86,7 @@ public class DebugAccountRange implements JsonRpcMethod {
               .get()
               .streamAccounts(Bytes32.fromHexStringLenient(addressHash), maxResults + 1)
               .collect(Collectors.toList());
-      Bytes32 nextKey = ZERO_32;
+      Bytes32 nextKey = Bytes32.ZERO;
       if (accounts.size() == maxResults + 1) {
         nextKey = accounts.get(maxResults).getAddressHash();
         accounts.remove(maxResults);

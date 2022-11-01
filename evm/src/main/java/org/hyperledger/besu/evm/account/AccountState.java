@@ -21,6 +21,7 @@ import java.util.NavigableMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An account state.
@@ -99,7 +100,7 @@ public interface AccountState {
    * @return the value associated to {@code key} in the account storage. Note that this is never
    *     {@code null}, but 0 acts as a default value.
    */
-  Bytes32 getStorageValue(Bytes32 key);
+  UInt256 getStorageValue(UInt256 key);
 
   /**
    * Retrieves the original value from before the current transaction in the account storage given
@@ -109,7 +110,7 @@ public interface AccountState {
    * @return the original value associated to {@code key} in the account storage. Note that this is
    *     never {@code null}, but 0 acts as a default value.
    */
-  Bytes32 getOriginalStorageValue(Bytes32 key);
+  UInt256 getOriginalStorageValue(UInt256 key);
 
   /**
    * Whether the account is "empty".

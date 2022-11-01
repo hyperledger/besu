@@ -21,7 +21,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class SStoreOperation extends AbstractOperation {
 
@@ -45,8 +45,8 @@ public class SStoreOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
-    final Bytes32 key = Bytes32.leftPad(frame.popStackItem());
-    final Bytes32 value = Bytes32.leftPad(frame.popStackItem());
+    final UInt256 key = UInt256.fromBytes(frame.popStackItem());
+    final UInt256 value = UInt256.fromBytes(frame.popStackItem());
 
     final MutableAccount account =
         frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getMutable();

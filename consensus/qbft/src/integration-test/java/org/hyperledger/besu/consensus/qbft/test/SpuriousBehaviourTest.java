@@ -120,13 +120,13 @@ public class SpuriousBehaviourTest {
     peers.getProposer().injectProposal(roundId, proposedBlock);
     peers.verifyMessagesReceived(expectedPrepare);
 
-    peers.prepareForNonProposing(roundId, Hash.ZERO_HASH);
+    peers.prepareForNonProposing(roundId, Hash.ZERO);
     peers.verifyNoMessagesReceived();
 
     peers.prepareForNonProposing(roundId, proposedBlock.getHash());
     peers.verifyMessagesReceived(expectedCommit);
 
-    peers.prepareForNonProposing(roundId, Hash.ZERO_HASH);
+    peers.prepareForNonProposing(roundId, Hash.ZERO);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);
 
     peers.commitForNonProposing(roundId, proposedBlock);
@@ -146,7 +146,7 @@ public class SpuriousBehaviourTest {
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
-    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO_HASH);
+    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
 
     badSealPeer.injectCommit(roundId, proposedBlock.getHash(), illegalSeal);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);

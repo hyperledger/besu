@@ -34,6 +34,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,18 +74,9 @@ public class WorldStateProofProviderTest {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
 
     // Add some storage values
-    writeStorageValue(
-        storageTrie,
-        Bytes32.leftPad(Bytes.ofUnsignedLong(1)),
-        Bytes32.leftPad(Bytes.ofUnsignedLong(2)));
-    writeStorageValue(
-        storageTrie,
-        Bytes32.leftPad(Bytes.ofUnsignedLong(2)),
-        Bytes32.leftPad(Bytes.ofUnsignedLong(4)));
-    writeStorageValue(
-        storageTrie,
-        Bytes32.leftPad(Bytes.ofUnsignedLong(3)),
-        Bytes32.leftPad(Bytes.ofUnsignedLong(6)));
+    writeStorageValue(storageTrie, UInt256.ONE, UInt256.valueOf(2L));
+    writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
+    writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
     // Save to Storage
     storageTrie.commit(
         (location, hash, value) ->
@@ -101,11 +93,8 @@ public class WorldStateProofProviderTest {
     // Persist updates
     updater.commit();
 
-    final List<Bytes32> storageKeys =
-        Arrays.asList(
-            Bytes32.leftPad(Bytes.ofUnsignedLong(1)),
-            Bytes32.leftPad(Bytes.ofUnsignedLong(3)),
-            Bytes32.leftPad(Bytes.ofUnsignedLong(6)));
+    final List<UInt256> storageKeys =
+        Arrays.asList(UInt256.ONE, UInt256.valueOf(3L), UInt256.valueOf(6L));
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
             Hash.wrap(worldStateTrie.getRootHash()), address, storageKeys);
@@ -117,19 +106,16 @@ public class WorldStateProofProviderTest {
     // Check storage fields
     assertThat(accountProof.get().getStorageKeys()).isEqualTo(storageKeys);
     // Check key 1
-    Bytes32 storageKey = Bytes32.leftPad(Bytes.ofUnsignedLong(1));
-    assertThat(accountProof.get().getStorageValue(storageKey))
-        .isEqualTo(Bytes32.leftPad(Bytes.ofUnsignedLong(2)));
+    UInt256 storageKey = UInt256.ONE;
+    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.valueOf(2L));
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
     // Check key 3
-    storageKey = Bytes32.leftPad(Bytes.ofUnsignedLong(3));
-    assertThat(accountProof.get().getStorageValue(storageKey))
-        .isEqualTo(Bytes32.leftPad(Bytes.ofUnsignedLong(6)));
+    storageKey = UInt256.valueOf(3L);
+    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.valueOf(6L));
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
     // Check key 6
-    storageKey = Bytes32.leftPad(Bytes.ofUnsignedLong(6));
-    assertThat(accountProof.get().getStorageValue(storageKey))
-        .isEqualTo(Bytes32.leftPad(Bytes.ofUnsignedLong(0)));
+    storageKey = UInt256.valueOf(6L);
+    assertThat(accountProof.get().getStorageValue(storageKey)).isEqualTo(UInt256.ZERO);
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
   }
 
@@ -146,17 +132,17 @@ public class WorldStateProofProviderTest {
 
   private void writeStorageValue(
       final MerklePatriciaTrie<Bytes32, Bytes> storageTrie,
-      final Bytes32 key,
-      final Bytes32 value) {
+      final UInt256 key,
+      final UInt256 value) {
     storageTrie.put(storageKeyHash(key), encodeStorageValue(value));
   }
 
-  private Bytes32 storageKeyHash(final Bytes32 storageKey) {
+  private Bytes32 storageKeyHash(final UInt256 storageKey) {
     return Hash.hash(storageKey);
   }
 
-  private Bytes encodeStorageValue(final Bytes32 storageValue) {
-    return RLP.encode(out -> out.writeBytes(storageValue.trimLeadingZeros()));
+  private Bytes encodeStorageValue(final UInt256 storageValue) {
+    return RLP.encode(out -> out.writeBytes(storageValue.toMinimalBytes()));
   }
 
   private MerklePatriciaTrie<Bytes32, Bytes> emptyStorageTrie() {
