@@ -58,37 +58,6 @@ public class StandardJsonTracer implements OperationTracer {
     return bytes.isZero() ? "0x0" : bytes.toShortHexString();
   }
 
-  private static String quoteEscape(final Bytes bytes) {
-    final StringBuilder result = new StringBuilder(bytes.size());
-    for (final byte b : bytes.toArrayUnsafe()) {
-      final int c = Byte.toUnsignedInt(b);
-      // list from RFC-4627 section 2
-      if (c == '"') {
-        result.append("\\\"");
-      } else if (c == '\\') {
-        result.append("\\\\");
-      } else if (c == '/') {
-        result.append("\\/");
-      } else if (c == '\b') {
-        result.append("\\b");
-      } else if (c == '\f') {
-        result.append("\\f");
-      } else if (c == '\n') {
-        result.append("\\n");
-      } else if (c == '\r') {
-        result.append("\\r");
-      } else if (c == '\t') {
-        result.append("\\t");
-      } else if (c <= 0x1F) {
-        result.append("\\u");
-        result.append(padStart(Integer.toHexString(c), 4, '0'));
-      } else {
-        result.append((char) b);
-      }
-    }
-    return result.toString();
-  }
-
   @Override
   public void tracePreExecution(final MessageFrame messageFrame) {
     stack = new ArrayList<>(messageFrame.stackSize());
@@ -135,6 +104,37 @@ public class StandardJsonTracer implements OperationTracer {
                 : executeResult.getHaltReason().getDescription())
         .append("\"}");
     out.println(sb);
+  }
+
+  private static String quoteEscape(final Bytes bytes) {
+    final StringBuilder result = new StringBuilder(bytes.size());
+    for (final byte b : bytes.toArrayUnsafe()) {
+      final int c = Byte.toUnsignedInt(b);
+      // list from RFC-4627 section 2
+      if (c == '"') {
+        result.append("\\\"");
+      } else if (c == '\\') {
+        result.append("\\\\");
+      } else if (c == '/') {
+        result.append("\\/");
+      } else if (c == '\b') {
+        result.append("\\b");
+      } else if (c == '\f') {
+        result.append("\\f");
+      } else if (c == '\n') {
+        result.append("\\n");
+      } else if (c == '\r') {
+        result.append("\\r");
+      } else if (c == '\t') {
+        result.append("\\t");
+      } else if (c <= 0x1F) {
+        result.append("\\u");
+        result.append(padStart(Integer.toHexString(c), 4, '0'));
+      } else {
+        result.append((char) b);
+      }
+    }
+    return result.toString();
   }
 
   @Override
