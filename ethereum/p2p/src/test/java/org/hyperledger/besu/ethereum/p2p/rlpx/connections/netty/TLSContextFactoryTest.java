@@ -273,14 +273,17 @@ class TLSContextFactoryTest {
       client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0));
       final boolean allMessagesServerExchanged = serverLatch.await(10, TimeUnit.SECONDS);
       final boolean allMessagesClientExchanged = clientLatch.await(10, TimeUnit.SECONDS);
-      assertThat(allMessagesClientExchanged && allMessagesServerExchanged).isTrue();
+      LOG.info(serverLatch.toString());
+      LOG.info(client.toString());
+      assertThat(allMessagesClientExchanged).isTrue();
+      assertThat(allMessagesServerExchanged).isTrue();
     } else {
       try {
         client.getChannelFuture().channel().writeAndFlush(Unpooled.copyInt(0)).sync();
         serverLatch.await(2, TimeUnit.SECONDS);
         assertThat(client.getChannelFuture().channel().isActive()).isFalse();
       } catch (final Exception e) {
-        // NOOP
+        LOG.error("unexpected exception", e);
       }
     }
   }
