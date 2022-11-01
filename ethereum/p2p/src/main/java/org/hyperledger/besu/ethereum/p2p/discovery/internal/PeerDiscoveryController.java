@@ -335,7 +335,6 @@ public class PeerDiscoveryController {
                       peer)) { // TDOD: check what "isAllowedInPeerTable" is exactly supposed to be
                     // used for
                     addToPeerTable(peer);
-                    recursivePeerRefreshState.onBondingComplete(peer);
                     Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
                         .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                     if (filterOnEnrForkId) {
@@ -344,6 +343,7 @@ public class PeerDiscoveryController {
                       peer.setStatus(PeerDiscoveryStatus.BONDED);
                       notifyPeerBonded(peer, System.currentTimeMillis());
                     }
+                    recursivePeerRefreshState.onBondingComplete(peer);
                   }
                 });
         break;
