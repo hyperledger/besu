@@ -70,27 +70,29 @@ public class NodeDeletionProcessor {
   public void startFromAccountNode(final Bytes location, final Bytes32 nodeHash, final Bytes data) {
     deletePotentialOldChildren(new BonsaiAccountInnerNode(location, nodeHash, data));
   }
-  public void deletePotentialOldChildren(final BonsaiStorageInnerNode newNode) {
-    retrieveStoredInnerStorageNode(
+  public int deletePotentialOldChildren(final BonsaiStorageInnerNode newNode) {
+    return retrieveStoredInnerStorageNode(
             newNode.getAccountHash(), newNode.getLocation())
-        .ifPresent(
+        .stream().mapToInt(
             oldNode -> {
               final List<Node<Bytes>> oldChildren = oldNode.decodeData();
               final List<Node<Bytes>> newChildren = newNode.decodeData();
+              int total =0;
               for (int i = 0; i < oldChildren.size(); i++) {
                 if (!(oldChildren.get(i) instanceof NullNode)
                     && newChildren.get(i) instanceof NullNode) {
                   final Node<Bytes> childToDelete = oldChildren.get(i);
-                  retrieveStoredInnerStorageNode(
+                  total += retrieveStoredInnerStorageNode(
                           newNode.getAccountHash(),
                           childToDelete.getLocation().orElseThrow())
-                      .ifPresent(root -> {
+                      .stream().mapToInt(root -> {
                         LOG.warn("Deleting node {}:{}", root.getLocation(),root.getNodeHash());
-                        deleteNode(root);
-                      });
+                        return deleteNode(root);
+                      }).sum();
                 }
               }
-            });
+              return total;
+            }).sum();
   }
   public void deletePotentialOldChildren(final BonsaiAccountInnerNode newNode) {
     retrieveStoredInnerAccountNode(newNode.getLocation())
@@ -113,11 +115,11 @@ public class NodeDeletionProcessor {
             });
   }
 
-  private void deleteNode(final BonsaiNode root) {
+  private int deleteNode(final BonsaiNode root) {
     LOG.warn("Deleting children of node {}:{}", root.getLocation(),root.getNodeHash());
-    root.getChildren().forEach(this::deleteNode);
+    final int deleted = root.getChildren().stream().mapToInt(this::deleteNode).sum();
     LOG.warn("Deleting node {}:{}", root.getLocation(),root.getNodeHash());
-    root.delete(updater);
+    return deleted + root.delete(updater);
   }
 
   private Optional<BonsaiNode> retrieveStoredInnerAccountNode(
@@ -128,10 +130,10 @@ public class NodeDeletionProcessor {
   }
 
   private Optional<BonsaiNode> retrieveStoredLeafAccountNode(
-      final Bytes location, final Bytes32 nodeHash) {
+      final Bytes location) {
     return worldStateStorage
         .getAccountStateTrieNode(location)
-        .map(oldData -> new BonsaiAccountLeafNode(location, nodeHash, oldData));
+        .map(oldData -> new BonsaiAccountLeafNode(location, Hash.hash(oldData), oldData));
   }
 
   private Optional<BonsaiStorageInnerNode> retrieveStoredRootStorageNode(
@@ -179,7 +181,7 @@ public class NodeDeletionProcessor {
 
     abstract List<BonsaiNode> getChildren();
 
-    abstract void delete(BonsaiWorldStateKeyValueStorage.Updater updater);
+    abstract int delete(BonsaiWorldStateKeyValueStorage.Updater updater);
 
     @NotNull
     public List<Node<Bytes>> decodeData() {
@@ -223,7 +225,7 @@ public class NodeDeletionProcessor {
                       .stream();
                 } else {
                   return retrieveStoredLeafAccountNode(
-                      node.getLocation().orElseThrow(), node.getHash())
+                      node.getLocation().orElseThrow())
                       .stream();
                 }
               })
@@ -231,8 +233,9 @@ public class NodeDeletionProcessor {
     }
 
     @Override
-    void delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
+    int delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
       updater.removeAccountStateTrieNode(getLocation(), getNodeHash());
+      return 1;
     }
   }
 
@@ -259,10 +262,11 @@ public class NodeDeletionProcessor {
     }
 
     @Override
-    void delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
+    int delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
       // todo: also remove the code
       updater.removeAccountStateTrieNode(getLocation(), getNodeHash());
       updater.removeAccountInfoState(Hash.wrap(getNodeHash()));
+      return 1;
     }
   }
 
@@ -291,8 +295,9 @@ public class NodeDeletionProcessor {
     }
 
     @Override
-    public void delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
+    public int delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
       updater.removeAccountStateTrieNode(getLocation(), getNodeHash());
+      return 1;
     }
   }
 
@@ -309,10 +314,11 @@ public class NodeDeletionProcessor {
     }
 
     @Override
-    public void delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
+    public int delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
       updater.removeStorageValueBySlotHash(
           getAccountHash(), Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(getLocation()))));
       updater.removeAccountStateTrieNode(getLocation(), getNodeHash());
+      return 1;
     }
   }
 }
