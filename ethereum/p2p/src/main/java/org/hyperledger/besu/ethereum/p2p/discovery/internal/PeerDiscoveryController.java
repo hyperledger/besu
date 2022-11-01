@@ -331,20 +331,10 @@ public class PeerDiscoveryController {
             .ifPresent(
                 interaction -> {
                   bondingPeers.invalidate(peer.getId());
-                  if (peerPermissions.isAllowedInPeerTable(
-                      peer)) { // TDOD: check what "isAllowedInPeerTable" is exactly supposed to be
-                    // used for
-                    addToPeerTable(peer);
-                    Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
-                        .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
-                    if (filterOnEnrForkId) {
-                      requestENR(peer);
-                    } else if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-                      peer.setStatus(PeerDiscoveryStatus.BONDED);
-                      notifyPeerBonded(peer, System.currentTimeMillis());
-                    }
-                    recursivePeerRefreshState.onBondingComplete(peer);
-                  }
+                  addToPeerTable(peer);
+                  recursivePeerRefreshState.onBondingComplete(peer);
+                  Optional.ofNullable(cachedEnrRequests.getIfPresent(peer.getId()))
+                      .ifPresent(cachedEnrRequest -> processEnrRequest(peer, cachedEnrRequest));
                 });
         break;
       case NEIGHBORS:
@@ -405,10 +395,7 @@ public class PeerDiscoveryController {
                     final ForkId forkId =
                         new ForkId(rawForkId.get(0).get(0), rawForkId.get(0).get(1));
                     if (forkIdManager.peerCheck(forkId)) {
-                      if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
-                        peer.setStatus(PeerDiscoveryStatus.BONDED);
-                        notifyPeerBonded(peer, System.currentTimeMillis());
-                      }
+                      notifyPeerBonded(peer, System.currentTimeMillis());
                       LOG.debug(
                           "Peer {} PASSED fork id check. ForkId received: {}",
                           sender.getId(),
@@ -448,13 +435,24 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private void addToPeerTable(final DiscoveryPeer peer) {
+  private boolean addToPeerTable(final DiscoveryPeer peer) {
+    if (!peerPermissions.isAllowedInPeerTable(peer)) {
+      return false;
+    }
+
     // Reset the last seen timestamp.
     final long now = System.currentTimeMillis();
     if (peer.getFirstDiscovered() == 0) {
       peer.setFirstDiscovered(now);
     }
     peer.setLastSeen(now);
+
+    if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
+      peer.setStatus(PeerDiscoveryStatus.BONDED);
+      if (!filterOnEnrForkId) {
+        notifyPeerBonded(peer, now);
+      }
+    }
 
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
 
@@ -467,7 +465,7 @@ public class PeerDiscoveryController {
       peerTable.tryAdd(peer);
     }
 
-    return;
+    return true;
   }
 
   private void notifyPeerBonded(final DiscoveryPeer peer, final long now) {
