@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -46,7 +48,6 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class DefaultMutableWorldState implements MutableWorldState {
 
@@ -57,7 +58,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Address, MerklePatriciaTrie<Bytes32, Bytes>> updatedStorageTries =
       new HashMap<>();
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
-  private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
+  private final Map<Bytes32, Bytes32> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
 
   public DefaultMutableWorldState(
@@ -203,16 +204,16 @@ public class DefaultMutableWorldState implements MutableWorldState {
     stateUpdater.commit();
   }
 
-  private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
+  private Optional<Bytes32> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
     return Optional.ofNullable(newStorageKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getStorageTrieKeyPreimage(trieKey));
   }
 
-  private static UInt256 convertToUInt256(final Bytes value) {
+  private static Bytes32 convertToBytes32(final Bytes value) {
     // TODO: we could probably have an optimized method to decode a single scalar since it's used
     // pretty often.
     final RLPInput in = RLP.input(value);
-    return in.readUInt256Scalar();
+    return Bytes32.leftPad(in.readBytes());
   }
 
   private Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
@@ -299,15 +300,15 @@ public class DefaultMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public UInt256 getStorageValue(final UInt256 key) {
+    public Bytes32 getStorageValue(final Bytes32 key) {
       return storageTrie()
           .get(Hash.hash(key))
-          .map(DefaultMutableWorldState::convertToUInt256)
-          .orElse(UInt256.ZERO);
+          .map(DefaultMutableWorldState::convertToBytes32)
+          .orElse(ZERO_32);
     }
 
     @Override
-    public UInt256 getOriginalStorageValue(final UInt256 key) {
+    public Bytes32 getOriginalStorageValue(final Bytes32 key) {
       return getStorageValue(key);
     }
 
@@ -321,7 +322,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
               (key, value) -> {
                 final AccountStorageEntry entry =
                     AccountStorageEntry.create(
-                        convertToUInt256(value), key, getStorageTrieKeyPreimage(key));
+                        convertToBytes32(value), key, getStorageTrieKeyPreimage(key));
                 storageEntries.put(key, entry);
               });
       return storageEntries;
@@ -400,7 +401,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
         if (freshState) {
           wrapped.updatedStorageTries.remove(updated.getAddress());
         }
-        final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
+        final Map<Bytes32, Bytes32> updatedStorage = updated.getUpdatedStorage();
         if (!updatedStorage.isEmpty()) {
           // Apply any storage updates
           final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
@@ -408,21 +409,21 @@ public class DefaultMutableWorldState implements MutableWorldState {
                   ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
-          final TreeSet<Map.Entry<UInt256, UInt256>> entries =
+          final TreeSet<Map.Entry<Bytes32, Bytes32>> entries =
               new TreeSet<>(
                   Comparator.comparing(
-                      (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
+                      (Function<Map.Entry<Bytes32, Bytes32>, Bytes32>) Map.Entry::getKey));
           entries.addAll(updatedStorage.entrySet());
 
-          for (final Map.Entry<UInt256, UInt256> entry : entries) {
-            final UInt256 value = entry.getValue();
+          for (final Map.Entry<Bytes32, Bytes32> entry : entries) {
+            final Bytes32 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
               storageTrie.remove(keyHash);
             } else {
               wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
               storageTrie.put(
-                  keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
+                  keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().trimLeadingZeros())));
             }
           }
           storageRoot = Hash.wrap(storageTrie.getRootHash());

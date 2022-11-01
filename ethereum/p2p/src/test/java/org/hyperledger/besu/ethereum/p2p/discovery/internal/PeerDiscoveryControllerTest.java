@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -1479,7 +1480,7 @@ public class PeerDiscoveryControllerTest {
     final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
     when(packet.getType()).thenReturn(PacketType.PING);
-    when(packet.getHash()).thenReturn(Bytes32.ZERO);
+    when(packet.getHash()).thenReturn(ZERO_32);
 
     return packet;
   }

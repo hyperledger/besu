@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -22,7 +24,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class ModOperation extends AbstractFixedCostOperation {
 
@@ -42,7 +43,7 @@ public class ModOperation extends AbstractFixedCostOperation {
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
     if (value1.isZero()) {
-      frame.pushStackItem(Bytes32.ZERO);
+      frame.pushStackItem(ZERO_32);
     } else {
       BigInteger b1 = new BigInteger(1, value0.toArrayUnsafe());
       BigInteger b2 = new BigInteger(1, value1.toArrayUnsafe());

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -27,7 +29,6 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class PrivateTransactionTestFixture {
 
@@ -90,7 +91,7 @@ public class PrivateTransactionTestFixture {
 
   public VersionedPrivateTransaction createVersionedPrivateTransaction(final KeyPair keyPair) {
     final PrivateTransaction transaction = createTransaction(keyPair);
-    return new VersionedPrivateTransaction(transaction, Bytes32.ZERO);
+    return new VersionedPrivateTransaction(transaction, ZERO_32);
   }
 
   public PrivateTransactionTestFixture nonce(final long nonce) {

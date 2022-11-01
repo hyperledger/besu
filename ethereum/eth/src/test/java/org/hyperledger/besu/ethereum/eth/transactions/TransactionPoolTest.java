@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.ValidationResult.valid;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -61,6 +62,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
@@ -117,7 +120,7 @@ public class TransactionPoolTest {
   private MutableBlockchain blockchain;
   private TransactionBroadcaster transactionBroadcaster;
 
-  private GasPricePendingTransactionsSorter transactions;
+  private AbstractPendingTransactionsSorter transactions;
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
@@ -133,7 +136,7 @@ public class TransactionPoolTest {
   public void setUp() {
     blockchain = executionContext.getBlockchain();
     transactions =
-        new GasPricePendingTransactionsSorter(
+        new BaseFeePendingTransactionsSorter(
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(MAX_TRANSACTIONS)
                 .txPoolLimitByAccountPercentage(1)
@@ -614,6 +617,60 @@ public class TransactionPoolTest {
 
     assertThat(transactionPool.addLocalTransaction(transaction1))
         .isEqualTo(ValidationResult.invalid(EXCEEDS_BLOCK_GAS_LIMIT));
+
+    assertTransactionNotPending(transaction1);
+    verifyNoInteractions(transactionBroadcaster);
+  }
+
+  @Test
+  public void shouldRejectRemoteTransactionsAnInvalidTransactionWithLowerNonceExists() {
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction invalidTx =
+        builder.gasLimit(genesisBlockGasLimit + 1).nonce(0).createTransaction(KEY_PAIR1);
+
+    final Transaction nextTx = builder.gasLimit(1).nonce(1).createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(invalidTx);
+    givenTransactionIsValid(nextTx);
+
+    transactionPool.addRemoteTransactions(List.of(invalidTx));
+    transactionPool.addRemoteTransactions(List.of(nextTx));
+
+    assertTransactionNotPending(invalidTx);
+    assertTransactionNotPending(nextTx);
+    verifyNoInteractions(transactionBroadcaster);
+  }
+
+  @Test
+  public void shouldAcceptLocalTransactionsEvenIfAnInvalidTransactionWithLowerNonceExists() {
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction invalidTx =
+        builder.gasLimit(genesisBlockGasLimit + 1).nonce(0).createTransaction(KEY_PAIR1);
+
+    final Transaction nextTx = builder.gasLimit(1).nonce(1).createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(invalidTx);
+    givenTransactionIsValid(nextTx);
+
+    assertThat(transactionPool.addLocalTransaction(invalidTx))
+        .isEqualTo(ValidationResult.invalid(EXCEEDS_BLOCK_GAS_LIMIT));
+    assertThat(transactionPool.addLocalTransaction(nextTx)).isEqualTo(ValidationResult.valid());
+
+    assertTransactionNotPending(invalidTx);
+    assertTransactionPending(nextTx);
+    verify(transactionBroadcaster).onTransactionsAdded(singletonList(nextTx));
+  }
+
+  @Test
+  public void shouldRejectLocalTransactionsWhenNonceTooFarInFuture() {
+    final TransactionTestFixture builder = new TransactionTestFixture();
+    final Transaction transaction1 =
+        builder.gasLimit(1).nonce(Integer.MAX_VALUE).createTransaction(KEY_PAIR1);
+
+    givenTransactionIsValid(transaction1);
+
+    assertThat(transactionPool.addLocalTransaction(transaction1))
+        .isEqualTo(ValidationResult.invalid(NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER));
 
     assertTransactionNotPending(transaction1);
     verifyNoInteractions(transactionBroadcaster);

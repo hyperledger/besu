@@ -58,7 +58,7 @@ public class EngineGetPayloadTest {
   private static final BlockResultFactory factory = new BlockResultFactory();
   private static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(
-          Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x42"));
+          Hash.ZERO_HASH, 1337L, Bytes32.random(), Address.fromHexString("0x42"));
   private static final BlockHeader mockHeader =
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
@@ -108,7 +108,7 @@ public class EngineGetPayloadTest {
     var resp =
         resp(
             PayloadIdentifier.forPayloadParams(
-                Hash.ZERO, 0L, Bytes32.random(), Address.fromHexString("0x42")));
+                Hash.ZERO_HASH, 0L, Bytes32.random(), Address.fromHexString("0x42")));
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }

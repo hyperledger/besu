@@ -255,7 +255,7 @@ public class RestrictedDefaultPrivacyControllerTest {
 
   @Test
   public void getContractCodeCallsPrivateWorldStateReader() {
-    final Hash blockHash = Hash.ZERO;
+    final Hash blockHash = Hash.ZERO_HASH;
     final Address contractAddress = Address.ZERO;
     final Bytes contractCode = Bytes.fromBase64String("ZXhhbXBsZQ==");
 

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,8 +39,8 @@ import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,9 +99,9 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldRecordStackWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
-    final UInt256 stackItem1 = UInt256.fromHexString("0x01");
-    final UInt256 stackItem2 = UInt256.fromHexString("0x02");
-    final UInt256 stackItem3 = UInt256.fromHexString("0x03");
+    final Bytes32 stackItem1 = Bytes32.fromHexStringLenient("0x01");
+    final Bytes32 stackItem2 = Bytes32.fromHexString("0x02");
+    final Bytes32 stackItem3 = Bytes32.fromHexString("0x03");
     frame.pushStackItem(stackItem1);
     frame.pushStackItem(stackItem2);
     frame.pushStackItem(stackItem3);
@@ -140,7 +141,7 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldRecordStorageWhenEnabled() {
     final MessageFrame frame = validMessageFrame();
-    final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
+    final Map<Bytes32, Bytes32> updatedStorage = setupStorageForCapture(frame);
     final TraceFrame traceFrame = traceFrame(frame, new TraceOptions(true, false, false));
     assertThat(traceFrame.getStorage()).isPresent();
     assertThat(traceFrame.getStorage()).contains(updatedStorage);
@@ -156,7 +157,7 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldCaptureFrameWhenExceptionalHaltOccurs() {
     final MessageFrame frame = validMessageFrame();
-    final Map<UInt256, UInt256> updatedStorage = setupStorageForCapture(frame);
+    final Map<Bytes32, Bytes32> updatedStorage = setupStorageForCapture(frame);
 
     final DebugOperationTracer tracer =
         new DebugOperationTracer(new TraceOptions(true, true, true));
@@ -205,15 +206,16 @@ public class DebugOperationTracerTest {
         .depth(DEPTH);
   }
 
-  private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {
+  private Map<Bytes32, Bytes32> setupStorageForCapture(final MessageFrame frame) {
     final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
     final MutableAccount mutableAccount = mock(MutableAccount.class);
     when(account.getMutable()).thenReturn(mutableAccount);
     when(worldUpdater.getAccount(frame.getRecipientAddress())).thenReturn(account);
 
-    final Map<UInt256, UInt256> updatedStorage = new TreeMap<>();
-    updatedStorage.put(UInt256.ZERO, UInt256.valueOf(233));
-    updatedStorage.put(UInt256.ONE, UInt256.valueOf(2424));
+    final Map<Bytes32, Bytes32> updatedStorage = new TreeMap<>();
+    updatedStorage.put(ZERO_32, Bytes32.leftPad(Bytes.ofUnsignedInt(233)));
+    updatedStorage.put(
+        Bytes32.leftPad(Bytes.ofUnsignedInt(1)), Bytes32.leftPad(Bytes.ofUnsignedInt(2424)));
     when(mutableAccount.getUpdatedStorage()).thenReturn(updatedStorage);
     final Bytes32 word1 = Bytes32.fromHexString("0x01");
     final Bytes32 word2 = Bytes32.fromHexString("0x02");

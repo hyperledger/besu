@@ -218,7 +218,7 @@ public class RestoreState implements Runnable {
             throw new RuntimeException("Unexpected storage trie entry length " + len);
           }
           final Bytes32 storageTrieKey = Bytes32.wrap(trieInput.readBytes());
-          final Bytes storageTrieValue = Bytes.wrap(trieInput.readBytes());
+          final Bytes storageTrieValue = trieInput.readBytes();
           final RestoreVisitor<Bytes> storageTrieWriteVisitor =
               new RestoreVisitor<>(t -> t, storageTrieValue, storagePersistVisitor);
           storageRoot = storageRoot.accept(storageTrieWriteVisitor, bytesToPath(storageTrieKey));

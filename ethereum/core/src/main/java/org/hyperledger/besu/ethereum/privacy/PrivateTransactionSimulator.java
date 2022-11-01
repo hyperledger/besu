@@ -135,7 +135,7 @@ public class PrivateTransactionSimulator {
             publicWorldState.updater(),
             disposablePrivateState.updater(),
             header,
-            Hash.ZERO, // Corresponding PMT hash not needed as this private transaction doesn't
+            Hash.ZERO_HASH, // Corresponding PMT hash not needed as this private transaction doesn't
             // exist
             transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),

@@ -24,7 +24,6 @@ import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class SLoadOperation extends AbstractOperation {
 
@@ -49,13 +48,13 @@ public class SLoadOperation extends AbstractOperation {
     try {
       final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
       final Address address = account.getAddress();
-      final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
+      final Bytes32 key = Bytes32.leftPad(frame.popStackItem());
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
       final long cost = slotIsWarm ? warmCost : coldCost;
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        frame.pushStackItem(account.getStorageValue(UInt256.fromBytes(key)));
+        frame.pushStackItem(account.getStorageValue(key));
 
         return slotIsWarm ? warmSuccess : coldSuccess;
       }

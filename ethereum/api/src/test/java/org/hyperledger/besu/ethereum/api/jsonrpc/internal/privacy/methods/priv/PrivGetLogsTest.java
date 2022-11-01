@@ -109,7 +109,7 @@ public class PrivGetLogsTest {
             null,
             Collections.emptyList(),
             Collections.emptyList(),
-            Hash.ZERO,
+            Hash.ZERO_HASH,
             null,
             null);
 
@@ -218,8 +218,8 @@ public class PrivGetLogsTest {
     return new LogWithMetadata(
         logIndex,
         100L,
-        Hash.ZERO,
-        Hash.ZERO,
+        Hash.ZERO_HASH,
+        Hash.ZERO_HASH,
         0,
         Address.fromHexString("0x0"),
         Bytes.EMPTY,

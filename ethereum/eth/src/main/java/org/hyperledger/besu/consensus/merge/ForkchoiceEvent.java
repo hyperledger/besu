@@ -30,7 +30,7 @@ public class ForkchoiceEvent {
   }
 
   public boolean hasValidFinalizedBlockHash() {
-    return !finalizedBlockHash.equals(Hash.ZERO);
+    return !finalizedBlockHash.equals(Hash.ZERO_HASH);
   }
 
   public Hash getHeadBlockHash() {

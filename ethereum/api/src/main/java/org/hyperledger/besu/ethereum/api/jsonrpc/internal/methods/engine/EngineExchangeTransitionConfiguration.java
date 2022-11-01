@@ -90,7 +90,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
             mergeContextOptional
                 .map(c -> c.getTerminalTotalDifficulty())
                 .orElse(FALLBACK_TTD_DEFAULT),
-            maybeTerminalPoWBlockHeader.map(BlockHeader::getHash).orElse(Hash.ZERO),
+            maybeTerminalPoWBlockHeader.map(BlockHeader::getHash).orElse(Hash.ZERO_HASH),
             maybeTerminalPoWBlockHeader.map(BlockHeader::getNumber).orElse(0L));
 
     if (!localTransitionConfiguration

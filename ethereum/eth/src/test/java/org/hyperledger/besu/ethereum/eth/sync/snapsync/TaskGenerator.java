@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
@@ -53,14 +55,13 @@ public class TaskGenerator {
         TrieGenerator.generateTrie(worldStateStorage, 1);
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Bytes32.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
+            ZERO_32, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(
                 root ->
-                    RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Bytes32.ZERO));
+                    RangeStorageEntriesCollector.collectEntries(collector, visitor, root, ZERO_32));
 
     final Hash rootHash = Hash.wrap(trie.getRootHash());
 
@@ -107,7 +108,7 @@ public class TaskGenerator {
 
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
-            Bytes32.ZERO, RangeManager.MAX_RANGE, 100, Integer.MAX_VALUE);
+            ZERO_32, RangeManager.MAX_RANGE, 100, Integer.MAX_VALUE);
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -121,8 +122,7 @@ public class TaskGenerator {
         (TreeMap<Bytes32, Bytes>)
             storageTrie.entriesFrom(
                 root ->
-                    RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Bytes32.ZERO));
+                    RangeStorageEntriesCollector.collectEntries(collector, visitor, root, ZERO_32));
 
     final StorageRangeDataRequest request =
         SnapDataRequest.createStorageRangeDataRequest(

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -42,7 +44,7 @@ public class TransactionEIP1559Test {
         List.of(
             new AccessListEntry(
                 Address.fromHexString("0x000000000000000000000000000000000000aaaa"),
-                List.of(Bytes32.ZERO)));
+                List.of(ZERO_32)));
     final Transaction tx =
         Transaction.builder()
             .chainId(new BigInteger("1559", 10))
