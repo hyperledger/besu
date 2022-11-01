@@ -70,7 +70,7 @@ public class ReferenceTestEnv extends BlockHeader {
         Long.decode(timestamp),
         Bytes.EMPTY,
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
-        Hash.ZERO_HASH,
+        Hash.ZERO,
         0L,
         new MainnetBlockHeaderFunctions());
   }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -38,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class RangeManager {
 
-  public static final Hash MIN_RANGE = Hash.wrap(ZERO_32);
+  public static final Hash MIN_RANGE = Hash.wrap(Bytes32.ZERO);
   public static final Hash MAX_RANGE =
       Hash.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 

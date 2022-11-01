@@ -165,7 +165,7 @@ public class FilterParameterTest {
             + ","
             + TOPICS_TWO_THREE_ARRAY
             + "], \"blockHash\": \""
-            + Hash.ZERO_HASH
+            + Hash.ZERO
             + "\"}],\"id\":1}";
 
     final String jsonUsingAlias =
@@ -176,7 +176,7 @@ public class FilterParameterTest {
             + ","
             + TOPICS_TWO_THREE_ARRAY
             + "], \"blockhash\": \""
-            + Hash.ZERO_HASH
+            + Hash.ZERO
             + "\"}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
@@ -204,7 +204,7 @@ public class FilterParameterTest {
             + ","
             + TOPICS_TWO_THREE_ARRAY
             + "], \"blockHash\": \""
-            + Hash.ZERO_HASH
+            + Hash.ZERO
             + "\"}],\"id\":1}";
 
     final String jsonUsingAlias =
@@ -215,7 +215,7 @@ public class FilterParameterTest {
             + ","
             + TOPICS_TWO_THREE_ARRAY
             + "], \"blockhash\": \""
-            + Hash.ZERO_HASH
+            + Hash.ZERO
             + "\"}],\"id\":1}";
 
     final JsonRpcRequestContext request = new JsonRpcRequestContext(readJsonAsJsonRpcRequest(json));
@@ -228,8 +228,7 @@ public class FilterParameterTest {
         requestUsingAlias.getRequiredParameter(0, FilterParameter.class);
 
     assertThat(parsedFilterParameterUsingAlias.isValid()).isTrue();
-    assertThat(parsedFilterParameterUsingAlias.getBlockHash())
-        .isEqualTo(Optional.of(Hash.ZERO_HASH));
+    assertThat(parsedFilterParameterUsingAlias.getBlockHash()).isEqualTo(Optional.of(Hash.ZERO));
 
     // blockhash and blockHash should end up the same
     assertThat(parsedFilterParameter)
