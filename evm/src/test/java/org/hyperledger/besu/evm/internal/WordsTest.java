@@ -17,17 +17,11 @@
 package org.hyperledger.besu.evm.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.evm.internal.Words.unsignedMin;
-
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,15 +48,5 @@ class WordsTest {
   @MethodSource("unsignedMinLongTestVector")
   void unsugnedMinLongTest(final long a, final long b, final long min) {
     assertThat(unsignedMin(a, b)).isEqualTo(min);
-  }
-
-  @Test
-  void constantAddressConversionTests() {
-    assertThat(Words.toAddress(Bytes.EMPTY).toShortHexString())
-        .isEqualTo(Address.EMPTY.toShortHexString());
-    assertThat(Words.toAddress(ZERO_32).toShortHexString())
-        .isEqualTo(Address.EMPTY.toShortHexString());
-    assertThat(Words.toAddress(Hash.ZERO_HASH).toShortHexString())
-        .isEqualTo(Address.EMPTY.toShortHexString());
   }
 }

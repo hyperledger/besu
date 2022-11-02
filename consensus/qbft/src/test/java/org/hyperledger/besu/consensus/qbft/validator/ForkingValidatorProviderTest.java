@@ -74,7 +74,7 @@ public class ForkingValidatorProviderTest {
   @Before
   public void setup() {
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
-    Block genesisBlock = createEmptyBlock(0, Hash.ZERO_HASH);
+    Block genesisBlock = createEmptyBlock(0, Hash.ZERO);
     Block block_1 = createEmptyBlock(1, genesisBlock.getHeader().getHash());
     Block block_2 = createEmptyBlock(2, block_1.getHeader().getHash());
     genesisHeader = genesisBlock.getHeader();

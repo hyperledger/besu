@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -26,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountRa
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
 
 import java.util.Collections;
@@ -76,34 +73,32 @@ public class DebugAccountRange implements JsonRpcMethod {
     }
 
     // TODO deal with mid-block locations
+    return blockchainQueries
+        .get()
+        .getAndMapWorldState(
+            blockHeaderOptional.get().getNumber(),
+            state -> {
+              final List<StreamableAccount> accounts =
+                  state
+                      .streamAccounts(Bytes32.fromHexStringLenient(addressHash), maxResults + 1)
+                      .collect(Collectors.toList());
+              Bytes32 nextKey = Bytes32.ZERO;
+              if (accounts.size() == maxResults + 1) {
+                nextKey = accounts.get(maxResults).getAddressHash();
+                accounts.remove(maxResults);
+              }
 
-    final Optional<WorldState> state =
-        blockchainQueries.get().getWorldState(blockHeaderOptional.get().getNumber());
-
-    if (state.isEmpty()) {
-      return emptyResponse(requestContext);
-    } else {
-      final List<StreamableAccount> accounts =
-          state
-              .get()
-              .streamAccounts(Bytes32.fromHexStringLenient(addressHash), maxResults + 1)
-              .collect(Collectors.toList());
-      Bytes32 nextKey = ZERO_32;
-      if (accounts.size() == maxResults + 1) {
-        nextKey = accounts.get(maxResults).getAddressHash();
-        accounts.remove(maxResults);
-      }
-
-      return new JsonRpcSuccessResponse(
-          requestContext.getRequest().getId(),
-          new DebugAccountRangeAtResult(
-              accounts.stream()
-                  .collect(
-                      Collectors.toMap(
-                          account -> account.getAddressHash().toString(),
-                          account -> account.getAddress().orElse(Address.ZERO).toString())),
-              nextKey.toString()));
-    }
+              return new JsonRpcSuccessResponse(
+                  requestContext.getRequest().getId(),
+                  new DebugAccountRangeAtResult(
+                      accounts.stream()
+                          .collect(
+                              Collectors.toMap(
+                                  account -> account.getAddressHash().toString(),
+                                  account -> account.getAddress().orElse(Address.ZERO).toString())),
+                      nextKey.toString()));
+            })
+        .orElse(emptyResponse(requestContext));
   }
 
   private Optional<Hash> hashFromParameter(final BlockParameterOrBlockHash blockParameter) {

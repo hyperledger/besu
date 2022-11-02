@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,6 +25,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 class MockPacketDataFactory {
@@ -39,7 +39,7 @@ class MockPacketDataFactory {
     final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
     when(packet.getType()).thenReturn(PacketType.NEIGHBORS);
-    when(packet.getHash()).thenReturn(ZERO_32);
+    when(packet.getHash()).thenReturn(Bytes32.ZERO);
 
     return packet;
   }
@@ -53,7 +53,7 @@ class MockPacketDataFactory {
     final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
     when(packet.getType()).thenReturn(PacketType.PONG);
-    when(packet.getHash()).thenReturn(ZERO_32);
+    when(packet.getHash()).thenReturn(Bytes32.ZERO);
 
     return packet;
   }
@@ -73,7 +73,7 @@ class MockPacketDataFactory {
     final Bytes id = from.getId();
     when(packet.getNodeId()).thenReturn(id);
     when(packet.getType()).thenReturn(PacketType.FIND_NEIGHBORS);
-    when(packet.getHash()).thenReturn(ZERO_32);
+    when(packet.getHash()).thenReturn(Bytes32.ZERO);
 
     return packet;
   }

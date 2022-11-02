@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -79,6 +78,7 @@ public class SnapWorldDownloadStateTest {
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
   private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapPersistedContext snapContext = mock(SnapPersistedContext.class);
   private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
   private final Blockchain blockchain = mock(Blockchain.class);
   private final DynamicPivotBlockManager dynamicPivotBlockManager =
@@ -114,6 +114,7 @@ public class SnapWorldDownloadStateTest {
     downloadState =
         new SnapWorldDownloadState(
             worldStateStorage,
+            snapContext,
             blockchain,
             snapSyncState,
             pendingRequests,
@@ -268,7 +269,7 @@ public class SnapWorldDownloadStateTest {
     downloadState.pendingTrieNodeRequests.add(
         BytecodeRequest.createAccountTrieNodeDataRequest(Hash.EMPTY, Bytes.EMPTY, new HashSet<>()));
     downloadState.pendingCodeRequests.add(
-        BytecodeRequest.createBytecodeRequest(ZERO_32, Hash.EMPTY, ZERO_32));
+        BytecodeRequest.createBytecodeRequest(Bytes32.ZERO, Hash.EMPTY, Bytes32.ZERO));
     // reload the heal
     downloadState.reloadHeal();
     verify(snapSyncState).setHealStatus(false);

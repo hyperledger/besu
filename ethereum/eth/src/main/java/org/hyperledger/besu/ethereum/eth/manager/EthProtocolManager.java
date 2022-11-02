@@ -95,7 +95,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.blockchain = blockchain;
     this.mergePeerFilter = mergePeerFilter;
     this.shutdown = new CountDownLatch(1);
-    this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO_HASH);
+    this.genesisHash = blockchain.getBlockHashByNumber(0L).orElse(Hash.ZERO);
 
     this.forkIdManager = forkIdManager;
 

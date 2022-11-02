@@ -165,8 +165,7 @@ public class PrivateStorageMigrationTest {
     createPrivacyGroupHeadBlockInitialMapAndMetadata(PRIVACY_GROUP_BYTES, rootHashOtherThanZero);
 
     // final state root won't match the legacy state root
-    when(legacyPrivateStateStorage.getLatestStateRoot(any()))
-        .thenReturn(Optional.of(Hash.ZERO_HASH));
+    when(legacyPrivateStateStorage.getLatestStateRoot(any())).thenReturn(Optional.of(Hash.ZERO));
 
     assertThat(privateStateStorage.getSchemaVersion()).isEqualTo(SCHEMA_VERSION_1_0_0);
 
@@ -230,14 +229,14 @@ public class PrivateStorageMigrationTest {
   private PrivacyGroupHeadBlockMap createPrivacyGroupHeadBlockInitialMapAndMetadata(
       final Bytes32 privacyGroupBytes, final Hash rootHash) {
     final PrivacyGroupHeadBlockMap existingPgHeadMap =
-        new PrivacyGroupHeadBlockMap(Map.of(privacyGroupBytes, Hash.ZERO_HASH));
+        new PrivacyGroupHeadBlockMap(Map.of(privacyGroupBytes, Hash.ZERO));
     final PrivateStateStorage.Updater updater = privateStateStorage.updater();
-    updater.putPrivacyGroupHeadBlockMap(Hash.ZERO_HASH, existingPgHeadMap);
+    updater.putPrivacyGroupHeadBlockMap(Hash.ZERO, existingPgHeadMap);
     updater.putPrivateBlockMetadata(
-        Hash.ZERO_HASH,
+        Hash.ZERO,
         privacyGroupBytes,
         new PrivateBlockMetadata(
-            Arrays.asList(new PrivateTransactionMetadata(Hash.ZERO_HASH, rootHash))));
+            Arrays.asList(new PrivateTransactionMetadata(Hash.ZERO, rootHash))));
     updater.commit();
     return existingPgHeadMap;
   }
