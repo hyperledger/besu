@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo.toTransactionList;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,12 +58,13 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   }
 
   public void relayTransactionPoolTo(final EthPeer peer) {
-    Set<TransactionInfo> pendingTransactionInfo = pendingTransactions.getTransactionInfo();
-    if (!pendingTransactionInfo.isEmpty()) {
+    Set<PendingTransaction> pendingPendingTransaction =
+        pendingTransactions.getPendingTransactions();
+    if (!pendingPendingTransaction.isEmpty()) {
       if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
-        sendTransactionHashes(toTransactionList(pendingTransactionInfo), List.of(peer));
+        sendTransactionHashes(toTransactionList(pendingPendingTransaction), List.of(peer));
       } else {
-        sendFullTransactions(toTransactionList(pendingTransactionInfo), List.of(peer));
+        sendFullTransactions(toTransactionList(pendingPendingTransaction), List.of(peer));
       }
     }
   }
