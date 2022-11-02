@@ -335,7 +335,7 @@ jobs:
           path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
   run-parallel-acceptance-tests:
-    runs-on: [self-hosted, linux, ARM64]
+    runs-on: [self-hosted, linux, X64]
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run acceptance test suite in parallel"
     needs:
@@ -351,8 +351,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v2
         with:
-          distribution: zulu
-          architecture: aarch64
+          distribution: adopt
           java-version: 17
           cache: gradle
       - name: Cache classes
