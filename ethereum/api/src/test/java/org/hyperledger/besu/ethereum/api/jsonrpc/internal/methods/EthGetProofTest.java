@@ -142,7 +142,7 @@ class EthGetProofTest {
   void errorWhenWorldStateUnavailable() {
 
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
-    when(blockchainQueries.mapWorldState(any(), any())).thenReturn(Optional.empty());
+    when(blockchainQueries.getAndMapWorldState(any(), any())).thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
@@ -231,7 +231,7 @@ class EthGetProofTest {
                         .<Function<MutableWorldState, ? extends JsonRpcResponse>>getArgument(1)
                         .apply(mutableWorldState)))
         .when(blockchainQueries)
-        .mapWorldState(any(), any());
+        .getAndMapWorldState(any(), any());
 
     return GetProofResult.buildGetProofResult(address, worldStateProof);
   }

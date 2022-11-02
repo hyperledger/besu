@@ -41,7 +41,7 @@ public class GoQuorumKeyValueStorageProvider extends KeyValueStorageProvider {
         worldStatePreimageStorage,
         privateWorldStatePreimageStorage,
         segmentIsolationSupported,
-        false);
+        SNAPSHOT_ISOLATION_UNSUPPORTED);
   }
 
   @Override
