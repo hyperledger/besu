@@ -30,11 +30,12 @@ public class WithdrawalDecoder {
   public static Withdrawal decode(final RLPInput input) {
     input.enterList();
     final long index = input.readLongScalar();
+    final long validatorIndex = input.readLongScalar();
     final Address address = Address.readFrom(input);
     final long amount = input.readLongScalar();
     input.leaveList();
 
-    return new Withdrawal((int) index, address, Wei.of(amount));
+    return new Withdrawal((int) index, validatorIndex, address, Wei.of(amount));
   }
 
   public static Withdrawal decodeOpaqueBytes(final Bytes input) {
