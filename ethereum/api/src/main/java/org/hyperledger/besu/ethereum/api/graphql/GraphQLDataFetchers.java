@@ -219,7 +219,7 @@ public class GraphQLDataFetchers {
       final Long bn = dataFetchingEnvironment.getArgument("blockNumber");
       if (bn != null) {
         return blockchainQuery
-            .mapWorldState(
+            .getAndMapWorldState(
                 bn,
                 ws -> {
                   final Account account = ws.get(addr);
@@ -241,7 +241,7 @@ public class GraphQLDataFetchers {
       } else {
         // return account on latest block
         final long latestBn = blockchainQuery.latestBlock().get().getHeader().getNumber();
-        return blockchainQuery.mapWorldState(
+        return blockchainQuery.getAndMapWorldState(
             latestBn,
             ws -> {
               final Account account = ws.get(addr);
