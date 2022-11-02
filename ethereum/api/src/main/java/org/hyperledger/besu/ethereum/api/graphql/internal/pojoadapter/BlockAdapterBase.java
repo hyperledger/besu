@@ -96,8 +96,7 @@ public class BlockAdapterBase extends AdapterBase {
     }
 
     return query
-        .getWorldState(blockNumber)
-        .map(ws -> ws.get(header.getCoinbase()))
+        .getAndMapWorldState(blockNumber, ws -> ws.get(header.getCoinbase()))
         .map(account -> (AdapterBase) new AccountAdapter(account))
         .or(() -> Optional.of(new EmptyAccountAdapter(header.getCoinbase())));
   }
@@ -147,13 +146,12 @@ public class BlockAdapterBase extends AdapterBase {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final long bn = header.getNumber();
-    return query
-        .getWorldState(bn)
-        .map(
-            ws -> {
-              final Address address = environment.getArgument("address");
-              return new AccountAdapter(ws.get(address));
-            });
+    return query.getAndMapWorldState(
+        bn,
+        ws -> {
+          final Address address = environment.getArgument("address");
+          return new AccountAdapter(ws.get(address));
+        });
   }
 
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {

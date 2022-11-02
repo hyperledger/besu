@@ -122,7 +122,7 @@ public class BlockDataGenerator {
       final Hash parent,
       final WorldStateArchive worldStateArchive,
       final List<Address> accountsToSetup,
-      final List<Bytes32> storageKeys) {
+      final List<UInt256> storageKeys) {
     final List<Block> seq = new ArrayList<>(count);
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
@@ -224,7 +224,7 @@ public class BlockDataGenerator {
       final int count,
       final WorldStateArchive worldStateArchive,
       final List<Address> accountsToSetup,
-      final List<Bytes32> storageKeys) {
+      final List<UInt256> storageKeys) {
     final long blockNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
     final Hash parentHash = Hash.ZERO;
     return blockSequence(

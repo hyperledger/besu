@@ -104,7 +104,6 @@ public class WebSocketService {
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
-
     httpServer =
         vertx
             .createHttpServer(

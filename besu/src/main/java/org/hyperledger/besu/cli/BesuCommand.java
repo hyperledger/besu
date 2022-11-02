@@ -180,6 +180,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
@@ -1972,7 +1973,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void configure() throws Exception {
     checkPortClash();
-
+    checkIfRequiredPortsAreAvailable();
     syncMode = getDefaultSyncModeIfNotSet(syncMode);
 
     ethNetworkConfig = updateNetworkConfig(network);
@@ -3124,6 +3125,30 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                         + "' has been specified multiple times. Please review the supplied configuration.");
               }
             });
+  }
+
+  private void checkIfRequiredPortsAreAvailable() {
+    final List<Integer> unavailablePorts = new ArrayList<>();
+    getEffectivePorts().stream()
+        .filter(Objects::nonNull)
+        .filter(port -> port > 0)
+        .forEach(
+            port -> {
+              if (port.equals(p2PDiscoveryOptionGroup.p2pPort)
+                  && !NetworkUtility.isPortAvailable(port)) {
+                unavailablePorts.add(port);
+              }
+              if (!port.equals(p2PDiscoveryOptionGroup.p2pPort)
+                  && !NetworkUtility.isPortAvailableForTcp(port)) {
+                unavailablePorts.add(port);
+              }
+            });
+    if (!unavailablePorts.isEmpty()) {
+      throw new InvalidConfigurationException(
+          "Port(s) '"
+              + unavailablePorts
+              + "' already in use. Check for other processes using the port(s).");
+    }
   }
 
   /**

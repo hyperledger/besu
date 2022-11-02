@@ -29,13 +29,13 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -56,7 +56,7 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,8 +167,8 @@ public class BlockchainQueries {
    * @param blockNumber The blockNumber that is being queried.
    * @return The value at the storage index being queried.
    */
-  public Optional<Bytes32> storageAt(
-      final Address address, final Bytes32 storageIndex, final long blockNumber) {
+  public Optional<UInt256> storageAt(
+      final Address address, final UInt256 storageIndex, final long blockNumber) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
 
@@ -183,10 +183,10 @@ public class BlockchainQueries {
    * @param blockHash The blockHash that is being queried.
    * @return The value at the storage index being queried.
    */
-  public Optional<Bytes32> storageAt(
-      final Address address, final Bytes32 storageIndex, final Hash blockHash) {
+  public Optional<UInt256> storageAt(
+      final Address address, final UInt256 storageIndex, final Hash blockHash) {
     return fromAccount(
-        address, blockHash, account -> account.getStorageValue(storageIndex), Bytes32.ZERO);
+        address, blockHash, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
   }
 
   /**
@@ -294,8 +294,7 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final Hash blockHash) {
-    return getWorldState(blockHash)
-        .map(worldState -> worldState.get(address))
+    return getAndMapWorldState(blockHash, worldState -> worldState.get(address))
         .map(Account::getNonce)
         .orElse(0L);
   }
@@ -835,29 +834,48 @@ public class BlockchainQueries {
   }
 
   /**
-   * Returns the world state for the corresponding block number
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash.
+   * This method provides access to the worldstate via a mapper function in order to ensure all of
+   * the uses of the MutableWorldState are subsequently closed, via the try-with-resources block.
    *
-   * @param blockNumber the block number
+   * @param <U> return type of the operation on the MutableWorldState
+   * @param blockHash the block hash
+   * @param mapper Function which performs an operation on a MutableWorldState
    * @return the world state at the block number
    */
-  public Optional<WorldState> getWorldState(final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
-
-    return getWorldState(blockHash);
+  public <U> Optional<U> getAndMapWorldState(
+      final Hash blockHash, final Function<MutableWorldState, ? extends U> mapper) {
+    return blockchain
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              try (var ws =
+                  worldStateArchive
+                      .getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false)
+                      .orElse(null)) {
+                if (ws != null) {
+                  return Optional.ofNullable(mapper.apply(ws));
+                }
+              } catch (Exception ex) {
+                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+              }
+              return Optional.empty();
+            });
   }
 
   /**
-   * Returns the world state for the corresponding block hash
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block number
    *
-   * @param blockHash the block hash
-   * @return the world state at the block hash
+   * @param <U> return type of the operation on the MutableWorldState
+   * @param blockNumber the block number
+   * @param mapper Function which performs an operation on a MutableWorldState returning type U
+   * @return the world state at the block number
    */
-  public Optional<WorldState> getWorldState(final Hash blockHash) {
-    final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
-    return header.flatMap(
-        blockHeader ->
-            worldStateArchive.getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false));
+  public <U> Optional<U> getAndMapWorldState(
+      final long blockNumber, final Function<MutableWorldState, ? extends U> mapper) {
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    return getAndMapWorldState(blockHash, mapper);
   }
 
   public Optional<Long> gasPrice() {
@@ -917,17 +935,12 @@ public class BlockchainQueries {
                         (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
   }
 
-  private <T> Optional<T> fromWorldState(
-      final Hash blockHash, final Function<WorldState, T> getter) {
-    return getWorldState(blockHash).map(getter);
-  }
-
   private <T> Optional<T> fromAccount(
       final Address address,
       final Hash blockHash,
       final Function<Account, T> getter,
       final T noAccountValue) {
-    return fromWorldState(
+    return getAndMapWorldState(
         blockHash,
         worldState ->
             Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));

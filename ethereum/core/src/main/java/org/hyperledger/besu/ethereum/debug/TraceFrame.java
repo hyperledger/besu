@@ -29,6 +29,7 @@ import java.util.OptionalLong;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class TraceFrame {
 
@@ -45,7 +46,7 @@ public class TraceFrame {
   private final Bytes outputData;
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes[]> memory;
-  private final Optional<Map<Bytes32, Bytes32>> storage;
+  private final Optional<Map<UInt256, UInt256>> storage;
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
@@ -73,7 +74,7 @@ public class TraceFrame {
       final Bytes outputData,
       final Optional<Bytes32[]> stack,
       final Optional<Bytes[]> memory,
-      final Optional<Map<Bytes32, Bytes32>> storage,
+      final Optional<Map<UInt256, UInt256>> storage,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
@@ -165,7 +166,7 @@ public class TraceFrame {
     return memory;
   }
 
-  public Optional<Map<Bytes32, Bytes32>> getStorage() {
+  public Optional<Map<UInt256, UInt256>> getStorage() {
     return storage;
   }
 

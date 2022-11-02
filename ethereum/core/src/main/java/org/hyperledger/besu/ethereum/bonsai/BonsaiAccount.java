@@ -37,6 +37,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, EvmAccount {
   private final BonsaiWorldView context;
@@ -50,7 +51,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Hash storageRoot;
   private Bytes code;
 
-  private final Map<Bytes32, Bytes32> updatedStorage = new HashMap<>();
+  private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
   BonsaiAccount(
       final BonsaiWorldView context,
@@ -203,12 +204,12 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
-  public Bytes32 getStorageValue(final Bytes32 key) {
+  public UInt256 getStorageValue(final UInt256 key) {
     return context.getStorageValue(address, key);
   }
 
   @Override
-  public Bytes32 getOriginalStorageValue(final Bytes32 key) {
+  public UInt256 getOriginalStorageValue(final UInt256 key) {
     return context.getPriorStorageValue(address, key);
   }
 
@@ -232,7 +233,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
-  public void setStorageValue(final Bytes32 key, final Bytes32 value) {
+  public void setStorageValue(final UInt256 key, final UInt256 value) {
     if (!mutable) {
       throw new UnsupportedOperationException("Account is immutable");
     }
@@ -245,7 +246,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   }
 
   @Override
-  public Map<Bytes32, Bytes32> getUpdatedStorage() {
+  public Map<UInt256, UInt256> getUpdatedStorage() {
     return updatedStorage;
   }
 
