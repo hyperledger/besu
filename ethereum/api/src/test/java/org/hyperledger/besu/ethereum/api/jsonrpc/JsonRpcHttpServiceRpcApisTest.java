@@ -267,7 +267,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     final Block genesisBlock = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(genesisBlock);
-    when(genesisBlock.getHash()).thenReturn(Hash.ZERO_HASH);
+    when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
             .supportedCapabilities(Capability.create("eth", 63))

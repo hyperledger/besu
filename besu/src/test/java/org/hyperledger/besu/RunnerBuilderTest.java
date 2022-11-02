@@ -122,7 +122,7 @@ public final class RunnerBuilderTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     final Block block = mock(Block.class);
     when(blockchain.getGenesisBlock()).thenReturn(block);
-    when(block.getHash()).thenReturn(Hash.ZERO_HASH);
+    when(block.getHash()).thenReturn(Hash.ZERO);
 
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
@@ -311,7 +311,7 @@ public final class RunnerBuilderTest {
   }
 
   @Test
-  public void whenEngineApiAddedEthSubscribeAvailable() { // TODO:
+  public void whenEngineApiAddedEthSubscribeAvailable() {
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);

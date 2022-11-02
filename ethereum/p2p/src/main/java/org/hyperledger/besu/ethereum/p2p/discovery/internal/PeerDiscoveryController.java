@@ -705,7 +705,12 @@ public class PeerDiscoveryController {
    * @return List of peers.
    */
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return peerTable.streamAllPeers().filter(peerPermissions::isAllowedInPeerTable);
+    return peerTable
+        .streamAllPeers()
+        .filter(
+            peerPermissions
+                ::isAllowedInPeerTable); // TODO: looks like the filter is not necessary, because
+    // they are already in the peer table?
   }
 
   public void setRetryDelayFunction(final RetryDelayFunction retryDelayFunction) {

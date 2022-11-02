@@ -518,7 +518,7 @@ public class P2PPlainNetworkTest {
   private DefaultP2PNetwork.Builder builder(final String name) {
     final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
     final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO_HASH);
+    when(blockMock.getHash()).thenReturn(Hash.ZERO);
     when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
     return DefaultP2PNetwork.builder()
         .vertx(vertx)
