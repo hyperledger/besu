@@ -10,7 +10,7 @@ env:
 
 jobs:
   compile:
-    runs-on: ubuntu-22.04
+    runs-on: [ self-hosted, linux, X64 ]
     container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
