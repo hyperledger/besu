@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -53,7 +54,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import io.vertx.core.impl.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +81,8 @@ public class TransactionPool implements BlockAddedObserver {
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final TransactionPoolConfiguration configuration;
+
+  private final Set<Address> localSenders = new ConcurrentHashSet<>();
 
   public TransactionPool(
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -111,13 +117,13 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addLocalTransaction(
       final Transaction transaction) {
     final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);
+
     if (validationResult.result.isValid()) {
-      if (!configuration.getTxFeeCap().isZero()
-          && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
-        return ValidationResult.invalid(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
-      }
+      localSenders.add(transaction.getSender());
+
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
+
       if (!transactionAddedStatus.equals(ADDED)) {
         if (transactionAddedStatus.equals(ALREADY_KNOWN)) {
           duplicateTransactionCounter.labels(LOCAL).inc();
@@ -131,6 +137,7 @@ public class TransactionPool implements BlockAddedObserver {
                       return INTERNAL_ERROR;
                     }));
       }
+
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBroadcaster.onTransactionsAdded(txs);
     }
@@ -138,38 +145,30 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult.result;
   }
 
-  private boolean effectiveGasPriceIsAboveConfiguredMinGasPrice(final Transaction transaction) {
+  private boolean effectiveGasPriceIsBelowConfiguredMinGasPrice(final Transaction transaction) {
     return transaction
         .getGasPrice()
         .map(Optional::of)
         .orElse(transaction.getMaxFeePerGas())
-        .map(g -> g.greaterOrEqualThan(miningParameters.getMinTransactionGasPrice()))
-        .orElse(false);
+        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .orElse(true);
   }
 
   public void addRemoteTransactions(final Collection<Transaction> transactions) {
     final List<Transaction> addedTransactions = new ArrayList<>(transactions.size());
     LOG.trace("Adding {} remote transactions", transactions.size());
+
     for (final Transaction transaction : transactions) {
+
       if (pendingTransactions.containsTransaction(transaction.getHash())) {
         traceLambda(LOG, "Discard already present transaction {}", transaction::toTraceLog);
         // We already have this transaction, don't even validate it.
         duplicateTransactionCounter.labels(REMOTE).inc();
         continue;
       }
-      final Wei transactionGasPrice = minTransactionGasPrice(transaction);
-      if (transactionGasPrice.compareTo(miningParameters.getMinTransactionGasPrice()) < 0) {
-        traceLambda(
-            LOG,
-            "Discard transaction {} below min gas price {}",
-            transaction::toTraceLog,
-            miningParameters::getMinTransactionGasPrice);
-        pendingTransactions
-            .signalInvalidAndGetDependentTransactions(transaction)
-            .forEach(pendingTransactions::removeTransaction);
-        continue;
-      }
+
       final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
+
       if (validationResult.result.isValid()) {
         final TransactionAddedStatus status =
             pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
@@ -196,6 +195,7 @@ public class TransactionPool implements BlockAddedObserver {
             .forEach(pendingTransactions::removeTransaction);
       }
     }
+
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
       traceLambda(
@@ -228,10 +228,24 @@ public class TransactionPool implements BlockAddedObserver {
     LOG.trace("Block added event {}", event);
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
     pendingTransactions.manageBlockAdded(event.getBlock());
-    var readdTransactions = event.getRemovedTransactions();
-    if (!readdTransactions.isEmpty()) {
-      LOG.trace("Readding {} transactions from a block event", readdTransactions.size());
-      addRemoteTransactions(readdTransactions);
+    reAddTransactions(event.getRemovedTransactions());
+  }
+
+  private void reAddTransactions(final List<Transaction> reAddTransactions) {
+    if (!reAddTransactions.isEmpty()) {
+      var txsByOrigin =
+          reAddTransactions.stream()
+              .collect(Collectors.partitioningBy(tx -> localSenders.contains(tx.getSender())));
+      var reAddLocalTxs = txsByOrigin.get(true);
+      var reAddRemoteTxs = txsByOrigin.get(false);
+      if (!reAddLocalTxs.isEmpty()) {
+        LOG.trace("Re-adding {} local transactions from a block event", reAddLocalTxs.size());
+        reAddLocalTxs.forEach(this::addLocalTransaction);
+      }
+      if (!reAddRemoteTxs.isEmpty()) {
+        LOG.trace("Re-adding {} remote transactions from a block event", reAddRemoteTxs.size());
+        addRemoteTransactions(reAddTransactions);
+      }
     }
   }
 
@@ -268,6 +282,12 @@ public class TransactionPool implements BlockAddedObserver {
     final FeeMarket feeMarket =
         protocolSchedule.getByBlockNumber(chainHeadBlockHeader.getNumber()).getFeeMarket();
 
+    final TransactionInvalidReason priceInvalidReason =
+        validatePrice(transaction, isLocal, feeMarket);
+    if (priceInvalidReason != null) {
+      return ValidationResultAndAccount.invalid(priceInvalidReason);
+    }
+
     // Check whether it's a GoQuorum transaction
     boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
     if (transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)) {
@@ -276,14 +296,6 @@ public class TransactionPool implements BlockAddedObserver {
         return ValidationResultAndAccount.invalid(
             TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
       }
-    }
-
-    // allow local transactions to be below minGas as long as we are mining and the transaction is
-    // executable:
-    if ((!effectiveGasPriceIsAboveConfiguredMinGasPrice(transaction)
-            && !miningParameters.isMiningEnabled())
-        || (!feeMarket.satisfiesFloorTxCost(transaction))) {
-      return ValidationResultAndAccount.invalid(TransactionInvalidReason.GAS_PRICE_TOO_LOW);
     }
 
     final ValidationResult<TransactionInvalidReason> basicValidationResult =
@@ -335,6 +347,28 @@ public class TransactionPool implements BlockAddedObserver {
     } catch (Exception ex) {
       return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
     }
+  }
+
+  private TransactionInvalidReason validatePrice(
+      final Transaction transaction, final boolean isLocal, final FeeMarket feeMarket) {
+    if (isLocal) {
+      if (!configuration.getTxFeeCap().isZero()
+          && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
+        return TransactionInvalidReason.TX_FEECAP_EXCEEDED;
+      }
+      // allow local transactions to be below minGas as long as we are mining
+      // or at least gas price is above the configured floor
+      if ((!miningParameters.isMiningEnabled()
+              && effectiveGasPriceIsBelowConfiguredMinGasPrice(transaction))
+          || !feeMarket.satisfiesFloorTxCost(transaction)) {
+        return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
+      }
+    } else {
+      if (effectiveGasPriceIsBelowConfiguredMinGasPrice(transaction)) {
+        return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
+      }
+    }
+    return null;
   }
 
   private boolean strictReplayProtectionShouldBeEnforceLocally(

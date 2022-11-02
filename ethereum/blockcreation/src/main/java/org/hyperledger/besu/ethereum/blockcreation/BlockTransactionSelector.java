@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -30,7 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
@@ -72,7 +70,6 @@ import org.slf4j.LoggerFactory;
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
 
-  private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
 
   public static class TransactionValidationResult {
@@ -191,7 +188,6 @@ public class BlockTransactionSelector {
   private final AbstractPendingTransactionsSorter pendingTransactions;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
-  private final FeeMarket feeMarket;
 
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
@@ -203,11 +199,9 @@ public class BlockTransactionSelector {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
-      final Address miningBeneficiary,
-      final FeeMarket feeMarket) {
+      final Address miningBeneficiary) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -215,10 +209,8 @@ public class BlockTransactionSelector {
     this.processableBlockHeader = processableBlockHeader;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
-    this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
-    this.feeMarket = feeMarket;
   }
 
   /*
@@ -273,21 +265,6 @@ public class BlockTransactionSelector {
       } else {
         return TransactionSelectionResult.CONTINUE;
       }
-    }
-
-    // If the gas price specified by the transaction is less than this node is willing to accept,
-    // do not include it in the block.
-    // ToDo: why we accept this in the pool in the first place then?
-    final Wei actualMinTransactionGasPriceInBlock =
-        feeMarket
-            .getTransactionPriceCalculator()
-            .price(transaction, processableBlockHeader.getBaseFee());
-    if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
-      LOG.warn(
-          "Gas fee of {} lower than configured minimum {}, deleting",
-          transaction,
-          minTransactionGasPrice);
-      return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();

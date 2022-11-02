@@ -91,7 +91,6 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
                 protocolContext,
                 protocolSchedule,
                 solver,
-                minTransactionGasPrice,
                 minBlockOccupancyRatio,
                 parentHeader);
 
