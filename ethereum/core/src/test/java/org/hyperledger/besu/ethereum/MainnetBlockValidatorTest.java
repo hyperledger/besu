@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class MainnetBlockValidatorTest {
@@ -173,7 +172,6 @@ public class MainnetBlockValidatorTest {
   }
 
   @Test
-  @Ignore("TODO: refactor this for mutable snapshot worldstate")
   public void shouldNotCacheWhenValidBlocks() {
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
@@ -184,6 +182,8 @@ public class MainnetBlockValidatorTest {
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
+        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));

@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdated;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayload;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayload;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -83,9 +82,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
           new EngineForkchoiceUpdated(
               consensusEngineServer, protocolContext, mergeCoordinator.get(), engineQosTimer),
           new EngineExchangeTransitionConfiguration(
-              consensusEngineServer, protocolContext, engineQosTimer),
-          new EnginePreparePayload(
-              consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get()));
+              consensusEngineServer, protocolContext, engineQosTimer));
     } else {
       return mapOf(
           new EngineExchangeTransitionConfiguration(

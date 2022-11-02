@@ -43,7 +43,7 @@ public interface TrieLogManager {
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
 
-  interface CachedLayer {
+  interface CachedWorldState {
     long getHeight();
 
     TrieLogLayer getTrieLog();

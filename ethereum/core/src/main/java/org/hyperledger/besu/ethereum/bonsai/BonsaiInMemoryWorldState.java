@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
@@ -118,8 +117,8 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
       for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
           storageAccountUpdate.getValue().entrySet()) {
         final Hash keyHash = storageUpdate.getKey();
-        final Bytes32 updatedStorage = storageUpdate.getValue().getUpdated();
-        if (updatedStorage == null || updatedStorage.equals(Bytes32.ZERO)) {
+        final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
+        if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
           storageTrie.remove(keyHash);
         } else {
           storageTrie.put(keyHash, BonsaiWorldView.encodeTrieValue(updatedStorage));

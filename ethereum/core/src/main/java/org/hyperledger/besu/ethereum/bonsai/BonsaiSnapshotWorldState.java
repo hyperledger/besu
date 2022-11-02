@@ -15,19 +15,18 @@
  */
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SnapshotMutableWorldState;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 /**
- * This class takes a snapshot of the worldstate as the basis of a mutable worldstate. It is able to
- * commit/perist as a trielog layer only. This is useful for async blockchain operations like block
- * creation and/or point-in-time queries since the snapshot worldstate is fully isolated from the
- * main BonsaiPersistedWorldState.
+ * This class extends BonsaiPersistedWorldstate directly such that it commits/perists directly to
+ * the transaction state. A SnapshotMutableWorldState is used to accumulate changes to a
+ * non-persisting mutable world state rather than writing worldstate changes directly.
  */
-public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
+public class BonsaiSnapshotWorldState extends BonsaiPersistedWorldState
     implements SnapshotMutableWorldState {
 
   private final SnappedKeyValueStorage accountSnap;
@@ -59,30 +58,24 @@ public class BonsaiSnapshotWorldState extends BonsaiInMemoryWorldState
   }
 
   @Override
-  public void persist(final BlockHeader blockHeader) {
-    super.persist(blockHeader);
-    // persist roothash to trie branch snapshot tx
-    trieBranchSnap
-        .getSnapshotTransaction()
-        .put(
-            BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY,
-            worldStateRootHash.toArrayUnsafe());
+  public Hash rootHash() {
+    if (updater.isDirty()) {
+      this.worldStateRootHash = calculateRootHash(worldStateStorage.updater(), updater);
+    }
+    return this.worldStateRootHash;
   }
 
   @Override
   public MutableWorldState copy() {
     // return a clone-based copy of worldstate storage
-    var copy =
-        new BonsaiSnapshotWorldState(
-            archive,
-            new BonsaiSnapshotWorldStateKeyValueStorage(
-                accountSnap.cloneFromSnapshot(),
-                codeSnap.cloneFromSnapshot(),
-                storageSnap.cloneFromSnapshot(),
-                trieBranchSnap.cloneFromSnapshot(),
-                worldStateStorage.trieLogStorage));
-    copy.updater.cloneFromUpdater(updater);
-    return copy;
+    return new BonsaiSnapshotWorldState(
+        archive,
+        new BonsaiSnapshotWorldStateKeyValueStorage(
+            accountSnap.cloneFromSnapshot(),
+            codeSnap.cloneFromSnapshot(),
+            storageSnap.cloneFromSnapshot(),
+            trieBranchSnap.cloneFromSnapshot(),
+            worldStateStorage.trieLogStorage));
   }
 
   @Override

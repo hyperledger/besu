@@ -29,6 +29,7 @@ import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -74,6 +76,22 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
+  }
+
+  @Override
+  public Account get(final Address address) {
+    return super.get(address);
+  }
+
+  @Override
+  protected UpdateTrackingAccount<BonsaiAccount> track(
+      final UpdateTrackingAccount<BonsaiAccount> account) {
+    return super.track(account);
+  }
+
+  @Override
+  public EvmAccount getAccount(final Address address) {
+    return super.getAccount(address);
   }
 
   @Override
@@ -242,7 +260,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
 
       final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-          new TreeSet<>(Map.Entry.comparingByKey());
+          new TreeSet<>(
+              Comparator.comparing(
+                  (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
       entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
       for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
@@ -605,7 +625,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                 address, slotHash));
       }
     } else {
-      final Bytes32 existingSlotValue = slotValue.getUpdated();
+      final UInt256 existingSlotValue = slotValue.getUpdated();
       if ((expectedValue == null || expectedValue.isZero())
           && existingSlotValue != null
           && !existingSlotValue.isZero()) {
@@ -636,10 +656,10 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     }
   }
 
-  private boolean isSlotEquals(final Bytes32 expectedValue, final Bytes32 existingSlotValue) {
-    final Bytes32 sanitizedExpectedValue = (expectedValue == null) ? Bytes32.ZERO : expectedValue;
-    final Bytes32 sanitizedExistingSlotValue =
-        (existingSlotValue == null) ? Bytes32.ZERO : existingSlotValue;
+  private boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
+    final UInt256 sanitizedExpectedValue = (expectedValue == null) ? UInt256.ZERO : expectedValue;
+    final UInt256 sanitizedExistingSlotValue =
+        (existingSlotValue == null) ? UInt256.ZERO : existingSlotValue;
     return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
   }
 
