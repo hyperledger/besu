@@ -102,8 +102,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   protected Hash calculateRootHash(
-          final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
-          final BonsaiWorldStateUpdater worldStateUpdater) {
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater) {
     clearStorage(stateUpdater, worldStateUpdater);
 
     // This must be done before updating the accounts so
@@ -135,9 +135,9 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private static void addTheAccounts(
-          final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
-          final BonsaiWorldStateUpdater worldStateUpdater,
-          final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater,
+      final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie) {
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> accountUpdate :
         worldStateUpdater.getAccountsToUpdate().entrySet()) {
       final Bytes accountKey = accountUpdate.getKey();
@@ -157,8 +157,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private static void updateCode(
-          final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
-          final BonsaiWorldStateUpdater worldStateUpdater) {
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater) {
     for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
         worldStateUpdater.getCodeToUpdate().entrySet()) {
       final Bytes updatedCode = codeUpdate.getValue().getUpdated();
@@ -172,8 +172,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private void updateAccountStorageState(
-          final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
-          final BonsaiWorldStateUpdater worldStateUpdater) {
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater) {
     for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storageAccountUpdate :
         worldStateUpdater.getStorageToUpdate().entrySet()) {
       final Address updatedAddress = storageAccountUpdate.getKey();
@@ -220,8 +220,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
   }
 
   private void clearStorage(
-          final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
-          final BonsaiWorldStateUpdater worldStateUpdater) {
+      final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater,
+      final BonsaiWorldStateUpdater worldStateUpdater) {
     for (final Address address : worldStateUpdater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
       final BonsaiAccount oldAccount =

@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +40,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   private final W world;
 
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
-  protected Set<Address> deletedAccounts = Collections.synchronizedSet(null);
+  protected Set<Address> deletedAccounts = Collections.synchronizedSet(new HashSet<>());
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;

@@ -16,8 +16,6 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -25,6 +23,9 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.Map;
 import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
 
@@ -131,7 +132,6 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
       }
     }
   }
-
 
   @Override
   public void persist(final BlockHeader blockHeader) {
