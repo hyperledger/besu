@@ -91,7 +91,7 @@ public class LayeredTrieLogManager
         });
   }
 
-  public static class LayeredWorldStateCache implements CachedLayer {
+  public static class LayeredWorldStateCache implements CachedWorldState {
 
     final BonsaiLayeredWorldState layeredWorldState;
 

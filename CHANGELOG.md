@@ -5,12 +5,14 @@
 
 ### Additions and Improvements
 - Updated jackson-databind library to version 2.13.4.2 addressing [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003)
-- Improve calculateRootHash method performance during Block processing [#4568](https://github.com/hyperledger/besu/pull/4568)
+- Gradle task allows custom docker image configs e.g. `./gradlew distDocker -PdockerImageName=my/besu -PdockerVariants=openjdk-17,openjdk-19`
+- Update snapsync feature to avoid restarting the download of the world state from scratch when restarting Besu [#4381](https://github.com/hyperledger/besu/pull/4381)
+- Added worldstate snapshot isolation to improve the stability of bonsai (`--Xbonsai-use-snapshots=true`) [#4351](https://github.com/hyperledger/besu/pull/4531)
 
 ### Bug Fixes
-- Fixed default fromBlock value and improved parameter interpetation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
-- Corrects treating a block as bad on internal error during either validation or processing [#4512](https://github.com/hyperledger/besu/issues/4512)
+- Fixed default fromBlock value and improved parameter interpretation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
 - Fix for NoSuchElementException for missing invalid reason when rejecting a local sent transaction [#4569](https://github.com/hyperledger/besu/pull/4569) 
+- Corrects treating a block as bad on internal error during either validation or processing [#4512](https://github.com/hyperledger/besu/issues/4512)
 
 ## 22.10.0-RC2
 
@@ -35,6 +37,7 @@
 - Upgrade RocksDB database version from 6.29.5 to 7.6.0 [#4517](https://github.com/hyperledger/besu/pull/4517)
 - Avoid connecting to self when using static-nodes [#4521](https://github.com/hyperledger/besu/pull/4521)
 - EVM performance has increased 20%-100% depending on the particulars of the contract. [#4540](https://github.com/hyperledger/besu/pull/4540)
+- Improve calculateRootHash method performance during Block processing [#4568](https://github.com/hyperledger/besu/pull/4568)
 
 ### Bug Fixes
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)

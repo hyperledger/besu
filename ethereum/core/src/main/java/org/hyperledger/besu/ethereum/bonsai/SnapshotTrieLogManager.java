@@ -84,7 +84,7 @@ public class SnapshotTrieLogManager
     // no-op.  Snapshots are independent and do not need to update 'next' worldstates
   }
 
-  public static class CachedSnapshotWorldState implements CachedLayer {
+  public static class CachedSnapshotWorldState implements CachedWorldState {
 
     final BonsaiSnapshotWorldState snapshot;
     final TrieLogLayer trieLog;

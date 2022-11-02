@@ -196,8 +196,8 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
         for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageUpdate :
             storageAccountUpdate.getValue().entrySet()) {
           final Hash keyHash = storageUpdate.getKey();
-          final Bytes32 updatedStorage = storageUpdate.getValue().getUpdated();
-          if (updatedStorage == null || updatedStorage.equals(Bytes32.ZERO)) {
+          final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
+          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
             stateUpdater.removeStorageValueBySlotHash(updatedAddressHash, keyHash);
             storageTrie.remove(keyHash);
           } else {
