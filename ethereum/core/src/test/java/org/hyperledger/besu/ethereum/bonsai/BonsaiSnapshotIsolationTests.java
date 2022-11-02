@@ -63,6 +63,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -85,9 +86,6 @@ public class BonsaiSnapshotIsolationTests {
       key ->
           SignatureAlgorithmFactory.getInstance()
               .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
-  final Function<GenesisAllocation, Address> extractAddress =
-      ga -> Address.fromHexString(ga.getAddress());
-
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(GenesisConfigFile.development().getConfigOptions());
   private final GenesisState genesisState =
@@ -172,7 +170,7 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(archive.getMutable().get(testAddress)).isNull();
 
     // roll the persisted world state to the new trie log from the persisted snapshot
-    var ws = archive.getMutable(firstBlock.getHeader().getNumber(), true);
+    var ws = archive.getMutable(null, firstBlock.getHash());
     assertThat(ws).isPresent();
     assertThat(ws.get().get(testAddress)).isNotNull();
     assertThat(ws.get().get(testAddress).getBalance())
@@ -246,8 +244,38 @@ public class BonsaiSnapshotIsolationTests {
 
   @Test
   public void assertSnapshotDoesNotClose() {
-    // TODO: add unit test to assert snapshot does not close on clone if parent tx is closed
+    Address testAddress = Address.fromHexString("0xdeadbeef");
 
+    // create a snapshot worldstate, and then clone it:
+    var isolated = archive.getMutableSnapshot(genesisState.getBlock().getHash()).get();
+
+    // execute a block with a single transaction on the first snapshot:
+    var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
+    var res = executeBlock(isolated, firstBlock);
+
+    assertThat(res.isSuccessful()).isTrue();
+    Consumer<MutableWorldState> checkIsolatedState =
+        (ws) -> {
+          assertThat(ws.rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+          assertThat(ws.get(testAddress)).isNotNull();
+          assertThat(ws.get(testAddress).getBalance())
+              .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+        };
+    checkIsolatedState.accept(isolated);
+
+    var isolatedClone = isolated.copy();
+    checkIsolatedState.accept(isolatedClone);
+
+    try {
+      // close the first snapshot worldstate.  The second worldstate should still be able to read
+      // through its snapshot
+      isolated.close();
+    } catch (Exception ex) {
+      // meh
+    }
+
+    // copy of closed isolated worldstate should still pass check
+    checkIsolatedState.accept(isolatedClone);
   }
 
   @Test
@@ -270,7 +298,7 @@ public class BonsaiSnapshotIsolationTests {
 
     // roll chain and worldstate to block 2
     blockchain.rewindToBlock(2L);
-    var block1State = archive.getMutable(2L, true);
+    var block1State = archive.getMutable(null, block2.getHash());
 
     // BonsaiPersistedWorldState should be at block 2
     assertThat(block1State.get().get(testAddress)).isNotNull();

@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.Arrays;
 import java.util.List;
@@ -58,27 +57,28 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
     final Address address = requestContext.getRequiredParameter(0, Address.class);
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
-    final Optional<WorldState> worldState = getBlockchainQueries().getWorldState(blockHash);
-
-    if (worldState.isPresent()) {
-      Optional<WorldStateProof> proofOptional =
-          getBlockchainQueries()
-              .getWorldStateArchive()
-              .getAccountProof(worldState.get().rootHash(), address, storageKeys);
-      return proofOptional
-          .map(
-              proof ->
-                  (JsonRpcResponse)
-                      new JsonRpcSuccessResponse(
-                          requestContext.getRequest().getId(),
-                          GetProofResult.buildGetProofResult(address, proof)))
-          .orElse(
-              new JsonRpcErrorResponse(
-                  requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND));
-    }
-
-    return new JsonRpcErrorResponse(
-        requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE);
+    return getBlockchainQueries()
+        .getAndMapWorldState(
+            blockHash,
+            worldState -> {
+              Optional<WorldStateProof> proofOptional =
+                  getBlockchainQueries()
+                      .getWorldStateArchive()
+                      .getAccountProof(worldState.rootHash(), address, storageKeys);
+              return proofOptional
+                  .map(
+                      proof ->
+                          (JsonRpcResponse)
+                              new JsonRpcSuccessResponse(
+                                  requestContext.getRequest().getId(),
+                                  GetProofResult.buildGetProofResult(address, proof)))
+                  .orElse(
+                      new JsonRpcErrorResponse(
+                          requestContext.getRequest().getId(), JsonRpcError.NO_ACCOUNT_FOUND));
+            })
+        .orElse(
+            new JsonRpcErrorResponse(
+                requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE));
   }
 
   @Override
