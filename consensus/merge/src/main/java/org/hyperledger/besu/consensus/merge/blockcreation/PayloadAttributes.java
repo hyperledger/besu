@@ -15,6 +15,9 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -22,12 +25,17 @@ public class PayloadAttributes {
   private final Long timestamp;
   private final Bytes32 prevRandao;
   private final Address suggestedFeeRecipient;
+  private final List<Withdrawal> withdrawals;
 
   public PayloadAttributes(
-      final Long timestamp, final Bytes32 prevRandao, final Address suggestedFeeRecipient) {
+      final Long timestamp,
+      final Bytes32 prevRandao,
+      final Address suggestedFeeRecipient,
+      final List<Withdrawal> withdrawals) {
     this.timestamp = timestamp;
     this.prevRandao = prevRandao;
     this.suggestedFeeRecipient = suggestedFeeRecipient;
+    this.withdrawals = withdrawals;
   }
 
   public Long getTimestamp() {
@@ -40,5 +48,9 @@ public class PayloadAttributes {
 
   public Address getSuggestedFeeRecipient() {
     return suggestedFeeRecipient;
+  }
+
+  public List<Withdrawal> getWithdrawals() {
+    return withdrawals;
   }
 }
