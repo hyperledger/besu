@@ -119,8 +119,9 @@ public class BlockHeaderBuilder {
     return toBuilder;
   }
 
-  private BlockHeaderBuilder withdrawalsRoot(final Hash withdrawalsRoot) {
-    this.withdrawalsRoot = withdrawalsRoot;
+  public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
+    checkNotNull(hash);
+    this.withdrawalsRoot = hash;
     return this;
   }
 
