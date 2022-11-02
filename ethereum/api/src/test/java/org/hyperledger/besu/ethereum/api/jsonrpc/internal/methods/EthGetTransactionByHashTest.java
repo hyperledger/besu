@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPen
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.plugin.data.Transaction;
 
@@ -159,11 +159,10 @@ public class EthGetTransactionByHashTest {
   @Test
   public void validateResultSpec() {
 
-    AbstractPendingTransactionsSorter.TransactionInfo tInfo =
-        getPendingTransactions().stream().findFirst().get();
-    Hash hash = tInfo.getHash();
+    PendingTransaction pendingTx = getPendingTransactions().stream().findFirst().get();
+    Hash hash = pendingTx.getHash();
     when(this.pendingTransactions.getTransactionByHash(hash))
-        .thenReturn(Optional.of(tInfo.getTransaction()));
+        .thenReturn(Optional.of(pendingTx.getTransaction()));
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, new Object[] {hash}));
@@ -190,7 +189,7 @@ public class EthGetTransactionByHashTest {
     assertThat(result.getS()).isNotNull();
   }
 
-  private Set<AbstractPendingTransactionsSorter.TransactionInfo> getPendingTransactions() {
+  private Set<PendingTransaction> getPendingTransactions() {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     Transaction pendingTransaction = gen.transaction();
@@ -198,8 +197,7 @@ public class EthGetTransactionByHashTest {
     return gen.transactionsWithAllTypes(4).stream()
         .map(
             transaction ->
-                new AbstractPendingTransactionsSorter.TransactionInfo(
-                    transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
+                new PendingTransaction(transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
         .collect(Collectors.toUnmodifiableSet());
   }
 }
