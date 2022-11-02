@@ -104,8 +104,8 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
             () ->
                 blockchainQueries
                     .get()
-                    .getWorldState(blockHeaderOptional.get().getNumber())
-                    .map(
+                    .mapWorldState(
+                        blockHeaderOptional.get().getNumber(),
                         worldState ->
                             extractStorageAt(
                                 requestContext, accountAddress, startKey, limit, worldState))

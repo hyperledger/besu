@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.ofNullable;
 import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -118,8 +120,17 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
       if (!transactionAddedStatus.equals(ADDED)) {
-        duplicateTransactionCounter.labels(LOCAL).inc();
-        return ValidationResult.invalid(transactionAddedStatus.getInvalidReason().orElseThrow());
+        if (transactionAddedStatus.equals(ALREADY_KNOWN)) {
+          duplicateTransactionCounter.labels(LOCAL).inc();
+        }
+        return ValidationResult.invalid(
+            transactionAddedStatus
+                .getInvalidReason()
+                .orElseGet(
+                    () -> {
+                      LOG.warn("Missing invalid reason for status {}", transactionAddedStatus);
+                      return INTERNAL_ERROR;
+                    }));
       }
       final Collection<Transaction> txs = singletonList(transaction);
       transactionBroadcaster.onTransactionsAdded(txs);
@@ -306,28 +317,25 @@ public class TransactionPool implements BlockAddedObserver {
           "EIP-1559 transaction are not allowed yet");
     }
 
-    return protocolContext
-        .getWorldStateArchive()
-        .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
-        .map(
-            worldState -> {
-              try {
-                final Account senderAccount = worldState.get(transaction.getSender());
-                return new ValidationResultAndAccount(
-                    senderAccount,
-                    getTransactionValidator()
-                        .validateForSender(
-                            transaction,
-                            senderAccount,
-                            TransactionValidationParams.transactionPool()));
-              } catch (MerkleTrieException ex) {
-                LOG.debug(
-                    "MerkleTrieException while validating transaction for sender {}",
-                    transaction.getSender());
-                return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
-              }
-            })
-        .orElseGet(() -> ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE));
+    try (var worldState =
+        protocolContext
+            .getWorldStateArchive()
+            .getMutable(chainHeadBlockHeader.getStateRoot(), chainHeadBlockHeader.getHash(), false)
+            .orElseThrow()) {
+      final Account senderAccount = worldState.get(transaction.getSender());
+      return new ValidationResultAndAccount(
+          senderAccount,
+          getTransactionValidator()
+              .validateForSender(
+                  transaction, senderAccount, TransactionValidationParams.transactionPool()));
+    } catch (MerkleTrieException ex) {
+      LOG.debug(
+          "MerkleTrieException while validating transaction for sender {}",
+          transaction.getSender());
+      return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    } catch (Exception ex) {
+      return ValidationResultAndAccount.invalid(CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE);
+    }
   }
 
   private boolean strictReplayProtectionShouldBeEnforceLocally(

@@ -5,9 +5,14 @@
 
 ### Additions and Improvements
 - Updated jackson-databind library to version 2.13.4.2 addressing [CVE-2022-42003](https://nvd.nist.gov/vuln/detail/CVE-2022-42003)
+- Gradle task allows custom docker image configs e.g. `./gradlew distDocker -PdockerImageName=my/besu -PdockerVariants=openjdk-17,openjdk-19`
+- Update snapsync feature to avoid restarting the download of the world state from scratch when restarting Besu [#4381](https://github.com/hyperledger/besu/pull/4381)
+- Added worldstate snapshot isolation to improve the stability of bonsai (`--Xbonsai-use-snapshots=true`) [#4351](https://github.com/hyperledger/besu/pull/4531)
 
 ### Bug Fixes
-- Fixed default fromBlock value and improved parameter interpetation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
+- Fixed default fromBlock value and improved parameter interpretation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
+- Fix for NoSuchElementException for missing invalid reason when rejecting a local sent transaction [#4569](https://github.com/hyperledger/besu/pull/4569) 
+- Corrects treating a block as bad on internal error during either validation or processing [#4512](https://github.com/hyperledger/besu/issues/4512)
 
 ## 22.10.0-RC2
 

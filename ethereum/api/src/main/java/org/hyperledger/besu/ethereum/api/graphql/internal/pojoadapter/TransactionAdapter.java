@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,12 +82,11 @@ public class TransactionAdapter extends AdapterBase {
     if (blockNumber == null) {
       blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
-    return query
-        .getWorldState(blockNumber)
-        .map(
-            mutableWorldState ->
-                new AccountAdapter(
-                    mutableWorldState.get(transactionWithMetadata.getTransaction().getSender())));
+    return query.mapWorldState(
+        blockNumber,
+        mutableWorldState ->
+            new AccountAdapter(
+                mutableWorldState.get(transactionWithMetadata.getTransaction().getSender())));
   }
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
@@ -98,15 +96,15 @@ public class TransactionAdapter extends AdapterBase {
       blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
 
-    return query
-        .getWorldState(blockNumber)
-        .flatMap(
-            ws -> {
-              return transactionWithMetadata
-                  .getTransaction()
-                  .getTo()
-                  .map(address -> new AccountAdapter(address, ws.get(address)));
-            });
+    return query.mapWorldState(
+        blockNumber,
+        ws ->
+            transactionWithMetadata
+                .getTransaction()
+                .getTo()
+                .map(address -> new AccountAdapter(address, ws.get(address)))
+                // safe because mapWorldState returns Optional.ofNullable
+                .orElse(null));
   }
 
   public Optional<Wei> getValue() {
@@ -176,11 +174,7 @@ public class TransactionAdapter extends AdapterBase {
           return Optional.empty();
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
-
-        final Optional<WorldState> ws = query.getWorldState(blockNumber);
-        if (ws.isPresent()) {
-          return Optional.of(new AccountAdapter(ws.get().get(addr.get())));
-        }
+        return query.mapWorldState(blockNumber, ws -> new AccountAdapter(ws.get(addr.get())));
       }
     }
     return Optional.empty();

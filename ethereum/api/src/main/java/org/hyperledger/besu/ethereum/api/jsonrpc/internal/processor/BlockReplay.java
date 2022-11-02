@@ -145,14 +145,18 @@ public class BlockReplay {
     if (previous == null) {
       return Optional.empty();
     }
-    final MutableWorldState mutableWorldState =
+    try (final MutableWorldState mutableWorldState =
         worldStateArchive
             .getMutable(previous.getStateRoot(), previous.getHash(), false)
-            .orElse(null);
-    if (mutableWorldState == null) {
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Missing worldstate for stateroot "
+                            + previous.getStateRoot().toShortHexString()))) {
+      return action.perform(body, header, blockchain, mutableWorldState, transactionProcessor);
+    } catch (Exception ex) {
       return Optional.empty();
     }
-    return action.perform(body, header, blockchain, mutableWorldState, transactionProcessor);
   }
 
   private Optional<Block> getBlock(final Hash blockHash) {
