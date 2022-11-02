@@ -22,8 +22,6 @@ import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
 import org.slf4j.Logger;
@@ -33,14 +31,11 @@ import org.slf4j.LoggerFactory;
 public class MetricsSystemFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsSystemFactory.class);
-  private static final AtomicBoolean globalOtelSet = new AtomicBoolean(false);
 
   private MetricsSystemFactory() {}
 
   private static void disableGlobalOpenTelemetry() {
-    if (globalOtelSet.compareAndSet(false, true)) {
-      GlobalOpenTelemetry.set(OpenTelemetry.noop());
-    }
+    GlobalOpenTelemetry.set(OpenTelemetry.noop());
   }
 
   /**

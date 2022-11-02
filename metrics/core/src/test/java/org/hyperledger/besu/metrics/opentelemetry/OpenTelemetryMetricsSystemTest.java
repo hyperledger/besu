@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +53,11 @@ public class OpenTelemetryMetricsSystemTest {
       Comparator.<Observation, String>comparing(observation -> observation.getCategory().getName())
           .thenComparing(Observation::getMetricName)
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
+
+  @Before
+  public void resetGlobalOpenTelemetry() {
+    GlobalOpenTelemetry.resetForTest();
+  }
 
   private OpenTelemetrySystem metricsSystem = null;
 
