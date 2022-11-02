@@ -22,6 +22,8 @@ import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +34,10 @@ public class MetricsSystemFactory {
 
   private MetricsSystemFactory() {}
 
+  private static void disableGlobalOpenTelemetry() {
+    GlobalOpenTelemetry.set(OpenTelemetry.noop());
+  }
+
   /**
    * Creates and starts a new metric system to observe the behavior of the client
    *
@@ -41,6 +47,7 @@ public class MetricsSystemFactory {
   public static ObservableMetricsSystem create(final MetricsConfiguration metricsConfiguration) {
     LOG.trace("Creating a metric system with {}", metricsConfiguration.getProtocol());
     if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
+      disableGlobalOpenTelemetry();
       return new NoOpMetricsSystem();
     }
     if (PROMETHEUS.equals(metricsConfiguration.getProtocol())) {
@@ -48,6 +55,7 @@ public class MetricsSystemFactory {
           new PrometheusMetricsSystem(
               metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
       metricsSystem.init();
+      disableGlobalOpenTelemetry();
       return metricsSystem;
     } else if (OPENTELEMETRY.equals(metricsConfiguration.getProtocol())) {
       final OpenTelemetrySystem metricsSystem =
