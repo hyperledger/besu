@@ -82,7 +82,7 @@ public class TransactionAdapter extends AdapterBase {
     if (blockNumber == null) {
       blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
-    return query.mapWorldState(
+    return query.getAndMapWorldState(
         blockNumber,
         mutableWorldState ->
             new AccountAdapter(
@@ -96,7 +96,7 @@ public class TransactionAdapter extends AdapterBase {
       blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
 
-    return query.mapWorldState(
+    return query.getAndMapWorldState(
         blockNumber,
         ws ->
             transactionWithMetadata
@@ -174,7 +174,7 @@ public class TransactionAdapter extends AdapterBase {
           return Optional.empty();
         }
         final long blockNumber = bn.orElseGet(txBlockNumber::get);
-        return query.mapWorldState(blockNumber, ws -> new AccountAdapter(ws.get(addr.get())));
+        return query.getAndMapWorldState(blockNumber, ws -> new AccountAdapter(ws.get(addr.get())));
       }
     }
     return Optional.empty();

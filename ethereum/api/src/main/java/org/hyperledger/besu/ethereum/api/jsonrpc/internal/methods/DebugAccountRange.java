@@ -75,7 +75,7 @@ public class DebugAccountRange implements JsonRpcMethod {
     // TODO deal with mid-block locations
     return blockchainQueries
         .get()
-        .mapWorldState(
+        .getAndMapWorldState(
             blockHeaderOptional.get().getNumber(),
             state -> {
               final List<StreamableAccount> accounts =
