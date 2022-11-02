@@ -27,11 +27,15 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Withdrawal {
   final long index;
+
+  final long validatorIndex;
   final Address address;
   final Wei amount;
 
-  public Withdrawal(final long index, final Address address, final Wei amount) {
+  public Withdrawal(
+      final long index, final long validatorIndex, final Address address, final Wei amount) {
     this.index = index;
+    this.validatorIndex = validatorIndex;
     this.address = address;
     this.amount = amount;
   }
@@ -54,5 +58,9 @@ public class Withdrawal {
 
   public Wei getAmount() {
     return amount;
+  }
+
+  public long getValidatorIndex() {
+    return validatorIndex;
   }
 }
