@@ -38,8 +38,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        true,
-        false);
+        SEGMENT_ISOLATION_SUPPORTED,
+        SNAPSHOT_ISOLATION_UNSUPPORTED);
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {

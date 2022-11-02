@@ -58,7 +58,7 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 
     return getBlockchainQueries()
-        .mapWorldState(
+        .getAndMapWorldState(
             blockHash,
             worldState -> {
               Optional<WorldStateProof> proofOptional =

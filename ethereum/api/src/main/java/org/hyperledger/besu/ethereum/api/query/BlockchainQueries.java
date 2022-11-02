@@ -294,7 +294,7 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final Hash blockHash) {
-    return mapWorldState(blockHash, worldState -> worldState.get(address))
+    return getAndMapWorldState(blockHash, worldState -> worldState.get(address))
         .map(Account::getNonce)
         .orElse(0L);
   }
@@ -834,14 +834,16 @@ public class BlockchainQueries {
   }
 
   /**
-   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash.
+   * This method provides access to the worldstate via a mapper function in order to ensure all of
+   * the uses of the MutableWorldState are subsequently closed, via the try-with-resources block.
    *
    * @param <U> return type of the operation on the MutableWorldState
    * @param blockHash the block hash
    * @param mapper Function which performs an operation on a MutableWorldState
    * @return the world state at the block number
    */
-  public <U> Optional<U> mapWorldState(
+  public <U> Optional<U> getAndMapWorldState(
       final Hash blockHash, final Function<MutableWorldState, ? extends U> mapper) {
     return blockchain
         .getBlockHeader(blockHash)
@@ -869,11 +871,11 @@ public class BlockchainQueries {
    * @param mapper Function which performs an operation on a MutableWorldState returning type U
    * @return the world state at the block number
    */
-  public <U> Optional<U> mapWorldState(
+  public <U> Optional<U> getAndMapWorldState(
       final long blockNumber, final Function<MutableWorldState, ? extends U> mapper) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
-    return mapWorldState(blockHash, mapper);
+    return getAndMapWorldState(blockHash, mapper);
   }
 
   public Optional<Long> gasPrice() {
@@ -938,7 +940,7 @@ public class BlockchainQueries {
       final Hash blockHash,
       final Function<Account, T> getter,
       final T noAccountValue) {
-    return mapWorldState(
+    return getAndMapWorldState(
         blockHash,
         worldState ->
             Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));

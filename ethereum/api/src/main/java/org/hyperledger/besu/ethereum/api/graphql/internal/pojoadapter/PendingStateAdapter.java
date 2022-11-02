@@ -65,7 +65,7 @@ public class PendingStateAdapter extends AdapterBase {
     final Long blockNumber = dataFetchingEnvironment.getArgument("blockNumber");
     final long latestBlockNumber = blockchainQuery.latestBlock().get().getHeader().getNumber();
     return blockchainQuery
-        .mapWorldState(latestBlockNumber, ws -> ws.get(addr))
+        .getAndMapWorldState(latestBlockNumber, ws -> ws.get(addr))
         .map(AccountAdapter::new);
   }
 
