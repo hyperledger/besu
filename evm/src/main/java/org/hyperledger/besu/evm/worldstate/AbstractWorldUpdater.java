@@ -21,11 +21,12 @@ import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
@@ -38,8 +39,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   private final W world;
 
-  protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new HashMap<>();
-  protected Set<Address> deletedAccounts = new HashSet<>();
+  protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
+  protected Set<Address> deletedAccounts = Collections.synchronizedSet(new HashSet<>());
 
   protected AbstractWorldUpdater(final W world) {
     this.world = world;
