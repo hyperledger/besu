@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
@@ -57,6 +58,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
@@ -69,6 +71,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -105,6 +108,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+
+  private static final List<Withdrawal> EMPTY_WITHDRAWALS = emptyList();
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 
@@ -191,7 +196,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
@@ -225,7 +231,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     blockCreationTask.get();
 
@@ -267,7 +274,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     blockCreationTask.get();
 
@@ -297,7 +305,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     try {
       blockCreationTask.get();
@@ -338,7 +347,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             genesisState.getBlock().getHeader(),
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
-            suggestedFeeRecipient);
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     waitForBlockCreationInProgress.await();
     coordinator.finalizeProposalById(payloadId);
@@ -378,13 +388,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     var payloadId1 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     final CompletableFuture<Void> task1 = blockCreationTask;
 
     var payloadId2 =
         coordinator.preparePayload(
-            genesisState.getBlock().getHeader(), timestamp, Bytes32.ZERO, suggestedFeeRecipient);
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            EMPTY_WITHDRAWALS);
 
     assertThat(payloadId1).isEqualTo(payloadId2);
 
@@ -787,7 +805,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             lastFinalizedBlock.getHash(),
             Optional.of(
                 new PayloadAttributes(
-                    headBlockHeader.getTimestamp() - 1, Hash.ZERO, Address.ZERO)));
+                    headBlockHeader.getTimestamp() - 1, Hash.ZERO, Address.ZERO, emptyList())));
 
     assertThat(res.isValid()).isFalse();
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.INVALID_PAYLOAD_ATTRIBUTES);
@@ -818,7 +836,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Hash.ZERO,
             terminalHeader.getHash(),
             Optional.of(
-                new PayloadAttributes(parentHeader.getTimestamp() + 1, Hash.ZERO, Address.ZERO)));
+                new PayloadAttributes(
+                    parentHeader.getTimestamp() + 1, Hash.ZERO, Address.ZERO, emptyList())));
 
     assertThat(res.getStatus()).isEqualTo(ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD);
     assertThat(res.getNewHead().isEmpty()).isTrue();

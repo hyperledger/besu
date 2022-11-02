@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -225,7 +226,8 @@ public class EngineForkchoiceUpdatedTest {
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
-            Address.ECREC.toString());
+            Address.ECREC.toString(),
+            Collections.emptyList());
     var mockPayloadId =
         PayloadIdentifier.forPayloadParams(
             mockHeader.getHash(),
@@ -234,7 +236,11 @@ public class EngineForkchoiceUpdatedTest {
             payloadParams.getSuggestedFeeRecipient());
 
     when(mergeCoordinator.preparePayload(
-            mockHeader, payloadParams.getTimestamp(), payloadParams.getPrevRandao(), Address.ECREC))
+            mockHeader,
+            payloadParams.getTimestamp(),
+            payloadParams.getPrevRandao(),
+            Address.ECREC,
+            payloadParams.getWithdrawals()))
         .thenReturn(mockPayloadId);
 
     var res =
@@ -409,7 +415,8 @@ public class EngineForkchoiceUpdatedTest {
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
-            Address.ECREC.toString());
+            Address.ECREC.toString(),
+            Collections.emptyList());
 
     var resp =
         (JsonRpcSuccessResponse)
@@ -420,7 +427,7 @@ public class EngineForkchoiceUpdatedTest {
 
     var forkchoiceRes = (EngineUpdateForkchoiceResult) resp.getResult();
 
-    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any());
+    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any(), any());
 
     assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(EngineStatus.VALID);
     assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();
