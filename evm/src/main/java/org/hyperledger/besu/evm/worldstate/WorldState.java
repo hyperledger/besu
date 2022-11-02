@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A specific state of the world.
@@ -35,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * not mutable. In other words, objects implementing this interface are not guaranteed to be
  * thread-safe, though some particular implementations may provide such guarantees.
  */
-public interface WorldState extends WorldView {
+public interface WorldState extends WorldView, AutoCloseable {
 
   /**
    * The root hash of the world state this represents.
@@ -100,12 +101,12 @@ public interface WorldState extends WorldView {
     }
 
     @Override
-    public Bytes32 getStorageValue(final Bytes32 key) {
+    public UInt256 getStorageValue(final UInt256 key) {
       return accountState.getStorageValue(key);
     }
 
     @Override
-    public Bytes32 getOriginalStorageValue(final Bytes32 key) {
+    public UInt256 getOriginalStorageValue(final UInt256 key) {
       return accountState.getOriginalStorageValue(key);
     }
 
@@ -114,5 +115,10 @@ public interface WorldState extends WorldView {
         final Bytes32 startKeyHash, final int limit) {
       return accountState.storageEntriesFrom(startKeyHash, limit);
     }
+  }
+
+  @Override
+  default void close() throws Exception {
+    // default no-op
   }
 }

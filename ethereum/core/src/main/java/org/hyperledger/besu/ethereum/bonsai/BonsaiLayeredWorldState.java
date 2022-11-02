@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** A World State backed first by trie log layer and then by another world state. */
 public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldView, WorldState {
@@ -124,19 +125,19 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public Bytes32 getStorageValue(final Address address, final Bytes32 key) {
-    return getStorageValueBySlotHash(address, Hash.hash(key)).orElse(Bytes32.ZERO);
+  public UInt256 getStorageValue(final Address address, final UInt256 key) {
+    return getStorageValueBySlotHash(address, Hash.hash(key)).orElse(UInt256.ZERO);
   }
 
   @Override
-  public Optional<Bytes32> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
+  public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
     // this must be iterative and lambda light because the stack may blow up
     // mainly because we don't have tail calls.
     BonsaiLayeredWorldState currentLayer = this;
     while (currentLayer != null) {
-      final Optional<Bytes32> maybeValue =
+      final Optional<UInt256> maybeValue =
           currentLayer.trieLog.getStorageBySlotHash(address, slotHash);
-      final Optional<Bytes32> maybePriorValue =
+      final Optional<UInt256> maybePriorValue =
           currentLayer.trieLog.getPriorStorageBySlotHash(address, slotHash);
       if (currentLayer == this && maybeValue.isPresent()) {
         return maybeValue;
@@ -157,7 +158,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
   }
 
   @Override
-  public Bytes32 getPriorStorageValue(final Address address, final Bytes32 key) {
+  public UInt256 getPriorStorageValue(final Address address, final UInt256 key) {
     // This is the base layer for a block, all values are original.
     return getStorageValue(address, key);
   }
@@ -176,7 +177,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
             .forEach(
                 entry -> {
                   if (!results.containsKey(entry.getKey())) {
-                    final Bytes32 value = entry.getValue().getUpdated();
+                    final UInt256 value = entry.getValue().getUpdated();
                     // yes, store the nulls.  If it was deleted it should stay deleted
                     results.put(entry.getKey(), value);
                   }

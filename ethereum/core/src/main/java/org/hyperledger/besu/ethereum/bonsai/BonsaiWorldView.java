@@ -26,6 +26,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public interface BonsaiWorldView extends WorldView {
 
@@ -33,11 +34,11 @@ public interface BonsaiWorldView extends WorldView {
 
   Optional<Bytes> getStateTrieNode(Bytes location);
 
-  Bytes32 getStorageValue(Address address, Bytes32 key);
+  UInt256 getStorageValue(Address address, UInt256 key);
 
-  Optional<Bytes32> getStorageValueBySlotHash(Address address, Hash slotHash);
+  Optional<UInt256> getStorageValueBySlotHash(Address address, Hash slotHash);
 
-  Bytes32 getPriorStorageValue(Address address, Bytes32 key);
+  UInt256 getPriorStorageValue(Address address, UInt256 key);
 
   /**
    * Retrieve all the storage values of a account.

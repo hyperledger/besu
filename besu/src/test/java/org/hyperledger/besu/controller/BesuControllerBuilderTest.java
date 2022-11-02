@@ -131,9 +131,11 @@ public class BesuControllerBuilderTest {
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
-    BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
-        mock(BonsaiWorldStateKeyValueStorage.Updater.class);
+    BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater =
+        mock(BonsaiWorldStateKeyValueStorage.BonsaiUpdater.class);
     when(bonsaiUpdater.getTrieLogStorageTransaction())
+        .thenReturn(mock(KeyValueStorageTransaction.class));
+    when(bonsaiUpdater.getTrieBranchStorageTransaction())
         .thenReturn(mock(KeyValueStorageTransaction.class));
     when(bonsaiWorldStateStorage.updater()).thenReturn(bonsaiUpdater);
     besuControllerBuilder = visitWithMockConfigs(new MainnetBesuControllerBuilder());
@@ -167,6 +169,7 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.BONSAI)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 
@@ -183,6 +186,7 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.FOREST)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 

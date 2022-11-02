@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class DefaultWorldStateArchive implements WorldStateArchive {
   private final WorldStateStorage worldStateStorage;
@@ -52,13 +52,6 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
-  }
-
-  @Override
-  public Optional<MutableWorldState> getMutable(
-      final long blockNumber, final boolean isPersistingState) {
-    throw new UnsupportedOperationException(
-        "Get mutable by block number is not available with the forest mode");
   }
 
   @Override
@@ -99,7 +92,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   public Optional<WorldStateProof> getAccountProof(
       final Hash worldStateRoot,
       final Address accountAddress,
-      final List<Bytes32> accountStorageKeys) {
+      final List<UInt256> accountStorageKeys) {
     return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
   }
 }

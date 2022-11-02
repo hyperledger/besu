@@ -131,7 +131,7 @@ public final class RangeManagerTest {
             accountStateTrie.getRootHash(), proofs, accounts, RangeManager.MAX_RANGE);
 
     Assertions.assertThat(newBeginElementInRange)
-        .contains(Bytes32.leftPad(Bytes.ofUnsignedShort(0x0b)));
+        .contains(Bytes32.leftPad(Bytes.wrap(Bytes.ofUnsignedShort(0x0b))));
   }
 
   @Test
