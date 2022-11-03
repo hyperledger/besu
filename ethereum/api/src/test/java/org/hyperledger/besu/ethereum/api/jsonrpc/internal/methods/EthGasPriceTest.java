@@ -67,7 +67,8 @@ public class EthGasPriceTest {
                 null,
                 Optional.empty(),
                 Optional.empty(),
-                ImmutableApiConfiguration.builder().gasPriceMin(100).build()),
+                ImmutableApiConfiguration.builder().gasPriceMin(100).build(),
+                Optional.empty()),
             miningCoordinator);
   }
 

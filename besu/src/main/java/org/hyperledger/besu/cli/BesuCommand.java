@@ -1284,6 +1284,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the static node file containing the static nodes for this node to connect to")
   private final Path staticNodesFile = null;
 
+  @CommandLine.Option(
+      names = {"--rpc-max-logs-range"},
+      description = "Specifies the maximum number of logs to retrieve via RPC")
+  private final Long rpcMaxLogsRange = null;
+
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -2149,7 +2154,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
-        .maxPeers(p2PDiscoveryOptionGroup.maxPeers);
+        .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
+        .rpcMaxLogsRange(rpcMaxLogsRange);
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -3330,5 +3336,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     && Optional.ofNullable(network).map(NetworkName::canFastSync).orElse(false)
                 ? SyncMode.FAST
                 : SyncMode.FULL);
+  }
+
+  public Long getRpcMaxLogsRange() {
+    return rpcMaxLogsRange;
   }
 }

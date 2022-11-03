@@ -194,6 +194,7 @@ public class RunnerBuilder {
   private Supplier<List<Bytes>> forkIdSupplier;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
+  private Optional<Long> rpcMaxLogsRange;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -527,13 +528,15 @@ public class RunnerBuilder {
     final TransactionPool transactionPool = besuController.getTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
+    // This is the one used by all the jsonRpcMethod calls
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),
             context.getWorldStateArchive(),
             Optional.of(dataDir.resolve(CACHE_PATH)),
             Optional.of(besuController.getProtocolManager().ethContext().getScheduler()),
-            apiConfiguration);
+            apiConfiguration,
+            rpcMaxLogsRange);
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
 
@@ -1062,7 +1065,12 @@ public class RunnerBuilder {
     if (privacyParameters.isEnabled()) {
       final BlockchainQueries blockchainQueries =
           new BlockchainQueries(
-              blockchain, worldStateArchive, Optional.empty(), Optional.empty(), apiConfiguration);
+              blockchain,
+              worldStateArchive,
+              Optional.empty(),
+              Optional.empty(),
+              apiConfiguration,
+              Optional.empty());
       privacyQueries =
           Optional.of(
               new PrivacyQueries(

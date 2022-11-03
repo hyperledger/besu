@@ -167,7 +167,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             context.getWorldStateArchive(),
             Optional.empty(),
             Optional.empty(),
-            ImmutableApiConfiguration.builder().gasPriceMin(0).build());
+            ImmutableApiConfiguration.builder().gasPriceMin(0).build(),
+            Optional.empty());
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
