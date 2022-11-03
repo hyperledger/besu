@@ -11,7 +11,6 @@ env:
 jobs:
   compile:
     runs-on: [ self-hosted, linux, X64 ]
-    container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
@@ -334,17 +333,13 @@ jobs:
           name: junit-qbft-reference-test-results
           path: '**/build/test-results/referenceTests/TEST-*.xml'
           retention-days: 1
-  run-parallel-acceptance-tests:
+  run-acceptance-tests:
     runs-on: [self-hosted, linux, X64]
     timeout-minutes: 30
-    name: "Runner #${{ matrix.runner-index }}: Run acceptance test suite in parallel"
+    name: "Run acceptance test suite"
     needs:
-      - runner-indexes
       - compile
     if: ${{ github.actor != 'dependabot[bot]' }}
-    strategy:
-      matrix:
-        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -361,9 +356,6 @@ jobs:
           key: ${{ runner.os }}-build-${{ github.sha }}
       - name: ethereum acceptance tests
         uses: gradle/gradle-build-action@v2
-        env:
-          SHARD_COUNT: "${{ env.total-runners }}"
-          SHARD_INDEX: "${{ matrix.runner-index }}"
         with:
           arguments: acceptanceTest --scan
       - name: Upload Test Report
