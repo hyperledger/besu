@@ -204,4 +204,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
         isSegmentIsolationSupported,
         "Whether segment isolation is supported will be determined during creation. Call a creation method first");
   }
+
+  @Override
+  public boolean isSnapshotIsolationSupported() {
+    return true;
+  }
 }

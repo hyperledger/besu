@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -34,6 +36,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +75,7 @@ public class PrivateMigrationBlockProcessor {
         protocolSpec.isSkipZeroBlockRewards());
   }
 
-  public AbstractBlockProcessor.Result processBlock(
+  public BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -89,7 +92,7 @@ public class PrivateMigrationBlockProcessor {
                 + " remaining {}",
             transaction.getGasLimit(),
             remainingGasBudget);
-        return AbstractBlockProcessor.Result.failed();
+        return BlockProcessingResult.FAILED;
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
@@ -108,7 +111,7 @@ public class PrivateMigrationBlockProcessor {
               true,
               TransactionValidationParams.processingBlock());
       if (result.isInvalid()) {
-        return AbstractBlockProcessor.Result.failed();
+        return BlockProcessingResult.FAILED;
       }
 
       worldStateUpdater.commit();
@@ -119,10 +122,10 @@ public class PrivateMigrationBlockProcessor {
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
-      return AbstractBlockProcessor.Result.failed();
+      return BlockProcessingResult.FAILED;
     }
-
-    return AbstractBlockProcessor.Result.successful(receipts);
+    BlockProcessingOutputs yield = new BlockProcessingOutputs(worldState, receipts);
+    return new BlockProcessingResult(Optional.of(yield));
   }
 
   private boolean rewardCoinbase(

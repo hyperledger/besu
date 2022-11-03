@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateUpdater;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -31,12 +33,11 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,83 +56,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);
 
   static final int MAX_GENERATION = 6;
-
-  public static class Result implements BlockProcessor.Result {
-
-    private static final AbstractBlockProcessor.Result FAILED =
-        new AbstractBlockProcessor.Result(false, null);
-
-    private final boolean successful;
-
-    private Optional<Throwable> causedBy = Optional.empty();
-
-    private final List<TransactionReceipt> receipts;
-    private final List<TransactionReceipt> privateReceipts;
-
-    public static AbstractBlockProcessor.Result successful(
-        final List<TransactionReceipt> receipts) {
-      return new AbstractBlockProcessor.Result(true, ImmutableList.copyOf(receipts));
-    }
-
-    public static Result successful(
-        final List<TransactionReceipt> publicTxReceipts,
-        final List<TransactionReceipt> privateTxReceipts) {
-      return new AbstractBlockProcessor.Result(
-          true,
-          ImmutableList.copyOf(publicTxReceipts),
-          Collections.unmodifiableList(privateTxReceipts));
-    }
-
-    public static AbstractBlockProcessor.Result failed() {
-      return FAILED;
-    }
-
-    public static AbstractBlockProcessor.Result failedBecause(final Throwable t) {
-      return new AbstractBlockProcessor.Result(t);
-    }
-
-    Result(final Throwable t) {
-      this.successful = false;
-      this.receipts = null;
-      this.privateReceipts = Collections.emptyList();
-      this.causedBy = Optional.of(t);
-    }
-
-    Result(final boolean successful, final List<TransactionReceipt> receipts) {
-      this.successful = successful;
-      this.receipts = receipts;
-      this.privateReceipts = Collections.emptyList();
-    }
-
-    public Result(
-        final boolean successful,
-        final ImmutableList<TransactionReceipt> publicReceipts,
-        final List<TransactionReceipt> privateReceipts) {
-      this.successful = successful;
-      this.receipts = publicReceipts;
-      this.privateReceipts = privateReceipts;
-    }
-
-    @Override
-    public List<TransactionReceipt> getReceipts() {
-      return receipts;
-    }
-
-    @Override
-    public List<TransactionReceipt> getPrivateReceipts() {
-      return privateReceipts;
-    }
-
-    @Override
-    public boolean isSuccessful() {
-      return successful;
-    }
-
-    @Override
-    public Optional<Throwable> causedBy() {
-      return this.causedBy;
-    }
-  }
 
   protected final MainnetTransactionProcessor transactionProcessor;
 
@@ -157,7 +81,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   @Override
-  public AbstractBlockProcessor.Result processBlock(
+  public BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -168,7 +92,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     long currentGasUsed = 0;
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
-        return AbstractBlockProcessor.Result.failed();
+        return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
@@ -189,15 +113,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               TransactionValidationParams.processingBlock(),
               privateMetadataUpdater);
       if (result.isInvalid()) {
-        LOG.info(
-            "Block processing error: transaction invalid '{}'. Block {} Transaction {}",
-            result.getValidationResult().getInvalidReason(),
-            blockHeader.getHash().toHexString(),
-            transaction.getHash().toHexString());
+        String errorMessage =
+            MessageFormat.format(
+                "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
+                result.getValidationResult().getErrorMessage(),
+                blockHeader.getHash().toHexString(),
+                transaction.getHash().toHexString());
+        LOG.info(errorMessage);
         if (worldState instanceof BonsaiPersistedWorldState) {
           ((BonsaiWorldStateUpdater) worldStateUpdater).reset();
         }
-        return AbstractBlockProcessor.Result.failed();
+        return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
       worldStateUpdater.commit();
 
@@ -213,17 +139,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       if (worldState instanceof BonsaiPersistedWorldState) {
         ((BonsaiWorldStateUpdater) worldState.updater()).reset();
       }
-      return AbstractBlockProcessor.Result.failed();
+      return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
 
     try {
       worldState.persist(blockHeader);
     } catch (Exception e) {
       LOG.error("failed persisting block", e);
-      return AbstractBlockProcessor.Result.failedBecause(e);
+      return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    return AbstractBlockProcessor.Result.successful(receipts);
+    return new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(worldState, receipts)));
   }
 
   protected boolean hasAvailableBlockBudget(

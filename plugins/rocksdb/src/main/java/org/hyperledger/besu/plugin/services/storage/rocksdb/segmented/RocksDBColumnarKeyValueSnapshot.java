@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.rocksdb.OptimisticTransactionDB;
 
 public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
@@ -55,6 +56,11 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
+    return snapTx.stream();
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
     return snapTx.streamKeys();
   }
@@ -68,6 +74,14 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     return streamKeys().filter(returnCondition).collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    return stream()
+        .filter(pair -> returnCondition.test(pair.getKey()))
+        .map(Pair::getValue)
+        .collect(toUnmodifiableSet());
   }
 
   @Override

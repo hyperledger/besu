@@ -192,6 +192,7 @@ ethstats-contact="contact@mail.n"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-maximum-back-layers-to-load=512
+Xbonsai-use-snapshots=true
 
 # feature flags
 Xsecp256k1-native-enabled=false

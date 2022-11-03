@@ -16,6 +16,8 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -26,6 +28,25 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage {
+
+  public BonsaiSnapshotWorldStateKeyValueStorage(final StorageProvider snappableStorageProvider) {
+    this(
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE)
+            .takeSnapshot(),
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE)
+            .takeSnapshot(),
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(
+                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE)
+            .takeSnapshot(),
+        snappableStorageProvider
+            .getSnappableStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE)
+            .takeSnapshot(),
+        snappableStorageProvider.getStorageBySegmentIdentifier(
+            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+  }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final SnappedKeyValueStorage accountStorage,
@@ -47,8 +68,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   public static class SnapshotUpdater implements BonsaiWorldStateKeyValueStorage.BonsaiUpdater {
-    //    private static final Logger LOG =
-    // LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
 
     private final SnappedKeyValueStorage accountStorage;
     private final SnappedKeyValueStorage codeStorage;

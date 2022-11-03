@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.goquorum;
 
 import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldState;
 
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -49,7 +50,7 @@ public class GoQuorumBlockValidator extends MainnetBlockValidator {
   }
 
   @Override
-  protected BlockProcessor.Result processBlock(
+  protected BlockProcessingResult processBlock(
       final ProtocolContext context, final MutableWorldState worldState, final Block block) {
     final MutableWorldState privateWorldState =
         getPrivateWorldState(goQuorumPrivacyParameters, worldState.rootHash(), block.getHash());
