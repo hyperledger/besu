@@ -442,7 +442,7 @@ public class TransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verifyNoInteractions(transactionValidator); // Reject before validation
+    verify(transactionValidator).getGoQuorumCompatibilityMode();
   }
 
   @Test

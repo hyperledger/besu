@@ -322,11 +322,14 @@ public class BlockTransactionSelector {
   private TransactionSelectionResult transactionSelectionResultForInvalidResult(
       final Transaction transaction,
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
-    // If the transaction has an incorrect nonce, leave it in the pool and continue
-    if (isIncorrectNonce(invalidReasonValidationResult)) {
+
+    final var invalidReason = invalidReasonValidationResult.getInvalidReason();
+    // If the invalid reason is transient, then leave the transaction in the pool and continue
+    if (isTransientValidationError(invalidReason)) {
       traceLambda(
           LOG,
-          "Incorrect nonce for transaction {} keeping it in the pool",
+          "Transient validation error {} for transaction {} keeping it in the pool",
+          invalidReason::toString,
           transaction::toTraceLog);
       return TransactionSelectionResult.CONTINUE;
     }
@@ -335,8 +338,13 @@ public class BlockTransactionSelector {
         LOG,
         "Delete invalid transaction {}, reason {}",
         transaction::toTraceLog,
-        invalidReasonValidationResult::getInvalidReason);
+        invalidReason::toString);
     return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+  }
+
+  private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {
+    return invalidReason.equals(TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE)
+        || invalidReason.equals(TransactionInvalidReason.INCORRECT_NONCE);
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(

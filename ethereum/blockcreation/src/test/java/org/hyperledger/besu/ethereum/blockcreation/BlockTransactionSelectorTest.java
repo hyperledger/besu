@@ -293,8 +293,15 @@ public class BlockTransactionSelectorTest {
   }
 
   @Test
-  public void transactionOfferingGasPriceLessThanMinimumIsIdentifiedAndRemovedFromPending() {
+  public void transactionOfferingGasPriceLessThanCurrentBlockMinimumIsIgnoredAndKeptInThePool() {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
+
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
+        .thenReturn(
+            TransactionProcessingResult.invalid(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE)));
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -316,7 +323,7 @@ public class BlockTransactionSelectorTest {
         selector.buildTransactionListForBlock();
 
     assertThat(results.getTransactions().size()).isEqualTo(0);
-    assertThat(pendingTransactions.size()).isEqualTo(0);
+    assertThat(pendingTransactions.size()).isEqualTo(1);
   }
 
   @Test
