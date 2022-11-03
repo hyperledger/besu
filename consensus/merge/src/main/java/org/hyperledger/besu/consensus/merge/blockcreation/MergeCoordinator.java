@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.PrintWriter;
@@ -211,7 +212,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .getBlock();
 
     BlockProcessingResult result = validateBlock(emptyBlock);
-    if (result.getYield().isPresent()) {
+    if (result.isSuccessful()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
       debugLambda(
           LOG,
@@ -327,7 +328,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
     final var resultBest = validateBlock(bestBlock);
-    if (resultBest.getYield().isPresent()) {
+    if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
@@ -350,6 +351,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private boolean canRetryBlockCreation(final Throwable throwable) {
     if (throwable instanceof StorageException) {
+      return true;
+    } else if (throwable instanceof MerkleTrieException) {
       return true;
     }
     return false;
@@ -424,7 +427,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
     final var validationResult = validateBlock(block);
-    validationResult.getYield().ifPresent(result -> chain.storeBlock(block, result.getReceipts()));
+    validationResult
+        .getYield()
+        .ifPresentOrElse(
+            result -> chain.storeBlock(block, result.getReceipts()),
+            () -> LOG.debug("empty yield in blockProcessingResult"));
     return validationResult;
   }
 

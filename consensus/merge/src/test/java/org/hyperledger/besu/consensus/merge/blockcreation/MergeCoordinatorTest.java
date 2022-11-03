@@ -63,9 +63,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTrans
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -246,7 +246,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             invocation -> {
               if (invocation.getArgument(1, Block.class).getBody().getTransactions().isEmpty()) {
                 // this is called by the first empty block
-                doThrow(new StorageException("lock")) // first fail
+                doThrow(new MerkleTrieException("lock")) // first fail
                     .doCallRealMethod() // then work
                     .when(blockchain)
                     .getBlockHeader(any());
