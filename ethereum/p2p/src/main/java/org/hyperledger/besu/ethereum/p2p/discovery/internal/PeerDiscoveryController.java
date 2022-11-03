@@ -330,6 +330,9 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
+                  if (filterOnEnrForkId) {
+                    requestENR(peer);
+                  }
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
