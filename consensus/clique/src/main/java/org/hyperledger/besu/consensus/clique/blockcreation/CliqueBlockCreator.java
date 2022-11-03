@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -52,6 +53,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final NodeKey nodeKey,
+      final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final EpochManager epochManager) {
@@ -63,6 +65,7 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
+        minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader);
     this.nodeKey = nodeKey;

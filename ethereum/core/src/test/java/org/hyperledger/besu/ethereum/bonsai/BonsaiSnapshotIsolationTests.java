@@ -388,6 +388,7 @@ public class BonsaiSnapshotIsolationTests {
         final AbstractPendingTransactionsSorter pendingTransactions,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
+        final Wei minTransactionGasPrice,
         final Double minBlockOccupancyRatio,
         final BlockHeader parentHeader) {
       super(
@@ -398,6 +399,7 @@ public class BonsaiSnapshotIsolationTests {
           pendingTransactions,
           protocolContext,
           protocolSchedule,
+          minTransactionGasPrice,
           minBlockOccupancyRatio,
           parentHeader);
     }
@@ -415,6 +417,7 @@ public class BonsaiSnapshotIsolationTests {
           sorter,
           protocolContext,
           protocolSchedule,
+          Wei.of(1L),
           0d,
           parentHeader);
     }

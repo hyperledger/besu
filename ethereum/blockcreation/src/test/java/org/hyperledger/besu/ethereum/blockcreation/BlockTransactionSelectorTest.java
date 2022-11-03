@@ -305,13 +305,6 @@ public class BlockTransactionSelectorTest {
   public void transactionOfferingGasPriceLessThanCurrentBlockMinimumIsIgnoredAndKeptInThePool() {
     final ProcessableBlockHeader blockHeader = createBlockWithGasLimit(301);
 
-    when(transactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
-        .thenReturn(
-            TransactionProcessingResult.invalid(
-                ValidationResult.invalid(
-                    TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE)));
-
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
@@ -325,9 +318,9 @@ public class BlockTransactionSelectorTest {
             0.8,
             this::isCancelled,
             miningBeneficiary,
-            FeeMarket.legacy());
+            FeeMarket.london(0L));
 
-    final Transaction tx = createTransaction(1);
+    final Transaction tx = createEIP1559Transaction(1);
     pendingTransactions.addRemoteTransaction(tx, Optional.empty());
 
     final BlockTransactionSelector.TransactionSelectionResults results =
@@ -641,6 +634,22 @@ public class BlockTransactionSelectorTest {
     return Transaction.builder()
         .gasLimit(100)
         .gasPrice(Wei.of(5))
+        .nonce(transactionNumber)
+        .payload(Bytes.EMPTY)
+        .to(Address.ID)
+        .value(Wei.of(transactionNumber))
+        .sender(Address.ID)
+        .chainId(BigInteger.ONE)
+        .guessType()
+        .signAndBuild(keyPair);
+  }
+
+  private Transaction createEIP1559Transaction(final int transactionNumber) {
+    return Transaction.builder()
+        .type(TransactionType.EIP1559)
+        .gasLimit(100)
+        .maxFeePerGas(Wei.of(5))
+        .maxPriorityFeePerGas(Wei.ONE)
         .nonce(transactionNumber)
         .payload(Bytes.EMPTY)
         .to(Address.ID)

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -46,6 +47,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PoWSolver nonceSolver,
+      final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
@@ -56,6 +58,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
+        minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader);
 

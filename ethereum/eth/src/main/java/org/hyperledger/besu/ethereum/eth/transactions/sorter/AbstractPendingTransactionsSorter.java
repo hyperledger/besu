@@ -497,6 +497,7 @@ public abstract class AbstractPendingTransactionsSorter {
           .map(PendingTransaction::getTransaction)
           .collect(Collectors.toList());
     }
+
     return List.of();
   }
 

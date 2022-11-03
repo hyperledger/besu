@@ -74,6 +74,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final ProtocolContext protocolContext;
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
+  private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   protected final BlockHeader parentHeader;
   protected final ProtocolSpec protocolSpec;
@@ -88,6 +89,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     this.coinbase = coinbase;
@@ -97,6 +99,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.pendingTransactions = pendingTransactions;
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
+    this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.parentHeader = parentHeader;
     this.protocolSpec = protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1);
@@ -230,9 +233,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             pendingTransactions,
             processableBlockHeader,
             transactionReceiptFactory,
+            minTransactionGasPrice,
             minBlockOccupancyRatio,
             isCancelled::get,
-            miningBeneficiary);
+            miningBeneficiary,
+            protocolSpec.getFeeMarket());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());

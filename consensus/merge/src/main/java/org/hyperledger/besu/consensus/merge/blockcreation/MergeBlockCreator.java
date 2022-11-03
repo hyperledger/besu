@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,6 +42,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
@@ -52,6 +54,7 @@ public class MergeBlockCreator extends AbstractBlockCreator {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
+        minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader);
   }
