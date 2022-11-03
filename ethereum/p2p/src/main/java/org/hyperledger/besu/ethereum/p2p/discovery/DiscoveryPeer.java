@@ -139,7 +139,17 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public void setNodeRecord(final NodeRecord nodeRecord) {
     this.nodeRecord = nodeRecord;
-    this.forkId = ForkId.fromRawForkId((List<List<Bytes>>) nodeRecord.get("eth"));
+
+    Object rawForkId = nodeRecord.get("eth");
+    if (rawForkId != null) {
+      try {
+        @SuppressWarnings("unchecked")
+        final List<List<Bytes>> typedRawForkId = (List<List<Bytes>>) rawForkId;
+        this.forkId = ForkId.fromRawForkId(typedRawForkId);
+      } catch (final Exception e) {
+        // do nothing
+      }
+    }
   }
 
   public Optional<ForkId> getForkId() {
