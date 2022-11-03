@@ -36,9 +36,6 @@ public enum JsonRpcError {
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
 
-  // match geth error if no block found by hash lookup
-  HEADER_BY_HASH_NOT_FOUND(-39002, "header for hash not found"),
-
   // eth_sendTransaction specific error message
   ETH_SEND_TX_NOT_AVAILABLE(
       -32604,
