@@ -86,6 +86,7 @@ class NodeDeletionProcessorTest {
     void shouldDoNothingWhenDeletingNodesWithoutPrevious() {
         NodeDeletionProcessor processor = new NodeDeletionProcessor(worldStateStorage, worldStateStorage.updater());
 
-        processor.deletePotentialOldChildren(new NodeDeletionProcessor.BonsaiStorageInnerNode(Hash.hash("NonExistingNode".getBytes()), 0));
+//        final NodeDeletionProcessor.BonsaiStorageInnerNode bonsaiStorageInnerNode = new NodeDeletionProcessor.BonsaiStorageInnerNode(Hash.hash(Bytes.wrap("NonExistingNode".getBytes())),null,null,null);
+//        processor.deletePotentialOldChildren(bonsaiStorageInnerNode, bytes -> processor.retrieveStoredInnerStorageNode(bonsaiStorageInnerNode.getAccountHash(), bytes));
     }
 }

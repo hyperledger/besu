@@ -324,10 +324,15 @@ public class NodeDeletionProcessor {
       return Collections.emptyList();
     }
 
+
+    private Hash getSlotHash() {
+      return Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), decodeData().get(0).getPath()))));
+    }
+
     @Override
     public int delete(final BonsaiWorldStateKeyValueStorage.Updater updater) {
       updater.removeStorageValueBySlotHash(
-          getAccountHash(), Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(getLocation()))));
+          getAccountHash(), getSlotHash());
       updater.removeAccountStateTrieNode(getLocation(), getNodeHash());
       return 1;
     }
