@@ -972,14 +972,6 @@ public class TransactionPoolTest {
     final Transaction transactionLocal =
         builder.nonce(1).gasPrice(twoEthers.add(Wei.of(1))).createTransaction(KEY_PAIR1);
 
-    when(transactionValidator.validate(any(Transaction.class), any(Optional.class), any()))
-        .thenReturn(valid());
-    when(transactionValidator.validateForSender(
-            any(Transaction.class),
-            nullable(Account.class),
-            any(TransactionValidationParams.class)))
-        .thenReturn(valid());
-
     final ValidationResult<TransactionInvalidReason> result =
         transactionPool.addLocalTransaction(transactionLocal);
     assertThat(result.getInvalidReason()).isEqualTo(TransactionInvalidReason.TX_FEECAP_EXCEEDED);
