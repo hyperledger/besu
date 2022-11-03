@@ -378,7 +378,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public BonsaiUpdater putStorageValueBySlotHash(
+    public synchronized BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
@@ -386,7 +386,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+    public synchronized void removeStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash) {
       storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 

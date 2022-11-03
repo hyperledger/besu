@@ -336,7 +336,7 @@ public class RocksDBColumnarKeyValueStorage
     }
 
     @Override
-    public void commit() throws StorageException {
+    public synchronized void commit() throws StorageException {
       try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
         innerTx.commit();
       } catch (final RocksDBException e) {
