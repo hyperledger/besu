@@ -491,7 +491,7 @@ public abstract class AbstractPendingTransactionsSorter {
               pendingTx ->
                   traceLambda(
                       LOG,
-                      "Transaction {} piked since there is a lowest invalid nonce {} for the sender",
+                      "Transaction {} invalid since there is a lower invalid nonce {} for the sender",
                       pendingTx::toTraceLog,
                       () -> invalidNonce))
           .map(PendingTransaction::getTransaction)
