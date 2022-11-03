@@ -21,6 +21,7 @@ import org.hyperledger.besu.util.EndianUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -37,6 +38,14 @@ public class ForkId {
 
   public ForkId(final Bytes hash, final long next) {
     this(hash, Bytes.wrap(EndianUtils.longToBigEndian(next)).trimLeadingZeros());
+  }
+
+  public static Optional<ForkId> fromRawForkId(final List<List<Bytes>> rawForkId) {
+    try {
+      return Optional.of(new ForkId(rawForkId.get(0).get(0), rawForkId.get(0).get(1)));
+    } catch (final Exception e) {
+      return Optional.empty();
+    }
   }
 
   public long getNext() {

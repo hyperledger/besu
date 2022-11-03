@@ -372,6 +372,7 @@ public class PeerDiscoveryController {
                   final Optional<ENRResponsePacketData> packetData =
                       packet.getPacketData(ENRResponsePacketData.class);
                   final NodeRecord enr = packetData.get().getEnr();
+                  peer.setNodeRecord(enr);
                   //                  final Bytes pkey = (Bytes) enr.get(EnrField.PKEY_SECP256K1);
                   // pkey contains the compressed public key. bytes 1 to 33 should be equal to the x
                   // component
@@ -388,27 +389,25 @@ public class PeerDiscoveryController {
                   //                    }
                   //                  } else {
                   //                    return;
-                  //                  }
-                  @SuppressWarnings("unchecked")
-                  final List<List<Bytes>> rawForkId = (List<List<Bytes>>) enr.get("eth");
-                  if (rawForkId != null) {
-                    final ForkId forkId =
-                        new ForkId(rawForkId.get(0).get(0), rawForkId.get(0).get(1));
-                    if (forkIdManager.peerCheck(forkId)) {
+                  //
+                  Optional<ForkId> maybeForkId = peer.getForkId();
+                  if (maybeForkId.isPresent()) {
+                    if (forkIdManager.peerCheck(maybeForkId.get())) {
                       notifyPeerBonded(peer, System.currentTimeMillis());
                       LOG.debug(
                           "Peer {} PASSED fork id check. ForkId received: {}",
                           sender.getId(),
-                          forkId);
+                          maybeForkId.get());
                     } else {
                       LOG.debug(
                           "Peer {} FAILED fork id check. ForkId received: {}",
                           sender.getId(),
-                          forkId);
+                          maybeForkId.get());
                     }
                   } else {
                     // if the peer hasn't sent the ForkId try to connect to it anyways
                     notifyPeerBonded(peer, System.currentTimeMillis());
+                    LOG.debug("No fork id sent");
                   }
                 });
         break;

@@ -253,6 +253,10 @@ public abstract class PeerDiscoveryAgent {
     this.peerRequirements.add(peerRequirement);
   }
 
+  public boolean checkForkId(final DiscoveryPeer peer) {
+    return peer.getForkId().map(forkIdManager::peerCheck).orElse(true);
+  }
+
   private void startController(final DiscoveryPeer localNode) {
     final PeerDiscoveryController controller = createController(localNode);
     this.controller = Optional.of(controller);

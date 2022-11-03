@@ -379,6 +379,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     rlpxAgent.connect(
         streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
+            .filter(peerDiscoveryAgent::checkForkId)
             .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection)));
   }
 
