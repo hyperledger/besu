@@ -29,9 +29,11 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -64,55 +66,64 @@ public class NodeDeletionProcessor {
 
   public void startFromStorageNode(
           final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes data) {
-    deletePotentialOldChildren(new BonsaiStorageInnerNode(accountHash, location, nodeHash, data));
+    deletePotentialOldChildren(new BonsaiStorageInnerNode(accountHash, location, nodeHash, data), bytes -> retrieveStoredInnerStorageNode(accountHash, bytes));
   }
 
   public void startFromAccountNode(final Bytes location, final Bytes32 nodeHash, final Bytes data) {
-    deletePotentialOldChildren(new BonsaiAccountInnerNode(location, nodeHash, data));
+    deletePotentialOldChildren(new BonsaiAccountInnerNode(location, nodeHash, data),this::retrieveStoredInnerAccountNode);
   }
-  public int deletePotentialOldChildren(final BonsaiStorageInnerNode newNode) {
-    return retrieveStoredInnerStorageNode(
-            newNode.getAccountHash(), newNode.getLocation())
+
+  public int deletePotentialOldChildren(final BonsaiNode newNode,final Function<Bytes,Optional<? extends BonsaiNode>> nodeLocator) {
+    return retrieveStoredInnerAccountNode(newNode.getLocation())
         .stream().mapToInt(
-            oldNode -> {
-              final List<Node<Bytes>> oldChildren = oldNode.decodeData();
-              final List<Node<Bytes>> newChildren = newNode.decodeData();
-              int total =0;
-              for (int i = 0; i < oldChildren.size(); i++) {
-                if (!(oldChildren.get(i) instanceof NullNode)
-                    && newChildren.get(i) instanceof NullNode) {
-                  final Node<Bytes> childToDelete = oldChildren.get(i);
-                  total += retrieveStoredInnerStorageNode(
-                          newNode.getAccountHash(),
-                          childToDelete.getLocation().orElseThrow())
-                      .stream().mapToInt(root -> {
-                        LOG.warn("Deleting node {}:{}", root.getLocation(),root.getNodeHash());
-                        return deleteNode(root);
-                      }).sum();
-                }
-              }
-              return total;
-            }).sum();
+            oldNode -> compareChildrenAndDeleteOldOnes(oldNode, newNode, nodeLocator)).sum();
   }
-  public void deletePotentialOldChildren(final BonsaiAccountInnerNode newNode) {
-    retrieveStoredInnerAccountNode(newNode.getLocation())
-        .ifPresent(
-            oldNode -> {
-              final List<Node<Bytes>> oldChildren = oldNode.decodeData();
-              final List<Node<Bytes>> newChildren = newNode.decodeData();
-              for (int i = 0; i < oldChildren.size(); i++) {
-                if (!(oldChildren.get(i) instanceof NullNode)
-                    && newChildren.get(i) instanceof NullNode) {
-                  final Node<Bytes> childToDelete = oldChildren.get(i);
-                  retrieveStoredInnerAccountNode(
-                          childToDelete.getLocation().orElseThrow())
-                      .ifPresent(root -> {
-                        LOG.warn("Deleting node {}:{}", root.getLocation(),root.getNodeHash());
-                        deleteNode(root);
-                      });
-                }
-              }
-            });
+
+  public int compareChildrenAndDeleteOldOnes(final BonsaiNode oldNode, final BonsaiNode newNode, final Function<Bytes,Optional<? extends BonsaiNode>> nodeLocator){
+    int totalDeleted = 0;
+    final List<Node<Bytes>> oldChildren = oldNode.decodeData();
+    final List<Node<Bytes>> newChildren = newNode.decodeData();
+    int oldChildIndex = 0;
+    int newChildIndex = 0;
+    while (oldChildIndex<oldChildren.size()){
+      final Node<Bytes> oldChild = oldChildren.get(oldChildIndex);
+      if (newChildIndex==newChildren.size()){
+        if (!(oldChild instanceof NullNode)){
+          totalDeleted += nodeLocator.apply(oldChild.getLocation().orElseThrow()).stream().mapToInt(root -> {
+            LOG.warn("Deleting node {}:{}", root.getLocation(),root.getNodeHash());
+            return deleteNode(root);
+          }).sum();
+        }
+        oldChildIndex++;
+        continue;
+      }
+      final Node<Bytes> newChild = newChildren.get(newChildIndex);
+      if (oldChild.getLocation().equals(newChild.getLocation())){
+        oldChildIndex++;
+        newChildIndex++;
+      } else if (oldChild instanceof NullNode){
+        oldChildIndex++;
+      } else if (newChild instanceof NullNode){
+        newChildIndex++;
+      } else{
+        final Bytes oldChildLocation = oldChild.getLocation().orElseThrow();
+        final Bytes newChildLocation = newChild.getLocation().orElseThrow();
+        if (oldChildLocation.compareTo(newChildLocation)<0){
+          //old child exists, but new child does not
+          totalDeleted += nodeLocator.apply(oldChild.getLocation().orElseThrow())
+                  .stream().mapToInt(
+                          root -> {
+                            LOG.warn("Deleting node {}:{}", root.getLocation(),root.getNodeHash());
+                            return deleteNode(root);
+                          }).sum();
+          oldChildIndex++;
+        } else {
+          //new child exists, but old child does not
+          newChildIndex++;
+        }
+      }
+    }
+    return totalDeleted;
   }
 
   private int deleteNode(final BonsaiNode root) {
@@ -122,7 +133,7 @@ public class NodeDeletionProcessor {
     return deleted + root.delete(updater);
   }
 
-  private Optional<BonsaiNode> retrieveStoredInnerAccountNode(
+  public Optional<BonsaiNode> retrieveStoredInnerAccountNode(
       final Bytes location) {
     return worldStateStorage
         .getAccountStateTrieNode(location)
@@ -141,7 +152,7 @@ public class NodeDeletionProcessor {
     return retrieveStoredInnerStorageNode(accountHash, Bytes.EMPTY);
   }
 
-  private Optional<BonsaiStorageInnerNode> retrieveStoredInnerStorageNode(
+  public Optional<BonsaiStorageInnerNode> retrieveStoredInnerStorageNode(
       final Hash accountHash, final Bytes location) {
     return worldStateStorage
         .getAccountStorageTrieNode(accountHash, location)
