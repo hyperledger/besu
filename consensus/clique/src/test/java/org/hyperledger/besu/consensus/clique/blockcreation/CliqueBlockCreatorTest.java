@@ -38,6 +38,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -138,6 +139,7 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
+            Wei.ZERO,
             0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
@@ -170,6 +172,7 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
+            Wei.ZERO,
             0.8,
             blockchain.getChainHeadHeader(),
             epochManager);
@@ -204,6 +207,7 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
+            Wei.ZERO,
             0.8,
             blockchain.getChainHeadHeader(),
             epochManager);

@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -45,6 +46,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final AbstractPendingTransactionsSorter pendingTransactions,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
+      final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader,
       final BftExtraDataCodec bftExtraDataCodec) {
@@ -56,6 +58,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
+        minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader);
     this.bftExtraDataCodec = bftExtraDataCodec;

@@ -29,6 +29,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -112,6 +113,7 @@ public class BftBlockCreatorTest {
             protContext,
             protocolSchedule,
             nodeKeys,
+            Wei.ZERO,
             0.8,
             parentHeader);
 
