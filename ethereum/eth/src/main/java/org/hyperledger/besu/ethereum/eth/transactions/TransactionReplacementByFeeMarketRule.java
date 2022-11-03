@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -37,27 +36,28 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
 
   @Override
   public boolean shouldReplace(
-      final TransactionInfo existingTransactionInfo,
-      final TransactionInfo newTransactionInfo,
+      final PendingTransaction existingPendingTransaction,
+      final PendingTransaction newPendingTransaction,
       final Optional<Wei> baseFee) {
 
     // bail early if basefee is absent or neither transaction supports 1559 fee market
     if (baseFee.isEmpty()
-        || !(isNotGasPriced(existingTransactionInfo) || isNotGasPriced(newTransactionInfo))) {
+        || !(isNotGasPriced(existingPendingTransaction) || isNotGasPriced(newPendingTransaction))) {
       return false;
     }
 
-    Wei newEffPrice = priceOf(newTransactionInfo.getTransaction(), baseFee);
-    Wei newEffPriority = newTransactionInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee);
+    Wei newEffPrice = priceOf(newPendingTransaction.getTransaction(), baseFee);
+    Wei newEffPriority =
+        newPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(baseFee);
 
     // bail early if price is not strictly positive
     if (newEffPrice.equals(Wei.ZERO)) {
       return false;
     }
 
-    Wei curEffPrice = priceOf(existingTransactionInfo.getTransaction(), baseFee);
+    Wei curEffPrice = priceOf(existingPendingTransaction.getTransaction(), baseFee);
     Wei curEffPriority =
-        existingTransactionInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee);
+        existingPendingTransaction.getTransaction().getEffectivePriorityFeePerGas(baseFee);
 
     if (isBumpedBy(curEffPrice, newEffPrice, priceBump)) {
       // if effective price is bumped by percent:

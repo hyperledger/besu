@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,10 +12,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
-package org.hyperledger.besu.ethereum.eth.transactions;
-
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.evm.account.Account;
 
 import java.util.Map;
@@ -26,38 +25,39 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TransactionsForSenderInfo {
-  private final NavigableMap<Long, TransactionInfo> transactionsInfos;
+public class PendingTransactionsForSender {
+  private final NavigableMap<Long, PendingTransaction> pendingTransactions;
   private OptionalLong nextGap = OptionalLong.empty();
 
   private Optional<Account> maybeSenderAccount;
 
-  public TransactionsForSenderInfo(final Optional<Account> maybeSenderAccount) {
-    this.transactionsInfos = new TreeMap<>();
+  public PendingTransactionsForSender(final Optional<Account> maybeSenderAccount) {
+    this.pendingTransactions = new TreeMap<>();
     this.maybeSenderAccount = maybeSenderAccount;
   }
 
-  public void addTransactionToTrack(final TransactionInfo transactionInfo) {
-    final long nonce = transactionInfo.getNonce();
-    synchronized (transactionsInfos) {
-      if (!transactionsInfos.isEmpty()) {
-        final long expectedNext = transactionsInfos.lastKey() + 1;
+  public void trackPendingTransaction(final PendingTransaction pendingTransaction) {
+    final long nonce = pendingTransaction.getNonce();
+    synchronized (pendingTransactions) {
+      if (!pendingTransactions.isEmpty()) {
+        final long expectedNext = pendingTransactions.lastKey() + 1;
         if (nonce > (expectedNext) && nextGap.isEmpty()) {
           nextGap = OptionalLong.of(expectedNext);
         }
       }
-      transactionsInfos.put(nonce, transactionInfo);
+      pendingTransactions.put(nonce, pendingTransaction);
       if (nonce == nextGap.orElse(-1)) {
         findGap();
       }
     }
   }
 
-  public void removeTrackedTransactionInfo(final TransactionInfo txInfo) {
+  public void removeTrackedPendingTransaction(final PendingTransaction pendingTransaction) {
     // check the value when removing, because it could have been replaced
-    if (transactionsInfos.remove(txInfo.getNonce(), txInfo)) {
-      synchronized (transactionsInfos) {
-        if (!transactionsInfos.isEmpty() && txInfo.getNonce() != transactionsInfos.firstKey()) {
+    if (pendingTransactions.remove(pendingTransaction.getNonce(), pendingTransaction)) {
+      synchronized (pendingTransactions) {
+        if (!pendingTransactions.isEmpty()
+            && pendingTransaction.getNonce() != pendingTransactions.firstKey()) {
           findGap();
         }
       }
@@ -78,8 +78,8 @@ public class TransactionsForSenderInfo {
 
   private void findGap() {
     // find first gap
-    long expectedValue = transactionsInfos.firstKey();
-    for (final Long nonce : transactionsInfos.keySet()) {
+    long expectedValue = pendingTransactions.firstKey();
+    for (final Long nonce : pendingTransactions.keySet()) {
       if (expectedValue == nonce) {
         // no gap, keep moving
         expectedValue++;
@@ -92,35 +92,35 @@ public class TransactionsForSenderInfo {
   }
 
   public OptionalLong maybeNextNonce() {
-    if (transactionsInfos.isEmpty()) {
+    if (pendingTransactions.isEmpty()) {
       return OptionalLong.empty();
     } else {
-      return nextGap.isEmpty() ? OptionalLong.of(transactionsInfos.lastKey() + 1) : nextGap;
+      return nextGap.isEmpty() ? OptionalLong.of(pendingTransactions.lastKey() + 1) : nextGap;
     }
   }
 
-  public Optional<TransactionInfo> maybeLastTx() {
-    return Optional.ofNullable(transactionsInfos.lastEntry()).map(Map.Entry::getValue);
+  public Optional<PendingTransaction> maybeLastPendingTransaction() {
+    return Optional.ofNullable(pendingTransactions.lastEntry()).map(Map.Entry::getValue);
   }
 
   public int transactionCount() {
-    return transactionsInfos.size();
+    return pendingTransactions.size();
   }
 
-  public Stream<TransactionInfo> streamTransactionInfos() {
-    return transactionsInfos.values().stream();
+  public Stream<PendingTransaction> streamPendingTransactions() {
+    return pendingTransactions.values().stream();
   }
 
-  public TransactionInfo getTransactionInfoForNonce(final long nonce) {
-    return transactionsInfos.get(nonce);
+  public PendingTransaction getPendingTransactionForNonce(final long nonce) {
+    return pendingTransactions.get(nonce);
   }
 
   public String toTraceLog() {
     return "{"
         + "senderAccount "
         + maybeSenderAccount
-        + ", transactions "
-        + transactionsInfos.entrySet().stream()
+        + ", pendingTransactions "
+        + pendingTransactions.entrySet().stream()
             .map(e -> "(" + e.getKey() + ")" + e.getValue().toTraceLog())
             .collect(Collectors.joining("; "))
         + ", nextGap "
