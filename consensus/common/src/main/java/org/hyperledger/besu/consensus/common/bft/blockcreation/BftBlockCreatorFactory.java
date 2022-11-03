@@ -70,7 +70,6 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
     this.protocolSchedule = protocolSchedule;
     this.forksSchedule = forksSchedule;
     this.localAddress = localAddress;
-    this.minTransactionGasPrice = miningParams.getMinTransactionGasPrice();
     this.minBlockOccupancyRatio = miningParams.getMinBlockOccupancyRatio();
     this.vanityData = miningParams.getExtraData();
     this.bftExtraDataCodec = bftExtraDataCodec;
@@ -86,7 +85,6 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader,
         bftExtraDataCodec);

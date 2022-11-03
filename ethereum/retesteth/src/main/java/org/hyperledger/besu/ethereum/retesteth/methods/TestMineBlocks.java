@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -71,7 +70,6 @@ public class TestMineBlocks implements JsonRpcMethod {
             protocolContext,
             protocolSchedule,
             context.getEthHashSolver(),
-            Wei.ZERO,
             0.0,
             blockchain.getChainHeadHeader());
     final Block block =

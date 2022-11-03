@@ -21,7 +21,6 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -53,7 +52,6 @@ public class IbftBlockCreator extends AbstractBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final KeyPair nodeKeys,
-      final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
@@ -64,7 +62,6 @@ public class IbftBlockCreator extends AbstractBlockCreator {
         pendingTransactions,
         protocolContext,
         protocolSchedule,
-        minTransactionGasPrice,
         minBlockOccupancyRatio,
         parentHeader);
     this.nodeKeys = nodeKeys;

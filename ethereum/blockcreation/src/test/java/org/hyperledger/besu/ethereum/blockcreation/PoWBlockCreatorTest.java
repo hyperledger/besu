@@ -110,7 +110,6 @@ public class PoWBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
             0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
@@ -172,7 +171,6 @@ public class PoWBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
             0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
@@ -226,7 +224,6 @@ public class PoWBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
             0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 
@@ -296,7 +293,6 @@ public class PoWBlockCreatorTest {
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
-            Wei.ZERO,
             0.8,
             executionContextTestFixture.getBlockchain().getChainHeadHeader());
 

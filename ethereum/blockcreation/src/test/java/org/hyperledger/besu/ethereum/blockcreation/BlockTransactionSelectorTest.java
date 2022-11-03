@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -145,11 +144,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -182,11 +179,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -237,11 +232,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -280,11 +273,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -314,11 +305,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.of(6),
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final Transaction tx = createTransaction(1);
     pendingTransactions.addRemoteTransaction(tx, Optional.empty());
@@ -353,11 +342,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions1559,
             blockHeader,
             this::createReceipt,
-            Wei.of(6),
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.london(0L));
+            miningBeneficiary);
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -420,11 +407,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -476,11 +461,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -536,11 +519,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -616,11 +597,9 @@ public class BlockTransactionSelectorTest {
             pendingTransactions,
             blockHeader,
             this::createReceipt,
-            Wei.ZERO,
             0.8,
             this::isCancelled,
-            miningBeneficiary,
-            FeeMarket.legacy());
+            miningBeneficiary);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
