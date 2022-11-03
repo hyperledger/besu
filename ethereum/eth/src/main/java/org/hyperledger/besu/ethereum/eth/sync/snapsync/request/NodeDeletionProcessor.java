@@ -293,13 +293,11 @@ public class NodeDeletionProcessor {
           .flatMap(
               node -> {
                 if (nodeIsHashReferencedDescendant(node)) {
-                  return retrieveStoredInnerStorageNode(
-                      getAccountHash(), node.getLocation().orElseThrow())
-                      .stream();
+                  return node.getLocation().stream().flatMap(location -> retrieveStoredInnerStorageNode(
+                      getAccountHash(), location).stream());
                 } else {
-                  return retrieveStoredLeafStorageNode(
-                      getAccountHash(), node.getLocation().orElseThrow())
-                      .stream();
+                  return node.getLocation().stream().flatMap(location->retrieveStoredLeafStorageNode(
+                      getAccountHash(), location).stream());
                 }
               })
           .collect(Collectors.toList());
