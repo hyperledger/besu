@@ -12,8 +12,8 @@
     "jsonrpc": "2.0",
     "id": 250,
     "error" : {
-      "code" : -39002,
-      "message" : "header for hash not found"
+      "code" : -32000,
+      "message" : "Block not found"
     }
   },
   "statusCode": 200
