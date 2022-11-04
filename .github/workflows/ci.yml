@@ -97,7 +97,6 @@ jobs:
           echo "::set-output name=json::${INDEX_JSON}"
   run-parallel-tests:
     runs-on: [self-hosted]
-    container: hyperledger/besu-build:1.0
     timeout-minutes: 30
     name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
     needs:
