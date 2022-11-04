@@ -584,7 +584,7 @@ public class PeerDiscoveryController {
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
         new PeerInteractionState(
-            action, peer.getId(), PacketType.ENR_RESPONSE, packet -> false, true);
+            action, peer.getId(), PacketType.ENR_RESPONSE, packet -> true, true);
     dispatchInteraction(peer, peerInteractionState);
   }
 
