@@ -26,8 +26,8 @@ import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,7 +210,7 @@ public class ProtocolScheduleBuilder {
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
-    return Lists.newArrayList(
+    return Stream.of(
             create(OptionalLong.of(0), specFactory.frontierDefinition()),
             create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
             create(
@@ -241,7 +241,6 @@ public class ProtocolScheduleBuilder {
             create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
             create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
             create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
-        .stream()
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(
