@@ -143,7 +143,7 @@ public class MainnetTransactionValidatorTest {
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, false))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
   }
 
   @Test
@@ -169,7 +169,7 @@ public class MainnetTransactionValidatorTest {
     final Account account = accountWithNonce(5);
 
     assertThat(validator.validateForSender(transaction, account, false))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
   }
 
   @Test

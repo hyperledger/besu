@@ -156,7 +156,7 @@ public class MainnetTransactionValidator {
 
     if (transaction.getNonce() == MAX_NONCE) {
       return ValidationResult.invalid(
-          TransactionInvalidReason.NONCE_TOO_HIGH, "Nonces must be less than 2^64-1");
+          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
 
     if (transaction
@@ -219,7 +219,7 @@ public class MainnetTransactionValidator {
 
     if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
       return ValidationResult.invalid(
-          TransactionInvalidReason.INCORRECT_NONCE,
+          TransactionInvalidReason.NONCE_TOO_HIGH,
           String.format(
               "transaction nonce %s does not match sender account nonce %s.",
               transaction.getNonce(), senderNonce));

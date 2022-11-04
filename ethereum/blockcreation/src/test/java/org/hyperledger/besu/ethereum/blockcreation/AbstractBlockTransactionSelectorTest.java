@@ -421,7 +421,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         txTestFixture.nonce(4).gasLimit(1).createTransaction(keyPair);
 
     pendingTransactions.addRemoteTransaction(futureTransaction, Optional.empty());
-    ensureTransactionIsInvalid(futureTransaction, TransactionInvalidReason.INCORRECT_NONCE);
+    ensureTransactionIsInvalid(futureTransaction, TransactionInvalidReason.NONCE_TOO_HIGH);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =

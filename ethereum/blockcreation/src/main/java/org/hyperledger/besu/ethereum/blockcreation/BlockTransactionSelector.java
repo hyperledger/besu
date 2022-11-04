@@ -383,7 +383,7 @@ public class BlockTransactionSelector {
 
   private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {
     return invalidReason.equals(TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE)
-        || invalidReason.equals(TransactionInvalidReason.INCORRECT_NONCE);
+        || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
@@ -434,7 +434,7 @@ public class BlockTransactionSelector {
   }
 
   private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
-    return result.getInvalidReason().equals(TransactionInvalidReason.INCORRECT_NONCE);
+    return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
   private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
