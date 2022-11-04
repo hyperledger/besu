@@ -42,6 +42,7 @@ public class EventMultiplexer {
           eventHandler.handleMessageEvent(rxEvent);
           break;
         case ROUND_EXPIRY:
+          LOG.debug("TODO SLD received ROUND_EXPIRY");
           final RoundExpiry roundExpiryEvent = (RoundExpiry) bftEvent;
           eventHandler.handleRoundExpiry(roundExpiryEvent);
           break;
@@ -50,6 +51,7 @@ public class EventMultiplexer {
           eventHandler.handleNewBlockEvent(newChainHead);
           break;
         case BLOCK_TIMER_EXPIRY:
+          LOG.debug("TODO SLD received BLOCK_TIMER_EXPIRY");
           final BlockTimerExpiry blockTimerExpiry = (BlockTimerExpiry) bftEvent;
           eventHandler.handleBlockTimerExpiry(blockTimerExpiry);
           break;

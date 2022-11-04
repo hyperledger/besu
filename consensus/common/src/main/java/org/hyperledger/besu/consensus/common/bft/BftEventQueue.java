@@ -69,4 +69,12 @@ public class BftEventQueue {
   public BftEvent poll(final long timeout, final TimeUnit unit) throws InterruptedException {
     return queue.poll(timeout, unit);
   }
+
+  @Override
+  public String toString() {
+    return "BftEventQueue{" +
+        "queue=" + queue +
+        ", messageQueueLimit=" + messageQueueLimit +
+        '}';
+  }
 }

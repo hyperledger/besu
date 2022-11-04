@@ -122,7 +122,20 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     if (isProposer) {
       if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
         final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-        qbftRound.createAndSendProposalMessage(headerTimeStampSeconds);
+        qbftRound.blockWithTransactions(headerTimeStampSeconds)
+            .ifPresentOrElse(qbftRound::sendProposalMessage,
+                () -> {
+//                  startNewRound(0);
+//                  finalState.getRoundTimer().cancelTimer(); // TODO SLD startTimer calls cancelTimer anyway
+                  long emptyBlockPeriodInMillis = 30_000L;
+                  long requestTimeoutInMillis = 10_000L;
+                  long delayInMillis = emptyBlockPeriodInMillis - requestTimeoutInMillis; // TODO SLD should be -blockPeriod?
+                  LOG.debug("TODO SLD skipping proposal due to empty block. Restarting round timer with {} delayInMillis", delayInMillis);
+                  finalState.getRoundTimer().startTimer(roundIdentifier, delayInMillis);
+//                  finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
+//                  currentRound = Optional.empty();
+                });
+//        qbftRound.createAndSendProposalMessage(headerTimeStampSeconds);
       } else {
         LOG.trace(
             "Block timer expired for a round ({}) other than current ({})",
