@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -54,10 +53,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.vertx.core.impl.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,8 +78,6 @@ public class TransactionPool implements BlockAddedObserver {
   private final MiningParameters miningParameters;
   private final LabelledMetric<Counter> duplicateTransactionCounter;
   private final TransactionPoolConfiguration configuration;
-
-  private final Set<Address> localSenders = new ConcurrentHashSet<>();
 
   public TransactionPool(
       final AbstractPendingTransactionsSorter pendingTransactions,
@@ -119,7 +114,6 @@ public class TransactionPool implements BlockAddedObserver {
     final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);
 
     if (validationResult.result.isValid()) {
-      localSenders.add(transaction.getSender());
 
       final TransactionAddedStatus transactionAddedStatus =
           pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
@@ -235,7 +229,9 @@ public class TransactionPool implements BlockAddedObserver {
     if (!reAddTransactions.isEmpty()) {
       var txsByOrigin =
           reAddTransactions.stream()
-              .collect(Collectors.partitioningBy(tx -> localSenders.contains(tx.getSender())));
+              .collect(
+                  Collectors.partitioningBy(
+                      tx -> pendingTransactions.isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
       if (!reAddLocalTxs.isEmpty()) {

@@ -59,6 +59,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import io.vertx.core.impl.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +97,8 @@ public abstract class AbstractPendingTransactionsSorter {
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
+
+  private final Set<Address> localSenders = new ConcurrentHashSet<>();
 
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
@@ -180,6 +183,7 @@ public abstract class AbstractPendingTransactionsSorter {
         addTransaction(
             new PendingTransaction(transaction, true, clock.instant()), maybeSenderAccount);
     if (transactionAdded.equals(ADDED)) {
+      localSenders.add(transaction.getSender());
       localTransactionAddedCounter.inc();
     }
     return transactionAdded;
@@ -499,6 +503,10 @@ public abstract class AbstractPendingTransactionsSorter {
     }
 
     return List.of();
+  }
+
+  public boolean isLocalSender(final Address sender) {
+    return localSenders.contains(sender);
   }
 
   public enum TransactionSelectionResult {
