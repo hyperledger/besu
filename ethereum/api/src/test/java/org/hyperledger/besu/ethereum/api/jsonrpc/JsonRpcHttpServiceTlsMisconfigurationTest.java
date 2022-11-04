@@ -129,13 +129,13 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     vertx));
   }
 
-  @AfterEach
+  @After
   public void shutdownServer() {
     Optional.ofNullable(service).ifPresent(s -> service.stop().join());
   }
 
   @Test
-  void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() {
+  public void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() throws IOException {
     Assertions.setMaxStackTraceElementsDisplayed(60);
     service =
         createJsonRpcHttpService(
@@ -150,7 +150,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  void exceptionRaisedWhenIncorrectKeystorePasswordIsSpecified() {
+  public void exceptionRaisedWhenIncorrectKeystorePasswordIsSpecified() throws IOException {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidPasswordTlsConfiguration()));
@@ -165,7 +165,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  void exceptionRaisedWhenIncorrectKeystorePasswordFileIsSpecified() {
+  public void exceptionRaisedWhenIncorrectKeystorePasswordFileIsSpecified() throws IOException {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidPasswordFileTlsConfiguration()));
@@ -195,7 +195,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  void exceptionRaisedWhenInvalidKnownClientsFileIsSpecified() throws IOException {
+  public void exceptionRaisedWhenInvalidKnownClientsFileIsSpecified() throws IOException {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKnownClientsTlsConfiguration()));
