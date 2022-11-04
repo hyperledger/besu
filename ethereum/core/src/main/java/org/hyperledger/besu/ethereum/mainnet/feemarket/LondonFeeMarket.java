@@ -83,7 +83,7 @@ public class LondonFeeMarket implements BaseFeeMarket {
   }
 
   @Override
-  public boolean satisfiesFloorTxCost(final Transaction txn) {
+  public boolean satisfiesFloorTxFee(final Transaction txn) {
     // ensure effective baseFee is at least above floor
     return txn.getGasPrice()
         .map(Optional::of)

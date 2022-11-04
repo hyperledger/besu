@@ -41,7 +41,7 @@ public class LegacyFeeMarket implements FeeMarket {
   }
 
   @Override
-  public boolean satisfiesFloorTxCost(final Transaction txn) {
+  public boolean satisfiesFloorTxFee(final Transaction txn) {
     return true;
   }
 }

@@ -32,7 +32,7 @@ public interface FeeMarket {
   Wei minTransactionPriceInNextBlock(
       Transaction transaction, Supplier<Optional<Wei>> baseFeeSupplier);
 
-  boolean satisfiesFloorTxCost(Transaction txn);
+  boolean satisfiesFloorTxFee(Transaction txn);
 
   static BaseFeeMarket london(final long londonForkBlockNumber) {
     return london(londonForkBlockNumber, Optional.empty());

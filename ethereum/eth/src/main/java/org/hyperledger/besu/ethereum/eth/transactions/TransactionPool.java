@@ -139,11 +139,12 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResult.result;
   }
 
-  private boolean effectiveGasPriceIsBelowConfiguredMinGasPrice(final Transaction transaction) {
-    return transaction
-        .getGasPrice()
-        .map(Optional::of)
-        .orElse(transaction.getMaxFeePerGas())
+  private Optional<Wei> getMaxGasPrice(final Transaction transaction) {
+    return transaction.getGasPrice().map(Optional::of).orElse(transaction.getMaxFeePerGas());
+  }
+
+  private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
+    return getMaxGasPrice(transaction)
         .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
         .orElse(true);
   }
@@ -349,18 +350,18 @@ public class TransactionPool implements BlockAddedObserver {
 
     if (isLocal) {
       if (!configuration.getTxFeeCap().isZero()
-          && minTransactionGasPrice(transaction).compareTo(configuration.getTxFeeCap()) > 0) {
+          && getMaxGasPrice(transaction).get().greaterThan(configuration.getTxFeeCap())) {
         return TransactionInvalidReason.TX_FEECAP_EXCEEDED;
       }
       // allow local transactions to be below minGas as long as we are mining
       // or at least gas price is above the configured floor
       if ((!miningParameters.isMiningEnabled()
-              && effectiveGasPriceIsBelowConfiguredMinGasPrice(transaction))
-          || !feeMarket.satisfiesFloorTxCost(transaction)) {
+              && isMaxGasPriceBelowConfiguredMinGasPrice(transaction))
+          || !feeMarket.satisfiesFloorTxFee(transaction)) {
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     } else {
-      if (effectiveGasPriceIsBelowConfiguredMinGasPrice(transaction)) {
+      if (isMaxGasPriceBelowConfiguredMinGasPrice(transaction)) {
         return TransactionInvalidReason.GAS_PRICE_TOO_LOW;
       }
     }
@@ -385,17 +386,6 @@ public class TransactionPool implements BlockAddedObserver {
   private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash());
-  }
-
-  private Wei minTransactionGasPrice(final Transaction transaction) {
-    return getChainHeadBlockHeader()
-        .map(
-            chainHeadBlockHeader ->
-                protocolSchedule
-                    .getByBlockNumber(chainHeadBlockHeader.getNumber())
-                    .getFeeMarket()
-                    .minTransactionPriceInNextBlock(transaction, chainHeadBlockHeader::getBaseFee))
-        .orElse(Wei.ZERO);
   }
 
   public interface TransactionBatchAddedListener {

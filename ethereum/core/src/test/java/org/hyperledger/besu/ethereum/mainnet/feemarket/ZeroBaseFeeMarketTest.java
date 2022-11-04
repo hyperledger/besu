@@ -96,7 +96,7 @@ public class ZeroBaseFeeMarketTest {
             .type(TransactionType.FRONTIER)
             .gasPrice(Wei.of(7))
             .createTransaction(KEY_PAIR1);
-    assertThat(zeroBaseFeeMarket.satisfiesFloorTxCost(transaction)).isTrue();
+    assertThat(zeroBaseFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 
   @Test
@@ -108,7 +108,7 @@ public class ZeroBaseFeeMarketTest {
             .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
-    assertThat(zeroBaseFeeMarket.satisfiesFloorTxCost(transaction)).isTrue();
+    assertThat(zeroBaseFeeMarket.satisfiesFloorTxFee(transaction)).isTrue();
   }
 
   @Test
