@@ -73,7 +73,7 @@ public class RequestManagerTest {
       requestManager.dispatchResponse(mockMessage);
 
       // Response handler should get message
-      assertThat(receivedMessages.size()).isEqualTo(1);
+      assertThat(receivedMessages).hasSize(1);
       assertResponseCorrect(receivedMessages.get(0), mockMessage, supportsRequestId);
       assertThat(closedCount.get()).isEqualTo(1);
     }
@@ -110,7 +110,7 @@ public class RequestManagerTest {
 
       // Response handler should get message
       stream.then(responseHandler);
-      assertThat(receivedMessages.size()).isEqualTo(1);
+      assertThat(receivedMessages).hasSize(1);
       assertResponseCorrect(receivedMessages.get(0), mockMessage, supportsRequestId);
       assertThat(closedCount.get()).isEqualTo(1);
     }
@@ -147,16 +147,16 @@ public class RequestManagerTest {
 
     // Response handler should get messages sent before it is registered
     stream.then(responseHandler);
-    assertThat(receivedMessages.size()).isEqualTo(1);
+    assertThat(receivedMessages).hasSize(1);
     assertResponseCorrect(receivedMessages.get(0), mockMessage, false);
-    assertThat(closedCount.get()).isEqualTo(0);
+    assertThat(closedCount.get()).isZero();
 
     // Dispatch second message
     mockMessage = mockMessage(peer, false);
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler should get messages sent after it is registered
-    assertThat(receivedMessages.size()).isEqualTo(2);
+    assertThat(receivedMessages).hasSize(2);
     assertResponseCorrect(receivedMessages.get(1), mockMessage, false);
     assertThat(closedCount.get()).isEqualTo(1);
   }
@@ -203,27 +203,27 @@ public class RequestManagerTest {
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler A should get message
-    assertThat(receivedMessagesA.size()).isEqualTo(1);
+    assertThat(receivedMessagesA).hasSize(1);
     assertResponseCorrect(receivedMessagesA.get(0), mockMessage, false);
-    assertThat(closedCountA.get()).isEqualTo(0);
+    assertThat(closedCountA.get()).isZero();
 
     streamB.then(responseHandlerB);
 
     // Response handler B should get message
-    assertThat(receivedMessagesB.size()).isEqualTo(1);
+    assertThat(receivedMessagesB).hasSize(1);
     assertResponseCorrect(receivedMessagesB.get(0), mockMessage, false);
-    assertThat(closedCountB.get()).isEqualTo(0);
+    assertThat(closedCountB.get()).isZero();
 
     // Dispatch second message
     mockMessage = mockMessage(peer, false);
     requestManager.dispatchResponse(mockMessage);
 
     // Response handler A should get message
-    assertThat(receivedMessagesA.size()).isEqualTo(2);
+    assertThat(receivedMessagesA).hasSize(2);
     assertResponseCorrect(receivedMessagesA.get(1), mockMessage, false);
     assertThat(closedCountA.get()).isEqualTo(1);
     // Response handler B should get message
-    assertThat(receivedMessagesB.size()).isEqualTo(2);
+    assertThat(receivedMessagesB).hasSize(2);
     assertResponseCorrect(receivedMessagesB.get(1), mockMessage, false);
     assertThat(closedCountB.get()).isEqualTo(1);
   }
