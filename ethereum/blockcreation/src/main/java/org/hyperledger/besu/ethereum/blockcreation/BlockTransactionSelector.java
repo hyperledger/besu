@@ -57,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * <p>If a transaction is suitable for inclusion, the world state must be updated, and a receipt
  * generated.
  *
- * <p>The output from this class's exeuction will be:
+ * <p>The output from this class's execution will be:
  *
  * <ul>
  *   <li>A list of transactions to include in the block being constructed.
@@ -275,19 +275,8 @@ public class BlockTransactionSelector {
       }
     }
 
-    // If the gas price specified by the transaction is less than this node is willing to accept,
-    // do not include it in the block.
-    // ToDo: why we accept this in the pool in the first place then?
-    final Wei actualMinTransactionGasPriceInBlock =
-        feeMarket
-            .getTransactionPriceCalculator()
-            .price(transaction, processableBlockHeader.getBaseFee());
-    if (minTransactionGasPrice.compareTo(actualMinTransactionGasPriceInBlock) > 0) {
-      LOG.warn(
-          "Gas fee of {} lower than configured minimum {}, deleting",
-          transaction,
-          minTransactionGasPrice);
-      return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+    if (transactionCurrentPriceBelowMin(transaction)) {
+      return TransactionSelectionResult.CONTINUE;
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
@@ -342,14 +331,44 @@ public class BlockTransactionSelector {
     return TransactionSelectionResult.CONTINUE;
   }
 
+  private boolean transactionCurrentPriceBelowMin(final Transaction transaction) {
+    // Here we only care about EIP1159 since for Frontier and local transactions the checks
+    // that we do when accepting them in the pool are enough
+    if (transaction.getType().supports1559FeeMarket()
+        && !pendingTransactions.isLocalSender(transaction.getSender())) {
+
+      // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
+      // only calculate at this time the current minimum price the transaction is willing to pay
+      // and if it is above the minimum accepted by the node.
+      // If below we do not delete the transaction, since when we added the transaction to the pool,
+      // we assured sure that the maxFeePerGas is >= of the minimum price accepted by the node
+      // and so the price of the transaction could satisfy this rule in the future
+      final Wei currentMinTransactionGasPriceInBlock =
+          feeMarket
+              .getTransactionPriceCalculator()
+              .price(transaction, processableBlockHeader.getBaseFee());
+      if (minTransactionGasPrice.compareTo(currentMinTransactionGasPriceInBlock) > 0) {
+        LOG.debug(
+            "Current gas fee of {} is lower than configured minimum {}, skipping",
+            transaction,
+            minTransactionGasPrice);
+        return true;
+      }
+    }
+    return false;
+  }
+
   private TransactionSelectionResult transactionSelectionResultForInvalidResult(
       final Transaction transaction,
       final ValidationResult<TransactionInvalidReason> invalidReasonValidationResult) {
-    // If the transaction has an incorrect nonce, leave it in the pool and continue
-    if (isIncorrectNonce(invalidReasonValidationResult)) {
+
+    final var invalidReason = invalidReasonValidationResult.getInvalidReason();
+    // If the invalid reason is transient, then leave the transaction in the pool and continue
+    if (isTransientValidationError(invalidReason)) {
       traceLambda(
           LOG,
-          "Incorrect nonce for transaction {} keeping it in the pool",
+          "Transient validation error {} for transaction {} keeping it in the pool",
+          invalidReason::toString,
           transaction::toTraceLog);
       return TransactionSelectionResult.CONTINUE;
     }
@@ -358,8 +377,13 @@ public class BlockTransactionSelector {
         LOG,
         "Delete invalid transaction {}, reason {}",
         transaction::toTraceLog,
-        invalidReasonValidationResult::getInvalidReason);
+        invalidReason::toString);
     return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+  }
+
+  private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {
+    return invalidReason.equals(TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE)
+        || invalidReason.equals(TransactionInvalidReason.INCORRECT_NONCE);
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransaction(
