@@ -348,7 +348,7 @@ public class BlockTransactionSelector {
               .getTransactionPriceCalculator()
               .price(transaction, processableBlockHeader.getBaseFee());
       if (minTransactionGasPrice.compareTo(currentMinTransactionGasPriceInBlock) > 0) {
-        LOG.debug(
+        LOG.trace(
             "Current gas fee of {} is lower than configured minimum {}, skipping",
             transaction,
             minTransactionGasPrice);

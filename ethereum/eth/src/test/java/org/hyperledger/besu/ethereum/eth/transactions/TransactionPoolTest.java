@@ -102,6 +102,9 @@ public class TransactionPoolTest {
   private static final KeyPair KEY_PAIR1 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
+  private static final KeyPair KEY_PAIR2 =
+      SignatureAlgorithmFactory.getInstance().generateKeyPair();
+
   @Mock private MainnetTransactionValidator transactionValidator;
   @Mock private PendingTransactionListener listener;
   @Mock private MiningParameters miningParameters;
@@ -123,6 +126,7 @@ public class TransactionPoolTest {
   private AbstractPendingTransactionsSorter transactions;
   private final Transaction transaction1 = createTransaction(1);
   private final Transaction transaction2 = createTransaction(2);
+  private final Transaction transactionOtherSender = createTransaction(1, KEY_PAIR2);
   private final ExecutionContextTestFixture executionContext = ExecutionContextTestFixture.create();
   private final ProtocolContext protocolContext = executionContext.getProtocolContext();
   private TransactionPool transactionPool;
@@ -287,17 +291,18 @@ public class TransactionPoolTest {
   }
 
   @Test
-  public void shouldReadTransactionsFromThePreviousCanonicalHeadWhenAReorgOccurs() {
+  public void shouldReAddTransactionsFromThePreviousCanonicalHeadWhenAReorgOccurs() {
     givenTransactionIsValid(transaction1);
-    givenTransactionIsValid(transaction2);
-    transactions.addRemoteTransaction(transaction1, Optional.empty());
-    transactions.addRemoteTransaction(transaction2, Optional.empty());
+    givenTransactionIsValid(transactionOtherSender);
+    transactions.addLocalTransaction(transaction1, Optional.empty());
+    transactions.addRemoteTransaction(transactionOtherSender, Optional.empty());
     final BlockHeader commonParent = getHeaderForCurrentChainHead();
     final Block originalFork1 = appendBlock(Difficulty.of(1000), commonParent, transaction1);
     final Block originalFork2 =
-        appendBlock(Difficulty.ONE, originalFork1.getHeader(), transaction2);
+        appendBlock(Difficulty.ONE, originalFork1.getHeader(), transactionOtherSender);
     assertTransactionNotPending(transaction1);
-    assertTransactionNotPending(transaction2);
+    assertTransactionNotPending(transactionOtherSender);
+    assertThat(transactions.getLocalTransactions()).isEmpty();
 
     final Block reorgFork1 = appendBlock(Difficulty.ONE, commonParent);
     verifyChainHeadIs(originalFork2);
@@ -307,14 +312,16 @@ public class TransactionPoolTest {
     verifyChainHeadIs(reorgFork2);
 
     assertTransactionPending(transaction1);
-    assertTransactionPending(transaction2);
+    assertTransactionPending(transactionOtherSender);
+    assertThat(transactions.getLocalTransactions()).contains(transaction1);
+    assertThat(transactions.getLocalTransactions()).doesNotContain(transactionOtherSender);
     verify(listener).onTransactionAdded(transaction1);
-    verify(listener).onTransactionAdded(transaction2);
+    verify(listener).onTransactionAdded(transactionOtherSender);
     verifyNoMoreInteractions(listener);
   }
 
   @Test
-  public void shouldNotReadTransactionsThatAreInBothForksWhenReorgHappens() {
+  public void shouldNotReAddTransactionsThatAreInBothForksWhenReorgHappens() {
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
     transactions.addRemoteTransaction(transaction1, Optional.empty());
@@ -1245,10 +1252,14 @@ public class TransactionPoolTest {
   }
 
   private Transaction createTransaction(final int transactionNumber) {
+    return createTransaction(transactionNumber, KEY_PAIR1);
+  }
+
+  private Transaction createTransaction(final int transactionNumber, final KeyPair keyPair) {
     return new TransactionTestFixture()
         .nonce(transactionNumber)
         .gasLimit(0)
-        .createTransaction(KEY_PAIR1);
+        .createTransaction(keyPair);
   }
 
   private Transaction createTransactionWithoutChainId(final int transactionNumber) {

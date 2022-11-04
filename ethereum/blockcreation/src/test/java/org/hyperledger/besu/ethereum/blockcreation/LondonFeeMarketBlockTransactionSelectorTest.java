@@ -129,7 +129,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     assertThat(pendingTransactions.size()).isEqualTo(1);
   }
 
-
   private Transaction createEIP1559Transaction(
       final int transactionNumber, final Wei maxFeePerGas, final Wei maxPriorityFeePerGas) {
     return Transaction.builder()
