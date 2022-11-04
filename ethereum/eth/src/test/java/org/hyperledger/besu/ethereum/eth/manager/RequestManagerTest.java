@@ -40,7 +40,7 @@ import org.junit.Test;
 
 public class RequestManagerTest {
 
-  private final AtomicLong requestIdCounter = new AtomicLong(0);
+  private final AtomicLong requestIdCounter = new AtomicLong(1);
 
   @Test
   public void dispatchesMessagesReceivedAfterRegisteringCallback() throws Exception {
