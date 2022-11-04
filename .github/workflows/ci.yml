@@ -95,16 +95,12 @@ jobs:
           INDEX_LIST=$(seq 0 ${MAX_INDEX})
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
-  run-parallel-tests:
-    runs-on: [self-hosted]
+  run-tests:
+    runs-on: [ self-hosted, linux, X64 ]
     timeout-minutes: 30
-    name: "Runner #${{ matrix.runner-index }}: Run test suite in parallel"
+    name: "Run test suite"
     needs:
-      - runner-indexes
       - compile
-    strategy:
-      matrix:
-        runner-index: ${{ fromjson(needs.runner-indexes.outputs.json) }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -119,25 +115,15 @@ jobs:
         with:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ github.sha }}
-      - name: Split tests
-        id: split-tests
-        uses: chaosaffe/split-tests@v1-alpha.1
-        with:
-            glob: '**/src/test/java'
-            split-total: ${{ env.total-runners }}
-            split-index: ${{ matrix.runner-index }}
-      - name: extract module names
-        id: set-modules
-        run: echo "::set-output name=tests::$(echo ${{ steps.split-tests.outputs.test-suite }} | sed -e 's:src/test/java:test:g' -e 's|/|:|g')"
       - name: test
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: ${{ steps.set-modules.outputs.tests }} --scan
+          arguments: test --scan
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
         if: always() # always run even if the previous step fails
         with:
-          name: junit-test-${{ matrix.runner-index }}-results
+          name: junit-test-results
           path: '**/build/test-results/test/TEST-*.xml'
           retention-days: 1
   integration-test:
