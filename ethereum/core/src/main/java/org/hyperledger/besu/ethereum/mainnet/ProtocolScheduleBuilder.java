@@ -130,8 +130,7 @@ public class ProtocolScheduleBuilder {
   }
 
   public ProtocolSchedule createProtocolSchedule() {
-    final Optional<BigInteger> chainId =
-        config.getChainId().map(Optional::of).orElse(defaultChainId);
+    final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
     final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(chainId);
 
     final MainnetProtocolSpecFactory specFactory =
@@ -211,54 +210,46 @@ public class ProtocolScheduleBuilder {
 
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
-    final TreeMap<Long, BuilderMapEntry> builders =
-        Lists.newArrayList(
-                create(OptionalLong.of(0), specFactory.frontierDefinition()),
-                create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
-                create(
-                    config.getTangerineWhistleBlockNumber(),
-                    specFactory.tangerineWhistleDefinition()),
-                create(
-                    config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
-                create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
-                create(
-                    config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
-                create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
-                create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
-                create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
-                create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
-                create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
-                create(
-                    config.getArrowGlacierBlockNumber(),
-                    specFactory.arrowGlacierDefinition(config)),
-                create(
-                    config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
-                create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
-                // Classic Milestones
-                create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
-                create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
-                create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
-                create(
-                    config.getDefuseDifficultyBombBlockNumber(),
-                    specFactory.defuseDifficultyBombDefinition()),
-                create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
-                create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
-                create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
-                create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
-                create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-                create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
-                create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
-            .stream()
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(
-                Collectors.toMap(
-                    BuilderMapEntry::getBlock,
-                    b -> b,
-                    (existing, replacement) -> replacement,
-                    TreeMap::new));
-
-    return builders;
+    return Lists.newArrayList(
+            create(OptionalLong.of(0), specFactory.frontierDefinition()),
+            create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+            create(
+                config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleDefinition()),
+            create(config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+            create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+            create(config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+            create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+            create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+            create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+            create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+            create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
+            create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
+            create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
+            create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+            create(config.getShandongBlockNumber(), specFactory.shandongDefinition(config)),
+            // Classic Milestones
+            create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+            create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+            create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+            create(
+                config.getDefuseDifficultyBombBlockNumber(),
+                specFactory.defuseDifficultyBombDefinition()),
+            create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+            create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+            create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+            create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+            create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
+            create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+            create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()))
+        .stream()
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(
+            Collectors.toMap(
+                BuilderMapEntry::getBlock,
+                b -> b,
+                (existing, replacement) -> replacement,
+                TreeMap::new));
   }
 
   private void addProtocolSpec(
@@ -326,6 +317,7 @@ public class ProtocolScheduleBuilder {
         validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Shandong", config.getShandongBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 

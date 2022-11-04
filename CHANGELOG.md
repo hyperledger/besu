@@ -2,6 +2,7 @@
 ## 22.10.1
 
 ### Additions and Improvements
+- Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
 
 ### Bug Fixes
 
