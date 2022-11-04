@@ -1,7 +1,6 @@
 {
   "config": {
     "chainId": 1337902,
-    "londonBlock": 0,
     "shandongBlock": 0,
     "terminalTotalDifficulty": 0,
     "ethash": {},

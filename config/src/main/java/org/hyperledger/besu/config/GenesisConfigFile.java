@@ -139,12 +139,17 @@ public class GenesisConfigFile {
   }
 
   public Optional<Wei> getGenesisBaseFeePerGas() {
-    // if we have a base fee market at genesis, get either the configured baseFeePerGas, or the
-    // default
-    return getBaseFeePerGas()
-        .map(Optional::of)
-        .orElseGet(() -> Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE))
-        .filter(z -> 0L == getConfigOptions().getLondonBlockNumber().orElse(-1L));
+    if (getBaseFeePerGas().isPresent()) {
+      // always use specified basefee if present
+      return getBaseFeePerGas();
+    } else if (getConfigOptions().getLondonBlockNumber().orElse(-1L) == 0) {
+      // if not specified, and we specify london at block zero use a default fee
+      // this is needed for testing.
+      return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+    } else {
+      // no explicit base fee and no london block zero means no basefee at genesis
+      return Optional.empty();
+    }
   }
 
   public String getMixHash() {
