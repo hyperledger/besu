@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Optional;
@@ -29,19 +28,19 @@ public class TransactionReplacementByGasPriceRule implements TransactionPoolRepl
 
   @Override
   public boolean shouldReplace(
-      final TransactionInfo existingTransactionInfo,
-      final TransactionInfo newTransactionInfo,
+      final PendingTransaction existingPendingTransaction,
+      final PendingTransaction newPendingTransaction,
       final Optional<Wei> baseFee) {
-    assert existingTransactionInfo.getTransaction() != null
-        && newTransactionInfo.getTransaction() != null;
+    assert existingPendingTransaction.getTransaction() != null
+        && newPendingTransaction.getTransaction() != null;
 
     // return false if either transaction supports 1559 fee market
-    if (isNotGasPriced(existingTransactionInfo) || isNotGasPriced(newTransactionInfo)) {
+    if (isNotGasPriced(existingPendingTransaction) || isNotGasPriced(newPendingTransaction)) {
       return false;
     }
 
     final Wei replacementThreshold =
-        existingTransactionInfo.getGasPrice().multiply(100 + priceBump.getValue()).divide(100);
-    return newTransactionInfo.getGasPrice().compareTo(replacementThreshold) > 0;
+        existingPendingTransaction.getGasPrice().multiply(100 + priceBump.getValue()).divide(100);
+    return newPendingTransaction.getGasPrice().compareTo(replacementThreshold) > 0;
   }
 }
