@@ -405,6 +405,11 @@ public class RunnerBuilder {
     return this;
   }
 
+  public RunnerBuilder rpcMaxLogsRange(final Optional<Long> rpcMaxLogsRange) {
+    this.rpcMaxLogsRange = rpcMaxLogsRange;
+    return this;
+  }
+
   public Runner build() {
 
     Preconditions.checkNotNull(besuController);
