@@ -156,10 +156,7 @@ public class GetWorkProtocol implements StratumProtocol {
 
   @Override
   public void setCurrentWorkTask(final PoWSolverInputs input) {
-    LOG.atDebug()
-        .setMessage("setting current stratum work task {}")
-        .addArgument(input::toString)
-        .log();
+    LOG.atDebug().setMessage("setting current stratum work task {}").addArgument(input).log();
     currentInput = input;
     final byte[] dagSeed =
         DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);

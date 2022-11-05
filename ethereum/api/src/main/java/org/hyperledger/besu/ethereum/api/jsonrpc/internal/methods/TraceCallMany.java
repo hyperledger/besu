@@ -90,8 +90,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       LOG.atTrace()
           .setMessage("Received RPC rpcName={} trace_callManyParams={} block={}")
           .addArgument(this::getName)
-          .addArgument(transactionsAndTraceTypeParameters::toString)
-          .addArgument(blockNumberString::toString)
+          .addArgument(transactionsAndTraceTypeParameters)
+          .addArgument(blockNumberString)
           .log();
     } catch (final Exception e) {
       LOG.error("Error parsing trace_callMany parameters: {}", e.getLocalizedMessage());

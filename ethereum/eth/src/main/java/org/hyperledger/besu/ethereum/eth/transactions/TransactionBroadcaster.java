@@ -125,7 +125,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
         .addArgument(sendOnlyFullTransactionPeers::size)
         .addArgument(sendOnlyHashPeers::size)
         .addArgument(sendMixedPeers::size)
-        .addArgument(sendOnlyFullTransactionPeers::toString)
+        .addArgument(sendOnlyFullTransactionPeers)
         .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers.toString())
         .log();
 

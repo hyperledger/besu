@@ -300,7 +300,7 @@ public class BonsaiPersistedWorldState implements MutableWorldState, BonsaiWorld
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
     LOG.atDebug()
         .setMessage("Persist world state for block {}")
-        .addArgument(maybeBlockHeader::toString)
+        .addArgument(maybeBlockHeader)
         .log();
     boolean success = false;
 

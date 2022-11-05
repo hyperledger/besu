@@ -210,10 +210,10 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       if (nativeErr.expectedErr() == Errors.ERROR_ENETUNREACH_NEGATIVE) {
         LOG.atDebug()
             .setMessage("Peer {} is unreachable, native error code {}, packet: {}, stacktrace: {}")
-            .addArgument(peer::toString)
+            .addArgument(peer)
             .addArgument(nativeErr::expectedErr)
             .addArgument(() -> wrapBuffer(packet.encode()))
-            .addArgument(err::toString)
+            .addArgument(err)
             .log();
       } else {
         LOG.warn(
@@ -226,9 +226,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
     } else if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
       LOG.atDebug()
           .setMessage("Peer {} is unreachable, packet: {}")
-          .addArgument(peer::toString)
+          .addArgument(peer)
           .addArgument(() -> wrapBuffer(packet.encode()))
-          .addArgument(err::toString)
+          .addArgument(err)
           .log();
     } else if (err instanceof SocketException
         && err.getMessage().contentEquals("Operation not permitted")) {
@@ -243,9 +243,9 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
           peer);
       LOG.atTrace()
           .setMessage("Sending to peer {} failed, packet: {}, stacktrace: {}")
-          .addArgument(peer::toString)
+          .addArgument(peer)
           .addArgument(() -> wrapBuffer(packet.encode()))
-          .addArgument(err::toString)
+          .addArgument(err)
           .log();
     } else {
       LOG.warn(

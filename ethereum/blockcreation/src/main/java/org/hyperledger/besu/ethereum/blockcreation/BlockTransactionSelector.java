@@ -426,7 +426,7 @@ public class BlockTransactionSelector {
     if (isTransientValidationError(invalidReason)) {
       LOG.atTrace()
           .setMessage("Transient validation error {} for transaction {} keeping it in the pool")
-          .addArgument(invalidReason::toString)
+          .addArgument(invalidReason)
           .addArgument(transaction::toTraceLog)
           .log();
       return TransactionSelectionResult.CONTINUE;
@@ -435,7 +435,7 @@ public class BlockTransactionSelector {
     LOG.atTrace()
         .setMessage("Delete invalid transaction {}, reason {}")
         .addArgument(transaction::toTraceLog)
-        .addArgument(invalidReason::toString)
+        .addArgument(invalidReason)
         .log();
     return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
   }

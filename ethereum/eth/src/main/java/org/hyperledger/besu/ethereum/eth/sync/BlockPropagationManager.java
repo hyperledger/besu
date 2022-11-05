@@ -481,7 +481,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       LOG.atDebug()
           .setMessage("Temporary failure retrieving block {} from peers with error {}")
           .addArgument(() -> logBlockNumberMaybeHash(blockNumber, maybeBlockHash))
-          .addArgument(throwable::toString)
+          .addArgument(throwable)
           .log();
       return CompletableFuture.completedFuture(null);
     };

@@ -239,7 +239,7 @@ public class PostMergeContext implements MergeContext {
             if (compareByGasUsedDesc.compare(newBlockWithReceipts, currBestBlock) < 0) {
               LOG.atDebug()
                   .setMessage("New proposal for payloadId {} {} is better than the previous one {}")
-                  .addArgument(payloadId::toString)
+                  .addArgument(payloadId)
                   .addArgument(() -> logBlockProposal(newBlockWithReceipts.getBlock()))
                   .addArgument(() -> logBlockProposal(currBestBlock.getBlock()))
                   .log();
@@ -252,7 +252,7 @@ public class PostMergeContext implements MergeContext {
 
       LOG.atDebug()
           .setMessage("Current best proposal for payloadId {} {}")
-          .addArgument(payloadId::toString)
+          .addArgument(payloadId)
           .addArgument(
               () ->
                   retrieveBlockById(payloadId)

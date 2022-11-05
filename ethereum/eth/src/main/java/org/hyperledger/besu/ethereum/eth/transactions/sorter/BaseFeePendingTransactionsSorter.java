@@ -208,7 +208,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
     LOG.atTrace()
         .setMessage("Adding {} to pending transactions, range type {}")
         .addArgument(pendingTransaction::toTraceLog)
-        .addArgument(kind::toString)
+        .addArgument(kind)
         .log();
   }
 
@@ -253,7 +253,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   public void updateBaseFee(final Wei newBaseFee) {
     LOG.atTrace()
         .setMessage("Updating base fee from {} to {}")
-        .addArgument(this.baseFee::toString)
+        .addArgument(this.baseFee)
         .addArgument(newBaseFee::toShortHexString)
         .log();
     if (this.baseFee.orElse(Wei.ZERO).equals(newBaseFee)) {

@@ -74,13 +74,10 @@ public class AllowlistPersistor {
     if (!existingValues.containsAll(checkLists)) {
       LOG.atDebug()
           .setMessage("\n LISTS DO NOT MATCH configFile::")
-          .addArgument(existingValues::toString)
-          .addArgument(configurationFilePath::toString)
+          .addArgument(existingValues)
+          .addArgument(configurationFilePath)
           .log();
-      LOG.atDebug()
-          .setMessage("\nLISTS DO NOT MATCH in-memory ::")
-          .addArgument(checkLists::toString)
-          .log();
+      LOG.atDebug().setMessage("\nLISTS DO NOT MATCH in-memory ::").addArgument(checkLists).log();
       throw new AllowlistFileSyncException();
     }
     return true;

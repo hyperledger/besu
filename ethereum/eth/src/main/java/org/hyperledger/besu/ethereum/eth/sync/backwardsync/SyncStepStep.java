@@ -48,10 +48,7 @@ public class SyncStepStep {
   }
 
   private CompletableFuture<Block> requestBlock(final Hash targetHash) {
-    LOG.atDebug()
-        .setMessage("Fetching block by hash {} from peers")
-        .addArgument(targetHash::toString)
-        .log();
+    LOG.atDebug().setMessage("Fetching block by hash {} from peers").addArgument(targetHash).log();
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
             context.getProtocolSchedule(),

@@ -53,7 +53,7 @@ class TransactionsMessageSender {
           .setMessage(
               "Sending transactions to peer {} all transactions count {}, "
                   + "single message transactions {}, single message list {}")
-          .addArgument(peer::toString)
+          .addArgument(peer)
           .addArgument(allTxToSend::size)
           .addArgument(includedTransactions::size)
           .addArgument(() -> toHashList(includedTransactions))

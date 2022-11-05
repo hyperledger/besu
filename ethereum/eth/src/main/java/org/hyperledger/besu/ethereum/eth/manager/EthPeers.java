@@ -278,7 +278,7 @@ public class EthPeers {
               LOG.atInfo()
                   .setMessage(
                       "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::toString)
+                  .addArgument(peer)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
                   .log();

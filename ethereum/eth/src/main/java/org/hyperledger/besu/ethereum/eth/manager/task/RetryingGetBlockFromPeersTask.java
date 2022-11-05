@@ -77,7 +77,7 @@ public class RetryingGetBlockFromPeersTask
               LOG.atDebug()
                   .setMessage("Got block {} from peer {}, attempt {}")
                   .addArgument(peerResult.getResult()::toLogString)
-                  .addArgument(peerResult.getPeer()::toString)
+                  .addArgument(peerResult.getPeer())
                   .addArgument(this::getRetryCount)
                   .log();
               result.complete(peerResult);

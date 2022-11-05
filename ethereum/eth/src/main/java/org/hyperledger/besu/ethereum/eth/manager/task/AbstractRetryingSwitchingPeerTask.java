@@ -69,7 +69,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
       LOG.atTrace()
           .setMessage("No peer found to try to execute task at attempt {}, tried peers {}")
           .addArgument(this::getRetryCount)
-          .addArgument(triedPeers::toString)
+          .addArgument(triedPeers)
           .log();
       final var ex = new NoAvailablePeersException();
       return CompletableFuture.failedFuture(ex);
@@ -89,8 +89,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             peerResult -> {
               LOG.atTrace()
                   .setMessage("Got result {} from peer {}, attempt {}")
-                  .addArgument(peerResult::toString)
-                  .addArgument(peerToUse::toString)
+                  .addArgument(peerResult)
+                  .addArgument(peerToUse)
                   .addArgument(this::getRetryCount)
                   .log();
               result.complete(peerResult);
@@ -146,7 +146,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                 LOG.atDebug()
                     .setMessage(
                         "Refresh peers disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                    .addArgument(peer::toString)
+                    .addArgument(peer)
                     .addArgument(peers::peerCount)
                     .addArgument(peers::getMaxPeers)
                     .log();

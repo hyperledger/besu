@@ -102,9 +102,9 @@ public class NewPooledTransactionHashesMessageProcessor {
       LOG.atTrace()
           .setMessage(
               "Received pooled transaction hashes message from {}, incoming hashes {}, incoming list {}")
-          .addArgument(peer::toString)
+          .addArgument(peer)
           .addArgument(incomingTransactionHashes::size)
-          .addArgument(incomingTransactionHashes::toString)
+          .addArgument(incomingTransactionHashes)
           .log();
 
       final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =

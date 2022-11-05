@@ -276,7 +276,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       LOG.atDebug()
           .setMessage("Built empty block proposal {} for payload {}")
           .addArgument(emptyBlock::toLogString)
-          .addArgument(payloadIdentifier::toString)
+          .addArgument(payloadIdentifier)
           .log();
     } else {
       LOG.warn(
@@ -327,7 +327,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               if (throwable != null) {
                 LOG.atDebug()
                     .setMessage("Exception building block for payload id {}, reason {}")
-                    .addArgument(payloadIdentifier::toString)
+                    .addArgument(payloadIdentifier)
                     .addArgument(() -> logException(throwable))
                     .log();
               }
@@ -359,7 +359,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       } catch (final CancellationException | InterruptedException ce) {
         LOG.atDebug()
             .setMessage("Block creation for payload id {} has been cancelled, reason {}")
-            .addArgument(payloadIdentifier::toString)
+            .addArgument(payloadIdentifier)
             .addArgument(() -> logException(ce))
             .log();
         return null;
@@ -385,7 +385,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       if (canRetryBlockCreation(throwable) && !isBlockCreationCancelled(payloadIdentifier)) {
         LOG.atDebug()
             .setMessage("Retrying block creation for payload id {} after recoverable error {}")
-            .addArgument(payloadIdentifier::toString)
+            .addArgument(payloadIdentifier)
             .addArgument(() -> logException(throwable))
             .log();
         recoverableBlockCreation(payloadIdentifier, blockCreator, startedAt);
@@ -411,7 +411,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .setMessage(
               "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms")
           .addArgument(bestBlock::toLogString)
-          .addArgument(payloadIdentifier::toString)
+          .addArgument(payloadIdentifier)
           .addArgument(bestBlock.getBody().getTransactions()::size)
           .addArgument(() -> System.currentTimeMillis() - startedAt)
           .log();

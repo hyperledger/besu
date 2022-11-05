@@ -101,7 +101,7 @@ class TransactionsMessageProcessor {
           .setMessage(
               "Received transactions message from {}, incoming transactions {}, incoming list {}"
                   + ", fresh transactions {}, fresh list {}")
-          .addArgument(peer::toString)
+          .addArgument(peer)
           .addArgument(incomingTransactions::size)
           .addArgument(() -> toHashList(incomingTransactions))
           .addArgument(freshTransactions::size)

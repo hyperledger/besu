@@ -63,9 +63,9 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
     LOG.atTrace()
         .setMessage("Received RPC rpcName={} callParams={} block={} traceTypes={}")
         .addArgument(this::getName)
-        .addArgument(callParams::toString)
-        .addArgument(blockNumberString::toString)
-        .addArgument(traceTypeParameter::toString)
+        .addArgument(callParams)
+        .addArgument(blockNumberString)
+        .addArgument(traceTypeParameter)
         .log();
 
     final Optional<BlockHeader> maybeBlockHeader =

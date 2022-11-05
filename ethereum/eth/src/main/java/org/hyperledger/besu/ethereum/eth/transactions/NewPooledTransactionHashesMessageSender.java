@@ -51,9 +51,9 @@ class NewPooledTransactionHashesMessageSender {
         LOG.atTrace()
             .setMessage(
                 "Sending transaction hashes to peer {}, transaction hashes count {}, list {}")
-            .addArgument(peer::toString)
+            .addArgument(peer)
             .addArgument(txHashes::size)
-            .addArgument(txHashes::toString)
+            .addArgument(txHashes)
             .log();
 
         final NewPooledTransactionHashesMessage message =

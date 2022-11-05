@@ -115,7 +115,7 @@ public class ForwardSyncStep {
         LOG.atDebug()
             .setMessage(
                 "Parent block {} not found, while saving block {}, reducing batch size to {}")
-            .addArgument(block.getHeader().getParentHash()::toString)
+            .addArgument(block.getHeader().getParentHash())
             .addArgument(block::toLogString)
             .addArgument(context::getBatchSize)
             .log();

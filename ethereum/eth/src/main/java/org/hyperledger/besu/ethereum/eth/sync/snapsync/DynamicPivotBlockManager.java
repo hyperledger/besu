@@ -187,7 +187,7 @@ public class DynamicPivotBlockManager {
             LOG.atDebug()
                 .setMessage("Setting new pivot block {} with state root {}")
                 .addArgument(blockHeader::toLogString)
-                .addArgument(blockHeader.getStateRoot()::toString)
+                .addArgument(blockHeader.getStateRoot())
                 .log();
             syncState.setCurrentHeader(blockHeader);
             lastPivotBlockFound = Optional.empty();
