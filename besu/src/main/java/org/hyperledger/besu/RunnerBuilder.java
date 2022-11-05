@@ -533,7 +533,6 @@ public class RunnerBuilder {
     final TransactionPool transactionPool = besuController.getTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
 
-    // This is the one used by all the jsonRpcMethod calls
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),
@@ -1075,7 +1074,7 @@ public class RunnerBuilder {
               Optional.empty(),
               Optional.empty(),
               apiConfiguration,
-              Optional.empty());
+              rpcMaxLogsRange);
       privacyQueries =
           Optional.of(
               new PrivacyQueries(
