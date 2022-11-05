@@ -2891,6 +2891,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
             .rpcEndpointService(rpcEndpointServiceImpl)
+            .rpcMaxLogsRange(rpcMaxLogsRange)
             .build();
 
     addShutdownHook(runner);

@@ -1548,6 +1548,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void rpcOptionMustBeUsed() {
+    final long rpcMaxLogsRange = 150L;
+    parseCommand("--rpc-max-logs-range", Long.toString(rpcMaxLogsRange));
+
+    ArgumentCaptor<Long> longArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+
+    verify(mockRunnerBuilder).rpcMaxLogsRange(longArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(longArgumentCaptor.getValue()).isEqualTo(rpcMaxLogsRange);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void p2pPeerUpperBound_without_p2pPeerLowerBound_shouldSetLowerBoundEqualToUpperBound() {
 
     final int maxPeers = 23;
