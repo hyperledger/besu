@@ -139,7 +139,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
-  protected Optional<Long> rpcMaxLogsRange;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -265,11 +264,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   public BesuControllerBuilder maxPeers(final int maxPeers) {
     this.maxPeers = maxPeers;
-    return this;
-  }
-
-  public BesuControllerBuilder rpcMaxLogsRange(final Long rpcMaxLogsRange) {
-    this.rpcMaxLogsRange = Optional.ofNullable(rpcMaxLogsRange);
     return this;
   }
 

@@ -1548,11 +1548,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rpcOptionMustBeUsed() {
+  public void rpcMaxLogsRangeOptionMustBeUsed() {
     final long rpcMaxLogsRange = 150L;
     parseCommand("--rpc-max-logs-range", Long.toString(rpcMaxLogsRange));
-
-    ArgumentCaptor<Long> longArgumentCaptor = ArgumentCaptor.forClass(Long.class);
 
     verify(mockRunnerBuilder).rpcMaxLogsRange(longArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
