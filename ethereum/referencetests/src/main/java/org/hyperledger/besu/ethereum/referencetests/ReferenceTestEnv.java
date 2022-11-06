@@ -50,11 +50,12 @@ public class ReferenceTestEnv extends BlockHeader {
   @JsonCreator
   public ReferenceTestEnv(
       @JsonProperty("currentCoinbase") final String coinbase,
-      @JsonProperty(value = "currentDifficulty", required = false) final String difficulty,
+      @JsonProperty(value = "currentDifficulty") final String difficulty,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
-      @JsonProperty(value = "currentBaseFee", required = false) final String baseFee,
-      @JsonProperty("currentTimestamp") final String timestamp) {
+      @JsonProperty(value = "currentBaseFee") final String baseFee,
+      @JsonProperty("currentTimestamp") final String timestamp,
+      @JsonProperty("currentRandom") final String random) {
     super(
         generateTestBlockHash(Long.decode(number) - 1),
         Hash.EMPTY, // ommersHash
@@ -70,7 +71,7 @@ public class ReferenceTestEnv extends BlockHeader {
         Long.decode(timestamp),
         Bytes.EMPTY,
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
-        Hash.ZERO,
+        Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         new MainnetBlockHeaderFunctions());
   }

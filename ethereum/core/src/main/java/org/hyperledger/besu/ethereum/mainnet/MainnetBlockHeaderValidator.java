@@ -17,14 +17,19 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantOmmersHashRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ExtraDataMaxLengthValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.IncrementalTimestampRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoDifficultyRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
@@ -44,6 +49,9 @@ public final class MainnetBlockHeaderValidator {
   public static final Bytes CLASSIC_FORK_BLOCK_HEADER =
       Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
+  private MainnetBlockHeaderValidator() {
+    // utility class
+  }
   public static BlockHeaderValidator.Builder create() {
     return createPgaFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
   }
@@ -83,11 +91,6 @@ public final class MainnetBlockHeaderValidator {
   static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
     return createLegacyFeeMarketOmmerValidator(
         new EpochCalculator.DefaultEpochCalculator(), PoWHasher.ETHASH_LIGHT);
-  }
-
-  static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(final PoWHasher hasher) {
-    return createLegacyFeeMarketOmmerValidator(
-        new EpochCalculator.DefaultEpochCalculator(), hasher);
   }
 
   static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator(
@@ -176,5 +179,24 @@ public final class MainnetBlockHeaderValidator {
                 PoWHasher.ETHASH_LIGHT,
                 Optional.of(baseFeeMarket)))
         .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
+  }
+
+  public static BlockHeaderValidator.Builder mergeBlockHeaderValidator(final FeeMarket feeMarket) {
+
+    var baseFeeMarket = (BaseFeeMarket) feeMarket;
+
+    return new BlockHeaderValidator.Builder()
+        .addRule(new AncestryValidationRule())
+        .addRule(new GasUsageValidationRule())
+        .addRule(
+            new GasLimitRangeAndDeltaValidationRule(
+                MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
+        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
+        .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
+        .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)))
+        .addRule(new ConstantOmmersHashRule())
+        .addRule(new NoNonceRule())
+        .addRule(new NoDifficultyRule())
+        .addRule(new IncrementalTimestampRule());
   }
 }
