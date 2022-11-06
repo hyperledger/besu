@@ -63,19 +63,21 @@ public class RoundTimer {
    * @param round The round identifier which this timer is tracking
    */
   public synchronized void startTimer(final ConsensusRoundIdentifier round) {
-    startTimer(round, 0L);
-  }
-
-  public synchronized void startTimer(final ConsensusRoundIdentifier round, final long delayInMillis) {
     cancelTimer();
 
-    final long expiryTime = (baseExpiryMillis * (long) Math.pow(2, round.getRoundNumber())) + delayInMillis; // TODO SLD can add delay here?
-    System.err.println("*** TODO SLD | RoundTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = "+expiryTime);
+    final long expiryTime = (baseExpiryMillis * (long) Math.pow(2, round.getRoundNumber()));
+    System.err.println(
+        "*** TODO SLD | RoundTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = "
+            + expiryTime);
 
-    final Runnable newTimerRunnable = () -> {
-      System.err.println("*** TODO SLD | RoundTimer.startTimer() | time expired -> queue.add(new RoundExpiry("+round+"))");
-      queue.add(new RoundExpiry(round));
-    };
+    final Runnable newTimerRunnable =
+        () -> {
+          System.err.println(
+              "*** TODO SLD | RoundTimer.startTimer() | time expired -> queue.add(new RoundExpiry("
+                  + round
+                  + "))");
+          queue.add(new RoundExpiry(round));
+        };
 
     final ScheduledFuture<?> newTimerTask =
         bftExecutors.scheduleTask(newTimerRunnable, expiryTime, TimeUnit.MILLISECONDS);

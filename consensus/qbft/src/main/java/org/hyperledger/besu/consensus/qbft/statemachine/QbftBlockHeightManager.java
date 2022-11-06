@@ -27,10 +27,13 @@ import org.hyperledger.besu.consensus.qbft.network.QbftMessageTransmitter;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
@@ -104,14 +108,19 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
+    LOG.info("TODO SLD in handleBlockTimerExpiry");
     if (currentRound.isPresent()) {
       // It is possible for the block timer to take longer than it should due to the precision of
       // the timer in Java and the OS. This means occasionally the proposal can arrive before the
       // block timer expiry and hence the round has already been set. There is no negative impact
       // on the protocol in this case.
+      LOG.info("TODO SLD currentRound isPresent, returning.");
       return;
     }
 
+    // createBlock
+
+    LOG.info("TODO SLD start new round");
     startNewRound(0);
 
     final QbftRound qbftRound = currentRound.get();
@@ -119,29 +128,58 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final boolean isProposer =
         finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
 
+    logIf(() -> !isProposer, "TODO SLD I is NOT proposer");
+    logIf(
+        () -> !roundIdentifier.equals(qbftRound.getRoundIdentifier()),
+        "TODO SLD roundIdentifier does not equal qbftRound.getRoundIdentifier");
+
     if (isProposer) {
+      LOG.info("TODO SLD I is proposer");
       if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
+        LOG.info("TODO SLD round is current");
         final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-        qbftRound.blockWithTransactions(headerTimeStampSeconds)
-            .ifPresentOrElse(qbftRound::sendProposalMessage,
-                () -> {
-//                  startNewRound(0);
-//                  finalState.getRoundTimer().cancelTimer(); // TODO SLD startTimer calls cancelTimer anyway
-                  long emptyBlockPeriodInMillis = 30_000L;
-                  long requestTimeoutInMillis = 10_000L;
-                  long delayInMillis = emptyBlockPeriodInMillis - requestTimeoutInMillis; // TODO SLD should be -blockPeriod?
-                  LOG.debug("TODO SLD skipping proposal due to empty block. Restarting round timer with {} delayInMillis", delayInMillis);
-                  finalState.getRoundTimer().startTimer(roundIdentifier, delayInMillis);
-//                  finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader);
-//                  currentRound = Optional.empty();
-                });
-//        qbftRound.createAndSendProposalMessage(headerTimeStampSeconds);
+        final Block block = qbftRound.createBlock(headerTimeStampSeconds);
+        LOG.info("TODO SLD created block {}", block);
+        final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
+        LOG.info(
+            "TODO SLD block.getTransactions.size() = {}", block.getBody().getTransactions().size());
+        if (blockHasTransactions) {
+          LOG.info("TODO SLD blockHasTransactions so send proposal");
+          qbftRound.sendProposalMessage(block);
+        } else {
+          LOG.info("TODO SLD EMPTY BLOCK DETECTED");
+          long emptyBlockPeriodInSeconds = 60L;
+          final long nowInMillis = finalState.getClock().millis();
+          final long nowInSeconds = nowInMillis / 1000;
+          final long maxEmptyBlockPeriodTimestampInSeconds =
+              parentHeader.getTimestamp() + emptyBlockPeriodInSeconds;
+          if (nowInSeconds > maxEmptyBlockPeriodTimestampInSeconds) {
+            qbftRound.sendProposalMessage(block);
+          } else {
+            finalState.getRoundTimer().cancelTimer();
+            long blockPeriodInMillis = 1_000L;
+            final long newExpiry = nowInMillis + blockPeriodInMillis;
+            final long delay = newExpiry - (parentHeader.getTimestamp() * 1000);
+            LOG.info(
+                "TODO SLD emptyBlock so delay proposal for {} millis until {}",
+                delay,
+                Instant.ofEpochMilli(newExpiry).atZone(ZoneId.systemDefault()));
+            finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader, delay);
+            currentRound = Optional.empty();
+          }
+        }
       } else {
         LOG.trace(
             "Block timer expired for a round ({}) other than current ({})",
             roundIdentifier,
             qbftRound.getRoundIdentifier());
       }
+    }
+  }
+
+  private void logIf(final Supplier<Boolean> condition, final String message) {
+    if (condition.get()) {
+      LOG.info(message);
     }
   }
 

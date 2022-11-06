@@ -20,12 +20,19 @@ import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Class for starting and keeping organised block timers */
 public class BlockTimer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BlockTimer.class);
 
   private final ForksSchedule<? extends BftConfigOptions> forksSchedule;
   private final BftExecutors bftExecutors;
@@ -86,10 +93,51 @@ public class BlockTimer {
     final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
+    System.err.println(
+        "*** TODO SLD | BlockTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = "
+            + expiryTime);
+
     if (expiryTime > now) {
       final long delay = expiryTime - now;
 
       final Runnable newTimerRunnable = () -> queue.add(new BlockTimerExpiry(round));
+
+      final ScheduledFuture<?> newTimerTask =
+          bftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.MILLISECONDS);
+      currentTimerTask = Optional.of(newTimerTask);
+    } else {
+      queue.add(new BlockTimerExpiry(round));
+    }
+  }
+
+  public synchronized void startTimer(
+      final ConsensusRoundIdentifier round,
+      final BlockHeader chainHeadHeader,
+      final long delayDuringEmptyBlockPeriod) {
+    cancelTimer();
+
+    final long now = clock.millis();
+
+    // absolute time when the timer is supposed to expire
+    final int blockPeriodSeconds =
+        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
+    final long minimumTimeBetweenBlocksMillis =
+        blockPeriodSeconds * 1000L + delayDuringEmptyBlockPeriod;
+    final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+
+    LOG.info(
+        "*** TODO SLD | BlockTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = {} (extra delay of {})",
+        Instant.ofEpochMilli(expiryTime).atZone(ZoneId.systemDefault()),
+        delayDuringEmptyBlockPeriod);
+
+    if (expiryTime > now) {
+      final long delay = expiryTime - now;
+
+      final Runnable newTimerRunnable =
+          () -> {
+            LOG.info("TODO SLD BlockTimer expired -> new BlockTimerExpiry({})", round);
+            queue.add(new BlockTimerExpiry(round));
+          };
 
       final ScheduledFuture<?> newTimerTask =
           bftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.MILLISECONDS);

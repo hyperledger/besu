@@ -95,14 +95,9 @@ public class QbftRound {
     return roundState.getRoundIdentifier();
   }
 
-  public Optional<Block> blockWithTransactions(final long headerTimeStampSeconds) {
+  public Block createBlock(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
-    if (block.getBody().getTransactions().isEmpty()) {
-      return Optional.empty();
-    } else {
-      return Optional.of(block);
-    }
+    return blockCreator.createBlock(headerTimeStampSeconds).getBlock();
   }
 
   public void sendProposalMessage(final Block block) {
@@ -114,13 +109,8 @@ public class QbftRound {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
 
-//    // TODO SLD use block or check txpool directly?
-//    if (block.getBody().getTransactions().isEmpty()) {
-//      LOG.info("TODO SLD Skipping Empty Block"); // TODO SLD also handle roundChange
-//    } else {
-      LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-      updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
-//    }
+    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
   public void startRoundWith(
@@ -138,15 +128,10 @@ public class QbftRound {
       blockToPublish = bestPreparedCertificate.get().getBlock();
     }
 
-//    if (blockToPublish.getBody().getTransactions().isEmpty()) {
-//      LOG.info("TODO SLD startRoundWith: Skipping Empty Block");
-//    } else {
-//      // TODO SLD log here?
-      updateStateWithProposalAndTransmit(
-          blockToPublish,
-          roundChangeArtifacts.getRoundChanges(),
-          bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
-//    }
+    updateStateWithProposalAndTransmit(
+        blockToPublish,
+        roundChangeArtifacts.getRoundChanges(),
+        bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
   }
 
   protected void updateStateWithProposalAndTransmit(
