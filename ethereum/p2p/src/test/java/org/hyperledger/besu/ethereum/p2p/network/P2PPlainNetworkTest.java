@@ -304,7 +304,7 @@ public class P2PPlainNetworkTest {
 
       // Check connection is made, and then a disconnect is registered at remote
       final Bytes localId = localEnode.getNodeId();
-      Assertions.assertThat(connectFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
+      Assertions.assertThat(connectFuture.get(10L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
           .isEqualTo(localId);
       Assertions.assertThat(peerFuture.get(5L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
           .isEqualTo(localId);
