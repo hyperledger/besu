@@ -68,7 +68,7 @@ public class BlockchainQueries {
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
   private final ApiConfiguration apiConfig;
-  private Optional<Long> maxLogRange = Optional.empty();
+  private final Optional<Long> maxLogRange;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
