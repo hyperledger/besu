@@ -46,14 +46,15 @@ public class ReferenceTestEnv extends BlockHeader {
    * @param number Block number for the mock block being tested.
    * @param baseFee Optional BaseFee for the mock block being tested.
    * @param timestamp Timestamp for the mock block being tested.
+   * @param random Optional RANDAO or the mock block being tested.
    */
   @JsonCreator
   public ReferenceTestEnv(
       @JsonProperty("currentCoinbase") final String coinbase,
-      @JsonProperty(value = "currentDifficulty") final String difficulty,
+      @JsonProperty("currentDifficulty") final String difficulty,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
-      @JsonProperty(value = "currentBaseFee") final String baseFee,
+      @JsonProperty("currentBaseFee") final String baseFee,
       @JsonProperty("currentTimestamp") final String timestamp,
       @JsonProperty("currentRandom") final String random) {
     super(

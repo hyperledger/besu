@@ -52,6 +52,7 @@ public final class MainnetBlockHeaderValidator {
   private MainnetBlockHeaderValidator() {
     // utility class
   }
+
   public static BlockHeaderValidator.Builder create() {
     return createPgaFeeMarketValidator(PoWHasher.ETHASH_LIGHT);
   }
