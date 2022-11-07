@@ -98,6 +98,10 @@ public abstract class MainnetDifficultyCalculators {
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, GRAY_GLACIER_FAKE_BLOCK_OFFSET);
 
+  // Post-Merge difficulty must not be altered
+  static final DifficultyCalculator MERGED_DIFFICULTY =
+      (time, parent, protocolContext) -> parent.getDifficulty().getAsBigInteger();
+
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {
     final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
