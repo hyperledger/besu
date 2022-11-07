@@ -78,7 +78,7 @@ public class EVM {
   private final EvmSpecVersion evmSpecVersion;
 
   // Optimized operation flags
-  private final boolean enablePush0;
+  private final boolean enableShanghai;
 
   public EVM(
       final OperationRegistry operations,
@@ -91,7 +91,7 @@ public class EVM {
     this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
 
-    enablePush0 = EvmSpecVersion.SHANGHAI.ordinal() >= evmSpecVersion.ordinal();
+    enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
   }
 
   public GasCalculator getGasCalculator() {
@@ -217,7 +217,7 @@ public class EVM {
             break;
           case 0x5f: // PUSH0
             result =
-                enablePush0
+                enableShanghai
                     ? Push0Operation.staticOperation(frame)
                     : InvalidOperation.INVALID_RESULT;
             break;
