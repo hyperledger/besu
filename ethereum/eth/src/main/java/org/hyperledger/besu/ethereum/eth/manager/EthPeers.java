@@ -97,11 +97,6 @@ public class EthPeers {
         "pending_peer_requests_current",
         "Number of peer requests currently pending because peers are busy",
         pendingRequests::size);
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.ETHEREUM,
-        "useful_peer_count",
-        "The current number of useful peers connected",
-        this::usefulPeersCount);
   }
 
   public void registerConnection(
@@ -115,31 +110,8 @@ public class EthPeers {
             maxMessageSize,
             clock,
             permissioningProviders);
-    connections.putIfAbsent(peerConnection, peer);
-    final String key = peerConnection.getPeerInfo().getClientId().substring(0, 4);
-    registeredMap.compute(
-        key,
-        (k, v) -> {
-          if (v != null) {
-            return Long.valueOf(v.longValue() + 1L);
-          } else {
-            return Long.valueOf(1L);
-          }
-        });
-    LOG.info(
-        "Adding new EthPeer {}, {} useful peers connected, useful geth peers: {}\n{}",
-        peer,
-        usefulPeersCount(),
-        usefulGethPeers(),
-        registeredMap);
-  }
-
-  private int usefulGethPeers() {
-    return (int)
-        streamAllPeers()
-            .filter(p -> p.getReputation().getScore() > 100)
-            .filter(p -> p.getConnection().getPeerInfo().getClientId().startsWith("Geth"))
-            .count();
+    final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
+    LOG.debug("Adding new EthPeer {}", peer.getShortNodeId());
   }
 
   public void registerDisconnect(final PeerConnection connection) {
@@ -220,11 +192,6 @@ public class EthPeers {
 
   public int peerCount() {
     return connections.size();
-  }
-
-  private int usefulPeersCount() {
-    removeDisconnectedPeers();
-    return (int) streamAllPeers().filter(p -> p.getReputation().getScore() > 100).count();
   }
 
   public int getMaxPeers() {

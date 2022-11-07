@@ -109,7 +109,6 @@ public class PeerDiscoveryController {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryController.class);
   private static final long REFRESH_CHECK_INTERVAL_MILLIS = MILLISECONDS.convert(30, SECONDS);
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
-
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
   private final Cache<Bytes, DiscoveryPeer> bondingPeers =
@@ -376,23 +375,7 @@ public class PeerDiscoveryController {
                       packet.getPacketData(ENRResponsePacketData.class);
                   final NodeRecord enr = packetData.get().getEnr();
                   peer.setNodeRecord(enr);
-                  //                  final Bytes pkey = (Bytes) enr.get(EnrField.PKEY_SECP256K1);
-                  // pkey contains the compressed public key. bytes 1 to 33 should be equal to the x
-                  // component
-                  // of the public key
-                  //                  if (pkey != null) {
-                  //                    if (!Arrays.equals(pkey.toArray(), 1, 33,
-                  // sender.getId().toArray(), 0, 32)) {
-                  //                      LOG.info(
-                  //                          "Peer {} has sent an ENR response containing the wrong
-                  // pkey ({})",
-                  //                          sender.getId(),
-                  //                          pkey);
-                  //                      return;
-                  //                    }
-                  //                  } else {
-                  //                    return;
-                  //
+
                   Optional<ForkId> maybeForkId = peer.getForkId();
                   if (maybeForkId.isPresent()) {
                     if (forkIdManager.peerCheck(maybeForkId.get())) {
@@ -410,7 +393,7 @@ public class PeerDiscoveryController {
                   } else {
                     // if the peer hasn't sent the ForkId try to connect to it anyways
                     notifyPeerBonded(peer, System.currentTimeMillis());
-                    LOG.debug("No fork id sent");
+                    LOG.debug("No fork id sent by peer: {}", peer.getId());
                   }
                 });
         break;
@@ -573,18 +556,30 @@ public class PeerDiscoveryController {
 
     final Consumer<PeerInteractionState> action =
         interaction -> {
+          final ENRRequestPacketData data = ENRRequestPacketData.create();
           createPacket(
               PacketType.ENR_REQUEST,
-              ENRRequestPacketData.create(),
-              enrRequestPacket -> {
-                sendPacket(peer, enrRequestPacket);
+              data,
+              enrPacket -> {
+                final Bytes enrHash = enrPacket.getHash();
+                // Update the matching filter to only accept the ENRResponse if it echoes the hash
+                // of our request.
+                final Predicate<Packet> newFilter =
+                    packet ->
+                        packet
+                            .getPacketData(ENRResponsePacketData.class)
+                            .map(enr -> enr.getRequestHash().equals(enrHash))
+                            .orElse(false);
+                interaction.updateFilter(newFilter);
+
+                sendPacket(peer, enrPacket);
               });
         };
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
         new PeerInteractionState(
-            action, peer.getId(), PacketType.ENR_RESPONSE, packet -> true, true);
+            action, peer.getId(), PacketType.ENR_RESPONSE, packet -> false, true);
     dispatchInteraction(peer, peerInteractionState);
   }
 
@@ -707,12 +702,7 @@ public class PeerDiscoveryController {
    * @return List of peers.
    */
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return peerTable
-        .streamAllPeers()
-        .filter(
-            peerPermissions
-                ::isAllowedInPeerTable); // TODO: looks like the filter is not necessary, because
-    // they are already in the peer table?
+    return peerTable.streamAllPeers();
   }
 
   public void setRetryDelayFunction(final RetryDelayFunction retryDelayFunction) {
