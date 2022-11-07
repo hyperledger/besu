@@ -297,7 +297,7 @@ public class MultiTenancyPrivacyControllerTest {
 
     final Optional<Bytes> result =
         multiTenancyPrivacyController.getContractCode(
-            PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO_HASH, ENCLAVE_PUBLIC_KEY1);
+            PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO, ENCLAVE_PUBLIC_KEY1);
 
     assertThat(result).isPresent().hasValue(contractCode);
   }
@@ -313,7 +313,7 @@ public class MultiTenancyPrivacyControllerTest {
     assertThatThrownBy(
             () ->
                 multiTenancyPrivacyController.getContractCode(
-                    PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO_HASH, ENCLAVE_PUBLIC_KEY2))
+                    PRIVACY_GROUP_ID, Address.ZERO, Hash.ZERO, ENCLAVE_PUBLIC_KEY2))
         .hasMessage("Privacy group must contain the enclave public key");
   }
 

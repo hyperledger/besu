@@ -58,7 +58,8 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
             .orElse(Collections.emptyList());
 
     final Set<Transaction> pendingTransactionsFiltered =
-        pendingTransactionFilter.reduce(pendingTransactions.getTransactionInfo(), filters, limit);
+        pendingTransactionFilter.reduce(
+            pendingTransactions.getPendingTransactions(), filters, limit);
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),

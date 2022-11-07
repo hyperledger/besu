@@ -38,11 +38,7 @@ public class RollingImport {
         new RollingFileReader((i, c) -> Path.of(String.format(arg[0] + "-%04d.rdat", i)), false);
 
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    final BonsaiWorldStateArchive archive =
-        new BonsaiWorldStateArchive(
-            new TrieLogManager(null, new BonsaiWorldStateKeyValueStorage(provider)),
-            provider,
-            null);
+    final BonsaiWorldStateArchive archive = new BonsaiWorldStateArchive(provider, null);
     final InMemoryKeyValueStorage accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);

@@ -85,8 +85,7 @@ public class CliqueMiningCoordinatorTest {
   public void setup() {
 
     headerTestFixture.number(1);
-    Block genesisBlock =
-        createEmptyBlock(0, Hash.ZERO_HASH, proposerKeys); // not normally signed but ok
+    Block genesisBlock = createEmptyBlock(0, Hash.ZERO, proposerKeys); // not normally signed but ok
     blockChain = createInMemoryBlockchain(genesisBlock);
 
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);

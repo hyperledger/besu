@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
 import java.time.Instant;
 
@@ -22,16 +22,16 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"hash", "isReceivedFromLocalSource"})
-public class TransactionInfoResult implements TransactionResult {
+public class PendingTransactionResult implements TransactionResult {
 
   private final String hash;
   private final boolean isReceivedFromLocalSource;
   private final Instant addedToPoolAt;
 
-  public TransactionInfoResult(final TransactionInfo transactionInfo) {
-    hash = transactionInfo.getHash().toString();
-    isReceivedFromLocalSource = transactionInfo.isReceivedFromLocalSource();
-    addedToPoolAt = transactionInfo.getAddedToPoolAt();
+  public PendingTransactionResult(final PendingTransaction pendingTransaction) {
+    hash = pendingTransaction.getHash().toString();
+    isReceivedFromLocalSource = pendingTransaction.isReceivedFromLocalSource();
+    addedToPoolAt = pendingTransaction.getAddedToPoolAt();
   }
 
   @JsonGetter(value = "hash")

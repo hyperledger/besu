@@ -166,16 +166,6 @@ public interface RLPInput {
   BigInteger readBigIntegerScalar();
 
   /**
-   * Reads a scalar from the input and return is as a {@link Bytes32}.
-   *
-   * @return The next scalar item of this input as a {@link Bytes32}.
-   * @throws RLPException if the next item to read is a list, the input is at the end of its current
-   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
-   *     fit a {@link Bytes32} or has leading zeros.
-   */
-  Bytes32 readBytes32Scalar();
-
-  /**
    * Reads a scalar from the input and return is as a {@link UInt256}.
    *
    * @return The next scalar item of this input as a {@link UInt256}.

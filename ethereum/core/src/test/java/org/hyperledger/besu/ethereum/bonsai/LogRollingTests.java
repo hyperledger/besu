@@ -69,7 +69,7 @@ public class LogRollingTests {
 
   private static final BlockHeader headerOne =
       new BlockHeader(
-          Hash.ZERO_HASH,
+          Hash.ZERO,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
           Hash.fromHexString("0x0ecfa454ddfe6b740f4af7b7f4c61b5c6bac2854efd2b07b27b1f53dba9bb46c"),
@@ -83,7 +83,7 @@ public class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO_HASH,
+          Hash.ZERO,
           0,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
@@ -102,18 +102,14 @@ public class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO_HASH,
+          Hash.ZERO,
           0,
           new MainnetBlockHeaderFunctions());
 
   @Before
   public void createStorage() {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive =
-        new BonsaiWorldStateArchive(
-            new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(provider)),
-            provider,
-            blockchain);
+    archive = new BonsaiWorldStateArchive(provider, blockchain);
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -132,11 +128,7 @@ public class LogRollingTests {
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
-    secondArchive =
-        new BonsaiWorldStateArchive(
-            new TrieLogManager(blockchain, new BonsaiWorldStateKeyValueStorage(secondProvider)),
-            secondProvider,
-            blockchain);
+    secondArchive = new BonsaiWorldStateArchive(secondProvider, blockchain);
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(

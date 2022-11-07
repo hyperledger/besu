@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 import static org.mockito.ArgumentMatchers.any;
@@ -29,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,7 +53,7 @@ public class PoWMiningCoordinatorTest {
             syncState,
             DEFAULT_REMOTE_SEALERS_LIMIT,
             DEFAULT_REMOTE_SEALERS_TTL);
-    final PoWSolution solution = new PoWSolution(1L, Hash.EMPTY, null, ZERO_32);
+    final PoWSolution solution = new PoWSolution(1L, Hash.EMPTY, null, Bytes32.ZERO);
 
     assertThat(miningCoordinator.isMining()).isFalse();
     assertThat(miningCoordinator.hashesPerSecond()).isEqualTo(Optional.empty());

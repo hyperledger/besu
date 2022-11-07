@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
-import static org.hyperledger.besu.datatypes.Constants.ZERO_32;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -119,8 +118,8 @@ public class TrieIteratorTest {
     Node<String> root = NullNode.instance();
     final NavigableSet<Bytes32> expectedKeyHashes = new TreeSet<>();
     final Random random = new Random(-5407159858935967790L);
-    Bytes32 startAtHash = ZERO_32;
-    Bytes32 stopAtHash = ZERO_32;
+    Bytes32 startAtHash = Bytes32.ZERO;
+    Bytes32 stopAtHash = Bytes32.ZERO;
     final int totalNodes = Math.abs(random.nextInt(1000));
     final int startNodeNumber = random.nextInt(Math.max(1, totalNodes - 1));
     final int stopNodeNumber = random.nextInt(Math.max(1, totalNodes - 1));

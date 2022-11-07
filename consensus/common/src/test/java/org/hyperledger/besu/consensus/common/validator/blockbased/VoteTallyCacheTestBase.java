@@ -62,7 +62,7 @@ public class VoteTallyCacheTestBase {
     }
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
 
-    genesisBlock = createEmptyBlock(0, Hash.ZERO_HASH);
+    genesisBlock = createEmptyBlock(0, Hash.ZERO);
 
     blockChain = createInMemoryBlockchain(genesisBlock);
 
