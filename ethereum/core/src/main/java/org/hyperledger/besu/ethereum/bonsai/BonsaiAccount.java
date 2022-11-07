@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -51,7 +52,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
   private Hash storageRoot;
   private Bytes code;
 
-  private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
+  private final Map<UInt256, UInt256> updatedStorage = new ConcurrentHashMap<>();
 
   BonsaiAccount(
       final BonsaiWorldView context,

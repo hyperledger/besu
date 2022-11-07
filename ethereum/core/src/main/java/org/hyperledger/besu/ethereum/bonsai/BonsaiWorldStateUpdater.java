@@ -186,7 +186,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
       // mark all updated storage as to be cleared
       final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
-          storageToUpdate.computeIfAbsent(deletedAddress, k -> new HashMap<>());
+          storageToUpdate.computeIfAbsent(deletedAddress, k -> new ConcurrentHashMap<>());
       final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
           deletedStorageUpdates.entrySet().iterator();
       while (iter.hasNext()) {
@@ -221,8 +221,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
     for (final UpdateTrackingAccount<BonsaiAccount> tracked : getUpdatedAccounts()) {
       final Address updatedAddress = tracked.getAddress();
-      BonsaiAccount updatedAccount = tracked.getWrappedAccount();
-      if (updatedAccount == null) {
+      final BonsaiAccount updatedAccount;
+      if (tracked.getWrappedAccount() == null) {
         final BonsaiValue<BonsaiAccount> updatedAccountValue = accountsToUpdate.get(updatedAddress);
         updatedAccount = new BonsaiAccount(this, tracked);
         tracked.setWrappedAccount(updatedAccount);
@@ -233,6 +233,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           updatedAccountValue.setUpdated(updatedAccount);
         }
       } else {
+        updatedAccount = tracked.getWrappedAccount();
         updatedAccount.setBalance(tracked.getBalance());
         updatedAccount.setNonce(tracked.getNonce());
         if (tracked.codeWasUpdated()) {
@@ -241,7 +242,8 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         if (tracked.getStorageWasCleared()) {
           updatedAccount.clearStorage();
         }
-        tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
+        tracked.getUpdatedStorage().entrySet().parallelStream()
+                .forEach(entry -> updatedAccount.setStorageValue(entry.getKey(), entry.getValue()));
       }
 
       if (tracked.codeWasUpdated()) {
@@ -253,30 +255,30 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       }
 
       final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
-          storageToUpdate.computeIfAbsent(updatedAddress, __ -> new HashMap<>());
+          storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
       if (tracked.getStorageWasCleared()) {
         storageToClear.add(updatedAddress);
         pendingStorageUpdates.clear();
       }
 
       final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-          new TreeSet<>(
-              Comparator.comparing(
-                  (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
+              new TreeSet<>(
+                      Map.Entry.comparingByKey());
       entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
-      for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
+      entries.parallelStream().forEach(storageUpdate -> {
         final UInt256 keyUInt = storageUpdate.getKey();
         final Hash slotHash = Hash.hash(keyUInt);
         final UInt256 value = storageUpdate.getValue();
         final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
         if (pendingValue == null) {
           pendingStorageUpdates.put(
-              slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
+                  slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
         } else {
           pendingValue.setUpdated(value);
         }
-      }
+      });
+
       updatedAccount.getUpdatedStorage().clear();
 
       if (pendingStorageUpdates.isEmpty()) {
@@ -611,7 +613,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
       if (storageValue.isPresent()) {
         slotValue = new BonsaiValue<>(storageValue.get(), storageValue.get());
-        storageToUpdate.computeIfAbsent(address, k -> new HashMap<>()).put(slotHash, slotValue);
+        storageToUpdate.computeIfAbsent(address, k -> new ConcurrentHashMap<>()).put(slotHash, slotValue);
       }
     }
     if (slotValue == null) {
