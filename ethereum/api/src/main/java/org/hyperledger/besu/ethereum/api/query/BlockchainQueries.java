@@ -656,7 +656,7 @@ public class BlockchainQueries {
       final Supplier<Boolean> isQueryAlive) {
     try {
       if (maxLogRange.isPresent() && ((toBlockNumber - fromBlockNumber) > maxLogRange.get())) {
-        throw new Exception("Specified range exceeds maximum range limit");
+        throw new Exception("Requested range exceeds maximum range limit");
       }
       final List<LogWithMetadata> result = new ArrayList<>();
       final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
