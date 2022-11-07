@@ -26,7 +26,6 @@ import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -68,8 +67,6 @@ public class EthPeers {
 
   private Comparator<EthPeer> bestPeerComparator;
 
-  private final Map<String, Long> registeredMap = new HashMap<>();
-
   public EthPeers(
       final String protocolName,
       final Clock clock,
@@ -110,7 +107,7 @@ public class EthPeers {
             maxMessageSize,
             clock,
             permissioningProviders);
-    final EthPeer ethPeer = connections.putIfAbsent(peerConnection, peer);
+    connections.putIfAbsent(peerConnection, peer);
     LOG.debug("Adding new EthPeer {}", peer.getShortNodeId());
   }
 
