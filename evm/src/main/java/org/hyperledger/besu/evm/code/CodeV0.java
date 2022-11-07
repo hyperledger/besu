@@ -86,7 +86,7 @@ public class CodeV0 implements Code {
 
   @Override
   public Bytes getContainerBytes() {
-    return getCodeBytes();
+    return bytes;
   }
 
   @Override
