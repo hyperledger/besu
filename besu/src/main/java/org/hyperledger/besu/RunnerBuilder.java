@@ -406,7 +406,7 @@ public class RunnerBuilder {
   }
 
   public RunnerBuilder rpcMaxLogsRange(final Long rpcMaxLogsRange) {
-    this.rpcMaxLogsRange = Optional.of(rpcMaxLogsRange);
+    this.rpcMaxLogsRange = rpcMaxLogsRange > 0 ? Optional.of(rpcMaxLogsRange) : Optional.empty();
     return this;
   }
 
