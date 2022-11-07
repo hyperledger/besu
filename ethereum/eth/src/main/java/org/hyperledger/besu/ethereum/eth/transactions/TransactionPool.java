@@ -248,7 +248,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
       if (!reAddRemoteTxs.isEmpty()) {
         LOG.trace("Re-adding {} remote transactions from a block event", reAddRemoteTxs.size());
-        addRemoteTransactions(reAddTransactions);
+        addRemoteTransactions(reAddRemoteTxs);
       }
     }
   }
