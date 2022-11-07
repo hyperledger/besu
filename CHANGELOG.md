@@ -1,6 +1,9 @@
 # Changelog
 ## 22.10.1
 
+### Breaking Changes
+- Fields `publicKey` and `raw` removed from RPC API `Transaction` result object [#4575](https://github.com/hyperledger/besu/pull/4575)
+
 ### Additions and Improvements
 
 ### Bug Fixes
