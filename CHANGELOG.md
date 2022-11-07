@@ -2,6 +2,7 @@
 ## 22.10.1
 
 ### Additions and Improvements
+- Added `--rpc-max-logs-range` CLI option to allow limiting the number of blocks queried by `eth_getLogs` and `priv_getLogs` RPC APIs [#4597](https://github.com/hyperledger/besu/pull/4597)
 
 ### Bug Fixes
 
