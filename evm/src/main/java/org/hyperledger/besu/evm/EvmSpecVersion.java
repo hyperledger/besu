@@ -11,7 +11,10 @@ public enum EvmSpecVersion {
   ISTANBUL(0, true),
   LONDON(0, true),
   PARIS(0, true),
-  SHANGHAI(1, false);
+  SHANGHAI(1, false),
+
+  /** Transient fork, will be removed */
+  SHANDONG(1, false);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
@@ -29,6 +32,7 @@ public enum EvmSpecVersion {
     return maxEofVersion;
   }
 
+  @SuppressWarnings("AlreadyChecked") // false positive
   public void maybeWarnVersion() {
     if (versionWarned) {
       return;

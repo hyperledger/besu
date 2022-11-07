@@ -117,7 +117,7 @@ public class MainnetEVMs {
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
   private MainnetEVMs() {
-    // prevent instantiations.
+    // utility class
   }
 
   public static EVM frontier(final EvmConfiguration evmConfiguration) {
@@ -400,5 +400,31 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
     registry.put(new PrevRanDaoOperation(gasCalculator));
+  }
+
+  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  public static EVM shandong(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(shandongOperations(gasCalculator, chainId), gasCalculator, evmConfiguration, EvmSpecVersion.SHANDONG);
+  }
+
+  public static OperationRegistry shandongOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerShandongOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerShandongOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerParisOperations(registry, gasCalculator, chainID);
+    // PUSH0
   }
 }

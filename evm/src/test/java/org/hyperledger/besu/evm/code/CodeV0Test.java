@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -57,7 +58,7 @@ public class CodeV0Test {
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));
     registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT);
+    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT, EvmSpecVersion.PARIS);
   }
 
   @Test
