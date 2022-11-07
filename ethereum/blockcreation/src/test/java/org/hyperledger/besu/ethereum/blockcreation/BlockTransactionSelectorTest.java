@@ -590,7 +590,7 @@ public class BlockTransactionSelectorTest {
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction futureTransaction =
-        txTestFixture.nonce(5).gasLimit(1).createTransaction(keyPair);
+        txTestFixture.nonce(4).gasLimit(1).createTransaction(keyPair);
 
     pendingTransactions.addRemoteTransaction(futureTransaction, Optional.empty());
 

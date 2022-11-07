@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -47,7 +49,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -58,7 +59,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public abstract class AbstractPendingTransactionsSorter {
   protected final TransactionPoolConfiguration poolConfig;
 
   protected final Object lock = new Object();
-  protected final Map<Hash, PendingTransaction> pendingTransactions = new ConcurrentHashMap<>();
+  protected final Map<Hash, PendingTransaction> pendingTransactions;
 
   protected final Map<Address, PendingTransactionsForSender> transactionsBySender =
       new ConcurrentHashMap<>();
@@ -103,6 +103,7 @@ public abstract class AbstractPendingTransactionsSorter {
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier) {
     this.poolConfig = poolConfig;
+    this.pendingTransactions = new ConcurrentHashMap<>(poolConfig.getTxPoolMaxSize());
     this.clock = clock;
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
     this.transactionReplacementHandler =
@@ -173,7 +174,6 @@ public abstract class AbstractPendingTransactionsSorter {
     return transactionAddedStatus;
   }
 
-  @VisibleForTesting
   public TransactionAddedStatus addLocalTransaction(
       final Transaction transaction, final Optional<Account> maybeSenderAccount) {
     final TransactionAddedStatus transactionAdded =
@@ -186,16 +186,16 @@ public abstract class AbstractPendingTransactionsSorter {
   }
 
   public void removeTransaction(final Transaction transaction) {
-    doRemoveTransaction(transaction, false);
+    removeTransaction(transaction, false);
     notifyTransactionDropped(transaction);
   }
 
   public void transactionAddedToBlock(final Transaction transaction) {
-    doRemoveTransaction(transaction, true);
+    removeTransaction(transaction, true);
     lowestInvalidKnownNonceCache.registerValidTransaction(transaction);
   }
 
-  protected void incrementTransactionRemovedCounter(
+  private void incrementTransactionRemovedCounter(
       final boolean receivedFromLocalSource, final boolean addedToBlock) {
     final String location = receivedFromLocalSource ? "local" : "remote";
     final String operation = addedToBlock ? "addedToBlock" : "dropped";
@@ -245,7 +245,7 @@ public abstract class AbstractPendingTransactionsSorter {
     }
   }
 
-  protected AccountTransactionOrder createSenderTransactionOrder(final Address address) {
+  private AccountTransactionOrder createSenderTransactionOrder(final Address address) {
     return new AccountTransactionOrder(
         transactionsBySender
             .get(address)
@@ -253,7 +253,7 @@ public abstract class AbstractPendingTransactionsSorter {
             .map(PendingTransaction::getTransaction));
   }
 
-  protected TransactionAddedStatus addTransactionForSenderAndNonce(
+  private TransactionAddedStatus addTransactionForSenderAndNonce(
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
     PendingTransactionsForSender pendingTxsForSender =
@@ -289,7 +289,7 @@ public abstract class AbstractPendingTransactionsSorter {
     return ADDED;
   }
 
-  protected void removePendingTransactionBySenderAndNonce(
+  private void removePendingTransactionBySenderAndNonce(
       final PendingTransaction pendingTransaction) {
     final Transaction transaction = pendingTransaction.getTransaction();
     Optional.ofNullable(transactionsBySender.get(transaction.getSender()))
@@ -311,11 +311,11 @@ public abstract class AbstractPendingTransactionsSorter {
             });
   }
 
-  protected void notifyTransactionAdded(final Transaction transaction) {
+  private void notifyTransactionAdded(final Transaction transaction) {
     pendingTransactionSubscribers.forEach(listener -> listener.onTransactionAdded(transaction));
   }
 
-  protected void notifyTransactionDropped(final Transaction transaction) {
+  private void notifyTransactionDropped(final Transaction transaction) {
     transactionDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
   }
 
@@ -366,25 +366,73 @@ public abstract class AbstractPendingTransactionsSorter {
 
   public abstract void manageBlockAdded(final Block block);
 
-  protected abstract void doRemoveTransaction(
-      final Transaction transaction, final boolean addedToBlock);
+  private void removeTransaction(final Transaction transaction, final boolean addedToBlock) {
+    synchronized (lock) {
+      final PendingTransaction removedPendingTx = pendingTransactions.remove(transaction.getHash());
+      if (removedPendingTx != null) {
+        removePrioritizedTransaction(removedPendingTx);
+        removePendingTransactionBySenderAndNonce(removedPendingTx);
+        incrementTransactionRemovedCounter(
+            removedPendingTx.isReceivedFromLocalSource(), addedToBlock);
+      }
+    }
+  }
+
+  protected abstract void removePrioritizedTransaction(PendingTransaction removedPendingTx);
 
   protected abstract Iterator<PendingTransaction> prioritizedTransactions();
 
-  protected abstract TransactionAddedStatus addTransaction(
-      final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount);
+  protected abstract void prioritizeTransaction(final PendingTransaction pendingTransaction);
 
-  Optional<PendingTransaction> lowestValueTxForRemovalBySender(
-      final NavigableSet<PendingTransaction> txSet) {
-    return txSet.descendingSet().stream()
-        .filter(
-            tx ->
-                transactionsBySender
-                    .get(tx.getSender())
-                    .maybeLastPendingTransaction()
-                    .filter(tx::equals)
-                    .isPresent())
-        .findFirst();
+  private TransactionAddedStatus addTransaction(
+      final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
+    final Transaction transaction = pendingTransaction.getTransaction();
+    synchronized (lock) {
+      if (pendingTransactions.containsKey(pendingTransaction.getHash())) {
+        traceLambda(LOG, "Already known transaction {}", pendingTransaction::toTraceLog);
+        return TransactionAddedStatus.ALREADY_KNOWN;
+      }
+
+      if (transaction.getNonce() - maybeSenderAccount.map(AccountState::getNonce).orElse(0L)
+          >= poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
+        traceLambda(
+            LOG,
+            "Transaction {} not added because nonce too far in the future for sender {}",
+            transaction::toTraceLog,
+            maybeSenderAccount::toString);
+        return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+      }
+
+      final TransactionAddedStatus transactionAddedStatus =
+          addTransactionForSenderAndNonce(pendingTransaction, maybeSenderAccount);
+
+      if (!transactionAddedStatus.equals(TransactionAddedStatus.ADDED)) {
+        return transactionAddedStatus;
+      }
+
+      pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
+      prioritizeTransaction(pendingTransaction);
+
+      if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
+        evictLessPriorityTransactions();
+      }
+    }
+    notifyTransactionAdded(pendingTransaction.getTransaction());
+    return TransactionAddedStatus.ADDED;
+  }
+
+  protected abstract PendingTransaction getLeastPriorityTransaction();
+
+  private void evictLessPriorityTransactions() {
+    final PendingTransaction leastPriorityTx = getLeastPriorityTransaction();
+    // evict all txs for the sender with nonce >= the least priority one to avoid gaps
+    final var pendingTxsForSender = transactionsBySender.get(leastPriorityTx.getSender());
+    final var txsToEvict = pendingTxsForSender.getPendingTransactions(leastPriorityTx.getNonce());
+
+    // remove backward to avoid gaps
+    for (int i = txsToEvict.size() - 1; i >= 0; i--) {
+      removeTransaction(txsToEvict.get(i).getTransaction());
+    }
   }
 
   public String toTraceLog(
@@ -443,12 +491,13 @@ public abstract class AbstractPendingTransactionsSorter {
               pendingTx ->
                   traceLambda(
                       LOG,
-                      "Transaction {} piked for removal since there is a lowest invalid nonce {} for the sender",
+                      "Transaction {} invalid since there is a lower invalid nonce {} for the sender",
                       pendingTx::toTraceLog,
                       () -> invalidNonce))
           .map(PendingTransaction::getTransaction)
           .collect(Collectors.toList());
     }
+
     return List.of();
   }
 
@@ -460,7 +509,6 @@ public abstract class AbstractPendingTransactionsSorter {
 
   @FunctionalInterface
   public interface TransactionSelector {
-
     TransactionSelectionResult evaluateTransaction(final Transaction transaction);
   }
 }
