@@ -370,7 +370,7 @@ public class BlockchainQueriesTest {
     final BlockchainQueries queries = data.blockchainQueries;
     assertThatThrownBy(
             () -> queries.matchingLogs(0L, 100L, new LogsQuery.Builder().build(), () -> true))
-        .hasRootCauseMessage("Specified range exceeds maximum range limit");
+        .hasRootCauseMessage("Requested range exceeds maximum range limit");
   }
 
   @Test
