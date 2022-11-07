@@ -1056,7 +1056,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isNull();
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337902));
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
   }
 
   @Test

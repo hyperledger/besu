@@ -62,7 +62,7 @@ public class EthNetworkConfigTest {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.SHANDONG);
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337902));
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
   }
 
   @Test
