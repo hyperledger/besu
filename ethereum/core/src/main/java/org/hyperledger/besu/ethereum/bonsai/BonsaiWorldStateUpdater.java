@@ -219,7 +219,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       accountValue.setUpdated(null);
     }
 
-    for (final UpdateTrackingAccount<BonsaiAccount> tracked : getUpdatedAccounts()) {
+    getUpdatedAccounts().parallelStream().forEach(tracked -> {
       final Address updatedAddress = tracked.getAddress();
       final BonsaiAccount updatedAccount;
       if (tracked.getWrappedAccount() == null) {
@@ -242,20 +242,19 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         if (tracked.getStorageWasCleared()) {
           updatedAccount.clearStorage();
         }
-        tracked.getUpdatedStorage().entrySet().parallelStream()
-                .forEach(entry -> updatedAccount.setStorageValue(entry.getKey(), entry.getValue()));
+        tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
       }
 
       if (tracked.codeWasUpdated()) {
         final BonsaiValue<Bytes> pendingCode =
-            codeToUpdate.computeIfAbsent(
-                updatedAddress,
-                addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
+                codeToUpdate.computeIfAbsent(
+                        updatedAddress,
+                        addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
         pendingCode.setUpdated(updatedAccount.getCode());
       }
 
       final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
-          storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
+              storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
       if (tracked.getStorageWasCleared()) {
         storageToClear.add(updatedAddress);
         pendingStorageUpdates.clear();
@@ -266,7 +265,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                       Map.Entry.comparingByKey());
       entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
-      entries.parallelStream().forEach(storageUpdate -> {
+      for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
         final UInt256 keyUInt = storageUpdate.getKey();
         final Hash slotHash = Hash.hash(keyUInt);
         final UInt256 value = storageUpdate.getValue();
@@ -277,7 +276,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         } else {
           pendingValue.setUpdated(value);
         }
-      });
+      }
 
       updatedAccount.getUpdatedStorage().clear();
 
@@ -289,8 +288,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         tracked.setStorageWasCleared(false); // storage already cleared for this transaction
       }
 
-      // TODO maybe add address preimage?
-    }
+    });
   }
 
   @Override
