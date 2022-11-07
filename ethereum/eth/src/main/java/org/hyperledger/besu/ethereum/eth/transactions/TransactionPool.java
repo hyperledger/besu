@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -397,7 +398,10 @@ public class TransactionPool implements BlockAddedObserver {
     ValidationResultAndAccount(
         final Account account, final ValidationResult<TransactionInvalidReason> result) {
       this.result = result;
-      this.maybeAccount = Optional.ofNullable(account);
+      this.maybeAccount =
+          Optional.ofNullable(account)
+              .map(
+                  acct -> new SimpleAccount(acct.getAddress(), acct.getNonce(), acct.getBalance()));
     }
 
     ValidationResultAndAccount(final ValidationResult<TransactionInvalidReason> result) {
