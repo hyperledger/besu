@@ -83,9 +83,6 @@ public class BlockTimer {
    */
   public synchronized void startTimer(
       final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
-    cancelTimer();
-
-    final long now = clock.millis();
 
     // absolute time when the timer is supposed to expire
     final int blockPeriodSeconds =
@@ -93,49 +90,24 @@ public class BlockTimer {
     final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
-    System.err.println(
-        "*** TODO SLD | BlockTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = "
-            + expiryTime);
-
-    if (expiryTime > now) {
-      final long delay = expiryTime - now;
-
-      final Runnable newTimerRunnable = () -> queue.add(new BlockTimerExpiry(round));
-
-      final ScheduledFuture<?> newTimerTask =
-          bftExecutors.scheduleTask(newTimerRunnable, delay, TimeUnit.MILLISECONDS);
-      currentTimerTask = Optional.of(newTimerTask);
-    } else {
-      queue.add(new BlockTimerExpiry(round));
-    }
+    startTimer(round, expiryTime);
   }
 
-  public synchronized void startTimer(
-      final ConsensusRoundIdentifier round,
-      final BlockHeader chainHeadHeader,
-      final long delayDuringEmptyBlockPeriod) {
+  public synchronized void startTimer(final ConsensusRoundIdentifier round, final long expiryTime) {
     cancelTimer();
 
     final long now = clock.millis();
 
-    // absolute time when the timer is supposed to expire
-    final int blockPeriodSeconds =
-        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
-    final long minimumTimeBetweenBlocksMillis =
-        blockPeriodSeconds * 1000L + delayDuringEmptyBlockPeriod;
-    final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
-
-    LOG.info(
-        "*** TODO SLD | BlockTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = {} (extra delay of {})",
-        Instant.ofEpochMilli(expiryTime).atZone(ZoneId.systemDefault()),
-        delayDuringEmptyBlockPeriod);
+    LOG.debug(
+        "*** TODO SLD | BlockTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = {}",
+        Instant.ofEpochMilli(expiryTime).atZone(ZoneId.systemDefault()));
 
     if (expiryTime > now) {
       final long delay = expiryTime - now;
 
       final Runnable newTimerRunnable =
           () -> {
-            LOG.info("TODO SLD BlockTimer expired -> new BlockTimerExpiry({})", round);
+            LOG.debug("TODO SLD BlockTimer expired -> new BlockTimerExpiry({})", round);
             queue.add(new BlockTimerExpiry(round));
           };
 

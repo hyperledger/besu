@@ -72,9 +72,6 @@ public class BftEventQueue {
 
   @Override
   public String toString() {
-    return "BftEventQueue{" +
-        "queue=" + queue +
-        ", messageQueueLimit=" + messageQueueLimit +
-        '}';
+    return "BftEventQueue{" + "queue=" + queue + ", messageQueueLimit=" + messageQueueLimit + '}';
   }
 }

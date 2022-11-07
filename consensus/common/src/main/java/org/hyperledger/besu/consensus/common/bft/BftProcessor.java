@@ -69,7 +69,7 @@ public class BftProcessor implements Runnable {
 
   private Optional<BftEvent> nextEvent() {
     try {
-//      LOG.debug("TODO SLD queue: " + incomingQueue);
+      //      LOG.debug("TODO SLD queue: " + incomingQueue);
       return Optional.ofNullable(incomingQueue.poll(500, TimeUnit.MILLISECONDS));
     } catch (final InterruptedException interrupt) {
       // If the queue was interrupted propagate it and spin to check our shutdown status

@@ -20,8 +20,13 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Class for starting and keeping organised round timers */
 public class RoundTimer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RoundTimer.class);
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
@@ -66,13 +71,13 @@ public class RoundTimer {
     cancelTimer();
 
     final long expiryTime = (baseExpiryMillis * (long) Math.pow(2, round.getRoundNumber()));
-    System.err.println(
+    LOG.debug(
         "*** TODO SLD | RoundTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = "
             + expiryTime);
 
     final Runnable newTimerRunnable =
         () -> {
-          System.err.println(
+          LOG.debug(
               "*** TODO SLD | RoundTimer.startTimer() | time expired -> queue.add(new RoundExpiry("
                   + round
                   + "))");

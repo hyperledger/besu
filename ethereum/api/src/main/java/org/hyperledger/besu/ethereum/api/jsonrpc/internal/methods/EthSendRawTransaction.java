@@ -73,7 +73,8 @@ public class EthSendRawTransaction implements JsonRpcMethod {
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
-    LOG.trace("Received local transaction {}", transaction);
+    // TODO SLD change back to trace
+    LOG.info("Received local transaction {}", transaction);
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         transactionPool.get().addLocalTransaction(transaction);
