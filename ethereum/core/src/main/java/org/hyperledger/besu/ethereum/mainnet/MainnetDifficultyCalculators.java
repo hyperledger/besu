@@ -44,7 +44,7 @@ public abstract class MainnetDifficultyCalculators {
 
   private MainnetDifficultyCalculators() {}
 
-  public static final DifficultyCalculator FRONTIER =
+  static final DifficultyCalculator FRONTIER =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger adjust = parentDifficulty.divide(DIFFICULTY_BOUND_DIVISOR);
@@ -59,7 +59,7 @@ public abstract class MainnetDifficultyCalculators {
         return periodCount > 1 ? adjustForPeriod(periodCount, difficulty) : difficulty;
       };
 
-  public static final DifficultyCalculator HOMESTEAD =
+  static final DifficultyCalculator HOMESTEAD =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger difficulty =

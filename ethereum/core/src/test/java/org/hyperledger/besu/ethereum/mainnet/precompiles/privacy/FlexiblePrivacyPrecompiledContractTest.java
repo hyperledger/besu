@@ -392,7 +392,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
+                ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH))));
 
     final FlexiblePrivacyPrecompiledContract contractSpy = spy(contract);
     Mockito.doReturn(true)

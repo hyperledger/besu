@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -228,10 +230,26 @@ public class TransactionPool implements BlockAddedObserver {
     LOG.trace("Block added event {}", event);
     event.getAddedTransactions().forEach(pendingTransactions::transactionAddedToBlock);
     pendingTransactions.manageBlockAdded(event.getBlock());
-    var readdTransactions = event.getRemovedTransactions();
-    if (!readdTransactions.isEmpty()) {
-      LOG.trace("Readding {} transactions from a block event", readdTransactions.size());
-      addRemoteTransactions(readdTransactions);
+    reAddTransactions(event.getRemovedTransactions());
+  }
+
+  private void reAddTransactions(final List<Transaction> reAddTransactions) {
+    if (!reAddTransactions.isEmpty()) {
+      var txsByOrigin =
+          reAddTransactions.stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      tx -> pendingTransactions.isLocalSender(tx.getSender())));
+      var reAddLocalTxs = txsByOrigin.get(true);
+      var reAddRemoteTxs = txsByOrigin.get(false);
+      if (!reAddLocalTxs.isEmpty()) {
+        LOG.trace("Re-adding {} local transactions from a block event", reAddLocalTxs.size());
+        reAddLocalTxs.forEach(this::addLocalTransaction);
+      }
+      if (!reAddRemoteTxs.isEmpty()) {
+        LOG.trace("Re-adding {} remote transactions from a block event", reAddRemoteTxs.size());
+        addRemoteTransactions(reAddRemoteTxs);
+      }
     }
   }
 
@@ -380,7 +398,10 @@ public class TransactionPool implements BlockAddedObserver {
     ValidationResultAndAccount(
         final Account account, final ValidationResult<TransactionInvalidReason> result) {
       this.result = result;
-      this.maybeAccount = Optional.ofNullable(account);
+      this.maybeAccount =
+          Optional.ofNullable(account)
+              .map(
+                  acct -> new SimpleAccount(acct.getAddress(), acct.getNonce(), acct.getBalance()));
     }
 
     ValidationResultAndAccount(final ValidationResult<TransactionInvalidReason> result) {

@@ -77,7 +77,7 @@ public class PrivateTransactionValidator {
               transactionNonce, accountNonce);
       LOG.debug(errorMessage);
       return ValidationResult.invalid(
-          TransactionInvalidReason.INCORRECT_PRIVATE_NONCE, errorMessage);
+          TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH, errorMessage);
     }
 
     return ValidationResult.valid();

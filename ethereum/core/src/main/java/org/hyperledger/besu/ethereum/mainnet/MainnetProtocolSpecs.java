@@ -132,6 +132,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
+                    false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
@@ -322,6 +323,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
+                    false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
@@ -538,6 +540,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
+                    false,
                     stackSizeLimit,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -629,6 +632,51 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::mergeBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .name("ParisFork");
+  }
+
+  static ProtocolSpecBuilder shandongDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final BaseFeeMarket londonFeeMarket =
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+
+    return parisDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.shandong(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    londonFeeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .name("Shandong");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(
