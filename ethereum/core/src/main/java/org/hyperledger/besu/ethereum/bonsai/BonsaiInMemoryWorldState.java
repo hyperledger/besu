@@ -22,6 +22,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -55,11 +58,13 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     // second update account storage state.  This must be done before updating the accounts so
     // that we can get the storage state hash
 
-    worldStateUpdater.getStorageToUpdate().entrySet().parallelStream()
-        .forEach(
-            addressMapEntry -> {
-              updateAccountStorage(worldStateUpdater, addressMapEntry);
-            });
+    ExecutorService executor = Executors.newFixedThreadPool(20);
+    CompletableFuture<Void>[] futures =  worldStateUpdater.getStorageToUpdate().entrySet().stream().map(addressMapEntry -> CompletableFuture.runAsync( () -> {
+      updateAccountStorage(worldStateUpdater, addressMapEntry);
+    }, executor)).toArray(CompletableFuture[]::new) ;
+
+    CompletableFuture.allOf(futures).join();
+    executor.shutdown();
 
     // for manicured tries and composting, trim and compost here
 

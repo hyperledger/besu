@@ -38,8 +38,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -219,76 +224,84 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       accountValue.setUpdated(null);
     });
 
-    getUpdatedAccounts().parallelStream().forEach(tracked -> {
-      final Address updatedAddress = tracked.getAddress();
-      final BonsaiAccount updatedAccount;
-      if (tracked.getWrappedAccount() == null) {
-        final BonsaiValue<BonsaiAccount> updatedAccountValue = accountsToUpdate.get(updatedAddress);
-        updatedAccount = new BonsaiAccount(this, tracked);
-        tracked.setWrappedAccount(updatedAccount);
-        if (updatedAccountValue == null) {
-          accountsToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount));
-          codeToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount.getCode()));
-        } else {
-          updatedAccountValue.setUpdated(updatedAccount);
-        }
+
+    ExecutorService executor = Executors.newFixedThreadPool(20);
+    CompletableFuture<Void>[] futures =  getUpdatedAccounts().stream().map(tracked -> CompletableFuture.runAsync( () -> {
+      prepareAccountUpdater(tracked);
+    }, executor)).toArray(CompletableFuture[]::new) ;
+
+    CompletableFuture.allOf(futures).join();
+    executor.shutdown();
+  }
+
+  private void prepareAccountUpdater(UpdateTrackingAccount<BonsaiAccount> tracked) {
+    final Address updatedAddress = tracked.getAddress();
+    final BonsaiAccount updatedAccount;
+    if (tracked.getWrappedAccount() == null) {
+      final BonsaiValue<BonsaiAccount> updatedAccountValue = accountsToUpdate.get(updatedAddress);
+      updatedAccount = new BonsaiAccount(this, tracked);
+      tracked.setWrappedAccount(updatedAccount);
+      if (updatedAccountValue == null) {
+        accountsToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount));
+        codeToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount.getCode()));
       } else {
-        updatedAccount = tracked.getWrappedAccount();
-        updatedAccount.setBalance(tracked.getBalance());
-        updatedAccount.setNonce(tracked.getNonce());
-        if (tracked.codeWasUpdated()) {
-          updatedAccount.setCode(tracked.getCode());
-        }
-        if (tracked.getStorageWasCleared()) {
-          updatedAccount.clearStorage();
-        }
-        tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
+        updatedAccountValue.setUpdated(updatedAccount);
       }
-
+    } else {
+      updatedAccount = tracked.getWrappedAccount();
+      updatedAccount.setBalance(tracked.getBalance());
+      updatedAccount.setNonce(tracked.getNonce());
       if (tracked.codeWasUpdated()) {
-        final BonsaiValue<Bytes> pendingCode =
-                codeToUpdate.computeIfAbsent(
-                        updatedAddress,
-                        addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
-        pendingCode.setUpdated(updatedAccount.getCode());
+        updatedAccount.setCode(tracked.getCode());
       }
-
-      final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
-              storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
       if (tracked.getStorageWasCleared()) {
-        storageToClear.add(updatedAddress);
-        pendingStorageUpdates.clear();
+        updatedAccount.clearStorage();
       }
+      tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
+    }
 
-      final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-              new TreeSet<>(
-                      Map.Entry.comparingByKey());
-      entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
+    if (tracked.codeWasUpdated()) {
+      final BonsaiValue<Bytes> pendingCode =
+              codeToUpdate.computeIfAbsent(
+                      updatedAddress,
+                      addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
+      pendingCode.setUpdated(updatedAccount.getCode());
+    }
 
-      for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
-        final UInt256 keyUInt = storageUpdate.getKey();
-        final Hash slotHash = Hash.hash(keyUInt);
-        final UInt256 value = storageUpdate.getValue();
-        final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
-        if (pendingValue == null) {
-          pendingStorageUpdates.put(
-                  slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
-        } else {
-          pendingValue.setUpdated(value);
-        }
+    final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
+            storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
+    if (tracked.getStorageWasCleared()) {
+      storageToClear.add(updatedAddress);
+      pendingStorageUpdates.clear();
+    }
+
+    final TreeSet<Map.Entry<UInt256, UInt256>> entries =
+            new TreeSet<>(
+                    Map.Entry.comparingByKey());
+    entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
+
+    for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
+      final UInt256 keyUInt = storageUpdate.getKey();
+      final Hash slotHash = Hash.hash(keyUInt);
+      final UInt256 value = storageUpdate.getValue();
+      final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
+      if (pendingValue == null) {
+        pendingStorageUpdates.put(
+                slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
+      } else {
+        pendingValue.setUpdated(value);
       }
+    }
 
-      updatedAccount.getUpdatedStorage().clear();
+    updatedAccount.getUpdatedStorage().clear();
 
-      if (pendingStorageUpdates.isEmpty()) {
-        storageToUpdate.remove(updatedAddress);
-      }
+    if (pendingStorageUpdates.isEmpty()) {
+      storageToUpdate.remove(updatedAddress);
+    }
 
-      if (tracked.getStorageWasCleared()) {
-        tracked.setStorageWasCleared(false); // storage already cleared for this transaction
-      }
-
-    });
+    if (tracked.getStorageWasCleared()) {
+      tracked.setStorageWasCleared(false); // storage already cleared for this transaction
+    }
   }
 
   @Override
