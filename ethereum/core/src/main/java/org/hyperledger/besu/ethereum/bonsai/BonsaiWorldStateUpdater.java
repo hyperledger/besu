@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -226,11 +227,11 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
 
     ExecutorService executor = Executors.newFixedThreadPool(20);
-    CompletableFuture<Void>[] futures =  getUpdatedAccounts().stream().map(tracked -> CompletableFuture.runAsync( () -> {
+    List<CompletableFuture<Void>> futures =  getUpdatedAccounts().stream().map(tracked -> CompletableFuture.runAsync( () -> {
       prepareAccountUpdater(tracked);
-    }, executor)).toArray(CompletableFuture[]::new) ;
+    }, executor)).collect(Collectors.toList()) ;
 
-    CompletableFuture.allOf(futures).join();
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     executor.shutdown();
   }
 
