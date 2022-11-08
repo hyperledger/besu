@@ -21,13 +21,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -61,11 +59,18 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     // that we can get the storage state hash
 
     ExecutorService executor = Executors.newFixedThreadPool(20);
-    List<CompletableFuture<Void>> futures =  worldStateUpdater.getStorageToUpdate().entrySet().stream().map(addressMapEntry -> CompletableFuture.runAsync( () -> {
-      updateAccountStorage(worldStateUpdater, addressMapEntry);
-    }, executor)).collect(Collectors.toList()); ;
+    CompletableFuture.allOf(
+            worldStateUpdater.getStorageToUpdate().entrySet().stream()
+                .map(
+                    addressMapEntry ->
+                        CompletableFuture.runAsync(
+                            () -> {
+                              updateAccountStorage(worldStateUpdater, addressMapEntry);
+                            },
+                            executor))
+                .toArray(CompletableFuture[]::new))
+        .join();
 
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     executor.shutdown();
 
     // for manicured tries and composting, trim and compost here

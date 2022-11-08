@@ -29,11 +29,9 @@ import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,9 +41,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -173,65 +168,74 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public void commit() {
-    getDeletedAccounts().parallelStream().forEach(deletedAddress -> {
-      final BonsaiValue<BonsaiAccount> accountValue =
-          accountsToUpdate.computeIfAbsent(
-              deletedAddress,
-              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
-      storageToClear.add(deletedAddress);
-      final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
-      if (codeValue != null) {
-        codeValue.setUpdated(null);
-      } else {
-        wrappedWorldView()
-            .getCode(deletedAddress)
-            .ifPresent(
-                deletedCode ->
-                    codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
-      }
+    getDeletedAccounts().parallelStream()
+        .forEach(
+            deletedAddress -> {
+              final BonsaiValue<BonsaiAccount> accountValue =
+                  accountsToUpdate.computeIfAbsent(
+                      deletedAddress,
+                      __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
+              storageToClear.add(deletedAddress);
+              final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
+              if (codeValue != null) {
+                codeValue.setUpdated(null);
+              } else {
+                wrappedWorldView()
+                    .getCode(deletedAddress)
+                    .ifPresent(
+                        deletedCode ->
+                            codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
+              }
 
-      // mark all updated storage as to be cleared
-      final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
-          storageToUpdate.computeIfAbsent(deletedAddress, k -> new ConcurrentHashMap<>());
-      final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
-          deletedStorageUpdates.entrySet().iterator();
-      while (iter.hasNext()) {
-        final Map.Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
-        final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
-        if (updatedSlot.getPrior() == null || updatedSlot.getPrior().isZero()) {
-          iter.remove();
-        } else {
-          updatedSlot.setUpdated(null);
-        }
-      }
+              // mark all updated storage as to be cleared
+              final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
+                  storageToUpdate.computeIfAbsent(deletedAddress, k -> new ConcurrentHashMap<>());
+              final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
+                  deletedStorageUpdates.entrySet().iterator();
+              while (iter.hasNext()) {
+                final Map.Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
+                final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
+                if (updatedSlot.getPrior() == null || updatedSlot.getPrior().isZero()) {
+                  iter.remove();
+                } else {
+                  updatedSlot.setUpdated(null);
+                }
+              }
 
-      final BonsaiAccount originalValue = accountValue.getPrior();
-      if (originalValue != null) {
-        // Enumerate and delete addresses not updated
-        wrappedWorldView()
-            .getAllAccountStorage(deletedAddress, originalValue.getStorageRoot())
-            .forEach(
-                (keyHash, entryValue) -> {
-                  final Hash slotHash = Hash.wrap(keyHash);
-                  if (!deletedStorageUpdates.containsKey(slotHash)) {
-                    final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
-                    deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null, true));
-                  }
-                });
-      }
-      if (deletedStorageUpdates.isEmpty()) {
-        storageToUpdate.remove(deletedAddress);
-      }
-      accountValue.setUpdated(null);
-    });
-
+              final BonsaiAccount originalValue = accountValue.getPrior();
+              if (originalValue != null) {
+                // Enumerate and delete addresses not updated
+                wrappedWorldView()
+                    .getAllAccountStorage(deletedAddress, originalValue.getStorageRoot())
+                    .forEach(
+                        (keyHash, entryValue) -> {
+                          final Hash slotHash = Hash.wrap(keyHash);
+                          if (!deletedStorageUpdates.containsKey(slotHash)) {
+                            final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
+                            deletedStorageUpdates.put(
+                                slotHash, new BonsaiValue<>(value, null, true));
+                          }
+                        });
+              }
+              if (deletedStorageUpdates.isEmpty()) {
+                storageToUpdate.remove(deletedAddress);
+              }
+              accountValue.setUpdated(null);
+            });
 
     ExecutorService executor = Executors.newFixedThreadPool(20);
-    List<CompletableFuture<Void>> futures =  getUpdatedAccounts().stream().map(tracked -> CompletableFuture.runAsync( () -> {
-      prepareAccountUpdater(tracked);
-    }, executor)).collect(Collectors.toList()) ;
 
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    CompletableFuture.allOf(
+            getUpdatedAccounts().stream()
+                .map(
+                    tracked ->
+                        CompletableFuture.runAsync(
+                            () -> {
+                              prepareAccountUpdater(tracked);
+                            },
+                            executor))
+                .toArray(CompletableFuture[]::new))
+        .join();
     executor.shutdown();
   }
 
@@ -263,22 +267,20 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
     if (tracked.codeWasUpdated()) {
       final BonsaiValue<Bytes> pendingCode =
-              codeToUpdate.computeIfAbsent(
-                      updatedAddress,
-                      addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
+          codeToUpdate.computeIfAbsent(
+              updatedAddress,
+              addr -> new BonsaiValue<>(wrappedWorldView().getCode(addr).orElse(null), null));
       pendingCode.setUpdated(updatedAccount.getCode());
     }
 
     final Map<Hash, BonsaiValue<UInt256>> pendingStorageUpdates =
-            storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
+        storageToUpdate.computeIfAbsent(updatedAddress, __ -> new ConcurrentHashMap<>());
     if (tracked.getStorageWasCleared()) {
       storageToClear.add(updatedAddress);
       pendingStorageUpdates.clear();
     }
 
-    final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-            new TreeSet<>(
-                    Map.Entry.comparingByKey());
+    final TreeSet<Map.Entry<UInt256, UInt256>> entries = new TreeSet<>(Map.Entry.comparingByKey());
     entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
     for (final Map.Entry<UInt256, UInt256> storageUpdate : entries) {
@@ -288,7 +290,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
       final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
       if (pendingValue == null) {
         pendingStorageUpdates.put(
-                slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
+            slotHash, new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
       } else {
         pendingValue.setUpdated(value);
       }
@@ -625,7 +627,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
           wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
       if (storageValue.isPresent()) {
         slotValue = new BonsaiValue<>(storageValue.get(), storageValue.get());
-        storageToUpdate.computeIfAbsent(address, k -> new ConcurrentHashMap<>()).put(slotHash, slotValue);
+        storageToUpdate
+            .computeIfAbsent(address, k -> new ConcurrentHashMap<>())
+            .put(slotHash, slotValue);
       }
     }
     if (slotValue == null) {
