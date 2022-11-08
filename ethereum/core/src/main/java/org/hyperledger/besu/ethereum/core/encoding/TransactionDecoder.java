@@ -29,6 +29,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.SignedBlobTransaction;
+import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
@@ -38,24 +40,82 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.ssz.SSZ;
+import org.apache.tuweni.ssz.SSZReader;
 
 public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input);
+    Transaction decode(final Bytes input);
+
+    static Decoder rlpDecoder(final RLPDecoder rlpDecoder) {
+      return encoded -> rlpDecoder.decode(RLP.input(encoded));
+    }
+
+    static Decoder sszDecoder(final SSZDecoder sszDecoder) {
+      return encoded ->
+          SSZ.decode(encoded, (SSZReader reader) -> sszDecoder.decode(reader, encoded.size()));
+    }
+  }
+
+  interface RLPDecoder {
+    Transaction decode(final RLPInput input);
+  }
+
+  interface SSZDecoder {
+    Transaction decode(final SSZReader reader, int length);
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
       ImmutableMap.of(
           TransactionType.ACCESS_LIST,
-          TransactionDecoder::decodeAccessList,
+          Decoder.rlpDecoder(TransactionDecoder::decodeAccessList),
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          Decoder.rlpDecoder(TransactionDecoder::decodeEIP1559),
+          TransactionType.BLOB_TX_TYPE,
+          Decoder.sszDecoder(TransactionDecoder::decodeBlob));
+
+  public static Transaction decodeBlob(final SSZReader input, final int length) {
+
+    TransactionNetworkPayload payload = new TransactionNetworkPayload();
+    payload.decodeFrom(input, length);
+
+    SignedBlobTransaction signedBlobTransaction = payload.getTransaction();
+
+    final SignedBlobTransaction.BlobTransaction blobTransaction =
+        signedBlobTransaction.getMessage();
+    return Transaction.builder()
+        .type(TransactionType.BLOB_TX_TYPE)
+        .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
+        .nonce(blobTransaction.getNonce())
+        .maxPriorityFeePerGas(Wei.of(blobTransaction.getMaxPriorityFeePerGas()))
+        .maxFeePerGas(Wei.of(blobTransaction.getMaxFeePerGas()))
+        .gasLimit(blobTransaction.getGas())
+        .to(blobTransaction.getAddress().orElse(null))
+        .value(Wei.of(blobTransaction.getValue().getValue()))
+        .payload(blobTransaction.getData())
+        .accessList(
+            blobTransaction.getAccessList().stream()
+                .map(
+                    accessListEntry ->
+                        new AccessListEntry(
+                            accessListEntry.getAddress(), accessListEntry.getStorageKeys()))
+                .collect(Collectors.toList()))
+        .signature(
+            SIGNATURE_ALGORITHM
+                .get()
+                .createSignature(
+                    signedBlobTransaction.getSignature().getR().getValue().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().getS().getValue().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().getyParity().getValue() ? (byte) 1 : 0))
+        .build();
+  }
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -72,7 +132,7 @@ public class TransactionDecoder {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
+      return getDecoder(transactionType).decode(typedTransactionBytes.slice(1));
     }
   }
 
@@ -88,7 +148,7 @@ public class TransactionDecoder {
     } catch (final IllegalArgumentException __) {
       return decodeForWire(RLP.input(input), goQuorumCompatibilityMode);
     }
-    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+    return getDecoder(transactionType).decode(input.slice(1));
   }
 
   private static Decoder getDecoder(final TransactionType transactionType) {
