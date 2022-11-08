@@ -23,12 +23,16 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public interface BonsaiWorldView extends WorldView {
+
+  public static ExecutorService executorService = Executors.newFixedThreadPool(20);
 
   Optional<Bytes> getCode(Address address);
 

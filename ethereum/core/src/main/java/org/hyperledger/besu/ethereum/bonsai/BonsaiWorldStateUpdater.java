@@ -39,8 +39,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -223,8 +221,6 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
               accountValue.setUpdated(null);
             });
 
-    ExecutorService executor = Executors.newFixedThreadPool(20);
-
     CompletableFuture.allOf(
             getUpdatedAccounts().stream()
                 .map(
@@ -233,10 +229,9 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                             () -> {
                               prepareAccountUpdater(tracked);
                             },
-                            executor))
+                            executorService))
                 .toArray(CompletableFuture[]::new))
         .join();
-    executor.shutdown();
   }
 
   private void prepareAccountUpdater(final UpdateTrackingAccount<BonsaiAccount> tracked) {
