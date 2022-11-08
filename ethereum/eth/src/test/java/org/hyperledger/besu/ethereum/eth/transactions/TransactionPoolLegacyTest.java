@@ -231,6 +231,28 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
         .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
   }
 
+  @Test
+  public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMining() {
+    when(miningParameters.isMiningEnabled()).thenReturn(true);
+
+    final Transaction transaction = createTransaction(0, Wei.ZERO);
+
+    givenTransactionIsValid(transaction);
+
+    assertLocalTransactionValid(transaction);
+  }
+
+  @Test
+  public void shouldAcceptZeroGasPriceTransactionWhenMinGasPriceIsZero() {
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
+
+    final Transaction transaction = createTransaction(0, Wei.ZERO);
+
+    givenTransactionIsValid(transaction);
+
+    assertLocalTransactionValid(transaction);
+  }
+
   private Transaction createTransactionWithoutChainId(final int transactionNumber) {
     return createTransaction(transactionNumber, Optional.empty());
   }

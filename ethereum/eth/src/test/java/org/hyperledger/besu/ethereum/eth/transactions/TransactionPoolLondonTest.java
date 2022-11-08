@@ -54,6 +54,8 @@ import org.junit.Test;
 
 public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
 
+  private static final Wei BASE_FEE_FLOOR = Wei.of(7L);
+
   @Override
   protected AbstractPendingTransactionsSorter createPendingTransactionsSorter() {
 
@@ -131,7 +133,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
 
   @Override
   protected FeeMarket getFeeMarket() {
-    return FeeMarket.london(0L, Optional.of(Wei.of(0L)));
+    return FeeMarket.london(0L, Optional.of(BASE_FEE_FLOOR));
   }
 
   @Override
@@ -164,14 +166,10 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIsZero();
 
-    final Transaction transaction =
-        createBaseTransaction(0)
-            .gasPrice(Wei.ZERO)
-            .type(TransactionType.FRONTIER)
-            .createTransaction(KEY_PAIR1);
+    final Transaction frontierTransaction = createFrontierTransaction(0, Wei.ZERO);
 
-    givenTransactionIsValid(transaction);
-    assertLocalTransactionValid(transaction);
+    givenTransactionIsValid(frontierTransaction);
+    assertLocalTransactionValid(frontierTransaction);
   }
 
   @Test
@@ -184,6 +182,15 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
 
     givenTransactionIsValid(transaction);
     assertLocalTransactionValid(transaction);
+  }
+
+  @Test
+  public void shouldAcceptBaseFeeFloorGasPriceFrontierTransactionsWhenMining() {
+    final Transaction frontierTransaction = createFrontierTransaction(0, BASE_FEE_FLOOR);
+
+    givenTransactionIsValid(frontierTransaction);
+
+    assertLocalTransactionValid(frontierTransaction);
   }
 
   @Test
@@ -201,5 +208,14 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
             .parentHash(blockchain.getChainHeadHash())
             .buildBlockHeader();
     blockchain.appendBlock(new Block(header, BlockBody.empty()), emptyList());
+  }
+
+  private Transaction createFrontierTransaction(final int transactionNumber, final Wei gasPrice) {
+    return new TransactionTestFixture()
+        .nonce(transactionNumber)
+        .gasPrice(gasPrice)
+        .gasLimit(blockGasLimit)
+        .type(TransactionType.FRONTIER)
+        .createTransaction(KEY_PAIR1);
   }
 }

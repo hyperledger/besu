@@ -441,7 +441,7 @@ public abstract class AbstractTransactionPoolTest {
   @Test
   public void shouldNotNotifyBatchListenerWhenLocalTransactionDoesNotReplaceExisting() {
     final Transaction transaction1 = createTransaction(1, Wei.of(10));
-    final Transaction transaction2 = createTransaction(1, Wei.of(5));
+    final Transaction transaction2 = createTransaction(1, Wei.of(9));
 
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
@@ -600,17 +600,6 @@ public abstract class AbstractTransactionPoolTest {
   }
 
   @Test
-  public void shouldAcceptZeroGasPriceFrontierTransactionsWhenMining() {
-    when(miningParameters.isMiningEnabled()).thenReturn(true);
-
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-
-    givenTransactionIsValid(transaction);
-
-    assertLocalTransactionValid(transaction);
-  }
-
-  @Test
   public void shouldRejectZeroGasPriceTransactionWhenNotMining() {
     when(miningParameters.isMiningEnabled()).thenReturn(false);
 
@@ -619,17 +608,6 @@ public abstract class AbstractTransactionPoolTest {
     givenTransactionIsValid(transaction);
 
     assertLocalTransactionInvalid(transaction, GAS_PRICE_TOO_LOW);
-  }
-
-  @Test
-  public void shouldAcceptZeroGasPriceTransactionWhenMinGasPriceIsZero() {
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
-
-    final Transaction transaction = createTransaction(0, Wei.ZERO);
-
-    givenTransactionIsValid(transaction);
-
-    assertLocalTransactionValid(transaction);
   }
 
   private void assertTransactionPending(final Transaction t) {
