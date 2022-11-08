@@ -510,6 +510,31 @@ public class EIP2124Test {
             Optional.of(ForkIds.GOERLI),
             empty()
           },
+          // Shandong network test cases
+          {
+            "Shandong // Unsynced",
+            Network.SHANDONG,
+            0L,
+            ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
+            empty(),
+            empty()
+          },
+          {
+            "Shandong // First block",
+            Network.SHANDONG,
+            1L,
+            ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
+            empty(),
+            empty()
+          },
+          {
+            "Shandong // Future block",
+            Network.SHANDONG,
+            1000000L,
+            ForkIdTestUtil.wantForkId("0xc42480d3", 0L),
+            empty(),
+            empty()
+          },
           // Private network test cases
           {
             "Private // Unsynced",
