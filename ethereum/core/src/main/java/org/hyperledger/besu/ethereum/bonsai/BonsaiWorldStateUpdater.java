@@ -167,7 +167,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
 
   @Override
   public void commit() {
-    for (final Address deletedAddress : getDeletedAccounts()) {
+    getDeletedAccounts().parallelStream().forEach(deletedAddress -> {
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
