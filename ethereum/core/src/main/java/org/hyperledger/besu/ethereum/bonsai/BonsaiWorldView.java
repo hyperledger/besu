@@ -32,7 +32,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public interface BonsaiWorldView extends WorldView {
 
-  public static ExecutorService executorService = Executors.newFixedThreadPool(20);
+  public static ExecutorService executorService = Executors.newFixedThreadPool(16);
 
   Optional<Bytes> getCode(Address address);
 
