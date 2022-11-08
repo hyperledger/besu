@@ -168,7 +168,7 @@ public class MainnetTransactionProcessorTest {
     when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
     when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
-        .thenReturn(ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE));
+        .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
     return txValidationParamCaptor;
   }
 }
