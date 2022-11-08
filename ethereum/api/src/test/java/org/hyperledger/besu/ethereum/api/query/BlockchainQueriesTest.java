@@ -531,8 +531,7 @@ public class BlockchainQueriesTest {
   }
 
   private BlockchainWithData setupBlockchain(final int blocksToAdd) {
-    return setupBlockchain(
-        blocksToAdd, Collections.emptyList(), Collections.emptyList());
+    return setupBlockchain(blocksToAdd, Collections.emptyList(), Collections.emptyList());
   }
 
   private BlockchainWithData setupBlockchain(
@@ -541,9 +540,7 @@ public class BlockchainQueriesTest {
   }
 
   private BlockchainWithData setupBlockchain(
-          final int blocksToAdd,
-          final List<Address> accountsToSetup,
-          final List<UInt256> storageKeys) {
+      final int blocksToAdd, final List<Address> accountsToSetup, final List<UInt256> storageKeys) {
     checkArgument(blocksToAdd >= 1, "Must add at least one block to the queries");
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
@@ -581,13 +578,7 @@ public class BlockchainQueriesTest {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
-      this.blockchainQueries =
-          new BlockchainQueries(
-              blockchain,
-              worldStateArchive,
-              Optional.empty(),
-              Optional.ofNullable(scheduler),
-              null);
+      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, scheduler);
     }
   }
 
