@@ -217,7 +217,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
         storageToUpdate.remove(deletedAddress);
       }
       accountValue.setUpdated(null);
-    }
+    });
 
     getUpdatedAccounts().parallelStream().forEach(tracked -> {
       final Address updatedAddress = tracked.getAddress();
