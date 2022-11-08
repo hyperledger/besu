@@ -68,7 +68,6 @@ public class BlockchainQueries {
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
   private final ApiConfiguration apiConfig;
-  private final Optional<Long> maxLogRange;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
@@ -91,8 +90,7 @@ public class BlockchainQueries {
         worldStateArchive,
         cachePath,
         scheduler,
-        ImmutableApiConfiguration.builder().build(),
-        Optional.empty());
+        ImmutableApiConfiguration.builder().build());
   }
 
   public BlockchainQueries(
@@ -100,8 +98,7 @@ public class BlockchainQueries {
       final WorldStateArchive worldStateArchive,
       final Optional<Path> cachePath,
       final Optional<EthScheduler> scheduler,
-      final ApiConfiguration apiConfig,
-      final Optional<Long> maxLogRange) {
+      final ApiConfiguration apiConfig) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
@@ -111,7 +108,6 @@ public class BlockchainQueries {
                 new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
     this.apiConfig = apiConfig;
-    this.maxLogRange = maxLogRange;
   }
 
   public Blockchain getBlockchain() {
@@ -655,9 +651,6 @@ public class BlockchainQueries {
       final LogsQuery query,
       final Supplier<Boolean> isQueryAlive) {
     try {
-      if (maxLogRange.isPresent() && ((toBlockNumber - fromBlockNumber) > maxLogRange.get())) {
-        throw new Exception("Requested range exceeds maximum range limit");
-      }
       final List<LogWithMetadata> result = new ArrayList<>();
       final long startSegment = fromBlockNumber / BLOCKS_PER_BLOOM_CACHE;
       final long endSegment = toBlockNumber / BLOCKS_PER_BLOOM_CACHE;

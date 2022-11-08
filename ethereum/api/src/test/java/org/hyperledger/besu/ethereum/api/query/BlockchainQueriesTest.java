@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
@@ -202,7 +201,7 @@ public class BlockchainQueriesTest {
     final List<Address> addresses = Arrays.asList(gen.address(), gen.address(), gen.address());
     final List<UInt256> storageKeys =
         Arrays.asList(gen.storageKey(), gen.storageKey(), gen.storageKey());
-    final BlockchainWithData data = setupBlockchain(3, addresses, storageKeys, Optional.empty());
+    final BlockchainWithData data = setupBlockchain(3, addresses, storageKeys);
     final BlockchainQueries queries = data.blockchainQueries;
 
     final BlockHeader blockHeader0 = data.blockData.get(2).block.getHeader();
@@ -362,24 +361,6 @@ public class BlockchainQueriesTest {
     List<LogWithMetadata> logs =
         queries.matchingLogs(Hash.ZERO, new LogsQuery.Builder().build(), () -> true);
     assertThat(logs).isEmpty();
-  }
-
-  @Test
-  public void matchingLogsQueryRangeLargerThanMaxRangeShouldThrow() {
-    final BlockchainWithData data = setupBlockchainWithMaxRange(3, 50L);
-    final BlockchainQueries queries = data.blockchainQueries;
-    assertThatThrownBy(
-            () -> queries.matchingLogs(0L, 100L, new LogsQuery.Builder().build(), () -> true))
-        .hasRootCauseMessage("Requested range exceeds maximum range limit");
-  }
-
-  @Test
-  public void matchingLogsQuerySmallerRangeThanMaxRangeShouldSucceed() {
-    final BlockchainWithData data = setupBlockchainWithMaxRange(15, 50L);
-    final BlockchainQueries queries = data.blockchainQueries;
-    final List<LogWithMetadata> logs =
-        queries.matchingLogs(0L, 8L, new LogsQuery.Builder().build(), () -> true);
-    assertThat(logs).isNotEmpty();
   }
 
   @Test
@@ -551,25 +532,18 @@ public class BlockchainQueriesTest {
 
   private BlockchainWithData setupBlockchain(final int blocksToAdd) {
     return setupBlockchain(
-        blocksToAdd, Collections.emptyList(), Collections.emptyList(), Optional.empty());
-  }
-
-  private BlockchainWithData setupBlockchainWithMaxRange(
-      final int blocksToAdd, final long maxRange) {
-    return setupBlockchain(
-        blocksToAdd, Collections.emptyList(), Collections.emptyList(), Optional.of(maxRange));
+        blocksToAdd, Collections.emptyList(), Collections.emptyList());
   }
 
   private BlockchainWithData setupBlockchain(
       final int blocksToAdd, final List<Address> accountsToSetup) {
-    return setupBlockchain(blocksToAdd, accountsToSetup, Collections.emptyList(), Optional.empty());
+    return setupBlockchain(blocksToAdd, accountsToSetup, Collections.emptyList());
   }
 
   private BlockchainWithData setupBlockchain(
-      final int blocksToAdd,
-      final List<Address> accountsToSetup,
-      final List<UInt256> storageKeys,
-      final Optional<Long> maxRange) {
+          final int blocksToAdd,
+          final List<Address> accountsToSetup,
+          final List<UInt256> storageKeys) {
     checkArgument(blocksToAdd >= 1, "Must add at least one block to the queries");
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
@@ -590,7 +564,7 @@ public class BlockchainQueriesTest {
         .subList(1, blockData.size())
         .forEach(b -> blockchain.appendBlock(b.block, b.receipts));
 
-    return new BlockchainWithData(blockchain, blockData, worldStateArchive, scheduler, maxRange);
+    return new BlockchainWithData(blockchain, blockData, worldStateArchive, scheduler);
   }
 
   private static class BlockchainWithData {
@@ -603,8 +577,7 @@ public class BlockchainQueriesTest {
         final MutableBlockchain blockchain,
         final List<BlockData> blockData,
         final WorldStateArchive worldStateArchive,
-        final EthScheduler scheduler,
-        final Optional<Long> maxRange) {
+        final EthScheduler scheduler) {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
@@ -614,8 +587,7 @@ public class BlockchainQueriesTest {
               worldStateArchive,
               Optional.empty(),
               Optional.ofNullable(scheduler),
-              null,
-              maxRange);
+              null);
     }
   }
 

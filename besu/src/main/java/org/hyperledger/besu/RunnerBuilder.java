@@ -539,8 +539,7 @@ public class RunnerBuilder {
             context.getWorldStateArchive(),
             Optional.of(dataDir.resolve(CACHE_PATH)),
             Optional.of(besuController.getProtocolManager().ethContext().getScheduler()),
-            apiConfiguration,
-            rpcMaxLogsRange);
+            apiConfiguration);
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
 
@@ -1027,7 +1026,8 @@ public class RunnerBuilder {
                 namedPlugins,
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers(),
-                consensusEngineServer);
+                consensusEngineServer,
+                rpcMaxLogsRange);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
@@ -1069,12 +1069,7 @@ public class RunnerBuilder {
     if (privacyParameters.isEnabled()) {
       final BlockchainQueries blockchainQueries =
           new BlockchainQueries(
-              blockchain,
-              worldStateArchive,
-              Optional.empty(),
-              Optional.empty(),
-              apiConfiguration,
-              rpcMaxLogsRange);
+              blockchain, worldStateArchive, Optional.empty(), Optional.empty(), apiConfiguration);
       privacyQueries =
           Optional.of(
               new PrivacyQueries(
