@@ -21,10 +21,11 @@ import java.util.Set;
 public enum TransactionType {
   FRONTIER(0xf8 /* this is serialized as 0x0 in TransactionCompleteResult */),
   ACCESS_LIST(0x01),
-  EIP1559(0x02);
+  EIP1559(0x02),
+  BLOB_TX_TYPE(0x05);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559);
+      Set.of(ACCESS_LIST, EIP1559, BLOB_TX_TYPE);
 
   private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
       EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
