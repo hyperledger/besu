@@ -97,6 +97,8 @@ public abstract class AbstractPendingTransactionsSorter {
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
+  private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
+
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
@@ -180,6 +182,7 @@ public abstract class AbstractPendingTransactionsSorter {
         addTransaction(
             new PendingTransaction(transaction, true, clock.instant()), maybeSenderAccount);
     if (transactionAdded.equals(ADDED)) {
+      localSenders.add(transaction.getSender());
       localTransactionAddedCounter.inc();
     }
     return transactionAdded;
@@ -499,6 +502,10 @@ public abstract class AbstractPendingTransactionsSorter {
     }
 
     return List.of();
+  }
+
+  public boolean isLocalSender(final Address sender) {
+    return localSenders.contains(sender);
   }
 
   public enum TransactionSelectionResult {
