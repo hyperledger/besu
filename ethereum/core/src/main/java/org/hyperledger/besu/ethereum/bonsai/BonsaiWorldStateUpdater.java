@@ -239,7 +239,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
     executor.shutdown();
   }
 
-  private void prepareAccountUpdater(UpdateTrackingAccount<BonsaiAccount> tracked) {
+  private void prepareAccountUpdater(final UpdateTrackingAccount<BonsaiAccount> tracked) {
     final Address updatedAddress = tracked.getAddress();
     final BonsaiAccount updatedAccount;
     if (tracked.getWrappedAccount() == null) {
