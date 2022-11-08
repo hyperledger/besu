@@ -70,6 +70,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put("GrayGlacier", createSchedule(new StubGenesisConfigOptions().grayGlacierBlock(0)));
     builder.put(
         "MergeNetSplit", createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0)));
+    builder.put("Shandong", createSchedule(new StubGenesisConfigOptions().shandongBlock(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

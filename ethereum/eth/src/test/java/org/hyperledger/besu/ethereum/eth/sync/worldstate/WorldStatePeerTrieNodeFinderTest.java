@@ -95,7 +95,7 @@ public class WorldStatePeerTrieNodeFinderTest {
           }
           return true;
         },
-        (cap, msg) -> TrieNodesMessage.create(Optional.of(BigInteger.ZERO), List.of(nodeValue)));
+        (cap, msg) -> TrieNodesMessage.create(Optional.of(BigInteger.ONE), List.of(nodeValue)));
   }
 
   @Test
