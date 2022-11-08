@@ -108,6 +108,10 @@ public final class DefaultP2PNetworkTest {
     lenient()
         .when(discoveryAgent.observePeerBondedEvents(discoverySubscriberCaptor.capture()))
         .thenReturn(1L);
+    lenient().when(discoveryAgent.checkForkId(any())).thenReturn(true);
+    lenient()
+        .when(discoveryAgent.start(anyInt()))
+        .thenReturn(CompletableFuture.completedFuture(Integer.valueOf(30301)));
   }
 
   @Test

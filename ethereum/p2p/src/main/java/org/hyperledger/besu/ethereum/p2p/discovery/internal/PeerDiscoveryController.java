@@ -702,7 +702,7 @@ public class PeerDiscoveryController {
    * @return List of peers.
    */
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return peerTable.streamAllPeers();
+    return peerTable.streamAllPeers().filter(peerPermissions::isAllowedInPeerTable);
   }
 
   public void setRetryDelayFunction(final RetryDelayFunction retryDelayFunction) {
