@@ -720,12 +720,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             ? Optional.of(parentHeader.get().getHash())
             : Optional.empty();
 
-    badBlockManager.addBadBlock(badBlock);
+    badBlockManager.addBadBlock(badBlock, Optional.empty());
 
     badBlockDescendants.forEach(
         block -> {
           LOG.trace("Add descendant block {} to bad blocks", block.getHash());
-          badBlockManager.addBadBlock(block);
+          badBlockManager.addBadBlock(block, Optional.empty());
           maybeLatestValidHash.ifPresent(
               latestValidHash ->
                   badBlockManager.addLatestValidHash(block.getHash(), latestValidHash));
@@ -751,7 +751,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     protocolSchedule
         .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
         .getBadBlocksManager()
-        .addBadBlock(block);
+        .addBadBlock(block, Optional.empty());
   }
 
   @Override

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -38,9 +39,11 @@ public class BadBlockManager {
    *
    * @param badBlock the invalid block
    */
-  public void addBadBlock(final Block badBlock) {
+  public void addBadBlock(final Block badBlock, final Optional<Throwable> cause) {
     if (badBlock != null) {
-      this.badBlocks.put(badBlock.getHash(), badBlock);
+      if (cause.isEmpty() || !isInternalError(cause.get())) {
+        this.badBlocks.put(badBlock.getHash(), badBlock);
+      }
     }
   }
 
@@ -77,5 +80,13 @@ public class BadBlockManager {
 
   public Optional<Hash> getLatestValidHash(final Hash blockHash) {
     return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
+  }
+
+  public boolean isInternalError(final Throwable causedBy) {
+    // As new "internal only" types of exception are discovered, add them here.
+    if (causedBy instanceof StorageException) {
+      return true;
+    }
+    return false;
   }
 }
