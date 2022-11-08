@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -41,8 +40,6 @@ import org.apache.tuweni.bytes.Bytes;
   "hash",
   "input",
   "nonce",
-  "publicKey",
-  "raw",
   "to",
   "transactionIndex",
   "type",
@@ -75,8 +72,6 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String hash;
   private final String input;
   private final String nonce;
-  private final String publicKey;
-  private final String raw;
   private final String to;
   private final String transactionIndex;
   private final String type;
@@ -104,8 +99,6 @@ public class TransactionCompleteResult implements TransactionResult {
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
-    this.publicKey = transaction.getPublicKey().orElse(null);
-    this.raw = TransactionEncoder.encodeOpaqueBytes(transaction).toHexString();
     this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     this.type =
@@ -176,16 +169,6 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
-  }
-
-  @JsonGetter(value = "publicKey")
-  public String getPublicKey() {
-    return publicKey;
-  }
-
-  @JsonGetter(value = "raw")
-  public String getRaw() {
-    return raw;
   }
 
   @JsonGetter(value = "to")

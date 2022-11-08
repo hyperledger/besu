@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.privacy;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INCORRECT_PRIVATE_NONCE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -260,13 +260,13 @@ public class FlexiblePrivacyControllerTest {
   @Test
   public void validateTransactionWithIncorrectNonceReturnsError() {
     when(privateTransactionValidator.validate(any(), any(), anyBoolean()))
-        .thenReturn(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+        .thenReturn(ValidationResult.invalid(PRIVATE_NONCE_TOO_HIGH));
 
     final PrivateTransaction transaction = buildPrivateTransaction(2).build();
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         privacyController.validatePrivateTransaction(transaction, ADDRESS1);
-    assertThat(validationResult).isEqualTo(ValidationResult.invalid(INCORRECT_PRIVATE_NONCE));
+    assertThat(validationResult).isEqualTo(ValidationResult.invalid(PRIVATE_NONCE_TOO_HIGH));
   }
 
   @Test
