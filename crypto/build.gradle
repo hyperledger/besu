@@ -41,6 +41,7 @@ dependencies {
   implementation 'org.hyperledger.besu:secp256r1'
   implementation 'org.hyperledger.besu:blake2bf'
   implementation 'com.google.guava:guava'
+  implementation 'com.bloxbean.cardano:cardano-client-lib:0.3.0'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
