@@ -32,6 +32,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator.ProposalBuilderExecutor;
@@ -166,6 +167,25 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             });
 
     MergeConfigOptions.setMergeEnabled(true);
+
+    MergeCoordinator.MergeBlockCreatorFactory mergeBlockCreatorFactory = (parentHeader, address) ->
+    {
+      MergeBlockCreator beingSpiedOn = spy(
+              new MergeBlockCreator(
+                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
+                      () -> Optional.of(30000000L),
+                      parent -> Bytes.EMPTY,
+                      transactions,
+                      protocolContext,
+                      mockProtocolSchedule,
+                      this.miningParameters.getMinTransactionGasPrice(),
+                      address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
+                      this.miningParameters.getMinBlockOccupancyRatio(),
+                      parentHeader));
+      return beingSpiedOn;
+    };
+
+
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
@@ -173,7 +193,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             proposalBuilderExecutor,
             transactions,
             miningParameters,
-            backwardSyncContext);
+            backwardSyncContext,
+                mergeBlockCreatorFactory);
   }
 
   @Test
@@ -199,6 +220,25 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     assertThat(block.getValue().getHeader().getCoinbase()).isEqualTo(suggestedFeeRecipient);
   }
+
+  @Test
+  public void exceptionDuringBuildingShouldNotBeInvalid() {
+
+    //throw a MerkleTrieException from AbstractBlockCreator.createBlock
+
+      var payloadId =
+              coordinator.preparePayload(
+                      genesisState.getBlock().getHeader(),
+                      System.currentTimeMillis() / 1000,
+                      Bytes32.ZERO,
+                      suggestedFeeRecipient);
+
+    ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
+
+    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), block.capture());
+
+    //verify that the badBlockManager remains empty
+    }
 
   @Test
   public void shouldContinueBuildingBlocksUntilFinalizeIsCalled()

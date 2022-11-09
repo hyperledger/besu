@@ -204,8 +204,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void addBadBlock(final Block block) {
-    mergeCoordinator.addBadBlock(block);
+  public void addBadBlock(final Block block, final Optional<Throwable> cause) {
+    mergeCoordinator.addBadBlock(block, cause);
   }
 
   @Override

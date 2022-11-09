@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collection;
@@ -84,7 +85,7 @@ public class BadBlockManager {
 
   public boolean isInternalError(final Throwable causedBy) {
     // As new "internal only" types of exception are discovered, add them here.
-    if (causedBy instanceof StorageException) {
+    if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
       return true;
     }
     return false;
