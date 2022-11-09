@@ -7,6 +7,7 @@
 ### Additions and Improvements
 - Explain and improve price validation for London and local transactions during block proposal selection [#4602](https://github.com/hyperledger/besu/pull/4602)
 - Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
+- Improve performance of block processing during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 
 ### Bug Fixes
 
