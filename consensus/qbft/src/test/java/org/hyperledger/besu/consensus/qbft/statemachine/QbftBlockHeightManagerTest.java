@@ -143,6 +143,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
+    when(finalState.getClock()).thenReturn(Clock.systemUTC());
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(createdBlock, new TransactionSelectionResults()));
 
@@ -242,7 +243,9 @@ public class QbftBlockHeightManagerTest {
             messageValidatorFactory,
             messageFactory);
 
-    manager.handleBlockTimerExpiry(roundIdentifier);
+    manager.handleBlockTimerExpiry(
+        roundIdentifier); // TODO SLD test is passing because parent.timestamp is 0 so now >
+    // emptyBlockPeriodExpiry
     verify(messageTransmitter, atLeastOnce())
         .multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, atLeastOnce()).multicastPrepare(eq(roundIdentifier), any());

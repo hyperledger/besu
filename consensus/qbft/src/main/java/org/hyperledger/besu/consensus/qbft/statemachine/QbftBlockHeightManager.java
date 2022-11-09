@@ -116,63 +116,65 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       return;
     }
 
-    // createBlock
-
     LOG.debug("TODO SLD start new round");
     startNewRound(0);
 
     final QbftRound qbftRound = currentRound.get();
-    // mining will be checked against round 0 as the current round is initialised to 0 above
-    final boolean isProposer =
-        finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
 
-    logIf(() -> !isProposer, "TODO SLD I is NOT proposer");
     logIf(
         () -> !roundIdentifier.equals(qbftRound.getRoundIdentifier()),
         "TODO SLD roundIdentifier does not equal qbftRound.getRoundIdentifier");
 
-    if (isProposer) {
-      LOG.debug("TODO SLD I is proposer");
-      if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
-        LOG.debug("TODO SLD round is current");
-        final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
-        final Block block = qbftRound.createBlock(headerTimeStampSeconds);
-        LOG.debug("TODO SLD created block {}", block);
-        final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
-        LOG.debug(
-            "TODO SLD block.getTransactions.size() = {}", block.getBody().getTransactions().size());
-        if (blockHasTransactions) {
-          LOG.debug("TODO SLD blockHasTransactions so send proposal");
-          qbftRound.sendProposalMessage(block);
-        } else {
-          LOG.debug("TODO SLD EMPTY BLOCK DETECTED");
-          long emptyBlockPeriodInSeconds = 60L;
-          final long nowInMillis = finalState.getClock().millis();
-          final long nowInSeconds = nowInMillis / 1000;
-          final long emptyBlockPeriodExpiryTime =
-              parentHeader.getTimestamp() + emptyBlockPeriodInSeconds;
-          if (nowInSeconds > emptyBlockPeriodExpiryTime) {
-            qbftRound.sendProposalMessage(block);
-          } else {
-            finalState.getRoundTimer().cancelTimer();
-            long blockPeriodInMillis = 5_000L;
-            final long newExpiry = nowInMillis + blockPeriodInMillis;
-            finalState.getBlockTimer().startTimer(roundIdentifier, newExpiry);
-            currentRound = Optional.empty();
-          }
-        }
+    if (roundIdentifier.equals(qbftRound.getRoundIdentifier())) {
+      LOG.debug("TODO SLD round is current");
+      buildBlockAndMaybePropose(roundIdentifier, qbftRound);
+    } else {
+      LOG.trace(
+          "Block timer expired for a round ({}) other than current ({})",
+          roundIdentifier,
+          qbftRound.getRoundIdentifier());
+    }
+  }
+
+  private void buildBlockAndMaybePropose(
+      final ConsensusRoundIdentifier roundIdentifier, final QbftRound qbftRound) {
+    final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
+    final Block block = qbftRound.createBlock(headerTimeStampSeconds);
+    LOG.debug("TODO SLD created block {}", block);
+    final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
+    LOG.debug(
+        "TODO SLD block.getTransactions.size() = {}", block.getBody().getTransactions().size());
+    if (blockHasTransactions) {
+      // mining will be checked against round 0 as the current round is initialised to 0 above
+      final boolean isProposer =
+          finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
+      logIf(() -> !isProposer, "TODO SLD I is NOT proposer");
+      if (isProposer) {
+        LOG.debug("TODO SLD blockHasTransactions and I am proposer so send proposal");
+        qbftRound.sendProposalMessage(block);
+      }
+    } else {
+      LOG.debug("TODO SLD EMPTY BLOCK DETECTED");
+      long emptyBlockPeriodInSeconds = 60L;
+      final long nowInMillis = finalState.getClock().millis();
+      final long nowInSeconds = nowInMillis / 1000;
+      final long emptyBlockPeriodExpiryTime =
+          parentHeader.getTimestamp() + emptyBlockPeriodInSeconds;
+      if (nowInSeconds > emptyBlockPeriodExpiryTime) {
+        qbftRound.sendProposalMessage(block);
       } else {
-        LOG.trace(
-            "Block timer expired for a round ({}) other than current ({})",
-            roundIdentifier,
-            qbftRound.getRoundIdentifier());
+        finalState.getRoundTimer().cancelTimer();
+        long blockPeriodInMillis = 5_000L;
+        final long newExpiry = nowInMillis + blockPeriodInMillis;
+        finalState.getBlockTimer().startTimer(roundIdentifier, newExpiry);
+        currentRound = Optional.empty();
       }
     }
   }
 
   private void logIf(final Supplier<Boolean> condition, final String message) {
     if (condition.get()) {
-      LOG.info(message);
+      LOG.debug(message);
     }
   }
 
