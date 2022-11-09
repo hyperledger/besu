@@ -37,6 +37,8 @@ dependencies {
   implementation project(':datatypes')
   implementation project(':ethereum:rlp')
   implementation 'com.google.guava:guava'
+  implementation 'org.web3j:abi:5.0.0'
+  implementation 'com.bloxbean.cardano:cardano-client-lib:0.3.0'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
 
