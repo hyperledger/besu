@@ -69,7 +69,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 
@@ -88,8 +87,8 @@ public abstract class MainnetProtocolSpecs {
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
   // failed, but the transaction itself succeeded.
-  private static final ImmutableSet<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
-      ImmutableSet.of(RIPEMD160_PRECOMPILE);
+  private static final Set<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
+      Set.of(RIPEMD160_PRECOMPILE);
 
   private static final Wei FRONTIER_BLOCK_REWARD = Wei.fromEth(5);
 
@@ -134,6 +133,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
+                    false,
                     false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
@@ -325,6 +325,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
+                    false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
@@ -541,6 +542,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
+                    false,
                     stackSizeLimit,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -629,6 +631,51 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .name("ParisFork");
+  }
+
+  static ProtocolSpecBuilder shandongDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+    final BaseFeeMarket londonFeeMarket =
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
+            : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+
+    return parisDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.shandong(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    londonFeeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .name("Shandong");
   }
 
   private static TransactionReceipt frontierTransactionReceiptFactory(

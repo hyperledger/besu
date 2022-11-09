@@ -168,7 +168,7 @@ public class TransactionSimulator {
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
-                    "Public world state not available for block " + header.getNumber()));
+                    "Public world state not available for block " + header.toLogString()));
   }
 
   @Nonnull

@@ -35,6 +35,9 @@ import java.util.function.Function;
 
 public class KeyValueStorageProvider implements StorageProvider {
 
+  public static final boolean SEGMENT_ISOLATION_SUPPORTED = true;
+  public static final boolean SNAPSHOT_ISOLATION_UNSUPPORTED = false;
+
   protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final KeyValueStorage privateWorldStatePreimageStorage;
@@ -50,7 +53,7 @@ public class KeyValueStorageProvider implements StorageProvider {
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
-    this.isWorldStateSnappable = false;
+    this.isWorldStateSnappable = SNAPSHOT_ISOLATION_UNSUPPORTED;
   }
 
   public KeyValueStorageProvider(

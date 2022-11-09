@@ -63,7 +63,7 @@ public class LogAdapter extends AdapterBase {
       blockNumber = bn;
     }
 
-    return query.mapWorldState(
+    return query.getAndMapWorldState(
         blockNumber, ws -> new AccountAdapter(ws.get(logWithMetadata.getLogger())));
   }
 }
