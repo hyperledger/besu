@@ -100,7 +100,7 @@ public class BlockTimer {
 
     LOG.debug(
         "*** TODO SLD | BlockTimer.startTimer() | cancelling existing timer and submitting new timerTask with expiryTime = {}",
-        Instant.ofEpochMilli(expiryTime).atZone(ZoneId.systemDefault()));
+        Instant.ofEpochMilli(expiryTime).atZone(ZoneId.of("Australia/Brisbane")));
 
     if (expiryTime > now) {
       final long delay = expiryTime - now;

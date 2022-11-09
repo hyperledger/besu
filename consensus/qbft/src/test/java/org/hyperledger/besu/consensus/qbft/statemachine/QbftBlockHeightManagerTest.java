@@ -65,6 +65,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -107,6 +108,8 @@ public class QbftBlockHeightManagerTest {
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
 
+  @Mock private Transaction transaction;
+
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
   private final List<Address> validators = Lists.newArrayList();
@@ -123,7 +126,9 @@ public class QbftBlockHeightManagerTest {
 
     headerTestFixture.extraData(bftExtraDataCodec.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
-    createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
+    // TODO SLD avoid emptyBlockPeriod logic
+    final List<Transaction> transactions = List.of(transaction);
+    createdBlock = new Block(header, new BlockBody(transactions, emptyList()));
   }
 
   @Before
@@ -143,7 +148,6 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
-    when(finalState.getClock()).thenReturn(Clock.systemUTC());
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(createdBlock, new TransactionSelectionResults()));
 
@@ -268,7 +272,9 @@ public class QbftBlockHeightManagerTest {
             messageValidatorFactory,
             messageFactory);
 
-    manager.handleBlockTimerExpiry(roundIdentifier);
+    manager.handleBlockTimerExpiry(
+        roundIdentifier); // TODO SLD passes for wrong reason: due to emptyBlockPeriod - add txs to
+    // block?
     verify(messageTransmitter, never()).multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(eq(roundIdentifier), any());
     verify(roundTimer, times(1)).startTimer(roundIdentifier);
@@ -346,7 +352,9 @@ public class QbftBlockHeightManagerTest {
     manager.handleBlockTimerExpiry(roundIdentifier);
     verify(roundFactory).createNewRound(any(), eq(0));
 
-    manager.roundExpired(new RoundExpiry(roundIdentifier));
+    manager.roundExpired(
+        new RoundExpiry(roundIdentifier)); // TODO SLD failing because currentRound.isEmpty during
+    // emptyBlockPeriod
     verify(roundFactory).createNewRound(any(), eq(1));
   }
 

@@ -138,6 +138,11 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private void buildBlockAndMaybePropose(
       final ConsensusRoundIdentifier roundIdentifier, final QbftRound qbftRound) {
+
+    // mining will be checked against round 0 as the current round is initialised to 0 above
+    final boolean isProposer =
+        finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
+
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     final Block block = qbftRound.createBlock(headerTimeStampSeconds);
     LOG.debug("TODO SLD created block {}", block);
@@ -145,10 +150,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     LOG.debug(
         "TODO SLD block.getTransactions.size() = {}", block.getBody().getTransactions().size());
     if (blockHasTransactions) {
-      // mining will be checked against round 0 as the current round is initialised to 0 above
-      final boolean isProposer =
-          finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
       logIf(() -> !isProposer, "TODO SLD I is NOT proposer");
+      logIf(() -> isProposer, "TODO SLD I IS proposer");
       if (isProposer) {
         LOG.debug("TODO SLD blockHasTransactions and I am proposer so send proposal");
         qbftRound.sendProposalMessage(block);
@@ -158,10 +161,22 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       long emptyBlockPeriodInSeconds = 60L;
       final long nowInMillis = finalState.getClock().millis();
       final long nowInSeconds = nowInMillis / 1000;
+      LOG.debug(
+          "TODO SLD parentHeader.getTimestamp() + emptyBlockPeriodInSeconds = {} + {}",
+          parentHeader.getTimestamp(),
+          emptyBlockPeriodInSeconds);
       final long emptyBlockPeriodExpiryTime =
           parentHeader.getTimestamp() + emptyBlockPeriodInSeconds;
-      if (nowInSeconds > emptyBlockPeriodExpiryTime) {
-        qbftRound.sendProposalMessage(block);
+      LOG.debug("TODO SLD isProposer = {}", isProposer);
+      LOG.debug(
+          "TODO SLD nowInSeconds > emptyBlockPeriodExpiryTime = {} > {}",
+          nowInSeconds,
+          emptyBlockPeriodExpiryTime);
+      if (nowInSeconds >= emptyBlockPeriodExpiryTime) {
+        if (isProposer) {
+          LOG.debug("TODO SLD emptyBlockPeriod expired and I am proposer so send proposal");
+          qbftRound.sendProposalMessage(block);
+        }
       } else {
         finalState.getRoundTimer().cancelTimer();
         long blockPeriodInMillis = 5_000L;
