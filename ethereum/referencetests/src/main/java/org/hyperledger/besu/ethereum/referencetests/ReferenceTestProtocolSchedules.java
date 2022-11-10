@@ -75,7 +75,7 @@ public class ReferenceTestProtocolSchedules {
         createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0).baseFeePerGas(0x0a)));
     builder.put(
         "Shandong",
-        createSchedule(new StubGenesisConfigOptions().baseFeePerGas(0x0a).shandongBlock(0)));
+        createSchedule(new StubGenesisConfigOptions().shandongBlock(0).baseFeePerGas(0x0a)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 

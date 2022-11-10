@@ -304,16 +304,14 @@ class OpcodesV1 {
       final int max = Math.min(64, length - (entryPos << 6));
       int j = i & 0x3f;
       for (; j < max; i++, j++) {
-        final byte operationNum = rawCode[i];
+        final int operationNum = rawCode[i] & 0xff;
         attribute = opcodeAttributes[operationNum];
         if ((attribute & INVALID) == INVALID) {
           return null;
         } else if ((attribute & JUMPDEST) == JUMPDEST) {
           thisEntry |= 1L << j;
-        } else if (operationNum > PushOperation.PUSH_BASE) {
-          // not needed - && operationNum <= PushOperation.PUSH_MAX
-          // Java quirk, all bytes are signed, and PUSH32 is 127, which is Byte.MAX_VALUE
-          // so we don't need to check the upper bound as it will never be violated
+        } else if (operationNum > PushOperation.PUSH_BASE
+            && operationNum <= PushOperation.PUSH_MAX) {
           final int multiByteDataLen = operationNum - PushOperation.PUSH_BASE;
           j += multiByteDataLen;
           i += multiByteDataLen;

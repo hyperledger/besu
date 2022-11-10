@@ -45,7 +45,7 @@ public class MergeProtocolScheduleTest {
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockNumber(1559);
 
-    assertThat(homesteadSpec.equals(londonSpec)).isFalse();
+    assertThat(homesteadSpec).isNotEqualTo(londonSpec);
     assertThat(homesteadSpec.getFeeMarket().implementsBaseFee()).isFalse();
     assertThat(londonSpec.getFeeMarket().implementsBaseFee()).isTrue();
   }
@@ -58,11 +58,11 @@ public class MergeProtocolScheduleTest {
 
     assertThat(london.getName()).isEqualTo("Frontier");
     assertThat(london.getBlockReward()).isEqualTo(Wei.ZERO);
-    assertThat(london.isSkipZeroBlockRewards()).isEqualTo(true);
+    assertThat(london.isSkipZeroBlockRewards()).isTrue();
 
     Bytes diffOp = Bytes.fromHexString("0x44");
     var op =
-        london.getEvm().operationAtOffset(CodeFactory.createCode(diffOp, Hash.hash(diffOp)), 0);
+        london.getEvm().operationAtOffset(CodeFactory.createCode(diffOp, Hash.hash(diffOp), 0), 0);
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 }

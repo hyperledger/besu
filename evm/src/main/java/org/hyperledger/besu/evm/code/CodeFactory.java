@@ -24,22 +24,24 @@ import org.apache.tuweni.bytes.Bytes;
 public final class CodeFactory {
 
   public static final int MAX_KNOWN_CODE_VERSION = 1;
-  static final int DEFAULT_MAX_CODE_VERSION = 0;
-  static final Bytes prefixV1 = Bytes.fromHexString("0xef0001");
+  static final Bytes prefix = Bytes.fromHexString("0xef00");
 
   private CodeFactory() {
     // factory class, no instantiations.
-  }
-
-  public static Code createCode(final Bytes bytes, final Hash codeHash) {
-    return createCode(bytes, codeHash, DEFAULT_MAX_CODE_VERSION);
   }
 
   public static Code createCode(final Bytes bytes, final Hash codeHash, final int maxEofVersion) {
     if (maxEofVersion == 0) {
       return new CodeV0(bytes, codeHash);
     } else if (maxEofVersion == 1) {
-      if (bytes.commonPrefixLength(prefixV1) == 3) {
+      if (bytes.commonPrefixLength(prefix) == 2) {
+        if (bytes.size() == 2) {
+          return new CodeInvalid(codeHash, bytes, "EOF Container too short");
+        }
+        int version = bytes.get(2);
+        if (version > maxEofVersion) {
+          return new CodeInvalid(codeHash, bytes, "Unsupported EOF Version: " + version);
+        }
         final EOFLayout layout = EOFLayout.parseEOF(bytes);
         if (!layout.isValid()) {
           return new CodeInvalid(

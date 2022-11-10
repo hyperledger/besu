@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
@@ -95,10 +96,6 @@ public class StateTestSubCommand implements Runnable {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  public StateTestSubCommand() {
-    this(null, System.in, System.out);
-  }
-
   public StateTestSubCommand(final EvmToolCommand parentCommand) {
     this(parentCommand, System.in, System.out);
   }
@@ -112,10 +109,10 @@ public class StateTestSubCommand implements Runnable {
 
   @Override
   public void run() {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
+    final ObjectMapper stateTestMapper = new ObjectMapper();
+    stateTestMapper.disable(Feature.AUTO_CLOSE_SOURCE);
     final JavaType javaType =
-        objectMapper
+        stateTestMapper
             .getTypeFactory()
             .constructParametricType(Map.class, String.class, GeneralStateTestCaseSpec.class);
     try {
@@ -131,13 +128,9 @@ public class StateTestSubCommand implements Runnable {
           }
           final File file = new File(fileName);
           if (file.isFile()) {
-            try {
-              final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-                  objectMapper.readValue(file, javaType);
-              executeStateTest(generalStateTests);
-            } catch (final JsonProcessingException jpe) {
-              output.println("File content error: " + jpe);
-            }
+            final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+                stateTestMapper.readValue(file, javaType);
+            executeStateTest(generalStateTests);
           } else {
             output.println("File not found: " + fileName);
           }
@@ -145,10 +138,12 @@ public class StateTestSubCommand implements Runnable {
       } else {
         for (final File stateTestFile : stateTestFiles) {
           final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-              objectMapper.readValue(stateTestFile, javaType);
+              stateTestMapper.readValue(stateTestFile, javaType);
           executeStateTest(generalStateTests);
         }
       }
+    } catch (final JsonProcessingException jpe) {
+      output.println("File content error: " + jpe);
     } catch (final IOException e) {
       LOG.error("Unable to read state file", e);
     }
@@ -159,7 +154,7 @@ public class StateTestSubCommand implements Runnable {
       generalStateTestEntry
           .getValue()
           .finalStateSpecs()
-          .forEach((fork, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+          .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
     }
   }
 
@@ -208,8 +203,8 @@ public class StateTestSubCommand implements Runnable {
           throw new UnsupportedForkException(forkName);
         }
 
-        final MainnetTransactionProcessor processor =
-            protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+        ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(0);
+        final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
         final WorldUpdater worldStateUpdater = worldState.updater();
         final ReferenceTestBlockchain blockchain =
             new ReferenceTestBlockchain(blockHeader.getNumber());
@@ -244,9 +239,9 @@ public class StateTestSubCommand implements Runnable {
         final var timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
         final var mGps = gasUsed * 1000.0f / timeNs;
 
-        summaryLine.put("Mgps", String.format("%.3f", mGps));
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
         summaryLine.put("time", timeNs);
+        summaryLine.put("Mgps", String.format("%.3f", mGps));
 
         // Check the world state root hash.
         summaryLine.put("test", test);

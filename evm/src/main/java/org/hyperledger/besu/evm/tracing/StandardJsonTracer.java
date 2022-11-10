@@ -40,6 +40,7 @@ public class StandardJsonTracer implements OperationTracer {
   private List<String> stack;
   private String gas;
   private Bytes memory;
+  private int memorySize;
 
   public StandardJsonTracer(final PrintStream out, final boolean showMemory) {
     this.out = out;
@@ -66,7 +67,10 @@ public class StandardJsonTracer implements OperationTracer {
     }
     pc = messageFrame.getPC();
     gas = shortNumber(messageFrame.getRemainingGas());
-    memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
+    memorySize = messageFrame.memoryWordSize() * 32;
+    if (showMemory) {
+      memory = messageFrame.readMemory(0, messageFrame.memoryWordSize() * 32L);
+    }
   }
 
   @Override
@@ -85,24 +89,23 @@ public class StandardJsonTracer implements OperationTracer {
     sb.append("\"gasCost\":\"").append(shortNumber(executeResult.getGasCost())).append("\",");
     if (showMemory) {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
-      sb.append("\"memSize\":").append(memory.size()).append(",");
-    } else {
-      sb.append("\"memory\":\"0x\",");
-      sb.append("\"memSize\":").append(messageFrame.memoryByteSize()).append(",");
     }
+    sb.append("\"memSize\":").append(memorySize).append(",");
     sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
-    sb.append("\"returnData\":")
-        .append(returnData.size() > 0 ? '"' + returnData.toHexString() + '"' : "\"0x\"")
-        .append(",");
+    if (returnData.size() > 0) {
+      sb.append("\"returnData\":").append('"').append(returnData.toHexString()).append('"').append(",");
+    }
     sb.append("\"depth\":").append(depth).append(",");
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
-    sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
-    sb.append("\"error\":\"")
-        .append(
-            executeResult.getHaltReason() == null
-                ? (quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
-                : executeResult.getHaltReason().getDescription())
-        .append("\"}");
+    sb.append("\"opName\":\"").append(currentOp.getName());
+    if (executeResult.getHaltReason() != null) {
+      sb.append(",\"error\":\"")
+          .append(executeResult.getHaltReason().getDescription())
+          .append("\"}");
+    } else if (messageFrame.getRevertReason().isPresent()) {
+      sb.append(",\"error\":\"").append(quoteEscape(messageFrame.getRevertReason().get()));
+    }
+    sb.append("\"}");
     out.println(sb);
   }
 
