@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,10 +27,19 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
+  private final Optional<Object> result;
 
   public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
+    this.result = Optional.empty();
+  }
+
+  public JsonRpcErrorResponse(
+      final Object id, final JsonRpcError error, final Optional<Object> result) {
+    this.id = id;
+    this.error = error;
+    this.result = result;
   }
 
   @JsonGetter("id")
@@ -40,6 +50,11 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   @JsonGetter("error")
   public JsonRpcError getError() {
     return error;
+  }
+
+  @JsonGetter("result")
+  public Optional<Object> getResult() {
+    return result;
   }
 
   @Override

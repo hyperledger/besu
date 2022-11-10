@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -87,6 +88,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
                     requestContext.getRequest().getId(), Hash.EMPTY.toString())
                 : new JsonRpcErrorResponse(
                     requestContext.getRequest().getId(),
-                    JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
+                    JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason),
+                    Optional.ofNullable(transaction.getHash().toString())));
   }
 }
