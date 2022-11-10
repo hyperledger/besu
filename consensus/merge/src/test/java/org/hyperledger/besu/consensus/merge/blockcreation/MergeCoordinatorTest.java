@@ -21,13 +21,11 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.AdditionalMatchers.gt;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -50,6 +48,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -67,6 +66,7 @@ import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -75,8 +75,6 @@ import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -91,11 +89,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
@@ -128,9 +123,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private MergeCoordinator coordinator;
   private ProtocolContext protocolContext;
 
-  private final ProtocolSchedule mockProtocolSchedule = getMergeProtocolSchedule();
+  private final ProtocolSchedule protocolSchedule = spy(getMergeProtocolSchedule());
   private final GenesisState genesisState =
-      GenesisState.fromConfig(getPosGenesisConfigFile(), mockProtocolSchedule);
+      GenesisState.fromConfig(getPosGenesisConfigFile(), protocolSchedule);
 
   private final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
@@ -157,12 +152,21 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
   CompletableFuture<Void> blockCreationTask = CompletableFuture.completedFuture(null);
 
+  private final BadBlockManager badBlockManager = spy(new BadBlockManager());
+
   @Before
   public void setUp() {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty())
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
     when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(terminalPowBlock()));
+    doAnswer(getSpecInvocation -> {
+      ProtocolSpec spec = (ProtocolSpec) spy(getSpecInvocation.callRealMethod());
+      doAnswer(getBadBlockInvocation -> { return badBlockManager; }
+      ).when(spec).getBadBlocksManager();
+      return spec;
+    }).when(protocolSchedule).getByBlockNumber(anyLong());
+
     protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
@@ -181,7 +185,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
-            mockProtocolSchedule,
+                protocolSchedule,
             proposalBuilderExecutor,
             transactions,
             miningParameters,
@@ -226,7 +230,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       parent -> Bytes.EMPTY,
                       transactions,
                       protocolContext,
-                      mockProtocolSchedule,
+                      protocolSchedule,
                       this.miningParameters.getMinTransactionGasPrice(),
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       this.miningParameters.getMinBlockOccupancyRatio(),
@@ -239,6 +243,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .doThrow(new MerkleTrieException("wrong nonce"))
+              .doCallRealMethod()
               .when(beingSpiedOn)
               .createBlock(any(), any(Bytes32.class), anyLong());
       return beingSpiedOn;
@@ -247,7 +252,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     MergeCoordinator willThrow =
             spy(new MergeCoordinator(
                     protocolContext,
-                    mockProtocolSchedule,
+                    protocolSchedule,
                     proposalBuilderExecutor,
                     transactions,
                     miningParameters,
@@ -271,10 +276,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             .when(mergeContext)
             .putPayloadById(any(), any());
 
-
-
-
-
       var payloadId =
               willThrow.preparePayload(
                       genesisState.getBlock().getHeader(),
@@ -290,8 +291,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext, times(txPerBlock+1)).putPayloadById(eq(payloadId), block.capture()); //+1 for the empty
     assertThat(block.getValue().getBody().getTransactions().size()).isEqualTo(txPerBlock);
     //this only verifies that adding the bad block didn't happen through the mergeCoordinator, it still may
-    //be called directly. In that case we need to spy on the one in the protocolSpec returned by the protocolSchedule
-    //for the given block.
+    //be called directly.
+    verify(badBlockManager, never()).addBadBlock(any(), any());
     verify(willThrow, never()).addBadBlock(any(), any());
 
     }
@@ -767,7 +768,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     MergeCoordinator mockCoordinator =
         new MergeCoordinator(
             mockProtocolContext,
-            mockProtocolSchedule,
+                protocolSchedule,
             CompletableFuture::runAsync,
             transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
@@ -828,7 +829,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     MergeCoordinator mockCoordinator =
         new MergeCoordinator(
             mockProtocolContext,
-            mockProtocolSchedule,
+                protocolSchedule,
             CompletableFuture::runAsync,
             transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
@@ -1019,7 +1020,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         spy(
             new MergeCoordinator(
                 mockProtocolContext,
-                mockProtocolSchedule,
+                    protocolSchedule,
                 CompletableFuture::runAsync,
                 transactions,
                 new MiningParameters.Builder().coinbase(coinbase).build(),
