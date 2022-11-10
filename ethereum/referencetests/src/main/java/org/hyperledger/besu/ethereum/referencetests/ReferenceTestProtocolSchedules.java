@@ -74,7 +74,7 @@ public class ReferenceTestProtocolSchedules {
         "Merge",
         createSchedule(new StubGenesisConfigOptions().mergeNetSplitBlock(0).baseFeePerGas(0x0a)));
     builder.put(
-        "Shandong",
+        "Shanghai",
         createSchedule(new StubGenesisConfigOptions().shandongBlock(0).baseFeePerGas(0x0a)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }

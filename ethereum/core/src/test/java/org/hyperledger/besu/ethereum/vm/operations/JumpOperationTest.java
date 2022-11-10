@@ -16,9 +16,7 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -28,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
@@ -160,35 +157,5 @@ public class JumpOperationTest {
 
     final OperationResult result = operation.execute(longContract, evm);
     assertThat(result.getHaltReason()).isNull();
-  }
-
-  @Test
-  public void shouldReuseJumpDestMap() {
-    final JumpOperation operation = new JumpOperation(gasCalculator);
-    final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    Code getsCached = spy(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0));
-    MessageFrame frame =
-        createMessageFrameBuilder(10_000)
-            .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(getsCached)
-            .build();
-    frame.setPC(CURRENT_PC);
-
-    OperationResult result = operation.execute(frame, evm);
-    assertNull(result.getHaltReason());
-    // FIXME Mockito.verify(getsCached, times(1)).calculateJumpDests();
-
-    // do it again to prove we don't recalc, and we hit the cache
-
-    frame =
-        createMessageFrameBuilder(10_000L)
-            .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(getsCached)
-            .build();
-    frame.setPC(CURRENT_PC);
-
-    result = operation.execute(frame, evm);
-    assertNull(result.getHaltReason());
-    // FIXME Mockito.verify(getsCached, times(1)).calculateJumpDests();
   }
 }

@@ -93,7 +93,11 @@ public class StandardJsonTracer implements OperationTracer {
     sb.append("\"memSize\":").append(memorySize).append(",");
     sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
     if (returnData.size() > 0) {
-      sb.append("\"returnData\":").append('"').append(returnData.toHexString()).append('"').append(",");
+      sb.append("\"returnData\":")
+          .append('"')
+          .append(returnData.toHexString())
+          .append('"')
+          .append(",");
     }
     sb.append("\"depth\":").append(depth).append(",");
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
