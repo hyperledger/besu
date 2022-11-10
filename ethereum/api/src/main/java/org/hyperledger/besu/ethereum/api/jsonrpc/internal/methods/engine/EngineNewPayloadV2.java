@@ -42,7 +42,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -61,15 +63,15 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
+public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
-  private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayloadV2.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
-  public EngineNewPayload(
+  public EngineNewPayloadV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
@@ -82,7 +84,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_NEW_PAYLOAD.getMethodName();
+    return RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName();
   }
 
   @Override
@@ -116,6 +118,21 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           INVALID,
           "Failed to decode transactions from block parameter");
     }
+    final List<Withdrawal> withdrawals;
+    try {
+      withdrawals =
+          blockParam.getWithdrawals().stream()
+              .map(Bytes::fromHexString)
+              .map(WithdrawalDecoder::decodeOpaqueBytes)
+              .collect(Collectors.toList());
+    } catch (final RLPException | IllegalArgumentException e) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          "Failed to decode withdrawals from block parameter");
+    }
 
     if (blockParam.getExtraData() == null) {
       return respondWithInvalid(
@@ -144,7 +161,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
-            BodyValidation.withdrawalsRoot(Collections.emptyList()),
+            BodyValidation.withdrawalsRoot(withdrawals),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -187,8 +204,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(
-            newBlockHeader,
-            new BlockBody(transactions, Collections.emptyList(), Collections.emptyList()));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), withdrawals));
 
     if (parentHeader.isEmpty()) {
       debugLambda(
@@ -199,8 +215,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     }
 
     // TODO: post-merge cleanup
-    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
-        && !mergeContext.get().isChainPruningEnabled()) {
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
       mergeCoordinator.addBadBlock(block, Optional.empty());
       return respondWithInvalid(
           reqId,

@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -45,11 +44,11 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdated.class);
+public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
   private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkchoiceUpdated(
+  public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
@@ -60,7 +59,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName();
+    return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V2.getMethodName();
   }
 
   @Override
@@ -143,7 +142,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
                         payloadAttributes.getSuggestedFeeRecipient(),
-                        Collections.emptyList())));
+                        payloadAttributes.getWithdrawals())));
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -159,7 +158,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    Collections.emptyList()));
+                    payloadAttributes.getWithdrawals()));
 
     payloadId.ifPresent(
         pid ->

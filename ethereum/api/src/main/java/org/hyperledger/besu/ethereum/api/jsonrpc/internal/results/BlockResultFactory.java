@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -93,6 +94,19 @@ public class BlockResultFactory {
             .collect(Collectors.toList());
 
     return new EngineGetPayloadResult(block.getHeader(), txs);
+  }
+
+  public EngineGetPayloadResultV2 enginePayloadTransactionCompleteV2(final Block block) {
+    final List<String> txs =
+        block.getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+    final List<WithdrawalParameter> withdrawals =
+        block.getBody().getWithdrawals().stream()
+            .map(WithdrawalParameter::fromWithdrawal)
+            .collect(Collectors.toList());
+    return new EngineGetPayloadResultV2(block.getHeader(), txs, withdrawals);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
