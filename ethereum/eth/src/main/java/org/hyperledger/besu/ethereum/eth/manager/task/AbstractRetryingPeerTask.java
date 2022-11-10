@@ -67,8 +67,9 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     this.metricsSystem = metricsSystem;
   }
 
-  public void assignPeer(final EthPeer peer) {
+  public AbstractRetryingPeerTask<T> assignPeer(final EthPeer peer) {
     assignedPeer = Optional.of(peer);
+    return this;
   }
 
   public Optional<EthPeer> getAssignedPeer() {

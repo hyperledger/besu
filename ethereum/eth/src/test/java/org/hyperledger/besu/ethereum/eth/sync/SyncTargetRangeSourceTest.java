@@ -60,10 +60,8 @@ public class SyncTargetRangeSourceTest {
       new SyncTargetRangeSource(
           rangeHeaders,
           syncTargetChecker,
-          ethScheduler,
           peer,
           commonAncestor,
-          CHECKPOINT_TIMEOUTS_PERMITTED,
           Duration.ofMillis(1),
           SyncTerminationCondition.never());
 

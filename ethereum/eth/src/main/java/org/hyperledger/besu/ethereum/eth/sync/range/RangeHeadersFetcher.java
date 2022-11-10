@@ -21,11 +21,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -102,9 +102,10 @@ public class RangeHeadersFetcher {
         headerCount,
         referenceHeader.getNumber(),
         skip);
-    return GetHeadersFromPeerByHashTask.startingAtHash(
+    return RetryingGetHeadersFromPeerByHashTask.startingAtHash(
             protocolSchedule,
             ethContext,
+            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
             referenceHeader.getHash(),
             // + 1 because lastHeader will be returned as well.
             headerCount + 1,
@@ -112,7 +113,13 @@ public class RangeHeadersFetcher {
             metricsSystem)
         .assignPeer(peer)
         .run()
-        .thenApply(PeerTaskResult::getResult)
+        .thenApply(
+            blockHeaders -> {
+              if (blockHeaders.isEmpty()) {
+                peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+              }
+              return blockHeaders;
+            })
         .thenApply(headers -> stripExistingRangeHeaders(referenceHeader, headers));
   }
 

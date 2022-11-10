@@ -88,10 +88,8 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new SyncTargetRangeSource(
             new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
             this::shouldContinueDownloadingFromPeer,
-            ethContext.getScheduler(),
             target.peer(),
             target.commonAncestor(),
-            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
             fullSyncTerminationCondition);
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(
