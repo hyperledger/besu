@@ -79,8 +79,6 @@ public abstract class MainnetProtocolSpecs {
 
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
 
-  public static final String LONDON_FORK_NAME = "London";
-
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
 
@@ -567,7 +565,7 @@ public abstract class MainnetProtocolSpecs {
             feeMarket ->
                 MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
         .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
-        .name(LONDON_FORK_NAME);
+        .name("London");
   }
 
   static ProtocolSpecBuilder arrowGlacierDefinition(
@@ -630,6 +628,9 @@ public abstract class MainnetProtocolSpecs {
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .difficultyCalculator(MainnetDifficultyCalculators.PROOF_OF_STAKE_DIFFICULTY)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::mergeBlockHeaderValidator)
+        .blockReward(Wei.ZERO)
         .name("ParisFork");
   }
 
