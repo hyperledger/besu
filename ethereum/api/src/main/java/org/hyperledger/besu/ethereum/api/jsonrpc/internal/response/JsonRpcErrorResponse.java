@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
 
@@ -27,16 +27,15 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
-  private final Optional<Object> result;
+  private final Object result;
 
   public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
-    this.result = Optional.empty();
+    this.result = null;
   }
 
-  public JsonRpcErrorResponse(
-      final Object id, final JsonRpcError error, final Optional<Object> result) {
+  public JsonRpcErrorResponse(final Object id, final JsonRpcError error, final Object result) {
     this.id = id;
     this.error = error;
     this.result = result;
@@ -52,8 +51,9 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
     return error;
   }
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter("result")
-  public Optional<Object> getResult() {
+  public Object getResult() {
     return result;
   }
 
@@ -72,16 +72,22 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
       return false;
     }
     final JsonRpcErrorResponse that = (JsonRpcErrorResponse) o;
-    return Objects.equals(id, that.id) && error == that.error;
+    return Objects.equals(id, that.id)
+        && error == that.error
+        && Objects.equals(result, that.result);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, error);
+    return Objects.hash(id, error, result);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("id", id).add("error", error).toString();
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .add("error", error)
+        .add("result", result)
+        .toString();
   }
 }
