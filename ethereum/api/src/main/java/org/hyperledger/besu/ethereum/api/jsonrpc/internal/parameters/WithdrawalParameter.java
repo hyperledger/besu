@@ -18,8 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
-import java.math.BigInteger;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -32,8 +30,8 @@ public class WithdrawalParameter {
 
   @JsonCreator
   public WithdrawalParameter(
-      @JsonProperty("index") final long index,
-      @JsonProperty("validatorIndex") final long validatorIndex,
+      @JsonProperty("index") final String index,
+      @JsonProperty("validatorIndex") final String validatorIndex,
       @JsonProperty("address") final Address address,
       @JsonProperty("amount") final String amount) {
     this.index = index;
@@ -43,6 +41,6 @@ public class WithdrawalParameter {
   }
 
   public Withdrawal toWithdrawal() {
-    return new Withdrawal(index, validatorIndex, address, Wei.of(new BigInteger(amount)));
+    return new Withdrawal(index, validatorIndex, address, Wei.fromHexString(amount));
   }
 }
