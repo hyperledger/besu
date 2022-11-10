@@ -17,7 +17,6 @@
 
 package org.hyperledger.besu.ethereum.core;
 
-import org.apache.tuweni.units.bigints.BaseUInt64Value;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
@@ -25,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.plugin.data.Quantity;
 
 import org.apache.tuweni.bytes.Bytes;
 

@@ -106,7 +106,7 @@ public class BlockResultFactory {
         block.getBody().getWithdrawals().stream()
             .map(WithdrawalParameter::fromWithdrawal)
             .collect(Collectors.toList());
-    return new EngineGetPayloadResultV2(block.getHeader(), txs,withdrawals);
+    return new EngineGetPayloadResultV2(block.getHeader(), txs, withdrawals);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

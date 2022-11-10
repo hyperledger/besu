@@ -138,7 +138,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                     new PayloadAttributes(
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient(), Collections.emptyList())));
+                        payloadAttributes.getSuggestedFeeRecipient(),
+                        Collections.emptyList())));
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -153,7 +154,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                     newHead.get(),
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
-                    payloadAttributes.getSuggestedFeeRecipient(),Collections.emptyList()));
+                    payloadAttributes.getSuggestedFeeRecipient(),
+                    Collections.emptyList()));
 
     payloadId.ifPresent(
         pid ->
