@@ -99,24 +99,26 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
-    Optional<BlockHeader> newHead =
-        mergeCoordinator.getOrSyncHeaderByHash(forkChoice.getHeadBlockHash());
+    final Optional<BlockHeader> maybeNewHead =
+        mergeCoordinator.getOrSyncHeadByHash(forkChoice.getHeadBlockHash());
 
-    if (newHead.isEmpty()) {
+    if (maybeNewHead.isEmpty()) {
       return syncingResponse(requestId, forkChoice);
     }
+
+    final BlockHeader newHead = maybeNewHead.get();
 
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
     if (!isValidForkchoiceState(
-        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
+        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcSuccessResponse(
           requestId,
@@ -124,12 +126,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
               INVALID,
               Hash.ZERO,
               null,
-              Optional.of(newHead.get() + " did not descend from terminal block")));
+              Optional.of(newHead + " did not descend from terminal block")));
     }
 
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead.get(),
+            newHead,
             forkChoice.getFinalizedBlockHash(),
             forkChoice.getSafeBlockHash(),
             maybePayloadAttributes.map(
@@ -149,7 +151,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         maybePayloadAttributes.map(
             payloadAttributes ->
                 mergeCoordinator.preparePayload(
-                    newHead.get(),
+                    newHead,
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient()));

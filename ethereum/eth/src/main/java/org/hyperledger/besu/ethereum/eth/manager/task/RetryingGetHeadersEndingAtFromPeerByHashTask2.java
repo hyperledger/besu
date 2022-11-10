@@ -21,83 +21,58 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class RetryingGetHeadersEndingAtFromPeerByHashTask
-    extends AbstractRetryingSwitchingPeerTask<List<BlockHeader>> {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(RetryingGetHeadersEndingAtFromPeerByHashTask.class);
+public class RetryingGetHeadersEndingAtFromPeerByHashTask2
+    extends AbstractRetryingPeerTask<List<BlockHeader>> {
 
   private final Hash referenceHash;
   private final ProtocolSchedule protocolSchedule;
   private final int count;
 
   @VisibleForTesting
-  RetryingGetHeadersEndingAtFromPeerByHashTask(
+  RetryingGetHeadersEndingAtFromPeerByHashTask2(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
       final int count,
-      final MetricsSystem metricsSystem,
-      final int maxRetries) {
-    super(ethContext, metricsSystem, List::isEmpty, maxRetries);
+      final MetricsSystem metricsSystem) {
+    super(ethContext, 4, List::isEmpty, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.count = count;
     checkNotNull(referenceHash);
     this.referenceHash = referenceHash;
   }
 
-  public static RetryingGetHeadersEndingAtFromPeerByHashTask endingAtHash(
+  public static RetryingGetHeadersEndingAtFromPeerByHashTask2 endingAtHash(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final Hash referenceHash,
       final int count,
-      final MetricsSystem metricsSystem,
-      final int maxRetries) {
-    return new RetryingGetHeadersEndingAtFromPeerByHashTask(
-        protocolSchedule, ethContext, referenceHash, count, metricsSystem, maxRetries);
+      final MetricsSystem metricsSystem) {
+    return new RetryingGetHeadersEndingAtFromPeerByHashTask2(
+        protocolSchedule, ethContext, referenceHash, count, metricsSystem);
   }
 
   @Override
-  protected CompletableFuture<List<BlockHeader>> executeTaskOnCurrentPeer(
-      final EthPeer currentPeer) {
+  protected CompletableFuture<List<BlockHeader>> executePeerTask(
+      final Optional<EthPeer> assignedPeer) {
     final AbstractGetHeadersFromPeerTask task =
         GetHeadersFromPeerByHashTask.endingAtHash(
             protocolSchedule, getEthContext(), referenceHash, count, getMetricsSystem());
-    task.assignPeer(currentPeer);
+    assignedPeer.ifPresent(task::assignPeer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
-              LOG.debug(
-                  "Get {} block headers by hash {} from peer {} has result {}",
-                  count,
-                  referenceHash,
-                  currentPeer,
-                  peerResult.getResult());
-              if (peerResult.getResult().isEmpty()) {
-                currentPeer.recordUselessResponse("GetHeadersFromPeerByHashTask");
-                throw new IncompleteResultsException(
-                    "No block headers for hash "
-                        + referenceHash
-                        + " returned by peer "
-                        + currentPeer.getShortNodeId());
-              }
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
-  }
-
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
   }
 }

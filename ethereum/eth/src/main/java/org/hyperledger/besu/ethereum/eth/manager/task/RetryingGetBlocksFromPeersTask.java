@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
@@ -25,63 +25,66 @@ import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskR
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RetryingGetBlockFromPeersTask
-    extends AbstractRetryingSwitchingPeerTask<AbstractPeerTask.PeerTaskResult<Block>> {
+public class RetryingGetBlocksFromPeersTask
+    extends AbstractRetryingSwitchingPeerTask<PeerTaskResult<List<Block>>> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlocksFromPeersTask.class);
 
   private final ProtocolSchedule protocolSchedule;
-  private final Optional<Hash> maybeBlockHash;
-  private final long blockNumber;
+  private final List<BlockHeader> headers;
 
-  protected RetryingGetBlockFromPeersTask(
+  protected RetryingGetBlocksFromPeersTask(
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final int maxRetries,
-      final Optional<Hash> maybeBlockHash,
-      final long blockNumber) {
+      final List<BlockHeader> headers) {
     super(ethContext, metricsSystem, Objects::isNull, maxRetries);
     this.protocolSchedule = protocolSchedule;
-    this.maybeBlockHash = maybeBlockHash;
-    this.blockNumber = blockNumber;
+    this.headers = headers;
   }
 
-  public static RetryingGetBlockFromPeersTask create(
+  public static RetryingGetBlocksFromPeersTask forHeaders(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final int maxRetries,
-      final Optional<Hash> maybeHash,
-      final long blockNumber) {
-    return new RetryingGetBlockFromPeersTask(
-        ethContext, protocolSchedule, metricsSystem, maxRetries, maybeHash, blockNumber);
+      final List<BlockHeader> headers) {
+    return new RetryingGetBlocksFromPeersTask(
+        ethContext, protocolSchedule, metricsSystem, maxRetries, headers);
   }
 
   @Override
-  protected CompletableFuture<PeerTaskResult<Block>> executeTaskOnCurrentPeer(
+  protected CompletableFuture<PeerTaskResult<List<Block>>> executeTaskOnCurrentPeer(
       final EthPeer currentPeer) {
-    final GetBlockFromPeerTask getBlockTask =
-        GetBlockFromPeerTask.create(
-            protocolSchedule, getEthContext(), maybeBlockHash, blockNumber, getMetricsSystem());
-    getBlockTask.assignPeer(currentPeer);
+    final GetBodiesFromPeerTask getBodiesTask =
+        GetBodiesFromPeerTask.forHeaders(
+            protocolSchedule, getEthContext(), headers, getMetricsSystem());
+    getBodiesTask.assignPeer(currentPeer);
 
-    return executeSubTask(getBlockTask::run)
+    return executeSubTask(getBodiesTask::run)
         .thenApply(
             peerResult -> {
               debugLambda(
                   LOG,
-                  "Got block {} from peer {}, attempt {}",
-                  peerResult.getResult()::toLogString,
+                  "Got {} blocks {} from peer {}, attempt {}",
+                  peerResult.getResult()::size,
                   peerResult.getPeer()::toString,
                   this::getRetryCount);
+
+              if (peerResult.getResult().isEmpty()) {
+                currentPeer.recordUselessResponse("GetBodiesFromPeerTask");
+                throw new IncompleteResultsException(
+                    "No blocks returned by peer " + currentPeer.getShortNodeId());
+              }
+
               result.complete(peerResult);
               return peerResult;
             });
@@ -97,21 +100,13 @@ public class RetryingGetBlockFromPeersTask
     if (getRetryCount() < getMaxRetries()) {
       debugLambda(
           LOG,
-          "Failed to get block {} from peer {}, attempt {}, retrying later",
-          this::logBlockNumberMaybeHash,
+          "Failed to get {} blocks from peer {}, attempt {}, retrying later",
+          headers::size,
           this::getAssignedPeer,
           this::getRetryCount);
     } else {
-      debugLambda(
-          LOG,
-          "Failed to get block {} after {} retries",
-          this::logBlockNumberMaybeHash,
-          this::getRetryCount);
+      LOG.warn("Failed to get {} blocks after {} retries", headers.size(), getRetryCount());
     }
     super.handleTaskError(error);
-  }
-
-  private String logBlockNumberMaybeHash() {
-    return blockNumber + maybeBlockHash.map(h -> " (" + h.toHexString() + ")").orElse("");
   }
 }

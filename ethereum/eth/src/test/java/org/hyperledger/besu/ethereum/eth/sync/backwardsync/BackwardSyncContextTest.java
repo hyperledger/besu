@@ -248,23 +248,6 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void testUpdatingHead() {
-    context.updateHeads(null, null);
-    context.possiblyMoveHead(null);
-    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(LOCAL_HEIGHT);
-
-    context.updateHeads(Hash.ZERO, null);
-    context.possiblyMoveHead(null);
-
-    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(LOCAL_HEIGHT);
-
-    context.updateHeads(localBlockchain.getBlockByNumber(4).orElseThrow().getHash(), null);
-    context.possiblyMoveHead(null);
-
-    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(4);
-  }
-
-  @Test
   public void shouldProcessExceptionsCorrectly() {
     assertThatThrownBy(
             () ->
