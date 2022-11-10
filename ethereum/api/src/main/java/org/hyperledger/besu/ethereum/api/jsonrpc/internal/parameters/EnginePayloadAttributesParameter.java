@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class EnginePayloadAttributesParameter {
@@ -38,14 +37,12 @@ public class EnginePayloadAttributesParameter {
       @JsonProperty("timestamp") final String timestamp,
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
-      @JsonProperty("withdrawals") final List<String> withdrawals) {
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
     this.withdrawals =
-        withdrawals.stream()
-            .map(s -> Withdrawal.readFrom(Bytes.fromHexString(s)))
-            .collect(Collectors.toList());
+        withdrawals.stream().map(WithdrawalParameter::toWithdrawal).collect(Collectors.toList());
   }
 
   public Long getTimestamp() {

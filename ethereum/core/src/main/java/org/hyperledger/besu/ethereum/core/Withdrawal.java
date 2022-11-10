@@ -26,11 +26,10 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.apache.tuweni.bytes.Bytes;
 
 public class Withdrawal {
-  final long index;
-
-  final long validatorIndex;
-  final Address address;
-  final Wei amount;
+  private final long index;
+  private final long validatorIndex;
+  private final Address address;
+  private final Wei amount;
 
   public Withdrawal(
       final long index, final long validatorIndex, final Address address, final Wei amount) {
