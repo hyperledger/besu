@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -71,7 +72,10 @@ public class P2PPlainNetworkTest {
   private final NetworkingConfiguration config =
       NetworkingConfiguration.create()
           .setDiscovery(DiscoveryConfiguration.create().setActive(false))
-          .setRlpx(RlpxConfiguration.create().setBindPort(0).setSupportedProtocols(subProtocol()));
+          .setRlpx(
+              RlpxConfiguration.create()
+                  .setBindPort(0)
+                  .setSupportedProtocols(MockSubProtocol.create()));
 
   @After
   public void closeVertx() {
@@ -144,7 +148,7 @@ public class P2PPlainNetworkTest {
                 RlpxConfiguration.create()
                     .setBindPort(0)
                     .setPeerUpperBound(maxPeers)
-                    .setSupportedProtocols(subProtocol()));
+                    .setSupportedProtocols(MockSubProtocol.create()));
     try (final P2PNetwork listener =
             builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
         final P2PNetwork connector1 = builder("partner1client1").build();
@@ -194,9 +198,9 @@ public class P2PPlainNetworkTest {
     final NodeKey listenerNodeKey = NodeKeyUtils.generate();
     final NodeKey connectorNodeKey = NodeKeyUtils.generate();
 
-    final SubProtocol subprotocol1 = subProtocol("eth");
+    final SubProtocol subprotocol1 = MockSubProtocol.create("eth");
     final Capability cap1 = Capability.create(subprotocol1.getName(), 63);
-    final SubProtocol subprotocol2 = subProtocol("oth");
+    final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 63);
     try (final P2PNetwork listener =
             builder("partner1client1")
@@ -399,34 +403,6 @@ public class P2PPlainNetworkTest {
             .nodeId(nodeId)
             .discoveryAndListeningPorts(listenPort)
             .build());
-  }
-
-  private static SubProtocol subProtocol() {
-    return subProtocol("eth");
-  }
-
-  private static SubProtocol subProtocol(final String name) {
-    return new SubProtocol() {
-      @Override
-      public String getName() {
-        return name;
-      }
-
-      @Override
-      public int messageSpace(final int protocolVersion) {
-        return 8;
-      }
-
-      @Override
-      public boolean isValidMessageCode(final int protocolVersion, final int code) {
-        return true;
-      }
-
-      @Override
-      public String messageName(final int protocolVersion, final int code) {
-        return INVALID_MESSAGE_NAME;
-      }
-    };
   }
 
   private Path initNSSConfigFile(final Path srcFilePath) {
