@@ -89,6 +89,6 @@ public class EthSendRawTransaction implements JsonRpcMethod {
                 : new JsonRpcErrorResponse(
                     requestContext.getRequest().getId(),
                     JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason),
-                    Optional.ofNullable(transaction.getHash().toString())));
+                    transaction.getHash().toString()));
   }
 }
