@@ -96,6 +96,12 @@ public class StateTestSubCommand implements Runnable {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  @SuppressWarnings("unused")
+  public StateTestSubCommand() {
+    // PicoCLI requires this
+    this(null, System.in, System.out);
+  }
+
   public StateTestSubCommand(final EvmToolCommand parentCommand) {
     this(parentCommand, System.in, System.out);
   }
