@@ -98,8 +98,8 @@ public abstract class MainnetDifficultyCalculators {
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, GRAY_GLACIER_FAKE_BLOCK_OFFSET);
 
-  // Post-Merge difficulty must not be altered
-  static final DifficultyCalculator MERGED_DIFFICULTY =
+  // Proof-of-Stake difficulty must not be altered
+  static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY =
       (time, parent, protocolContext) -> parent.getDifficulty().getAsBigInteger();
 
   private static BigInteger calculateThawedDifficulty(
