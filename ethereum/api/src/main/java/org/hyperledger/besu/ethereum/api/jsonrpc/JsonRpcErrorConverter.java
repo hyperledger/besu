@@ -25,9 +25,9 @@ public class JsonRpcErrorConverter {
       case NONCE_TOO_LOW:
       case PRIVATE_NONCE_TOO_LOW:
         return JsonRpcError.NONCE_TOO_LOW;
-      case INCORRECT_NONCE:
-      case INCORRECT_PRIVATE_NONCE:
-        return JsonRpcError.INCORRECT_NONCE;
+      case NONCE_TOO_HIGH:
+      case PRIVATE_NONCE_TOO_HIGH:
+        return JsonRpcError.NONCE_TOO_HIGH;
       case INVALID_SIGNATURE:
         return JsonRpcError.INVALID_TRANSACTION_SIGNATURE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
