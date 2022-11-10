@@ -22,14 +22,15 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.plugin.data.Quantity;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class Withdrawal {
-  private final long index;
-  private final long validatorIndex;
+  private final Quantity index;
+  private final Quantity validatorIndex;
   private final Address address;
-  private final Wei amount;
+  private final Quantity amount;
 
   public Withdrawal(
       final long index, final long validatorIndex, final Address address, final Wei amount) {
