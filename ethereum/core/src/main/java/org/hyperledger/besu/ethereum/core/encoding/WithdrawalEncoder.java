@@ -29,7 +29,7 @@ public class WithdrawalEncoder {
     return RLP.encode(rlpOutput -> encode(withdrawal, rlpOutput));
   }
 
-  private static void encode(final Withdrawal withdrawal, final RLPOutput rlpOutput) {
+  public static void encode(final Withdrawal withdrawal, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     rlpOutput.writeLongScalar(withdrawal.getIndex());
     rlpOutput.writeLongScalar(withdrawal.getValidatorIndex());

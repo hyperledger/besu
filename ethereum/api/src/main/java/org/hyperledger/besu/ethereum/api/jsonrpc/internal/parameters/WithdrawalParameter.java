@@ -14,17 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.hyperledger.besu.ethereum.core.json.HexLongDeserializer;
 
 public class WithdrawalParameter {
 
-  private final long index;
-  private final long validatorIndex;
+  private final String index;
+  private final String validatorIndex;
   private final Address address;
   private final String amount;
 
@@ -41,6 +43,14 @@ public class WithdrawalParameter {
   }
 
   public Withdrawal toWithdrawal() {
-    return new Withdrawal(index, validatorIndex, address, Wei.fromHexString(amount));
+    return new Withdrawal(Long.decode(index), Long.decode(validatorIndex), address, Wei.fromHexString(amount));
+  }
+
+  public static WithdrawalParameter fromWithdrawal(final Withdrawal withdrawal) {
+    return new WithdrawalParameter(
+        Long.toHexString(withdrawal.getIndex()),
+        Long.toHexString(withdrawal.getValidatorIndex()),
+        withdrawal.getAddress(),
+        withdrawal.getAmount().toHexString());
   }
 }

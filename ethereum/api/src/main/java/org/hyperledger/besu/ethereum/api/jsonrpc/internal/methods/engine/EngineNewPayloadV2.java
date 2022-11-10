@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -42,34 +41,34 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
+
+public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
-  private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayload.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EngineNewPayloadV2.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
-  public EngineNewPayload(
+  public EngineNewPayloadV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
@@ -82,7 +81,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_NEW_PAYLOAD.getMethodName();
+    return RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName();
   }
 
   @Override
@@ -95,11 +94,6 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     Object reqId = requestContext.getRequest().getId();
 
     traceLambda(LOG, "blockparam: {}", () -> Json.encodePrettily(blockParam));
-
-    if (mergeContext.get().isSyncing()) {
-      LOG.debug("We are syncing");
-      return respondWith(reqId, blockParam, null, SYNCING);
-    }
 
     final List<Transaction> transactions;
     try {
@@ -115,6 +109,21 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
           INVALID,
           "Failed to decode transactions from block parameter");
+    }
+    final List<Withdrawal> withdrawals;
+    try {
+      withdrawals =
+          blockParam.getWithdrawals().stream()
+              .map(Bytes::fromHexString)
+              .map(WithdrawalDecoder::decodeOpaqueBytes)
+              .collect(Collectors.toList());
+    } catch (final RLPException | IllegalArgumentException e) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          "Failed to decode withdrawals from block parameter");
     }
 
     if (blockParam.getExtraData() == null) {
@@ -144,7 +153,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
-            BodyValidation.withdrawalsRoot(Collections.emptyList()),
+            BodyValidation.withdrawalsRoot(withdrawals),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -187,19 +196,28 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), Collections.emptyList()));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), withdrawals));
+    final String warningMessage = "Sync to block " + block.toLogString() + " failed";
 
-    if (parentHeader.isEmpty()) {
-      debugLambda(
-          LOG, "Parent of block {} is not present, append it to backward sync", block::toLogString);
-      mergeCoordinator.appendNewPayloadToSync(block);
-
+    if (mergeContext.get().isSyncing() || parentHeader.isEmpty()) {
+      LOG.debug(
+          "isSyncing: {} parentHeaderMissing: {}, adding {} to backwardsync",
+          mergeContext.get().isSyncing(),
+          parentHeader.isEmpty(),
+          block.getHash());
+      mergeCoordinator
+          .appendNewPayloadToSync(block)
+          .exceptionally(
+              exception -> {
+                LOG.warn(warningMessage, exception.getMessage());
+                return null;
+              });
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      mergeCoordinator.addBadBlock(block, Optional.empty());
+      mergeCoordinator.addBadBlock(block);
       return respondWithInvalid(
           reqId,
           blockParam,
@@ -218,13 +236,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     final long startTimeMs = System.currentTimeMillis();
     final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
 
-    if (executionResult.isSuccessful()) {
+    if (executionResult.errorMessage.isEmpty()) {
       logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
-      if (executionResult.causedBy().isPresent()) {
-        Throwable causedBy = executionResult.causedBy().get();
-        if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
+      if (executionResult.cause.isPresent()) {
+        // TODO; would prefer to invert the logic so we rpc error on anything that isn't a
+        // consensus error
+        if (executionResult.cause.get() instanceof StorageException) {
           JsonRpcError error = JsonRpcError.INTERNAL_ERROR;
           JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
           return response;

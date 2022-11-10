@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import io.vertx.core.Vertx;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadAttributes;
@@ -36,20 +34,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-
-import java.util.Collections;
-import java.util.Optional;
-import java.util.function.BiConsumer;
-
-import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
-  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdated.class);
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
+public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
   private final MergeMiningCoordinator mergeCoordinator;
 
-  public EngineForkchoiceUpdated(
+  public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
@@ -60,7 +57,7 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_FORKCHOICE_UPDATED.getMethodName();
+    return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V2.getMethodName();
   }
 
   @Override
@@ -100,27 +97,24 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
-    final Optional<BlockHeader> maybeNewHead =
-        mergeCoordinator.getOrSyncHeadByHash(
-            forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
+    Optional<BlockHeader> newHead =
+        mergeCoordinator.getOrSyncHeaderByHash(forkChoice.getHeadBlockHash());
 
-    if (maybeNewHead.isEmpty()) {
+    if (newHead.isEmpty()) {
       return syncingResponse(requestId, forkChoice);
     }
-
-    final BlockHeader newHead = maybeNewHead.get();
 
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
     if (!isValidForkchoiceState(
-        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
+        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead.get())) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
-    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead)) {
+    if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newHead.get())) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcSuccessResponse(
           requestId,
@@ -128,12 +122,12 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
               INVALID,
               Hash.ZERO,
               null,
-              Optional.of(newHead + " did not descend from terminal block")));
+              Optional.of(newHead.get() + " did not descend from terminal block")));
     }
 
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
-            newHead,
+            newHead.get(),
             forkChoice.getFinalizedBlockHash(),
             forkChoice.getSafeBlockHash(),
             maybePayloadAttributes.map(
@@ -141,7 +135,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
                     new PayloadAttributes(
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
-                        payloadAttributes.getSuggestedFeeRecipient(), Collections.emptyList())));
+                        payloadAttributes.getSuggestedFeeRecipient(),
+                        payloadAttributes.getWithdrawals())));
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -153,10 +148,11 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
         maybePayloadAttributes.map(
             payloadAttributes ->
                 mergeCoordinator.preparePayload(
-                    newHead,
+                    newHead.get(),
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
-                    payloadAttributes.getSuggestedFeeRecipient(),Collections.emptyList()));
+                    payloadAttributes.getSuggestedFeeRecipient(),
+                    payloadAttributes.getWithdrawals()));
 
     payloadId.ifPresent(
         pid ->
