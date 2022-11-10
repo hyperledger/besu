@@ -192,6 +192,7 @@ public class RunnerBuilder {
   private StorageProvider storageProvider;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
+  private boolean legacyForkIdEnabled;
 
   public RunnerBuilder vertx(final Vertx vertx) {
     this.vertx = vertx;
@@ -482,6 +483,7 @@ public class RunnerBuilder {
                 .vertx(vertx)
                 .nodeKey(nodeKey)
                 .config(networkingConfiguration)
+                .legacyForkIdEnabled(legacyForkIdEnabled)
                 .peerPermissions(peerPermissions)
                 .metricsSystem(metricsSystem)
                 .supportedCapabilities(caps)
@@ -1172,6 +1174,11 @@ public class RunnerBuilder {
 
   public RunnerBuilder minPeers(final int minPeers) {
     this.minPeers = minPeers;
+    return this;
+  }
+
+  public RunnerBuilder legacyForkId(final boolean legacyEth64ForkIdEnabled) {
+    this.legacyForkIdEnabled = legacyEth64ForkIdEnabled;
     return this;
   }
 }

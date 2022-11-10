@@ -118,7 +118,8 @@ public class PeerDiscoveryController {
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
-  private final Map<Bytes, PeerInteractionState> inflightInteractions = new ConcurrentHashMap<>();
+  private final Map<Bytes, Map<PacketType, PeerInteractionState>> inflightInteractions =
+      new ConcurrentHashMap<>();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -261,7 +262,13 @@ public class PeerDiscoveryController {
     tableRefreshTimerId = OptionalLong.empty();
     cleanTableTimerId.ifPresent(timerUtil::cancelTimer);
     cleanTableTimerId = OptionalLong.empty();
-    inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
+    inflightInteractions
+        .values()
+        .forEach(
+            l -> {
+              l.values().forEach(s -> s.cancelTimers());
+              l.clear();
+            });
     inflightInteractions.clear();
     return CompletableFuture.completedFuture(null);
   }
@@ -453,19 +460,29 @@ public class PeerDiscoveryController {
     return true;
   }
 
-  private void notifyPeerBonded(final DiscoveryPeer peer, final long now) {
+  @VisibleForTesting
+  void notifyPeerBonded(final DiscoveryPeer peer, final long now) {
     final PeerDiscoveryEvent.PeerBondedEvent event =
         new PeerDiscoveryEvent.PeerBondedEvent(peer, now);
     dispatchPeerBondedEvent(peerBondedObservers, event);
   }
 
   private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
-    final PeerInteractionState interaction = inflightInteractions.get(packet.getNodeId());
+    final Bytes nodeId = packet.getNodeId();
+    Map<PacketType, PeerInteractionState> stateMap = inflightInteractions.get(nodeId);
+    if (stateMap == null) {
+      return Optional.empty();
+    }
+    final PacketType packetType = packet.getType();
+    final PeerInteractionState interaction = stateMap.get(packetType);
     if (interaction == null || !interaction.test(packet)) {
       return Optional.empty();
     }
     interaction.cancelTimers();
-    inflightInteractions.remove(packet.getNodeId());
+    stateMap.remove(packetType);
+    if (stateMap.isEmpty()) {
+      inflightInteractions.remove(nodeId);
+    }
     return Optional.of(interaction);
   }
 
@@ -541,7 +558,7 @@ public class PeerDiscoveryController {
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
-        new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false);
     dispatchInteraction(peer, peerInteractionState);
   }
 
@@ -578,8 +595,7 @@ public class PeerDiscoveryController {
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
-        new PeerInteractionState(
-            action, peer.getId(), PacketType.ENR_RESPONSE, packet -> false, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.ENR_RESPONSE, packet -> false);
     dispatchInteraction(peer, peerInteractionState);
   }
 
@@ -625,7 +641,7 @@ public class PeerDiscoveryController {
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
-        new PeerInteractionState(action, peer.getId(), PacketType.NEIGHBORS, packet -> true, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.NEIGHBORS, packet -> true);
     dispatchInteraction(peer, interaction);
   }
 
@@ -639,11 +655,15 @@ public class PeerDiscoveryController {
    * @param state The state.
    */
   private void dispatchInteraction(final Peer peer, final PeerInteractionState state) {
-    final PeerInteractionState previous = inflightInteractions.put(peer.getId(), state);
+    Bytes id = peer.getId();
+    final PeerInteractionState previous =
+        inflightInteractions
+            .computeIfAbsent(id, k -> new ConcurrentHashMap<>())
+            .put(state.expectedType, state);
     if (previous != null) {
       previous.cancelTimers();
     }
-    state.execute(0, 0);
+    state.execute();
   }
 
   private void respondToPing(
@@ -750,22 +770,21 @@ public class PeerDiscoveryController {
     private final Counter retryCounter;
     /** A custom filter to accept transitions out of this state. */
     private Predicate<Packet> filter;
-    /** Whether the action associated to this state is retryable or not. */
-    private final boolean retryable;
     /** Timers associated with this entry. */
     private OptionalLong timerId = OptionalLong.empty();
+
+    private long delay = 0;
+    private int retryCount = 0;
 
     PeerInteractionState(
         final Consumer<PeerInteractionState> action,
         final Bytes peerId,
         final PacketType expectedType,
-        final Predicate<Packet> filter,
-        final boolean retryable) {
+        final Predicate<Packet> filter) {
       this.action = action;
       this.peerId = peerId;
       this.expectedType = expectedType;
       this.filter = filter;
-      this.retryable = retryable;
       interactionCounter.labels(expectedType.name()).inc();
       retryCounter = interactionRetryCounter.labels(expectedType.name());
     }
@@ -779,27 +798,27 @@ public class PeerDiscoveryController {
       this.filter = filter;
     }
 
-    /**
-     * Executes the action associated with this state. Sets a "boomerang" timer to itself in case
-     * the action is retryable.
-     *
-     * @param lastTimeout the previous timeout, or 0 if this is the first time the action is being
-     *     executed.
-     */
-    void execute(final long lastTimeout, final int retryCount) {
+    /** Executes the action associated with this state. Sets a "boomerang" timer to itself. */
+    void execute() {
       action.accept(this);
-      if (retryable && retryCount < MAX_RETRIES) {
-        final long newTimeout = retryDelayFunction.apply(lastTimeout);
+      if (retryCount < MAX_RETRIES) {
+        delay = retryDelayFunction.apply(delay);
         timerId =
             OptionalLong.of(
                 timerUtil.setTimer(
-                    newTimeout,
+                    delay,
                     () -> {
                       retryCounter.inc();
-                      execute(newTimeout, retryCount + 1);
+                      retryCount++;
+                      execute();
                     }));
       } else {
-        inflightInteractions.remove(peerId);
+        Map<PacketType, PeerInteractionState> peerInteractionStateMap =
+            inflightInteractions.get(peerId);
+        peerInteractionStateMap.remove(expectedType);
+        if (peerInteractionStateMap.isEmpty()) {
+          inflightInteractions.remove(peerId);
+        }
       }
     }
 

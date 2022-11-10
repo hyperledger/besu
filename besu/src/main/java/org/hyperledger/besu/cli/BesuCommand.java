@@ -2864,6 +2864,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                     .getValue())
             .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
+            .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)

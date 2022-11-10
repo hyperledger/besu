@@ -494,6 +494,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
     private Blockchain blockchain;
     private List<Long> forks;
+    private boolean legacyForkIdEnabled = false;
 
     public P2PNetwork build() {
       validate();
@@ -538,7 +539,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
-      final ForkIdManager forkIdManager = new ForkIdManager(blockchain, forks, false);
+      final ForkIdManager forkIdManager =
+          new ForkIdManager(blockchain, forks, this.legacyForkIdEnabled);
 
       return new VertxPeerDiscoveryAgent(
           vertx,
@@ -656,6 +658,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder forks(final List<Long> forks) {
       checkNotNull(forks);
       this.forks = forks;
+      return this;
+    }
+
+    public Builder legacyForkIdEnabled(final boolean legacyForkIdEnabled) {
+      this.legacyForkIdEnabled = legacyForkIdEnabled;
       return this;
     }
   }

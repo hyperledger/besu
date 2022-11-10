@@ -152,6 +152,42 @@ public class NetworkingOptionsTest
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void checkFilterByForkIdNotSet() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(false);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkFilterByForkIdSet() {
+    final TestBesuCommand cmd = parseCommand(NetworkingOptions.FILTER_ON_ENR_FORK_ID + "=true");
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(true);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkFilterByForkIdSetToFalse() {
+    final TestBesuCommand cmd = parseCommand(NetworkingOptions.FILTER_ON_ENR_FORK_ID + "=false");
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(false);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   NetworkingConfiguration createDefaultDomainObject() {
     return NetworkingConfiguration.create();
