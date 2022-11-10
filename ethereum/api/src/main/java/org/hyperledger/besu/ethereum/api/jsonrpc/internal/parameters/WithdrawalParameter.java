@@ -19,20 +19,22 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.JsonObject;
 
 public class WithdrawalParameter {
 
   private final String index;
   private final String validatorIndex;
-  private final Address address;
+  private final String address;
   private final String amount;
 
   @JsonCreator
   public WithdrawalParameter(
       @JsonProperty("index") final String index,
       @JsonProperty("validatorIndex") final String validatorIndex,
-      @JsonProperty("address") final Address address,
+      @JsonProperty("address") final String address,
       @JsonProperty("amount") final String amount) {
     this.index = index;
     this.validatorIndex = validatorIndex;
@@ -42,14 +44,46 @@ public class WithdrawalParameter {
 
   public Withdrawal toWithdrawal() {
     return new Withdrawal(
-        Long.decode(index), Long.decode(validatorIndex), address, Wei.fromHexString(amount));
+        Long.decode(index),
+        Long.decode(validatorIndex),
+        Address.fromHexString(address),
+        Wei.fromHexString(amount));
   }
 
   public static WithdrawalParameter fromWithdrawal(final Withdrawal withdrawal) {
     return new WithdrawalParameter(
         Long.toHexString(withdrawal.getIndex()),
         Long.toHexString(withdrawal.getValidatorIndex()),
-        withdrawal.getAddress(),
+        withdrawal.getAddress().toHexString(),
         withdrawal.getAmount().toHexString());
+  }
+
+  public String serialize() {
+    return new JsonObject()
+        .put("index", index)
+        .put("validatorIndex", validatorIndex)
+        .put("address", address)
+        .put("amount", amount)
+        .encode();
+  }
+
+  @JsonGetter
+  public String getIndex() {
+    return index;
+  }
+
+  @JsonGetter
+  public String getValidatorIndex() {
+    return validatorIndex;
+  }
+
+  @JsonGetter
+  public String getAddress() {
+    return address;
+  }
+
+  @JsonGetter
+  public String getAmount() {
+    return amount;
   }
 }

@@ -73,8 +73,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
-    //TODO Withdrawals: depends on protocol schedule if we include withdrawals, skip withdrawals (but maybe this is ok)
-    //if block after withdral fork only then include the following line
+    // TODO Withdrawals: depends on protocol schedule if we include withdrawals, skip withdrawals
+    // (but maybe this is ok)
+    // if block after withdral fork only then include the following line
     output.writeList(getWithdrawals(), Withdrawal::writeTo);
 
     output.endList();
@@ -89,7 +90,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
             input.readList(Transaction::readFrom),
             input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
 
-            //TODO Withdrawals: if we are after fork only then read the list. if we are before fork then empty list
+            // TODO Withdrawals: if we are after fork only then read the list. if we are before fork
+            // then empty list
             input.isEndOfCurrentList()
                 ? Collections.emptyList()
                 : input.readList(Withdrawal::readFrom));

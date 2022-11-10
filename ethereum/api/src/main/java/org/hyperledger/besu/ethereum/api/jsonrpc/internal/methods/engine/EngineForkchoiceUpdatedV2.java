@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
@@ -142,7 +144,9 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
                         payloadAttributes.getSuggestedFeeRecipient(),
-                        payloadAttributes.getWithdrawals())));
+                        payloadAttributes.getWithdrawals().stream()
+                            .map(WithdrawalParameter::toWithdrawal)
+                            .collect(Collectors.toList()))));
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -158,7 +162,9 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    payloadAttributes.getWithdrawals()));
+                    payloadAttributes.getWithdrawals().stream()
+                        .map(WithdrawalParameter::toWithdrawal)
+                        .collect(Collectors.toList())));
 
     payloadId.ifPresent(
         pid ->
