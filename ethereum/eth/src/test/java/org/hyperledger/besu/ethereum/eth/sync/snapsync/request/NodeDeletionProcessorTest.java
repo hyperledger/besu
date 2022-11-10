@@ -18,6 +18,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -51,35 +52,42 @@ class NodeDeletionProcessorTest {
         storageStorage = Mockito.mock(KeyValueStorage.class);
         final KeyValueStorage trieBranchStorage = Mockito.mock(KeyValueStorage.class);
         trieLogStorage = new InMemoryKeyValueStorage();
-        prepareData(trieLogStorage, 3);
+        prepareData(trieLogStorage, 3,20);
         worldStateStorage = new BonsaiInMemoryWorldStateKeyValueStorage(accountStorage,codeStorage, storageStorage,trieBranchStorage, trieLogStorage,Optional.empty());
     }
 
-    private void prepareData(final KeyValueStorage trieLogStorage, int accounts) {
+    private void prepareData(final KeyValueStorage trieLogStorage,final int accounts, final int maxStorageSlots) {
         final MerkleStorage merkleStorage = new KeyValueMerkleStorage(trieLogStorage);
         final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
                 new StoredMerklePatriciaTrie<>(merkleStorage::get, Function.identity(), Function.identity());
+        final Random random = new Random(accounts * 2L + maxStorageSlots * 3L);
         for (int i = 0; i < accounts; i++) {
-            final Bytes accountBytes = encodeAccount(i);
-            final Hash accountHash= Hash.hash(accountBytes);
-            trie.put(accountHash, accountBytes);
-            trie.commit(merkleStorage::put);
+            final Hash accountHash = Hash.hash(Bytes.wrap(("account seed " + i).getBytes()));
+            final Hash storageRootHash = generateRandomStorage(trie, accountHash, random.nextInt(maxStorageSlots),random);
+
+            addRandomAccount(trie, accountHash, storageRootHash, random);
 
             final Bytes32 rootHash = trie.getRootHash();
             final StoredMerklePatriciaTrie<Bytes, Bytes> newTrie =
                     new StoredMerklePatriciaTrie<>(merkleStorage::get, rootHash, b -> b, b -> b);
 
-            return;
-
         }
+        trie.commit(merkleStorage::put);
 
     }
 
-    private Bytes encodeAccount(int seed){
-        StateTrieAccountValue value = new StateTrieAccountValue(seed, Wei.ZERO,Hash.hash(Bytes.wrap(("storage"+seed).getBytes())),Hash.hash(Bytes.wrap(("code"+seed).getBytes())));
-        return RLP.encode(value::writeTo);
+    private void addRandomAccount(final StoredMerklePatriciaTrie<Bytes, Bytes> trie, final Hash accountHash, final Hash storageRootHash, final Random random) {
+        StateTrieAccountValue value = new StateTrieAccountValue(random.nextLong(100), Wei.ZERO,storageRootHash,Hash.hash(Bytes.wrap(("code seed"+accountHash).getBytes())));
+        trie.put(accountHash, RLP.encode(value::writeTo));
     }
-    private void insertStorageNode(){
+
+    private Hash generateRandomStorage(final StoredMerklePatriciaTrie<Bytes, Bytes> trie, final Hash accountHash, final int slots, final Random random) {
+        for (int i =0;i<slots;i++) {
+            final Hash storageHash = Hash.hash(Bytes.wrap(("storage seed " + accountHash + " " + i).getBytes()));
+            trie.put(Bytes.concatenate(accountHash,storageHash), RLP.encode(out -> out.writeLong(random.nextLong(100))));
+        }
+//        return trie.get(Bytes.concatenate(accountHash,Hash.EMPTY));
+        return null;
     }
 
     @Test
