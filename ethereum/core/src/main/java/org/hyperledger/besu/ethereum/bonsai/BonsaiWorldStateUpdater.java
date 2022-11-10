@@ -267,6 +267,7 @@ public class BonsaiWorldStateUpdater extends AbstractWorldUpdater<BonsaiWorldVie
                   new TreeSet<>(Map.Entry.comparingByKey());
               entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
 
+              // parallel stream here may cause database corruption
               entries.forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
