@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+
 import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 @JsonPropertyOrder({
   "parentHash",
@@ -56,7 +58,10 @@ public class EngineGetPayloadResultV2 {
   protected final List<String> transactions;
   protected final List<WithdrawalParameter> withdrawals;
 
-  public EngineGetPayloadResultV2(final BlockHeader header, final List<String> transactions, final List<WithdrawalParameter> withdrawals) {
+  public EngineGetPayloadResultV2(
+      final BlockHeader header,
+      final List<String> transactions,
+      final List<WithdrawalParameter> withdrawals) {
     this.blockNumber = Quantity.create(header.getNumber());
     this.blockHash = header.getHash().toString();
     this.parentHash = header.getParentHash().toString();

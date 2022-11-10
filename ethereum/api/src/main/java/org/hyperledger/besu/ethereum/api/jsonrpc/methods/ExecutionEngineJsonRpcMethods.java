@@ -76,7 +76,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               mergeCoordinator.get(),
               blockResultFactory,
               engineQosTimer),
-              new EngineGetPayloadV2(
+          new EngineGetPayloadV2(
               consensusEngineServer,
               protocolContext,
               mergeCoordinator.get(),
@@ -99,8 +99,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
           new EngineForkchoiceUpdatedV2(
               consensusEngineServer, protocolContext, mergeCoordinator.get(), engineQosTimer),
           new EngineExchangeTransitionConfiguration(
-              consensusEngineServer, protocolContext, engineQosTimer)
-              );
+              consensusEngineServer, protocolContext, engineQosTimer));
     } else {
       return mapOf(
           new EngineExchangeTransitionConfiguration(
