@@ -82,34 +82,33 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldPersist) {
 
-    try {
-      final BlockHeader header = block.getHeader();
+    final BlockHeader header = block.getHeader();
 
-      final MutableBlockchain blockchain = context.getBlockchain();
-      final Optional<BlockHeader> maybeParentHeader =
-          blockchain.getBlockHeader(header.getParentHash());
-      if (maybeParentHeader.isEmpty()) {
-        var retval =
-            new BlockProcessingResult(
-                "Parent block with hash " + header.getParentHash() + " not present");
-        handleAndLogImportFailure(block, retval);
-        return retval;
-      }
-      final BlockHeader parentHeader = maybeParentHeader.get();
+    final MutableBlockchain blockchain = context.getBlockchain();
+    final Optional<BlockHeader> maybeParentHeader =
+        blockchain.getBlockHeader(header.getParentHash());
+    if (maybeParentHeader.isEmpty()) {
+      var retval =
+          new BlockProcessingResult(
+              "Parent block with hash " + header.getParentHash() + " not present");
+      handleAndLogImportFailure(block, retval);
+      return retval;
+    }
+    final BlockHeader parentHeader = maybeParentHeader.get();
 
-      if (!blockHeaderValidator.validateHeader(
-          header, parentHeader, context, headerValidationMode)) {
-        var retval = new BlockProcessingResult("header validation rule violated, see logs");
-        handleAndLogImportFailure(block, retval);
-        return retval;
-      }
+    if (!blockHeaderValidator.validateHeader(header, parentHeader, context, headerValidationMode)) {
+      var retval = new BlockProcessingResult("header validation rule violated, see logs");
+      handleAndLogImportFailure(block, retval);
+      return retval;
+    }
 
-      final Optional<MutableWorldState> maybeWorldState =
-          context
-              .getWorldStateArchive()
-              .getMutable(parentHeader.getStateRoot(), parentHeader.getHash());
+    try (final var worldState =
+        context
+            .getWorldStateArchive()
+            .getMutable(parentHeader.getStateRoot(), parentHeader.getBlockHash(), shouldPersist)
+            .orElse(null)) {
 
-      if (maybeWorldState.isEmpty()) {
+      if (worldState == null) {
         var retval =
             new BlockProcessingResult(
                 "Unable to process block because parent world state "
@@ -118,8 +117,6 @@ public class MainnetBlockValidator implements BlockValidator {
         handleAndLogImportFailure(block, retval);
         return retval;
       }
-      final MutableWorldState worldState =
-          shouldPersist ? maybeWorldState.get() : maybeWorldState.get().copy();
 
       var result = processBlock(context, worldState, block);
       if (result.isFailed()) {
@@ -160,6 +157,8 @@ public class MainnetBlockValidator implements BlockValidator {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
       handleAndLogImportFailure(block, retval);
       return retval;
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
     }
   }
 
