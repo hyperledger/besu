@@ -71,17 +71,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         || account.getNonce() == -1) {
       fail(frame);
     } else {
-      final long inputOffset = clampedToLong(frame.getStackItem(1));
-      final long inputSize = clampedToLong(frame.getStackItem(2));
-      final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      Code code = evm.getCode(Hash.hash(inputData), inputData);
-
-      if (code.isValid()) {
-        spawnChildMessage(frame, code);
-      } else {
-        fail(frame);
-        account.incrementNonce();
-      }
+      spawnChildMessage(frame, evm);
     }
 
     return new OperationResult(cost, null);
@@ -99,7 +89,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(UInt256.ZERO);
   }
 
-  private void spawnChildMessage(final MessageFrame frame, final Code code) {
+  private void spawnChildMessage(final MessageFrame frame, final EVM evm) {
     // memory cost needs to be calculated prior to memory expansion
     final long cost = cost(frame);
     frame.decrementRemainingGas(cost);
@@ -110,6 +100,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     account.incrementNonce();
 
     final Wei value = Wei.wrap(frame.getStackItem(0));
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+
+    final var code = evm.getCode(Hash.hash(inputData), inputData);
 
     final Address contractAddress = targetContractAddress(frame);
 
