@@ -83,21 +83,29 @@ public class MainnetBlockValidator implements BlockValidator {
       final boolean shouldPersist) {
 
     final BlockHeader header = block.getHeader();
+    final BlockHeader parentHeader;
 
-    final MutableBlockchain blockchain = context.getBlockchain();
-    final Optional<BlockHeader> maybeParentHeader =
-        blockchain.getBlockHeader(header.getParentHash());
-    if (maybeParentHeader.isEmpty()) {
-      var retval =
-          new BlockProcessingResult(
-              "Parent block with hash " + header.getParentHash() + " not present");
-      handleAndLogImportFailure(block, retval);
-      return retval;
-    }
-    final BlockHeader parentHeader = maybeParentHeader.get();
+    try {
+      final MutableBlockchain blockchain = context.getBlockchain();
+      final Optional<BlockHeader> maybeParentHeader =
+          blockchain.getBlockHeader(header.getParentHash());
+      if (maybeParentHeader.isEmpty()) {
+        var retval =
+            new BlockProcessingResult(
+                "Parent block with hash " + header.getParentHash() + " not present");
+        handleAndLogImportFailure(block, retval);
+        return retval;
+      }
+      parentHeader = maybeParentHeader.get();
 
-    if (!blockHeaderValidator.validateHeader(header, parentHeader, context, headerValidationMode)) {
-      var retval = new BlockProcessingResult("header validation rule violated, see logs");
+      if (!blockHeaderValidator.validateHeader(
+          header, parentHeader, context, headerValidationMode)) {
+        var retval = new BlockProcessingResult("header validation rule violated, see logs");
+        handleAndLogImportFailure(block, retval);
+        return retval;
+      }
+    } catch (StorageException ex) {
+      var retval = new BlockProcessingResult(Optional.empty(), ex);
       handleAndLogImportFailure(block, retval);
       return retval;
     }
