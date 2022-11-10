@@ -71,7 +71,20 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         || account.getNonce() == -1) {
       fail(frame);
     } else {
-      spawnChildMessage(frame, evm);
+      frame.decrementRemainingGas(cost);
+      account.incrementNonce();
+
+      final long inputOffset = clampedToLong(frame.getStackItem(1));
+      final long inputSize = clampedToLong(frame.getStackItem(2));
+      final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+      Code code = evm.getCode(Hash.hash(inputData), inputData);
+
+      if (code.isValid()) {
+        spawnChildMessage(frame, code, evm);
+        frame.incrementRemainingGas(cost);
+      } else {
+        fail(frame);
+      }
     }
 
     return new OperationResult(cost, null);
@@ -89,22 +102,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(UInt256.ZERO);
   }
 
-  private void spawnChildMessage(final MessageFrame frame, final EVM evm) {
-    // memory cost needs to be calculated prior to memory expansion
-    final long cost = cost(frame);
-    frame.decrementRemainingGas(cost);
-
-    final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
-
-    account.incrementNonce();
-
+  private void spawnChildMessage(final MessageFrame frame, final Code code, final EVM evm) {
     final Wei value = Wei.wrap(frame.getStackItem(0));
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
-    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-
-    final var code = evm.getCode(Hash.hash(inputData), inputData);
 
     final Address contractAddress = targetContractAddress(frame);
 
@@ -129,26 +128,24 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .code(code)
             .blockValues(frame.getBlockValues())
             .depth(frame.getMessageStackDepth() + 1)
-            .completer(child -> complete(frame, child))
+            .completer(child -> complete(frame, child, evm))
             .miningBeneficiary(frame.getMiningBeneficiary())
             .blockHashLookup(frame.getBlockHashLookup())
             .maxStackSize(frame.getMaxStackSize())
             .build();
 
-    frame.incrementRemainingGas(cost);
-
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
-  private void complete(final MessageFrame frame, final MessageFrame childFrame) {
+  private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
     Code outputCode =
         CodeFactory.createCode(
-            childFrame.getOutputData(), Hash.hash(childFrame.getOutputData()), 1
-            /* FIXME set per spec */
-            );
+            childFrame.getOutputData(),
+            Hash.hash(childFrame.getOutputData()),
+            evm.getMaxEOFVersion());
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {

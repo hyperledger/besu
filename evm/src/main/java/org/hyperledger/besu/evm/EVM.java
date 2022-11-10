@@ -98,6 +98,10 @@ public class EVM {
     return gasCalculator;
   }
 
+  public int getMaxEOFVersion() {
+    return evmSpecVersion.maxEofVersion;
+  }
+
   // Note to maintainers: lots of Java idioms and OO principals are being set aside in the
   // name of performance. This is one of the hottest sections of code.
   //
