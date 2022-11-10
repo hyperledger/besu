@@ -92,24 +92,16 @@ public class StandardJsonTracer implements OperationTracer {
     }
     sb.append("\"memSize\":").append(memorySize).append(",");
     sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
-    if (returnData.size() > 0) {
-      sb.append("\"returnData\":")
-          .append('"')
-          .append(returnData.toHexString())
-          .append('"')
-          .append(",");
-    }
+    sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     sb.append("\"depth\":").append(depth).append(",");
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
-    sb.append("\"opName\":\"").append(currentOp.getName());
-    if (executeResult.getHaltReason() != null) {
-      sb.append(",\"error\":\"")
-          .append(executeResult.getHaltReason().getDescription())
-          .append("\"}");
-    } else if (messageFrame.getRevertReason().isPresent()) {
-      sb.append(",\"error\":\"").append(quoteEscape(messageFrame.getRevertReason().get()));
-    }
-    sb.append("\"}");
+    sb.append("\"opName\":\"").append(currentOp.getName()).append("\",");
+    sb.append("\"error\":\"")
+        .append(
+            executeResult.getHaltReason() == null
+                ? (quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
+                : executeResult.getHaltReason().getDescription())
+        .append("\"}");
     out.println(sb);
   }
 
