@@ -30,8 +30,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
@@ -198,9 +196,7 @@ public class EthSendRawTransactionTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(),
-            expectedError,
-            Optional.ofNullable(transaction.getHash().toString()));
+            request.getRequest().getId(), expectedError, transaction.getHash().toString());
 
     final JsonRpcResponse actualResponse = method.response(request);
 
