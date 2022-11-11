@@ -390,7 +390,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private Void logSyncException(final Hash blockHash, final Throwable exception) {
-    LOG.warn("Sync to block hash " + blockHash.toHexString() + " failed", exception.getMessage());
+    debugLambda(
+        LOG,
+        "Sync to block hash {} failed, reason {}",
+        blockHash::toHexString,
+        exception::getMessage);
     return null;
   }
 

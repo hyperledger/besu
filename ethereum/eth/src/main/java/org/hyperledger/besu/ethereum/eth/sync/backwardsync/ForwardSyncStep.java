@@ -94,6 +94,9 @@ public class ForwardSyncStep {
       return null;
     }
 
+    long lastImportedHeight =
+        context.getProtocolContext().getBlockchain().getChainHeadBlockNumber();
+
     for (Block block : blocks) {
       final Optional<Block> parent =
           context
@@ -109,14 +112,15 @@ public class ForwardSyncStep {
             block.getHeader().getParentHash()::toString,
             block::toLogString,
             context::getBatchSize);
-        logProgress(blocks.get(blocks.size() - 1).getHeader().getNumber());
+        logProgress(lastImportedHeight);
         return null;
       } else {
         context.saveBlock(block);
+        lastImportedHeight = block.getHeader().getNumber();
       }
     }
 
-    logProgress(blocks.get(blocks.size() - 1).getHeader().getNumber());
+    logProgress(lastImportedHeight);
 
     context.resetBatchSize();
     return null;
@@ -130,7 +134,7 @@ public class ForwardSyncStep {
 
     final float completedPercentage = 100.0f * imported / estimatedTotal;
 
-    if (currImportedHeight < targetHeight) {
+    if (completedPercentage < 100.0f) {
       final long now = System.currentTimeMillis();
       if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
         LOG.info(

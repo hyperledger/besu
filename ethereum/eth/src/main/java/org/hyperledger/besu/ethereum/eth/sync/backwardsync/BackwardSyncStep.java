@@ -113,7 +113,7 @@ public class BackwardSyncStep {
 
     final float completedPercentage = 100.0f * downloaded / estimatedTotal;
 
-    if (currLowestDownloadedHeight > initialHeight) {
+    if (completedPercentage < 100.0f) {
       final long now = System.currentTimeMillis();
       if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
         LOG.info(
