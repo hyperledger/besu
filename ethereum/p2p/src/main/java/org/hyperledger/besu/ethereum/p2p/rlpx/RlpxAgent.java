@@ -691,4 +691,9 @@ public class RlpxAgent {
       return this;
     }
   }
+
+  @Override
+  public String toString() {
+    return connectionEvents.toString();
+  }
 }

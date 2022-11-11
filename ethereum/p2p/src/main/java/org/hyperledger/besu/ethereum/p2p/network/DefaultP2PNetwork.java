@@ -649,4 +649,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return this;
     }
   }
+
+  @Override
+  public String toString() {
+    return rlpxAgent.toString();
+  }
 }
