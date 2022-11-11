@@ -118,13 +118,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   public MergeCoordinator(
-          final ProtocolContext protocolContext,
-          final ProtocolSchedule protocolSchedule,
-          final ProposalBuilderExecutor blockBuilderExecutor,
-          final AbstractPendingTransactionsSorter pendingTransactions,
-          final MiningParameters miningParams,
-          final BackwardSyncContext backwardSyncContext,
-          final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProposalBuilderExecutor blockBuilderExecutor,
+      final AbstractPendingTransactionsSorter pendingTransactions,
+      final MiningParameters miningParams,
+      final BackwardSyncContext backwardSyncContext,
+      final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
 
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -133,13 +133,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     this.miningParameters = miningParams;
     this.backwardSyncContext = backwardSyncContext;
     this.targetGasLimit =
-            miningParameters
-                    .getTargetGasLimit()
-                    // TODO: revisit default target gas limit
-                    .orElse(new AtomicLong(30000000L));
+        miningParameters
+            .getTargetGasLimit()
+            // TODO: revisit default target gas limit
+            .orElse(new AtomicLong(30000000L));
 
     this.mergeBlockCreatorFactory = mergeBlockCreatorFactory;
-
 
     this.backwardSyncContext.subscribeBadChainListener(this);
   }
@@ -250,7 +249,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       LOG.warn(
           "failed to validate empty block proposal {}, reason {}",
           emptyBlock.getHash(),
-          result.errorMessage, result.causedBy());
+          result.errorMessage,
+          result.causedBy());
     }
 
     tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator);

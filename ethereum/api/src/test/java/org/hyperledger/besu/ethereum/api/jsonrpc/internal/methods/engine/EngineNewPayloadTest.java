@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -221,7 +222,7 @@ public class EngineNewPayloadTest {
   }
 
   @Test
-  public void shouldNotReturnInvalidOnInternalException() {
+  public void shouldNotReturnInvalidOnStorageException() {
     BlockHeader mockHeader = createBlockHeader();
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
@@ -243,18 +244,18 @@ public class EngineNewPayloadTest {
   }
 
   @Test
-  public void shouldNotReturnInvalidOnMerkleTrieException() {
+  public void shouldNotReturnInvalidOnHandledMerkleTrieException() {
     BlockHeader mockHeader = createBlockHeader();
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
-            .thenReturn(Optional.of(mock(BlockHeader.class)));
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
-            .thenReturn(Optional.of(mockHash));
+        .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-            .thenReturn(true);
+        .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-            .thenReturn(
-                    new BlockProcessingResult(Optional.empty(), new MerkleTrieException("missing leaf")));
+        .thenReturn(
+            new BlockProcessingResult(Optional.empty(), new MerkleTrieException("missing leaf")));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -263,7 +264,27 @@ public class EngineNewPayloadTest {
     // verify mainnetBlockValidator does not add to bad block manager
 
     fromErrorResp(resp);
+  }
 
+  @Test
+  public void shouldNotReturnInvalidOnThrownMerkleTrieException() {
+    BlockHeader mockHeader = createBlockHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    verify(engineCallListener, times(1)).executionEngineCalled();
+    verify(mergeCoordinator, never()).addBadBlock(any(), any());
+    // verify mainnetBlockValidator does not add to bad block manager
+
+    fromErrorResp(resp);
   }
 
   @Test
