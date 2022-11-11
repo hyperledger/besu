@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -189,6 +190,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
+      maybeWithdrawals.ifPresent(
+          withdrawals -> {
+            WithdrawalProcessor withdrawalProcessor = new WithdrawalProcessor();
+            final WorldUpdater updater = disposableWorldState.updater();
+            for (Withdrawal withdrawal : withdrawals) {
+              withdrawalProcessor.processWithdrawal(withdrawal, updater);
+            }
+            updater.commit();
+          });
+
       final SealableBlockHeader sealableBlockHeader =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
@@ -202,6 +213,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(transactionResults.getCumulativeGasUsed())
               .extraData(extraDataCalculator.get(parentHeader))
+              .withdrawalsRoot(
+                  maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(Hash.EMPTY))
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);

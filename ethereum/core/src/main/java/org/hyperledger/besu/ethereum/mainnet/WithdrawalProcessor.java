@@ -28,10 +28,11 @@ public class WithdrawalProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(WithdrawalProcessor.class);
 
-  public void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldState) {
+  public void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldUpdater) {
     try {
-      final EvmAccount account = worldState.getOrCreate(withdrawal.getAddress());
+      final EvmAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
       account.getMutable().setBalance(account.getBalance().add(withdrawal.getAmount()));
+      worldUpdater.commit();
     } catch (Exception e) {
       final String message =
           String.format(
