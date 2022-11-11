@@ -259,7 +259,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 protocolContext,
                 protocolSchedule,
                 proposalBuilderExecutor,
-                transactions,
                 miningParameters,
                 backwardSyncContext,
                 mergeBlockCreatorFactory));

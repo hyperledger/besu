@@ -121,7 +121,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ProposalBuilderExecutor blockBuilderExecutor,
-      final AbstractPendingTransactionsSorter pendingTransactions,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext,
       final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
