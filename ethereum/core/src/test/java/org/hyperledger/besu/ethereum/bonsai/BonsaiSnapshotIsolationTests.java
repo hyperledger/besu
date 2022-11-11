@@ -146,6 +146,13 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolated2.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+
+    try {
+      isolated.get().close();
+      isolated2.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -176,6 +183,11 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(ws.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(ws.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+    try {
+      isolated.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -240,6 +252,13 @@ public class BonsaiSnapshotIsolationTests {
     var cloneForkTrieLog = archive.getTrieLogManager().getTrieLogLayer(cloneForkBlock.getHash());
     assertThat(cloneForkTrieLog.get().getAccount(testAddress)).isEmpty();
     assertThat(cloneForkTrieLog.get().getAccount(altTestAddress)).isNotEmpty();
+
+    try {
+      isolated.close();
+      isolatedClone.close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -276,6 +295,12 @@ public class BonsaiSnapshotIsolationTests {
 
     // copy of closed isolated worldstate should still pass check
     checkIsolatedState.accept(isolatedClone);
+
+    try {
+      isolatedClone.close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -320,6 +345,13 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolatedRollBack.get().rootHash()).isEqualTo(block1.getHeader().getStateRoot());
+
+    try {
+      isolatedRollForward.get().close();
+      isolatedRollBack.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
