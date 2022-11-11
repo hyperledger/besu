@@ -145,7 +145,6 @@ public class BackwardsSyncAlgorithm {
         final boolean await = latch.await(2, TimeUnit.MINUTES);
         if (await) {
           LOG.debug("Preconditions meet, ensure at least one peer is connected");
-          // ensure at least one peer is connected
           waitForPeers(1).get();
         }
       }
@@ -155,7 +154,7 @@ public class BackwardsSyncAlgorithm {
           "Wait for TTD preconditions interrupted (" + e.getMessage() + ")");
     } catch (ExecutionException e) {
       throw new BackwardSyncException(
-          "Error while waiting for at least one connected peer (" + e.getMessage() + ")");
+          "Error while waiting for at least one connected peer (" + e.getMessage() + ")", true);
     } finally {
       context.getSyncState().unsubscribeTTDReached(idTTD);
       context.getSyncState().unsubscribeInitialConditionReached(idIS);

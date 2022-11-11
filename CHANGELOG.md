@@ -9,6 +9,7 @@
 - Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
+- Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
 
 ### Bug Fixes
 
