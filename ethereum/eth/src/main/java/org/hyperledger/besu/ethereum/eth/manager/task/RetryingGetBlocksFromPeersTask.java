@@ -105,7 +105,7 @@ public class RetryingGetBlocksFromPeersTask
           this::getAssignedPeer,
           this::getRetryCount);
     } else {
-      LOG.warn("Failed to get {} blocks after {} retries", headers.size(), getRetryCount());
+      LOG.debug("Failed to get {} blocks after {} retries", headers.size(), getRetryCount());
     }
     super.handleTaskError(error);
   }
