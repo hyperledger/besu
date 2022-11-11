@@ -250,7 +250,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           "failed to validate empty block proposal {}, reason {}",
           emptyBlock.getHash(),
           result.errorMessage);
-      if(result.causedBy().isPresent()) {
+      if (result.causedBy().isPresent()) {
         LOG.warn("caused by", result.causedBy().get());
       }
     }
@@ -375,10 +375,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           bestBlock.getHash(),
           payloadIdentifier.toString(),
           resultBest.errorMessage);
-      if(resultBest.causedBy().isPresent()) {
+      if (resultBest.causedBy().isPresent()) {
         LOG.warn("caused by", resultBest.cause.get());
       }
-
     }
   }
 

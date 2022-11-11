@@ -39,6 +39,7 @@ public class BadBlockManager {
    * Add a new invalid block.
    *
    * @param badBlock the invalid block
+   * @param cause optional exception causing the block to be considered invalid
    */
   public void addBadBlock(final Block badBlock, final Optional<Throwable> cause) {
     if (badBlock != null) {
