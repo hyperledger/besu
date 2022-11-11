@@ -2345,13 +2345,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     for (final String cipherSuite : jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites) {
-      if (!getJDKEnabledCypherSuites().contains(cipherSuite)) {
+      if (!getJDKEnabledCipherSuites().contains(cipherSuite)) {
         throw new ParameterException(
             commandLine, "Invalid TLS cipher suite specified " + cipherSuite);
       }
     }
 
-    jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites.retainAll(getJDKEnabledCypherSuites());
+    jsonRPCHttpOptionGroup.rpcHttpTlsCipherSuites.retainAll(getJDKEnabledCipherSuites());
 
     return Optional.of(
         TlsConfiguration.Builder.aTlsConfiguration()
@@ -3300,7 +3300,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return engineRPCOptionGroup.overrideEngineRpcEnabled || isMergeEnabled();
   }
 
-  public static List<String> getJDKEnabledCypherSuites() {
+  public static List<String> getJDKEnabledCipherSuites() {
     try {
       final SSLContext context = SSLContext.getInstance("TLS");
       context.init(null, null, null);
