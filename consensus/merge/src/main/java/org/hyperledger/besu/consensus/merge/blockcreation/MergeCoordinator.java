@@ -439,7 +439,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (newHead.getNumber() < blockchain.getChainHeadBlockNumber()
         && isDescendantOf(newHead, blockchain.getChainHeadHeader())) {
-      LOG.info("Ignoring update to old head");
+      debugLambda(LOG, "Ignoring update to old head {}", newHead::toLogString);
       return ForkchoiceResult.withIgnoreUpdateToOldHead(newHead);
     }
 

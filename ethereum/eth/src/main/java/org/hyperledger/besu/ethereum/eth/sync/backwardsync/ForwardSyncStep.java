@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -34,6 +33,8 @@ import org.slf4j.LoggerFactory;
 public class ForwardSyncStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
+  private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
+  private static long lastLogAt = 0;
   private final BackwardSyncContext context;
   private final BackwardChain backwardChain;
 
@@ -78,6 +79,7 @@ public class ForwardSyncStep {
     return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult)
         .thenApply(
             blocks -> {
+              LOG.debug("Got {} blocks from peers", blocks.size());
               blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
               return blocks;
             });
@@ -86,8 +88,8 @@ public class ForwardSyncStep {
   @VisibleForTesting
   protected Void saveBlocks(final List<Block> blocks) {
     if (blocks.isEmpty()) {
-      LOG.info("No blocks to save...");
       context.halveBatchSize();
+      LOG.debug("No blocks to save, reducing batch size to {}", context.getBatchSize());
       return null;
     }
 
@@ -97,21 +99,53 @@ public class ForwardSyncStep {
               .getProtocolContext()
               .getBlockchain()
               .getBlockByHash(block.getHeader().getParentHash());
+
       if (parent.isEmpty()) {
         context.halveBatchSize();
+        debugLambda(
+            LOG,
+            "Parent block {} not found, while saving block {}, reducing batch size to {}",
+            block.getHeader().getParentHash()::toString,
+            block::toLogString,
+            context::getBatchSize);
+        logProgress(blocks.get(blocks.size() - 1).getHeader().getNumber());
         return null;
       } else {
         context.saveBlock(block);
       }
     }
-    infoLambda(
-        LOG,
-        "Saved blocks {} -> {} (target: {})",
-        () -> blocks.get(0).getHeader().getNumber(),
-        () -> blocks.get(blocks.size() - 1).getHeader().getNumber(),
-        () ->
-            backwardChain.getPivot().orElse(blocks.get(blocks.size() - 1)).getHeader().getNumber());
+
+    logProgress(blocks.get(blocks.size() - 1).getHeader().getNumber());
+
     context.resetBatchSize();
     return null;
+  }
+
+  private void logProgress(final long currImportedHeight) {
+    final long targetHeight = context.getStatus().getTargetChainHeight();
+    final long initialHeight = context.getStatus().getInitialChainHeight();
+    final long estimatedTotal = targetHeight - initialHeight;
+    final long imported = currImportedHeight - initialHeight;
+
+    final float completedPercentage = 100.0f * imported / estimatedTotal;
+
+    if (currImportedHeight < targetHeight) {
+      final long now = System.currentTimeMillis();
+      if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
+        LOG.info(
+            String.format(
+                "Backward sync phase 2 of 2, %.2f%% completed, imported %d blocks of at least %d. Peers: %d",
+                completedPercentage,
+                imported,
+                estimatedTotal,
+                context.getEthContext().getEthPeers().peerCount()));
+        lastLogAt = now;
+      }
+    } else {
+      LOG.info(
+          String.format(
+              "Backward sync phase 2 of 2 completed, imported a total of %d blocks. Peers: %d",
+              imported, context.getEthContext().getEthPeers().peerCount()));
+    }
   }
 }
