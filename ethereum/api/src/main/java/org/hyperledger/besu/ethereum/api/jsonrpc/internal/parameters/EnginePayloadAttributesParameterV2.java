@@ -14,27 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import static java.util.stream.Collectors.toList;
+
 import org.hyperledger.besu.datatypes.Address;
+
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class EnginePayloadAttributesParameter {
+public class EnginePayloadAttributesParameterV2 {
 
   final Long timestamp;
   final Bytes32 prevRandao;
   final Address suggestedFeeRecipient;
+  final List<WithdrawalParameter> withdrawals;
 
   @JsonCreator
-  public EnginePayloadAttributesParameter(
+  public EnginePayloadAttributesParameterV2(
       @JsonProperty("timestamp") final String timestamp,
       @JsonProperty("prevRandao") final String prevRandao,
-      @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient) {
+      @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
+    this.withdrawals = withdrawals;
   }
 
   public Long getTimestamp() {
@@ -49,11 +56,18 @@ public class EnginePayloadAttributesParameter {
     return suggestedFeeRecipient;
   }
 
+  public List<WithdrawalParameter> getWithdrawals() {
+    return withdrawals;
+  }
+
   public String serialize() {
     return new JsonObject()
         .put("timestamp", timestamp)
         .put("prevRandao", prevRandao.toHexString())
         .put("suggestedFeeRecipient", suggestedFeeRecipient.toHexString())
+        .put(
+            "withdrawals",
+            withdrawals.stream().map(WithdrawalParameter::serialize).collect(toList()))
         .encode();
   }
 }

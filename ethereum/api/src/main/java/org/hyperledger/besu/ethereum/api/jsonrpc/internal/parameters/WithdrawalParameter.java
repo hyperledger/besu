@@ -86,4 +86,22 @@ public class WithdrawalParameter {
   public String getAmount() {
     return amount;
   }
+
+  @Override
+  public String toString() {
+    return "WithdrawalParameter{"
+        + "index='"
+        + index
+        + '\''
+        + ", validatorIndex='"
+        + validatorIndex
+        + '\''
+        + ", address='"
+        + address
+        + '\''
+        + ", amount='"
+        + amount
+        + '\''
+        + '}';
+  }
 }

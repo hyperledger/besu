@@ -32,10 +32,10 @@ public class WithdrawalDecoder {
     final long index = input.readLongScalar();
     final long validatorIndex = input.readLongScalar();
     final Address address = Address.readFrom(input);
-    final long amount = input.readLongScalar();
+    final Wei amount = Wei.of(input.readUInt256Scalar());
     input.leaveList();
 
-    return new Withdrawal((int) index, validatorIndex, address, Wei.of(amount));
+    return new Withdrawal((int) index, validatorIndex, address, amount);
   }
 
   public static Withdrawal decodeOpaqueBytes(final Bytes input) {
