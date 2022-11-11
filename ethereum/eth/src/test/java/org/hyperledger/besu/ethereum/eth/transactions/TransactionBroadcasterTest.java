@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo.toTransactionList;
+import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -243,20 +242,20 @@ public class TransactionBroadcasterTest {
         transactionTracker, transactionsMessageSender, newPooledTransactionHashesMessageSender);
   }
 
-  private Set<TransactionInfo> setupTransactionPool(
+  private Set<PendingTransaction> setupTransactionPool(
       final int numLocalTransactions, final int numRemoteTransactions) {
-    Set<TransactionInfo> txInfo = createTransactionInfoList(numLocalTransactions, true);
-    txInfo.addAll(createTransactionInfoList(numRemoteTransactions, false));
+    Set<PendingTransaction> pendingTxs = createPendingTransactionList(numLocalTransactions, true);
+    pendingTxs.addAll(createPendingTransactionList(numRemoteTransactions, false));
 
-    when(pendingTransactions.getTransactionInfo()).thenReturn(txInfo);
+    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
 
-    return txInfo;
+    return pendingTxs;
   }
 
-  private Set<TransactionInfo> createTransactionInfoList(final int num, final boolean local) {
+  private Set<PendingTransaction> createPendingTransactionList(final int num, final boolean local) {
     return IntStream.range(0, num)
         .mapToObj(unused -> generator.transaction())
-        .map(tx -> new TransactionInfo(tx, local, Instant.now()))
+        .map(tx -> new PendingTransaction(tx, local, Instant.now()))
         .collect(Collectors.toSet());
   }
 

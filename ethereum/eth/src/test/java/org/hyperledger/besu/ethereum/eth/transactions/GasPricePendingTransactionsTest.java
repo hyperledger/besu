@@ -14,23 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.junit.Test;
 
 public class GasPricePendingTransactionsTest extends AbstractPendingTransactionsTestBase {
 
@@ -42,36 +32,5 @@ public class GasPricePendingTransactionsTest extends AbstractPendingTransactions
         clock.orElse(TestClock.system(ZoneId.systemDefault())),
         metricsSystem,
         AbstractPendingTransactionsTestBase::mockBlockHeader);
-  }
-
-  @Test
-  public void shouldPrioritizeGasPriceThenTimeAddedToPool() {
-    transactions.subscribeDroppedTransactions(
-        transaction -> assertThat(transaction.getGasPrice().get().toLong()).isLessThan(100));
-
-    // Fill the pool with transactions from random senders
-    final List<Transaction> lowGasPriceTransactions =
-        IntStream.range(0, MAX_TRANSACTIONS)
-            .mapToObj(
-                i -> {
-                  final Account randomSender = mock(Account.class);
-                  final Transaction lowPriceTx =
-                      transactionWithNonceSenderAndGasPrice(
-                          0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10);
-                  transactions.addRemoteTransaction(lowPriceTx, Optional.of(randomSender));
-                  return lowPriceTx;
-                })
-            .collect(Collectors.toUnmodifiableList());
-
-    // This should kick the oldest tx with the low gas price out, namely the first one we added
-    final Account highPriceSender = mock(Account.class);
-    final Transaction highGasPriceTransaction =
-        transactionWithNonceSenderAndGasPrice(0, KEYS1, 100);
-    transactions.addRemoteTransaction(highGasPriceTransaction, Optional.of(highPriceSender));
-    assertThat(transactions.size()).isEqualTo(MAX_TRANSACTIONS);
-
-    assertTransactionPending(highGasPriceTransaction);
-    assertTransactionNotPending(lowGasPriceTransactions.get(0));
-    lowGasPriceTransactions.stream().skip(1).forEach(this::assertTransactionPending);
   }
 }

@@ -29,6 +29,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
+import static org.hyperledger.besu.cli.config.NetworkName.SHANDONG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
@@ -43,6 +44,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SHANDONG_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.junit.Assume.assumeThat;
@@ -100,6 +102,7 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -1038,6 +1041,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
+  }
+
+  @Test
+  public void testGenesisPathShandongEthConfig() {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "shandong");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
   }
 
   @Test
@@ -3976,6 +3995,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void shandongValuesAreUsed() {
+    parseCommand("--network", "shandong");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(SHANDONG));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Shandong is deprecated and will be shutdown"));
+  }
+
+  @Test
   public void classicValuesAreUsed() throws Exception {
     parseCommand("--network", "classic");
 
@@ -4036,6 +4073,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ropstenValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("ropsten");
+  }
+
+  public void shandongValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("shandong");
   }
 
   @Test
@@ -5370,5 +5411,18 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--Xpos-block-creation-max-time", "17000");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--Xpos-block-creation-max-time must be positive and ≤ 12000");
+  }
+
+  @Test
+  public void portInUseReportsError() throws IOException {
+    final ServerSocket serverSocket = new ServerSocket(8545);
+
+    parseCommand("--rpc-http-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Port(s) '[8545]' already in use. Check for other processes using the port(s).");
+
+    serverSocket.close();
   }
 }
