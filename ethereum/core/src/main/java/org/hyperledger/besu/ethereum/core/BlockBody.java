@@ -72,7 +72,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     // TODO Withdrawals: depends on protocol schedule if we include withdrawals, skip withdrawals
     // (but maybe this is ok)
     // if block after withdral fork only then include the following line
-    output.writeList(getWithdrawals(), Withdrawal::writeTo);
+    if (getWithdrawals() != null) { // null check added to pass MessageWrapperTest.BlockBodies test
+      output.writeList(getWithdrawals(), Withdrawal::writeTo);
+    }
 
     output.endList();
   }

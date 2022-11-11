@@ -41,7 +41,6 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -287,7 +286,7 @@ public class MessageWrapperTest {
       super(
           transactions.stream().collect(toUnmodifiableList()),
           uncles.stream().collect(toUnmodifiableList()),
-          Collections.emptyList());
+          null); // TODO Withdrawals done to pass BlockBodies test but hmmm...
     }
   }
 
