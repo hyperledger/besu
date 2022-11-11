@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 public class BackwardSyncStep {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
+  private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
+  private static long lastLogAt = 0;
   private final BackwardSyncContext context;
   private final BackwardChain backwardChain;
 
@@ -98,26 +100,36 @@ public class BackwardSyncStep {
       saveHeader(blockHeader);
     }
 
-    logProgress(blockHeaders.size(), blockHeaders.get(blockHeaders.size() - 1).getNumber());
+    logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
 
     return null;
   }
 
-  private void logProgress(final int downloadedBatchSize, final long currLowestDownloadedHeight) {
+  private void logProgress(final long currLowestDownloadedHeight) {
     final long targetHeight = context.getStatus().getTargetChainHeight();
     final long initialHeight = context.getStatus().getInitialChainHeight();
-    final long estimatedTotal = targetHeight - Math.min(initialHeight, currLowestDownloadedHeight);
+    final long estimatedTotal = targetHeight - initialHeight;
     final long downloaded = targetHeight - currLowestDownloadedHeight;
 
     final float completedPercentage = 100.0f * downloaded / estimatedTotal;
 
-    LOG.info(
-        String.format(
-            "Backward sync phase 1 of 2, %.2f%% completed, downloaded %d (+%d) headers (estimated total %d). Peers: %d",
-            completedPercentage,
-            downloaded,
-            downloadedBatchSize,
-            estimatedTotal,
-            context.getEthContext().getEthPeers().peerCount()));
+    if (currLowestDownloadedHeight > initialHeight) {
+      final long now = System.currentTimeMillis();
+      if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
+        LOG.info(
+            String.format(
+                "Backward sync phase 1 of 2, %.2f%% completed, downloaded %d headers of at least %d. Peers: %d",
+                completedPercentage,
+                downloaded,
+                estimatedTotal,
+                context.getEthContext().getEthPeers().peerCount()));
+        lastLogAt = now;
+      }
+    } else {
+      LOG.info(
+          String.format(
+              "Backward sync phase 1 of 2 completed, downloaded a total of %d headers. Peers: %d",
+              downloaded, context.getEthContext().getEthPeers().peerCount()));
+    }
   }
 }
