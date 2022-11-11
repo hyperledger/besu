@@ -21,10 +21,23 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class WithdrawalProcessor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(WithdrawalProcessor.class);
+
   public void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldState) {
-    final EvmAccount account = worldState.getAccount(withdrawal.getAddress());
-    account.getMutable().setBalance(account.getBalance().add(withdrawal.getAmount()));
+    try {
+      final EvmAccount account = worldState.getOrCreate(withdrawal.getAddress());
+      account.getMutable().setBalance(account.getBalance().add(withdrawal.getAmount()));
+    } catch (Exception e) {
+      final String message =
+          String.format(
+              "failed to process withdrawal for address: %s of %s wei",
+              withdrawal.getAddress(), withdrawal.getAmount());
+      LOG.error(message, e);
+    }
   }
 }
