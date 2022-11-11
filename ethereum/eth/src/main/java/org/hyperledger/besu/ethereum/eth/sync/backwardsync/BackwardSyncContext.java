@@ -131,6 +131,7 @@ public class BackwardSyncContext {
     backwardChain.addNewHash(newBlockHash);
     return maybeFuture.orElseGet(
         () -> {
+          LOG.info("Starting a new backward sync session");
           Status status = new Status(prepareBackwardSyncFutureWithRetry());
           this.currentBackwardSyncStatus.set(status);
           return status.currentFuture;
@@ -147,7 +148,12 @@ public class BackwardSyncContext {
     backwardChain.appendTrustedBlock(newPivot);
     return maybeFuture.orElseGet(
         () -> {
+          LOG.info("Starting a new backward sync session");
+          LOG.info("Backward sync target block is {}", newPivot.toLogString());
           Status status = new Status(prepareBackwardSyncFutureWithRetry());
+          status.setSyncRange(
+              protocolContext.getBlockchain().getChainHeadBlockNumber(),
+              newPivot.getHeader().getNumber());
           this.currentBackwardSyncStatus.set(status);
           return status.currentFuture;
         });
@@ -170,6 +176,7 @@ public class BackwardSyncContext {
             (unused, throwable) -> {
               this.currentBackwardSyncStatus.set(null);
               if (throwable != null) {
+                LOG.info("Current backward sync session failed, it will be restarted");
                 throw extractBackwardSyncException(throwable)
                     .orElse(new BackwardSyncException(throwable));
               }
@@ -406,10 +413,6 @@ public class BackwardSyncContext {
 
     public long getInitialChainHeight() {
       return initialChainHeight;
-    }
-
-    public long getBlockCount() {
-      return targetChainHeight - initialChainHeight;
     }
   }
 }
