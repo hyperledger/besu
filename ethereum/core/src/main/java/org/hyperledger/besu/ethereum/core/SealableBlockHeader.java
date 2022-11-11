@@ -141,4 +141,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   public Hash getWithdrawalRoot() {
     return withdrawalRoot;
   }
+
+  public Hash getWithdrawalsRoot() {
+    return withdrawalRoot;
+  }
 }

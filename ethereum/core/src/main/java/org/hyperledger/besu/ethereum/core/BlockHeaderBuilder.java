@@ -242,6 +242,7 @@ public class BlockHeaderBuilder {
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot());
     return this;
   }
 
