@@ -69,7 +69,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   Optional<BlockHeader> getOrSyncHeaderByHash(Hash blockHash, Hash finalizedBlockHash);
 
-  void addBadBlock(final Block block, Optional<Throwable> cause);
+  void addBadBlock(final Block block, Optional<Throwable> maybeCause);
 
   boolean isBadBlock(Hash blockHash);
 

@@ -243,7 +243,4 @@ public class BlockImportExceptionHandlingTest {
         HeaderValidationMode.DETACHED_ONLY);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
   }
-  // cover validate body failing on bad receipts
-  // cover MerkleTrieExceptions
-  // cover either StorageException or MerkleTrieException during block creation
 }
