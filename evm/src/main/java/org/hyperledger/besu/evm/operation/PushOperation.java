@@ -27,6 +27,7 @@ public class PushOperation extends AbstractFixedCostOperation {
   private final int length;
 
   static final OperationResult pushSuccess = new OperationResult(3, null);
+
   public PushOperation(final int length, final GasCalculator gasCalculator) {
     super(
         PUSH_BASE + length,
@@ -35,7 +36,7 @@ public class PushOperation extends AbstractFixedCostOperation {
         1,
         length + 1,
         gasCalculator,
-        length == 0 ? gasCalculator.getBaseTierGasCost() : gasCalculator.getVeryLowTierGasCost());
+        gasCalculator.getVeryLowTierGasCost());
     this.length = length;
   }
 
