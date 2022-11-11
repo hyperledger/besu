@@ -82,6 +82,7 @@ import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
+import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
@@ -202,8 +203,11 @@ public class MainnetEVMs {
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
 
-    // Register the PUSH0, PUSH1, PUSH2, ..., PUSH32 operations.
-    for (int i = 0; i <= 32; ++i) {
+    // Register the PUSH0 operation.
+    registry.put(new Push0Operation(gasCalculator));
+
+    // Register the PUSH1, PUSH2, ..., PUSH32 operations.
+    for (int i = 1; i <= 32; ++i) {
       registry.put(new PushOperation(i, gasCalculator));
     }
 

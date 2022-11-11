@@ -27,8 +27,6 @@ public class PushOperation extends AbstractFixedCostOperation {
   private final int length;
 
   static final OperationResult pushSuccess = new OperationResult(3, null);
-  static final OperationResult push0Success = new OperationResult(2, null);
-
   public PushOperation(final int length, final GasCalculator gasCalculator) {
     super(
         PUSH_BASE + length,
@@ -50,13 +48,6 @@ public class PushOperation extends AbstractFixedCostOperation {
 
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
-    // Handle the PUSH0 special case
-    if(pushSize == 0) {
-      frame.pushStackItem(Bytes.EMPTY);
-      frame.setPC(pc + 1);
-      return push0Success;
-    }
-
     int copyStart = pc + 1;
     Bytes push;
     if (code.length <= copyStart) {
