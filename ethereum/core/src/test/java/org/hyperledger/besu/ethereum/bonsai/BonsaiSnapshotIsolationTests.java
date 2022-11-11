@@ -71,7 +71,6 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -189,8 +188,6 @@ public class BonsaiSnapshotIsolationTests {
     } catch (Exception ex) {
       throw new RuntimeException("failed to close isolated worldstates");
     }
-
-
   }
 
   @Test
@@ -262,7 +259,6 @@ public class BonsaiSnapshotIsolationTests {
     } catch (Exception ex) {
       throw new RuntimeException("failed to close isolated worldstates");
     }
-
   }
 
   @Test
@@ -305,7 +301,6 @@ public class BonsaiSnapshotIsolationTests {
     } catch (Exception ex) {
       throw new RuntimeException("failed to close isolated worldstates");
     }
-
   }
 
   @Test
@@ -357,7 +352,6 @@ public class BonsaiSnapshotIsolationTests {
     } catch (Exception ex) {
       throw new RuntimeException("failed to close isolated worldstates");
     }
-
   }
 
   @Test
