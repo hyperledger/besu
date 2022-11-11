@@ -55,7 +55,7 @@ public class SyncStepStep {
             context.getProtocolSchedule(),
             context.getEthContext(),
             context.getMetricsSystem(),
-            context.getEthContext().getEthPeers().getMaxPeers(),
+            context.getEthContext().getEthPeers().peerCount(),
             Optional.of(targetHash),
             UNUSED);
     return context
