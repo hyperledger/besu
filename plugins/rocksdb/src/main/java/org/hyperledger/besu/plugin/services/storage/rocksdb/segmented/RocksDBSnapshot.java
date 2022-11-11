@@ -26,6 +26,7 @@ import org.rocksdb.Snapshot;
  * use.
  */
 class RocksDBSnapshot {
+
   private final OptimisticTransactionDB db;
   private final Snapshot dbSnapshot;
   private final AtomicInteger usages = new AtomicInteger(0);
@@ -42,8 +43,17 @@ class RocksDBSnapshot {
 
   void unMarkSnapshot() {
     if (usages.decrementAndGet() < 1) {
-      dbSnapshot.close();
       db.releaseSnapshot(dbSnapshot);
+      dbSnapshot.close();
+    }
+  }
+
+  // TODO:  this is a stopgap measure, revisit with https://github.com/hyperledger/besu/issues/4641
+  @Override
+  protected void finalize() {
+    if (usages.decrementAndGet() > 0) {
+      db.releaseSnapshot(dbSnapshot);
+      dbSnapshot.close();
     }
   }
 }
