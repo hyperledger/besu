@@ -22,9 +22,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -62,6 +64,26 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
         request, getBlockchainQueries().getBlockchain().getChainHead().getHash());
   }
 
+  protected Object finalizedResult(final JsonRpcRequestContext request) {
+    return posRelatedResult(request, BlockchainQueries::finalizedBlockHeader);
+  }
+
+  protected Object safeResult(final JsonRpcRequestContext request) {
+    return posRelatedResult(request, BlockchainQueries::safeBlockHeader);
+  }
+
+  private Object posRelatedResult(
+      final JsonRpcRequestContext request,
+      final Function<BlockchainQueries, Optional<BlockHeader>> blockHeaderSupplier) {
+
+    return blockHeaderSupplier
+        .apply(blockchainQueries.get())
+        .map(header -> resultByBlockHash(request, header.getBlockHash()))
+        .orElseGet(
+            () ->
+                new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_BLOCK));
+  }
+
   protected Object handleParamTypes(final JsonRpcRequestContext requestContext) {
     final BlockParameterOrBlockHash blockParameterOrBlockHash =
         blockParameterOrBlockHash(requestContext);
@@ -71,6 +93,10 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       result = latestResult(requestContext);
     } else if (blockParameterOrBlockHash.isPending()) {
       result = pendingResult(requestContext);
+    } else if (blockParameterOrBlockHash.isSafe()) {
+      result = safeResult(requestContext);
+    } else if (blockParameterOrBlockHash.isFinalized()) {
+      result = finalizedResult(requestContext);
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
       final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
       if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
