@@ -142,7 +142,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(codeBytes, Hash.hash(codeBytes), 0))
+            .code(CodeFactory.createCode(codeBytes, Hash.hash(codeBytes), 0, true))
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
@@ -168,7 +168,8 @@ public class Create2OperationTest {
     when(evm.getCode(any(), any()))
         .thenAnswer(
             invocation ->
-                CodeFactory.createCode(invocation.getArgument(1), invocation.getArgument(0), 0));
+                CodeFactory.createCode(
+                    invocation.getArgument(1), invocation.getArgument(0), 0, true));
   }
 
   @Test

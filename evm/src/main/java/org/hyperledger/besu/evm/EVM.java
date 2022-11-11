@@ -340,7 +340,8 @@ public class EVM {
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = CodeFactory.createCode(codeBytes, codeHash, evmSpecVersion.getMaxEofVersion());
+      result =
+          CodeFactory.createCode(codeBytes, codeHash, evmSpecVersion.getMaxEofVersion(), false);
       codeCache.put(codeHash, result);
     }
     return result;

@@ -62,7 +62,9 @@ public class MergeProtocolScheduleTest {
 
     Bytes diffOp = Bytes.fromHexString("0x44");
     var op =
-        london.getEvm().operationAtOffset(CodeFactory.createCode(diffOp, Hash.hash(diffOp), 0), 0);
+        london
+            .getEvm()
+            .operationAtOffset(CodeFactory.createCode(diffOp, Hash.hash(diffOp), 0, false), 0);
     assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
   }
 }

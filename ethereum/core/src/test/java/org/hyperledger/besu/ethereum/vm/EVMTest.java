@@ -52,7 +52,7 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptNotExplicitlySetInCodeReturnsAVirtualOperation() {
     final Bytes noEnd = Bytes.fromHexString("0x60203560003555606035604035556000");
-    final Code code = CodeFactory.createCode(noEnd, Hash.hash(noEnd), 0);
+    final Code code = CodeFactory.createCode(noEnd, Hash.hash(noEnd), 0, false);
     final Operation operation = evm.operationAtOffset(code, code.getSize());
     assertThat(operation).isNotNull();
     assertThat(operation.isVirtualOperation()).isTrue();
@@ -61,7 +61,7 @@ public class EVMTest {
   @Test
   public void assertThatEndOfScriptExplicitlySetInCodeDoesNotReturnAVirtualOperation() {
     final Bytes ends = Bytes.fromHexString("0x6020356000355560603560403555600000");
-    final Code code = CodeFactory.createCode(ends, Hash.hash(ends), 0);
+    final Code code = CodeFactory.createCode(ends, Hash.hash(ends), 0, false);
     when(operationRegistry.get(anyByte())).thenReturn(new StopOperation(gasCalculator));
     final Operation operation = evm.operationAtOffset(code, code.getSize() - 1);
     assertThat(operation).isNotNull();

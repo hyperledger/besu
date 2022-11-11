@@ -23,23 +23,40 @@ import org.apache.tuweni.bytes.Bytes;
 
 public final class CodeFactory {
 
+  public static final byte EOF_LEAD_BYTE = -17; // 0xEF in signed byte form
+
   public static final int MAX_KNOWN_CODE_VERSION = 1;
-  static final Bytes prefix = Bytes.fromHexString("0xef00");
 
   private CodeFactory() {
     // factory class, no instantiations.
   }
 
-  public static Code createCode(final Bytes bytes, final Hash codeHash, final int maxEofVersion) {
+  public static Code createCode(
+      final Bytes bytes,
+      final Hash codeHash,
+      final int maxEofVersion,
+      final boolean inCreateOperation) {
     if (maxEofVersion == 0) {
       return new CodeV0(bytes, codeHash);
     } else if (maxEofVersion == 1) {
-      if (bytes.commonPrefixLength(prefix) == 2) {
-        if (bytes.size() == 2) {
+      int codeSize = bytes.size();
+      if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
+        if (codeSize == 1 && !inCreateOperation) {
+          return new CodeV0(bytes, codeHash);
+        }
+        if (codeSize < 3) {
           return new CodeInvalid(codeHash, bytes, "EOF Container too short");
         }
+        if (bytes.get(1) != 0) {
+          if (inCreateOperation) {
+            // because some 0xef code made it to mainnet, this is only an error at contract create
+            return new CodeInvalid(codeHash, bytes, "Incorrect second byte");
+          } else {
+            return new CodeV0(bytes, codeHash);
+          }
+        }
         int version = bytes.get(2);
-        if (version > maxEofVersion) {
+        if (version != 1) {
           return new CodeInvalid(codeHash, bytes, "Unsupported EOF Version: " + version);
         }
         final EOFLayout layout = EOFLayout.parseEOF(bytes);

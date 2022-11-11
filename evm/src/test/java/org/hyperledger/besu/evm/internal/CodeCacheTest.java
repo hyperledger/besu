@@ -34,7 +34,8 @@ public class CodeCacheTest {
     final Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
     final CodeScale scale = new CodeScale();
-    final Code contractCode = CodeFactory.createCode(contractBytes, Hash.hash(contractBytes), 0);
+    final Code contractCode =
+        CodeFactory.createCode(contractBytes, Hash.hash(contractBytes), 0, false);
     final int weight = scale.weigh(contractCode.getCodeHash(), contractCode);
     assertThat(weight)
         .isEqualTo(contractCode.getCodeHash().size() + (contractBytes.size() * 9 + 7) / 8);

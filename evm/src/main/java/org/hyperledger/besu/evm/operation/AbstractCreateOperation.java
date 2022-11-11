@@ -71,7 +71,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         || account.getNonce() == -1) {
       fail(frame);
     } else {
-      frame.decrementRemainingGas(cost);
       account.incrementNonce();
 
       final long inputOffset = clampedToLong(frame.getStackItem(1));
@@ -80,6 +79,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       Code code = evm.getCode(Hash.hash(inputData), inputData);
 
       if (code.isValid()) {
+        frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
       } else {
@@ -145,7 +145,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         CodeFactory.createCode(
             childFrame.getOutputData(),
             Hash.hash(childFrame.getOutputData()),
-            evm.getMaxEOFVersion());
+            evm.getMaxEOFVersion(),
+            true);
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {
@@ -162,6 +163,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         frame.pushStackItem(UInt256.ZERO);
       }
     } else {
+      frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(UInt256.ZERO);
     }

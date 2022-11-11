@@ -190,7 +190,7 @@ public class CreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE), 0))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, Hash.hash(SIMPLE_CREATE), 0, true))
             .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))

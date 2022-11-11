@@ -40,7 +40,8 @@ public class ReferenceTestCode implements Code {
         CodeFactory.createCode(
             Bytes.fromHexString(bytes),
             Hash.hash(Bytes.fromHexString(bytes)),
-            CodeFactory.MAX_KNOWN_CODE_VERSION);
+            CodeFactory.MAX_KNOWN_CODE_VERSION,
+            false);
   }
 
   @Override

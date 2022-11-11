@@ -93,7 +93,7 @@ public class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0))
+            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -108,7 +108,7 @@ public class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0))
+            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -123,7 +123,7 @@ public class JumpOperationTest {
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0))
+            .code(CodeFactory.createCode(jumpBytes, Hash.hash(jumpBytes), 0, false))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -133,7 +133,7 @@ public class JumpOperationTest {
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(CodeFactory.createCode(badJump, Hash.hash(badJump), 0))
+            .code(CodeFactory.createCode(badJump, Hash.hash(badJump), 0, false))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
@@ -151,7 +151,7 @@ public class JumpOperationTest {
     final MessageFrame longContract =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x12c"))
-            .code(CodeFactory.createCode(longCode, Hash.hash(longCode), 0))
+            .code(CodeFactory.createCode(longCode, Hash.hash(longCode), 0, false))
             .build();
     longContract.setPC(255);
 
