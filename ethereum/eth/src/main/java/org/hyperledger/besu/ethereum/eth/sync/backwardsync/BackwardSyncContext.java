@@ -55,9 +55,7 @@ public class BackwardSyncContext {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final SyncState syncState;
-
-  private final AtomicReference<CompletableFuture<Void>> currentBackwardSyncFuture =
-      new AtomicReference<>();
+  private final AtomicReference<Status> currentBackwardSyncStatus = new AtomicReference<>();
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
   private Optional<Hash> maybeFinalized = Optional.empty();
@@ -105,8 +103,8 @@ public class BackwardSyncContext {
   }
 
   public synchronized boolean isSyncing() {
-    return Optional.ofNullable(currentBackwardSyncFuture.get())
-        .map(CompletableFuture::isDone)
+    return Optional.ofNullable(currentBackwardSyncStatus.get())
+        .map(status -> status.currentFuture.isDone())
         .orElse(Boolean.FALSE);
   }
 
@@ -125,31 +123,33 @@ public class BackwardSyncContext {
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
     Optional<CompletableFuture<Void>> maybeFuture =
-        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+        Optional.ofNullable(this.currentBackwardSyncStatus.get())
+            .map(status -> status.currentFuture);
     if (isTrusted(newBlockHash)) {
       return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
     backwardChain.addNewHash(newBlockHash);
     return maybeFuture.orElseGet(
         () -> {
-          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
-          this.currentBackwardSyncFuture.set(future);
-          return future;
+          Status status = new Status(prepareBackwardSyncFutureWithRetry());
+          this.currentBackwardSyncStatus.set(status);
+          return status.currentFuture;
         });
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
     Optional<CompletableFuture<Void>> maybeFuture =
-        Optional.ofNullable(this.currentBackwardSyncFuture.get());
+        Optional.ofNullable(this.currentBackwardSyncStatus.get())
+            .map(status -> status.currentFuture);
     if (isTrusted(newPivot.getHash())) {
       return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
     }
     backwardChain.appendTrustedBlock(newPivot);
     return maybeFuture.orElseGet(
         () -> {
-          CompletableFuture<Void> future = prepareBackwardSyncFutureWithRetry();
-          this.currentBackwardSyncFuture.set(future);
-          return future;
+          Status status = new Status(prepareBackwardSyncFutureWithRetry());
+          this.currentBackwardSyncStatus.set(status);
+          return status.currentFuture;
         });
   }
 
@@ -168,7 +168,7 @@ public class BackwardSyncContext {
     return prepareBackwardSyncFutureWithRetry(maxRetries)
         .handle(
             (unused, throwable) -> {
-              this.currentBackwardSyncFuture.set(null);
+              this.currentBackwardSyncStatus.set(null);
               if (throwable != null) {
                 throw extractBackwardSyncException(throwable)
                     .orElse(new BackwardSyncException(throwable));
@@ -201,8 +201,8 @@ public class BackwardSyncContext {
         .ifPresentOrElse(
             backwardSyncException -> {
               if (backwardSyncException.shouldRestart()) {
-                LOG.info(
-                    "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds...",
+                LOG.debug(
+                    "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds",
                     throwable.getMessage(),
                     ethContext.getEthPeers().peerCount(),
                     millisBetweenRetries);
@@ -213,8 +213,8 @@ public class BackwardSyncContext {
               }
             },
             () -> {
-              LOG.warn(
-                  "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds...",
+              LOG.debug(
+                  "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds",
                   throwable.getMessage(),
                   ethContext.getEthPeers().peerCount(),
                   millisBetweenRetries);
@@ -276,10 +276,6 @@ public class BackwardSyncContext {
         syncState.isInitialSyncPhaseDone());
     return syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)
         && syncState.isInitialSyncPhaseDone();
-  }
-
-  public CompletableFuture<Void> stop() {
-    return currentBackwardSyncFuture.get();
   }
 
   public void subscribeBadChainListener(final BadChainListener badChainListener) {
@@ -365,6 +361,10 @@ public class BackwardSyncContext {
         .findFirst();
   }
 
+  public Status getStatus() {
+    return currentBackwardSyncStatus.get();
+  }
+
   private void emitBadChainEvent(final Block badBlock) {
     final List<Block> badBlockDescendants = new ArrayList<>();
     final List<BlockHeader> badBlockHeaderDescendants = new ArrayList<>();
@@ -384,5 +384,32 @@ public class BackwardSyncContext {
 
     badChainListeners.forEach(
         listener -> listener.onBadChain(badBlock, badBlockDescendants, badBlockHeaderDescendants));
+  }
+
+  static class Status {
+    private final CompletableFuture<Void> currentFuture;
+    private long targetChainHeight;
+    private long initialChainHeight;
+
+    public Status(final CompletableFuture<Void> currentFuture) {
+      this.currentFuture = currentFuture;
+    }
+
+    public void setSyncRange(final long initialHeight, final long targetHeight) {
+      initialChainHeight = initialHeight;
+      targetChainHeight = targetHeight;
+    }
+
+    public long getTargetChainHeight() {
+      return targetChainHeight;
+    }
+
+    public long getInitialChainHeight() {
+      return initialChainHeight;
+    }
+
+    public long getBlockCount() {
+      return targetChainHeight - initialChainHeight;
+    }
   }
 }
