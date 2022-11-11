@@ -202,8 +202,8 @@ public class MainnetEVMs {
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
 
-    // Register the PUSH1, PUSH2, ..., PUSH32 operations.
-    for (int i = 1; i <= 32; ++i) {
+    // Register the PUSH0, PUSH1, PUSH2, ..., PUSH32 operations.
+    for (int i = 0; i <= 32; ++i) {
       registry.put(new PushOperation(i, gasCalculator));
     }
 

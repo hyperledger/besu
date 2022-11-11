@@ -203,7 +203,8 @@ public class EVM {
           case 0x50: // POP
             result = PopOperation.staticOperation(frame);
             break;
-          case 0x60: // PUSH1-32
+          case 0x5f: // PUSH0-32
+          case 0x60:
           case 0x61:
           case 0x62:
           case 0x63:
