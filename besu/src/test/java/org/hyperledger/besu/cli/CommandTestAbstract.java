@@ -224,7 +224,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
-    when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -281,6 +280,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
+//    when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
