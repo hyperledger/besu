@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
@@ -51,7 +50,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Collections;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
@@ -228,8 +226,7 @@ public class EngineForkchoiceUpdatedTest {
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
-            Address.ECREC.toString(),
-            Collections.emptyList());
+            Address.ECREC.toString());
     var mockPayloadId =
         PayloadIdentifier.forPayloadParams(
             mockHeader.getHash(),
@@ -242,9 +239,7 @@ public class EngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
-            payloadParams.getWithdrawals().stream()
-                .map(WithdrawalParameter::toWithdrawal)
-                .collect(Collectors.toList())))
+            Collections.emptyList()))
         .thenReturn(mockPayloadId);
 
     var res =
@@ -419,8 +414,7 @@ public class EngineForkchoiceUpdatedTest {
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
-            Address.ECREC.toString(),
-            Collections.emptyList());
+            Address.ECREC.toString());
 
     var resp =
         (JsonRpcSuccessResponse)

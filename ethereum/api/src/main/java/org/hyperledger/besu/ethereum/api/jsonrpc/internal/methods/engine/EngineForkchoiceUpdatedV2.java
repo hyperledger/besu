@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameterV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -72,8 +72,8 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
 
     final EngineForkchoiceUpdatedParameter forkChoice =
         requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
-    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
-        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    final Optional<EnginePayloadAttributesParameterV2> maybePayloadAttributes =
+        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameterV2.class);
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
 
@@ -172,7 +172,7 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                 LOG,
                 "returning identifier {} for requested payload {}",
                 pid::toHexString,
-                () -> maybePayloadAttributes.map(EnginePayloadAttributesParameter::serialize)));
+                () -> maybePayloadAttributes.map(EnginePayloadAttributesParameterV2::serialize)));
 
     logForkchoiceUpdatedCall(VALID, forkChoice);
     return new JsonRpcSuccessResponse(
@@ -218,13 +218,14 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
     return response;
   }
 
-  private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
+  private void logPayload(final EnginePayloadAttributesParameterV2 payloadAttributes) {
     debugLambda(
         LOG,
-        "timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}",
+        "timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}, withdrawals: {}",
         payloadAttributes::getTimestamp,
         () -> payloadAttributes.getPrevRandao().toHexString(),
-        () -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
+        () -> payloadAttributes.getSuggestedFeeRecipient().toHexString(),
+        payloadAttributes::getWithdrawals);
   }
 
   private boolean isValidForkchoiceState(

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,7 +45,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.WithdrawalDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -118,21 +118,10 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
           INVALID,
           "Failed to decode transactions from block parameter");
     }
-    final List<Withdrawal> withdrawals;
-    try {
-      withdrawals =
-          blockParam.getWithdrawals().stream()
-              .map(Bytes::fromHexString)
-              .map(WithdrawalDecoder::decodeOpaqueBytes)
-              .collect(Collectors.toList());
-    } catch (final RLPException | IllegalArgumentException e) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "Failed to decode withdrawals from block parameter");
-    }
+    final List<Withdrawal> withdrawals =
+        blockParam.getWithdrawals().stream()
+            .map(WithdrawalParameter::toWithdrawal)
+            .collect(Collectors.toList());
 
     if (blockParam.getExtraData() == null) {
       return respondWithInvalid(
