@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
@@ -60,7 +59,7 @@ public class EVMExecutor {
   private Wei gasPriceGWei = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
-  private Code code = CodeV0.EMPTY_CODE;
+  private Code code = Code.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
@@ -231,10 +230,13 @@ public class EVMExecutor {
 
     while (!messageFrameStack.isEmpty()) {
       final MessageFrame messageFrame = messageFrameStack.peek();
-      if (messageFrame.getType() == MessageFrame.Type.CONTRACT_CREATION) {
-        ccp.process(messageFrame, tracer);
-      } else if (messageFrame.getType() == MessageFrame.Type.MESSAGE_CALL) {
-        mcp.process(messageFrame, tracer);
+      switch (messageFrame.getType()) {
+        case CONTRACT_CREATION:
+          ccp.process(messageFrame, tracer);
+          break;
+        case MESSAGE_CALL:
+          mcp.process(messageFrame, tracer);
+          break;
       }
     }
     if (commitWorldState) {

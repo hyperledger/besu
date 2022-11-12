@@ -19,10 +19,8 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -71,20 +69,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         || account.getNonce() == -1) {
       fail(frame);
     } else {
-      account.incrementNonce();
-
-      final long inputOffset = clampedToLong(frame.getStackItem(1));
-      final long inputSize = clampedToLong(frame.getStackItem(2));
-      final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      Code code = evm.getCode(Hash.hash(inputData), inputData);
-
-      if (code.isValid()) {
-        frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, code, evm);
-        frame.incrementRemainingGas(cost);
-      } else {
-        fail(frame);
-      }
+      spawnChildMessage(frame, evm);
     }
 
     return new OperationResult(cost, null);
@@ -102,8 +87,20 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(UInt256.ZERO);
   }
 
-  private void spawnChildMessage(final MessageFrame frame, final Code code, final EVM evm) {
+  private void spawnChildMessage(final MessageFrame frame, final EVM evm) {
+    // memory cost needs to be calculated prior to memory expansion
+    final long cost = cost(frame);
+    frame.decrementRemainingGas(cost);
+
+    final Address address = frame.getRecipientAddress();
+    final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
+
+    account.incrementNonce();
+
     final Wei value = Wei.wrap(frame.getStackItem(0));
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
 
     final Address contractAddress = targetContractAddress(frame);
 
@@ -125,45 +122,34 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .sender(frame.getRecipientAddress())
             .value(value)
             .apparentValue(value)
-            .code(code)
+            .code(evm.getCode(Hash.hash(inputData), inputData))
             .blockValues(frame.getBlockValues())
             .depth(frame.getMessageStackDepth() + 1)
-            .completer(child -> complete(frame, child, evm))
+            .completer(child -> complete(frame, child))
             .miningBeneficiary(frame.getMiningBeneficiary())
             .blockHashLookup(frame.getBlockHashLookup())
             .maxStackSize(frame.getMaxStackSize())
             .build();
 
+    frame.incrementRemainingGas(cost);
+
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
-  private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
+  private void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    Code outputCode =
-        CodeFactory.createCode(
-            childFrame.getOutputData(),
-            Hash.hash(childFrame.getOutputData()),
-            evm.getMaxEOFVersion(),
-            true);
+    frame.incrementRemainingGas(childFrame.getRemainingGas());
+    frame.addLogs(childFrame.getLogs());
+    frame.addSelfDestructs(childFrame.getSelfDestructs());
+    frame.incrementGasRefund(childFrame.getGasRefund());
     frame.popStackItems(getStackItemsConsumed());
 
-    if (outputCode.isValid()) {
-      frame.incrementRemainingGas(childFrame.getRemainingGas());
-      frame.addLogs(childFrame.getLogs());
-      frame.addSelfDestructs(childFrame.getSelfDestructs());
-      frame.incrementGasRefund(childFrame.getGasRefund());
-
-      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        frame.mergeWarmedUpFields(childFrame);
-        frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
-      } else {
-        frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(UInt256.ZERO);
-      }
+    if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      frame.mergeWarmedUpFields(childFrame);
+      frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
     } else {
-      frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(UInt256.ZERO);
     }

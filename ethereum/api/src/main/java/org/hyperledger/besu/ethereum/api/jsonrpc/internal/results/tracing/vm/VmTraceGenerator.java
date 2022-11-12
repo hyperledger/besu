@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 
 import java.util.ArrayDeque;
@@ -73,9 +72,9 @@ public class VmTraceGenerator {
       Optional<TraceFrame> nextTraceFrame =
           iter.hasNext() ? Optional.of(iter.next()) : Optional.empty();
       while (nextTraceFrame.isPresent()) {
-        final TraceFrame traceFrame = nextTraceFrame.get();
+        final TraceFrame currentTraceFrame = nextTraceFrame.get();
         nextTraceFrame = iter.hasNext() ? Optional.of(iter.next()) : Optional.empty();
-        addFrame(traceFrame, nextTraceFrame);
+        addFrame(currentTraceFrame, nextTraceFrame);
       }
     }
     return rootVmTrace;
@@ -182,11 +181,7 @@ public class VmTraceGenerator {
                     code ->
                         op.setSub(
                             new VmTrace(
-                                currentTraceFrame
-                                    .getMaybeCode()
-                                    .get()
-                                    .getContainerBytes()
-                                    .toHexString())));
+                                currentTraceFrame.getMaybeCode().get().getBytes().toHexString())));
           } else {
             op.setCost(op.getCost());
             op.setSub(null);
@@ -291,11 +286,7 @@ public class VmTraceGenerator {
     // set smart contract code
     if (currentTrace != null && "0x".equals(currentTrace.getCode())) {
       currentTrace.setCode(
-          currentTraceFrame
-              .getMaybeCode()
-              .orElse(CodeV0.EMPTY_CODE)
-              .getContainerBytes()
-              .toHexString());
+          currentTraceFrame.getMaybeCode().orElse(Code.EMPTY_CODE).getBytes().toHexString());
     }
   }
 

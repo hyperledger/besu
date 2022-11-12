@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -37,7 +36,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class MessageFrameTestFixture {
 
   public static final Address DEFAUT_ADDRESS = AddressHelpers.ofValue(244259721);
-  private static final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
+  private final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
   private MessageFrame.Type type = MessageFrame.Type.MESSAGE_CALL;
   private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -51,7 +50,7 @@ public class MessageFrameTestFixture {
   private Wei gasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
-  private Code code = CodeV0.EMPTY_CODE;
+  private Code code = Code.EMPTY_CODE;
   private final List<UInt256> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
   private int depth = 0;
@@ -63,7 +62,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  MessageFrameTestFixture messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
+  public MessageFrameTestFixture messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
     this.messageFrameStack = messageFrameStack;
     return this;
   }
@@ -104,7 +103,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  MessageFrameTestFixture originator(final Address originator) {
+  public MessageFrameTestFixture originator(final Address originator) {
     this.originator = originator;
     return this;
   }
@@ -124,7 +123,7 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  MessageFrameTestFixture inputData(final Bytes inputData) {
+  public MessageFrameTestFixture inputData(final Bytes inputData) {
     this.inputData = inputData;
     return this;
   }

@@ -23,7 +23,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class PushOperation extends AbstractFixedCostOperation {
 
   public static final int PUSH_BASE = 0x5F;
-  public static final int PUSH_MAX = 0x7F;
 
   private final int length;
 
@@ -42,8 +41,9 @@ public class PushOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getCodeBytes().toArrayUnsafe();
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
+    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     return staticOperation(frame, code, frame.getPC(), length);
   }
 

@@ -49,7 +49,6 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "Shandong,"
                 + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
@@ -82,8 +81,7 @@ public class BlockchainReferenceTestTools {
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul_*");
 
-    // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
-    // chain head.
+    // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the chain head.
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_Merge");
   }

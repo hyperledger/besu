@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -40,7 +39,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
-  AbstractCallOperation(
+  protected AbstractCallOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
@@ -183,7 +182,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Code code =
         contract == null
-            ? CodeV0.EMPTY_CODE
+            ? Code.EMPTY_CODE
             : evm.getCode(contract.getCodeHash(), contract.getCode());
 
     final MessageFrame childFrame =

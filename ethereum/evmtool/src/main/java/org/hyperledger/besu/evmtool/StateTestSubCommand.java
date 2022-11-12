@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
@@ -96,9 +95,7 @@ public class StateTestSubCommand implements Runnable {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @SuppressWarnings("unused")
   public StateTestSubCommand() {
-    // PicoCLI requires this
     this(null, System.in, System.out);
   }
 
@@ -115,10 +112,10 @@ public class StateTestSubCommand implements Runnable {
 
   @Override
   public void run() {
-    final ObjectMapper stateTestMapper = new ObjectMapper();
-    stateTestMapper.disable(Feature.AUTO_CLOSE_SOURCE);
+    final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
     final JavaType javaType =
-        stateTestMapper
+        objectMapper
             .getTypeFactory()
             .constructParametricType(Map.class, String.class, GeneralStateTestCaseSpec.class);
     try {
@@ -134,9 +131,13 @@ public class StateTestSubCommand implements Runnable {
           }
           final File file = new File(fileName);
           if (file.isFile()) {
-            final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-                stateTestMapper.readValue(file, javaType);
-            executeStateTest(generalStateTests);
+            try {
+              final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+                  objectMapper.readValue(file, javaType);
+              executeStateTest(generalStateTests);
+            } catch (final JsonProcessingException jpe) {
+              output.println("File content error: " + jpe);
+            }
           } else {
             output.println("File not found: " + fileName);
           }
@@ -144,12 +145,10 @@ public class StateTestSubCommand implements Runnable {
       } else {
         for (final File stateTestFile : stateTestFiles) {
           final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-              stateTestMapper.readValue(stateTestFile, javaType);
+              objectMapper.readValue(stateTestFile, javaType);
           executeStateTest(generalStateTests);
         }
       }
-    } catch (final JsonProcessingException jpe) {
-      output.println("File content error: " + jpe);
     } catch (final IOException e) {
       LOG.error("Unable to read state file", e);
     }
@@ -160,7 +159,7 @@ public class StateTestSubCommand implements Runnable {
       generalStateTestEntry
           .getValue()
           .finalStateSpecs()
-          .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+          .forEach((fork, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
     }
   }
 
@@ -209,8 +208,8 @@ public class StateTestSubCommand implements Runnable {
           throw new UnsupportedForkException(forkName);
         }
 
-        ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(0);
-        final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
+        final MainnetTransactionProcessor processor =
+            protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
         final WorldUpdater worldStateUpdater = worldState.updater();
         final ReferenceTestBlockchain blockchain =
             new ReferenceTestBlockchain(blockHeader.getNumber());
@@ -245,9 +244,9 @@ public class StateTestSubCommand implements Runnable {
         final var timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
         final var mGps = gasUsed * 1000.0f / timeNs;
 
+        summaryLine.put("Mgps", String.format("%.3f", mGps));
         summaryLine.put("gasUsed", StandardJsonTracer.shortNumber(gasUsed));
         summaryLine.put("time", timeNs);
-        summaryLine.put("Mgps", String.format("%.3f", mGps));
 
         // Check the world state root hash.
         summaryLine.put("test", test);
