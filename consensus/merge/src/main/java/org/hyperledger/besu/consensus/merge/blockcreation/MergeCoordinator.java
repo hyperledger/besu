@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.PrintWriter;
@@ -67,7 +68,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   protected final AtomicLong targetGasLimit;
   protected final MiningParameters miningParameters;
-  protected final MergeBlockCreatorFactory mergeBlockCreator;
+  protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
   protected final AtomicReference<Bytes> extraData =
       new AtomicReference<>(Bytes.fromHexString("0x"));
   protected final AtomicReference<BlockHeader> latestDescendsFromTerminal = new AtomicReference<>();
@@ -99,7 +100,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             // TODO: revisit default target gas limit
             .orElse(new AtomicLong(30000000L));
 
-    this.mergeBlockCreator =
+    this.mergeBlockCreatorFactory =
         (parentHeader, address) ->
             new MergeBlockCreator(
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
@@ -112,6 +113,31 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
+
+    this.backwardSyncContext.subscribeBadChainListener(this);
+  }
+
+  public MergeCoordinator(
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final ProposalBuilderExecutor blockBuilderExecutor,
+      final MiningParameters miningParams,
+      final BackwardSyncContext backwardSyncContext,
+      final MergeBlockCreatorFactory mergeBlockCreatorFactory) {
+
+    this.protocolContext = protocolContext;
+    this.protocolSchedule = protocolSchedule;
+    this.blockBuilderExecutor = blockBuilderExecutor;
+    this.mergeContext = protocolContext.getConsensusContext(MergeContext.class);
+    this.miningParameters = miningParams;
+    this.backwardSyncContext = backwardSyncContext;
+    this.targetGasLimit =
+        miningParameters
+            .getTargetGasLimit()
+            // TODO: revisit default target gas limit
+            .orElse(new AtomicLong(30000000L));
+
+    this.mergeBlockCreatorFactory = mergeBlockCreatorFactory;
 
     this.backwardSyncContext.subscribeBadChainListener(this);
   }
@@ -200,7 +226,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
 
     final MergeBlockCreator mergeBlockCreator =
-        this.mergeBlockCreator.forParams(parentHeader, Optional.ofNullable(feeRecipient));
+        this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     blockCreationTask.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator));
 
@@ -211,7 +237,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .getBlock();
 
     BlockProcessingResult result = validateBlock(emptyBlock);
-    if (result.getYield().isPresent()) {
+    if (result.isSuccessful()) {
       mergeContext.putPayloadById(payloadIdentifier, emptyBlock);
       debugLambda(
           LOG,
@@ -220,9 +246,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           payloadIdentifier::toString);
     } else {
       LOG.warn(
-          "failed to execute empty block proposal {}, reason {}",
+          "failed to validate empty block proposal {}, reason {}",
           emptyBlock.getHash(),
           result.errorMessage);
+      if (result.causedBy().isPresent()) {
+        LOG.warn("caused by", result.causedBy().get());
+      }
     }
 
     tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator);
@@ -327,7 +356,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (isBlockCreationCancelled(payloadIdentifier)) return;
 
     final var resultBest = validateBlock(bestBlock);
-    if (resultBest.getYield().isPresent()) {
+    if (resultBest.isSuccessful()) {
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
@@ -345,11 +374,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           bestBlock.getHash(),
           payloadIdentifier.toString(),
           resultBest.errorMessage);
+      if (resultBest.causedBy().isPresent()) {
+        LOG.warn("caused by", resultBest.cause.get());
+      }
     }
   }
 
   private boolean canRetryBlockCreation(final Throwable throwable) {
     if (throwable instanceof StorageException) {
+      return true;
+    } else if (throwable instanceof MerkleTrieException) {
       return true;
     }
     return false;
@@ -428,7 +462,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     debugLambda(LOG, "Remember block {}", block::toLogString);
     final var chain = protocolContext.getBlockchain();
     final var validationResult = validateBlock(block);
-    validationResult.getYield().ifPresent(result -> chain.storeBlock(block, result.getReceipts()));
+    validationResult
+        .getYield()
+        .ifPresentOrElse(
+            result -> chain.storeBlock(block, result.getReceipts()),
+            () -> LOG.debug("empty yield in blockProcessingResult"));
     return validationResult;
   }
 
@@ -717,12 +755,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             ? Optional.of(parentHeader.get().getHash())
             : Optional.empty();
 
-    badBlockManager.addBadBlock(badBlock);
+    badBlockManager.addBadBlock(badBlock, Optional.empty());
 
     badBlockDescendants.forEach(
         block -> {
           LOG.trace("Add descendant block {} to bad blocks", block.getHash());
-          badBlockManager.addBadBlock(block);
+          badBlockManager.addBadBlock(block, Optional.empty());
           maybeLatestValidHash.ifPresent(
               latestValidHash ->
                   badBlockManager.addLatestValidHash(block.getHash(), latestValidHash));
@@ -744,11 +782,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public void addBadBlock(final Block block) {
+  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
     protocolSchedule
         .getByBlockNumber(protocolContext.getBlockchain().getChainHeadBlockNumber())
         .getBadBlocksManager()
-        .addBadBlock(block);
+        .addBadBlock(block, maybeCause);
   }
 
   @Override
