@@ -203,9 +203,6 @@ public class MainnetEVMs {
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
 
-    // Register the PUSH0 operation.
-    registry.put(new Push0Operation(gasCalculator));
-
     // Register the PUSH1, PUSH2, ..., PUSH32 operations.
     for (int i = 1; i <= 32; ++i) {
       registry.put(new PushOperation(i, gasCalculator));
@@ -429,6 +426,7 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerParisOperations(registry, gasCalculator, chainID);
-    // PUSH0
+    // Register the PUSH0 operation.
+    registry.put(new Push0Operation(gasCalculator));
   }
 }
