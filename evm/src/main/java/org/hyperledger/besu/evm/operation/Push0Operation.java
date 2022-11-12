@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class Push0Operation extends AbstractFixedCostOperation {
 
@@ -25,26 +26,17 @@ public class Push0Operation extends AbstractFixedCostOperation {
   static final OperationResult push0Success = new OperationResult(2, null);
 
   public Push0Operation(final GasCalculator gasCalculator) {
-    super(
-        PUSH_BASE,
-        "PUSH0",
-        0,
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getBaseTierGasCost());
+    super(PUSH_BASE, "PUSH0", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame, frame.getPC());
   }
 
-  public static OperationResult staticOperation(
-      final MessageFrame frame, final int pc) {
-      frame.pushStackItem(Bytes.EMPTY);
-      frame.setPC(pc + 1);
-      return push0Success;
+  public static OperationResult staticOperation(final MessageFrame frame, final int pc) {
+    frame.pushStackItem(Bytes.EMPTY);
+    frame.setPC(pc + 1);
+    return push0Success;
   }
 }
