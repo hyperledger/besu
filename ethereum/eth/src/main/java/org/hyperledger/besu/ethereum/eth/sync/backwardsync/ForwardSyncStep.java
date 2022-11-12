@@ -19,7 +19,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlocksFromPeersTask;
 
 import java.util.Comparator;
 import java.util.List;
@@ -67,12 +67,13 @@ public class ForwardSyncStep {
 
   @VisibleForTesting
   protected CompletableFuture<List<Block>> requestBodies(final List<BlockHeader> blockHeaders) {
-    final GetBodiesFromPeerTask getBodiesFromPeerTask =
-        GetBodiesFromPeerTask.forHeaders(
+    final RetryingGetBlocksFromPeersTask getBodiesFromPeerTask =
+        RetryingGetBlocksFromPeersTask.forHeaders(
             context.getProtocolSchedule(),
             context.getEthContext(),
-            blockHeaders,
-            context.getMetricsSystem());
+            context.getMetricsSystem(),
+            context.getEthContext().getEthPeers().peerCount(),
+            blockHeaders);
 
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<Block>>> run =
         getBodiesFromPeerTask.run();

@@ -14,6 +14,7 @@
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
 - Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
+- Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
 
 ### Bug Fixes
 
