@@ -22,7 +22,7 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
-  boolean DEFAULT_BONSAI_USE_SNAPSHOTS = false;
+  boolean DEFAULT_BONSAI_USE_SNAPSHOTS = true;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
