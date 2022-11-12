@@ -259,8 +259,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       + parentHeader.getNumber()
                       + " with state root "
                       + parentStateRoot);
-            })
-        .copy();
+            });
   }
 
   private List<BlockHeader> selectOmmers() {

@@ -125,7 +125,6 @@ public class MainnetBlockValidator implements BlockValidator {
         handleAndLogImportFailure(block, retval);
         return retval;
       }
-
       var result = processBlock(context, worldState, block);
       if (result.isFailed()) {
         handleAndLogImportFailure(block, result);
