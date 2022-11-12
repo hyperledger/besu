@@ -13,6 +13,7 @@
 - Shanghai implementation of EIP-3540 and EIP-3670 Ethereum Object Format and Code Validation [#4644](https://github.com/hyperledger/besu/pull/4644)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
 - Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
 
 ### Bug Fixes
 
