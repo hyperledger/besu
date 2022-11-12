@@ -166,18 +166,12 @@ public class EVM {
             result = SignExtendOperation.staticOperation(frame);
             break;
           case 0x0c:
-            result = InvalidOperation.INVALID_RESULT;
-            break;
           case 0x0d:
-            result = InvalidOperation.INVALID_RESULT;
-            break;
           case 0x0e:
-            result = InvalidOperation.INVALID_RESULT;
-            break;
           case 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
-            // case 0x10: // LT
+          // case 0x10: // LT
             //  result = LtOperation.staticOperation(frame);
             //  break;
             // case 0x11: // GT

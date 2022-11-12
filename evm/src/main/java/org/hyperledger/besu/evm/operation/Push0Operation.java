@@ -11,30 +11,23 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evm.operation;
 
-import static org.apache.tuweni.bytes.Bytes.EMPTY;
+import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class Push0Operation extends AbstractFixedCostOperation {
 
-  static final OperationResult pushSuccess = new OperationResult(2, null);
+  static final OperationResult push0Success = new OperationResult(2, null);
 
   public Push0Operation(final GasCalculator gasCalculator) {
-    super(
-        PushOperation.PUSH_BASE,
-        "PUSH0",
-        0,
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getVeryLowTierGasCost());
+    super(PUSH_BASE, "PUSH0", 0, 1, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
   }
 
   @Override
@@ -43,7 +36,7 @@ public class Push0Operation extends AbstractFixedCostOperation {
   }
 
   public static OperationResult staticOperation(final MessageFrame frame) {
-    frame.pushStackItem(EMPTY);
-    return pushSuccess;
+    frame.pushStackItem(Bytes.EMPTY);
+    return push0Success;
   }
 }
