@@ -28,7 +28,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
@@ -65,7 +65,7 @@ public class Benchmarks {
           .sender(Address.ZERO)
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
-          .code(Code.EMPTY_CODE)
+          .code(CodeV0.EMPTY_CODE)
           .depth(1)
           .completer(__ -> {})
           .address(Address.ZERO)
@@ -79,7 +79,7 @@ public class Benchmarks {
           .worldUpdater(mock(WorldUpdater.class))
           .build();
 
-  public static void benchSecp256k1Recover() {
+  private static void benchSecp256k1Recover() {
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     final SECPPrivateKey privateKey =
@@ -135,6 +135,8 @@ public class Benchmarks {
   }
 
   private static void benchKeccak256() {
+    fakeFrame.expandMemory(0, 1024);
+    var istanbulGasCalculator = new IstanbulGasCalculator();
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
@@ -154,7 +156,9 @@ public class Benchmarks {
       final double perCall = elapsed / HASH_ITERATIONS;
       final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
 
-      System.out.printf("keccak256 %,d bytes for %,d gas.%n", len, (int) gasSpent);
+      System.out.printf(
+          "keccak256 %,d bytes for %,d gas. Charing %d gas.%n",
+          len, (int) gasSpent, istanbulGasCalculator.keccak256OperationGasCost(fakeFrame, 0, len));
     }
   }
 

@@ -354,7 +354,7 @@ public class FlatTraceGenerator {
 
     // set value for contract creation TXes, CREATE, and CREATE2
     if (actionBuilder.getCallType() == null && traceFrame.getMaybeCode().isPresent()) {
-      actionBuilder.init(traceFrame.getMaybeCode().get().getBytes().toHexString());
+      actionBuilder.init(traceFrame.getMaybeCode().get().getContainerBytes().toHexString());
       resultBuilder.code(outputData.toHexString());
       if (currentContext.isCreateOp()) {
         // this is from a CREATE/CREATE2, so add code deposit cost.
@@ -427,7 +427,7 @@ public class FlatTraceGenerator {
   }
 
   private static String firstNonNull(final String defaultValue, final String... values) {
-    for (String value : values) {
+    for (final String value : values) {
       if (value != null) {
         return value;
       }
@@ -460,7 +460,7 @@ public class FlatTraceGenerator {
 
     traceFrame
         .getMaybeCode()
-        .map(Code::getBytes)
+        .map(Code::getContainerBytes)
         .map(Bytes::toHexString)
         .ifPresent(subTraceActionBuilder::init);
 
@@ -576,8 +576,8 @@ public class FlatTraceGenerator {
       final TransactionTrace transactionTrace,
       final TraceFrame traceFrame) {
 
-    long gasRemainingBeforeProcessed;
-    long gasRemainingAfterProcessed;
+    final long gasRemainingBeforeProcessed;
+    final long gasRemainingAfterProcessed;
     long gasRefund = 0;
     if (tracesContexts.size() == 1) {
       gasRemainingBeforeProcessed = transactionTrace.getTraceFrames().get(0).getGasRemaining();

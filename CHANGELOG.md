@@ -6,8 +6,11 @@
 
 ### Additions and Improvements
 - Explain and improve price validation for London and local transactions during block proposal selection [#4602](https://github.com/hyperledger/besu/pull/4602)
-- Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
+- Support for ephemeral testnet Shandong, for EOF testing. [#4599](https://github.com/hyperledger/besu/pull/4599)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
+- Shanghai implementation of EIP-3651 Warm coinbase [#4620](https://github.com/hyperledger/besu/pull/4620) 
+- Shanghai implementation of EIP-3855 Push0 [#4660](https://github.com/hyperledger/besu/pull/4660)
+- Shanghai implementation of EIP-3540 and EIP-3670 Ethereum Object Format and Code Validation [#4644](https://github.com/hyperledger/besu/pull/4644)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
 - Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
 
