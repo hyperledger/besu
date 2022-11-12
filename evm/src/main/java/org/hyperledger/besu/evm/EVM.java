@@ -171,7 +171,7 @@ public class EVM {
           case 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
-          // case 0x10: // LT
+            // case 0x10: // LT
             //  result = LtOperation.staticOperation(frame);
             //  break;
             // case 0x11: // GT
