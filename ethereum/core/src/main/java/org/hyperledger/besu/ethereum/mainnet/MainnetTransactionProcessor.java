@@ -75,8 +75,31 @@ public class MainnetTransactionProcessor {
 
   protected final boolean clearEmptyAccounts;
 
+  protected final boolean warmCoinbase;
+
   protected final FeeMarket feeMarket;
   protected final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
+
+  public MainnetTransactionProcessor(
+      final GasCalculator gasCalculator,
+      final MainnetTransactionValidator transactionValidator,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final boolean clearEmptyAccounts,
+      final boolean warmCoinbase,
+      final int maxStackSize,
+      final FeeMarket feeMarket,
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+    this.gasCalculator = gasCalculator;
+    this.transactionValidator = transactionValidator;
+    this.contractCreationProcessor = contractCreationProcessor;
+    this.messageCallProcessor = messageCallProcessor;
+    this.clearEmptyAccounts = clearEmptyAccounts;
+    this.warmCoinbase = warmCoinbase;
+    this.maxStackSize = maxStackSize;
+    this.feeMarket = feeMarket;
+    this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+  }
 
   /**
    * Applies a transaction to the current system state.
@@ -228,27 +251,8 @@ public class MainnetTransactionProcessor {
         null);
   }
 
-  public MainnetTransactionProcessor(
-      final GasCalculator gasCalculator,
-      final MainnetTransactionValidator transactionValidator,
-      final AbstractMessageProcessor contractCreationProcessor,
-      final AbstractMessageProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts,
-      final int maxStackSize,
-      final FeeMarket feeMarket,
-      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
-    this.gasCalculator = gasCalculator;
-    this.transactionValidator = transactionValidator;
-    this.contractCreationProcessor = contractCreationProcessor;
-    this.messageCallProcessor = messageCallProcessor;
-    this.clearEmptyAccounts = clearEmptyAccounts;
-    this.maxStackSize = maxStackSize;
-    this.feeMarket = feeMarket;
-    this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
-  }
-
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
+      final Blockchain ignoredBlockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -313,6 +317,9 @@ public class MainnetTransactionProcessor {
         final List<Bytes32> storageKeys = entry.getStorageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
+      }
+      if (warmCoinbase) {
+        addressList.add(miningBeneficiary);
       }
 
       final long intrinsicGas =
@@ -448,7 +455,7 @@ public class MainnetTransactionProcessor {
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        clearEmptyAccounts(worldState);
+        clearAccountsThatAreEmpty(worldState);
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -474,7 +481,7 @@ public class MainnetTransactionProcessor {
     return transactionValidator;
   }
 
-  protected static void clearEmptyAccounts(final WorldUpdater worldState) {
+  protected static void clearAccountsThatAreEmpty(final WorldUpdater worldState) {
     new ArrayList<>(worldState.getTouchedAccounts())
         .stream().filter(Account::isEmpty).forEach(a -> worldState.deleteAccount(a.getAddress()));
   }

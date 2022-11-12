@@ -16,19 +16,14 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionsForSenderInfo;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -39,9 +34,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
-import com.google.errorprone.annotations.Keep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,41 +63,35 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
    * See this post for an explainer about these data structures:
    * https://hackmd.io/@adietrichs/1559-transaction-sorting
    */
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
+  private final NavigableSet<PendingTransaction> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(PendingTransaction::isReceivedFromLocalSource)
               .thenComparing(
-                  transactionInfo ->
-                      transactionInfo
+                  pendingTx ->
+                      pendingTx
                           .getTransaction()
                           .getMaxPriorityFeePerGas()
                           // just in case we attempt to compare non-1559 transaction
                           .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(TransactionInfo::getAddedToPoolAt)
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
+  private final NavigableSet<PendingTransaction> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(PendingTransaction::isReceivedFromLocalSource)
               .thenComparing(
-                  transactionInfo ->
-                      transactionInfo
+                  pendingTx ->
+                      pendingTx
                           .getTransaction()
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
-                          .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(TransactionInfo::getAddedToPoolAt)
-              .thenComparing(TransactionInfo::getSequence)
+                          .orElse(pendingTx.getGasPrice().toLong()))
+              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getSequence)
               .reversed());
-
-  private final TreeSet<TransactionInfo> transactionsByEvictionOrder =
-      new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
-              .reversed()
-              .thenComparing(TransactionInfo::getSequence));
 
   @Override
   public void manageBlockAdded(final Block block) {
@@ -112,47 +99,34 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
-  protected void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (lock) {
-      final TransactionInfo removedTransactionInfo =
-          pendingTransactions.remove(transaction.getHash());
-      if (removedTransactionInfo != null) {
-        transactionsByEvictionOrder.remove(removedTransactionInfo);
-        if (prioritizedTransactionsDynamicRange.remove(removedTransactionInfo)) {
-          traceLambda(
-              LOG, "Removed dynamic range transaction {}", removedTransactionInfo::toTraceLog);
-        } else {
-          removedTransactionInfo
-              .getTransaction()
-              .getMaxPriorityFeePerGas()
-              .ifPresent(
-                  __ -> {
-                    if (prioritizedTransactionsStaticRange.remove(removedTransactionInfo)) {
-                      traceLambda(
-                          LOG,
-                          "Removed static range transaction {}",
-                          removedTransactionInfo::toTraceLog);
-                    }
-                  });
-        }
-        removeTransactionInfoTrackedBySenderAndNonce(removedTransactionInfo);
-        incrementTransactionRemovedCounter(
-            removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
-      }
+  protected void removePrioritizedTransaction(final PendingTransaction removedPendingTx) {
+    if (prioritizedTransactionsDynamicRange.remove(removedPendingTx)) {
+      traceLambda(LOG, "Removed dynamic range transaction {}", removedPendingTx::toTraceLog);
+    } else {
+      removedPendingTx
+          .getTransaction()
+          .getMaxPriorityFeePerGas()
+          .ifPresent(
+              __ -> {
+                if (prioritizedTransactionsStaticRange.remove(removedPendingTx)) {
+                  traceLambda(
+                      LOG, "Removed static range transaction {}", removedPendingTx::toTraceLog);
+                }
+              });
     }
   }
 
   @Override
-  protected Iterator<TransactionInfo> prioritizedTransactions() {
+  protected Iterator<PendingTransaction> prioritizedTransactions() {
     return new Iterator<>() {
-      final Iterator<TransactionInfo> staticRangeIterable =
+      final Iterator<PendingTransaction> staticRangeIterable =
           prioritizedTransactionsStaticRange.iterator();
-      final Iterator<TransactionInfo> dynamicRangeIterable =
+      final Iterator<PendingTransaction> dynamicRangeIterable =
           prioritizedTransactionsDynamicRange.iterator();
 
-      Optional<TransactionInfo> currentStaticRangeTransaction =
+      Optional<PendingTransaction> currentStaticRangeTransaction =
           getNextOptional(staticRangeIterable);
-      Optional<TransactionInfo> currentDynamicRangeTransaction =
+      Optional<PendingTransaction> currentDynamicRangeTransaction =
           getNextOptional(dynamicRangeIterable);
 
       @Override
@@ -162,17 +136,17 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       }
 
       @Override
-      public TransactionInfo next() {
+      public PendingTransaction next() {
         if (currentStaticRangeTransaction.isEmpty() && currentDynamicRangeTransaction.isEmpty()) {
           throw new NoSuchElementException("Tried to iterate past end of iterator.");
         } else if (currentStaticRangeTransaction.isEmpty()) {
           // only dynamic range txs left
-          final TransactionInfo best = currentDynamicRangeTransaction.get();
+          final PendingTransaction best = currentDynamicRangeTransaction.get();
           currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
           return best;
         } else if (currentDynamicRangeTransaction.isEmpty()) {
           // only static range txs left
-          final TransactionInfo best = currentStaticRangeTransaction.get();
+          final PendingTransaction best = currentStaticRangeTransaction.get();
           currentStaticRangeTransaction = getNextOptional(staticRangeIterable);
           return best;
         } else {
@@ -188,7 +162,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                   .get()
                   .getTransaction()
                   .getEffectivePriorityFeePerGas(baseFee);
-          final TransactionInfo best;
+          final PendingTransaction best;
           if (dynamicRangeEffectivePriorityFee.compareTo(staticRangeEffectivePriorityFee) > 0) {
             best = currentDynamicRangeTransaction.get();
             currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
@@ -200,147 +174,57 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
         }
       }
 
-      private Optional<TransactionInfo> getNextOptional(
-          final Iterator<TransactionInfo> transactionInfoIterator) {
-        return transactionInfoIterator.hasNext()
-            ? Optional.of(transactionInfoIterator.next())
+      private Optional<PendingTransaction> getNextOptional(
+          final Iterator<PendingTransaction> pendingTxsIterator) {
+        return pendingTxsIterator.hasNext()
+            ? Optional.of(pendingTxsIterator.next())
             : Optional.empty();
       }
     };
   }
 
   @Override
-  protected TransactionAddedStatus addTransaction(
-      final TransactionInfo transactionInfo, final Optional<Account> maybeSenderAccount) {
-    Optional<Transaction> droppedTransaction = Optional.empty();
-    final Transaction transaction = transactionInfo.getTransaction();
-    synchronized (lock) {
-      if (pendingTransactions.containsKey(transactionInfo.getHash())) {
-        traceLambda(LOG, "Already known transaction {}", transactionInfo::toTraceLog);
-        return ALREADY_KNOWN;
-      }
-
-      if (transaction.getNonce() - maybeSenderAccount.map(AccountState::getNonce).orElse(0L)
-          >= poolConfig.getTxPoolMaxFutureTransactionByAccount()) {
-        traceLambda(
-            LOG,
-            "Transaction {} not added because nonce too far in the future for sender {}",
-            transaction::toTraceLog,
-            maybeSenderAccount::toString);
-        return NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-      }
-
-      final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo, maybeSenderAccount);
-      if (!transactionAddedStatus.equals(ADDED)) {
-        traceLambda(
-            LOG,
-            "Not added with status {}, transaction {}",
-            transactionAddedStatus::name,
-            transactionInfo::toTraceLog);
-        return transactionAddedStatus;
-      }
-
-      // check if it's in static or dynamic range
-      final String kind;
-      if (isInStaticRange(transaction, baseFee)) {
-        kind = "static";
-        prioritizedTransactionsStaticRange.add(transactionInfo);
-      } else {
-        kind = "dynamic";
-        prioritizedTransactionsDynamicRange.add(transactionInfo);
-      }
-      traceLambda(
-          LOG,
-          "Adding {} to pending transactions, range type {}",
-          transactionInfo::toTraceLog,
-          kind::toString);
-      pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
-      transactionsByEvictionOrder.add(transactionInfo);
-
-      // if we are over txpool limit, select a transaction to evict
-      if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
-        LOG.trace(
-            "Tx pool size {} over limit {} selecting a transaction to evict",
-            pendingTransactions.size(),
-            poolConfig.getTxPoolMaxSize());
-        droppedTransaction = getTransactionToEvict();
-
-        droppedTransaction.ifPresent(
-            toRemove -> {
-              doRemoveTransaction(toRemove, false);
-              traceLambda(
-                  LOG,
-                  "Evicted transaction {} due to transaction pool size, effective price {}",
-                  toRemove::toTraceLog,
-                  () -> toRemove.getEffectivePriorityFeePerGas(baseFee));
-            });
-      }
+  protected void prioritizeTransaction(final PendingTransaction pendingTransaction) {
+    // check if it's in static or dynamic range
+    final String kind;
+    if (isInStaticRange(pendingTransaction.getTransaction(), baseFee)) {
+      kind = "static";
+      prioritizedTransactionsStaticRange.add(pendingTransaction);
+    } else {
+      kind = "dynamic";
+      prioritizedTransactionsDynamicRange.add(pendingTransaction);
     }
-
-    notifyTransactionAdded(transaction);
-    droppedTransaction.ifPresent(this::notifyTransactionDropped);
-    return ADDED;
-  }
-
-  private Optional<Transaction> getTransactionToEvict() {
-    // select transaction to drop by lowest sequence and then by max nonce for the sender
-    final TransactionInfo firstTransactionInfo = transactionsByEvictionOrder.first();
-    final TransactionsForSenderInfo transactionsForSenderInfo =
-        transactionsBySender.get(firstTransactionInfo.getSender());
     traceLambda(
         LOG,
-        "Oldest transaction info {} will pick transaction with highest nonce for that sender {}",
-        firstTransactionInfo::toTraceLog,
-        transactionsForSenderInfo::toTraceLog);
-    return transactionsForSenderInfo.maybeLastTx().map(TransactionInfo::getTransaction);
+        "Adding {} to pending transactions, range type {}",
+        pendingTransaction::toTraceLog,
+        kind::toString);
   }
 
-  @Keep
-  private Optional<Transaction> selectLowestValueTransaction() {
-    Optional<Transaction> droppedTransaction;
-    final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
-    if (!prioritizedTransactionsDynamicRange.isEmpty())
-      lowestValueTxForRemovalBySender(prioritizedTransactionsDynamicRange)
-          .ifPresent(
-              tx -> {
-                traceLambda(
-                    LOG,
-                    "Selected for removal dynamic range transaction {} effective price {}",
-                    tx::toTraceLog,
-                    () ->
-                        tx.getTransaction()
-                            .getEffectivePriorityFeePerGas(baseFee)
-                            .getAsBigInteger());
-                removalCandidates.add(tx);
-              });
-    if (!prioritizedTransactionsStaticRange.isEmpty())
-      lowestValueTxForRemovalBySender(prioritizedTransactionsStaticRange)
-          .ifPresent(
-              tx -> {
-                traceLambda(
-                    LOG,
-                    "Selected for removal static range transaction {} effective price {}",
-                    tx::toTraceLog,
-                    () ->
-                        tx.getTransaction()
-                            .getEffectivePriorityFeePerGas(baseFee)
-                            .getAsBigInteger());
-                removalCandidates.add(tx);
-              });
+  @Override
+  protected PendingTransaction getLeastPriorityTransaction() {
+    final var lastStatic =
+        prioritizedTransactionsStaticRange.isEmpty()
+            ? null
+            : prioritizedTransactionsStaticRange.last();
+    final var lastDynamic =
+        prioritizedTransactionsDynamicRange.isEmpty()
+            ? null
+            : prioritizedTransactionsDynamicRange.last();
 
-    droppedTransaction =
-        removalCandidates
-            .build()
-            .min(
-                Comparator.comparing(
-                    txInfo ->
-                        txInfo
-                            .getTransaction()
-                            .getEffectivePriorityFeePerGas(baseFee)
-                            .getAsBigInteger()))
-            .map(TransactionInfo::getTransaction);
-    return droppedTransaction;
+    if (lastDynamic == null) {
+      return lastStatic;
+    }
+    if (lastStatic == null) {
+      return lastDynamic;
+    }
+
+    final Comparator<PendingTransaction> compareByValue =
+        Comparator.comparing(
+            txInfo ->
+                txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee).getAsBigInteger());
+
+    return compareByValue.compare(lastStatic, lastDynamic) < 0 ? lastStatic : lastDynamic;
   }
 
   private boolean isInStaticRange(final Transaction transaction, final Optional<Wei> baseFee) {
@@ -373,16 +257,16 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
             .filter(
                 // these are the transactions whose effective priority fee have now dropped
                 // below their max priority fee
-                transactionInfo1 -> !isInStaticRange(transactionInfo1.getTransaction(), baseFee))
+                pendingTx -> !isInStaticRange(pendingTx.getTransaction(), baseFee))
             .collect(toUnmodifiableList())
             .forEach(
-                transactionInfo -> {
+                pendingTx -> {
                   traceLambda(
                       LOG,
                       "Moving {} from static to dynamic gas fee paradigm",
-                      transactionInfo::toTraceLog);
-                  prioritizedTransactionsStaticRange.remove(transactionInfo);
-                  prioritizedTransactionsDynamicRange.add(transactionInfo);
+                      pendingTx::toTraceLog);
+                  prioritizedTransactionsStaticRange.remove(pendingTx);
+                  prioritizedTransactionsDynamicRange.add(pendingTx);
                 });
       } else {
         // base fee decreases can only cause transactions to go from dynamic to static range
@@ -390,16 +274,16 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
             .filter(
                 // these are the transactions whose effective priority fee are now above their
                 // max priority fee
-                transactionInfo1 -> isInStaticRange(transactionInfo1.getTransaction(), baseFee))
+                pendingTx -> isInStaticRange(pendingTx.getTransaction(), baseFee))
             .collect(toUnmodifiableList())
             .forEach(
-                transactionInfo -> {
+                pendingTx -> {
                   traceLambda(
                       LOG,
                       "Moving {} from dynamic to static gas fee paradigm",
-                      transactionInfo::toTraceLog);
-                  prioritizedTransactionsDynamicRange.remove(transactionInfo);
-                  prioritizedTransactionsStaticRange.add(transactionInfo);
+                      pendingTx::toTraceLog);
+                  prioritizedTransactionsDynamicRange.remove(pendingTx);
+                  prioritizedTransactionsStaticRange.add(pendingTx);
                 });
       }
     }

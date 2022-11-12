@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,6 +47,8 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   private final RocksDBSnapshot snapshot;
   private final WriteOptions writeOptions;
   private final ReadOptions readOptions;
+  // TODO:  this is a stopgap measure, revisit with https://github.com/hyperledger/besu/issues/4641
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   RocksDBSnapshotTransaction(
       final OptimisticTransactionDB db,
@@ -164,5 +167,14 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     writeOptions.close();
     readOptions.close();
     snapshot.unMarkSnapshot();
+    isClosed.set(true);
+  }
+
+  // TODO:  this is a stopgap measure, revisit with https://github.com/hyperledger/besu/issues/4641
+  @Override
+  protected void finalize() {
+    if (!isClosed.get()) {
+      close();
+    }
   }
 }

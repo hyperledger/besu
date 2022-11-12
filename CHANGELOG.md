@@ -1,4 +1,18 @@
 # Changelog
+## 22.10.1
+
+### Breaking Changes
+- Fields `publicKey` and `raw` removed from RPC API `Transaction` result object [#4575](https://github.com/hyperledger/besu/pull/4575)
+
+### Additions and Improvements
+- Explain and improve price validation for London and local transactions during block proposal selection [#4602](https://github.com/hyperledger/besu/pull/4602)
+- Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
+- Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
+
+### Bug Fixes
+
+### Download Links
+
 ## 22.10.0
 
 ### Breaking Changes
@@ -34,7 +48,7 @@
 
 ### Bug Fixes
 - Fixed default fromBlock value and improved parameter interpretation in eth_getLogs RPC handler [#4513](https://github.com/hyperledger/besu/pull/4513)
-- Fix for NoSuchElementException for missing invalid reason when rejecting a local sent transaction [#4569](https://github.com/hyperledger/besu/pull/4569) 
+- Fix for NoSuchElementException for missing invalid reason when rejecting a local sent transaction [#4569](https://github.com/hyperledger/besu/pull/4569)
 - Corrects treating a block as bad on internal error during either validation or processing [#4512](https://github.com/hyperledger/besu/issues/4512)
 - Corrects emission of blockadded events when rewinding during a re-org. Fix for [#4495](https://github.com/hyperledger/besu/issues/4495)
 - Always return a transaction type for pending transactions [#4364](https://github.com/hyperledger/besu/pull/4364)
@@ -45,6 +59,9 @@
 - Update apache-commons-text to 1.10.0 to address CVE-2022-42889 [#4542](https://github.com/hyperledger/besu/pull/4542)
 
 ### Download Links
+
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.tar.gz  / sha256: 18590796831a6c6c2ca17ba8e6877dd2bd63c25e034f1bbc987aaa0a9c3a178e
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.zip / sha256: 8ad4927469e8e128a3a2c7a708f108393eebc82c522f66cdcac4b7d206e07f90
 
 ## 22.10.0-RC2
 
