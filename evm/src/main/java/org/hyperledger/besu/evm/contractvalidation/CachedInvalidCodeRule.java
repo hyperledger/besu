@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,9 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
+
 package org.hyperledger.besu.evm.contractvalidation;
 
 import org.hyperledger.besu.evm.EVM;
@@ -20,8 +22,18 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.Optional;
 
-@FunctionalInterface
-public interface ContractValidationRule {
+public class CachedInvalidCodeRule implements ContractValidationRule {
 
-  Optional<ExceptionalHaltReason> validate(EVM evm, MessageFrame frame);
+  @Override
+  public Optional<ExceptionalHaltReason> validate(final EVM evm, final MessageFrame frame) {
+    if (!frame.getCode().isValid()) {
+      return Optional.of(ExceptionalHaltReason.INVALID_CODE);
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  public static ContractValidationRule of() {
+    return new CachedInvalidCodeRule();
+  }
 }
