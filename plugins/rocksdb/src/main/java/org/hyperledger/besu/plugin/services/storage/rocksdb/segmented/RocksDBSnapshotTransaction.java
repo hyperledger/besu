@@ -15,6 +15,8 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -178,9 +180,10 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   @Override
   protected void finalize() {
     if (!isClosed.get()) {
-      LOG.debug(
+      debugLambda(
+          LOG,
           "RocksDBSnapshotTransaction was not closed.  This is a memory leak.  Stack trace: {}",
-          Arrays.toString(stackTrace));
+          () -> Arrays.toString(stackTrace));
       close();
     }
   }
