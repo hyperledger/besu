@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
+import com.google.common.base.Suppliers;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -61,14 +63,16 @@ public class SnapshotTrieLogManager
         "adding snapshot world state for block {}, state root hash {}",
         blockHeader::toLogString,
         worldStateRootHash::toHexString);
-    worldStateArchive
-        .getMutableSnapshot(worldStateRootHash)
-        .map(BonsaiSnapshotWorldState.class::cast)
-        .ifPresent(
-            snapshot ->
-                cachedWorldStatesByHash.put(
-                    blockHeader.getHash(),
-                    new CachedSnapshotWorldState(snapshot, trieLog, blockHeader.getNumber())));
+    cachedWorldStatesByHash.put(
+        blockHeader.getHash(),
+        new CachedSnapshotWorldState(
+            () ->
+                worldStateArchive
+                    .getMutableSnapshot(blockHeader.getHash())
+                    .map(BonsaiSnapshotWorldState.class::cast)
+                    .orElse(null),
+            trieLog,
+            blockHeader.getNumber()));
   }
 
   @Override
@@ -81,18 +85,21 @@ public class SnapshotTrieLogManager
 
   @Override
   public void updateCachedLayers(final Hash blockParentHash, final Hash blockHash) {
-    // no-op.  Snapshots are independent and do not need to update 'next' worldstates
+    // fetch the snapshot supplier as soon as its block has been added:
+    cachedWorldStatesByHash.get(blockHash).getMutableWorldState();
   }
 
   public static class CachedSnapshotWorldState implements CachedWorldState {
 
-    final BonsaiSnapshotWorldState snapshot;
+    final Supplier<BonsaiSnapshotWorldState> snapshot;
     final TrieLogLayer trieLog;
     final long height;
 
     public CachedSnapshotWorldState(
-        final BonsaiSnapshotWorldState snapshot, final TrieLogLayer trieLog, final long height) {
-      this.snapshot = snapshot;
+        final Supplier<BonsaiSnapshotWorldState> snapshotSupplier,
+        final TrieLogLayer trieLog,
+        final long height) {
+      this.snapshot = Suppliers.memoize(snapshotSupplier::get);
       this.trieLog = trieLog;
       this.height = height;
     }
@@ -109,7 +116,7 @@ public class SnapshotTrieLogManager
 
     @Override
     public MutableWorldState getMutableWorldState() {
-      return snapshot;
+      return snapshot.get();
     }
   }
 }

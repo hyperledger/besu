@@ -134,6 +134,8 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash())).isNotEmpty();
+
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
