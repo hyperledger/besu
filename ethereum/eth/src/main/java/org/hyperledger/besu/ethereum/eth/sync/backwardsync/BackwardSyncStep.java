@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 public class BackwardSyncStep {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncStep.class);
+  private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
+  private static long lastLogAt = 0;
   private final BackwardSyncContext context;
   private final BackwardChain backwardChain;
 
@@ -61,7 +62,7 @@ public class BackwardSyncStep {
   @VisibleForTesting
   protected CompletableFuture<List<BlockHeader>> requestHeaders(final Hash hash) {
     final int batchSize = context.getBatchSize();
-    debugLambda(LOG, "Requesting header for hash {}", hash::toHexString);
+    LOG.debug("Requesting headers for hash {}, with batch size {}", hash, batchSize);
 
     final RetryingGetHeadersEndingAtFromPeerByHashTask
         retryingGetHeadersEndingAtFromPeerByHashTask =
@@ -70,17 +71,14 @@ public class BackwardSyncStep {
                 context.getEthContext(),
                 hash,
                 batchSize,
-                context.getMetricsSystem());
+                context.getMetricsSystem(),
+                context.getEthContext().getEthPeers().peerCount());
     return context
         .getEthContext()
         .getScheduler()
         .scheduleSyncWorkerTask(retryingGetHeadersEndingAtFromPeerByHashTask::run)
         .thenApply(
             blockHeaders -> {
-              if (blockHeaders.isEmpty()) {
-                throw new BackwardSyncException(
-                    "Did not receive a headers for hash " + hash.toHexString(), true);
-              }
               debugLambda(
                   LOG,
                   "Got headers {} -> {}",
@@ -101,12 +99,37 @@ public class BackwardSyncStep {
     for (BlockHeader blockHeader : blockHeaders) {
       saveHeader(blockHeader);
     }
-    infoLambda(
-        LOG,
-        "Saved headers {} -> {} (head: {})",
-        () -> blockHeaders.get(0).getNumber(),
-        () -> blockHeaders.get(blockHeaders.size() - 1).getNumber(),
-        () -> context.getProtocolContext().getBlockchain().getChainHead().getHeight());
+
+    logProgress(blockHeaders.get(blockHeaders.size() - 1).getNumber());
+
     return null;
+  }
+
+  private void logProgress(final long currLowestDownloadedHeight) {
+    final long targetHeight = context.getStatus().getTargetChainHeight();
+    final long initialHeight = context.getStatus().getInitialChainHeight();
+    final long estimatedTotal = targetHeight - initialHeight;
+    final long downloaded = targetHeight - currLowestDownloadedHeight;
+
+    final float completedPercentage = 100.0f * downloaded / estimatedTotal;
+
+    if (completedPercentage < 100.0f) {
+      final long now = System.currentTimeMillis();
+      if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
+        LOG.info(
+            String.format(
+                "Backward sync phase 1 of 2, %.2f%% completed, downloaded %d headers of at least %d. Peers: %d",
+                completedPercentage,
+                downloaded,
+                estimatedTotal,
+                context.getEthContext().getEthPeers().peerCount()));
+        lastLogAt = now;
+      }
+    } else {
+      LOG.info(
+          String.format(
+              "Backward sync phase 1 of 2 completed, downloaded a total of %d headers. Peers: %d",
+              downloaded, context.getEthContext().getEthPeers().peerCount()));
+    }
   }
 }

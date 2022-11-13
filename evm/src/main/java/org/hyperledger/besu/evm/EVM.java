@@ -45,9 +45,6 @@ import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
 import org.hyperledger.besu.evm.operation.SModOperation;
-import org.hyperledger.besu.evm.operation.SarOperation;
-import org.hyperledger.besu.evm.operation.ShlOperation;
-import org.hyperledger.besu.evm.operation.ShrOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
@@ -166,14 +163,8 @@ public class EVM {
             result = SignExtendOperation.staticOperation(frame);
             break;
           case 0x0c:
-            result = InvalidOperation.INVALID_RESULT;
-            break;
           case 0x0d:
-            result = InvalidOperation.INVALID_RESULT;
-            break;
           case 0x0e:
-            result = InvalidOperation.INVALID_RESULT;
-            break;
           case 0x0f:
             result = InvalidOperation.INVALID_RESULT;
             break;
@@ -206,15 +197,6 @@ public class EVM {
             break;
           case 0x1a: // BYTE
             result = ByteOperation.staticOperation(frame);
-            break;
-          case 0x1b: // SHL
-            result = ShlOperation.staticOperation(frame);
-            break;
-          case 0x1c: // SHR
-            result = ShrOperation.staticOperation(frame);
-            break;
-          case 0x1d: // SAR
-            result = SarOperation.staticOperation(frame);
             break;
           case 0x50: // POP
             result = PopOperation.staticOperation(frame);
