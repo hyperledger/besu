@@ -226,7 +226,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   @Override
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -239,7 +239,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .get(0L)
         .createEthProtocolManager(
             protocolContext,
-            fastSyncEnabled,
+            synchronizerConfiguration,
             transactionPool,
             ethereumWireProtocolConfiguration,
             ethPeers,
