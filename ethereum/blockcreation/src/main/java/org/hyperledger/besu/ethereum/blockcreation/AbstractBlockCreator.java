@@ -251,6 +251,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return protocolContext
         .getWorldStateArchive()
         .getMutable(parentStateRoot, parentHeader.getHash(), false)
+        .map(
+            ws -> {
+              var wsCopy = ws.copy();
+              try {
+                ws.close();
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+              return wsCopy;
+            })
         .orElseThrow(
             () -> {
               LOG.info("Unable to create block because world state is not available");
@@ -259,8 +269,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       + parentHeader.getNumber()
                       + " with state root "
                       + parentStateRoot);
-            })
-        .copy();
+            });
   }
 
   private List<BlockHeader> selectOmmers() {

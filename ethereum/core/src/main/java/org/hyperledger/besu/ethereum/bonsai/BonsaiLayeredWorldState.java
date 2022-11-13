@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -257,17 +258,15 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public MutableWorldState copy() {
-    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
-        ((BonsaiPersistedWorldState) archive.getMutable());
-    BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
-        new BonsaiInMemoryWorldStateKeyValueStorage(
-            bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
-            bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
-    return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
+    // TODO:  this is a stopgap measure, revisit with
+    // https://github.com/hyperledger/besu/issues/4641
+    // rip off the band-aid.  you know you want to:
+    return archive
+        .getMutableSnapshot(this.blockHash())
+        .orElseThrow(
+            () ->
+                new StorageException(
+                    "Worldstate unavailable for " + blockHash().toShortHexString()));
   }
 
   @Override
