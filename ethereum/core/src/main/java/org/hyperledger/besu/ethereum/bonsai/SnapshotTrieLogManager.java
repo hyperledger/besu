@@ -86,7 +86,8 @@ public class SnapshotTrieLogManager
   @Override
   public void updateCachedLayers(final Hash blockParentHash, final Hash blockHash) {
     // fetch the snapshot supplier as soon as its block has been added:
-    cachedWorldStatesByHash.get(blockHash).getMutableWorldState();
+    Optional.ofNullable(cachedWorldStatesByHash.get(blockHash))
+        .ifPresent(CachedSnapshotWorldState::getMutableWorldState);
   }
 
   public static class CachedSnapshotWorldState implements CachedWorldState {
