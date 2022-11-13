@@ -47,13 +47,4 @@ class RocksDBSnapshot {
       dbSnapshot.close();
     }
   }
-
-  // TODO:  this is a stopgap measure, revisit with https://github.com/hyperledger/besu/issues/4641
-  @Override
-  protected void finalize() {
-    if (usages.decrementAndGet() > 0) {
-      db.releaseSnapshot(dbSnapshot);
-      dbSnapshot.close();
-    }
-  }
 }
