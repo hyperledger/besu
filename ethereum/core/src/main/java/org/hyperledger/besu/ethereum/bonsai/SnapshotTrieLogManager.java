@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
-import com.google.common.base.Suppliers;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -28,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
