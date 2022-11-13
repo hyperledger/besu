@@ -78,7 +78,8 @@ public class SnapshotTrieLogManager
   @Override
   public Optional<MutableWorldState> getBonsaiCachedWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
-      return Optional.of(cachedWorldStatesByHash.get(blockHash).getMutableWorldState().copy());
+      return Optional.ofNullable(cachedWorldStatesByHash.get(blockHash).getMutableWorldState())
+          .map(MutableWorldState::copy);
     }
     return Optional.empty();
   }
