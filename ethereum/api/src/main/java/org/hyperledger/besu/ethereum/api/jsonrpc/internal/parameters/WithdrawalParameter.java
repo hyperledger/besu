@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class WithdrawalParameter {
 
@@ -44,18 +45,18 @@ public class WithdrawalParameter {
 
   public Withdrawal toWithdrawal() {
     return new Withdrawal(
-        Long.decode(index),
-        Long.decode(validatorIndex),
+        UInt64.fromHexString(index),
+        UInt64.fromHexString(validatorIndex),
         Address.fromHexString(address),
         Wei.fromHexString(amount));
   }
 
   public static WithdrawalParameter fromWithdrawal(final Withdrawal withdrawal) {
     return new WithdrawalParameter(
-        Long.toHexString(withdrawal.getIndex()),
-        Long.toHexString(withdrawal.getValidatorIndex()),
-        withdrawal.getAddress().toHexString(),
-        withdrawal.getAmount().toHexString());
+        withdrawal.getIndex().toShortHexString(),
+        withdrawal.getValidatorIndex().toShortHexString(),
+        withdrawal.getAddress().toString(),
+        withdrawal.getAmount().toShortHexString());
   }
 
   public String serialize() {

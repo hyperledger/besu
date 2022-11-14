@@ -28,15 +28,16 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.StringJoiner;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class Withdrawal {
-  private final long index;
-  private final long validatorIndex;
+  private final UInt64 index;
+  private final UInt64 validatorIndex;
   private final Address address;
   private final Wei amount;
 
   public Withdrawal(
-      final long index, final long validatorIndex, final Address address, final Wei amount) {
+      final UInt64 index, final UInt64 validatorIndex, final Address address, final Wei amount) {
     this.index = index;
     this.validatorIndex = validatorIndex;
     this.address = address;
@@ -51,7 +52,7 @@ public class Withdrawal {
     return WithdrawalDecoder.decode(rlpInput);
   }
 
-  public long getIndex() {
+  public UInt64 getIndex() {
     return index;
   }
 
@@ -63,7 +64,7 @@ public class Withdrawal {
     return amount;
   }
 
-  public long getValidatorIndex() {
+  public UInt64 getValidatorIndex() {
     return validatorIndex;
   }
 
