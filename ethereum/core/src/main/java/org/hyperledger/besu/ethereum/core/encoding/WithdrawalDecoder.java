@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class WithdrawalDecoder {
 
@@ -35,7 +36,7 @@ public class WithdrawalDecoder {
     final Wei amount = Wei.of(input.readUInt256Scalar());
     input.leaveList();
 
-    return new Withdrawal((int) index, validatorIndex, address, amount);
+    return new Withdrawal(UInt64.valueOf(index), UInt64.valueOf(validatorIndex), address, amount);
   }
 
   public static Withdrawal decodeOpaqueBytes(final Bytes input) {
