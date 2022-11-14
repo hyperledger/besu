@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 public class ForwardSyncStep {
 
   private static final Logger LOG = LoggerFactory.getLogger(ForwardSyncStep.class);
-  private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
-  private static long lastLogAt = 0;
   private final BackwardSyncContext context;
   private final BackwardChain backwardChain;
 
@@ -93,9 +91,6 @@ public class ForwardSyncStep {
       return null;
     }
 
-    long lastImportedHeight =
-        context.getProtocolContext().getBlockchain().getChainHeadBlockNumber();
-
     for (Block block : blocks) {
       final Optional<Block> parent =
           context
@@ -111,45 +106,13 @@ public class ForwardSyncStep {
             block.getHeader().getParentHash()::toString,
             block::toLogString,
             context::getBatchSize);
-        logProgress(lastImportedHeight);
         return null;
       } else {
         context.saveBlock(block);
-        lastImportedHeight = block.getHeader().getNumber();
       }
     }
-
-    logProgress(lastImportedHeight);
 
     context.resetBatchSize();
     return null;
-  }
-
-  private void logProgress(final long currImportedHeight) {
-    final long targetHeight = context.getStatus().getTargetChainHeight();
-    final long initialHeight = context.getStatus().getInitialChainHeight();
-    final long estimatedTotal = targetHeight - initialHeight;
-    final long imported = currImportedHeight - initialHeight;
-
-    final float completedPercentage = 100.0f * imported / estimatedTotal;
-
-    if (completedPercentage < 100.0f) {
-      final long now = System.currentTimeMillis();
-      if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
-        LOG.info(
-            String.format(
-                "Backward sync phase 2 of 2, %.2f%% completed, imported %d blocks of at least %d. Peers: %d",
-                completedPercentage,
-                imported,
-                estimatedTotal,
-                context.getEthContext().getEthPeers().peerCount()));
-        lastLogAt = now;
-      }
-    } else {
-      LOG.info(
-          String.format(
-              "Backward sync phase 2 of 2 completed, imported a total of %d blocks. Peers: %d",
-              imported, context.getEthContext().getEthPeers().peerCount()));
-    }
   }
 }
