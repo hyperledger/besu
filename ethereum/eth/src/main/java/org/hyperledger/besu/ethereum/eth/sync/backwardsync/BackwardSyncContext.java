@@ -46,6 +46,7 @@ public class BackwardSyncContext {
   private static final Logger LOG = LoggerFactory.getLogger(BackwardSyncContext.class);
   public static final int BATCH_SIZE = 200;
   private static final int DEFAULT_MAX_RETRIES = 20;
+  private static final long MILLIS_DELAY_BETWEEN_PROGRESS_LOG = 10_000L;
   private static final long DEFAULT_MILLIS_BETWEEN_RETRIES = 5000;
 
   protected final ProtocolContext protocolContext;
@@ -102,41 +103,51 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    Optional<CompletableFuture<Void>> maybeFuture =
-        Optional.ofNullable(this.currentBackwardSyncStatus.get())
-            .map(status -> status.currentFuture);
+    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
     if (isTrusted(newBlockHash)) {
-      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
+      return maybeCurrentStatus
+          .map(
+              status -> {
+                backwardChain
+                    .getBlock(newBlockHash)
+                    .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber()));
+                return status.currentFuture;
+              })
+          .orElseGet(() -> CompletableFuture.completedFuture(null));
     }
     backwardChain.addNewHash(newBlockHash);
-    return maybeFuture.orElseGet(
-        () -> {
-          LOG.info("Starting a new backward sync session");
-          Status status = new Status(prepareBackwardSyncFutureWithRetry());
-          this.currentBackwardSyncStatus.set(status);
-          return status.currentFuture;
-        });
+    return maybeCurrentStatus
+        .map(Status::getCurrentFuture)
+        .orElseGet(
+            () -> {
+              LOG.info("Starting a new backward sync session");
+              Status status = new Status(prepareBackwardSyncFutureWithRetry());
+              this.currentBackwardSyncStatus.set(status);
+              return status.currentFuture;
+            });
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    Optional<CompletableFuture<Void>> maybeFuture =
-        Optional.ofNullable(this.currentBackwardSyncStatus.get())
-            .map(status -> status.currentFuture);
+    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
     if (isTrusted(newPivot.getHash())) {
-      return maybeFuture.orElseGet(() -> CompletableFuture.completedFuture(null));
+      return maybeCurrentStatus
+          .map(Status::getCurrentFuture)
+          .orElseGet(() -> CompletableFuture.completedFuture(null));
     }
     backwardChain.appendTrustedBlock(newPivot);
-    return maybeFuture.orElseGet(
-        () -> {
-          LOG.info("Starting a new backward sync session");
-          LOG.info("Backward sync target block is {}", newPivot.toLogString());
-          Status status = new Status(prepareBackwardSyncFutureWithRetry());
-          status.setSyncRange(
-              protocolContext.getBlockchain().getChainHeadBlockNumber(),
-              newPivot.getHeader().getNumber());
-          this.currentBackwardSyncStatus.set(status);
-          return status.currentFuture;
-        });
+    return maybeCurrentStatus
+        .map(Status::getCurrentFuture)
+        .orElseGet(
+            () -> {
+              LOG.info("Starting a new backward sync session");
+              LOG.info("Backward sync target block is {}", newPivot.toLogString());
+              Status status = new Status(prepareBackwardSyncFutureWithRetry());
+              status.setSyncRange(
+                  getProtocolContext().getBlockchain().getChainHeadBlockNumber(),
+                  newPivot.getHeader().getNumber());
+              this.currentBackwardSyncStatus.set(status);
+              return status.currentFuture;
+            });
   }
 
   private boolean isTrusted(final Hash hash) {
@@ -298,6 +309,7 @@ public class BackwardSyncContext {
       this.getProtocolContext()
           .getBlockchain()
           .appendBlock(block, optResult.getYield().get().getReceipts());
+      logBlockImportProgress(block.getHeader().getNumber());
     } else {
       emitBadChainEvent(block);
       throw new BackwardSyncException(
@@ -343,10 +355,41 @@ public class BackwardSyncContext {
         listener -> listener.onBadChain(badBlock, badBlockDescendants, badBlockHeaderDescendants));
   }
 
+  private void logBlockImportProgress(final long currImportedHeight) {
+    final Status currentStatus = getStatus();
+    final long targetHeight = currentStatus.getTargetChainHeight();
+    final long initialHeight = currentStatus.getInitialChainHeight();
+    final long estimatedTotal = targetHeight - initialHeight;
+    final long imported = currImportedHeight - initialHeight;
+
+    final float completedPercentage = 100.0f * imported / estimatedTotal;
+
+    if (completedPercentage < 100.0f) {
+      if (currentStatus.couldLogProgress()) {
+        LOG.info(
+            String.format(
+                "Backward sync phase 2 of 2, %.2f%% completed, imported %d blocks of at least %d (current head %d, target head %d). Peers: %d",
+                completedPercentage,
+                imported,
+                estimatedTotal,
+                currImportedHeight,
+                currentStatus.getTargetChainHeight(),
+                getEthContext().getEthPeers().peerCount()));
+      }
+    } else {
+      LOG.info(
+          String.format(
+              "Backward sync phase 2 of 2 completed, imported a total of %d blocks. Peers: %d",
+              imported, getEthContext().getEthPeers().peerCount()));
+    }
+  }
+
   static class Status {
     private final CompletableFuture<Void> currentFuture;
     private long targetChainHeight;
     private long initialChainHeight;
+
+    private static long lastLogAt = 0;
 
     public Status(final CompletableFuture<Void> currentFuture) {
       this.currentFuture = currentFuture;
@@ -355,6 +398,23 @@ public class BackwardSyncContext {
     public void setSyncRange(final long initialHeight, final long targetHeight) {
       initialChainHeight = initialHeight;
       targetChainHeight = targetHeight;
+    }
+
+    public void updateTargetHeight(final long newTargetHeight) {
+      targetChainHeight = newTargetHeight;
+    }
+
+    public boolean couldLogProgress() {
+      final long now = System.currentTimeMillis();
+      if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
+        lastLogAt = now;
+        return true;
+      }
+      return false;
+    }
+
+    public CompletableFuture<Void> getCurrentFuture() {
+      return currentFuture;
     }
 
     public long getTargetChainHeight() {
