@@ -210,9 +210,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     capabilities.add(EthProtocol.ETH65);
     capabilities.add(EthProtocol.ETH66);
 
-    // Version 67 removes the GetNodeData and NodeData
+    // Version 67 removes GetNodeData and NodeData
+    // Fast sync depends on GetNodeData and NodeData
+    // Do not add eth/67 if fast sync is enabled
     // see https://eips.ethereum.org/EIPS/eip-4938
-    if (!fastSyncEnabled) {
+    if (!synchronizerConfiguration.getSyncMode().equals(SyncMode.FAST)) {
       capabilities.add(EthProtocol.ETH67);
     }
 
