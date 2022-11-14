@@ -279,6 +279,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShanghaiBlockNumber() {
+    return getOptionalLong("shangaiblock");
+  }
+
+  @Override
   public OptionalLong getShandongBlockNumber() {
     return getOptionalLong("shandongblock");
   }
@@ -433,6 +438,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
+    getShanghaiBlockNumber().ifPresent(l -> builder.put("shanghaiBlock", l));
     getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
@@ -568,7 +574,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
             getMystiqueBlockNumber(),
-            getEcip1049BlockNumber());
+            getEcip1049BlockNumber(),
+            getShanghaiBlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers

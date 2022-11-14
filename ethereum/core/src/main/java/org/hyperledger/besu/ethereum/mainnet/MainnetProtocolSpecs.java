@@ -635,6 +635,27 @@ public abstract class MainnetProtocolSpecs {
         .name("ParisFork");
   }
 
+  static ProtocolSpecBuilder shanghaiDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final boolean quorumCompatibilityMode,
+      final EvmConfiguration evmConfiguration) {
+
+    return parisDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            quorumCompatibilityMode,
+            evmConfiguration)
+        .withdrawalsProcessorBuilder(WithdrawalsProcessor.AllowedWithdrawalsProcessor::new)
+        .name("Shanghai");
+  }
+
   static ProtocolSpecBuilder shandongDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,

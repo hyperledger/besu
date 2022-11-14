@@ -59,7 +59,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   static final int MAX_GENERATION = 6;
 
   protected final MainnetTransactionProcessor transactionProcessor;
-  protected final WithdrawalProcessor withdrawalProcessor = new WithdrawalProcessor();
+  protected final WithdrawalsProcessor.AllowedWithdrawalsProcessor mainnetWithdrawalsProcessor =
+      new WithdrawalsProcessor.AllowedWithdrawalsProcessor();
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -141,7 +142,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final WorldUpdater worldStateUpdater = worldState.updater();
 
     for (final Withdrawal withdrawal : withdrawals) {
-      withdrawalProcessor.processWithdrawal(withdrawal, worldStateUpdater);
+      mainnetWithdrawalsProcessor.processWithdrawal(withdrawal, worldStateUpdater);
     }
     worldStateUpdater.commit();
 

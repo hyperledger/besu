@@ -39,7 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalProcessor;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -192,10 +192,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       maybeWithdrawals.ifPresent(
           withdrawals -> {
-            WithdrawalProcessor withdrawalProcessor = new WithdrawalProcessor();
+            WithdrawalsProcessor withdrawalsProcessor = newProtocolSpec.getWithdrawalsProcessor();
             final WorldUpdater updater = disposableWorldState.updater();
             for (Withdrawal withdrawal : withdrawals) {
-              withdrawalProcessor.processWithdrawal(withdrawal, updater);
+              withdrawalsProcessor.processWithdrawal(withdrawal, updater);
             }
             updater.commit();
           });

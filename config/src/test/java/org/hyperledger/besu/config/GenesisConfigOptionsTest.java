@@ -198,6 +198,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetShanghaiBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("shanghaiBlock", 1337));
+    assertThat(config.getShanghaiBlockNumber()).hasValue(1337);
+  }
+
+  @Test
   public void shouldGetShandongBlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("shandongBlock", 1337));
     assertThat(config.getShandongBlockNumber()).hasValue(1337);
