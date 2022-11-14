@@ -20,7 +20,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.spotless' version '6.8.0'
+  id 'com.diffplug.spotless' version '6.10.0'
   id 'com.github.ben-manes.versions' version '0.42.0'
   id 'com.github.hierynomus.license' version '0.16.1-fix'
   id 'com.jfrog.artifactory' version '4.28.3'
@@ -103,14 +103,26 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
+    maven {
+      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
+      content { includeGroupByRegex('org\\.hyperledger\\..*') }
+    }
+    maven {
+      url 'https://artifacts.consensys.net/public/maven/maven/'
+      content { includeGroupByRegex('tech\\.pegasys\\..*') }
+    }
+    maven {
+      url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
+      content { includeGroupByRegex('net\\.consensys\\..*') }
+    }
+    maven {
+      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      content { includeGroupByRegex('com\\.splunk\\..*') }
+    }
     mavenCentral()
-    maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
-    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
-    maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
-    maven { url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"}
   }
 
-  dependencies { errorprone "com.google.errorprone:error_prone_core" }
+  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
@@ -126,7 +138,7 @@ allprojects {
     }
     groovyGradle {
       target '*.gradle'
-      greclipse('4.6.3').configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.21.0').configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
@@ -592,7 +604,9 @@ artifactoryPublish {
   dependsOn distZip
 }
 
-def dockerVariants = [
+def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+def dockerImageName = project.hasProperty("dockerImageName") ? project.getProperty("dockerImageName") : "hyperledger/besu"
+def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-11",
   "openjdk-11-debug",
   "graalvm",
@@ -622,9 +636,7 @@ tasks.register("dockerDistUntar") {
 task distDocker {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerBuildDir = "build/docker-besu/"
-  def imageName = "hyperledger/besu"
 
   doLast {
     for (def variant in dockerVariants) {
@@ -633,7 +645,7 @@ task distDocker {
         into(dockerBuildDir)
       }
       exec {
-        def image = "${imageName}:${dockerBuildVersion}-${variant}"
+        def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
         executable "sh"
         workingDir dockerBuildDir
         args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
@@ -642,12 +654,12 @@ task distDocker {
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
-      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
     }
     // create a static tag for the benchmark target
     exec {
       executable "sh"
-      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:benchmark'"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:benchmark'"
     }
   }
 }
@@ -663,7 +675,7 @@ task testDocker {
   doLast {
     for (def variant in dockerVariants) {
       exec {
-        def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+        def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
         workingDir "${projectDir}/docker/${variant}"
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
@@ -698,7 +710,7 @@ task acceptanceTestsQuorum {
       new File(dataDirectory).mkdirs()
       new File(reportsDirectory).mkdirs()
 
-      def image = project.hasProperty('release.releaseVersion') ? "hyperledger/besu:" + project.property('release.releaseVersion') : "hyperledger/besu:${project.version}"
+      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
       def dockerEnv = "--env LOGGING_LEVEL_COM_QUORUM_GAUGE=DEBUG --env TF_VAR_besu_docker_image='{name=\"${image}-${variant}\",local=true}'"
       def dockerVolumes = "-v ${reportsDirectory}:/workspace/target/gauge/reports/ -v /var/run/docker.sock:/var/run/docker.sock -v ${dataDirectory}:${dataDirectory}"
       executable "sh"
@@ -707,13 +719,10 @@ task acceptanceTestsQuorum {
   }
 }
 
-def dockerImage = "hyperledger/besu"
-
 task dockerUpload {
   dependsOn distDocker
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def architecture = System.getenv('architecture')
-  def image = "${dockerImage}:${dockerBuildVersion}"
+  def image = "${dockerImageName}:${dockerBuildVersion}"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
@@ -731,7 +740,7 @@ task dockerUpload {
       exec {
         def archVariantImage = "${variantImage}-${architecture}"
         def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
-        additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImage}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${variant}-${architecture}'" }
+        additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImageName}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${variant}-${architecture}'" }
         executable "sh"
         args "-c", cmd
       }
@@ -740,7 +749,7 @@ task dockerUpload {
     exec {
       def archImage = "${image}-${architecture}"
       def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
-      additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImage}:${tag.trim()}-${architecture}' && docker push '${dockerImage}:${tag.trim()}-${architecture}'" }
+      additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
       executable "sh"
       args "-c", cmd
     }
@@ -749,18 +758,17 @@ task dockerUpload {
 
 task manifestDocker {
 
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def image = "${dockerImage}:${dockerBuildVersion}"
+  def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = ["arm64", "amd64"]
   def tags = ["${image}"]
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
-    tags.add("${dockerImage}:develop")
+    tags.add("${dockerImageName}:develop")
   }
 
   if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
-    tags.add("${dockerImage}:latest")
-    tags.add("${dockerImage}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
+    tags.add("${dockerImageName}:latest")
+    tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   doLast {

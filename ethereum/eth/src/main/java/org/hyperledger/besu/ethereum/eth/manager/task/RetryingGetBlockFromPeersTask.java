@@ -14,135 +14,101 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RetryingGetBlockFromPeersTask
-    extends AbstractRetryingPeerTask<AbstractPeerTask.PeerTaskResult<Block>> {
+    extends AbstractRetryingSwitchingPeerTask<AbstractPeerTask.PeerTaskResult<Block>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlockFromPeersTask.class);
 
-  private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
-  private final Optional<Hash> blockHash;
+  private final Optional<Hash> maybeBlockHash;
   private final long blockNumber;
-  private final Set<EthPeer> triedPeers = new HashSet<>();
 
   protected RetryingGetBlockFromPeersTask(
-      final ProtocolContext protocolContext,
       final EthContext ethContext,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem,
       final int maxRetries,
-      final Optional<Hash> blockHash,
+      final Optional<Hash> maybeBlockHash,
       final long blockNumber) {
-    super(ethContext, maxRetries, Objects::isNull, metricsSystem);
-    this.protocolContext = protocolContext;
+    super(ethContext, metricsSystem, Objects::isNull, maxRetries);
     this.protocolSchedule = protocolSchedule;
-    this.blockHash = blockHash;
+    this.maybeBlockHash = maybeBlockHash;
     this.blockNumber = blockNumber;
   }
 
   public static RetryingGetBlockFromPeersTask create(
-      final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final int maxRetries,
-      final Optional<Hash> hash,
+      final Optional<Hash> maybeHash,
       final long blockNumber) {
     return new RetryingGetBlockFromPeersTask(
-        protocolContext,
-        ethContext,
-        protocolSchedule,
-        metricsSystem,
-        maxRetries,
-        hash,
-        blockNumber);
+        ethContext, protocolSchedule, metricsSystem, maxRetries, maybeHash, blockNumber);
   }
 
   @Override
-  public void assignPeer(final EthPeer peer) {
-    super.assignPeer(peer);
-    triedPeers.add(peer);
-  }
-
-  @Override
-  protected CompletableFuture<AbstractPeerTask.PeerTaskResult<Block>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
-
+  protected CompletableFuture<PeerTaskResult<Block>> executeTaskOnCurrentPeer(
+      final EthPeer currentPeer) {
     final GetBlockFromPeerTask getBlockTask =
         GetBlockFromPeerTask.create(
-            protocolSchedule, getEthContext(), blockHash, blockNumber, getMetricsSystem());
-
-    getBlockTask.assignPeer(
-        assignedPeer
-            .filter(unused -> getRetryCount() == 1) // first try with the assigned preferred peer
-            .orElseGet( // then selecting a new one from the pool
-                () -> {
-                  assignPeer(selectNextPeer());
-                  return getAssignedPeer().get();
-                }));
-
-    LOG.debug(
-        "Getting block {} ({}) from peer {}, attempt {}",
-        blockNumber,
-        blockHash,
-        getAssignedPeer(),
-        getRetryCount());
+            protocolSchedule, getEthContext(), maybeBlockHash, blockNumber, getMetricsSystem());
+    getBlockTask.assignPeer(currentPeer);
 
     return executeSubTask(getBlockTask::run)
         .thenApply(
             peerResult -> {
+              debugLambda(
+                  LOG,
+                  "Got block {} from peer {}, attempt {}",
+                  peerResult.getResult()::toLogString,
+                  peerResult.getPeer()::toString,
+                  this::getRetryCount);
               result.complete(peerResult);
               return peerResult;
             });
   }
 
-  private EthPeer selectNextPeer() {
-    return getEthContext()
-        .getEthPeers()
-        .streamBestPeers()
-        .filter(peer -> !triedPeers.contains(peer))
-        .findFirst()
-        .orElseThrow(NoAvailablePeersException::new);
-  }
-
   @Override
   protected boolean isRetryableError(final Throwable error) {
-    return (blockNumber > protocolContext.getBlockchain().getChainHeadBlockNumber())
-        && (super.isRetryableError(error) || error instanceof IncompleteResultsException);
+    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
   }
 
   @Override
   protected void handleTaskError(final Throwable error) {
     if (getRetryCount() < getMaxRetries()) {
-      LOG.debug(
-          "Failed to get block {} ({}) from peer {}, attempt {}, retrying later",
-          blockNumber,
-          blockHash,
-          getAssignedPeer(),
-          getRetryCount());
+      debugLambda(
+          LOG,
+          "Failed to get block {} from peer {}, attempt {}, retrying later",
+          this::logBlockNumberMaybeHash,
+          this::getAssignedPeer,
+          this::getRetryCount);
     } else {
       LOG.warn(
-          "Failed to get block {} ({}) after {} retries", blockNumber, blockHash, getRetryCount());
+          "Failed to get block {} after {} retries", logBlockNumberMaybeHash(), getRetryCount());
     }
     super.handleTaskError(error);
+  }
+
+  private String logBlockNumberMaybeHash() {
+    return blockNumber + maybeBlockHash.map(h -> " (" + h.toHexString() + ")").orElse("");
   }
 }

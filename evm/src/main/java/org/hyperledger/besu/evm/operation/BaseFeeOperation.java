@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.Optional;
-import java.util.OptionalLong;
 
 public class BaseFeeOperation extends AbstractFixedCostOperation {
 
@@ -34,8 +33,7 @@ public class BaseFeeOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     final Optional<Wei> maybeBaseFee = frame.getBlockValues().getBaseFee();
     if (maybeBaseFee.isEmpty()) {
-      return new Operation.OperationResult(
-          OptionalLong.of(gasCost), Optional.of(ExceptionalHaltReason.INVALID_OPERATION));
+      return new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_OPERATION);
     }
     frame.pushStackItem(maybeBaseFee.orElseThrow());
     return successResponse;

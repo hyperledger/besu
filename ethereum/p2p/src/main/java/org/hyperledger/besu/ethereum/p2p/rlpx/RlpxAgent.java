@@ -69,7 +69,8 @@ public class RlpxAgent {
 
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
-  private final int maxConnections;
+  private final int upperBoundConnections;
+  private final int lowerBoundConnections;
   private final boolean randomPeerPriority;
   private final int maxRemotelyInitiatedConnections;
   // xor'ing with this mask will allow us to randomly let new peers connect
@@ -89,7 +90,8 @@ public class RlpxAgent {
       final ConnectionInitializer connectionInitializer,
       final PeerRlpxPermissions peerPermissions,
       final PeerPrivileges peerPrivileges,
-      final int maxConnections,
+      final int upperBoundConnections,
+      final int lowerBoundConnections,
       final int maxRemotelyInitiatedConnections,
       final boolean randomPeerPriority,
       final MetricsSystem metricsSystem) {
@@ -98,10 +100,11 @@ public class RlpxAgent {
     this.connectionInitializer = connectionInitializer;
     this.peerPermissions = peerPermissions;
     this.peerPrivileges = peerPrivileges;
-    this.maxConnections = maxConnections;
+    this.upperBoundConnections = upperBoundConnections;
+    this.lowerBoundConnections = lowerBoundConnections;
     this.randomPeerPriority = randomPeerPriority;
     this.maxRemotelyInitiatedConnections =
-        Math.min(maxConnections, maxRemotelyInitiatedConnections);
+        Math.min(upperBoundConnections, maxRemotelyInitiatedConnections);
 
     // Setup metrics
     connectedPeersCounter =
@@ -110,14 +113,9 @@ public class RlpxAgent {
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
-        "peer_count",
-        "The current number of peers connected",
-        this::getConnectionCount);
-    metricsSystem.createIntegerGauge(
-        BesuMetricCategory.ETHEREUM,
         "peer_limit",
         "The maximum number of peers this node allows to connect",
-        () -> maxConnections);
+        () -> upperBoundConnections);
   }
 
   public static Builder builder() {
@@ -174,7 +172,7 @@ public class RlpxAgent {
       return;
     }
     peerStream
-        .takeWhile(peer -> Math.max(0, maxConnections - getConnectionCount()) > 0)
+        .takeWhile(peer -> Math.max(0, lowerBoundConnections - getConnectionCount()) > 0)
         .filter(peer -> !connectionsById.containsKey(peer.getId()))
         .filter(peer -> peer.getEnodeURL().isListening())
         .filter(peerPermissions::allowNewOutboundConnectionTo)
@@ -233,10 +231,11 @@ public class RlpxAgent {
       return peerConnection.get();
     }
     // Check max peers
-    if (!peerPrivileges.canExceedConnectionLimits(peer) && getConnectionCount() >= maxConnections) {
+    if (!peerPrivileges.canExceedConnectionLimits(peer)
+        && getConnectionCount() >= upperBoundConnections) {
       final String errorMsg =
           "Max peer connections established ("
-              + maxConnections
+              + upperBoundConnections
               + "). Cannot connect to peer: "
               + peer;
       return CompletableFuture.failedFuture(new IllegalStateException(errorMsg));
@@ -360,16 +359,21 @@ public class RlpxAgent {
     if (!randomPeerPriority) {
       // Disconnect if too many peers
       if (!peerPrivileges.canExceedConnectionLimits(peer)
-          && getConnectionCount() >= maxConnections) {
-        LOG.debug("Too many peers. Disconnect incoming connection: {}", peerConnection);
+          && getConnectionCount() >= upperBoundConnections) {
+        LOG.debug(
+            "Too many peers. Disconnect incoming connection: {} currentCount {}, max {}",
+            peerConnection,
+            getConnectionCount(),
+            upperBoundConnections);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return;
       }
       // Disconnect if too many remotely-initiated connections
       if (!peerPrivileges.canExceedConnectionLimits(peer) && remoteConnectionLimitReached()) {
         LOG.debug(
-            "Too many remotely-initiated connections. Disconnect incoming connection: {}",
-            peerConnection);
+            "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
+            peerConnection,
+            maxRemotelyInitiatedConnections);
         peerConnection.disconnect(DisconnectReason.TOO_MANY_PEERS);
         return;
       }
@@ -431,7 +435,7 @@ public class RlpxAgent {
   }
 
   private boolean shouldLimitRemoteConnections() {
-    return maxRemotelyInitiatedConnections < maxConnections;
+    return maxRemotelyInitiatedConnections < upperBoundConnections;
   }
 
   private boolean remoteConnectionLimitReached() {
@@ -461,24 +465,28 @@ public class RlpxAgent {
         .forEach(
             conn -> {
               LOG.debug(
-                  "Too many remotely initiated connections. Disconnect low-priority connection: {}",
-                  conn);
+                  "Too many remotely initiated connections. Disconnect low-priority connection: {}, maxRemote={}",
+                  conn,
+                  maxRemotelyInitiatedConnections);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
             });
   }
 
   private void enforceConnectionLimits() {
-    if (connectionsById.size() < maxConnections) {
+    if (connectionsById.size() < upperBoundConnections) {
       // Nothing to do - we're under our limits
       return;
     }
 
     getActivePrioritizedConnections()
-        .skip(maxConnections)
+        .skip(upperBoundConnections)
         .filter(c -> !peerPrivileges.canExceedConnectionLimits(c.getPeer()))
         .forEach(
             conn -> {
-              LOG.debug("Too many connections. Disconnect low-priority connection: {}", conn);
+              LOG.debug(
+                  "Too many connections. Disconnect low-priority connection: {}, maxConnections={}",
+                  conn,
+                  upperBoundConnections);
               conn.disconnect(DisconnectReason.TOO_MANY_PEERS);
             });
   }
@@ -541,7 +549,7 @@ public class RlpxAgent {
       }
     }
     // Otherwise, keep older connection
-    LOG.info("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
+    LOG.debug("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
     return Math.toIntExact(a.getInitiatedAt() - b.getInitiatedAt());
   }
 
@@ -609,7 +617,8 @@ public class RlpxAgent {
           connectionInitializer,
           rlpxPermissions,
           peerPrivileges,
-          config.getMaxPeers(),
+          config.getPeerUpperBound(),
+          config.getPeerLowerBound(),
           config.getMaxRemotelyInitiatedConnections(),
           randomPeerPriority,
           metricsSystem);

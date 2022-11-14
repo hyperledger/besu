@@ -49,7 +49,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
   private URI q2TUri;
   private URI thirdPartyUri;
 
-  private final String tesseraVersion = "latest";
+  public static final String TESSERA_VERSION = "22.1.7";
 
   private final int thirdPartyPort = 9081;
   private final int q2TPort = 9082;
@@ -163,11 +163,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
     String confString =
         "{\n"
             + "    \"mode\" : \"orion\",\n"
-            + "    \"encryptor\":{\n"
-            + "        \"type\":\"NACL\",\n"
-            + "        \"properties\":{\n"
-            + "        }\n"
-            + "    },\n"
+            + enclaveConfiguration.getEnclaveEncryptorType().toTesseraEncryptorConfigJSON()
             + "    \"useWhiteList\": false,\n"
             + "    \"jdbc\": {\n"
             + "        \"username\": \"sa\",\n"
@@ -268,7 +264,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
   private GenericContainer buildTesseraContainer(final String configFilePath) {
     final String containerConfigFilePath = "/tmp/config.json";
     final String keyDir = enclaveConfiguration.getTempDir().toString();
-    return new GenericContainer<>("quorumengineering/tessera:" + tesseraVersion)
+    return new GenericContainer<>("quorumengineering/tessera:" + TESSERA_VERSION)
         .withCopyFileToContainer(MountableFile.forHostPath(configFilePath), containerConfigFilePath)
         .withFileSystemBind(keyDir, containerKeyDir)
         .withCommand("--configfile " + containerConfigFilePath)

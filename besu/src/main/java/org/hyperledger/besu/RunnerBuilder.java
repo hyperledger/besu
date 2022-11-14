@@ -142,7 +142,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -165,6 +167,7 @@ public class RunnerBuilder {
   private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
   private int maxPeers;
+  private int minPeers;
   private boolean limitRemoteWireConnectionsEnabled = false;
   private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
@@ -444,7 +447,8 @@ public class RunnerBuilder {
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
-            .setMaxPeers(maxPeers)
+            .setPeerUpperBound(maxPeers)
+            .setPeerLowerBound(minPeers)
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString))
             .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
@@ -704,6 +708,8 @@ public class RunnerBuilder {
       graphQlContextMap.putIfAbsent(GraphQLContextType.TRANSACTION_POOL, transactionPool);
       graphQlContextMap.putIfAbsent(GraphQLContextType.MINING_COORDINATOR, miningCoordinator);
       graphQlContextMap.putIfAbsent(GraphQLContextType.SYNCHRONIZER, synchronizer);
+      graphQlContextMap.putIfAbsent(
+          GraphQLContextType.CHAIN_ID, protocolSchedule.getChainId().map(UInt256::valueOf));
       final GraphQL graphQL;
       try {
         graphQL = GraphQLProvider.buildGraphQL(fetchers);
@@ -984,6 +990,9 @@ public class RunnerBuilder {
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+    // sync vertx for engine consensus API, to process requests in FIFO order;
+    final Vertx consensusEngineServer = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
+
     final Map<String, JsonRpcMethod> methods =
         new JsonRpcMethodsFactory()
             .methods(
@@ -1010,7 +1019,8 @@ public class RunnerBuilder {
                 natService,
                 namedPlugins,
                 dataDir,
-                besuController.getProtocolManager().ethContext().getEthPeers());
+                besuController.getProtocolManager().ethContext().getEthPeers(),
+                consensusEngineServer);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     var pluginMethods = rpcEndpointServiceImpl.getPluginMethods(jsonRpcConfiguration.getRpcApis());
@@ -1156,5 +1166,14 @@ public class RunnerBuilder {
   private Optional<MetricsService> createMetricsService(
       final Vertx vertx, final MetricsConfiguration configuration) {
     return MetricsService.create(vertx, configuration, metricsSystem);
+  }
+
+  public int getMinPeers() {
+    return minPeers;
+  }
+
+  public RunnerBuilder minPeers(final int minPeers) {
+    this.minPeers = minPeers;
+    return this;
   }
 }

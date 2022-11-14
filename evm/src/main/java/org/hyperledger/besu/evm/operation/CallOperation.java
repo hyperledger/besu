@@ -25,22 +25,10 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-import java.util.Optional;
-import java.util.OptionalLong;
-
 public class CallOperation extends AbstractCallOperation {
 
   public CallOperation(final GasCalculator gasCalculator) {
     super(0xF1, "CALL", 7, 1, 1, gasCalculator);
-  }
-
-  @Override
-  protected long gas(final MessageFrame frame) {
-    try {
-      return frame.getStackItem(0).trimLeadingZeros().toLong();
-    } catch (final ArithmeticException | IllegalArgumentException ae) {
-      return Long.MAX_VALUE;
-    }
   }
 
   @Override
@@ -123,8 +111,7 @@ public class CallOperation extends AbstractCallOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
-      return new OperationResult(
-          OptionalLong.of(cost(frame)), Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
+      return new OperationResult(cost(frame), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return super.execute(frame, evm);
     }

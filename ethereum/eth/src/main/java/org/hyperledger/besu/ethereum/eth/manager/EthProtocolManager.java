@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -72,7 +74,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
-  private final int maxMessageSize;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -85,7 +86,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
       final ForkIdManager forkIdManager) {
     this.networkId = networkId;
@@ -102,11 +103,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.ethMessages = ethMessages;
     this.ethContext = ethContext;
 
-    this.maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
-
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
-    supportedCapabilities = calculateCapabilities(fastSyncEnabled);
+    supportedCapabilities = calculateCapabilities(synchronizerConfiguration);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -134,7 +133,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler) {
     this(
         blockchain,
@@ -147,7 +146,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
         new ForkIdManager(
             blockchain,
@@ -166,7 +165,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
       final List<Long> forks) {
     this(
@@ -180,7 +179,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
         new ForkIdManager(
             blockchain, forks, ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
@@ -199,9 +198,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return EthProtocol.NAME;
   }
 
-  private List<Capability> calculateCapabilities(final boolean fastSyncEnabled) {
+  private List<Capability> calculateCapabilities(
+      final SynchronizerConfiguration synchronizerConfiguration) {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
-    if (!fastSyncEnabled) {
+
+    if (SyncMode.isFullSync(synchronizerConfiguration.getSyncMode())) {
       capabilities.add(EthProtocol.ETH62);
     }
     capabilities.add(EthProtocol.ETH63);
@@ -257,7 +258,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
       LOG.debug(
-          "{} requires a Status ({}) message to be sent first.  Instead, received message {}.  Disconnecting from {}.",
+          "{} requires a Status ({}) message to be sent first.  Instead, received message {} (BREACH_OF_PROTOCOL).  Disconnecting from {}.",
           this.getClass().getSimpleName(),
           EthPV62.STATUS,
           code,
@@ -268,6 +269,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (this.mergePeerFilter.isPresent()) {
       if (this.mergePeerFilter.get().disconnectIfGossipingBlocks(message, ethPeer)) {
+        LOG.debug("Post-merge disconnect: peer still gossiping blocks {}", ethPeer);
         handleDisconnect(ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
         return;
       }
@@ -276,17 +278,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
 
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug("Unsolicited message received, disconnecting from EthPeer: {}", ethPeer);
+      LOG.debug(
+          "Unsolicited message received (BREACH_OF_PROTOCOL), disconnecting from EthPeer: {}",
+          ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       return;
-    }
-
-    if (messageData.getSize() > this.maxMessageSize) {
-      LOG.debug(
-          "Peer {} sent a message with size {}, larger than the max message size {}",
-          ethPeer,
-          messageData.getSize(),
-          this.maxMessageSize);
     }
 
     // This will handle responses
@@ -307,7 +303,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.debug(
-          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+          "Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          messageData.getData(),
+          ethPeer,
+          e);
 
       ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
     }
@@ -389,6 +388,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (mergePeerFilter.isPresent()
           && mergePeerFilter.get().disconnectIfPoW(status, peer)) {
+        LOG.debug("Post-merge disconnect: peer still PoW {}", peer);
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
         LOG.debug("Received status message from {}: {}", peer, status);

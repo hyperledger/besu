@@ -42,9 +42,9 @@ public class CapabilityMultiplexerTest {
     // Define protocols with message spaces
     final List<SubProtocol> subProtocols =
         Arrays.asList(
-            subProtocol(eth61.getName(), 8),
-            subProtocol(shh1.getName(), 11),
-            subProtocol(bzz1.getName(), 25));
+            MockSubProtocol.create(eth61.getName(), 8),
+            MockSubProtocol.create(shh1.getName(), 11),
+            MockSubProtocol.create(bzz1.getName(), 25));
 
     // Calculate capabilities
     final List<Capability> capSetA = Arrays.asList(eth61, eth62, bzz1, shh2);
@@ -85,29 +85,5 @@ public class CapabilityMultiplexerTest {
     assertThat(demultiplexed.getMessage().getCode()).isEqualTo(ethCode);
     assertThat(demultiplexed.getCapability()).isEqualTo(eth62);
     assertThat(demultiplexedData).isEqualTo(ethData);
-  }
-
-  private SubProtocol subProtocol(final String name, final int messageSpace) {
-    return new SubProtocol() {
-      @Override
-      public String getName() {
-        return name;
-      }
-
-      @Override
-      public int messageSpace(final int protocolVersion) {
-        return messageSpace;
-      }
-
-      @Override
-      public boolean isValidMessageCode(final int protocolVersion, final int code) {
-        return true;
-      }
-
-      @Override
-      public String messageName(final int protocolVersion, final int code) {
-        return INVALID_MESSAGE_NAME;
-      }
-    };
   }
 }

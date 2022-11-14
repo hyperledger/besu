@@ -19,7 +19,7 @@ import static org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand.C
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
 
-import java.io.PrintStream;
+import java.io.PrintWriter;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -52,9 +52,9 @@ public class OperatorSubCommand implements Runnable {
   @Spec
   private CommandSpec spec; // Picocli injects reference to command spec
 
-  private final PrintStream out;
+  private final PrintWriter out;
 
-  public OperatorSubCommand(final PrintStream out) {
+  public OperatorSubCommand(final PrintWriter out) {
     this.out = out;
   }
 

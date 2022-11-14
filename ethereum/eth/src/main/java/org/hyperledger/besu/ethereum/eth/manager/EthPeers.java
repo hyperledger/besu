@@ -94,6 +94,11 @@ public class EthPeers {
         "pending_peer_requests_current",
         "Number of peer requests currently pending because peers are busy",
         pendingRequests::size);
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.ETHEREUM,
+        "peer_count",
+        "The current number of peers connected",
+        () -> (int) streamAvailablePeers().count());
   }
 
   public void registerConnection(
@@ -202,8 +207,20 @@ public class EthPeers {
     return connections.values().stream();
   }
 
+  private void removeDisconnectedPeers() {
+    final Collection<EthPeer> peerStream = connections.values();
+    for (EthPeer p : peerStream) {
+      if (p.isDisconnected()) {
+        connections.remove(p.getConnection());
+      }
+    }
+  }
+
   public Stream<EthPeer> streamAvailablePeers() {
-    return streamAllPeers().filter(EthPeer::readyForRequests);
+    removeDisconnectedPeers();
+    return streamAllPeers()
+        .filter(EthPeer::readyForRequests)
+        .filter(peer -> !peer.isDisconnected());
   }
 
   public Stream<EthPeer> streamBestPeers() {

@@ -47,4 +47,14 @@ public class EngineForkchoiceUpdatedParameter {
     this.headBlockHash = headBlockHash;
     this.safeBlockHash = safeBlockHash;
   }
+
+  @Override
+  public String toString() {
+    return "headBlockHash="
+        + headBlockHash
+        + ", safeBlockHash="
+        + safeBlockHash
+        + ", finalizedBlockHash="
+        + finalizedBlockHash;
+  }
 }

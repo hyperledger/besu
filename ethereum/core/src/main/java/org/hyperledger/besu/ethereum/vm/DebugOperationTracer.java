@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -44,25 +45,33 @@ public class DebugOperationTracer implements OperationTracer {
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
+  private Optional<Bytes32[]> preExecutionStack;
+  private long gasRemaining;
+  private Bytes inputData;
+  private int pc;
+
   public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
   }
 
   @Override
-  public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
+  public void tracePreExecution(final MessageFrame frame) {
+    preExecutionStack = captureStack(frame);
+    gasRemaining = frame.getRemainingGas();
+    inputData = frame.getInputData().copy();
+    pc = frame.getPC();
+  }
+
+  @Override
+  public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
-    final int pc = frame.getPC();
-    final long gasRemaining = frame.getRemainingGas();
-    final Bytes inputData = frame.getInputData();
-    final Optional<Bytes32[]> stack = captureStack(frame);
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
-    final Optional<Bytes32[]> stackPostExecution;
-    final Operation.OperationResult operationResult = executeOperation.execute();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
-    stackPostExecution = captureStack(frame);
+    final Optional<Bytes32[]> stackPostExecution = captureStack(frame);
+
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
@@ -74,15 +83,17 @@ public class DebugOperationTracer implements OperationTracer {
             pc,
             Optional.of(opcode),
             gasRemaining,
-            operationResult.getGasCost(),
+            operationResult.getGasCost() == 0
+                ? OptionalLong.empty()
+                : OptionalLong.of(operationResult.getGasCost()),
             frame.getGasRefund(),
             depth,
-            operationResult.getHaltReason(),
+            Optional.ofNullable(operationResult.getHaltReason()),
             frame.getRecipientAddress(),
             frame.getApparentValue(),
-            pc == 0 ? inputData.copy() : inputData,
+            inputData,
             outputData,
-            stack,
+            preExecutionStack,
             memory,
             storage,
             worldUpdater,

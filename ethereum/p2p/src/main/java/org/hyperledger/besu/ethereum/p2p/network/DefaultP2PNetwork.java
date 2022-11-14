@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -185,8 +184,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.nodeId = nodeKey.getPublicKey().getEncodedBytes();
     this.peerPermissions = peerPermissions;
 
-    final int maxPeers = config.getRlpx().getMaxPeers();
-    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= maxPeers);
+    // set the requirement here that the number of peers be greater than the lower bound
+    final int peerLowerBound = config.getRlpx().getPeerLowerBound();
+    LOG.debug("setting peerLowerBound {}", peerLowerBound);
+    peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
   }
 
@@ -213,7 +214,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         .ifPresent(
             disco -> {
               // These lists are updated every 12h
-              // We retrieve the list every 30 minutes (1800000 msec)
+              // We retrieve the list every 10 minutes (600000 msec)
               LOG.info("Starting DNS discovery with URL {}", disco);
               config
                   .getDnsDiscoveryServerOverride()
@@ -227,7 +228,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       disco,
                       createDaemonListener(),
                       0L,
-                      1800000L,
+                      600000L,
                       config.getDnsDiscoveryServerOverride().orElse(null));
               dnsDaemon.start();
             });
@@ -257,6 +258,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     peerBondedObserverId =
         OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
+
+    // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer
+    // additions
+    checkMaintainedConnectionPeers();
 
     // Periodically check maintained connections
     final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
@@ -348,14 +353,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
         peers.add(peer);
       }
       if (!peers.isEmpty()) {
-        final Optional<PeerDiscoveryController> peerDiscoveryController =
-            peerDiscoveryAgent.getPeerDiscoveryController();
-        if (peerDiscoveryController.isPresent()) {
-          final PeerDiscoveryController controller = peerDiscoveryController.get();
-          LOG.debug("Adding {} DNS peers to PeerTable", peers.size());
-          peers.forEach(controller::addToPeerTable);
-          peers.forEach(rlpxAgent::connect);
-        }
+        peers.stream().forEach(peerDiscoveryAgent::bond);
       }
     };
   }
@@ -365,8 +363,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (!localNode.isReady()) {
       return;
     }
+    final EnodeURL localEnodeURL = localNode.getPeer().getEnodeURL();
     maintainedPeers
         .streamPeers()
+        .filter(peer -> !peer.getEnodeURL().getNodeId().equals(localEnodeURL.getNodeId()))
         .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
         .forEach(rlpxAgent::connect);
   }
@@ -500,7 +500,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       // Set up permissions
       // Fold peer reputation into permissions
       final PeerPermissionsDenylist misbehavingPeers = PeerPermissionsDenylist.create(500);
-      final PeerDenylistManager reputationManager = new PeerDenylistManager(misbehavingPeers);
+      final PeerDenylistManager reputationManager =
+          new PeerDenylistManager(misbehavingPeers, maintainedPeers);
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 
       final MutableLocalNode localNode =

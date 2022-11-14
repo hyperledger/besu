@@ -27,7 +27,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
@@ -52,7 +52,7 @@ public class RLPSubCommand implements Runnable {
 
   public static final String COMMAND_NAME = "rlp";
 
-  private final PrintStream out;
+  private final PrintWriter out;
   private final InputStream in;
 
   @SuppressWarnings("unused")
@@ -63,7 +63,7 @@ public class RLPSubCommand implements Runnable {
   @Spec
   private CommandSpec spec;
 
-  public RLPSubCommand(final PrintStream out, final InputStream in) {
+  public RLPSubCommand(final PrintWriter out, final InputStream in) {
     this.out = out;
     this.in = in;
   }

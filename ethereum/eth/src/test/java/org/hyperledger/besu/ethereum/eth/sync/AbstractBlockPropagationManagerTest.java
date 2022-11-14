@@ -26,6 +26,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -49,6 +51,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer.Responder;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockHashesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
+import org.hyperledger.besu.ethereum.eth.sync.BlockPropagationManager.ProcessingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -85,8 +88,11 @@ public abstract class AbstractBlockPropagationManagerTest {
       spy(
           new PendingBlocksManager(
               SynchronizerConfiguration.builder().blockPropagationRange(-10, 30).build()));
+  protected final ProcessingBlocksManager processingBlocksManager =
+      spy(new ProcessingBlocksManager());
   protected SyncState syncState;
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private final Hash finalizedHash = Hash.fromHexStringLenient("0x1337");
 
   protected void setup(final DataStorageFormat dataStorageFormat) {
     blockchainUtil = BlockchainSetupUtil.forTesting(dataStorageFormat);
@@ -116,7 +122,8 @@ public abstract class AbstractBlockPropagationManagerTest {
             syncState,
             pendingBlocksManager,
             metricsSystem,
-            blockBroadcaster);
+            blockBroadcaster,
+            processingBlocksManager);
   }
 
   @Test
@@ -667,6 +674,36 @@ public abstract class AbstractBlockPropagationManagerTest {
         });
   }
 
+  @Test
+  public void shouldRequestLowestAnnouncedPendingBlockParent_twoMissingBlocks() {
+    // test if block propagation manager can recover if one block is missed
+    blockchainUtil.importFirstBlocks(2);
+    final List<Block> blocks = blockchainUtil.getBlocks().subList(2, 6);
+
+    blockPropagationManager.start();
+
+    // Create peer and responder
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    // skip two block then create messages from blocklist
+    blocks.stream()
+        .skip(2)
+        .map(this::createNewBlockHashMessage)
+        .forEach(
+            message -> { // Broadcast new block hash message
+              EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, message);
+            });
+
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    // assert all blocks were imported
+    blocks.forEach(
+        block -> {
+          assertThat(blockchain.contains(block.getHash())).isTrue();
+        });
+  }
+
   private NewBlockHashesMessage createNewBlockHashMessage(final Block block) {
     return NewBlockHashesMessage.create(
         Collections.singletonList(
@@ -812,25 +849,29 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldStopWhenTTDReached() {
+  public void shouldStopWhenFinalized() {
     blockPropagationManager.start();
-    syncState.setReachedTerminalDifficulty(true);
+    // syncState.setReachedTerminalDifficulty(true);
+    blockPropagationManager.onNewUnverifiedForkchoice(
+        new ForkchoiceEvent(null, null, this.finalizedHash));
     assertThat(blockPropagationManager.isRunning()).isFalse();
     assertThat(ethProtocolManager.ethContext().getEthMessages().messageCodesHandled())
         .doesNotContain(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
   }
 
   @Test
-  public void shouldRestartWhenTTDReachedReturnsFalse() {
+  public void shouldRestartWhenTTDReachedReturnsFalseAfterFinalizing() {
     blockPropagationManager.start();
     syncState.setReachedTerminalDifficulty(true);
+    blockPropagationManager.onNewUnverifiedForkchoice(
+        new ForkchoiceEvent(null, null, this.finalizedHash));
     assertThat(blockPropagationManager.isRunning()).isFalse();
     syncState.setReachedTerminalDifficulty(false);
     assertThat(blockPropagationManager.isRunning()).isTrue();
   }
 
   @Test
-  public void shouldNotListenToNewBlockHashesAnnouncementsWhenTTDReached() {
+  public void shouldNotListenToNewBlockHashesAnnouncementsWhenTTDReachedAndFinal() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -848,7 +889,8 @@ public abstract class AbstractBlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     syncState.setReachedTerminalDifficulty(true);
-
+    blockPropagationManager.onNewUnverifiedForkchoice(
+        new ForkchoiceEvent(null, null, this.finalizedHash));
     // Broadcast message
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
@@ -858,7 +900,7 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldNotListenToNewBlockAnnouncementsWhenTTDReached() {
+  public void shouldNotListenToNewBlockAnnouncementsWhenTTDReachedAndFinal() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);
 
@@ -874,7 +916,8 @@ public abstract class AbstractBlockPropagationManagerTest {
     final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     syncState.setReachedTerminalDifficulty(true);
-
+    blockPropagationManager.onNewUnverifiedForkchoice(
+        new ForkchoiceEvent(null, null, this.finalizedHash));
     // Broadcast message
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
@@ -884,17 +927,56 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
-  public void shouldNotListenToBlockAddedEventsWhenTTDReached() {
+  public void shouldNotListenToBlockAddedEventsWhenTTDReachedAndFinal() {
     blockchainUtil.importFirstBlocks(2);
 
     blockPropagationManager.start();
 
     syncState.setReachedTerminalDifficulty(true);
-
+    blockPropagationManager.onNewUnverifiedForkchoice(
+        new ForkchoiceEvent(null, null, this.finalizedHash));
     blockchainUtil.importBlockAtIndex(2);
 
     assertThat(blockPropagationManager.isRunning()).isFalse();
     verifyNoInteractions(pendingBlocksManager);
+  }
+
+  @Test
+  public void shouldRequestBlockFromOtherPeersIfFirstPeerFails() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+
+    // Sanity check
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    blockPropagationManager.start();
+
+    final RespondingEthPeer firstPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final NewBlockHashesMessage nextAnnouncement =
+        NewBlockHashesMessage.create(
+            Collections.singletonList(
+                new NewBlockHashesMessage.NewBlockHash(
+                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+
+    // Broadcast message and peer fail to respond
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, firstPeer, nextAnnouncement);
+    firstPeer.respondWhile(RespondingEthPeer.emptyResponder(), firstPeer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    // second peer responds
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final Responder goodResponder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    secondPeer.respondWhile(goodResponder, secondPeer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isTrue();
+    verify(processingBlocksManager).addRequestedBlock(nextBlock.getHash());
+    verify(processingBlocksManager).addImportingBlock(nextBlock.getHash());
+    verify(processingBlocksManager).registerReceivedBlock(nextBlock);
+    verify(processingBlocksManager).registerBlockImportDone(nextBlock.getHash());
   }
 
   public abstract Blockchain getFullBlockchain();

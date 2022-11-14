@@ -22,12 +22,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -56,7 +59,8 @@ public class BlockMinerTest {
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
+    when(blockCreator.createBlock(anyLong()))
+        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -64,7 +68,7 @@ public class BlockMinerTest {
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(true);
+    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);
@@ -96,14 +100,19 @@ public class BlockMinerTest {
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
-    when(blockCreator.createBlock(anyLong())).thenReturn(blockToCreate);
+    when(blockCreator.createBlock(anyLong()))
+        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     final ProtocolSchedule protocolSchedule = singleSpecSchedule(protocolSpec);
 
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(false, false, true);
+    when(blockImporter.importBlock(any(), any(), any()))
+        .thenReturn(
+            new BlockImportResult(false),
+            new BlockImportResult(false),
+            new BlockImportResult(true));
 
     final MinedBlockObserver observer = mock(MinedBlockObserver.class);
     final DefaultBlockScheduler scheduler = mock(DefaultBlockScheduler.class);

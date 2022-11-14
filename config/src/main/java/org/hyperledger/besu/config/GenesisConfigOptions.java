@@ -90,6 +90,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getMergeNetSplitBlockNumber();
 
+  OptionalLong getShandongBlockNumber();
+
   Optional<Wei> getBaseFeePerGas();
 
   Optional<UInt256> getTerminalTotalDifficulty();
@@ -283,4 +285,12 @@ public interface GenesisConfigOptions {
    * @return the name of the elliptic curve.
    */
   Optional<String> getEcCurve();
+
+  /**
+   * Set a Zero Base Fee network so that free gas can be used with London/EIP-1559. Once the chain
+   * has a zero base fee, you cannot go back to a non-zero base fee.
+   *
+   * @return true, if you want the next block to use zero for the base fee.
+   */
+  boolean isZeroBaseFee();
 }

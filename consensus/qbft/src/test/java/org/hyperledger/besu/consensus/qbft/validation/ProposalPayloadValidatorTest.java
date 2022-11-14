@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2022 Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,9 +37,8 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -105,7 +104,7 @@ public class ProposalPayloadValidatorTest {
             eq(block),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
   }
@@ -129,7 +128,7 @@ public class ProposalPayloadValidatorTest {
             eq(block),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
   }
@@ -152,7 +151,7 @@ public class ProposalPayloadValidatorTest {
             eq(block),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(new Result("Failed"));
+        .thenReturn(new BlockProcessingResult("Failed"));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
   }
@@ -228,7 +227,7 @@ public class ProposalPayloadValidatorTest {
             eq(block),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
   }
@@ -262,7 +261,7 @@ public class ProposalPayloadValidatorTest {
             eq(block),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(cmsValidator.validate(eq(cms), eq(hashWithoutCms))).thenReturn(false);
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -297,7 +296,7 @@ public class ProposalPayloadValidatorTest {
             eq(block),
             eq(HeaderValidationMode.LIGHT),
             eq(HeaderValidationMode.FULL)))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, null)));
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(cmsValidator.validate(eq(cms), eq(hashWithoutCms))).thenReturn(true);
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();

@@ -27,6 +27,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
@@ -41,14 +42,17 @@ public class PrivacyReceiptAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode alice;
 
-  public PrivacyReceiptAcceptanceTest(final Restriction restriction, final EnclaveType enclaveType)
+  public PrivacyReceiptAcceptanceTest(
+      final Restriction restriction,
+      final EnclaveType enclaveType,
+      final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
-    super(restriction, enclaveType);
+    super(restriction, enclaveType, enclaveEncryptorType);
 
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
-            PrivacyAccountResolver.ALICE,
+            PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
             Optional.empty(),

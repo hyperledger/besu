@@ -130,7 +130,8 @@ public class JsonRpcHttpServiceTestBase {
                     natService,
                     new HashMap<>(),
                     folder.getRoot().toPath(),
-                    ethPeersMock));
+                    ethPeersMock,
+                    vertx));
     service = createJsonRpcHttpService(createLimitedJsonRpcConfig());
     service.start().join();
 

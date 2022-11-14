@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum RpcApis {
   ETH,
@@ -41,4 +43,7 @@ public enum RpcApis {
   @SuppressWarnings("unused")
   public static final List<RpcApis> ALL_JSON_RPC_APIS =
       Arrays.asList(ETH, DEBUG, MINER, NET, PERM, WEB3, ADMIN, EEA, PRIV, TXPOOL, TRACE, PLUGINS);
+
+  public static final List<String> VALID_APIS =
+      Stream.of(RpcApis.values()).map(RpcApis::name).collect(Collectors.toList());
 }

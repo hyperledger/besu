@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.QosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -31,10 +30,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,22 +45,16 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   // use (2^256 - 2^10) if engine is enabled in the absence of a TTD configuration
   static final Difficulty FALLBACK_TTD_DEFAULT =
-      Difficulty.MAX_VALUE.subtract(UInt256.valueOf(1024L));
-  static final long QOS_TIMEOUT_MILLIS = 120000L;
+      Difficulty.fromHexString(
+          "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc00");
 
-  private final QosTimer qosTimer;
+  private static final Supplier<ObjectMapper> mapperSupplier = Suppliers.memoize(ObjectMapper::new);
 
   public EngineExchangeTransitionConfiguration(
-      final Vertx vertx, final ProtocolContext protocolContext) {
-    super(vertx, protocolContext);
-    qosTimer =
-        new QosTimer(
-            vertx,
-            QOS_TIMEOUT_MILLIS,
-            lastCall ->
-                LOG.warn(
-                    "not called in {} seconds, consensus client may not be connected",
-                    QOS_TIMEOUT_MILLIS / 1000L));
+      final Vertx vertx,
+      final ProtocolContext protocolContext,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, engineCallListener);
   }
 
   @Override
@@ -69,8 +64,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    // update our QoS "last call time"
-    getQosTimer().resetTimer();
+    engineCallListener.executionEngineCalled();
 
     final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
         requestContext.getRequiredParameter(
@@ -80,7 +74,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     traceLambda(
         LOG,
         "received transitionConfiguration: {}",
-        () -> Json.encodePrettily(remoteTransitionConfiguration));
+        () -> {
+          try {
+            return mapperSupplier.get().writeValueAsString(remoteTransitionConfiguration);
+          } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+          }
+        });
 
     final Optional<BlockHeader> maybeTerminalPoWBlockHeader =
         mergeContextOptional.flatMap(MergeContext::getTerminalPoWBlock);
@@ -96,7 +96,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     if (!localTransitionConfiguration
         .getTerminalTotalDifficulty()
         .equals(remoteTransitionConfiguration.getTerminalTotalDifficulty())) {
-      LOG.warn(
+      LOG.debug(
           "Configured terminal total difficulty {} does not match value of consensus client {}",
           localTransitionConfiguration.getTerminalTotalDifficulty(),
           remoteTransitionConfiguration.getTerminalTotalDifficulty());
@@ -105,7 +105,7 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
     if (!localTransitionConfiguration
         .getTerminalBlockHash()
         .equals(remoteTransitionConfiguration.getTerminalBlockHash())) {
-      LOG.warn(
+      LOG.debug(
           "Configured terminal block hash {} does not match value of consensus client {}",
           localTransitionConfiguration.getTerminalBlockHash(),
           remoteTransitionConfiguration.getTerminalBlockHash());
@@ -126,10 +126,5 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
       final Object requestId,
       final EngineExchangeTransitionConfigurationResult transitionConfiguration) {
     return new JsonRpcSuccessResponse(requestId, transitionConfiguration);
-  }
-
-  // QosTimer accessor for testing considerations
-  QosTimer getQosTimer() {
-    return qosTimer;
   }
 }

@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,14 +32,16 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -48,6 +51,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
 import java.util.List;
@@ -77,11 +82,18 @@ public class EngineNewPayloadTest {
 
   @Mock private MutableBlockchain blockchain;
 
+  @Mock private EthPeers ethPeers;
+
+  @Mock private EngineCallListener engineCallListener;
+
   @Before
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    this.method = new EngineNewPayload(vertx, protocolContext, mergeCoordinator);
+    when(ethPeers.peerCount()).thenReturn(1);
+    this.method =
+        new EngineNewPayload(
+            vertx, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
   @Test
@@ -101,7 +113,8 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
+        .thenReturn(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -109,6 +122,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -121,7 +135,7 @@ public class EngineNewPayloadTest {
         .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
-    when(mergeCoordinator.rememberBlock(any())).thenReturn(new Result("error 42"));
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(new BlockProcessingResult("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -129,6 +143,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("error 42");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -148,6 +163,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(ACCEPTED.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -164,6 +180,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -181,6 +198,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     verify(mergeCoordinator, atLeastOnce()).addBadBlock(any());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -198,6 +216,29 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(latestValidHash));
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldNotReturnInvalidOnInternalException() {
+    BlockHeader mockHeader = createBlockHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+        .thenReturn(true);
+    when(mergeCoordinator.rememberBlock(any()))
+        .thenReturn(
+            new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    fromErrorResp(resp);
+    verify(engineCallListener, times(1)).executionEngineCalled();
+    verify(mergeCoordinator, times(0)).addBadBlock(any());
+    // verify mainnetBlockValidator does not add to bad block manager
   }
 
   @Test
@@ -209,6 +250,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -222,6 +264,7 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID_BLOCK_HASH.name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -236,6 +279,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Failed to decode transactions from block parameter");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -257,6 +301,7 @@ public class EngineNewPayloadTest {
     var payloadStatusResult = (EnginePayloadStatusResult) res;
     assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
     assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -272,6 +317,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getError()).isNull();
     assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
     assertThat(res.getLatestValidHash()).isEmpty();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -285,6 +331,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
     assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -306,6 +353,7 @@ public class EngineNewPayloadTest {
     assertThat(res.getLatestValidHash()).isEmpty();
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Field extraData must not be null");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -318,7 +366,8 @@ public class EngineNewPayloadTest {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(res.getError()).isNull();
+    assertThat(res.getError()).isEqualTo("Block already present in bad block manager.");
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   private JsonRpcResponse resp(final EnginePayloadParameter payload) {
@@ -352,6 +401,14 @@ public class EngineNewPayloadTest {
         .map(JsonRpcSuccessResponse.class::cast)
         .map(JsonRpcSuccessResponse::getResult)
         .map(EnginePayloadStatusResult.class::cast)
+        .get();
+  }
+
+  private JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    return Optional.of(resp)
+        .map(JsonRpcErrorResponse.class::cast)
+        .map(JsonRpcErrorResponse::getError)
         .get();
   }
 

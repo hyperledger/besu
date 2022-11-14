@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineCallListener;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -45,12 +46,17 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   protected final Optional<MergeContext> mergeContextOptional;
   protected final Supplier<MergeContext> mergeContext;
   protected final ProtocolContext protocolContext;
+  protected final EngineCallListener engineCallListener;
 
-  protected ExecutionEngineJsonRpcMethod(final Vertx vertx, final ProtocolContext protocolContext) {
+  protected ExecutionEngineJsonRpcMethod(
+      final Vertx vertx,
+      final ProtocolContext protocolContext,
+      final EngineCallListener engineCallListener) {
     this.syncVertx = vertx;
     this.protocolContext = protocolContext;
     this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
     this.mergeContext = mergeContextOptional::orElseThrow;
+    this.engineCallListener = engineCallListener;
   }
 
   @Override
@@ -82,8 +88,10 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     try {
       return cf.get();
     } catch (InterruptedException e) {
+      LOG.error("Failed to get execution engine response", e);
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.TIMEOUT_ERROR);
     } catch (ExecutionException e) {
+      LOG.error("Failed to get execution engine response", e);
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
     }
   }

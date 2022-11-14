@@ -16,15 +16,15 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ADDED;
-import static org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionAddedStatus.ALREADY_KNOWN;
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.number.Percentage;
 
 import java.time.Clock;
 import java.util.Comparator;
@@ -34,7 +34,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,19 +51,11 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   private Optional<Wei> baseFee;
 
   public BaseFeePendingTransactionsSorter(
-      final int maxTransactionRetentionHours,
-      final int maxPendingTransactions,
+      final TransactionPoolConfiguration poolConfig,
       final Clock clock,
       final MetricsSystem metricsSystem,
-      final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final Percentage priceBump) {
-    super(
-        maxTransactionRetentionHours,
-        maxPendingTransactions,
-        clock,
-        metricsSystem,
-        chainHeadHeaderSupplier,
-        priceBump);
+      final Supplier<BlockHeader> chainHeadHeaderSupplier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier);
     this.baseFee = chainHeadHeaderSupplier.get().getBaseFee();
   }
 
@@ -72,32 +63,34 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
    * See this post for an explainer about these data structures:
    * https://hackmd.io/@adietrichs/1559-transaction-sorting
    */
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsStaticRange =
+  private final NavigableSet<PendingTransaction> prioritizedTransactionsStaticRange =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(PendingTransaction::isReceivedFromLocalSource)
               .thenComparing(
-                  transactionInfo ->
-                      transactionInfo
+                  pendingTx ->
+                      pendingTx
                           .getTransaction()
                           .getMaxPriorityFeePerGas()
-                          // safe to .get() here because only 1559 txs can be in the static range
-                          .get()
+                          // just in case we attempt to compare non-1559 transaction
+                          .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(TransactionInfo::getSequence)
+              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
-  private final NavigableSet<TransactionInfo> prioritizedTransactionsDynamicRange =
+  private final NavigableSet<PendingTransaction> prioritizedTransactionsDynamicRange =
       new TreeSet<>(
-          comparing(TransactionInfo::isReceivedFromLocalSource)
+          comparing(PendingTransaction::isReceivedFromLocalSource)
               .thenComparing(
-                  transactionInfo ->
-                      transactionInfo
+                  pendingTx ->
+                      pendingTx
                           .getTransaction()
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
-                          .orElse(transactionInfo.getGasPrice().toLong()))
-              .thenComparing(TransactionInfo::getSequence)
+                          .orElse(pendingTx.getGasPrice().toLong()))
+              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
   @Override
@@ -106,31 +99,34 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
-  protected void doRemoveTransaction(final Transaction transaction, final boolean addedToBlock) {
-    synchronized (lock) {
-      final TransactionInfo removedTransactionInfo =
-          pendingTransactions.remove(transaction.getHash());
-      if (removedTransactionInfo != null) {
-        if (!prioritizedTransactionsDynamicRange.remove(removedTransactionInfo))
-          prioritizedTransactionsStaticRange.remove(removedTransactionInfo);
-        removeTransactionTrackedBySenderAndNonce(transaction);
-        incrementTransactionRemovedCounter(
-            removedTransactionInfo.isReceivedFromLocalSource(), addedToBlock);
-      }
+  protected void removePrioritizedTransaction(final PendingTransaction removedPendingTx) {
+    if (prioritizedTransactionsDynamicRange.remove(removedPendingTx)) {
+      traceLambda(LOG, "Removed dynamic range transaction {}", removedPendingTx::toTraceLog);
+    } else {
+      removedPendingTx
+          .getTransaction()
+          .getMaxPriorityFeePerGas()
+          .ifPresent(
+              __ -> {
+                if (prioritizedTransactionsStaticRange.remove(removedPendingTx)) {
+                  traceLambda(
+                      LOG, "Removed static range transaction {}", removedPendingTx::toTraceLog);
+                }
+              });
     }
   }
 
   @Override
-  protected Iterator<TransactionInfo> prioritizedTransactions() {
+  protected Iterator<PendingTransaction> prioritizedTransactions() {
     return new Iterator<>() {
-      final Iterator<TransactionInfo> staticRangeIterable =
+      final Iterator<PendingTransaction> staticRangeIterable =
           prioritizedTransactionsStaticRange.iterator();
-      final Iterator<TransactionInfo> dynamicRangeIterable =
+      final Iterator<PendingTransaction> dynamicRangeIterable =
           prioritizedTransactionsDynamicRange.iterator();
 
-      Optional<TransactionInfo> currentStaticRangeTransaction =
+      Optional<PendingTransaction> currentStaticRangeTransaction =
           getNextOptional(staticRangeIterable);
-      Optional<TransactionInfo> currentDynamicRangeTransaction =
+      Optional<PendingTransaction> currentDynamicRangeTransaction =
           getNextOptional(dynamicRangeIterable);
 
       @Override
@@ -140,21 +136,21 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       }
 
       @Override
-      public TransactionInfo next() {
+      public PendingTransaction next() {
         if (currentStaticRangeTransaction.isEmpty() && currentDynamicRangeTransaction.isEmpty()) {
           throw new NoSuchElementException("Tried to iterate past end of iterator.");
         } else if (currentStaticRangeTransaction.isEmpty()) {
           // only dynamic range txs left
-          final TransactionInfo best = currentDynamicRangeTransaction.get();
+          final PendingTransaction best = currentDynamicRangeTransaction.get();
           currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
           return best;
         } else if (currentDynamicRangeTransaction.isEmpty()) {
           // only static range txs left
-          final TransactionInfo best = currentStaticRangeTransaction.get();
+          final PendingTransaction best = currentStaticRangeTransaction.get();
           currentStaticRangeTransaction = getNextOptional(staticRangeIterable);
           return best;
         } else {
-          // there are both static and dynamic txs remaining so we need to compare them by their
+          // there are both static and dynamic txs remaining, so we need to compare them by their
           // effective priority fees
           final Wei dynamicRangeEffectivePriorityFee =
               currentDynamicRangeTransaction
@@ -166,7 +162,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                   .get()
                   .getTransaction()
                   .getEffectivePriorityFeePerGas(baseFee);
-          final TransactionInfo best;
+          final PendingTransaction best;
           if (dynamicRangeEffectivePriorityFee.compareTo(staticRangeEffectivePriorityFee) > 0) {
             best = currentDynamicRangeTransaction.get();
             currentDynamicRangeTransaction = getNextOptional(dynamicRangeIterable);
@@ -178,60 +174,57 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
         }
       }
 
-      private Optional<TransactionInfo> getNextOptional(
-          final Iterator<TransactionInfo> transactionInfoIterator) {
-        return transactionInfoIterator.hasNext()
-            ? Optional.of(transactionInfoIterator.next())
+      private Optional<PendingTransaction> getNextOptional(
+          final Iterator<PendingTransaction> pendingTxsIterator) {
+        return pendingTxsIterator.hasNext()
+            ? Optional.of(pendingTxsIterator.next())
             : Optional.empty();
       }
     };
   }
 
   @Override
-  protected TransactionAddedStatus addTransaction(final TransactionInfo transactionInfo) {
-    Optional<Transaction> droppedTransaction = Optional.empty();
-    final Transaction transaction = transactionInfo.getTransaction();
-    synchronized (lock) {
-      if (pendingTransactions.containsKey(transactionInfo.getHash())) {
-        return ALREADY_KNOWN;
-      }
-
-      final TransactionAddedStatus transactionAddedStatus =
-          addTransactionForSenderAndNonce(transactionInfo);
-      if (!transactionAddedStatus.equals(ADDED)) {
-        return transactionAddedStatus;
-      }
-      // check if it's in static or dynamic range
-      if (isInStaticRange(transaction, baseFee)) {
-        prioritizedTransactionsStaticRange.add(transactionInfo);
-      } else {
-        prioritizedTransactionsDynamicRange.add(transactionInfo);
-      }
-      LOG.trace("Adding {} to pending transactions", transactionInfo);
-      pendingTransactions.put(transactionInfo.getHash(), transactionInfo);
-
-      if (pendingTransactions.size() > maxPendingTransactions) {
-        final Stream.Builder<TransactionInfo> removalCandidates = Stream.builder();
-        if (!prioritizedTransactionsDynamicRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsDynamicRange.last());
-        if (!prioritizedTransactionsStaticRange.isEmpty())
-          removalCandidates.add(prioritizedTransactionsStaticRange.last());
-        final TransactionInfo toRemove =
-            removalCandidates
-                .build()
-                .min(
-                    Comparator.comparing(
-                        txInfo -> txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee)))
-                // safe because we just added a tx to the pool so we're guaranteed to have one
-                .get();
-        doRemoveTransaction(toRemove.getTransaction(), false);
-        LOG.trace("Evicted {} due to transaction pool size", toRemove);
-        droppedTransaction = Optional.of(toRemove.getTransaction());
-      }
+  protected void prioritizeTransaction(final PendingTransaction pendingTransaction) {
+    // check if it's in static or dynamic range
+    final String kind;
+    if (isInStaticRange(pendingTransaction.getTransaction(), baseFee)) {
+      kind = "static";
+      prioritizedTransactionsStaticRange.add(pendingTransaction);
+    } else {
+      kind = "dynamic";
+      prioritizedTransactionsDynamicRange.add(pendingTransaction);
     }
-    notifyTransactionAdded(transaction);
-    droppedTransaction.ifPresent(this::notifyTransactionDropped);
-    return ADDED;
+    traceLambda(
+        LOG,
+        "Adding {} to pending transactions, range type {}",
+        pendingTransaction::toTraceLog,
+        kind::toString);
+  }
+
+  @Override
+  protected PendingTransaction getLeastPriorityTransaction() {
+    final var lastStatic =
+        prioritizedTransactionsStaticRange.isEmpty()
+            ? null
+            : prioritizedTransactionsStaticRange.last();
+    final var lastDynamic =
+        prioritizedTransactionsDynamicRange.isEmpty()
+            ? null
+            : prioritizedTransactionsDynamicRange.last();
+
+    if (lastDynamic == null) {
+      return lastStatic;
+    }
+    if (lastStatic == null) {
+      return lastDynamic;
+    }
+
+    final Comparator<PendingTransaction> compareByValue =
+        Comparator.comparing(
+            txInfo ->
+                txInfo.getTransaction().getEffectivePriorityFeePerGas(baseFee).getAsBigInteger());
+
+    return compareByValue.compare(lastStatic, lastDynamic) < 0 ? lastStatic : lastDynamic;
   }
 
   private boolean isInStaticRange(final Transaction transaction, final Optional<Wei> baseFee) {
@@ -247,7 +240,11 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   public void updateBaseFee(final Wei newBaseFee) {
-    LOG.trace("Updating base fee from {} to {}", this.baseFee, newBaseFee);
+    traceLambda(
+        LOG,
+        "Updating base fee from {} to {}",
+        this.baseFee::toString,
+        newBaseFee::toShortHexString);
     if (this.baseFee.orElse(Wei.ZERO).equals(newBaseFee)) {
       return;
     }
@@ -260,13 +257,16 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
             .filter(
                 // these are the transactions whose effective priority fee have now dropped
                 // below their max priority fee
-                transactionInfo1 -> !isInStaticRange(transactionInfo1.getTransaction(), baseFee))
+                pendingTx -> !isInStaticRange(pendingTx.getTransaction(), baseFee))
             .collect(toUnmodifiableList())
             .forEach(
-                transactionInfo -> {
-                  LOG.trace("Moving {} from static to dynamic gas fee paradigm", transactionInfo);
-                  prioritizedTransactionsStaticRange.remove(transactionInfo);
-                  prioritizedTransactionsDynamicRange.add(transactionInfo);
+                pendingTx -> {
+                  traceLambda(
+                      LOG,
+                      "Moving {} from static to dynamic gas fee paradigm",
+                      pendingTx::toTraceLog);
+                  prioritizedTransactionsStaticRange.remove(pendingTx);
+                  prioritizedTransactionsDynamicRange.add(pendingTx);
                 });
       } else {
         // base fee decreases can only cause transactions to go from dynamic to static range
@@ -274,13 +274,16 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
             .filter(
                 // these are the transactions whose effective priority fee are now above their
                 // max priority fee
-                transactionInfo1 -> isInStaticRange(transactionInfo1.getTransaction(), baseFee))
+                pendingTx -> isInStaticRange(pendingTx.getTransaction(), baseFee))
             .collect(toUnmodifiableList())
             .forEach(
-                transactionInfo -> {
-                  LOG.trace("Moving {} from dynamic to static gas fee paradigm", transactionInfo);
-                  prioritizedTransactionsDynamicRange.remove(transactionInfo);
-                  prioritizedTransactionsStaticRange.add(transactionInfo);
+                pendingTx -> {
+                  traceLambda(
+                      LOG,
+                      "Moving {} from dynamic to static gas fee paradigm",
+                      pendingTx::toTraceLog);
+                  prioritizedTransactionsDynamicRange.remove(pendingTx);
+                  prioritizedTransactionsStaticRange.add(pendingTx);
                 });
       }
     }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
+import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -36,8 +37,12 @@ public class PeerDenylistManager implements DisconnectCallback {
 
   private final PeerPermissionsDenylist denylist;
 
-  public PeerDenylistManager(final PeerPermissionsDenylist denylist) {
+  private final MaintainedPeers maintainedPeers;
+
+  public PeerDenylistManager(
+      final PeerPermissionsDenylist denylist, final MaintainedPeers maintainedPeers) {
     this.denylist = denylist;
+    this.maintainedPeers = maintainedPeers;
   }
 
   @Override
@@ -46,8 +51,15 @@ public class PeerDenylistManager implements DisconnectCallback {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     if (shouldBlock(reason, initiatedByPeer)) {
-      LOG.debug("Added peer {} to peer denylist for reason {}", connection, reason.name());
-      denylist.add(connection.getPeer());
+      if (maintainedPeers.contains(connection.getPeer())) {
+        LOG.debug(
+            "Skip adding maintained peer {} to peer denylist for reason {}",
+            connection,
+            reason.name());
+      } else {
+        LOG.debug("Added peer {} to peer denylist for reason {}", connection, reason.name());
+        denylist.add(connection.getPeer());
+      }
     }
   }
 

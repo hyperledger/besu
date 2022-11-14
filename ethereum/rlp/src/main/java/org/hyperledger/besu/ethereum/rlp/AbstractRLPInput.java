@@ -129,13 +129,13 @@ abstract class AbstractRLPInput implements RLPInput {
     // Sets the kind of the item, the offset at which his payload starts and the size of this
     // payload.
     try {
-      RLPDecodingHelpers.RLPElementMetadata elementMetadata =
+      final RLPDecodingHelpers.RLPElementMetadata elementMetadata =
           RLPDecodingHelpers.rlpElementMetadata(this::inputByte, size, currentItem);
       currentKind = elementMetadata.kind;
       currentPayloadOffset = elementMetadata.payloadStart;
       currentPayloadSize = elementMetadata.payloadSize;
-    } catch (RLPException exception) {
-      String message =
+    } catch (final RLPException exception) {
+      final String message =
           String.format(
               exception.getMessage() + getErrorMessageSuffix(), getErrorMessageSuffixParams());
       throw new RLPException(message, exception);
@@ -524,6 +524,11 @@ abstract class AbstractRLPInput implements RLPInput {
   @Override
   public boolean isEndOfCurrentList() {
     return depth > 0 && currentItem >= endOfListOffset[depth - 1];
+  }
+
+  @Override
+  public boolean isZeroLengthString() {
+    return currentKind == RLPDecodingHelpers.Kind.SHORT_ELEMENT && currentPayloadSize == 0;
   }
 
   @Override

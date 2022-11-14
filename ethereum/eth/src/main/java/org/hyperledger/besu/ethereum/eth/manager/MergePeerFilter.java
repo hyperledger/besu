@@ -16,9 +16,9 @@
 
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceMessageListener;
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.MergeStateHandler;
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
@@ -26,18 +26,17 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.StampedLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageListener {
+public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceListener {
 
   private Optional<Difficulty> powTerminalDifficulty = Optional.of(Difficulty.MAX_VALUE);
   private final StampedLock powTerminalDifficultyLock = new StampedLock();
-  private Hash lastFinalized = Hash.ZERO;
-  private final AtomicLong numFinalizedSeen = new AtomicLong(0);
+  private final AtomicBoolean finalized = new AtomicBoolean(false);
   private static final Logger LOG = LoggerFactory.getLogger(MergePeerFilter.class);
 
   public boolean disconnectIfPoW(final StatusMessage status, final EthPeer peer) {
@@ -70,19 +69,16 @@ public class MergePeerFilter implements MergeStateHandler, ForkchoiceMessageList
   }
 
   private boolean isFinalized() {
-    return this.numFinalizedSeen.get() > 1;
+    return this.finalized.get();
   }
 
   @Override
-  public void onNewForkchoiceMessage(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    if (maybeFinalizedBlockHash.isPresent()
-        && !maybeFinalizedBlockHash.get().equals(this.lastFinalized)) {
-      this.lastFinalized = maybeFinalizedBlockHash.get();
-      this.numFinalizedSeen.getAndIncrement();
-      LOG.debug("have seen {} finalized blocks", this.numFinalizedSeen);
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+    if (event
+        .hasValidFinalizedBlockHash()) { // forkchoices send finalized as 0 after ttd, but before an
+      // epoch is
+      // finalized
+      this.finalized.set(true);
     }
   }
 

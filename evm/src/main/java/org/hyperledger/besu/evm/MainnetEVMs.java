@@ -82,6 +82,7 @@ import org.hyperledger.besu.evm.operation.OriginOperation;
 import org.hyperledger.besu.evm.operation.PCOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
+import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
@@ -112,7 +113,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Provides EVMs supporting the appropriate operations for mainnet hard forks. */
-public abstract class MainnetEVMs {
+public class MainnetEVMs {
+
+  private MainnetEVMs() {
+    // utility class
+  }
 
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
@@ -133,6 +138,9 @@ public abstract class MainnetEVMs {
 
   public static void registerFrontierOperations(
       final OperationRegistry registry, final GasCalculator gasCalculator) {
+    for (int i = 0; i < 255; i++) {
+      registry.put(new InvalidOperation(i, gasCalculator));
+    }
     registry.put(new AddOperation(gasCalculator));
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
@@ -393,5 +401,32 @@ public abstract class MainnetEVMs {
       final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
     registry.put(new PrevRanDaoOperation(gasCalculator));
+  }
+
+  public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return shandong(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  public static EVM shandong(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(shandongOperations(gasCalculator, chainId), gasCalculator, evmConfiguration);
+  }
+
+  public static OperationRegistry shandongOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerShandongOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  public static void registerShandongOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerParisOperations(registry, gasCalculator, chainID);
+    // Register the PUSH0 operation.
+    registry.put(new Push0Operation(gasCalculator));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -56,6 +58,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
@@ -73,6 +76,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -190,7 +194,7 @@ public final class EthProtocolManagerTest {
       // Send status message with wrong chain
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.valueOf(2222),
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
@@ -218,7 +222,7 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage workPeerStatus =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty().add(20),
               blockchain.getChainHeadHash(),
@@ -226,7 +230,7 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage stakePeerStatus =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
@@ -236,10 +240,10 @@ public final class EthProtocolManagerTest {
 
       mergePeerFilter.mergeStateChanged(
           true, Optional.empty(), Optional.of(blockchain.getChainHead().getTotalDifficulty()));
-      mergePeerFilter.onNewForkchoiceMessage(
-          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(1))), Hash.EMPTY);
-      mergePeerFilter.onNewForkchoiceMessage(
-          Hash.EMPTY, Optional.of(Hash.hash(Bytes.of(2))), Hash.EMPTY);
+      mergePeerFilter.onNewUnverifiedForkchoice(
+          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(1))));
+      mergePeerFilter.onNewUnverifiedForkchoice(
+          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(2))));
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
       assertThat(workPeer.isDisconnected()).isTrue();
@@ -287,7 +291,7 @@ public final class EthProtocolManagerTest {
       // Send status message with wrong chain
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               gen.hash(),
@@ -512,7 +516,7 @@ public final class EthProtocolManagerTest {
     final MockPeerConnection peer = setupPeerWithoutStatusExchange(ethManager, onSend);
     final StatusMessage statusMessage =
         StatusMessage.create(
-            EthProtocol.EthVersion.V63,
+            EthProtocolVersion.V63,
             BigInteger.ONE,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
@@ -1038,7 +1042,7 @@ public final class EthProtocolManagerTest {
       ethManager.handleNewConnection(peer);
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
@@ -1081,9 +1085,9 @@ public final class EthProtocolManagerTest {
           protocolSchedule,
           protocolContext,
           ethManager.ethContext(),
-          TestClock.fixed(),
+          TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
-          () -> true,
+          new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
           new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
           TransactionPoolConfiguration.DEFAULT);
 

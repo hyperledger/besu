@@ -53,7 +53,7 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
 
   @Override
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    LOG.info("Starting sync.");
+    LOG.debug("Start snap sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
 

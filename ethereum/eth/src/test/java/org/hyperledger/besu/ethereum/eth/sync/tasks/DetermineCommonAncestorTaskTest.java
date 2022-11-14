@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException.FailureReason;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -117,8 +118,7 @@ public class DetermineCommonAncestorTaskTest {
     assertThat(failure.get()).isNotNull();
     final Throwable error = ExceptionUtils.rootCause(failure.get());
     assertThat(error).isInstanceOf(EthTaskException.class);
-    assertThat(((EthTaskException) error).reason())
-        .isEqualTo(EthTaskException.FailureReason.PEER_DISCONNECTED);
+    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.NO_AVAILABLE_PEERS);
   }
 
   @Test

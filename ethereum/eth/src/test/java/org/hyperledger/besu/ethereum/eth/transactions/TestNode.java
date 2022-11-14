@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -64,6 +65,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,7 +123,9 @@ public class TestNode implements Closeable {
         new ProtocolContext(blockchain, worldStateArchive, null);
 
     final SyncState syncState = mock(SyncState.class);
+    final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
     final EthMessages ethMessages = new EthMessages();
 
@@ -141,9 +145,9 @@ public class TestNode implements Closeable {
             protocolSchedule,
             protocolContext,
             ethContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             TransactionPoolConfiguration.DEFAULT);
 
@@ -159,7 +163,7 @@ public class TestNode implements Closeable {
             ethContext,
             Collections.emptyList(),
             Optional.empty(),
-            false,
+            syncConfig,
             scheduler);
 
     final NetworkRunner networkRunner =

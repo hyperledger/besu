@@ -202,24 +202,24 @@ public class BackwardSyncContext {
             backwardSyncException -> {
               if (backwardSyncException.shouldRestart()) {
                 LOG.info(
-                    "Backward sync failed ({}). Current Peers: {}. Retrying in "
-                        + millisBetweenRetries
-                        + " milliseconds...",
-                    backwardSyncException.getMessage(),
-                    ethContext.getEthPeers().peerCount());
-                return;
+                    "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds...",
+                    throwable.getMessage(),
+                    ethContext.getEthPeers().peerCount(),
+                    millisBetweenRetries);
               } else {
                 debugLambda(
                     LOG, "Not recoverable backward sync exception {}", throwable::getMessage);
                 throw backwardSyncException;
               }
             },
-            () ->
-                LOG.warn(
-                    "There was an uncaught exception during Backwards Sync. Retrying in "
-                        + millisBetweenRetries
-                        + " milliseconds...",
-                    throwable));
+            () -> {
+              LOG.warn(
+                  "Backward sync failed ({}). Current Peers: {}. Retrying in {} milliseconds...",
+                  throwable.getMessage(),
+                  ethContext.getEthPeers().peerCount(),
+                  millisBetweenRetries);
+              LOG.debug("Exception details:", throwable);
+            });
   }
 
   private Optional<BackwardSyncException> extractBackwardSyncException(final Throwable throwable) {
@@ -309,12 +309,12 @@ public class BackwardSyncContext {
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
-    if (optResult.blockProcessingOutputs.isPresent()) {
+    if (optResult.getYield().isPresent()) {
       traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
-      optResult.blockProcessingOutputs.get().worldState.persist(block.getHeader());
+      optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()
           .getBlockchain()
-          .appendBlock(block, optResult.blockProcessingOutputs.get().receipts);
+          .appendBlock(block, optResult.getYield().get().getReceipts());
       possiblyMoveHead(block);
     } else {
       emitBadChainEvent(block);

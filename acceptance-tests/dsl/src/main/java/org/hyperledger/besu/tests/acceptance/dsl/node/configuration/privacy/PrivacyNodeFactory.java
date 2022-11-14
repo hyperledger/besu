@@ -19,6 +19,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfigur
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccount;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
@@ -52,16 +53,6 @@ public class PrivacyNodeFactory {
       final String name,
       final PrivacyAccount privacyAccount,
       final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
-      throws IOException {
-    return createPrivateTransactionEnabledMinerNode(
-        name, privacyAccount, enclaveType, containerNetwork, false, false, false);
-  }
-
-  public PrivacyNode createPrivateTransactionEnabledMinerNode(
-      final String name,
-      final PrivacyAccount privacyAccount,
-      final EnclaveType enclaveType,
       final Optional<Network> containerNetwork,
       final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
@@ -83,19 +74,11 @@ public class PrivacyNodeFactory {
                 .extraCLIOptions(List.of("--plugin-privacy-service-encryption-prefix=0xAA"))
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
-  }
-
-  public PrivacyNode createPrivateTransactionEnabledNode(
-      final String name,
-      final PrivacyAccount privacyAccount,
-      final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
-      throws IOException {
-    return createPrivateTransactionEnabledNode(
-        name, privacyAccount, enclaveType, containerNetwork, false, false, false);
   }
 
   public PrivacyNode createPrivateTransactionEnabledNode(
@@ -122,19 +105,11 @@ public class PrivacyNodeFactory {
                 .extraCLIOptions(List.of("--plugin-privacy-service-encryption-prefix=0xBB"))
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
-  }
-
-  public PrivacyNode createIbft2NodePrivacyEnabled(
-      final String name,
-      final PrivacyAccount privacyAccount,
-      final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
-      throws IOException {
-    return createIbft2NodePrivacyEnabled(
-        name, privacyAccount, false, enclaveType, containerNetwork, false, false, false, "0xAA");
   }
 
   public PrivacyNode createIbft2NodePrivacyEnabled(
@@ -167,7 +142,9 @@ public class PrivacyNodeFactory {
                     List.of("--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }
@@ -204,7 +181,9 @@ public class PrivacyNodeFactory {
                         "--plugin-privacy-service-genesis-enabled=true"))
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }
@@ -238,7 +217,9 @@ public class PrivacyNodeFactory {
                     List.of("--plugin-privacy-service-encryption-prefix=" + unrestrictedPrefix))
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }
@@ -253,8 +234,11 @@ public class PrivacyNodeFactory {
     final BesuNodeConfigurationBuilder besuNodeConfigurationBuilder =
         new BesuNodeConfigurationBuilder();
     if (multiTenancyEnabled) {
-      besuNodeConfigurationBuilder.jsonRpcAuthenticationConfiguration(
-          "authentication/auth_priv.toml");
+      final String authPrivTomlPath =
+          EnclaveEncryptorType.EC.equals(privacyAccount.getEnclaveEncryptorType())
+              ? "authentication/auth_priv_ec_pubkey.toml"
+              : "authentication/auth_priv.toml";
+      besuNodeConfigurationBuilder.jsonRpcAuthenticationConfiguration(authPrivTomlPath);
     }
     return create(
         new PrivacyNodeConfiguration(
@@ -272,7 +256,9 @@ public class PrivacyNodeFactory {
                 .keyFilePath(privacyAccount.getPrivateKeyPath())
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }
@@ -299,7 +285,9 @@ public class PrivacyNodeFactory {
                 .webSocketEnabled()
                 .build(),
             new EnclaveKeyConfiguration(
-                privacyAccount.getEnclaveKeyPaths(), privacyAccount.getEnclavePrivateKeyPaths())),
+                privacyAccount.getEnclaveKeyPaths(),
+                privacyAccount.getEnclavePrivateKeyPaths(),
+                privacyAccount.getEnclaveEncryptorType())),
         enclaveType,
         containerNetwork);
   }

@@ -44,12 +44,12 @@ public class PrevRanDaoOperationTest {
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
-    assertThat(r.getHaltReason()).isNotPresent();
+    assertThat(r.getHaltReason()).isNull();
     verify(messageFrame).pushStackItem(prevRandao);
   }
 
   @Test
-  public void pushesDifficultyWhenPresent() {
+  public void pushesPrevRandDaoWhenDifficultyPresent() {
     PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
@@ -60,7 +60,7 @@ public class PrevRanDaoOperationTest {
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
-    assertThat(r.getHaltReason()).isNotPresent();
-    verify(messageFrame).pushStackItem(difficulty);
+    assertThat(r.getHaltReason()).isNull();
+    verify(messageFrame).pushStackItem(prevRandao);
   }
 }

@@ -44,6 +44,13 @@ public class WireMessagesSedesTest {
                 + "3b1e5d41");
 
     assertSedesWorks(rlp);
+
+    rlp =
+        decodeHexDump(
+            "f8a305b74e65746865726d696e642f76312e31332e342d302d3365353937326332342d32303232303831312f5836342d4c696e75782f362e302e36e4c5836574683ec5836574683fc58365746840c58365746841c58365746842c5837769748082765db84005c95b2618ba1ca53f0f019d1750d12769267705e46b4dbfb77f73998b21d30973161542a2090bcaa5876e6aed99436009f3f646029bb723b8dff75feec27374");
+    // This test contains a hello message from Nethermind. The Capability version of the wit
+    // capability is encoded as 0x80, which is an empty string
+    assertSedesWorks(rlp);
   }
 
   private static void assertSedesWorks(final byte[] data) {

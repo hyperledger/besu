@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -23,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -30,11 +33,17 @@ import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.EvictingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PostMergeContext implements MergeContext {
+  private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
+
+  private static final Comparator<Block> compareByGasUsedDesc =
+      Comparator.comparingLong((Block block) -> block.getHeader().getGasUsed()).reversed();
 
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
@@ -43,8 +52,8 @@ public class PostMergeContext implements MergeContext {
       new AtomicReference<>(Optional.empty());
   private final Subscribers<MergeStateHandler> newMergeStateCallbackSubscribers =
       Subscribers.create();
-  private final Subscribers<ForkchoiceMessageListener> newForkchoiceMessageCallbackSubscribers =
-      Subscribers.create();
+  private final Subscribers<UnverifiedForkchoiceListener>
+      newUnverifiedForkchoiceCallbackSubscribers = Subscribers.create();
 
   private final EvictingQueue<PayloadTuple> blocksInProgress =
       EvictingQueue.create(MAX_BLOCKS_IN_PROGRESS);
@@ -135,23 +144,22 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public long addNewForkchoiceMessageListener(
-      final ForkchoiceMessageListener forkchoiceMessageListener) {
-    return newForkchoiceMessageCallbackSubscribers.subscribe(forkchoiceMessageListener);
+  public long addNewUnverifiedForkchoiceListener(
+      final UnverifiedForkchoiceListener unverifiedForkchoiceListener) {
+    return newUnverifiedForkchoiceCallbackSubscribers.subscribe(unverifiedForkchoiceListener);
   }
 
   @Override
-  public void removeNewForkchoiceMessageListener(final long subscriberId) {
-    newForkchoiceMessageCallbackSubscribers.unsubscribe(subscriberId);
+  public void removeNewUnverifiedForkchoiceListener(final long subscriberId) {
+    newUnverifiedForkchoiceCallbackSubscribers.unsubscribe(subscriberId);
   }
 
   @Override
-  public void fireNewUnverifiedForkchoiceMessageEvent(
-      final Hash headBlockHash,
-      final Optional<Hash> maybeFinalizedBlockHash,
-      final Hash safeBlockHash) {
-    newForkchoiceMessageCallbackSubscribers.forEach(
-        cb -> cb.onNewForkchoiceMessage(headBlockHash, maybeFinalizedBlockHash, safeBlockHash));
+  public void fireNewUnverifiedForkchoiceEvent(
+      final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash) {
+    final ForkchoiceEvent event =
+        new ForkchoiceEvent(headBlockHash, safeBlockHash, finalizedBlockHash);
+    newUnverifiedForkchoiceCallbackSubscribers.forEach(cb -> cb.onNewUnverifiedForkchoice(event));
   }
 
   @Override
@@ -197,19 +205,55 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(final PayloadIdentifier payloadId, final Block block) {
-    var priorsById = retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList());
-    blocksInProgress.add(new PayloadTuple(payloadId, block));
-    priorsById.stream().forEach(blocksInProgress::remove);
+  public void putPayloadById(final PayloadIdentifier payloadId, final Block newBlock) {
+    synchronized (blocksInProgress) {
+      final Optional<Block> maybeCurrBestBlock = retrieveBlockById(payloadId);
+
+      maybeCurrBestBlock.ifPresentOrElse(
+          currBestBlock -> {
+            if (compareByGasUsedDesc.compare(newBlock, currBestBlock) < 0) {
+              debugLambda(
+                  LOG,
+                  "New proposal for payloadId {} {} is better than the previous one {}",
+                  payloadId::toString,
+                  () -> logBlockProposal(newBlock),
+                  () -> logBlockProposal(currBestBlock));
+              blocksInProgress.removeAll(
+                  retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
+              blocksInProgress.add(new PayloadTuple(payloadId, newBlock));
+            }
+          },
+          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlock)));
+
+      debugLambda(
+          LOG,
+          "Current best proposal for payloadId {} {}",
+          payloadId::toString,
+          () -> retrieveBlockById(payloadId).map(bb -> logBlockProposal(bb)).orElse("N/A"));
+    }
   }
 
   @Override
   public Optional<Block> retrieveBlockById(final PayloadIdentifier payloadId) {
-    return retrieveTuplesById(payloadId).map(tuple -> tuple.block).findFirst();
+    synchronized (blocksInProgress) {
+      return retrieveTuplesById(payloadId)
+          .map(tuple -> tuple.block)
+          .sorted(compareByGasUsedDesc)
+          .findFirst();
+    }
   }
 
   private Stream<PayloadTuple> retrieveTuplesById(final PayloadIdentifier payloadId) {
     return blocksInProgress.stream().filter(z -> z.payloadIdentifier.equals(payloadId));
+  }
+
+  private String logBlockProposal(final Block block) {
+    return "block "
+        + block.toLogString()
+        + " gas used "
+        + block.getHeader().getGasUsed()
+        + " transactions "
+        + block.getBody().getTransactions().size();
   }
 
   private static class PayloadTuple {

@@ -48,7 +48,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -63,14 +62,14 @@ import java.util.concurrent.CompletionException;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnJre;
+import org.junit.jupiter.api.condition.JRE;
+import org.junit.jupiter.api.io.TempDir;
 
-public class JsonRpcHttpServiceTlsMisconfigurationTest {
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+class JsonRpcHttpServiceTlsMisconfigurationTest {
 
   protected static final Vertx vertx = Vertx.vertx();
 
@@ -78,13 +77,14 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
   private static final NatService natService = new NatService(Optional.empty());
   private final SelfSignedP12Certificate besuCertificate = SelfSignedP12Certificate.create();
+  @TempDir private Path tempDir;
   private Path knownClientsFile;
   private Map<String, JsonRpcMethod> rpcMethods;
   private JsonRpcHttpService service;
 
-  @Before
-  public void beforeEach() throws IOException {
-    knownClientsFile = folder.newFile().toPath();
+  @BeforeEach
+  public void beforeEach() {
+    knownClientsFile = tempDir.resolve("knownClients");
     writeToKnownClientsFile(
         besuCertificate.getCommonName(),
         besuCertificate.getCertificateHexFingerprint(),
@@ -124,17 +124,18 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     Collections.emptyMap(),
-                    folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    tempDir.getRoot(),
+                    mock(EthPeers.class),
+                    vertx));
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     Optional.ofNullable(service).ifPresent(s -> service.stop().join());
   }
 
   @Test
-  public void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() throws IOException {
+  void exceptionRaisedWhenNonExistentKeystoreFileIsSpecified() {
     Assertions.setMaxStackTraceElementsDisplayed(60);
     service =
         createJsonRpcHttpService(
@@ -149,7 +150,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  public void exceptionRaisedWhenIncorrectKeystorePasswordIsSpecified() throws IOException {
+  void exceptionRaisedWhenIncorrectKeystorePasswordIsSpecified() {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidPasswordTlsConfiguration()));
@@ -164,7 +165,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  public void exceptionRaisedWhenIncorrectKeystorePasswordFileIsSpecified() throws IOException {
+  void exceptionRaisedWhenIncorrectKeystorePasswordFileIsSpecified() {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidPasswordFileTlsConfiguration()));
@@ -179,7 +180,8 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  public void exceptionRaisedWhenInvalidKeystoreFileIsSpecified() throws IOException {
+  @DisabledOnJre({JRE.JAVA_17, JRE.JAVA_18}) // error message changed
+  void exceptionRaisedWhenInvalidKeystoreFileIsSpecified() throws IOException {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKeystoreFileTlsConfiguration()));
@@ -194,7 +196,23 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   @Test
-  public void exceptionRaisedWhenInvalidKnownClientsFileIsSpecified() throws IOException {
+  @DisabledOnJre({JRE.JAVA_11, JRE.JAVA_12, JRE.JAVA_13, JRE.JAVA_14, JRE.JAVA_15, JRE.JAVA_16})
+  void exceptionRaisedWhenInvalidKeystoreFileIsSpecified_NewJava() throws IOException {
+    service =
+        createJsonRpcHttpService(
+            rpcMethods, createJsonRpcConfig(invalidKeystoreFileTlsConfiguration()));
+    assertThatExceptionOfType(CompletionException.class)
+        .isThrownBy(
+            () -> {
+              service.start().join();
+              Assertions.fail("service.start should have failed");
+            })
+        .withCauseInstanceOf(JsonRpcServiceException.class)
+        .withMessageContaining("Tag number over 30 is not supported");
+  }
+
+  @Test
+  void exceptionRaisedWhenInvalidKnownClientsFileIsSpecified() throws IOException {
     service =
         createJsonRpcHttpService(
             rpcMethods, createJsonRpcConfig(invalidKnownClientsTlsConfiguration()));
@@ -209,9 +227,10 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   private TlsConfiguration invalidKeystoreFileTlsConfiguration() throws IOException {
-    final File tempFile = folder.newFile();
+    final Path tempFile = tempDir.resolve("invalidKeystoreFileTlsConfig");
+    Files.createFile(tempFile);
     return aTlsConfiguration()
-        .withKeyStorePath(tempFile.toPath())
+        .withKeyStorePath(tempFile)
         .withKeyStorePasswordSupplier(() -> "invalid_password")
         .withClientAuthConfiguration(
             aTlsClientAuthConfiguration().withKnownClientsFile(knownClientsFile).build())
@@ -247,7 +266,7 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   private TlsConfiguration invalidKnownClientsTlsConfiguration() throws IOException {
-    final Path tempKnownClientsFile = folder.newFile().toPath();
+    final Path tempKnownClientsFile = tempDir.resolve("invalidKnownClientsTlsConfiguration");
     Files.write(tempKnownClientsFile, List.of("cn invalid_sha256"));
 
     return TlsConfiguration.Builder.aTlsConfiguration()
@@ -259,11 +278,12 @@ public class JsonRpcHttpServiceTlsMisconfigurationTest {
   }
 
   private JsonRpcHttpService createJsonRpcHttpService(
-      final Map<String, JsonRpcMethod> rpcMethods, final JsonRpcConfiguration jsonRpcConfig)
-      throws IOException {
+      final Map<String, JsonRpcMethod> rpcMethods, final JsonRpcConfiguration jsonRpcConfig) {
+    final Path testDir = tempDir.resolve("createJsonRpcHttpSercice");
+    testDir.toFile().mkdirs();
     return new JsonRpcHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        tempDir,
         jsonRpcConfig,
         new NoOpMetricsSystem(),
         natService,

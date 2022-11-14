@@ -85,21 +85,29 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    peerCountToTimeout.set(3);
     final List<Block> requestedData = generateDataToBeRequested(10);
 
     final CompleteBlocksTask task = createTask(requestedData);
     final CompletableFuture<List<Block>> future = task.run();
 
-    final List<MessageData> messageCollector = new ArrayList<>();
+    final List<MessageData> messageCollector = new ArrayList<>(4);
 
-    respondingPeer.respond(
+    peerCountToTimeout.set(4);
+    // after 3 timeouts a peer is disconnected, so we need another peer to reach 4 retries
+    respondingPeer.respondTimes(
+        RespondingEthPeer.wrapResponderWithCollector(
+            RespondingEthPeer.emptyResponder(), messageCollector),
+        3);
+    final RespondingEthPeer respondingPeer2 =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    respondingPeer2.respond(
         RespondingEthPeer.wrapResponderWithCollector(
             RespondingEthPeer.emptyResponder(), messageCollector));
 
     assertThat(batchSize(messageCollector.get(0))).isEqualTo(10);
     assertThat(batchSize(messageCollector.get(1))).isEqualTo(5);
     assertThat(batchSize(messageCollector.get(2))).isEqualTo(4);
+    assertThat(batchSize(messageCollector.get(3))).isEqualTo(3);
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
   }
@@ -110,21 +118,29 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
-    peerCountToTimeout.set(3);
     final List<Block> requestedData = generateDataToBeRequested(1);
 
     final EthTask<List<Block>> task = createTask(requestedData);
     final CompletableFuture<List<Block>> future = task.run();
 
-    final List<MessageData> messageCollector = new ArrayList<>();
+    final List<MessageData> messageCollector = new ArrayList<>(4);
 
-    respondingPeer.respond(
+    peerCountToTimeout.set(4);
+    // after 3 timeouts a peer is disconnected, so we need another peer to reach 4 retries
+    respondingPeer.respondTimes(
+        RespondingEthPeer.wrapResponderWithCollector(
+            RespondingEthPeer.emptyResponder(), messageCollector),
+        3);
+    final RespondingEthPeer respondingPeer2 =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    respondingPeer2.respond(
         RespondingEthPeer.wrapResponderWithCollector(
             RespondingEthPeer.emptyResponder(), messageCollector));
 
     assertThat(batchSize(messageCollector.get(0))).isEqualTo(1);
     assertThat(batchSize(messageCollector.get(1))).isEqualTo(1);
     assertThat(batchSize(messageCollector.get(2))).isEqualTo(1);
+    assertThat(batchSize(messageCollector.get(3))).isEqualTo(1);
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
   }
