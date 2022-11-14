@@ -59,7 +59,19 @@ public class ForwardSyncStep {
           () -> blockHeaders.get(0).getNumber(),
           () -> blockHeaders.get(blockHeaders.size() - 1).getNumber(),
           () -> blockHeaders.get(0).getHash().toHexString());
-      return requestBodies(blockHeaders).thenApply(this::saveBlocks);
+      return requestBodies(blockHeaders)
+          .thenApply(this::saveBlocks)
+          .exceptionally(
+              throwable -> {
+                context.halveBatchSize();
+                debugLambda(
+                    LOG,
+                    "Getting {} blocks from peers failed with reason {}, reducing batch size to {}",
+                    blockHeaders::size,
+                    throwable::getMessage,
+                    context::getBatchSize);
+                return null;
+              });
     }
   }
 
