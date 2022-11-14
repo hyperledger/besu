@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -102,10 +103,15 @@ public class BlockResultFactory {
             .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
-    final List<WithdrawalParameter> withdrawals =
-        block.getBody().getWithdrawals().stream()
-            .map(WithdrawalParameter::fromWithdrawal)
-            .collect(Collectors.toList());
+    final Optional<List<WithdrawalParameter>> withdrawals =
+        block
+            .getBody()
+            .getWithdrawals()
+            .map(
+                w ->
+                    w.stream()
+                        .map(WithdrawalParameter::fromWithdrawal)
+                        .collect(Collectors.toList()));
     return new EngineGetPayloadResultV2(block.getHeader(), txs, withdrawals);
   }
 

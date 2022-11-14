@@ -72,7 +72,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -124,8 +123,7 @@ public class QbftBlockHeightManagerTest {
 
     headerTestFixture.extraData(bftExtraDataCodec.encode(extraData));
     final BlockHeader header = headerTestFixture.buildHeader();
-    createdBlock =
-        new Block(header, new BlockBody(emptyList(), emptyList(), Collections.emptyList()));
+    createdBlock = new Block(header, new BlockBody(emptyList(), emptyList(), Optional.empty()));
   }
 
   @Before

@@ -20,23 +20,24 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
 
   private final List<Transaction> transactions;
   private final List<BlockHeader> ommers;
-  private final List<Withdrawal> withdrawals;
+  private final Optional<List<Withdrawal>> maybeWithdrawals;
 
   public BlockBody(
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final List<Withdrawal> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals) {
     this.transactions = transactions;
     this.ommers = ommers;
-    this.withdrawals = withdrawals;
+    this.maybeWithdrawals = withdrawals;
   }
 
   public static BlockBody empty() {
@@ -55,8 +56,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return ommers;
   }
 
-  public List<Withdrawal> getWithdrawals() {
-    return withdrawals;
+  public Optional<List<Withdrawal>> getWithdrawals() {
+    return maybeWithdrawals;
   }
 
   /**
@@ -69,12 +70,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
-    // TODO Withdrawals: depends on protocol schedule if we include withdrawals, skip withdrawals
-    // (but maybe this is ok)
-    // if block after withdral fork only then include the following line
-    if (getWithdrawals() != null) { // null check added to pass MessageWrapperTest.BlockBodies test
-      output.writeList(getWithdrawals(), Withdrawal::writeTo);
-    }
+
+    maybeWithdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
 
     output.endList();
   }
@@ -87,12 +84,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         new BlockBody(
             input.readList(Transaction::readFrom),
             input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
-
-            // TODO Withdrawals: if we are after fork only then read the list. if we are before fork
-            // then empty list
-            input.isEndOfCurrentList()
-                ? Collections.emptyList()
-                : input.readList(Withdrawal::readFrom));
+            input.nextIsList()
+                ? Optional.of(input.readList(Withdrawal::readFrom))
+                : Optional.empty());
     input.leaveList();
     return body;
   }
@@ -108,12 +102,12 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     final BlockBody other = (BlockBody) obj;
     return transactions.equals(other.transactions)
         && ommers.equals(other.ommers)
-        && withdrawals.equals(other.withdrawals);
+        && maybeWithdrawals.equals(other.maybeWithdrawals);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals);
+    return Objects.hash(transactions, ommers, maybeWithdrawals);
   }
 
   @Override
@@ -122,7 +116,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     sb.append("BlockBody{");
     sb.append("transactions=").append(transactions).append(", ");
     sb.append("ommers=").append(ommers);
-    sb.append("withdrawals=").append(withdrawals);
+    sb.append("withdrawals=").append(maybeWithdrawals);
     return sb.append("}").toString();
   }
 }

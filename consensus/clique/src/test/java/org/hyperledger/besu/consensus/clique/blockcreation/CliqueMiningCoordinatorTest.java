@@ -250,7 +250,6 @@ public class CliqueMiningCoordinatorTest {
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerTestFixture, signer, validators);
     return new Block(
-        header,
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+        header, new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
   }
 }

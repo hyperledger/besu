@@ -39,8 +39,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -256,8 +256,8 @@ public class BlockchainReferenceTestCaseSpec {
               input.readList(Transaction::readFrom),
               input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
               input.isEndOfCurrentList()
-                  ? Collections.emptyList()
-                  : input.readList(Withdrawal::readFrom));
+                  ? Optional.empty()
+                  : Optional.of(input.readList(Withdrawal::readFrom)));
       return new Block(header, body);
     }
   }

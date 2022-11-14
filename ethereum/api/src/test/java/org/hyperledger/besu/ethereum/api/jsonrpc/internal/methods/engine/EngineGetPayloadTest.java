@@ -64,7 +64,7 @@ public class EngineGetPayloadTest {
   private static final Block mockBlock =
       new Block(
           mockHeader,
-          new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+          new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
 
   @Mock private ProtocolContext protocolContext;
 

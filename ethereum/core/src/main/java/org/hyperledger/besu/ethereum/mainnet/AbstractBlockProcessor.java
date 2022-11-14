@@ -59,7 +59,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   static final int MAX_GENERATION = 6;
 
   protected final MainnetTransactionProcessor transactionProcessor;
-  protected final WithdrawalsProcessor.AllowedWithdrawalsProcessor mainnetWithdrawalsProcessor =
+  protected final WithdrawalsProcessor withdrawalsProcessor =
       new WithdrawalsProcessor.AllowedWithdrawalsProcessor();
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
@@ -90,7 +90,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final List<Withdrawal> withdrawals,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -139,12 +139,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       receipts.add(transactionReceipt);
     }
 
-    final WorldUpdater worldStateUpdater = worldState.updater();
-
-    for (final Withdrawal withdrawal : withdrawals) {
-      mainnetWithdrawalsProcessor.processWithdrawal(withdrawal, worldStateUpdater);
-    }
-    worldStateUpdater.commit();
+    maybeWithdrawals.ifPresent(
+        withdrawals -> {
+          final WorldUpdater worldStateUpdater = worldState.updater();
+          for (final Withdrawal withdrawal : withdrawals) {
+            withdrawalsProcessor.processWithdrawal(withdrawal, worldStateUpdater);
+          }
+          worldStateUpdater.commit();
+        });
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
