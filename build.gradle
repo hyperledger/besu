@@ -128,7 +128,7 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target '**/*.java'
+      target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
