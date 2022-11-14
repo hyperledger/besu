@@ -46,6 +46,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -210,11 +211,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     capabilities.add(EthProtocol.ETH65);
     capabilities.add(EthProtocol.ETH66);
 
-    // Version 67 removes GetNodeData and NodeData
+    // Version 67 removes the GetNodeData and NodeData
     // Fast sync depends on GetNodeData and NodeData
     // Do not add eth/67 if fast sync is enabled
     // see https://eips.ethereum.org/EIPS/eip-4938
-    if (!synchronizerConfiguration.getSyncMode().equals(SyncMode.FAST)) {
+    if (!Objects.equals(SyncMode.FAST, synchronizerConfiguration.getSyncMode())) {
       capabilities.add(EthProtocol.ETH67);
     }
 
