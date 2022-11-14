@@ -72,6 +72,8 @@ public class ProtocolSpecBuilder {
   private PrivacyParameters privacyParameters;
   private PrivateTransactionProcessorBuilder privateTransactionProcessorBuilder;
   private PrivateTransactionValidatorBuilder privateTransactionValidatorBuilder;
+
+  private WithdrawalsProcessorBuilder withdrawalsProcessorBuilder;
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -243,6 +245,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder withdrawalsProcessorBuilder(
+      final WithdrawalsProcessorBuilder withdrawalsProcessorBuilder) {
+    this.withdrawalsProcessorBuilder = withdrawalsProcessorBuilder;
+    return this;
+  }
+
   public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -316,6 +324,12 @@ public class ProtocolSpecBuilder {
               privacyParameters.getPrivateStateGenesisAllocator());
     }
 
+    WithdrawalsProcessor withdrawalsProcessor =
+        new WithdrawalsProcessor.DisallowedWithdrawalsProcessor();
+    if (withdrawalsProcessorBuilder != null) {
+      withdrawalsProcessor = withdrawalsProcessorBuilder.apply();
+    }
+
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
             blockHeaderValidator,
@@ -347,7 +361,8 @@ public class ProtocolSpecBuilder {
         gasLimitCalculator,
         feeMarket,
         badBlockManager,
-        Optional.ofNullable(powHasher));
+        Optional.ofNullable(powHasher),
+        withdrawalsProcessor);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
@@ -441,6 +456,10 @@ public class ProtocolSpecBuilder {
         BlockProcessor blockProcessor,
         BadBlockManager badBlockManager,
         Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+  }
+
+  public interface WithdrawalsProcessorBuilder {
+    WithdrawalsProcessor apply();
   }
 
   public interface BlockImporterBuilder {

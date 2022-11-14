@@ -655,6 +655,7 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        .withdrawalsProcessorBuilder(WithdrawalsProcessor.AllowedWithdrawalsProcessor::new)
         .name("Shanghai");
   }
 

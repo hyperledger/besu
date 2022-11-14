@@ -139,11 +139,11 @@ public class MainnetProtocolScheduleTest {
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(
                     Resources.toString(
-                        this.getClass().getResource("/shandong.json"), StandardCharsets.UTF_8))
+                        this.getClass().getResource("/shanghai.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
             EvmConfiguration.DEFAULT);
-    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Shandong");
-    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Shandong");
+    Assertions.assertThat(sched.getByBlockNumber(0L).getName()).isEqualTo("Shanghai");
+    Assertions.assertThat(sched.getByBlockNumber(Long.MAX_VALUE).getName()).isEqualTo("Shanghai");
   }
 
   @Test

@@ -30,6 +30,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.config.NetworkName.SHANDONG;
+import static org.hyperledger.besu.cli.config.NetworkName.SHANGHAI;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
@@ -1042,6 +1043,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
+  }
+
+  @Test
+  public void testGenesisPathShanghaiEthConfig() {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "shanghai");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
   }
 
   @Test
@@ -4010,6 +4027,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void shanghaiValuesAreUsed() {
+    parseCommand("--network", "shanghai");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(SHANGHAI));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Shanghai is deprecated and will be shutdown"));
+  }
+
+  @Test
   public void shandongValuesAreUsed() {
     parseCommand("--network", "shandong");
 
@@ -4088,6 +4123,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ropstenValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("ropsten");
+  }
+
+  public void shanghaiValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("shanghai");
   }
 
   public void shandongValuesCanBeOverridden() throws Exception {
