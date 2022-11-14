@@ -184,7 +184,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final List<Withdrawal> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -248,7 +248,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 random,
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
-      final List<Withdrawal> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals) {
 
     final Supplier<BlockCreationResult> blockCreator =
         () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp, withdrawals);

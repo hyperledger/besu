@@ -187,7 +187,8 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), withdrawals));
+            newBlockHeader,
+            new BlockBody(transactions, Collections.emptyList(), Optional.of(withdrawals)));
     final String warningMessage = "Sync to block " + block.toLogString() + " failed";
 
     if (mergeContext.get().isSyncing() || parentHeader.isEmpty()) {

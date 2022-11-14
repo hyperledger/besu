@@ -57,7 +57,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,7 +115,7 @@ public class CliqueBlockCreatorTest {
         new Block(
             TestHelpers.createCliqueSignedBlockHeader(
                 headerTestFixture, otherKeyPair, validatorList),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Collections.emptyList()));
+            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
     blockchain.appendBlock(emptyBlock, Lists.newArrayList());
   }
 

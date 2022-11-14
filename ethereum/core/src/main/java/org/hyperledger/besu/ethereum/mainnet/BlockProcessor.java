@@ -25,8 +25,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
@@ -128,7 +128,7 @@ public interface BlockProcessor {
         blockHeader,
         transactions,
         ommers,
-        Collections.emptyList(),
+        Optional.empty(),
         privateMetadataUpdater);
   }
 
@@ -138,7 +138,7 @@ public interface BlockProcessor {
       BlockHeader blockHeader,
       List<Transaction> transactions,
       List<BlockHeader> ommers,
-      List<Withdrawal> withdrawals,
+      Optional<List<Withdrawal>> withdrawals,
       PrivateMetadataUpdater privateMetadataUpdater);
 
   /**

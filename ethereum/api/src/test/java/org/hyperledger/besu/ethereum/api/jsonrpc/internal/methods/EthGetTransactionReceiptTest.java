@@ -112,6 +112,7 @@ public class EthGetTransactionReceiptTest {
           FeeMarket.legacy(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT),
+          null,
           null);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
@@ -138,6 +139,7 @@ public class EthGetTransactionReceiptTest {
           FeeMarket.legacy(),
           null,
           Optional.of(PoWHasher.ETHASH_LIGHT),
+          null,
           null);
 
   @SuppressWarnings("unchecked")

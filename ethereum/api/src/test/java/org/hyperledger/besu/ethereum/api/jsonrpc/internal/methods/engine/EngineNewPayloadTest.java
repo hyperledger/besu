@@ -172,8 +172,7 @@ public class EngineNewPayloadTest {
     Block mockBlock =
         new Block(
             mockHeader,
-            new BlockBody(
-                Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+            new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty()));
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
 

@@ -48,7 +48,6 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -239,7 +238,7 @@ public class EngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
-            Collections.emptyList()))
+            Optional.empty()))
         .thenReturn(mockPayloadId);
 
     var res =

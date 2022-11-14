@@ -99,6 +99,30 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
+    if (!validateWithdrawals(header, body)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean validateWithdrawals(final BlockHeader header, final BlockBody body) {
+    final WithdrawalsValidator withdrawalsValidator =
+        protocolSchedule.getByBlockNumber(header.getNumber()).getWithdrawalsValidator();
+    if (!withdrawalsValidator.validateRoot(header.getWithdrawalRoot())) {
+      LOG.warn("Invalid withdrawals root {}", header.getWithdrawalRoot());
+      return false;
+    }
+
+    final Hash calculatedHash =
+        body.getWithdrawals().map(BodyValidation::withdrawalsRoot).orElse(Hash.EMPTY);
+    if (!header.getWithdrawalRoot().equals(calculatedHash)) {
+      LOG.warn(
+          "Invalid withdrawals root. Calculated {}, found {}",
+          calculatedHash,
+          header.getWithdrawalRoot());
+      return false;
+    }
     return true;
   }
 

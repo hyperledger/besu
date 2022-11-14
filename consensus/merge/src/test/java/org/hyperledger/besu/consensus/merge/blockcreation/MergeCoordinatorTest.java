@@ -109,7 +109,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
 
-  private static final List<Withdrawal> EMPTY_WITHDRAWALS = emptyList();
+  private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 

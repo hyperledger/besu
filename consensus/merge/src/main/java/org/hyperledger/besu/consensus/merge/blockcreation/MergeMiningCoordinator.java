@@ -37,7 +37,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final List<Withdrawal> withdrawals);
+      final Optional<List<Withdrawal>> withdrawals);
 
   @Override
   default boolean isCompatibleWithEngineApi() {

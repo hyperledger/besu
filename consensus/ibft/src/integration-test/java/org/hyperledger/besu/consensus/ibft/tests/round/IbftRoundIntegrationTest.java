@@ -53,7 +53,6 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleExcepti
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -111,8 +110,7 @@ public class IbftRoundIntegrationTest {
     headerTestFixture.extraData(bftExtraDataEncoder.encode(proposedExtraData));
     headerTestFixture.number(1);
     final BlockHeader header = headerTestFixture.buildHeader();
-    proposedBlock =
-        new Block(header, new BlockBody(emptyList(), emptyList(), Collections.emptyList()));
+    proposedBlock = new Block(header, new BlockBody(emptyList(), emptyList(), Optional.empty()));
 
     when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
 

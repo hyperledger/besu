@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static java.util.Collections.emptyList;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -207,8 +205,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .stateRoot(disposableWorldState.rootHash())
               .transactionsRoot(
                   BodyValidation.transactionsRoot(transactionResults.getTransactions()))
-              .withdrawalsRoot(
-                  maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(Hash.EMPTY))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(transactionResults.getCumulativeGasUsed())
@@ -218,14 +214,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
-
       final Block block =
           new Block(
               blockHeader,
-              new BlockBody(
-                  transactionResults.getTransactions(),
-                  ommers,
-                  maybeWithdrawals.orElse(emptyList())));
+              new BlockBody(transactionResults.getTransactions(), ommers, maybeWithdrawals));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
