@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalP
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,12 +57,12 @@ public class EngineGetPayloadResultV2 {
   private final String extraData;
   private final String baseFeePerGas;
   protected final List<String> transactions;
-  protected final List<WithdrawalParameter> withdrawals;
+  protected final Optional<List<WithdrawalParameter>> withdrawals;
 
   public EngineGetPayloadResultV2(
       final BlockHeader header,
       final List<String> transactions,
-      final List<WithdrawalParameter> withdrawals) {
+      final Optional<List<WithdrawalParameter>> withdrawals) {
     this.blockNumber = Quantity.create(header.getNumber());
     this.blockHash = header.getHash().toString();
     this.parentHash = header.getParentHash().toString();
@@ -152,6 +153,6 @@ public class EngineGetPayloadResultV2 {
 
   @JsonGetter(value = "withdrawals")
   public List<WithdrawalParameter> getWithdrawals() {
-    return withdrawals;
+    return withdrawals.orElse(null);
   }
 }

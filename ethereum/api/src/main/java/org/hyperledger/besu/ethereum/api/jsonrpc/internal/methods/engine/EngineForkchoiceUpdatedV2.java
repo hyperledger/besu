@@ -162,9 +162,10 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    payloadAttributes.getWithdrawals().stream()
-                        .map(WithdrawalParameter::toWithdrawal)
-                        .collect(Collectors.toList())));
+                    Optional.of(
+                        payloadAttributes.getWithdrawals().stream()
+                            .map(WithdrawalParameter::toWithdrawal)
+                            .collect(Collectors.toList()))));
 
     payloadId.ifPresent(
         pid ->

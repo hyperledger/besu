@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,8 +93,7 @@ public class ForkingValidatorProviderTest {
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
     headerBuilder.number(blockNumber).parentHash(parentHash).coinbase(AddressHelpers.ofValue(0));
     return new Block(
-        headerBuilder.buildHeader(),
-        new BlockBody(emptyList(), emptyList(), Collections.emptyList()));
+        headerBuilder.buildHeader(), new BlockBody(emptyList(), emptyList(), Optional.empty()));
   }
 
   @Test

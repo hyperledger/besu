@@ -286,7 +286,7 @@ public class MessageWrapperTest {
       super(
           transactions.stream().collect(toUnmodifiableList()),
           uncles.stream().collect(toUnmodifiableList()),
-          null); // TODO Withdrawals done to pass BlockBodies test but hmmm...
+          Optional.empty());
     }
   }
 

@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -54,7 +53,7 @@ public class BlockMinerTest {
     final Block blockToCreate =
         new Block(
             headerBuilder.buildHeader(),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Collections.emptyList()));
+            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 
@@ -96,7 +95,7 @@ public class BlockMinerTest {
     final Block blockToCreate =
         new Block(
             headerBuilder.buildHeader(),
-            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Collections.emptyList()));
+            new BlockBody(Lists.newArrayList(), Lists.newArrayList(), Optional.empty()));
 
     final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
 

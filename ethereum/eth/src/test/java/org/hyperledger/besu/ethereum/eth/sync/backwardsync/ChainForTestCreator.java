@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -98,13 +97,13 @@ public class ChainForTestCreator {
 
   public static Block createEmptyBlock(final Long height) {
     return new Block(
-        prepareEmptyHeader(height), new BlockBody(List.of(), List.of(), Collections.emptyList()));
+        prepareEmptyHeader(height), new BlockBody(List.of(), List.of(), Optional.empty()));
   }
 
   private static Block createEmptyBlock(final Block parent) {
     return new Block(
         prepareEmptyHeader(parent.getHeader()),
-        new BlockBody(List.of(), List.of(), Collections.emptyList()));
+        new BlockBody(List.of(), List.of(), Optional.empty()));
   }
 
   private static BlockHeader prepareEmptyHeader(final Long number) {

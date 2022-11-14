@@ -114,7 +114,7 @@ public class BlockchainQueriesLogCacheTest {
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     final BlockBody fakeBody =
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
     when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(testHash));
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(fakeHeader));
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 public interface WithdrawalsProcessor {
   void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldUpdater);
 
-  class DisallowedWithdrawalsProcessor implements WithdrawalsProcessor {
+  class ProhibitedWithdrawalsProcessor implements WithdrawalsProcessor {
     @Override
     public void processWithdrawal(final Withdrawal withdrawal, final WorldUpdater worldUpdater) {
       throw new UnsupportedOperationException("Withdrawals are not allowed on this chain");

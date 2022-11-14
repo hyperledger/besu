@@ -88,7 +88,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final List<Withdrawal> withdrawals,
+      final Optional<List<Withdrawal>> withdrawals,
       final PrivateMetadataUpdater privateMetadataUpdater) {
 
     if (privateMetadataUpdater != null) {

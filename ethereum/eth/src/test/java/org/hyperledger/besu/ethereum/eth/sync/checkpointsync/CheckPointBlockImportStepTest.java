@@ -77,7 +77,7 @@ public class CheckPointBlockImportStepTest {
 
   private Block generateBlock(final int blockNumber) {
     final BlockBody body =
-        new BlockBody(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        new BlockBody(Collections.emptyList(), Collections.emptyList(), Optional.empty());
     return new Block(new BlockHeaderTestFixture().number(blockNumber).buildHeader(), body);
   }
 }

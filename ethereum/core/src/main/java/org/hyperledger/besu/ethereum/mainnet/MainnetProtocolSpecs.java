@@ -656,6 +656,7 @@ public abstract class MainnetProtocolSpecs {
             quorumCompatibilityMode,
             evmConfiguration)
         .withdrawalsProcessorBuilder(WithdrawalsProcessor.AllowedWithdrawalsProcessor::new)
+        .withdrawalsValidatorBuilder(WithdrawalsValidator.AllowedWithdrawals::new)
         .name("Shanghai");
   }
 
@@ -809,7 +810,7 @@ public abstract class MainnetProtocolSpecs {
         final BlockHeader blockHeader,
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
-        final List<Withdrawal> withdrawals,
+        final Optional<List<Withdrawal>> withdrawals,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(

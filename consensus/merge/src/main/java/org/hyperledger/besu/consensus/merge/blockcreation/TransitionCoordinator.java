@@ -135,7 +135,7 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final List<Withdrawal> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals) {
     return mergeCoordinator.preparePayload(
         parentHeader, timestamp, prevRandao, feeRecipient, withdrawals);
   }

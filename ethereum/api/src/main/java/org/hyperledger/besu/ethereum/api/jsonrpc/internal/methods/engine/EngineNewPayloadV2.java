@@ -193,7 +193,7 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), withdrawals));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), Optional.of(withdrawals)));
 
     if (parentHeader.isEmpty()) {
       debugLambda(

@@ -144,7 +144,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
-            BodyValidation.withdrawalsRoot(Collections.emptyList()),
+            Hash.EMPTY,
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -184,11 +184,9 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           INVALID,
           "block timestamp not greater than parent");
     }
-
     final var block =
         new Block(
-            newBlockHeader,
-            new BlockBody(transactions, Collections.emptyList(), Collections.emptyList()));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), Optional.empty()));
 
     if (parentHeader.isEmpty()) {
       debugLambda(

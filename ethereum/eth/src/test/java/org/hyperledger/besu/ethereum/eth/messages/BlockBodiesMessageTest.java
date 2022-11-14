@@ -31,9 +31,9 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
@@ -64,8 +64,8 @@ public final class BlockBodiesMessageTest {
               oneBlock.readList(
                   rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions())),
               oneBlock.isEndOfCurrentList()
-                  ? Collections.emptyList()
-                  : oneBlock.readList(Withdrawal::readFrom)));
+                  ? Optional.empty()
+                  : Optional.of(oneBlock.readList(Withdrawal::readFrom))));
     }
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
