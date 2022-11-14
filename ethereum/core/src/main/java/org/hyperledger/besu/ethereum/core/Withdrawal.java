@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.StringJoiner;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class Withdrawal {
@@ -67,5 +69,15 @@ public class Withdrawal {
 
   public void writeTo(final RLPOutput out) {
     WithdrawalEncoder.encode(this, out);
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", Withdrawal.class.getSimpleName() + "[", "]")
+        .add("index=" + index)
+        .add("validatorIndex=" + validatorIndex)
+        .add("address=" + address)
+        .add("amount=" + amount)
+        .toString();
   }
 }
