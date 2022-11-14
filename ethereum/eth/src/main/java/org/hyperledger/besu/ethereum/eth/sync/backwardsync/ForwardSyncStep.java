@@ -113,7 +113,10 @@ public class ForwardSyncStep {
       }
     }
 
-    context.resetBatchSize();
+    if (blocks.size() == context.getBatchSize()) {
+      // reset the batch size only if we got a full batch
+      context.resetBatchSize();
+    }
     return null;
   }
 }
