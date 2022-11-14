@@ -383,7 +383,7 @@ public class PeerDiscoveryController {
                   final NodeRecord enr = packetData.get().getEnr();
                   peer.setNodeRecord(enr);
 
-                  Optional<ForkId> maybeForkId = peer.getForkId();
+                  final Optional<ForkId> maybeForkId = peer.getForkId();
                   if (maybeForkId.isPresent()) {
                     if (forkIdManager.peerCheck(maybeForkId.get())) {
                       notifyPeerBonded(peer, System.currentTimeMillis());
