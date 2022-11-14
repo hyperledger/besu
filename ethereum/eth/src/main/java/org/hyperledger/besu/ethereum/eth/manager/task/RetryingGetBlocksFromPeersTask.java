@@ -74,7 +74,7 @@ public class RetryingGetBlocksFromPeersTask
             peerResult -> {
               debugLambda(
                   LOG,
-                  "Got {} blocks {} from peer {}, attempt {}",
+                  "Got {} blocks from peer {}, attempt {}",
                   peerResult.getResult()::size,
                   peerResult.getPeer()::toString,
                   this::getRetryCount);
