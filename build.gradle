@@ -730,7 +730,10 @@ task dockerUpload {
     additionalTags.add('develop')
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC/)
+
+  if (!isInterimBuild) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
