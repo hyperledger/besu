@@ -5,7 +5,7 @@ on:
 
 jobs:
   dco:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     timeout-minutes: 10
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:

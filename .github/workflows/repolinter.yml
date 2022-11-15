@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     container: ghcr.io/todogroup/repolinter:v0.10.1
     steps:
       - name: Checkout Code

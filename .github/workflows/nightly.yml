@@ -8,7 +8,7 @@ env:
 
 jobs:
   run-acceptance-tests:
-    runs-on: [self-hosted, linux, X64]
+    runs-on: self-hosted
     timeout-minutes: 90
     name: "Run acceptance test suite"
     if: ${{ github.actor != 'dependabot[bot]' }}

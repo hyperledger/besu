@@ -10,7 +10,7 @@ env:
 
 jobs:
   compile:
-    runs-on: [ self-hosted, linux, X64 ]
+    runs-on: self-hosted
     timeout-minutes: 30
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
@@ -33,7 +33,7 @@ jobs:
           path: "**/*.class"
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
   assemble:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     needs: compile
     container: hyperledger/besu-build:1.0
     timeout-minutes: 30
@@ -84,7 +84,7 @@ jobs:
           besu\bin\besu.bat --help
           besu\bin\besu.bat --version
   runner-indexes:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     name: Generate runner indexes
     outputs:
       json: ${{ steps.generate-index-list.outputs.json }}
@@ -96,7 +96,7 @@ jobs:
           INDEX_JSON=$(jq --null-input --compact-output '. |= [inputs]' <<< ${INDEX_LIST})
           echo "::set-output name=json::${INDEX_JSON}"
   run-tests:
-    runs-on: [ self-hosted, linux, X64 ]
+    runs-on: self-hosted
     timeout-minutes: 30
     name: "Run test suite"
     needs:
@@ -127,7 +127,7 @@ jobs:
           path: '**/build/test-results/test/TEST-*.xml'
           retention-days: 1
   integration-test:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     needs: compile
     timeout-minutes: 30
     container: hyperledger/besu-build:1.0
@@ -183,7 +183,7 @@ jobs:
 #        with:
 #          arguments: javadoc --scan
   compileJmh:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     container: hyperledger/besu-build:1.0
     needs: compile
     timeout-minutes: 30
@@ -207,7 +207,7 @@ jobs:
         with:
           arguments: compileJmh --scan
   prepareReferenceTestEthereum:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     container: hyperledger/besu-build:1.0
     needs: compile
     timeout-minutes: 30
@@ -238,7 +238,7 @@ jobs:
           path: "ethereum/referencetests/build/generated/sources/reference-test/**"
           key: ${{ runner.os }}-reftests-${{ github.sha }}
   referenceTestEthereum:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     container: hyperledger/besu-build:1.0
     needs:
      - prepareReferenceTestEthereum
@@ -286,7 +286,7 @@ jobs:
           path: '**/build/test-results/test/TEST-*.xml'
           retention-days: 1
   referenceTestQbft:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     container: hyperledger/besu-build:1.0
     needs: compile
     timeout-minutes: 30
