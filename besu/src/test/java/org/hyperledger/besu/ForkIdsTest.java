@@ -104,8 +104,8 @@ public class ForkIdsTest {
         new Object[] {
           NetworkName.SHANDONG,
           List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xc42480d3L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0xc42480d3L), 0L))
+              new ForkId(Bytes.ofUnsignedInt(0x0459e09dL), 0L),
+              new ForkId(Bytes.ofUnsignedInt(0x0459e09dL), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,

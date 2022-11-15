@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -79,7 +81,7 @@ public class PeerDiscoveryTestHelper {
   public DiscoveryPeer createDiscoveryPeer(final NodeKey nodeKey) {
     final Bytes peerId = nodeKey.getPublicKey().getEncodedBytes();
     final int port = nextAvailablePort.incrementAndGet();
-    DiscoveryPeer discoveryPeer =
+    final DiscoveryPeer discoveryPeer =
         DiscoveryPeer.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(peerId)
@@ -283,14 +285,15 @@ public class PeerDiscoveryTestHelper {
       config.setBindPort(port);
       config.setActive(active);
 
-      MockPeerDiscoveryAgent mockPeerDiscoveryAgent =
+      final MockPeerDiscoveryAgent mockPeerDiscoveryAgent =
           new MockPeerDiscoveryAgent(
               nodeKey,
               config,
               peerPermissions,
               agents,
               natService,
-              () -> Collections.singletonList(Bytes.EMPTY));
+              () -> Collections.singletonList(Bytes.EMPTY),
+              mock(RlpxAgent.class));
       mockPeerDiscoveryAgent.getAdvertisedPeer().ifPresent(peer -> peer.setNodeRecord(nodeRecord));
 
       return mockPeerDiscoveryAgent;

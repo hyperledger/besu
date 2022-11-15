@@ -194,7 +194,7 @@ public class BonsaiWorldStateArchive implements WorldStateArchive {
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  private Optional<MutableWorldState> rollMutableStateToBlockHash(
+  Optional<MutableWorldState> rollMutableStateToBlockHash(
       final BonsaiPersistedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
