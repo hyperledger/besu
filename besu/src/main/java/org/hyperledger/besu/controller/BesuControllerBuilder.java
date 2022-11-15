@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -139,6 +140,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       Collections.emptyList();
   protected EvmConfiguration evmConfiguration;
   protected int maxPeers;
+  protected boolean isChainDataPruningEnabled;
+  protected long chainDataPruningBlocksRetained;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -267,6 +270,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder isChainDataPruningEnabled(final boolean isChainDataPruningEnabled) {
+    this.isChainDataPruningEnabled = isChainDataPruningEnabled;
+    return this;
+  }
+
+  public BesuControllerBuilder chainDataPruningBlocksRetained(
+      final long chainDataPruningBlocksRetained) {
+    this.chainDataPruningBlocksRetained = chainDataPruningBlocksRetained;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -299,6 +313,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             reorgLoggingThreshold,
             dataDirectory.toString());
+
+    if (isChainDataPruningEnabled) {
+      ChainDataPruner chainDataPruner =
+          new ChainDataPruner(
+              blockchainStorage,
+              storageProvider.getStorageBySegmentIdentifier(
+                  KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE),
+              chainDataPruningBlocksRetained);
+      blockchain.observeBlockAdded(chainDataPruner);
+      LOG.info(
+          "Chain data pruning enabled with recent blocks retained to be: "
+              + chainDataPruningBlocksRetained);
+    }
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain);
