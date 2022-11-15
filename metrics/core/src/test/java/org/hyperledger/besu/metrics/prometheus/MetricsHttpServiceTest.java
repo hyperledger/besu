@@ -23,6 +23,7 @@ import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.prometheus.client.exporter.common.TextFormat;
 import io.vertx.core.Vertx;
 import okhttp3.OkHttpClient;
@@ -55,10 +56,12 @@ public class MetricsHttpServiceTest {
   }
 
   private static MetricsHttpService createMetricsHttpService(final MetricsConfiguration config) {
+    GlobalOpenTelemetry.resetForTest();
     return new MetricsHttpService(vertx, config, MetricsSystemFactory.create(config));
   }
 
   private static MetricsHttpService createMetricsHttpService() {
+    GlobalOpenTelemetry.resetForTest();
     final MetricsConfiguration metricsConfiguration = createMetricsConfig();
     return new MetricsHttpService(
         vertx, metricsConfiguration, MetricsSystemFactory.create(metricsConfiguration));

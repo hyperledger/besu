@@ -30,7 +30,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -60,17 +59,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   static JsonGenesisConfigOptions fromJsonObjectWithOverrides(
       final ObjectNode configRoot, final Map<String, String> configOverrides) {
     final TransitionsConfigOptions transitionsConfigOptions;
-    try {
-      transitionsConfigOptions = loadTransitionsFrom(configRoot);
-    } catch (final JsonProcessingException e) {
-      throw new RuntimeException("Transitions section of genesis file failed to decode.", e);
-    }
+    transitionsConfigOptions = loadTransitionsFrom(configRoot);
     return new JsonGenesisConfigOptions(configRoot, configOverrides, transitionsConfigOptions);
   }
 
-  private static TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode)
-      throws JsonProcessingException {
-
+  private static TransitionsConfigOptions loadTransitionsFrom(final ObjectNode parentNode) {
     final Optional<ObjectNode> transitionsNode =
         JsonUtil.getObjectNode(parentNode, TRANSITIONS_CONFIG_KEY);
     if (transitionsNode.isEmpty()) {
@@ -286,6 +279,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShandongBlockNumber() {
+    return getOptionalLong("shandongblock");
+  }
+
+  @Override
   public Optional<Wei> getBaseFeePerGas() {
     return Optional.ofNullable(configOverrides.get("baseFeePerGas"))
         .map(Wei::fromHexString)
@@ -422,21 +420,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     // mainnet fork blocks
     getHomesteadBlockNumber().ifPresent(l -> builder.put("homesteadBlock", l));
-    getDaoForkBlock()
-        .ifPresent(
-            l -> {
-              builder.put("daoForkBlock", l);
-            });
-    getTangerineWhistleBlockNumber()
-        .ifPresent(
-            l -> {
-              builder.put("eip150Block", l);
-            });
-    getSpuriousDragonBlockNumber()
-        .ifPresent(
-            l -> {
-              builder.put("eip158Block", l);
-            });
+    getDaoForkBlock().ifPresent(l -> builder.put("daoForkBlock", l));
+    getTangerineWhistleBlockNumber().ifPresent(l -> builder.put("eip150Block", l));
+    getSpuriousDragonBlockNumber().ifPresent(l -> builder.put("eip158Block", l));
     getByzantiumBlockNumber().ifPresent(l -> builder.put("byzantiumBlock", l));
     getConstantinopleBlockNumber().ifPresent(l -> builder.put("constantinopleBlock", l));
     getPetersburgBlockNumber().ifPresent(l -> builder.put("petersburgBlock", l));
@@ -447,6 +433,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getArrowGlacierBlockNumber().ifPresent(l -> builder.put("arrowGlacierBlock", l));
     getGrayGlacierBlockNumber().ifPresent(l -> builder.put("grayGlacierBlock", l));
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
+    getShandongBlockNumber().ifPresent(l -> builder.put("shandongBlock", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
 
@@ -548,7 +535,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       final String overrideHash = configOverrides.get(key);
       return Optional.of(Hash.fromHexString(overrideHash));
     } else {
-      return JsonUtil.getValueAsString(configRoot, key).map(s -> Hash.fromHexString(s));
+      return JsonUtil.getValueAsString(configRoot, key).map(Hash::fromHexString);
     }
   }
 
@@ -570,6 +557,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
             getMergeNetSplitBlockNumber(),
+            getShandongBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

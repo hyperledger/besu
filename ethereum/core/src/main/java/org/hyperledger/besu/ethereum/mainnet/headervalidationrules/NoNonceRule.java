@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,11 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
+package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-@FunctionalInterface
-public interface PeerBondedObserver {
-  void onPeerBonded(PeerBondedEvent peerBondedEvent);
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
+
+public class NoNonceRule implements AttachedBlockHeaderValidationRule {
+
+  @Override
+  public boolean validate(
+      final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
+    return header.getNonce() == 0L;
+  }
 }

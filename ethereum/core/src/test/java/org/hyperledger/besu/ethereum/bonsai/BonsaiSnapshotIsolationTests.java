@@ -134,6 +134,11 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(res.isSuccessful()).isTrue();
     assertThat(res2.isSuccessful()).isTrue();
 
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(secondBlock.getHash()))
+        .isNotEmpty();
+
     assertThat(archive.getMutable().get(testAddress)).isNotNull();
     assertThat(archive.getMutable().get(testAddress).getBalance())
         .isEqualTo(Wei.of(2_000_000_000_000_000_000L));
@@ -146,6 +151,13 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolated2.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolated2.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+
+    try {
+      isolated.get().close();
+      isolated2.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -156,6 +168,9 @@ public class BonsaiSnapshotIsolationTests {
 
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(isolated.get(), firstBlock);
+
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
 
     assertThat(res.isSuccessful()).isTrue();
     assertThat(isolated.get().get(testAddress)).isNotNull();
@@ -176,6 +191,11 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(ws.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(ws.get().rootHash()).isEqualTo(firstBlock.getHeader().getStateRoot());
+    try {
+      isolated.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -237,9 +257,19 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(firstBlockTrieLog).isNotEmpty();
     assertThat(firstBlockTrieLog.get().getAccount(testAddress)).isNotEmpty();
     assertThat(firstBlockTrieLog.get().getAccount(altTestAddress)).isEmpty();
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
+
     var cloneForkTrieLog = archive.getTrieLogManager().getTrieLogLayer(cloneForkBlock.getHash());
     assertThat(cloneForkTrieLog.get().getAccount(testAddress)).isEmpty();
     assertThat(cloneForkTrieLog.get().getAccount(altTestAddress)).isNotEmpty();
+
+    try {
+      isolated.close();
+      isolatedClone.close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -252,6 +282,8 @@ public class BonsaiSnapshotIsolationTests {
     // execute a block with a single transaction on the first snapshot:
     var firstBlock = forTransactions(List.of(burnTransaction(sender1, 0L, testAddress)));
     var res = executeBlock(isolated, firstBlock);
+    assertThat(archive.getTrieLogManager().getBonsaiCachedWorldState(firstBlock.getHash()))
+        .isNotEmpty();
 
     assertThat(res.isSuccessful()).isTrue();
     Consumer<MutableWorldState> checkIsolatedState =
@@ -276,6 +308,12 @@ public class BonsaiSnapshotIsolationTests {
 
     // copy of closed isolated worldstate should still pass check
     checkIsolatedState.accept(isolatedClone);
+
+    try {
+      isolatedClone.close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test
@@ -320,6 +358,13 @@ public class BonsaiSnapshotIsolationTests {
     assertThat(isolatedRollBack.get().get(testAddress).getBalance())
         .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(isolatedRollBack.get().rootHash()).isEqualTo(block1.getHeader().getStateRoot());
+
+    try {
+      isolatedRollForward.get().close();
+      isolatedRollBack.get().close();
+    } catch (Exception ex) {
+      throw new RuntimeException("failed to close isolated worldstates");
+    }
   }
 
   @Test

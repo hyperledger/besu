@@ -34,7 +34,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -42,8 +41,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -1536,7 +1535,6 @@ public class PeerDiscoveryControllerTest {
     private PeerTable peerTable;
     private OutboundMessageHandler outboundMessageHandler = OutboundMessageHandler.NOOP;
     private static final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
-    private final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private Cache<Bytes, Packet> enrs =
@@ -1611,9 +1609,9 @@ public class PeerDiscoveryControllerTest {
               .tableRefreshIntervalMs(TABLE_REFRESH_INTERVAL_MS)
               .peerRequirement(PEER_REQUIREMENT)
               .peerPermissions(peerPermissions)
-              .peerBondedObservers(peerBondedObservers)
               .metricsSystem(new NoOpMetricsSystem())
               .cacheForEnrRequests(enrs)
+              .rlpxAgent(mock(RlpxAgent.class))
               .build());
     }
   }
