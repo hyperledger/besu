@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+  <Properties>
+    <Property name="root.log.level">INFO</Property>
+  </Properties>
+
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout>
+        <pattern>%X{test} | %X{node} | %d{HH:mm:ss.SSS} | %t | %-5level | %c{1} | %msg%n</pattern>
+        <replace regex="\|  \| " replacement="| "/>
+      </PatternLayout>
+    </Console>
+    <Console name="SubProcessConsole" target="SYSTEM_OUT">
+      <PatternLayout pattern="%X{test} | %X{node} | %msg%n" />
+    </Console>
+
+    <Routing name="PerTestFile">
+      <Routes pattern="${ctx:class}-${ctx:test}">
+        <Route key="$${ctx:class}-$${ctx:test}">
+          <!-- The class and test names failed to resolve, so use a catch-all filename -->
+          <File
+                  name="Appends to AllTestsMissingExtraLoggingConf.log"
+                  filename="build/acceptanceTestLogs/AllTestsMissingExtraLoggingConf.log"
+                  append="true"
+                  createOnDemand="true"
+          >
+            <PatternLayout>
+              <pattern>%X{node} | %d{HH:mm:ss.SSS} | %t | %-5level | %c{1} | %msg%n</pattern>
+              <replace regex="^ \| " replacement=""/>
+            </PatternLayout>
+          </File>
+        </Route>
+        <Route>
+          <!-- The default route sends the log to an on-demand file whose name contains the class and test names -->
+          <File
+                  name="Creates CLASSNAME.TESTNAME.log"
+                  filename="build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log"
+                  append="false"
+                  createOnDemand="true"
+          >
+            <PatternLayout>
+              <pattern>%X{node} | %d{HH:mm:ss.SSS} | %t | %-5level | %c{1} | %msg%n</pattern>
+              <replace regex="^ \| " replacement=""/>
+            </PatternLayout>
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+    <Routing name="PerTestSubprocessFile">
+      <Routes pattern="${ctx:class}-${ctx:test}">
+        <Route key="$${ctx:class}-$${ctx:test}">
+          <!-- The class and test names failed to resolve, so use a catch-all filename -->
+          <File
+                  name="Appends to AllTestsMissingExtraLoggingConf.log"
+                  filename="build/acceptanceTestLogs/AllTestsMissingExtraLoggingConf.log"
+                  append="true"
+                  createOnDemand="true"
+          >
+            <PatternLayout pattern="%X{node} | %msg%n" />
+          </File>
+        </Route>
+        <Route>
+          <!-- The default route sends the log to an on-demand file whose name contains the class and test names -->
+          <File
+                  name="Appends to CLASSNAME.TESTNAME.log"
+                  filename="build/acceptanceTestLogs/${ctx:class}.${ctx:test}.log"
+                  append="true"
+                  createOnDemand="true"
+          >
+            <PatternLayout pattern="%X{node} | %msg%n" />
+          </File>
+        </Route>
+
+      </Routes>
+    </Routing>
+
+  </Appenders>
+  <Loggers>
+    <Logger name="org.hyperledger.besu.SubProcessLog" level="INFO" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+      <AppenderRef ref="PerTestSubprocessFile" />
+    </Logger>
+    <Root level="${sys:root.log.level}">
+      <AppenderRef ref="Console" />
+      <AppenderRef ref="PerTestFile" />
+    </Root>
+  </Loggers>
+</Configuration>
