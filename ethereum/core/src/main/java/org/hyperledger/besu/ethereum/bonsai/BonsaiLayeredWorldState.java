@@ -258,20 +258,39 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public MutableWorldState copy() {
-    // TODO:  this is a stopgap measure, revisit with
-    // https://github.com/hyperledger/besu/issues/4641
-    // rip off the band-aid.  you know you want to:
+    // TODO: this is unsafe because the underlying persisted worldstate will likely have mutated if
+    // this
+    //  layer is not the current head
+    //  revisit with https://github.com/hyperledger/besu/issues/4641
+    final BonsaiPersistedWorldState bonsaiPersistedWorldState =
+        ((BonsaiPersistedWorldState) archive.getMutable());
+    BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
+        new BonsaiInMemoryWorldStateKeyValueStorage(
+            bonsaiPersistedWorldState.getWorldStateStorage().accountStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().codeStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().storageStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
+            bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
+
     return archive
-        .getMutableSnapshot(this.blockHash())
+        .rollMutableStateToBlockHash(
+            new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage),
+            this.blockHash())
         .orElseThrow(
             () ->
                 new StorageException(
-                    "Worldstate unavailable for " + blockHash().toShortHexString()));
+                    "Unable to copy Layered Worldstate for " + blockHash().toHexString()));
+  }
+
+  @Override
+  public boolean isPersistable() {
+    return false;
   }
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    throw new UnsupportedOperationException("Layered worldState can not be persisted.");
+    // no-op, layered worldstates do not persist, not even as a trielog.
   }
 
   @Override
