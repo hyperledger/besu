@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibftlegacy.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -127,7 +129,7 @@ public class Istanbul99ProtocolManagerTest {
             messages,
             new EthContext(peers, messages, ethScheduler),
             Collections.emptyList(),
-            false,
+            mock(SynchronizerConfiguration.class),
             ethScheduler)) {
 
       final long startBlock = blockchain.getChainHeadBlockNumber() + 1;

@@ -9,6 +9,8 @@
 - Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
+- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
 - Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
 
