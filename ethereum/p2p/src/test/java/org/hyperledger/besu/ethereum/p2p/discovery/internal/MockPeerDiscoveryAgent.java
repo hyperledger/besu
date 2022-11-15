@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
@@ -53,7 +54,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService,
-      final Supplier<List<Bytes>> forkIdSupplier) {
+      final Supplier<List<Bytes>> forkIdSupplier,
+      final RlpxAgent rlpxAgent) {
     super(
         nodeKey,
         config,
@@ -61,7 +63,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
         natService,
         new NoOpMetricsSystem(),
         new InMemoryKeyValueStorageProvider(),
-        forkIdSupplier);
+        forkIdSupplier,
+        rlpxAgent);
     this.agentNetwork = agentNetwork;
   }
 
