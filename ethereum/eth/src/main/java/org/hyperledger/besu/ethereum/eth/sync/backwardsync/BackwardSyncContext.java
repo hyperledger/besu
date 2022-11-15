@@ -414,7 +414,7 @@ public class BackwardSyncContext {
     final float completedPercentage = 100.0f * imported / estimatedTotal;
 
     if (completedPercentage < 100.0f) {
-      if (currentStatus.couldLogProgress()) {
+      if (currentStatus.progressLogDue()) {
         LOG.info(
             String.format(
                 "Backward sync phase 2 of 2, %.2f%% completed, imported %d blocks of at least %d (current head %d, target head %d). Peers: %d",
@@ -453,7 +453,7 @@ public class BackwardSyncContext {
       targetChainHeight = newTargetHeight;
     }
 
-    public boolean couldLogProgress() {
+    public boolean progressLogDue() {
       final long now = System.currentTimeMillis();
       if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
         lastLogAt = now;
