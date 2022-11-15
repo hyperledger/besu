@@ -253,7 +253,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .getMutable(parentStateRoot, parentHeader.getHash(), false)
         .map(
             ws -> {
-              if (!ws.isPersistable()) {
+              if (ws.isPersistable()) {
+                return ws;
+              } else {
                 var wsCopy = ws.copy();
                 try {
                   ws.close();
@@ -265,7 +267,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 }
                 return wsCopy;
               }
-              return ws;
             })
         .orElseThrow(
             () -> {
