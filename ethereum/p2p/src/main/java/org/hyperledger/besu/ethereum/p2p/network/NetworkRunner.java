@@ -78,7 +78,6 @@ public class NetworkRunner implements AutoCloseable {
       LOG.info("Starting Network.");
       setupHandlers();
       network.start();
-      LOG.info("Capabilities: {}", network);
     } else {
       LOG.error("Attempted to start already running network.");
     }

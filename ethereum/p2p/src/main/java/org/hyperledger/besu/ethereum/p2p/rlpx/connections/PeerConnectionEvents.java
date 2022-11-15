@@ -29,7 +29,6 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class PeerConnectionEvents implements PeerConnectionEventDispatcher {
   private final Subscribers<DisconnectCallback> disconnectSubscribers = Subscribers.create(true);
@@ -73,12 +72,5 @@ public class PeerConnectionEvents implements PeerConnectionEventDispatcher {
     messageSubscribers
         .computeIfAbsent(capability, key -> Subscribers.create(true))
         .subscribe(callback);
-  }
-
-  @Override
-  public String toString() {
-    return messageSubscribers.keySet().stream()
-        .map(Capability::toString)
-        .collect(Collectors.joining(", "));
   }
 }
