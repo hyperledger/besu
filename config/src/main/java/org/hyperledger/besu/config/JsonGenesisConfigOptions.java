@@ -280,7 +280,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public OptionalLong getShanghaiBlockNumber() {
-    return getOptionalLong("shangaiblock");
+    return getOptionalLong("shanghaiblock");
   }
 
   @Override
