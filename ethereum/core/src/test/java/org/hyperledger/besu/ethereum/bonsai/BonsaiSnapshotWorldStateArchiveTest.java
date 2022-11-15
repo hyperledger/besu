@@ -120,13 +120,13 @@ public class BonsaiSnapshotWorldStateArchiveTest {
     when(worldStatesByHash.get(eq(blockHeaderChainA.getHash())))
         .thenReturn(
             new CachedSnapshotWorldState(
-                mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
+                () -> mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
                 mock(TrieLogLayer.class),
                 2));
     when(worldStatesByHash.get(eq(blockHeaderChainB.getHash())))
         .thenReturn(
             new CachedSnapshotWorldState(
-                mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
+                () -> mock(BonsaiSnapshotWorldState.class, Answers.RETURNS_MOCKS),
                 mock(TrieLogLayer.class),
                 2));
     var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
