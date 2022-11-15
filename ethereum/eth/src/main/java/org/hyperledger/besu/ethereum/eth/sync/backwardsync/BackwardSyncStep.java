@@ -115,7 +115,7 @@ public class BackwardSyncStep {
     final float completedPercentage = 100.0f * downloaded / estimatedTotal;
 
     if (completedPercentage < 100.0f) {
-      if (context.getStatus().couldLogProgress()) {
+      if (context.getStatus().progressLogDue()) {
         LOG.info(
             String.format(
                 "Backward sync phase 1 of 2, %.2f%% completed, downloaded %d headers of at least %d. Peers: %d",
