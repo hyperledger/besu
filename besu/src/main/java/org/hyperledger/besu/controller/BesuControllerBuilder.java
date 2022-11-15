@@ -375,8 +375,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
-    final boolean fastSyncEnabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
-    final SyncState syncState = new SyncState(blockchain, ethPeers, fastSyncEnabled, checkpoint);
+    final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -394,7 +394,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthProtocolManager ethProtocolManager =
         createEthProtocolManager(
             protocolContext,
-            fastSyncEnabled,
+            syncConfig,
             transactionPool,
             ethereumWireProtocolConfiguration,
             ethPeers,
@@ -475,7 +475,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthProtocolManager ethProtocolManager,
       final PivotBlockSelector pivotBlockSelector) {
 
-    DefaultSynchronizer toUse =
+    final DefaultSynchronizer toUse =
         new DefaultSynchronizer(
             syncConfig,
             protocolSchedule,
@@ -583,7 +583,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -603,7 +603,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
         genesisConfig.getForks());
   }

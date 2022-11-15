@@ -81,7 +81,7 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   public void testNodeRecordCreated() {
-    KeyPair keyPair =
+    final KeyPair keyPair =
         SIGNATURE_ALGORITHM
             .get()
             .createKeyPair(
@@ -116,7 +116,7 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   public void testNodeRecordCreatedUpdatesDiscoveryPeer() {
-    KeyPair keyPair =
+    final KeyPair keyPair =
         SIGNATURE_ALGORITHM
             .get()
             .createKeyPair(
@@ -141,7 +141,7 @@ public class PeerDiscoveryAgentTest {
 
   @Test
   public void testNodeRecordNotUpdatedIfNoPeerDiscovery() {
-    KeyPair keyPair =
+    final KeyPair keyPair =
         SIGNATURE_ALGORITHM
             .get()
             .createKeyPair(
@@ -325,7 +325,7 @@ public class PeerDiscoveryAgentTest {
     agent.bond(genericPeer);
 
     // We should send an outgoing ping
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
@@ -353,13 +353,16 @@ public class PeerDiscoveryAgentTest {
     when(peerPermissions.isPermitted(
             any(), eq(remotePeer), eq(Action.DISCOVERY_ALLOW_OUTBOUND_BONDING)))
         .thenReturn(true);
+    when(peerPermissions.isPermitted(
+            any(), eq(remotePeer), eq(Action.DISCOVERY_ALLOW_IN_PEER_TABLE)))
+        .thenReturn(true);
 
     // Start agent and bond
     assertThat(agent.start(30303)).isCompleted();
     agent.bond(remotePeer);
 
     // We should send an outgoing ping
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(1);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
@@ -390,7 +393,7 @@ public class PeerDiscoveryAgentTest {
     agent.bond(peerWithDisabledDiscovery);
 
     // We should not send any messages to peer with discovery disabled
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(0);
   }
 
@@ -414,7 +417,7 @@ public class PeerDiscoveryAgentTest {
     agent.bond(remotePeer);
 
     // We should not send an outgoing ping
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(0);
   }
 
@@ -442,7 +445,7 @@ public class PeerDiscoveryAgentTest {
     // Bond
     otherNode.bond(localNode);
 
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
@@ -505,7 +508,7 @@ public class PeerDiscoveryAgentTest {
     // Check peer was allowed
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
     // Check that peer received a return ping
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(1);
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
     assertThat(firstMsg.packet.getType()).isEqualTo(PacketType.PING);
@@ -535,7 +538,7 @@ public class PeerDiscoveryAgentTest {
     agent.start(999);
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).isEmpty();
   }
 
@@ -666,7 +669,7 @@ public class PeerDiscoveryAgentTest {
     agent.start(999);
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
@@ -698,7 +701,7 @@ public class PeerDiscoveryAgentTest {
     agent.start(999);
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
@@ -739,7 +742,7 @@ public class PeerDiscoveryAgentTest {
     requestNeighbors(otherNode, agent);
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(2);
 
     // Peer should get a ping
@@ -775,7 +778,7 @@ public class PeerDiscoveryAgentTest {
     requestNeighbors(otherNode, agent);
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
-    List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
+    final List<IncomingPacket> remoteIncomingPackets = otherNode.getIncomingPackets();
     assertThat(remoteIncomingPackets).hasSize(3);
     // Peer should get a ping
     final IncomingPacket firstMsg = remoteIncomingPackets.get(0);
