@@ -15,17 +15,13 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -50,9 +46,6 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   private final RocksDBSnapshot snapshot;
   private final WriteOptions writeOptions;
   private final ReadOptions readOptions;
-  // TODO:  this is a stopgap measure, revisit with https://github.com/hyperledger/besu/issues/4641
-  private final AtomicBoolean isClosed = new AtomicBoolean(false);
-  private final StackTraceElement[] stackTrace;
 
   RocksDBSnapshotTransaction(
       final OptimisticTransactionDB db,
@@ -65,7 +58,6 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     this.writeOptions = new WriteOptions();
     this.snapTx = db.beginTransaction(writeOptions);
     this.readOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
-    this.stackTrace = Thread.currentThread().getStackTrace();
   }
 
   private RocksDBSnapshotTransaction(
@@ -82,7 +74,6 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     this.writeOptions = new WriteOptions();
     this.readOptions = readOptions;
     this.snapTx = snapTx;
-    this.stackTrace = Thread.currentThread().getStackTrace();
   }
 
   public Optional<byte[]> get(final byte[] key) {
@@ -173,18 +164,5 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     writeOptions.close();
     readOptions.close();
     snapshot.unMarkSnapshot();
-    isClosed.set(true);
-  }
-
-  // TODO:  this is a stopgap measure, revisit with https://github.com/hyperledger/besu/issues/4641
-  @Override
-  protected void finalize() {
-    if (!isClosed.get()) {
-      debugLambda(
-          LOG,
-          "RocksDBSnapshotTransaction was not closed.  This is a memory leak.  Stack trace: {}",
-          () -> Arrays.toString(stackTrace));
-      close();
-    }
   }
 }
