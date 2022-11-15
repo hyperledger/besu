@@ -69,17 +69,14 @@ public class BackwardSyncStep {
                 context.getEthContext(),
                 hash,
                 batchSize,
-                context.getMetricsSystem());
+                context.getMetricsSystem(),
+                context.getEthContext().getEthPeers().peerCount());
     return context
         .getEthContext()
         .getScheduler()
         .scheduleSyncWorkerTask(retryingGetHeadersEndingAtFromPeerByHashTask::run)
         .thenApply(
             blockHeaders -> {
-              if (blockHeaders.isEmpty()) {
-                throw new BackwardSyncException(
-                    "Did not receive a headers for hash " + hash.toHexString(), true);
-              }
               debugLambda(
                   LOG,
                   "Got headers {} -> {}",
