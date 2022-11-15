@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PongPacketData;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -293,7 +294,13 @@ public class PeerDiscoveryTestHelper {
       when(mockForkIdManager.peerCheck(forkId)).thenReturn(true);
       final MockPeerDiscoveryAgent mockPeerDiscoveryAgent =
           new MockPeerDiscoveryAgent(
-              nodeKey, config, peerPermissions, agents, natService, mockForkIdManager);
+              nodeKey,
+              config,
+              peerPermissions,
+              agents,
+              natService,
+              mockForkIdManager,
+              mock(RlpxAgent.class));
       mockPeerDiscoveryAgent.getAdvertisedPeer().ifPresent(peer -> peer.setNodeRecord(nodeRecord));
 
       return mockPeerDiscoveryAgent;

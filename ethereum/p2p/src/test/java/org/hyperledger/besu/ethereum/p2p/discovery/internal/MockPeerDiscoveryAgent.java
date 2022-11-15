@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
@@ -53,7 +53,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
       final NatService natService,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final RlpxAgent rlpxAgent) {
     super(
         nodeKey,
         config,
@@ -61,7 +62,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
         natService,
         new NoOpMetricsSystem(),
         new InMemoryKeyValueStorageProvider(),
-        forkIdManager);
+        forkIdManager,
+        rlpxAgent);
     this.agentNetwork = agentNetwork;
   }
 
@@ -136,7 +138,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   }
 
   @Override
-  protected AsyncExecutor createWorkerExecutor() {
+  protected PeerDiscoveryController.AsyncExecutor createWorkerExecutor() {
     return new BlockingAsyncExecutor();
   }
 

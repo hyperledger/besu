@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatService;
@@ -72,7 +73,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final RlpxAgent rlpxAgent) {
     super(
         nodeKey,
         config,
@@ -80,7 +82,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         natService,
         metricsSystem,
         storageProvider,
-        forkIdManager);
+        forkIdManager,
+        rlpxAgent);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 

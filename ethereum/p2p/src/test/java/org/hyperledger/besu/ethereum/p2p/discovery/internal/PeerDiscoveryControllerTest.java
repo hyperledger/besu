@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -47,8 +46,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -1485,13 +1484,13 @@ public class PeerDiscoveryControllerTest {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
     final ForkIdManager forkIdManager = mock(ForkIdManager.class);
-    DiscoveryPeer sender = peers.get(0);
+    final DiscoveryPeer sender = peers.get(0);
     final Packet enrPacket = prepareForForkIdCheck(forkIdManager, nodeKeys, sender, true);
 
     when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(true);
     controller.onMessage(enrPacket, sender);
 
-    Optional<DiscoveryPeer> maybePeer =
+    final Optional<DiscoveryPeer> maybePeer =
         controller
             .streamDiscoveredPeers()
             .filter(p -> p.getId().equals(sender.getId()))
@@ -1499,7 +1498,7 @@ public class PeerDiscoveryControllerTest {
 
     assertThat(maybePeer.isPresent()).isTrue();
     assertThat(maybePeer.get().getForkId().isPresent()).isTrue();
-    verify(controller, times(1)).notifyPeerBonded(eq(maybePeer.get()), anyLong());
+    verify(controller, times(1)).connectOnRlpxLayer(eq(maybePeer.get()));
   }
 
   @Test
@@ -1507,13 +1506,13 @@ public class PeerDiscoveryControllerTest {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
     final ForkIdManager forkIdManager = mock(ForkIdManager.class);
-    DiscoveryPeer sender = peers.get(0);
+    final DiscoveryPeer sender = peers.get(0);
     final Packet enrPacket = prepareForForkIdCheck(forkIdManager, nodeKeys, sender, true);
 
     when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(false);
     controller.onMessage(enrPacket, sender);
 
-    Optional<DiscoveryPeer> maybePeer =
+    final Optional<DiscoveryPeer> maybePeer =
         controller
             .streamDiscoveredPeers()
             .filter(p -> p.getId().equals(sender.getId()))
@@ -1521,20 +1520,20 @@ public class PeerDiscoveryControllerTest {
 
     assertThat(maybePeer.isPresent()).isTrue();
     assertThat(maybePeer.get().getForkId().isPresent()).isTrue();
-    verify(controller, never()).notifyPeerBonded(eq(maybePeer.get()), anyLong());
+    verify(controller, never()).connectOnRlpxLayer(eq(maybePeer.get()));
   }
 
   @Test
-  public void shouldStillCallNotifyPeerBondedIfNoForkIdSent() {
+  public void shouldStillCallConnectIfNoForkIdSent() {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
     final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
-    DiscoveryPeer sender = peers.get(0);
+    final DiscoveryPeer sender = peers.get(0);
     final Packet enrPacket =
         prepareForForkIdCheck(mock(ForkIdManager.class), nodeKeys, sender, false);
 
     controller.onMessage(enrPacket, sender);
 
-    Optional<DiscoveryPeer> maybePeer =
+    final Optional<DiscoveryPeer> maybePeer =
         controller
             .streamDiscoveredPeers()
             .filter(p -> p.getId().equals(sender.getId()))
@@ -1542,7 +1541,7 @@ public class PeerDiscoveryControllerTest {
 
     assertThat(maybePeer.isPresent()).isTrue();
     assertThat(maybePeer.get().getForkId().isPresent()).isFalse();
-    verify(controller, times(1)).notifyPeerBonded(eq(maybePeer.get()), anyLong());
+    verify(controller, times(1)).connectOnRlpxLayer(eq(maybePeer.get()));
   }
 
   @NotNull
@@ -1595,9 +1594,9 @@ public class PeerDiscoveryControllerTest {
 
     controller.onMessage(pongPacket, sender);
 
-    NodeRecord nodeRecord = createNodeRecord(nodeKeys.get(0), sendForkId);
+    final NodeRecord nodeRecord = createNodeRecord(nodeKeys.get(0), sendForkId);
 
-    ENRResponsePacketData enrResponsePacketData =
+    final ENRResponsePacketData enrResponsePacketData =
         ENRResponsePacketData.create(
             packetTypeBytesHashMap.get(PacketType.ENR_REQUEST), nodeRecord);
     final Packet enrPacket =
@@ -1716,7 +1715,6 @@ public class PeerDiscoveryControllerTest {
     private PeerTable peerTable;
     private OutboundMessageHandler outboundMessageHandler = OutboundMessageHandler.NOOP;
     private static final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
-    private final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private Cache<Bytes, Packet> enrs =
@@ -1803,11 +1801,11 @@ public class PeerDiscoveryControllerTest {
               .tableRefreshIntervalMs(TABLE_REFRESH_INTERVAL_MS)
               .peerRequirement(PEER_REQUIREMENT)
               .peerPermissions(peerPermissions)
-              .peerBondedObservers(peerBondedObservers)
               .metricsSystem(new NoOpMetricsSystem())
               .cacheForEnrRequests(enrs)
               .forkIdManager(forkIdManager == null ? mock(ForkIdManager.class) : forkIdManager)
               .filterOnEnrForkId(filterOnForkId)
+              .rlpxAgent(mock(RlpxAgent.class))
               .build());
     }
   }

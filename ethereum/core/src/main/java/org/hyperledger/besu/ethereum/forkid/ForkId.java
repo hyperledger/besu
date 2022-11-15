@@ -40,12 +40,17 @@ public class ForkId {
     this(hash, Bytes.wrap(EndianUtils.longToBigEndian(next)).trimLeadingZeros());
   }
 
-  public static Optional<ForkId> fromRawForkId(final List<List<Bytes>> rawForkId) {
-    try {
-      return Optional.of(new ForkId(rawForkId.get(0).get(0), rawForkId.get(0).get(1)));
-    } catch (final Exception e) {
-      return Optional.empty();
+  public static Optional<ForkId> fromRawForkId(final Object rawForkId) {
+    if (rawForkId != null) {
+      try {
+        @SuppressWarnings("unchecked")
+        final List<List<Bytes>> typedRawForkId = (List<List<Bytes>>) rawForkId;
+        return Optional.of(new ForkId(typedRawForkId.get(0).get(0), typedRawForkId.get(0).get(1)));
+      } catch (final Exception e) {
+        return Optional.empty();
+      }
     }
+    return Optional.empty();
   }
 
   public long getNext() {
@@ -108,8 +113,6 @@ public class ForkId {
 
   @Override
   public int hashCode() {
-    int hashCode = 31;
-    hashCode = hashCode * this.hash.hashCode();
-    return hashCode * this.next.hashCode();
+    return 31 * this.hash.hashCode() * this.next.hashCode();
   }
 }

@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -139,17 +138,7 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public void setNodeRecord(final NodeRecord nodeRecord) {
     this.nodeRecord = nodeRecord;
-
-    Object rawForkId = nodeRecord.get("eth");
-    if (rawForkId != null) {
-      try {
-        @SuppressWarnings("unchecked")
-        final List<List<Bytes>> typedRawForkId = (List<List<Bytes>>) rawForkId;
-        this.forkId = ForkId.fromRawForkId(typedRawForkId);
-      } catch (final Exception e) {
-        // do nothing
-      }
-    }
+    this.forkId = ForkId.fromRawForkId(nodeRecord.get("eth"));
   }
 
   public Optional<ForkId> getForkId() {

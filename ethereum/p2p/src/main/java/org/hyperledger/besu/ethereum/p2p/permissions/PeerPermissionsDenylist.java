@@ -55,8 +55,8 @@ public class PeerPermissionsDenylist extends PeerPermissions {
 
   @Override
   public boolean isPermitted(final Peer localNode, final Peer remotePeer, final Action action) {
-    return !denylist.contains(remotePeer.getId())
-        && !EnodeURLImpl.sameListeningEndpoint(localNode.getEnodeURL(), remotePeer.getEnodeURL());
+    return !EnodeURLImpl.sameListeningEndpoint(localNode.getEnodeURL(), remotePeer.getEnodeURL())
+        && !denylist.contains(remotePeer.getId());
   }
 
   public void add(final Peer peer) {

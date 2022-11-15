@@ -33,10 +33,7 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -82,9 +79,6 @@ public final class DefaultP2PNetworkTest {
   @Mock PeerDiscoveryAgent discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
-  private final ArgumentCaptor<PeerBondedObserver> discoverySubscriberCaptor =
-      ArgumentCaptor.forClass(PeerBondedObserver.class);
-
   @Captor private ArgumentCaptor<Stream<? extends Peer>> peerStreamCaptor;
 
   private final NetworkingConfiguration config =
@@ -99,15 +93,7 @@ public final class DefaultP2PNetworkTest {
   public void before() {
     lenient().when(rlpxAgent.start()).thenReturn(CompletableFuture.completedFuture(30303));
     lenient().when(rlpxAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
-    lenient()
-        .when(discoveryAgent.start(anyInt()))
-        .thenAnswer(
-            invocation ->
-                CompletableFuture.completedFuture(invocation.getArgument(0, Integer.class)));
     lenient().when(discoveryAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
-    lenient()
-        .when(discoveryAgent.observePeerBondedEvents(discoverySubscriberCaptor.capture()))
-        .thenReturn(1L);
     lenient().when(discoveryAgent.checkForkId(any())).thenReturn(true);
     lenient()
         .when(discoveryAgent.start(anyInt()))
@@ -293,32 +279,6 @@ public final class DefaultP2PNetworkTest {
             eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
-  }
-
-  @Test
-  public void handlePeerBondedEvent_forListeningPeer() {
-    final DefaultP2PNetwork network = network();
-    network.start();
-    final DiscoveryPeer peer = DiscoveryPeer.fromEnode(PeerTestHelper.enode());
-    final PeerDiscoveryEvent.PeerBondedEvent peerBondedEvent =
-        new PeerDiscoveryEvent.PeerBondedEvent(peer, System.currentTimeMillis());
-
-    discoverySubscriberCaptor.getValue().onPeerBonded(peerBondedEvent);
-    verify(rlpxAgent, times(1)).connect(peer);
-  }
-
-  @Test
-  public void handlePeerBondedEvent_forPeerWithNoTcpPort() {
-    final DefaultP2PNetwork network = network();
-    network.start();
-    final DiscoveryPeer peer =
-        DiscoveryPeer.fromIdAndEndpoint(
-            Peer.randomId(), new Endpoint("127.0.0.1", 999, Optional.empty()));
-    final PeerDiscoveryEvent.PeerBondedEvent peerBondedEvent =
-        new PeerDiscoveryEvent.PeerBondedEvent(peer, System.currentTimeMillis());
-
-    discoverySubscriberCaptor.getValue().onPeerBonded(peerBondedEvent);
-    verify(rlpxAgent, times(1)).connect(peer);
   }
 
   @Test

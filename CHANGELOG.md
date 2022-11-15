@@ -8,6 +8,9 @@
 - Explain and improve price validation for London and local transactions during block proposal selection [#4602](https://github.com/hyperledger/besu/pull/4602)
 - Support for ephemeral testnet Shandong.  EIPs are still in flux, besu does not fully sync yet, and the network is subject to restarts. [#//FIXME](https://github.com/hyperledger/besu/pull///FIXME)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
+- Upgrade RocksDB version from 7.6.0 to 7.7.3
+- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 
 ### Bug Fixes
 
@@ -62,6 +65,7 @@
 
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.tar.gz  / sha256: 18590796831a6c6c2ca17ba8e6877dd2bd63c25e034f1bbc987aaa0a9c3a178e
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.0/besu-22.10.0.zip / sha256: 8ad4927469e8e128a3a2c7a708f108393eebc82c522f66cdcac4b7d206e07f90
+
 
 ## 22.10.0-RC2
 

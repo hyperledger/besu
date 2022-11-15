@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
@@ -62,7 +61,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -140,8 +138,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final MaintainedPeers maintainedPeers;
 
   private final NatService natService;
-
-  private OptionalLong peerBondedObserverId = OptionalLong.empty();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -258,9 +254,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     setLocalNode(address, listeningPort, discoveryPort);
 
-    peerBondedObserverId =
-        OptionalLong.of(peerDiscoveryAgent.observePeerBondedEvents(this::handlePeerBondedEvent));
-
     // Call checkMaintainedConnectionPeers() now that the local node is up, for immediate peer
     // additions
     checkMaintainedConnectionPeers();
@@ -287,8 +280,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
     rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
-    peerBondedObserverId.ifPresent(peerDiscoveryAgent::removePeerBondedObserver);
-    peerBondedObserverId = OptionalLong.empty();
     peerPermissions.close();
   }
 
@@ -413,10 +404,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     rlpxAgent.subscribeDisconnect(callback);
   }
 
-  private void handlePeerBondedEvent(final PeerBondedEvent peerBondedEvent) {
-    rlpxAgent.connect(peerBondedEvent.getPeer());
-  }
-
   @Override
   public void close() {
     stop();
@@ -512,8 +499,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final MutableLocalNode localNode =
           MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
-      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
       rlpxAgent = rlpxAgent == null ? createRlpxAgent(localNode, peerPrivileges) : rlpxAgent;
+      peerDiscoveryAgent = peerDiscoveryAgent == null ? createDiscoveryAgent() : peerDiscoveryAgent;
 
       return new DefaultP2PNetwork(
           localNode,
@@ -550,7 +537,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           natService,
           metricsSystem,
           storageProvider,
-          forkIdManager);
+          forkIdManager,
+          rlpxAgent);
     }
 
     private RlpxAgent createRlpxAgent(

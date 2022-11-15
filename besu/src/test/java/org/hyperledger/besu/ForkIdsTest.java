@@ -52,8 +52,8 @@ public class ForkIdsTest {
   public static class NotParameterized {
     @Test
     public void testFromRaw() {
-      ForkId forkId = new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L);
-      List<List<Bytes>> forkIdAsBytesList = List.of(forkId.getForkIdAsBytesList());
+      final ForkId forkId = new ForkId(Bytes.ofUnsignedInt(0xfe3366e7L), 1735371L);
+      final List<List<Bytes>> forkIdAsBytesList = List.of(forkId.getForkIdAsBytesList());
       assertThat(ForkId.fromRawForkId(forkIdAsBytesList).get()).isEqualTo(forkId);
     }
   }

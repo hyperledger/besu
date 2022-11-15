@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.apache.tuweni.bytes.Bytes;
@@ -319,6 +320,8 @@ public abstract class CommandTestAbstract {
 
   @Before
   public void setUpStreams() {
+    // reset the global opentelemetry singleton
+    GlobalOpenTelemetry.resetForTest();
     commandOutput.reset();
     commandErrorOutput.reset();
     System.setOut(new PrintStream(commandOutput));
@@ -355,6 +358,8 @@ public abstract class CommandTestAbstract {
   protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
+    // reset GlobalOpenTelemetry
+    GlobalOpenTelemetry.resetForTest();
 
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
