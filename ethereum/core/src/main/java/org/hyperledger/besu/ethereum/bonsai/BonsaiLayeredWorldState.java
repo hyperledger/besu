@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -257,6 +258,10 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
 
   @Override
   public MutableWorldState copy() {
+    // TODO: this is unsafe because the underlying persisted worldstate will likely have mutated if
+    // this
+    //  layer is not the current head
+    //  revisit with https://github.com/hyperledger/besu/issues/4641
     final BonsaiPersistedWorldState bonsaiPersistedWorldState =
         ((BonsaiPersistedWorldState) archive.getMutable());
     BonsaiInMemoryWorldStateKeyValueStorage bonsaiInMemoryWorldStateKeyValueStorage =
@@ -267,12 +272,25 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
             bonsaiPersistedWorldState.getWorldStateStorage().trieBranchStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().trieLogStorage,
             bonsaiPersistedWorldState.getWorldStateStorage().getMaybeFallbackNodeFinder());
-    return new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage);
+
+    return archive
+        .rollMutableStateToBlockHash(
+            new BonsaiInMemoryWorldState(archive, bonsaiInMemoryWorldStateKeyValueStorage),
+            this.blockHash())
+        .orElseThrow(
+            () ->
+                new StorageException(
+                    "Unable to copy Layered Worldstate for " + blockHash().toHexString()));
+  }
+
+  @Override
+  public boolean isPersistable() {
+    return false;
   }
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    throw new UnsupportedOperationException("Layered worldState can not be persisted.");
+    // no-op, layered worldstates do not persist, not even as a trielog.
   }
 
   @Override
