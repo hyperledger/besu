@@ -22,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -57,11 +58,15 @@ public class BackwardsSyncAlgorithm {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
       return executeSyncStep(firstHash.get())
-          .whenComplete(
-              (result, throwable) -> {
-                if (throwable == null) {
-                  context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                }
+          .thenAccept(
+              result -> {
+                LOG.info("Backward sync target block is {}", result.toLogString());
+                context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                context
+                    .getStatus()
+                    .setSyncRange(
+                        context.getProtocolContext().getBlockchain().getChainHeadBlockNumber(),
+                        result.getHeader().getNumber());
               });
     }
     if (!context.isReady()) {
@@ -73,7 +78,7 @@ public class BackwardsSyncAlgorithm {
         context.getBackwardChain().getFirstAncestorHeader();
     if (possibleFirstAncestorHeader.isEmpty()) {
       this.finished = true;
-      LOG.info("The Backward sync is done...");
+      LOG.info("The Backward sync is done");
       context.getBackwardChain().clear();
       return CompletableFuture.completedFuture(null);
     }
@@ -85,13 +90,16 @@ public class BackwardsSyncAlgorithm {
     if (blockchain.getChainHead().getHeight() > firstAncestorHeader.getNumber()) {
       debugLambda(
           LOG,
-          "Backward reached below previous head {} : {}",
+          "Backward reached below current chain head {} : {}",
           () -> blockchain.getChainHead().toLogString(),
           firstAncestorHeader::toLogString);
     }
 
     if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)) {
-      LOG.info("Backward sync reached ancestor header, starting Forward sync");
+      debugLambda(
+          LOG,
+          "Backward sync reached ancestor header with {}, starting Forward sync",
+          firstAncestorHeader::toLogString);
       return executeForwardAsync();
     }
 
@@ -104,7 +112,7 @@ public class BackwardsSyncAlgorithm {
   }
 
   @VisibleForTesting
-  public CompletableFuture<Void> executeSyncStep(final Hash hash) {
+  public CompletableFuture<Block> executeSyncStep(final Hash hash) {
     return new SyncStepStep(context, context.getBackwardChain()).executeAsync(hash);
   }
 
