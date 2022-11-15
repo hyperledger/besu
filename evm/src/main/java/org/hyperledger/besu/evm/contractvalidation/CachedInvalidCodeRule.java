@@ -16,7 +16,6 @@
 
 package org.hyperledger.besu.evm.contractvalidation;
 
-import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -25,7 +24,7 @@ import java.util.Optional;
 public class CachedInvalidCodeRule implements ContractValidationRule {
 
   @Override
-  public Optional<ExceptionalHaltReason> validate(final EVM evm, final MessageFrame frame) {
+  public Optional<ExceptionalHaltReason> validate(final MessageFrame frame) {
     if (!frame.getCode().isValid()) {
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     } else {
