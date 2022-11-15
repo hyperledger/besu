@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetHeadersFromPeer
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -112,7 +113,14 @@ public class RangeHeadersFetcher {
             metricsSystem)
         .assignPeer(peer)
         .run()
-        .thenApply(headers -> stripExistingRangeHeaders(referenceHeader, headers));
+        .thenApply(headers -> stripExistingRangeHeaders(referenceHeader, headers))
+        .thenApply(
+            blockHeaders -> {
+              if (blockHeaders.isEmpty()) {
+                peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+              }
+              return blockHeaders;
+            });
   }
 
   private List<BlockHeader> stripExistingRangeHeaders(
