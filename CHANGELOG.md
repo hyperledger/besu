@@ -11,6 +11,7 @@
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
 - Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
+- Implement Eth/67 sub-protocol [#4596](https://github.com/hyperledger/besu/issues/4596)
 
 ### Bug Fixes
 
