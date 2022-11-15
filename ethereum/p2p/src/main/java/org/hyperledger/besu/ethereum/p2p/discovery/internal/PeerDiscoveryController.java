@@ -22,17 +22,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerBondedObserver;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -128,6 +126,7 @@ public class PeerDiscoveryController {
   private final DiscoveryProtocolLogger discoveryProtocolLogger;
   private final LabelledMetric<Counter> interactionCounter;
   private final LabelledMetric<Counter> interactionRetryCounter;
+  private final RlpxAgent rlpxAgent;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
 
@@ -141,10 +140,6 @@ public class PeerDiscoveryController {
   private final long cleanPeerTableIntervalMs;
   private final AtomicBoolean peerTableIsDirty = new AtomicBoolean(false);
   private OptionalLong cleanTableTimerId = OptionalLong.empty();
-
-  // Observers for "peer bonded" discovery events.
-  private final Subscribers<PeerBondedObserver> peerBondedObservers;
-
   private RecursivePeerRefreshState recursivePeerRefreshState;
 
   private PeerDiscoveryController(
@@ -159,9 +154,9 @@ public class PeerDiscoveryController {
       final long cleanPeerTableIntervalMs,
       final PeerRequirement peerRequirement,
       final PeerPermissions peerPermissions,
-      final Subscribers<PeerBondedObserver> peerBondedObservers,
       final MetricsSystem metricsSystem,
-      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests) {
+      final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
+      final RlpxAgent rlpxAgent) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -172,10 +167,10 @@ public class PeerDiscoveryController {
     this.cleanPeerTableIntervalMs = cleanPeerTableIntervalMs;
     this.peerRequirement = peerRequirement;
     this.outboundMessageHandler = outboundMessageHandler;
-    this.peerBondedObservers = peerBondedObservers;
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
 
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
+    this.rlpxAgent = rlpxAgent;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -387,10 +382,6 @@ public class PeerDiscoveryController {
   }
 
   private boolean addToPeerTable(final DiscoveryPeer peer) {
-    if (!peerPermissions.isAllowedInPeerTable(peer)) {
-      return false;
-    }
-
     // Reset the last seen timestamp.
     final long now = System.currentTimeMillis();
     if (peer.getFirstDiscovered() == 0) {
@@ -400,7 +391,7 @@ public class PeerDiscoveryController {
 
     if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
       peer.setStatus(PeerDiscoveryStatus.BONDED);
-      notifyPeerBonded(peer, now);
+      connectOnRlpxLayer(peer);
     }
 
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
@@ -417,10 +408,8 @@ public class PeerDiscoveryController {
     return true;
   }
 
-  private void notifyPeerBonded(final DiscoveryPeer peer, final long now) {
-    final PeerDiscoveryEvent.PeerBondedEvent event =
-        new PeerDiscoveryEvent.PeerBondedEvent(peer, now);
-    dispatchPeerBondedEvent(peerBondedObservers, event);
+  private void connectOnRlpxLayer(final DiscoveryPeer peer) {
+    rlpxAgent.connect(peer);
   }
 
   private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
@@ -473,6 +462,10 @@ public class PeerDiscoveryController {
    */
   @VisibleForTesting
   void bond(final DiscoveryPeer peer) {
+    if (!peerPermissions.isAllowedInPeerTable(peer)) {
+      return;
+    }
+
     peer.setFirstDiscovered(System.currentTimeMillis());
     peer.setStatus(PeerDiscoveryStatus.BONDING);
     bondingPeers.put(peer.getId(), peer);
@@ -614,13 +607,6 @@ public class PeerDiscoveryController {
     }
   }
 
-  // Dispatches an event to a set of observers.
-  private void dispatchPeerBondedEvent(
-      final Subscribers<PeerBondedObserver> observers,
-      final PeerDiscoveryEvent.PeerBondedEvent event) {
-    observers.forEach(observer -> observer.onPeerBonded(event));
-  }
-
   /**
    * Returns a copy of the known peers. Modifications to the list will not update the table's state,
    * but modifications to the Peers themselves will.
@@ -748,7 +734,6 @@ public class PeerDiscoveryController {
     private long cleanPeerTableIntervalMs = MILLISECONDS.convert(1, TimeUnit.MINUTES);
     private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
-    private Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
 
     // Required dependencies
     private NodeKey nodeKey;
@@ -759,6 +744,7 @@ public class PeerDiscoveryController {
 
     private Cache<Bytes, Packet> cachedEnrRequests =
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
+    private RlpxAgent rlpxAgent;
 
     private Builder() {}
 
@@ -781,9 +767,9 @@ public class PeerDiscoveryController {
           cleanPeerTableIntervalMs,
           peerRequirement,
           peerPermissions,
-          peerBondedObservers,
           metricsSystem,
-          Optional.of(cachedEnrRequests));
+          Optional.of(cachedEnrRequests),
+          rlpxAgent);
     }
 
     private void validate() {
@@ -792,7 +778,7 @@ public class PeerDiscoveryController {
       validateRequiredDependency(timerUtil, "TimerUtil");
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
       validateRequiredDependency(metricsSystem, "MetricsSystem");
-      validateRequiredDependency(peerBondedObservers, "PeerBondedObservers");
+      validateRequiredDependency(rlpxAgent, "RlpxAgent");
     }
 
     private void validateRequiredDependency(final Object object, final String name) {
@@ -864,12 +850,6 @@ public class PeerDiscoveryController {
       return this;
     }
 
-    public Builder peerBondedObservers(final Subscribers<PeerBondedObserver> peerBondedObservers) {
-      checkNotNull(peerBondedObservers);
-      this.peerBondedObservers = peerBondedObservers;
-      return this;
-    }
-
     public Builder metricsSystem(final MetricsSystem metricsSystem) {
       checkNotNull(metricsSystem);
       this.metricsSystem = metricsSystem;
@@ -879,6 +859,12 @@ public class PeerDiscoveryController {
     public Builder cacheForEnrRequests(final Cache<Bytes, Packet> cacheToUse) {
       checkNotNull(cacheToUse);
       this.cachedEnrRequests = cacheToUse;
+      return this;
+    }
+
+    public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
+      checkNotNull(rlpxAgent);
+      this.rlpxAgent = rlpxAgent;
       return this;
     }
   }
