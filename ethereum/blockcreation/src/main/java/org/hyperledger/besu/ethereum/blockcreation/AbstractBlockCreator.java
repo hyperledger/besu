@@ -253,13 +253,19 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .getMutable(parentStateRoot, parentHeader.getHash(), false)
         .map(
             ws -> {
-              var wsCopy = ws.copy();
-              try {
-                ws.close();
-              } catch (Exception e) {
-                throw new RuntimeException(e);
+              if (!ws.isPersistable()) {
+                var wsCopy = ws.copy();
+                try {
+                  ws.close();
+                } catch (Exception ex) {
+                  LOG.error(
+                      "unexpected error closing non-peristable worldstate + "
+                          + parentHeader.toLogString(),
+                      ex);
+                }
+                return wsCopy;
               }
-              return wsCopy;
+              return ws;
             })
         .orElseThrow(
             () -> {
