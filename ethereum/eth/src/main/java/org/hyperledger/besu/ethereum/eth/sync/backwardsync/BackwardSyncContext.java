@@ -57,6 +57,7 @@ public class BackwardSyncContext {
   private final AtomicReference<Status> currentBackwardSyncStatus = new AtomicReference<>();
   private final BackwardChain backwardChain;
   private int batchSize = BATCH_SIZE;
+  private Optional<Hash> maybeHead = Optional.empty();
   private final int maxRetries;
   private final long millisBetweenRetries = DEFAULT_MILLIS_BETWEEN_RETRIES;
   private final Subscribers<BadChainListener> badChainListeners = Subscribers.create();
@@ -100,6 +101,14 @@ public class BackwardSyncContext {
     return Optional.ofNullable(currentBackwardSyncStatus.get())
         .map(status -> status.currentFuture.isDone())
         .orElse(Boolean.FALSE);
+  }
+
+  public synchronized void updateHeads(final Hash head) {
+    if (Hash.ZERO.equals(head)) {
+      this.maybeHead = Optional.empty();
+    } else {
+      this.maybeHead = Optional.of(head);
+    }
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
@@ -309,6 +318,7 @@ public class BackwardSyncContext {
       this.getProtocolContext()
           .getBlockchain()
           .appendBlock(block, optResult.getYield().get().getReceipts());
+      possiblyMoveHead(block);
       logBlockImportProgress(block.getHeader().getNumber());
     } else {
       emitBadChainEvent(block);
@@ -320,6 +330,28 @@ public class BackwardSyncContext {
     }
 
     return null;
+  }
+
+  @VisibleForTesting
+  protected void possiblyMoveHead(final Block lastSavedBlock) {
+    final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
+    if (maybeHead.isEmpty()) {
+      LOG.debug("Nothing to do with the head");
+      return;
+    }
+    if (blockchain.getChainHead().getHash().equals(maybeHead.get())) {
+      LOG.debug("Head is already properly set");
+      return;
+    }
+    if (blockchain.contains(maybeHead.get())) {
+      LOG.debug("Changing head to {}", maybeHead.get().toHexString());
+      blockchain.rewindToBlock(maybeHead.get());
+      return;
+    }
+    if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
+      LOG.debug("Rewinding head to lastSavedBlock {}", lastSavedBlock.getHash());
+      blockchain.rewindToBlock(lastSavedBlock.getHash());
+    }
   }
 
   public SyncState getSyncState() {
@@ -365,7 +397,7 @@ public class BackwardSyncContext {
     final float completedPercentage = 100.0f * imported / estimatedTotal;
 
     if (completedPercentage < 100.0f) {
-      if (currentStatus.couldLogProgress()) {
+      if (currentStatus.progressLogDue()) {
         LOG.info(
             String.format(
                 "Backward sync phase 2 of 2, %.2f%% completed, imported %d blocks of at least %d (current head %d, target head %d). Peers: %d",
@@ -404,7 +436,7 @@ public class BackwardSyncContext {
       targetChainHeight = newTargetHeight;
     }
 
-    public boolean couldLogProgress() {
+    public boolean progressLogDue() {
       final long now = System.currentTimeMillis();
       if (now - lastLogAt > MILLIS_DELAY_BETWEEN_PROGRESS_LOG) {
         lastLogAt = now;
