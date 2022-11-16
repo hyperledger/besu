@@ -75,7 +75,7 @@ public class DebugReplayBlock extends AbstractBlockParameterMethod {
     try {
       // replay block and persist it
       protocolSchedule
-          .getByBlockNumber(blockNumber)
+          .getByBlockHeader(maybeBlock.get().getHeader())
           .getBlockValidator()
           .validateAndProcessBlock(
               protocolContext,

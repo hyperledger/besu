@@ -71,7 +71,7 @@ public class TraceTransactionIntegrationTest {
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+    transactionProcessor = protocolSchedule.getFirstSpec().getTransactionProcessor();
     blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 

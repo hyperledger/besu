@@ -164,8 +164,7 @@ public class TransactionPoolFactory {
       final TransactionPoolConfiguration transactionPoolConfiguration) {
     boolean isFeeMarketImplementBaseFee =
         protocolSchedule
-            .streamMilestoneBlocks()
-            .map(protocolSchedule::getByBlockNumber)
+            .streamSpecs()
             .map(ProtocolSpec::getFeeMarket)
             .anyMatch(FeeMarket::implementsBaseFee);
     if (isFeeMarketImplementBaseFee) {

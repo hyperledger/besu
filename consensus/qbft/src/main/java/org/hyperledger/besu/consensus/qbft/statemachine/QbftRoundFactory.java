@@ -84,7 +84,9 @@ public class QbftRoundFactory {
         roundState,
         blockCreator,
         protocolContext,
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
+        protocolSchedule
+            .getByRoundSequenceNumber(roundIdentifier.getSequenceNumber())
+            .getBlockImporter(),
         minedBlockObservers,
         finalState.getNodeKey(),
         messageFactory,

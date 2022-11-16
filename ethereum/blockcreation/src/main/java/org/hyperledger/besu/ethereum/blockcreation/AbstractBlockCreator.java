@@ -102,7 +102,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.parentHeader = parentHeader;
-    this.protocolSpec = protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1);
+    this.protocolSpec = protocolSchedule.getByParentBlocHeader(parentHeader);
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
@@ -168,7 +168,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final ProtocolSpec newProtocolSpec =
-          protocolSchedule.getByBlockNumber(processableBlockHeader.getNumber());
+          protocolSchedule.getByBlockHeader(processableBlockHeader);
 
       if (rewardCoinbase
           && !rewardBeneficiary(

@@ -50,7 +50,7 @@ public class GeneralStateReferenceTestTools {
   private static MainnetTransactionProcessor transactionProcessor(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
-        .getByBlockNumber(0)
+        .getFirstSpec()
         .getTransactionProcessor();
   }
 

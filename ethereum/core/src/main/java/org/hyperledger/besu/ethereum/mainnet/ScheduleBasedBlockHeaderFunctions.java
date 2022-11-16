@@ -47,6 +47,6 @@ public class ScheduleBasedBlockHeaderFunctions implements BlockHeaderFunctions {
   }
 
   private BlockHeaderFunctions getBlockHeaderFunctions(final SealableBlockHeader header) {
-    return protocolSchedule.getByBlockNumber(header.getNumber()).getBlockHeaderFunctions();
+    return protocolSchedule.getByBlockHeader(header).getBlockHeaderFunctions();
   }
 }

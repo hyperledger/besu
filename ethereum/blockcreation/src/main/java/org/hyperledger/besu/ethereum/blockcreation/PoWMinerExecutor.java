@@ -75,7 +75,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     final PoWSolver solver =
         new PoWSolver(
             nonceGenerator,
-            protocolSchedule.getByBlockNumber(parentHeader.getNumber() + 1).getPoWHasher().get(),
+            protocolSchedule.getByParentBlocHeader(parentHeader).getPoWHasher().get(),
             stratumMiningEnabled,
             ethHashObservers,
             epochCalculator,

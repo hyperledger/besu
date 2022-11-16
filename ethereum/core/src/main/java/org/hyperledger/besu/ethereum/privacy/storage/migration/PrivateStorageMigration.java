@@ -93,7 +93,7 @@ public class PrivateStorageMigration {
 
       final int lastPmtIndex = findLastPMTIndexInBlock(block);
       if (lastPmtIndex >= 0) {
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
         final PrivateMigrationBlockProcessor privateMigrationBlockProcessor =
             privateMigrationBlockProcessorBuilder.apply(protocolSpec);
 

@@ -1091,7 +1091,7 @@ public class RunnerBuilder {
           (FlexiblePrivacyPrecompiledContract)
               besuController
                   .getProtocolSchedule()
-                  .getByBlockNumber(1)
+                  .getFirstSpec()
                   .getPrecompileContractRegistry()
                   .get(FLEXIBLE_PRIVACY);
       flexiblePrivacyPrecompiledContract.addPrivateTransactionObserver(privateTransactionObserver);

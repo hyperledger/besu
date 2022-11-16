@@ -256,8 +256,8 @@ public class RetestethContext {
     return blockchain.getChainHeadBlockNumber();
   }
 
-  public ProtocolSpec getProtocolSpec(final long blockNumber) {
-    return getProtocolSchedule().getByBlockNumber(blockNumber);
+  public ProtocolSpec getProtocolSpec(final BlockHeader header) {
+    return getProtocolSchedule().getByBlockHeader(header);
   }
 
   public BlockHeader getBlockHeader(final long blockNumber) {

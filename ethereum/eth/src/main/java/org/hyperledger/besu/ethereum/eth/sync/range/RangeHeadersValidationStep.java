@@ -75,8 +75,7 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
   }
 
   private boolean isValid(final BlockHeader expectedParent, final BlockHeader firstHeaderToImport) {
-    final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockNumber(firstHeaderToImport.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(firstHeaderToImport);
     final BlockHeaderValidator validator = protocolSpec.getBlockHeaderValidator();
     return validator.validateHeader(
         firstHeaderToImport,

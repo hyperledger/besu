@@ -52,7 +52,7 @@ public class TestCodeExecutor {
       final String codeHexString,
       final long gasLimit,
       final Consumer<MutableAccount> accountSetup) {
-    final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getByBlockNumber(0);
+    final ProtocolSpec protocolSpec = fixture.getProtocolSchedule().getFirstSpec();
     final WorldUpdater worldUpdater =
         createInitialWorldState(accountSetup, fixture.getStateArchive());
     final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();

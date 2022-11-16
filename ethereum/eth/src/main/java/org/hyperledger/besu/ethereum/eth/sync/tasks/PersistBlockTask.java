@@ -195,8 +195,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
   @Override
   protected void executeTask() {
     try {
-      final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       debugLambda(LOG, "Running import task for block {}", block::toLogString);
       blockImportResult = blockImporter.importBlock(protocolContext, block, validateHeaders);

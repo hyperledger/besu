@@ -53,7 +53,7 @@ public class TransactionTest {
   private static MainnetTransactionValidator transactionValidator(final String name) {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
-        .getByBlockNumber(0)
+        .getFirstSpec()
         .getTransactionValidator();
   }
 

@@ -79,7 +79,7 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries) {
     final BlockHeader blockHeader = block.getHeader();
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final Wei staticBlockReward = protocolSpec.getBlockReward();
     final Wei transactionFee =
         block.getTransactions().stream()

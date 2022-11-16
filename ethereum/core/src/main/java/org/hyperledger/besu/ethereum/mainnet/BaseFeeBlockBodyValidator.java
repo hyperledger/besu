@@ -54,7 +54,7 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
     final List<Transaction> transactions = body.getTransactions();
     final TransactionPriceCalculator transactionPriceCalculator =
         protocolSchedule
-            .getByBlockNumber(block.getHeader().getNumber())
+            .getByBlockHeader(block.getHeader())
             .getFeeMarket()
             .getTransactionPriceCalculator();
 

@@ -63,7 +63,7 @@ public class MessageValidatorFactory {
         new RoundChangePayloadValidator(validatorsForHeight, chainHeight);
 
     final BlockValidator blockValidator =
-        protocolSchedule.getByBlockNumber(chainHeight).getBlockValidator();
+        protocolSchedule.getByParentBlocHeader(parentHeader).getBlockValidator();
 
     return new RoundChangeMessageValidator(
         roundChangePayloadValidator,
@@ -79,7 +79,9 @@ public class MessageValidatorFactory {
 
     final Collection<Address> validatorsForHeight = getValidatorsAfterBlock(parentHeader);
     final BlockValidator blockValidator =
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockValidator();
+        protocolSchedule
+            .getByRoundSequenceNumber(roundIdentifier.getSequenceNumber())
+            .getBlockValidator();
 
     final ProposalValidator proposalValidator =
         new ProposalValidator(

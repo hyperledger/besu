@@ -140,7 +140,7 @@ public class PrivateStateRehydration {
               .map(Transaction::getHash)
               .collect(Collectors.toList()));
 
-      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockHeader.getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
       final PrivateGroupRehydrationBlockProcessor privateGroupRehydrationBlockProcessor =
           new PrivateGroupRehydrationBlockProcessor(
               protocolSpec.getTransactionProcessor(),
