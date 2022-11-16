@@ -21,8 +21,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 public class CreateOperation extends AbstractCreateOperation {
 
-  public CreateOperation(final GasCalculator gasCalculator) {
-    super(0xF0, "CREATE", 3, 1, 1, gasCalculator);
+  public CreateOperation(final GasCalculator gasCalculator, final int initCodeSizeLimit) {
+    super(0xF0, "CREATE", 3, 1, 1, gasCalculator, initCodeSizeLimit);
   }
 
   @Override

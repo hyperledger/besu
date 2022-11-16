@@ -33,6 +33,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public abstract class AbstractCreateOperation extends AbstractOperation {
 
+  private final int initCodeSizeLimit;
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
@@ -42,8 +43,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final int stackItemsConsumed,
       final int stackItemsProduced,
       final int opSize,
-      final GasCalculator gasCalculator) {
+      final GasCalculator gasCalculator,
+      final int initCodeSizeLimit) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, opSize, gasCalculator);
+    this.initCodeSizeLimit = initCodeSizeLimit;
   }
 
   @Override
@@ -53,6 +56,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
+    final long initCodeSize = clampedToLong(frame.getStackItem(2));
+    if(initCodeSize > initCodeSizeLimit){
+      fail(frame);
+      return new OperationResult(0, ExceptionalHaltReason.INITCODE_TOO_LARGE);
+    }
     final long cost = cost(frame);
     if (frame.isStatic()) {
       return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);

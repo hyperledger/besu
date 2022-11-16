@@ -32,6 +32,7 @@ public interface ExceptionalHaltReason {
   ExceptionalHaltReason INVALID_CODE = DefaultExceptionalHaltReason.INVALID_CODE;
   ExceptionalHaltReason PRECOMPILE_ERROR = DefaultExceptionalHaltReason.PRECOMPILE_ERROR;
   ExceptionalHaltReason INVALID_CODE_FORMAT = DefaultExceptionalHaltReason.INVALID_CODE_FORMAT;
+  ExceptionalHaltReason INITCODE_TOO_LARGE = DefaultExceptionalHaltReason.INITCODE_TOO_LARGE;
 
   String name();
 
@@ -50,7 +51,8 @@ public interface ExceptionalHaltReason {
     CODE_TOO_LARGE("Code is too large"),
     INVALID_CODE("Code is invalid"),
     PRECOMPILE_ERROR("Precompile error"),
-    INVALID_CODE_FORMAT("Code violates EOF validation rules");
+    INVALID_CODE_FORMAT("Code violates EOF validation rules"),
+    INITCODE_TOO_LARGE("Initcode is too large");
 
     final String description;
 
