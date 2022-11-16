@@ -56,7 +56,7 @@ public class CardanoSigVerificationPrecompiledContract extends AbstractPrecompil
     super("CardanoSigVerification", gasCalculator);
   }
 
-  /** @todo Has to be revisited. Gas should be deduced step by step depending on the input. */
+  /** TODO: Has to be revisited. Gas should be deduced step by step depending on the input. */
   @Override
   public long gasRequirement(final Bytes input) {
     return 30_000L;
