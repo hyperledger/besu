@@ -1900,11 +1900,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   public void validateChainDataPruningParams() {
-    if (Boolean.TRUE.equals(unstableChainDataPruningOptions.getChainDataPruningEnabled())
-        && unstableChainDataPruningOptions.getChainDataPruningBlocksRetained()
-            < ChainDataPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
-      throw new ParameterException(
-          this.commandLine, "--Xchain-data-pruning-blocks-retained must be >= 1024");
+    if (Boolean.TRUE.equals(unstableChainDataPruningOptions.getChainDataPruningEnabled())) {
+      if (unstableChainDataPruningOptions.getChainDataPruningBlocksRetained()
+          < ChainDataPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
+        throw new ParameterException(
+            this.commandLine, "--Xchain-data-pruning-blocks-retained must be >= 1024");
+      }
+      if (unstableChainDataPruningOptions.getChainDataPruningBlocksFrequency() <= 0) {
+        throw new ParameterException(
+            this.commandLine, "--Xchain-data-pruning-frequency must be positive");
+      }
     }
   }
 
@@ -2166,7 +2171,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
         .isChainDataPruningEnabled(unstableChainDataPruningOptions.getChainDataPruningEnabled())
         .chainDataPruningBlocksRetained(
-            unstableChainDataPruningOptions.getChainDataPruningBlocksRetained());
+            unstableChainDataPruningOptions.getChainDataPruningBlocksRetained())
+        .chainDataPruningFrequency(
+            unstableChainDataPruningOptions.getChainDataPruningBlocksFrequency());
   }
 
   private GraphQLConfiguration graphQLConfiguration() {

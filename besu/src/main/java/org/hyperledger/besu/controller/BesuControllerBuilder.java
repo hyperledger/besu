@@ -142,6 +142,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected int maxPeers;
   protected boolean isChainDataPruningEnabled;
   protected long chainDataPruningBlocksRetained;
+  protected long chainDataPruningFrequency;
 
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     this.storageProvider = storageProvider;
@@ -281,6 +282,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder chainDataPruningFrequency(final long chainDataPruningFrequency) {
+    this.chainDataPruningFrequency = chainDataPruningFrequency;
+    return this;
+  }
+
   public BesuController build() {
     checkNotNull(genesisConfig, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
@@ -320,11 +326,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               blockchainStorage,
               storageProvider.getStorageBySegmentIdentifier(
                   KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE),
-              chainDataPruningBlocksRetained);
+              chainDataPruningBlocksRetained,
+              chainDataPruningFrequency);
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
           "Chain data pruning enabled with recent blocks retained to be: "
-              + chainDataPruningBlocksRetained);
+              + chainDataPruningBlocksRetained
+              + " and frequency to be: "
+              + chainDataPruningFrequency);
     }
 
     final WorldStateArchive worldStateArchive =
