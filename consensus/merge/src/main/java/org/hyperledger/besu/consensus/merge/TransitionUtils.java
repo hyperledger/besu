@@ -97,4 +97,8 @@ public class TransitionUtils<SwitchingObject> {
     return header.getNumber() == 0L
         && header.getDifficulty().greaterOrEqualThan(configuredTotalTerminalDifficulty);
   }
+
+  public MergeContext getMergeContext() {
+    return mergeContext;
+  }
 }
