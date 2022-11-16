@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
+
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -22,7 +24,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Push0Operation extends AbstractFixedCostOperation {
 
-  public static final int PUSH_BASE = 0x5F;
   static final OperationResult push0Success = new OperationResult(2, null);
 
   public Push0Operation(final GasCalculator gasCalculator) {
@@ -31,12 +32,11 @@ public class Push0Operation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame, frame.getPC());
+    return staticOperation(frame);
   }
 
-  public static OperationResult staticOperation(final MessageFrame frame, final int pc) {
+  public static OperationResult staticOperation(final MessageFrame frame) {
     frame.pushStackItem(Bytes.EMPTY);
-    frame.setPC(pc + 1);
     return push0Success;
   }
 }
