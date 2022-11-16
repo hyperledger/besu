@@ -32,38 +32,39 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule>
-    implements ProtocolSchedule {
+public class TransitionProtocolSchedule implements ProtocolSchedule {
+  private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule) {
-    super(preMergeProtocolSchedule, postMergeProtocolSchedule);
+    transitionUtils = new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule);
   }
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
       final MergeContext mergeContext) {
-    super(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
+    transitionUtils =
+        new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
 
   public ProtocolSchedule getPreMergeSchedule() {
-    return getPreMergeObject();
+    return transitionUtils.getPreMergeObject();
   }
 
   public ProtocolSchedule getPostMergeSchedule() {
-    return getPostMergeObject();
+    return transitionUtils.getPostMergeObject();
   }
 
   public ProtocolSpec getByBlockHeader(
       final ProtocolContext protocolContext, final BlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
-    if (mergeContext.getFinalized().isEmpty()) {
+    if (transitionUtils.getMergeContext().getFinalized().isEmpty()) {
 
       // if head is not post-merge, return pre-merge schedule:
-      if (!mergeContext.isPostMerge()) {
+      if (!transitionUtils.getMergeContext().isPostMerge()) {
         debugLambda(
             LOG,
             "for {} returning a pre-merge schedule because we are not post-merge",
@@ -76,7 +77,8 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
       Difficulty parentDifficulty =
           blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
-      Difficulty terminalDifficulty = mergeContext.getTerminalTotalDifficulty();
+      Difficulty terminalDifficulty =
+          transitionUtils.getMergeContext().getTerminalTotalDifficulty();
       debugLambda(
           LOG,
           " block {} ttd is: {}, parent total diff is: {}, this total diff is: {}",
@@ -102,30 +104,31 @@ public class TransitionProtocolSchedule extends TransitionUtils<ProtocolSchedule
 
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
-    return dispatchFunctionAccordingToMergeState(
+    return transitionUtils.dispatchFunctionAccordingToMergeState(
         protocolSchedule -> protocolSchedule.getByBlockNumber(number));
   }
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
-    return dispatchFunctionAccordingToMergeState(ProtocolSchedule::streamMilestoneBlocks);
+    return transitionUtils.dispatchFunctionAccordingToMergeState(
+        ProtocolSchedule::streamMilestoneBlocks);
   }
 
   @Override
   public Optional<BigInteger> getChainId() {
-    return dispatchFunctionAccordingToMergeState(ProtocolSchedule::getChainId);
+    return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::getChainId);
   }
 
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
-    dispatchConsumerAccordingToMergeState(
+    transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule -> protocolSchedule.setTransactionFilter(transactionFilter));
   }
 
   @Override
   public void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       final WorldStateArchive publicWorldStateArchive) {
-    dispatchConsumerAccordingToMergeState(
+    transitionUtils.dispatchConsumerAccordingToMergeState(
         protocolSchedule ->
             protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
                 publicWorldStateArchive));
