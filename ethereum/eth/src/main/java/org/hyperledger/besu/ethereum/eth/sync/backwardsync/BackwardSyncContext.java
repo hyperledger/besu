@@ -103,25 +103,21 @@ public class BackwardSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public synchronized void updateHeads(final Hash head) {
-    if (Hash.ZERO.equals(head)) {
-      this.maybeHead = Optional.empty();
-    } else {
-      this.maybeHead = Optional.of(head);
-    }
+  public synchronized void updateHead(final Hash head) {
+    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
+    maybeCurrentStatus.ifPresent(
+        status ->
+            backwardChain
+                .getBlock(head)
+                .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber())));
+    this.maybeHead = Optional.of(head);
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
     Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
     if (isTrusted(newBlockHash)) {
       return maybeCurrentStatus
-          .map(
-              status -> {
-                backwardChain
-                    .getBlock(newBlockHash)
-                    .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber()));
-                return status.currentFuture;
-              })
+          .map(Status::getCurrentFuture)
           .orElseGet(() -> CompletableFuture.completedFuture(null));
     }
     backwardChain.addNewHash(newBlockHash);
@@ -290,7 +286,7 @@ public class BackwardSyncContext {
   }
 
   // In rare case when we request too many headers/blocks we get response that does not contain all
-  // data and we might want to retry with smaller batch size
+  // data, and we might want to retry with smaller batch size
   public int getBatchSize() {
     return batchSize;
   }
@@ -339,17 +335,19 @@ public class BackwardSyncContext {
       LOG.debug("Nothing to do with the head");
       return;
     }
-    if (blockchain.getChainHead().getHash().equals(maybeHead.get())) {
+
+    final Hash head = maybeHead.get();
+    if (blockchain.getChainHead().getHash().equals(head)) {
       LOG.debug("Head is already properly set");
       return;
     }
-    if (blockchain.contains(maybeHead.get())) {
-      LOG.debug("Changing head to {}", maybeHead.get().toHexString());
-      blockchain.rewindToBlock(maybeHead.get());
+    if (blockchain.contains(head)) {
+      LOG.debug("Changing head to {}", head);
+      blockchain.rewindToBlock(head);
       return;
     }
     if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
-      LOG.debug("Rewinding head to lastSavedBlock {}", lastSavedBlock.getHash());
+      debugLambda(LOG, "Rewinding head to lastSavedBlock {}", lastSavedBlock::toLogString);
       blockchain.rewindToBlock(lastSavedBlock.getHash());
     }
   }

@@ -363,7 +363,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (maybeHeadHeader.isPresent()) {
       debugLambda(LOG, "BlockHeader {} is already present", maybeHeadHeader.get()::toLogString);
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", headHash::toHexString);
+      debugLambda(LOG, "Appending new head block hash {} to backward sync", headHash::toHexString);
+      backwardSyncContext.updateHead(headHash);
       backwardSyncContext
           .syncBackwardsUntil(headHash)
           .exceptionally(e -> logSyncException(headHash, e));
