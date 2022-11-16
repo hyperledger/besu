@@ -27,7 +27,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class TransitionUtils<SwitchingObject> {
+public class TransitionUtils<SwitchingObject> {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionUtils.class);
 
   protected final MergeContext mergeContext;
@@ -101,5 +101,9 @@ public abstract class TransitionUtils<SwitchingObject> {
     // return true for genesis block when merge-at-genesis, otherwise false
     return header.getNumber() == 0L
         && header.getDifficulty().greaterOrEqualThan(configuredTotalTerminalDifficulty);
+  }
+
+  public MergeContext getMergeContext() {
+    return mergeContext;
   }
 }
