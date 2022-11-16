@@ -17,6 +17,7 @@
 - Backward sync: use retry switching peer when fetching data from peers [#4656](https://github.com/hyperledger/besu/pull/4656)
 
 ### Bug Fixes
+- Restore updating chain head during backward sync [#4688](https://github.com/hyperledger/besu/pull/4688)
 
 ### Download Links
 

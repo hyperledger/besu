@@ -390,37 +390,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
+  public Optional<BlockHeader> getOrSyncHeadByHash(final Hash headHash) {
     final var chain = protocolContext.getBlockchain();
-    final var optHeader = chain.getBlockHeader(blockHash);
+    final var maybeHeadHeader = chain.getBlockHeader(headHash);
 
-    if (optHeader.isPresent()) {
-      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
+    if (maybeHeadHeader.isPresent()) {
+      debugLambda(LOG, "BlockHeader {} is already present", maybeHeadHeader.get()::toLogString);
     } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
+      debugLambda(LOG, "Appending new head block hash {} to backward sync", headHash::toHexString);
+      backwardSyncContext.updateHead(headHash);
       backwardSyncContext
-          .syncBackwardsUntil(blockHash)
-          .exceptionally(e -> logSyncException(blockHash, e));
+          .syncBackwardsUntil(headHash)
+          .exceptionally(e -> logSyncException(headHash, e));
     }
-    return optHeader;
-  }
-
-  @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(
-      final Hash blockHash, final Hash finalizedBlockHash) {
-    final var chain = protocolContext.getBlockchain();
-    final var optHeader = chain.getBlockHeader(blockHash);
-
-    if (optHeader.isPresent()) {
-      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
-    } else {
-      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
-      backwardSyncContext.updateHeads(blockHash, finalizedBlockHash);
-      backwardSyncContext
-          .syncBackwardsUntil(blockHash)
-          .exceptionally(e -> logSyncException(blockHash, e));
-    }
-    return optHeader;
+    return maybeHeadHeader;
   }
 
   private Void logSyncException(final Hash blockHash, final Throwable exception) {
