@@ -30,10 +30,12 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloader
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapPersistedContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStatePeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -78,6 +80,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
+      final StorageProvider storageProvider,
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
@@ -141,6 +144,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
       this.fastSyncDownloader =
           CheckpointDownloaderFactory.createCheckpointDownloader(
+              new SnapPersistedContext(storageProvider),
               pivotBlockSelector,
               syncConfig,
               dataDirectory,
@@ -154,6 +158,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     } else {
       this.fastSyncDownloader =
           SnapDownloaderFactory.createSnapDownloader(
+              new SnapPersistedContext(storageProvider),
               pivotBlockSelector,
               syncConfig,
               dataDirectory,

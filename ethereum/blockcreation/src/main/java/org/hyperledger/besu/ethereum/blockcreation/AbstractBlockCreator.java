@@ -148,15 +148,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<Bytes32> maybePrevRandao,
       final long timestamp,
       boolean rewardCoinbase) {
-    try {
+
+    try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
       final ProcessableBlockHeader processableBlockHeader =
           createPendingBlockHeader(timestamp, maybePrevRandao);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
-
-      throwIfStopped();
-
-      final MutableWorldState disposableWorldState = duplicateWorldStateAtParent();
 
       throwIfStopped();
 
@@ -212,7 +209,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     } catch (final StorageException ex) {
       throw ex;
     } catch (final Exception ex) {
-      // TODO(tmm): How are we going to know this has exploded, and thus restart it?
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
@@ -252,21 +248,35 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
   private MutableWorldState duplicateWorldStateAtParent() {
     final Hash parentStateRoot = parentHeader.getStateRoot();
-    final MutableWorldState worldState =
-        protocolContext
-            .getWorldStateArchive()
-            .getMutable(parentStateRoot, parentHeader.getHash(), false)
-            .orElseThrow(
-                () -> {
-                  LOG.info("Unable to create block because world state is not available");
-                  return new CancellationException(
-                      "World state not available for block "
-                          + parentHeader.getNumber()
-                          + " with state root "
-                          + parentStateRoot);
-                });
-
-    return worldState.copy();
+    return protocolContext
+        .getWorldStateArchive()
+        .getMutable(parentStateRoot, parentHeader.getHash(), false)
+        .map(
+            ws -> {
+              if (ws.isPersistable()) {
+                return ws;
+              } else {
+                var wsCopy = ws.copy();
+                try {
+                  ws.close();
+                } catch (Exception ex) {
+                  LOG.error(
+                      "unexpected error closing non-peristable worldstate + "
+                          + parentHeader.toLogString(),
+                      ex);
+                }
+                return wsCopy;
+              }
+            })
+        .orElseThrow(
+            () -> {
+              LOG.info("Unable to create block because world state is not available");
+              return new CancellationException(
+                  "World state not available for block "
+                      + parentHeader.getNumber()
+                      + " with state root "
+                      + parentStateRoot);
+            });
   }
 
   private List<BlockHeader> selectOmmers() {

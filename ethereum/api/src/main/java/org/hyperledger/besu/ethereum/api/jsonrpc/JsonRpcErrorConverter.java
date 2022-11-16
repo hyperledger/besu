@@ -25,9 +25,9 @@ public class JsonRpcErrorConverter {
       case NONCE_TOO_LOW:
       case PRIVATE_NONCE_TOO_LOW:
         return JsonRpcError.NONCE_TOO_LOW;
-      case INCORRECT_NONCE:
-      case INCORRECT_PRIVATE_NONCE:
-        return JsonRpcError.INCORRECT_NONCE;
+      case NONCE_TOO_HIGH:
+      case PRIVATE_NONCE_TOO_HIGH:
+        return JsonRpcError.NONCE_TOO_HIGH;
       case INVALID_SIGNATURE:
         return JsonRpcError.INVALID_TRANSACTION_SIGNATURE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
@@ -63,6 +63,10 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.GAS_PRICE_MUST_BE_ZERO;
       case ETHER_VALUE_NOT_SUPPORTED:
         return JsonRpcError.ETHER_VALUE_NOT_SUPPORTED;
+      case NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER:
+        return JsonRpcError.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+      case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
+        return JsonRpcError.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
       default:
         return JsonRpcError.INVALID_PARAMS;
     }

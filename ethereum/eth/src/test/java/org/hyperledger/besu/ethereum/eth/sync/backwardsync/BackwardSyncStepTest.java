@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -181,7 +182,7 @@ public class BackwardSyncStepTest {
   }
 
   @Test
-  public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() throws Exception {
+  public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
@@ -191,10 +192,7 @@ public class BackwardSyncStepTest {
         step.requestHeaders(lookingForBlock.getHeader().getHash());
     peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
-    assertThatThrownBy(future::get)
-        .getCause()
-        .isInstanceOf(BackwardSyncException.class)
-        .hasMessageContaining("Did not receive a headers for hash");
+    assertThatThrownBy(future::get).cause().isInstanceOf(MaxRetriesReachedException.class);
   }
 
   @Test

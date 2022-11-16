@@ -15,61 +15,20 @@
 package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface BlockValidator {
 
-  class Result {
-    public final Optional<BlockProcessingOutputs> blockProcessingOutputs;
-    public final Optional<String> errorMessage;
-    public final Optional<Throwable> cause;
-    public final boolean isValid;
-
-    public Result(final BlockProcessingOutputs blockProcessingOutputs) {
-      this.blockProcessingOutputs = Optional.of(blockProcessingOutputs);
-      this.errorMessage = Optional.empty();
-      this.cause = Optional.empty();
-      this.isValid = true;
-    }
-
-    public Result(final String errorMessage) {
-      this.blockProcessingOutputs = Optional.empty();
-      this.errorMessage = Optional.of(errorMessage);
-      this.cause = Optional.empty();
-      this.isValid = false;
-    }
-
-    public Result(final String errorMessage, final Throwable cause) {
-      this.blockProcessingOutputs = Optional.empty();
-      this.errorMessage = Optional.of(errorMessage);
-      this.cause = Optional.of(cause);
-      this.isValid = false;
-    }
-  }
-
-  class BlockProcessingOutputs {
-    public final MutableWorldState worldState;
-    public final List<TransactionReceipt> receipts;
-
-    public BlockProcessingOutputs(
-        final MutableWorldState worldState, final List<TransactionReceipt> receipts) {
-      this.worldState = worldState;
-      this.receipts = receipts;
-    }
-  }
-
-  Result validateAndProcessBlock(
+  BlockProcessingResult validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode);
 
-  Result validateAndProcessBlock(
+  BlockProcessingResult validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,

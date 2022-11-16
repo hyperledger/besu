@@ -30,6 +30,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.Gene
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class BesuNodeConfiguration {
@@ -65,6 +66,7 @@ public class BesuNodeConfiguration {
   private final Optional<KeyPair> keyPair;
   private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
   private final boolean strictTxReplayProtectionEnabled;
+  private final Map<String, String> environment;
 
   BesuNodeConfiguration(
       final String name,
@@ -97,7 +99,8 @@ public class BesuNodeConfiguration {
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
       final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
-      final boolean strictTxReplayProtectionEnabled) {
+      final boolean strictTxReplayProtectionEnabled,
+      final Map<String, String> environment) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -129,6 +132,7 @@ public class BesuNodeConfiguration {
     this.keyPair = keyPair;
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
+    this.environment = environment;
   }
 
   public String getName() {
@@ -253,5 +257,9 @@ public class BesuNodeConfiguration {
 
   public boolean isStrictTxReplayProtectionEnabled() {
     return strictTxReplayProtectionEnabled;
+  }
+
+  public Map<String, String> getEnvironment() {
+    return environment;
   }
 }
