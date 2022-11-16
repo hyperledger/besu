@@ -18,6 +18,7 @@
 - Shanghai implementation of EIP-3540 and EIP-3670 Ethereum Object Format and Code Validation [#4644](https://github.com/hyperledger/besu/pull/4644)
 
 ### Bug Fixes
+- Restore updating chain head during backward sync [#4688](https://github.com/hyperledger/besu/pull/4688)
 
 ### Download Links
 
