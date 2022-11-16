@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -84,7 +86,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
       final ForkIdManager forkIdManager) {
     this.networkId = networkId;
@@ -103,7 +105,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     this.blockBroadcaster = new BlockBroadcaster(ethContext);
 
-    supportedCapabilities = calculateCapabilities(fastSyncEnabled);
+    supportedCapabilities = calculateCapabilities(synchronizerConfiguration);
 
     // Run validators
     for (final PeerValidator peerValidator : this.peerValidators) {
@@ -131,7 +133,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler) {
     this(
         blockchain,
@@ -144,7 +146,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
         new ForkIdManager(
             blockchain,
@@ -163,7 +165,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
       final Optional<MergePeerFilter> mergePeerFilter,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler,
       final List<Long> forks) {
     this(
@@ -177,7 +179,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         ethContext,
         peerValidators,
         mergePeerFilter,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler,
         new ForkIdManager(
             blockchain, forks, ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
@@ -196,9 +198,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     return EthProtocol.NAME;
   }
 
-  private List<Capability> calculateCapabilities(final boolean fastSyncEnabled) {
+  private List<Capability> calculateCapabilities(
+      final SynchronizerConfiguration synchronizerConfiguration) {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
-    if (!fastSyncEnabled) {
+
+    if (SyncMode.isFullSync(synchronizerConfiguration.getSyncMode())) {
       capabilities.add(EthProtocol.ETH62);
     }
     capabilities.add(EthProtocol.ETH63);

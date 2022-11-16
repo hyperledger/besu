@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -30,6 +31,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +53,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
+  private final SnapPersistedContext snapContext;
   private final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection;
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
@@ -60,6 +65,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   public SnapWorldStateDownloader(
       final EthContext ethContext,
+      final SnapPersistedContext snapContext,
       final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
@@ -72,6 +78,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
     this.worldStateStorage = worldStateStorage;
+    this.snapContext = snapContext;
     this.snapTaskCollection = snapTaskCollection;
     this.snapSyncConfiguration = snapSyncConfiguration;
     this.maxOutstandingRequests = maxOutstandingRequests;
@@ -128,6 +135,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
               worldStateStorage,
+              snapContext,
               protocolContext.getBlockchain(),
               snapSyncState,
               snapTaskCollection,
@@ -138,10 +146,33 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
-      ranges.forEach(
-          (key, value) ->
-              newDownloadState.enqueueRequest(
-                  createAccountRangeDataRequest(stateRoot, key, value)));
+
+      final List<AccountRangeDataRequest> persistedTasks = snapContext.getPersistedTasks();
+      final HashSet<Bytes> inconsistentAccounts = snapContext.getInconsistentAccounts();
+
+      if (!persistedTasks.isEmpty()) { // continue to download worldstate ranges
+        newDownloadState.setInconsistentAccounts(inconsistentAccounts);
+        snapContext
+            .getPersistedTasks()
+            .forEach(
+                snapDataRequest -> {
+                  snapsyncMetricsManager.notifyStateDownloaded(
+                      snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
+                  newDownloadState.enqueueRequest(snapDataRequest);
+                });
+      } else if (!inconsistentAccounts.isEmpty()) { // restart only the heal step
+        snapSyncState.setHealStatus(true);
+        newDownloadState.setInconsistentAccounts(inconsistentAccounts);
+        newDownloadState.enqueueRequest(
+            SnapDataRequest.createAccountTrieNodeDataRequest(
+                stateRoot, Bytes.EMPTY, snapContext.getInconsistentAccounts()));
+      } else { // start from scratch
+        worldStateStorage.clear();
+        ranges.forEach(
+            (key, value) ->
+                newDownloadState.enqueueRequest(
+                    createAccountRangeDataRequest(stateRoot, key, value)));
+      }
 
       Optional<CompleteTaskStep> maybeCompleteTask =
           Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));

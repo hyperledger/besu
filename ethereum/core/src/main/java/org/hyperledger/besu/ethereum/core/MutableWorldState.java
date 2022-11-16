@@ -34,4 +34,14 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *     `null` should be passed in.
    */
   void persist(BlockHeader blockHeader);
+
+  /**
+   * Returns whether this mutable worldstate can be persisted to storage.
+   *
+   * @return boolean
+   */
+  default boolean isPersistable() {
+    // default to true
+    return true;
+  }
 }

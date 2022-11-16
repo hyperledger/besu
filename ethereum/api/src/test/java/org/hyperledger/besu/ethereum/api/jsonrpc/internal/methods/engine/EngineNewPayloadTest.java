@@ -32,8 +32,8 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -113,7 +113,8 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-        .thenReturn(new Result(new BlockProcessingOutputs(null, List.of())));
+        .thenReturn(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -134,7 +135,7 @@ public class EngineNewPayloadTest {
         .thenReturn(Optional.of(mockHash));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
-    when(mergeCoordinator.rememberBlock(any())).thenReturn(new Result("error 42"));
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(new BlockProcessingResult("error 42"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -229,7 +230,8 @@ public class EngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     when(mergeCoordinator.rememberBlock(any()))
-        .thenReturn(new Result("kablooey", new StorageException(new Exception())));
+        .thenReturn(
+            new BlockProcessingResult(Optional.empty(), new StorageException("database bedlam")));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 

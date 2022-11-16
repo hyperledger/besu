@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -193,7 +194,7 @@ public final class EthProtocolManagerTest {
       // Send status message with wrong chain
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.valueOf(2222),
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
@@ -221,7 +222,7 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage workPeerStatus =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty().add(20),
               blockchain.getChainHeadHash(),
@@ -229,7 +230,7 @@ public final class EthProtocolManagerTest {
 
       final StatusMessage stakePeerStatus =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
@@ -290,7 +291,7 @@ public final class EthProtocolManagerTest {
       // Send status message with wrong chain
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               gen.hash(),
@@ -515,7 +516,7 @@ public final class EthProtocolManagerTest {
     final MockPeerConnection peer = setupPeerWithoutStatusExchange(ethManager, onSend);
     final StatusMessage statusMessage =
         StatusMessage.create(
-            EthProtocol.EthVersion.V63,
+            EthProtocolVersion.V63,
             BigInteger.ONE,
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
@@ -1041,7 +1042,7 @@ public final class EthProtocolManagerTest {
       ethManager.handleNewConnection(peer);
       final StatusMessage statusMessage =
           StatusMessage.create(
-              EthProtocol.EthVersion.V63,
+              EthProtocolVersion.V63,
               BigInteger.ONE,
               blockchain.getChainHead().getTotalDifficulty(),
               blockchain.getChainHeadHash(),
