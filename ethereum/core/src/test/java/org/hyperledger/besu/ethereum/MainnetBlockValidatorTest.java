@@ -173,6 +173,9 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void shouldNotCacheWhenValidBlocks() {
+    MutableWorldState mockWorldState =
+        when(mock(MutableWorldState.class).isPersistable()).thenReturn(true).getMock();
+
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     when(blockHeaderValidator.validateHeader(
@@ -182,9 +185,9 @@ public class MainnetBlockValidatorTest {
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
-        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+        .thenReturn(Optional.of(mockWorldState));
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
-        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+        .thenReturn(Optional.of(mockWorldState));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(blockBodyValidator.validateBody(
