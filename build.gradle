@@ -128,7 +128,7 @@ allprojects {
   spotless {
     java {
       // This path needs to be relative to each project
-      target '**/*.java'
+      target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
       googleJavaFormat('1.10.0')
@@ -729,7 +729,10 @@ task dockerUpload {
     additionalTags.add('develop')
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  def isInterimBuild = (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC/)
+
+  if (!isInterimBuild) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }

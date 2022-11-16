@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.nat.NatService;
@@ -41,7 +41,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.NetworkUtility;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -84,6 +83,7 @@ public abstract class PeerDiscoveryAgent {
   private final PeerPermissions peerPermissions;
   private final NatService natService;
   private final MetricsSystem metricsSystem;
+  private final RlpxAgent rlpxAgent;
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -99,8 +99,6 @@ public abstract class PeerDiscoveryAgent {
 
   /* Is discovery enabled? */
   private boolean isActive = false;
-  protected final Subscribers<PeerBondedObserver> peerBondedObservers = Subscribers.create();
-
   private final StorageProvider storageProvider;
   private final Supplier<List<Bytes>> forkIdSupplier;
   private String advertisedAddress;
@@ -112,7 +110,8 @@ public abstract class PeerDiscoveryAgent {
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
-      final Supplier<List<Bytes>> forkIdSupplier) {
+      final Supplier<List<Bytes>> forkIdSupplier,
+      final RlpxAgent rlpxAgent) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
     checkArgument(config != null, "provided configuration cannot be null");
@@ -131,6 +130,7 @@ public abstract class PeerDiscoveryAgent {
 
     this.storageProvider = storageProvider;
     this.forkIdSupplier = forkIdSupplier;
+    this.rlpxAgent = rlpxAgent;
   }
 
   protected abstract TimerUtil createTimer();
@@ -266,8 +266,8 @@ public abstract class PeerDiscoveryAgent {
         .workerExecutor(createWorkerExecutor())
         .peerRequirement(PeerRequirement.combine(peerRequirements))
         .peerPermissions(peerPermissions)
-        .peerBondedObservers(peerBondedObservers)
         .metricsSystem(metricsSystem)
+        .rlpxAgent(rlpxAgent)
         .build();
   }
 
@@ -333,40 +333,6 @@ public abstract class PeerDiscoveryAgent {
 
   public Bytes getId() {
     return id;
-  }
-
-  /**
-   * Adds an observer that will get called when a new peer is bonded with and added to the peer
-   * table.
-   *
-   * <p><i>No guarantees are made about the order in which observers are invoked.</i>
-   *
-   * @param observer The observer to call.
-   * @return A unique ID identifying this observer, to that it can be removed later.
-   */
-  public long observePeerBondedEvents(final PeerBondedObserver observer) {
-    checkNotNull(observer);
-    return peerBondedObservers.subscribe(observer);
-  }
-
-  /**
-   * Removes a previously added peer bonded observer.
-   *
-   * @param observerId The unique ID identifying the observer to remove.
-   * @return Whether the observer was located and removed.
-   */
-  public boolean removePeerBondedObserver(final long observerId) {
-    return peerBondedObservers.unsubscribe(observerId);
-  }
-
-  /**
-   * Returns the count of observers that are registered on this controller.
-   *
-   * @return The observer count.
-   */
-  @VisibleForTesting
-  public int getObserverCount() {
-    return peerBondedObservers.getSubscriberCount();
   }
 
   private static void validateConfiguration(final DiscoveryConfiguration config) {

@@ -27,8 +27,8 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -69,8 +69,8 @@ public class PeerDiscoveryTableRefreshTest {
                 .timerUtil(timer)
                 .workerExecutor(new BlockingAsyncExecutor())
                 .tableRefreshIntervalMs(0)
-                .peerBondedObservers(Subscribers.create())
                 .metricsSystem(new NoOpMetricsSystem())
+                .rlpxAgent(mock(RlpxAgent.class))
                 .build());
     controller.start();
 

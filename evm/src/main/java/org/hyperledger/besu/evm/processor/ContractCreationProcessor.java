@@ -28,8 +28,8 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +73,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         requireCodeDepositToSucceed,
         contractValidationRules,
         initialContractNonce,
-        ImmutableSet.of());
+        Set.of());
   }
 
   private static boolean accountExists(final Account account) {
