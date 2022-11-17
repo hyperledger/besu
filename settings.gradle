@@ -78,3 +78,6 @@ include 'services:pipeline'
 include 'services:tasks'
 include 'testutil'
 include 'util'
+include 'spring-main:spring-main'
+findProject(':spring-main:spring-main')?.name = 'spring-main'
+
