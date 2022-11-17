@@ -105,11 +105,7 @@ public class BackwardSyncContext {
 
   public synchronized void updateHead(final Hash head) {
     Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
-    maybeCurrentStatus.ifPresent(
-        status ->
-            backwardChain
-                .getBlock(head)
-                .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber())));
+    maybeCurrentStatus.ifPresent(status -> updateTargetHeight(status, head));
     this.maybeHead = Optional.of(head);
   }
 
@@ -117,7 +113,11 @@ public class BackwardSyncContext {
     Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
     if (isTrusted(newBlockHash)) {
       return maybeCurrentStatus
-          .map(Status::getCurrentFuture)
+          .map(
+              status -> {
+                updateTargetHeight(status, newBlockHash);
+                return status.currentFuture;
+              })
           .orElseGet(() -> CompletableFuture.completedFuture(null));
     }
     backwardChain.addNewHash(newBlockHash);
@@ -141,7 +141,11 @@ public class BackwardSyncContext {
     }
     backwardChain.appendTrustedBlock(newPivot);
     return maybeCurrentStatus
-        .map(Status::getCurrentFuture)
+        .map(
+            status -> {
+              updateTargetHeight(status, newPivot);
+              return status.currentFuture;
+            })
         .orElseGet(
             () -> {
               LOG.info("Starting a new backward sync session");
@@ -153,6 +157,16 @@ public class BackwardSyncContext {
               this.currentBackwardSyncStatus.set(status);
               return status.currentFuture;
             });
+  }
+
+  private void updateTargetHeight(final Status status, final Hash targetHash) {
+    backwardChain
+        .getBlock(targetHash)
+        .ifPresent(targetBlock -> updateTargetHeight(status, targetBlock));
+  }
+
+  private void updateTargetHeight(final Status status, final Block targetBlock) {
+    status.updateTargetHeight(targetBlock.getHeader().getNumber());
   }
 
   private boolean isTrusted(final Hash hash) {
