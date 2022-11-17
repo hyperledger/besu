@@ -17,6 +17,9 @@
 
 package org.hyperledger.besu.springmain.bootstrap;
 
+import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolEvictionService;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.nat.NatService;
 import org.slf4j.Logger;
@@ -34,9 +37,22 @@ public class MainNetBootstrap {
 
     final NetworkRunner networkRunner;
 
-    public MainNetBootstrap(final NatService natService, final NetworkRunner networkRunner) {
+    final Synchronizer synchronizer;
+
+    final MiningCoordinator miningCoordinator;
+
+    final TransactionPoolEvictionService transactionPoolEvictionService;
+
+    public MainNetBootstrap(final NatService natService,
+                            final NetworkRunner networkRunner,
+                            final Synchronizer synchronizer,
+                            final MiningCoordinator miningCoordinator,
+                            final TransactionPoolEvictionService transactionPoolEvictionService) {
         this.natService = natService;
         this.networkRunner = networkRunner;
+        this.synchronizer = synchronizer;
+        this.miningCoordinator = miningCoordinator;
+        this.transactionPoolEvictionService = transactionPoolEvictionService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -45,5 +61,13 @@ public class MainNetBootstrap {
         natService.start();
         LOG.info("starting network runner");
         networkRunner.start();
+
+        if (networkRunner.getNetwork().isP2pEnabled()) {
+            synchronizer.start();
+        }
+        miningCoordinator.start();
+        transactionPoolEvictionService.start();
+
+        LOG.info("Ethereum main loop is up.");
     }
 }

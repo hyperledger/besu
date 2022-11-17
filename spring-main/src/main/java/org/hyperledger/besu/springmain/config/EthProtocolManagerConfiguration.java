@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import com.google.common.io.Resources;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -35,10 +36,16 @@ import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
+import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -280,17 +287,51 @@ public class EthProtocolManagerConfiguration {
     }
 
     @Bean
-    ProtocolContext protocolContext(MutableBlockchain blockchain, WorldStateArchive worldStateArchive, ProtocolSchedule protocolSchedule){
+    ProtocolContext protocolContext(MutableBlockchain blockchain, WorldStateArchive worldStateArchive, ProtocolSchedule protocolSchedule, final ConsensusContextFactory consensusContextFactory){
         return ProtocolContext.init(
-                blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+                blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
     }
 
     @Bean
-    protected ConsensusContext createConsensusContext(
-            final Blockchain blockchain,
-            final WorldStateArchive worldStateArchive,
-            final ProtocolSchedule protocolSchedule) {
-        return null;
+    protected ConsensusContextFactory consensusContextFactory(
+            GenesisConfigOptions genesisConfigOptions, SyncState syncState) {
+        {
+            return (blockchain, worldStateArchive, protocolSchedule) -> {
+                OptionalLong terminalBlockNumber = genesisConfigOptions.getTerminalBlockNumber();
+                Optional<Hash> terminalBlockHash = genesisConfigOptions.getTerminalBlockHash();
+
+                final MergeContext mergeContext =
+                        PostMergeContext.get()
+                                .setSyncState(syncState)
+                                .setTerminalTotalDifficulty(
+                                        genesisConfigOptions
+                                                .getTerminalTotalDifficulty()
+                                                .map(Difficulty::of)
+                                                .orElse(Difficulty.ZERO));
+
+                blockchain
+                        .getFinalized()
+                        .flatMap(blockchain::getBlockHeader)
+                        .ifPresent(mergeContext::setFinalized);
+
+                blockchain
+                        .getSafeBlock()
+                        .flatMap(blockchain::getBlockHeader)
+                        .ifPresent(mergeContext::setSafeBlock);
+
+                if (terminalBlockNumber.isPresent() && terminalBlockHash.isPresent()) {
+                    Optional<BlockHeader> termBlock = blockchain.getBlockHeader(terminalBlockNumber.getAsLong());
+                    mergeContext.setTerminalPoWBlock(termBlock);
+                }
+                blockchain.observeBlockAdded(
+                        blockAddedEvent ->
+                                blockchain
+                                        .getTotalDifficultyByHash(blockAddedEvent.getBlock().getHeader().getHash())
+                                        .ifPresent(mergeContext::setIsPostMerge));
+
+                return mergeContext;
+            };
+        }
     }
 
     @Bean Clock clock(){

@@ -17,22 +17,15 @@
 
 package org.hyperledger.besu.springmain.config;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolEvictionService;
+import org.springframework.context.annotation.Bean;
 
-@Configuration
-@Import({NatServiceConfiguration.class,
-        NetworkRunnerConfiguration.class,
-        BlockchainConfiguration.class,
-        VertxConfiguration.class,
-        PermissioningConfiguration.class,
-        MetricsSystemConfiguration.class,
-        EthProtocolManagerConfiguration.class,
-        JsonRPCConfiguration.class,
-        SynchronizerConfiguration.class,
-        MiningCoordinatorConfiguration.class,
-        TransactionPoolEvictionConfiguration.class})
-public class MainNetBesuConfiguration {
+public class TransactionPoolEvictionConfiguration {
 
-
+    @Bean
+    public TransactionPoolEvictionService transactionPoolEvictionService(Vertx vertx, TransactionPool transactionPool) {
+        return new TransactionPoolEvictionService(vertx, transactionPool);
+    }
 }

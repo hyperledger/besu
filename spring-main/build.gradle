@@ -23,6 +23,8 @@ dependencies {
 	def besuVersion = '+'
 
 	implementation group:'org.hyperledger.besu.internal', name: 'api',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'blockcreation',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'merge',  version:   besuVersion
 	implementation group:'org.hyperledger.besu.internal', name: 'nat',  version:   besuVersion
 	implementation group:'org.hyperledger.besu.internal', name: 'besu',  version:   besuVersion
 	implementation group:'org.hyperledger.besu.internal', name: 'config',  version:   besuVersion
