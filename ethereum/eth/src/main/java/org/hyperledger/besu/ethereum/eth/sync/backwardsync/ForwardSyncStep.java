@@ -15,12 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.infoLambda;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask;
-import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.RetryingGetBlocksFromPeersTask;
 
 import java.util.Comparator;
 import java.util.List;
@@ -60,24 +59,38 @@ public class ForwardSyncStep {
           () -> blockHeaders.get(0).getNumber(),
           () -> blockHeaders.get(blockHeaders.size() - 1).getNumber(),
           () -> blockHeaders.get(0).getHash().toHexString());
-      return requestBodies(blockHeaders).thenApply(this::saveBlocks);
+      return requestBodies(blockHeaders)
+          .thenApply(this::saveBlocks)
+          .exceptionally(
+              throwable -> {
+                context.halveBatchSize();
+                debugLambda(
+                    LOG,
+                    "Getting {} blocks from peers failed with reason {}, reducing batch size to {}",
+                    blockHeaders::size,
+                    throwable::getMessage,
+                    context::getBatchSize);
+                return null;
+              });
     }
   }
 
   @VisibleForTesting
   protected CompletableFuture<List<Block>> requestBodies(final List<BlockHeader> blockHeaders) {
-    final GetBodiesFromPeerTask getBodiesFromPeerTask =
-        GetBodiesFromPeerTask.forHeaders(
+    final RetryingGetBlocksFromPeersTask getBodiesFromPeerTask =
+        RetryingGetBlocksFromPeersTask.forHeaders(
             context.getProtocolSchedule(),
             context.getEthContext(),
-            blockHeaders,
-            context.getMetricsSystem());
+            context.getMetricsSystem(),
+            context.getEthContext().getEthPeers().peerCount(),
+            blockHeaders);
 
     final CompletableFuture<AbstractPeerTask.PeerTaskResult<List<Block>>> run =
         getBodiesFromPeerTask.run();
     return run.thenApply(AbstractPeerTask.PeerTaskResult::getResult)
         .thenApply(
             blocks -> {
+              LOG.debug("Got {} blocks from peers", blocks.size());
               blocks.sort(Comparator.comparing(block -> block.getHeader().getNumber()));
               return blocks;
             });
@@ -86,8 +99,8 @@ public class ForwardSyncStep {
   @VisibleForTesting
   protected Void saveBlocks(final List<Block> blocks) {
     if (blocks.isEmpty()) {
-      LOG.info("No blocks to save...");
       context.halveBatchSize();
+      LOG.debug("No blocks to save, reducing batch size to {}", context.getBatchSize());
       return null;
     }
 
@@ -97,21 +110,25 @@ public class ForwardSyncStep {
               .getProtocolContext()
               .getBlockchain()
               .getBlockByHash(block.getHeader().getParentHash());
+
       if (parent.isEmpty()) {
         context.halveBatchSize();
+        debugLambda(
+            LOG,
+            "Parent block {} not found, while saving block {}, reducing batch size to {}",
+            block.getHeader().getParentHash()::toString,
+            block::toLogString,
+            context::getBatchSize);
         return null;
       } else {
         context.saveBlock(block);
       }
     }
-    infoLambda(
-        LOG,
-        "Saved blocks {} -> {} (target: {})",
-        () -> blocks.get(0).getHeader().getNumber(),
-        () -> blocks.get(blocks.size() - 1).getHeader().getNumber(),
-        () ->
-            backwardChain.getPivot().orElse(blocks.get(blocks.size() - 1)).getHeader().getNumber());
-    context.resetBatchSize();
+
+    if (blocks.size() == context.getBatchSize()) {
+      // reset the batch size only if we got a full batch
+      context.resetBatchSize();
+    }
     return null;
   }
 }

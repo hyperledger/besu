@@ -58,6 +58,8 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -81,6 +83,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -1116,6 +1119,42 @@ public final class EthProtocolManagerTest {
             new ForkIdManager(blockchain, Collections.emptyList(), true))) {
 
       assertThat(ethManager.getForkIdAsBytesList()).isEmpty();
+    }
+  }
+
+  @Test
+  public void shouldUseRightCapabilityDependingOnSyncMode() {
+    assertHighestCapability(SyncMode.X_SNAP, EthProtocol.ETH67);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH67);
+    assertHighestCapability(SyncMode.X_CHECKPOINT, EthProtocol.ETH67);
+    /* Eth67 does not support fast sync, see EIP-4938 */
+    assertHighestCapability(SyncMode.FAST, EthProtocol.ETH66);
+  }
+
+  private void assertHighestCapability(final SyncMode syncMode, final Capability capability) {
+    final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
+    when(syncConfig.getSyncMode()).thenReturn(syncMode);
+    try (final EthProtocolManager ethManager =
+        new EthProtocolManager(
+            blockchain,
+            BigInteger.ONE,
+            mock(WorldStateArchive.class),
+            transactionPool,
+            EthProtocolConfiguration.defaultConfig(),
+            mock(EthPeers.class),
+            mock(EthMessages.class),
+            mock(EthContext.class),
+            Collections.emptyList(),
+            Optional.empty(),
+            syncConfig,
+            mock(EthScheduler.class),
+            mock(ForkIdManager.class))) {
+
+      final Capability highestCapability =
+          ethManager.getSupportedCapabilities().stream()
+              .max(Comparator.comparing(Capability::getVersion))
+              .get();
+      assertThat(capability.equals(highestCapability)).isTrue();
     }
   }
 }

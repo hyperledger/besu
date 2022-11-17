@@ -25,6 +25,7 @@ public class EthProtocolTest {
   @Test
   public void eth66CheckShouldReturnTrueForCompatibleProtocols() {
     assertThat(EthProtocol.isEth66Compatible(EthProtocol.ETH66)).isTrue();
+    assertThat(EthProtocol.isEth66Compatible(EthProtocol.ETH67)).isTrue();
   }
 
   @Test
