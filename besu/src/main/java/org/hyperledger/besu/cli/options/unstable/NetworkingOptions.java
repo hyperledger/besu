@@ -33,6 +33,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
   private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
   private final String P2P_PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
+  public static final String FILTER_ON_ENR_FORK_ID = "--Xfilter-on-enr-fork-id";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
@@ -69,6 +70,13 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   private final Boolean isPeerDiscoveryV5Enabled = false;
 
   @CommandLine.Option(
+      names = FILTER_ON_ENR_FORK_ID,
+      hidden = true,
+      defaultValue = "false",
+      description = "Whether to enable filtering of peers based on the ENR field ForkId)")
+  private final Boolean filterOnEnrForkId = false;
+
+  @CommandLine.Option(
       hidden = true,
       names = {P2P_PEER_LOWER_BOUND_FLAG},
       description =
@@ -99,6 +107,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
     config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
+    config.getDiscovery().setFilterOnEnrForkId(filterOnEnrForkId);
     config.getRlpx().setPeerLowerBound(peerLowerBound);
     return config;
   }
