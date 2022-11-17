@@ -124,12 +124,9 @@ public class MainnetEVMs {
     // utility class
   }
 
-<<<<<<< HEAD
-=======
   public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
 
 
->>>>>>> f753a8bd1 (Implement eip 3860 - initial commit)
   public static EVM frontier(final EvmConfiguration evmConfiguration) {
     return frontier(new FrontierGasCalculator(), evmConfiguration);
   }
@@ -463,13 +460,9 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerParisOperations(registry, gasCalculator, chainID);
-<<<<<<< HEAD
     // Register the PUSH0 operation.
     registry.put(new Push0Operation(gasCalculator));
-=======
     registry.put(new CreateOperation(gasCalculator, MAX_INITCODE_SIZE));
     registry.put(new Create2Operation(gasCalculator, MAX_INITCODE_SIZE));
-    // PUSH0
->>>>>>> f753a8bd1 (Implement eip 3860 - initial commit)
   }
 }
