@@ -279,6 +279,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getShanghaiTimestamp(){
+    return getOptionalLong("shanghaitimestamp");
+  }
+
+  @Override
   public OptionalLong getShandongBlockNumber() {
     return getOptionalLong("shandongblock");
   }

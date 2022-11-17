@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -21,7 +22,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface ProtocolSchedule {
+public interface ProtocolSchedule extends HeaderBasedProtocolSchedule {
 
   ProtocolSpec getByBlockNumber(long number);
 
@@ -33,4 +34,9 @@ public interface ProtocolSchedule {
 
   void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       WorldStateArchive publicWorldStateArchive);
+
+  @Override
+  default ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
+    return getByBlockNumber(blockHeader.getNumber());
+  };
 }

@@ -185,6 +185,10 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return parisDefinition(genesisConfigOptions);
+  }
+
   public ProtocolSpecBuilder shandongDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.shandongDefinition(
         chainId,

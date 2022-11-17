@@ -44,6 +44,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
+  private OptionalLong shanghaiTimestamp = OptionalLong.empty();
   private OptionalLong shandongBlockNumber = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
   private Optional<Hash> terminalBlockHash = Optional.empty();
@@ -215,6 +216,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getMergeNetSplitBlockNumber() {
     return mergeNetSplitBlockNumber;
+  }
+
+  @Override
+  public OptionalLong getShanghaiTimestamp() {
+    return shanghaiTimestamp;
   }
 
   @Override
@@ -483,6 +489,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions {
 
   public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
     mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions shanghaiTimestamp(final long timestamp) {
+    shanghaiTimestamp = OptionalLong.of(timestamp);
     return this;
   }
 

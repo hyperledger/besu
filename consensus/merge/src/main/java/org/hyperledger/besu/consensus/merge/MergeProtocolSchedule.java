@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -58,6 +60,23 @@ public class MergeProtocolSchedule {
         .createProtocolSchedule();
   }
 
+
+  public static TimestampSchedule createTimeStamp(final GenesisConfigOptions config, final PrivacyParameters privacyParameters, final boolean isRevertReasonEnabled) {
+    return new TimestampScheduleBuilder(
+            config,
+            DEFAULT_CHAIN_ID,
+            ProtocolSpecAdapters.create(
+                    0,
+                    (specBuilder) ->
+                            MergeProtocolSchedule.applyMergeSpecificModifications(
+                                    specBuilder, config.getChainId())),
+            privacyParameters,
+            isRevertReasonEnabled,
+            config.isQuorum(),
+            EvmConfiguration.DEFAULT)
+            .createTimeStampSchedule();
+  }
+
   private static ProtocolSpecBuilder applyMergeSpecificModifications(
       final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
 
@@ -76,4 +95,5 @@ public class MergeProtocolSchedule {
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
   }
+
 }

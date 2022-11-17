@@ -90,6 +90,8 @@ public interface GenesisConfigOptions {
 
   OptionalLong getMergeNetSplitBlockNumber();
 
+  OptionalLong getShanghaiTimestamp();
+
   OptionalLong getShandongBlockNumber();
 
   Optional<Wei> getBaseFeePerGas();
@@ -293,4 +295,5 @@ public interface GenesisConfigOptions {
    * @return true, if you want the next block to use zero for the base fee.
    */
   boolean isZeroBaseFee();
+
 }
