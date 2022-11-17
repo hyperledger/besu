@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
@@ -42,6 +43,7 @@ public class DiscoveryPeer extends DefaultPeer {
   private long lastAttemptedConnection = 0;
 
   private NodeRecord nodeRecord;
+  private Optional<ForkId> forkId = Optional.empty();
 
   private DiscoveryPeer(final EnodeURL enode, final Endpoint endpoint) {
     super(enode);
@@ -136,6 +138,11 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public void setNodeRecord(final NodeRecord nodeRecord) {
     this.nodeRecord = nodeRecord;
+    this.forkId = ForkId.fromRawForkId(nodeRecord.get("eth"));
+  }
+
+  public Optional<ForkId> getForkId() {
+    return this.forkId;
   }
 
   public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {
