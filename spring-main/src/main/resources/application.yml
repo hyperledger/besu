@@ -1,3 +1,9 @@
+spring:
+  banner:
+    image:
+      location: "classpath:banner.png"
+
+
 p2p:
   max-remote-wire-connections-percentage: 50
   host: "0.0.0.0"
@@ -13,3 +19,5 @@ metrics:
   push-interval: 10
 #  allowed-list: []
   prometheus-job: "besu-client"
+
+
