@@ -399,20 +399,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     } else {
       debugLambda(LOG, "Appending new head block hash {} to backward sync", headHash::toHexString);
       backwardSyncContext.updateHead(headHash);
-      backwardSyncContext
-          .syncBackwardsUntil(headHash)
-          .exceptionally(e -> logSyncException(headHash, e));
+      backwardSyncContext.syncBackwardsUntil(headHash);
     }
     return maybeHeadHeader;
-  }
-
-  private Void logSyncException(final Hash blockHash, final Throwable exception) {
-    debugLambda(
-        LOG,
-        "Sync to block hash {} failed, reason {}",
-        blockHash::toHexString,
-        exception::getMessage);
-    return null;
   }
 
   @Override
