@@ -26,18 +26,14 @@ import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.docker.DockerDetector;
 import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
-import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
-@Configuration
-@Import({JsonRPCConfiguration.class})
 public class NatServiceConfiguration {
     @Value("${p2p.host:localhost")
     private String p2pAdvertisedHost;
@@ -49,6 +45,7 @@ public class NatServiceConfiguration {
         final Boolean natMethodFallbackEnabled = natOptions.getNatMethodFallbackEnabled();
         return new NatService(manager, natMethodFallbackEnabled);
     }
+
     @Bean
     public Optional<NatManager> natManager(NatMethod natMethod, JsonRpcConfiguration jsonRpcConfiguration) {
         final NatMethod detectedNatMethod =
@@ -68,7 +65,7 @@ public class NatServiceConfiguration {
     }
 
     @Bean
-    public NatMethod NatMethod(){
+    public NatMethod NatMethod() {
         return NatMethod.AUTO;
     }
 

@@ -27,9 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
 public class JsonRPCConfiguration {
     @Value("${rpc.http.enabled:false}")
     private boolean isRpcHttpEnabled;
@@ -178,14 +176,17 @@ public class JsonRPCConfiguration {
         return jsonRpcConfiguration;
     }
 
+    @Bean
     private Optional<TlsConfiguration> rpcHttpTlsConfiguration() {
         return Optional.empty();
     }
 
+    @Bean
     private JwtAlgorithm rpcHttpAuthenticationAlgorithm() {
         return JwtAlgorithm.fromString(rpcHttpAuthenticationAlgorithm);
     }
 
+    @Bean
     private File rpcHttpAuthenticationPublicKeyFile() {
         return rpcHttpAuthenticationPublicKeyFile == null
                 ? null

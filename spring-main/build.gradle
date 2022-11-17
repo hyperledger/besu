@@ -1,0 +1,53 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.5'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = 'org.hyperledger.besu'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+	mavenCentral()
+	maven { url "https://hyperledger.jfrog.io/hyperledger/besu-maven" }
+	maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+	maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
+	maven { url "https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/"}
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	def besuVersion = '+'
+
+	implementation group:'org.hyperledger.besu.internal', name: 'api',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'nat',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'besu',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'config',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'clique',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'core',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'crypto',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'plugins-rocksdb',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'metrics-core',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'trie',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'p2p',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'eth',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'permissioning',  version:   besuVersion
+	implementation group:'org.hyperledger.besu', name: 'besu-datatypes',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'rlp',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'common',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'kvstore',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'qbft',  version:   besuVersion
+	implementation group:'org.hyperledger.besu.internal', name: 'ibft',  version:   besuVersion
+	implementation group:'org.hyperledger.besu', name: 'evm',  version: besuVersion
+
+	implementation(group: 'com.google.guava', name: 'guava', version: '30.1.1-jre')
+	implementation 'io.vertx:vertx-core:4.2.7'
+	implementation 'io.vertx:vertx-web:4.2.7'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

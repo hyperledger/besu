@@ -17,30 +17,19 @@
 
 package org.hyperledger.besu.springmain.config;
 
-import java.util.Optional;
-import org.hyperledger.besu.cli.options.unstable.NatOptions;
-import org.hyperledger.besu.metrics.MetricsSystemFactory;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.nat.NatService;
-import org.hyperledger.besu.nat.core.NatManager;
-import org.hyperledger.besu.nat.docker.DockerDetector;
-import org.hyperledger.besu.nat.docker.DockerNatManager;
-import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
-import org.hyperledger.besu.nat.kubernetes.KubernetesNatManager;
-import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import static java.util.function.Predicate.isEqual;
-import static java.util.function.Predicate.not;
-
 @Configuration
-@Import({NatServiceConfiguration.class})
+@Import({NatServiceConfiguration.class,
+        NetworkRunnerConfiguration.class,
+        BlockchainConfiguration.class,
+        VertxConfiguration.class,
+        PermissioningConfiguration.class,
+        MetricsSystemConfiguration.class,
+        EthProtocolManagerConfiguration.class,
+        JsonRPCConfiguration.class})
 public class MainNetBesuConfiguration {
-
-
 
 
 }

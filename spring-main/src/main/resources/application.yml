@@ -1,0 +1,15 @@
+p2p:
+  max-remote-wire-connections-percentage: 50
+  host: "0.0.0.0"
+
+metrics:
+  enabled: false
+  push-enabled: false
+#  host:
+  port: 9545
+  protocol: "prometheus"
+#  push-host:
+  push-port: 9001
+  push-interval: 10
+#  allowed-list: []
+  prometheus-job: "besu-client"
