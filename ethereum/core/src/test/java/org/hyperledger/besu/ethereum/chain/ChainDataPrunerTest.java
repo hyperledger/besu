@@ -37,7 +37,7 @@ public class ChainDataPrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final ChainDataPruner chainDataPruner =
-        new ChainDataPruner(blockchainStorage, new InMemoryKeyValueStorage(), 512, 1);
+        new ChainDataPruner(blockchainStorage, new InMemoryKeyValueStorage(), 512, 0);
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -68,7 +68,7 @@ public class ChainDataPrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
     final ChainDataPruner chainDataPruner =
-        new ChainDataPruner(blockchainStorage, new InMemoryKeyValueStorage(), 512, 1);
+        new ChainDataPruner(blockchainStorage, new InMemoryKeyValueStorage(), 512, 0);
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
