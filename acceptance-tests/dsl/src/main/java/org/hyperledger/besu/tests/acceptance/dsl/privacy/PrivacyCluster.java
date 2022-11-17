@@ -17,14 +17,16 @@ package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 import static java.util.Collections.emptyList;
 import static java.util.function.Predicate.not;
 
+import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
+import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
-import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
