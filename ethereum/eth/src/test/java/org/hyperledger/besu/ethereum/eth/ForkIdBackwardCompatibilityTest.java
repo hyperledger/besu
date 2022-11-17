@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.GenesisHash;
 import static org.hyperledger.besu.ethereum.eth.ForkIdTestUtil.mockBlockchain;
 
-import org.hyperledger.besu.ethereum.eth.manager.ForkId;
-import org.hyperledger.besu.ethereum.eth.manager.ForkIdManager;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 
 import java.util.Arrays;
 import java.util.Collection;

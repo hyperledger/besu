@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.manager;
+package org.hyperledger.besu.ethereum.forkid;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -78,7 +78,7 @@ public class ForkIdManager {
   }
 
   @VisibleForTesting
-  List<ForkId> getForkIds() {
+  public List<ForkId> getForkIds() {
     return this.forkIds;
   }
 
@@ -96,7 +96,7 @@ public class ForkIdManager {
    * @param forkId to be validated.
    * @return boolean (peer valid (true) or invalid (false))
    */
-  boolean peerCheck(final ForkId forkId) {
+  public boolean peerCheck(final ForkId forkId) {
     if (forkId == null || onlyZerosForkBlocks) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
