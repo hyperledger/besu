@@ -33,10 +33,10 @@ dependencies {
   integrationTestImplementation 'org.testcontainers:testcontainers'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
-  tessera 'net.consensys.quorum.tessera:tessera-dist:22.10.0@tar'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:22.1.7@tar'
 }
 
-def tesseraDist = '22.10.0'
+def tesseraDist = '22.1.7'
 integrationTest {
   useJUnitPlatform()
   systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"

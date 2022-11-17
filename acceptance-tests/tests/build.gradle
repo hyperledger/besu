@@ -88,7 +88,7 @@ dependencies {
   testImplementation 'org.web3j:core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-  tessera 'net.consensys.quorum.tessera:tessera-dist:22.10.0@tar'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:22.1.7@tar'
 }
 
 test.enabled = false
@@ -127,7 +127,7 @@ task acceptanceTest(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
-def tesseraDist = '22.10.0'
+def tesseraDist = '22.1.7'
 acceptanceTest {
   useJUnitPlatform()
   systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
