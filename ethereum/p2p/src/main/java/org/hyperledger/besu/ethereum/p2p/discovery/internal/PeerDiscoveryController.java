@@ -21,6 +21,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -114,7 +116,8 @@ public class PeerDiscoveryController {
   private final Collection<DiscoveryPeer> bootstrapNodes;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
-  private final Map<Bytes, PeerInteractionState> inflightInteractions = new ConcurrentHashMap<>();
+  private final Map<Bytes, Map<PacketType, PeerInteractionState>> inflightInteractions =
+      new ConcurrentHashMap<>();
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -126,6 +129,8 @@ public class PeerDiscoveryController {
   private final DiscoveryProtocolLogger discoveryProtocolLogger;
   private final LabelledMetric<Counter> interactionCounter;
   private final LabelledMetric<Counter> interactionRetryCounter;
+  private final ForkIdManager forkIdManager;
+  private final boolean filterOnEnrForkId;
   private final RlpxAgent rlpxAgent;
 
   private RetryDelayFunction retryDelayFunction = RetryDelayFunction.linear(1.5, 2000, 60000);
@@ -156,6 +161,8 @@ public class PeerDiscoveryController {
       final PeerPermissions peerPermissions,
       final MetricsSystem metricsSystem,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
+      final ForkIdManager forkIdManager,
+      final boolean filterOnEnrForkId,
       final RlpxAgent rlpxAgent) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
@@ -168,7 +175,6 @@ public class PeerDiscoveryController {
     this.peerRequirement = peerRequirement;
     this.outboundMessageHandler = outboundMessageHandler;
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
-
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
 
@@ -178,14 +184,14 @@ public class PeerDiscoveryController {
         "Current number of inflight discovery interactions",
         inflightInteractions::size);
 
-    interactionCounter =
+    this.interactionCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
             "discovery_interaction_count",
             "Total number of discovery interactions initiated",
             "type");
 
-    interactionRetryCounter =
+    this.interactionRetryCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
             "discovery_interaction_retry_count",
@@ -194,6 +200,9 @@ public class PeerDiscoveryController {
     this.cachedEnrRequests =
         maybeCacheForEnrRequests.orElse(
             CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
+
+    this.forkIdManager = forkIdManager;
+    this.filterOnEnrForkId = filterOnEnrForkId;
   }
 
   public static Builder builder() {
@@ -205,6 +214,7 @@ public class PeerDiscoveryController {
       throw new IllegalStateException("The peer table had already been started");
     }
 
+    LOG.debug("Starting with filterOnEnrForkId = {}", filterOnEnrForkId);
     final List<DiscoveryPeer> initialDiscoveryPeers =
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
@@ -246,7 +256,13 @@ public class PeerDiscoveryController {
     tableRefreshTimerId = OptionalLong.empty();
     cleanTableTimerId.ifPresent(timerUtil::cancelTimer);
     cleanTableTimerId = OptionalLong.empty();
-    inflightInteractions.values().forEach(PeerInteractionState::cancelTimers);
+    inflightInteractions
+        .values()
+        .forEach(
+            l -> {
+              l.values().forEach(s -> s.cancelTimers());
+              l.clear();
+            });
     inflightInteractions.clear();
     return CompletableFuture.completedFuture(null);
   }
@@ -314,6 +330,9 @@ public class PeerDiscoveryController {
         matchInteraction(packet)
             .ifPresent(
                 interaction -> {
+                  if (filterOnEnrForkId) {
+                    requestENR(peer);
+                  }
                   bondingPeers.invalidate(peer.getId());
                   addToPeerTable(peer);
                   recursivePeerRefreshState.onBondingComplete(peer);
@@ -350,13 +369,34 @@ public class PeerDiscoveryController {
         }
         break;
       case ENR_RESPONSE:
-        // Currently there is no use case where an ENRResponse will be sent otherwise
-        // logic can be added here to query and store the response ENRs
-        packet
-            .getPacketData(ENRResponsePacketData.class)
-            .filter(p -> p.getEnr().getNodeId().equals(sender.getId()))
-            .ifPresent(p -> LOG.debug("Received NodeRecord: {}", p.getEnr().asEnr()));
+        matchInteraction(packet)
+            .ifPresent(
+                interaction -> {
+                  final Optional<ENRResponsePacketData> packetData =
+                      packet.getPacketData(ENRResponsePacketData.class);
+                  final NodeRecord enr = packetData.get().getEnr();
+                  peer.setNodeRecord(enr);
 
+                  final Optional<ForkId> maybeForkId = peer.getForkId();
+                  if (maybeForkId.isPresent()) {
+                    if (forkIdManager.peerCheck(maybeForkId.get())) {
+                      connectOnRlpxLayer(peer);
+                      LOG.debug(
+                          "Peer {} PASSED fork id check. ForkId received: {}",
+                          sender.getId(),
+                          maybeForkId.get());
+                    } else {
+                      LOG.debug(
+                          "Peer {} FAILED fork id check. ForkId received: {}",
+                          sender.getId(),
+                          maybeForkId.get());
+                    }
+                  } else {
+                    // if the peer hasn't sent the ForkId try to connect to it anyways
+                    connectOnRlpxLayer(peer);
+                    LOG.debug("No fork id sent by peer: {}", peer.getId());
+                  }
+                });
         break;
     }
   }
@@ -391,7 +431,9 @@ public class PeerDiscoveryController {
 
     if (peer.getStatus() != PeerDiscoveryStatus.BONDED) {
       peer.setStatus(PeerDiscoveryStatus.BONDED);
-      connectOnRlpxLayer(peer);
+      if (!filterOnEnrForkId) {
+        connectOnRlpxLayer(peer);
+      }
     }
 
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
@@ -408,17 +450,26 @@ public class PeerDiscoveryController {
     return true;
   }
 
-  private void connectOnRlpxLayer(final DiscoveryPeer peer) {
+  void connectOnRlpxLayer(final DiscoveryPeer peer) {
     rlpxAgent.connect(peer);
   }
 
   private Optional<PeerInteractionState> matchInteraction(final Packet packet) {
-    final PeerInteractionState interaction = inflightInteractions.get(packet.getNodeId());
+    final Bytes nodeId = packet.getNodeId();
+    final Map<PacketType, PeerInteractionState> stateMap = inflightInteractions.get(nodeId);
+    if (stateMap == null) {
+      return Optional.empty();
+    }
+    final PacketType packetType = packet.getType();
+    final PeerInteractionState interaction = stateMap.get(packetType);
     if (interaction == null || !interaction.test(packet)) {
       return Optional.empty();
     }
     interaction.cancelTimers();
-    inflightInteractions.remove(packet.getNodeId());
+    stateMap.remove(packetType);
+    if (stateMap.isEmpty()) {
+      inflightInteractions.remove(nodeId);
+    }
     return Optional.of(interaction);
   }
 
@@ -498,7 +549,44 @@ public class PeerDiscoveryController {
 
     // The filter condition will be updated as soon as the action is performed.
     final PeerInteractionState peerInteractionState =
-        new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.PONG, packet -> false);
+    dispatchInteraction(peer, peerInteractionState);
+  }
+
+  /**
+   * Initiates an enr request cycle with a peer.
+   *
+   * @param peer The targeted peer.
+   */
+  @VisibleForTesting
+  void requestENR(final DiscoveryPeer peer) {
+    peer.setStatus(PeerDiscoveryStatus.ENR_REQUESTED);
+
+    final Consumer<PeerInteractionState> action =
+        interaction -> {
+          final ENRRequestPacketData data = ENRRequestPacketData.create();
+          createPacket(
+              PacketType.ENR_REQUEST,
+              data,
+              enrPacket -> {
+                final Bytes enrHash = enrPacket.getHash();
+                // Update the matching filter to only accept the ENRResponse if it echoes the hash
+                // of our request.
+                final Predicate<Packet> newFilter =
+                    packet ->
+                        packet
+                            .getPacketData(ENRResponsePacketData.class)
+                            .map(enr -> enr.getRequestHash().equals(enrHash))
+                            .orElse(false);
+                interaction.updateFilter(newFilter);
+
+                sendPacket(peer, enrPacket);
+              });
+        };
+
+    // The filter condition will be updated as soon as the action is performed.
+    final PeerInteractionState peerInteractionState =
+        new PeerInteractionState(action, peer.getId(), PacketType.ENR_RESPONSE, packet -> false);
     dispatchInteraction(peer, peerInteractionState);
   }
 
@@ -544,7 +632,7 @@ public class PeerDiscoveryController {
           sendPacket(peer, PacketType.FIND_NEIGHBORS, data);
         };
     final PeerInteractionState interaction =
-        new PeerInteractionState(action, peer.getId(), PacketType.NEIGHBORS, packet -> true, true);
+        new PeerInteractionState(action, peer.getId(), PacketType.NEIGHBORS, packet -> true);
     dispatchInteraction(peer, interaction);
   }
 
@@ -558,11 +646,15 @@ public class PeerDiscoveryController {
    * @param state The state.
    */
   private void dispatchInteraction(final Peer peer, final PeerInteractionState state) {
-    final PeerInteractionState previous = inflightInteractions.put(peer.getId(), state);
+    final Bytes id = peer.getId();
+    final PeerInteractionState previous =
+        inflightInteractions
+            .computeIfAbsent(id, k -> new ConcurrentHashMap<>())
+            .put(state.expectedType, state);
     if (previous != null) {
       previous.cancelTimers();
     }
-    state.execute(0, 0);
+    state.execute();
   }
 
   private void respondToPing(
@@ -662,22 +754,21 @@ public class PeerDiscoveryController {
     private final Counter retryCounter;
     /** A custom filter to accept transitions out of this state. */
     private Predicate<Packet> filter;
-    /** Whether the action associated to this state is retryable or not. */
-    private final boolean retryable;
     /** Timers associated with this entry. */
     private OptionalLong timerId = OptionalLong.empty();
+
+    private long delay = 0;
+    private int retryCount = 0;
 
     PeerInteractionState(
         final Consumer<PeerInteractionState> action,
         final Bytes peerId,
         final PacketType expectedType,
-        final Predicate<Packet> filter,
-        final boolean retryable) {
+        final Predicate<Packet> filter) {
       this.action = action;
       this.peerId = peerId;
       this.expectedType = expectedType;
       this.filter = filter;
-      this.retryable = retryable;
       interactionCounter.labels(expectedType.name()).inc();
       retryCounter = interactionRetryCounter.labels(expectedType.name());
     }
@@ -691,27 +782,27 @@ public class PeerDiscoveryController {
       this.filter = filter;
     }
 
-    /**
-     * Executes the action associated with this state. Sets a "boomerang" timer to itself in case
-     * the action is retryable.
-     *
-     * @param lastTimeout the previous timeout, or 0 if this is the first time the action is being
-     *     executed.
-     */
-    void execute(final long lastTimeout, final int retryCount) {
+    /** Executes the action associated with this state. Sets a "boomerang" timer to itself. */
+    void execute() {
       action.accept(this);
-      if (retryable && retryCount < MAX_RETRIES) {
-        final long newTimeout = retryDelayFunction.apply(lastTimeout);
+      if (retryCount < MAX_RETRIES) {
+        this.delay = retryDelayFunction.apply(this.delay);
         timerId =
             OptionalLong.of(
                 timerUtil.setTimer(
-                    newTimeout,
+                    this.delay,
                     () -> {
                       retryCounter.inc();
-                      execute(newTimeout, retryCount + 1);
+                      retryCount++;
+                      execute();
                     }));
       } else {
-        inflightInteractions.remove(peerId);
+        final Map<PacketType, PeerInteractionState> peerInteractionStateMap =
+            inflightInteractions.get(peerId);
+        peerInteractionStateMap.remove(expectedType);
+        if (peerInteractionStateMap.isEmpty()) {
+          inflightInteractions.remove(peerId);
+        }
       }
     }
 
@@ -741,9 +832,11 @@ public class PeerDiscoveryController {
     private TimerUtil timerUtil;
     private AsyncExecutor workerExecutor;
     private MetricsSystem metricsSystem;
+    private boolean filterOnEnrForkId;
 
     private Cache<Bytes, Packet> cachedEnrRequests =
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
+    private ForkIdManager forkIdManager;
     private RlpxAgent rlpxAgent;
 
     private Builder() {}
@@ -769,6 +862,8 @@ public class PeerDiscoveryController {
           peerPermissions,
           metricsSystem,
           Optional.of(cachedEnrRequests),
+          forkIdManager,
+          filterOnEnrForkId,
           rlpxAgent);
     }
 
@@ -778,6 +873,7 @@ public class PeerDiscoveryController {
       validateRequiredDependency(timerUtil, "TimerUtil");
       validateRequiredDependency(workerExecutor, "AsyncExecutor");
       validateRequiredDependency(metricsSystem, "MetricsSystem");
+      validateRequiredDependency(forkIdManager, "ForkIdManager");
       validateRequiredDependency(rlpxAgent, "RlpxAgent");
     }
 
@@ -856,6 +952,11 @@ public class PeerDiscoveryController {
       return this;
     }
 
+    public Builder filterOnEnrForkId(final boolean filterOnEnrForkId) {
+      this.filterOnEnrForkId = filterOnEnrForkId;
+      return this;
+    }
+
     public Builder cacheForEnrRequests(final Cache<Bytes, Packet> cacheToUse) {
       checkNotNull(cacheToUse);
       this.cachedEnrRequests = cacheToUse;
@@ -865,6 +966,12 @@ public class PeerDiscoveryController {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
+      return this;
+    }
+
+    public Builder forkIdManager(final ForkIdManager forkIdManager) {
+      checkNotNull(forkIdManager);
+      this.forkIdManager = forkIdManager;
       return this;
     }
   }
