@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,12 +11,25 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryEvent.PeerBondedEvent;
+package org.hyperledger.besu.evm.code;
 
-@FunctionalInterface
-public interface PeerBondedObserver {
-  void onPeerBonded(PeerBondedEvent peerBondedEvent);
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
+
+class CodeV1Test {
+
+  @Test
+  void calculatesJumpDestMap() {
+    String codeHex = "0xEF000101000F006001600055600D5660026000555B00";
+    final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex));
+
+    long[] jumpDest = OpcodesV1.validateAndCalculateJumpDests(layout.getSections()[1]);
+
+    assertThat(jumpDest).containsExactly(0x2000);
+  }
 }

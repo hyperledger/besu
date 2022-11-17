@@ -424,7 +424,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private Void logSyncException(final Hash blockHash, final Throwable exception) {
-    LOG.warn("Sync to block hash " + blockHash.toHexString() + " failed", exception.getMessage());
+    debugLambda(
+        LOG,
+        "Sync to block hash {} failed, reason {}",
+        blockHash::toHexString,
+        exception::getMessage);
     return null;
   }
 
@@ -477,7 +481,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     if (newHead.getNumber() < blockchain.getChainHeadBlockNumber()
         && isDescendantOf(newHead, blockchain.getChainHeadHeader())) {
-      LOG.info("Ignoring update to old head");
+      debugLambda(LOG, "Ignoring update to old head {}", newHead::toLogString);
       return ForkchoiceResult.withIgnoreUpdateToOldHead(newHead);
     }
 
