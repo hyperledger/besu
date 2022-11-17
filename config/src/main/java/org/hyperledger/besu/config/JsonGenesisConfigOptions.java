@@ -580,8 +580,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
             getMystiqueBlockNumber(),
-            getEcip1049BlockNumber(),
-            getShanghaiBlockNumber());
+            getEcip1049BlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers
