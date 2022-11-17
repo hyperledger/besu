@@ -17,12 +17,13 @@ package org.hyperledger.besu.consensus.merge;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -35,17 +36,23 @@ import org.slf4j.LoggerFactory;
 public class TransitionProtocolSchedule implements ProtocolSchedule {
   private final TransitionUtils<ProtocolSchedule> transitionUtils;
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
+  private final TimestampSchedule timestampSchedule;
+  private ProtocolContext protocolContext;
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
-      final ProtocolSchedule postMergeProtocolSchedule) {
+      final ProtocolSchedule postMergeProtocolSchedule,
+      final TimestampSchedule timestampSchedule) {
+    this.timestampSchedule = timestampSchedule;
     transitionUtils = new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule);
   }
 
   public TransitionProtocolSchedule(
       final ProtocolSchedule preMergeProtocolSchedule,
       final ProtocolSchedule postMergeProtocolSchedule,
-      final MergeContext mergeContext) {
+      final MergeContext mergeContext,
+      final TimestampSchedule timestampSchedule) {
+    this.timestampSchedule = timestampSchedule;
     transitionUtils =
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
@@ -58,8 +65,15 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
     return transitionUtils.getPostMergeObject();
   }
 
-  public ProtocolSpec getByBlockHeader(
-      final ProtocolContext protocolContext, final BlockHeader blockHeader) {
+
+@Override
+public ProtocolSpec getByBlockHeader(final BlockHeader blockHeader){
+    return this.timestampSchedule
+            .getByTimestamp(blockHeader.getTimestamp())
+            .orElseGet(()->getByBlockHeaderFromTransitionUtils(blockHeader));
+
+  }
+  public ProtocolSpec getByBlockHeaderFromTransitionUtils( final BlockHeader blockHeader) {
     // if we do not have a finalized block we might return pre or post merge protocol schedule:
     if (transitionUtils.getMergeContext().getFinalized().isEmpty()) {
 
@@ -73,9 +87,8 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       }
 
       // otherwise check to see if this block represents a re-org TTD block:
-      MutableBlockchain blockchain = protocolContext.getBlockchain();
       Difficulty parentDifficulty =
-          blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
+          protocolContext.getBlockchain().getTotalDifficultyByHash(blockHeader.getParentHash()).orElseThrow();
       Difficulty thisDifficulty = parentDifficulty.add(blockHeader.getDifficulty());
       Difficulty terminalDifficulty =
           transitionUtils.getMergeContext().getTerminalTotalDifficulty();
@@ -104,8 +117,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public ProtocolSpec getByBlockNumber(final long number) {
-    return transitionUtils.dispatchFunctionAccordingToMergeState(
-        protocolSchedule -> protocolSchedule.getByBlockNumber(number));
+    return protocolContext.getBlockchain().getBlockByNumber(number)
+            .map(Block::getHeader)
+            .map(this::getByBlockHeader)
+            .orElse(transitionUtils.dispatchFunctionAccordingToMergeState(
+        protocolSchedule -> protocolSchedule.getByBlockNumber(number)));
   }
 
   @Override
@@ -132,5 +148,9 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         protocolSchedule ->
             protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
                 publicWorldStateArchive));
+  }
+
+  public void setProtocolContext(final ProtocolContext protocolContext) {
+    this.protocolContext = protocolContext;
   }
 }

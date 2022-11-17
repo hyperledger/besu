@@ -54,7 +54,7 @@ public class TransitionBackwardSyncContext extends BackwardSyncContext {
   @Override
   public BlockValidator getBlockValidatorForBlock(final Block block) {
     return transitionProtocolSchedule
-        .getByBlockHeader(protocolContext, block.getHeader())
+        .getByBlockHeader(block.getHeader())
         .getBlockValidator();
   }
 }
