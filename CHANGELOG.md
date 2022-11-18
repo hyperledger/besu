@@ -1,9 +1,12 @@
 # Changelog
-## 23.1
+## 23.1.0-beta
 
 ### Breaking Changes
 - GoQuorum-compatible privacy is deprecated and will be removed in 23.4
 - IBFT 1.0 is deprecated and will be removed in 23.4
+
+### Additions and Improvements
+- Added post-execution state logging option to EVM Tool [#4709](https://github.com/hyperledger/besu/pull/4709)
 
 ## 22.10.4
 
@@ -59,7 +62,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/22.10.2/besu-22.10.2
 - Support for ephemeral testnet Shandong, for EOF testing. [#4599](https://github.com/hyperledger/besu/pull/4599)
 - Improve performance of block processing by parallelizing some parts during the "commit" step [#4635](https://github.com/hyperledger/besu/pull/4635)
 - Upgrade RocksDB version from 7.6.0 to 7.7.3
-- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
+- Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [#4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 - Implement Eth/67 sub-protocol [#4596](https://github.com/hyperledger/besu/issues/4596)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)

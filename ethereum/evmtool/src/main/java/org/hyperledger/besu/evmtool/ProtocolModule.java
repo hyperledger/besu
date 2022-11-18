@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
-
 import javax.inject.Singleton;
 
 import dagger.Module;
