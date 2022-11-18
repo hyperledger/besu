@@ -21,10 +21,10 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerRequirement;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PingPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
@@ -84,6 +84,8 @@ public abstract class PeerDiscoveryAgent {
   private final NatService natService;
   private final MetricsSystem metricsSystem;
   private final RlpxAgent rlpxAgent;
+  private final ForkIdManager forkIdManager;
+
   /* The peer controller, which takes care of the state machine of peers. */
   protected Optional<PeerDiscoveryController> controller = Optional.empty();
 
@@ -110,7 +112,7 @@ public abstract class PeerDiscoveryAgent {
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
-      final Supplier<List<Bytes>> forkIdSupplier,
+      final ForkIdManager forkIdManager,
       final RlpxAgent rlpxAgent) {
     this.metricsSystem = metricsSystem;
     checkArgument(nodeKey != null, "nodeKey cannot be null");
@@ -129,13 +131,14 @@ public abstract class PeerDiscoveryAgent {
     this.id = nodeKey.getPublicKey().getEncodedBytes();
 
     this.storageProvider = storageProvider;
-    this.forkIdSupplier = forkIdSupplier;
+    this.forkIdManager = forkIdManager;
+    this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
   }
 
   protected abstract TimerUtil createTimer();
 
-  protected abstract AsyncExecutor createWorkerExecutor();
+  protected abstract PeerDiscoveryController.AsyncExecutor createWorkerExecutor();
 
   protected abstract CompletableFuture<InetSocketAddress> listenForConnections();
 
@@ -250,6 +253,10 @@ public abstract class PeerDiscoveryAgent {
     this.peerRequirements.add(peerRequirement);
   }
 
+  public boolean checkForkId(final DiscoveryPeer peer) {
+    return peer.getForkId().map(forkIdManager::peerCheck).orElse(true);
+  }
+
   private void startController(final DiscoveryPeer localNode) {
     final PeerDiscoveryController controller = createController(localNode);
     this.controller = Optional.of(controller);
@@ -267,6 +274,8 @@ public abstract class PeerDiscoveryAgent {
         .peerRequirement(PeerRequirement.combine(peerRequirements))
         .peerPermissions(peerPermissions)
         .metricsSystem(metricsSystem)
+        .forkIdManager(forkIdManager)
+        .filterOnEnrForkId((config.isFilterOnEnrForkIdEnabled()))
         .rlpxAgent(rlpxAgent)
         .build();
   }

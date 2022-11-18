@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
@@ -24,10 +23,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -142,12 +143,17 @@ public class BackwardsSyncAlgorithm {
         LOG.debug("Waiting for preconditions...");
         final boolean await = latch.await(2, TimeUnit.MINUTES);
         if (await) {
-          LOG.debug("Preconditions meet...");
+          LOG.debug("Preconditions meet, ensure at least one peer is connected");
+          waitForPeers(1).get();
         }
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new BackwardSyncException("Wait for TTD preconditions interrupted");
+      throw new BackwardSyncException(
+          "Wait for TTD preconditions interrupted (" + e.getMessage() + ")");
+    } catch (ExecutionException e) {
+      throw new BackwardSyncException(
+          "Error while waiting for at least one connected peer (" + e.getMessage() + ")", true);
     } finally {
       context.getSyncState().unsubscribeTTDReached(idTTD);
       context.getSyncState().unsubscribeInitialConditionReached(idIS);
@@ -204,5 +210,11 @@ public class BackwardsSyncAlgorithm {
     }
 
     blockchain.setFinalized(newFinalized);
+  }
+
+  private CompletableFuture<Void> waitForPeers(final int count) {
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(context.getEthContext(), count, context.getMetricsSystem());
+    return waitForPeersTask.run();
   }
 }
