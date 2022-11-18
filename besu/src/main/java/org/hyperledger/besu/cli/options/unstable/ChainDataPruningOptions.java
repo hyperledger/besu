@@ -19,7 +19,7 @@ import picocli.CommandLine;
 
 public class ChainDataPruningOptions {
 
-  public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 1024;
+  public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 50400;
   public static final long DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
 
   @CommandLine.Option(
@@ -33,7 +33,7 @@ public class ChainDataPruningOptions {
       hidden = true,
       names = {"--Xchain-data-pruning-blocks-retained"},
       description =
-          "The number of recent blocks for which to keep the chain data. Must be >= 1024 (default: ${DEFAULT-VALUE})")
+          "The number of recent blocks for which to keep the chain data. Must be >= 50400 (default: ${DEFAULT-VALUE})")
   private final Long chainDataPruningBlocksRetained =
       DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED;
 
@@ -41,7 +41,7 @@ public class ChainDataPruningOptions {
       hidden = true,
       names = {"--Xchain-data-pruning-frequency"},
       description =
-          "The number of blocks added to the chain between two pruning operations. Must be positive (default: ${DEFAULT-VALUE})")
+          "The number of blocks added to the chain between two pruning operations. Must be non-negative (default: ${DEFAULT-VALUE})")
   private final Long chainDataPruningBlocksFrequency = DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY;
 
   public static ChainDataPruningOptions create() {
