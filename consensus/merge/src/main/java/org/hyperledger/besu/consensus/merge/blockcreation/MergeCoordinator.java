@@ -364,9 +364,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
       debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
-      backwardSyncContext
-          .syncBackwardsUntil(blockHash)
-          .exceptionally(e -> logSyncException(blockHash, e));
+      backwardSyncContext.syncBackwardsUntil(blockHash);
     }
     return optHeader;
   }
@@ -382,20 +380,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     } else {
       debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
       backwardSyncContext.updateHeads(blockHash, finalizedBlockHash);
-      backwardSyncContext
-          .syncBackwardsUntil(blockHash)
-          .exceptionally(e -> logSyncException(blockHash, e));
+      backwardSyncContext.syncBackwardsUntil(blockHash);
     }
     return optHeader;
-  }
-
-  private Void logSyncException(final Hash blockHash, final Throwable exception) {
-    debugLambda(
-        LOG,
-        "Sync to block hash {} failed, reason {}",
-        blockHash::toHexString,
-        exception::getMessage);
-    return null;
   }
 
   @Override

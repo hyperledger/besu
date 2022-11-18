@@ -187,17 +187,8 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           mergeContext.get().isSyncing(),
           parentHeader.isEmpty(),
           block.getHash());
-      mergeCoordinator
-          .appendNewPayloadToSync(block)
-          .exceptionally(
-              exception -> {
-                debugLambda(
-                    LOG,
-                    "Sync to block {} failed, reason {}",
-                    block::toLogString,
-                    exception::getMessage);
-                return null;
-              });
+      mergeCoordinator.appendNewPayloadToSync(block);
+
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
