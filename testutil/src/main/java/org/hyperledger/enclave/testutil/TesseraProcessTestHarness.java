@@ -181,13 +181,13 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
 
     final ProcessBuilder processBuilder = new ProcessBuilder(args);
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
-    // processBuilder.redirectOutput(new File(tempFolder, "Proce“ssOutput.txt"));
+    //processBuilder.redirectOutput(new File(tempFolder, "ProcessOutput.txt"));
 
     try {
       final Process process = processBuilder.redirectErrorStream(true).start();
       tesseraProcess.set(process);
       tesseraProcesses.put(enclaveConfiguration.getName(), process);
-      // redirectTesseraOutput();
+      redirectTesseraOutput();
     } catch (final NullPointerException ex) {
       ex.printStackTrace();
       throw new NullPointerException("Check that application.jar property has been set");
