@@ -17,7 +17,6 @@ package org.hyperledger.enclave.testutil;
 import static com.google.common.io.Files.readLines;
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
-import com.google.common.base.Charsets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -47,6 +46,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.common.base.Charsets;
 import org.assertj.core.util.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,7 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
   private URI nodeURI;
   private URI q2TUri;
   private File tempFolder;
+  private final boolean REDIRECT_OUTPUT = true;
 
   protected TesseraProcessTestHarness(final EnclaveConfiguration enclaveConfiguration) {
     this.enclaveConfiguration = enclaveConfiguration;
@@ -181,8 +183,13 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
 
     final ProcessBuilder processBuilder = new ProcessBuilder(args);
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
-    //processBuilder.redirectOutput(new File(tempFolder, "ProcessOutput.txt"));
 
+    if (REDIRECT_OUTPUT) {
+      final String path =
+          String.format(
+              "build/acceptanceTestLogs/%s-tessera-output.txt", System.currentTimeMillis());
+      processBuilder.redirectOutput(new File(path));
+    }
     try {
       final Process process = processBuilder.redirectErrorStream(true).start();
       tesseraProcess.set(process);
@@ -252,6 +259,7 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
 
   @SuppressWarnings("UnusedMethod")
   private void redirectTesseraOutput() {
+    final Logger LOG = LoggerFactory.getLogger(Process.class);
     executorService.submit(
         () -> {
           try (final BufferedReader reader =
@@ -263,9 +271,8 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
 
             String line;
             while ((line = reader.readLine()) != null) {
-              System.out.println(line);
+              LOG.info(line);
             }
-
           } catch (final IOException ex) {
             throw new UncheckedIOException(ex);
           }
