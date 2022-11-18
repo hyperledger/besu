@@ -291,7 +291,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-
     verify(mergeContext, times(txPerBlock + 1))
         .putPayloadById(eq(payloadId), block.capture()); // +1 for the empty
     assertThat(block.getValue().getBody().getTransactions().size()).isEqualTo(txPerBlock);
