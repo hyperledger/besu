@@ -17,6 +17,7 @@ package org.hyperledger.enclave.testutil;
 import static com.google.common.io.Files.readLines;
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
+import com.google.common.base.Charsets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -42,11 +43,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.google.common.base.Charsets;
 import org.assertj.core.util.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,8 +193,12 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
       throw new NullPointerException("Check that application.jar property has been set");
     }
 
-    this.waitForTesseraUris()
-        .ifPresentOrElse(this::readTesseraUriFile, () -> LOG.info("Tessera not started"));
+    final Optional<Path> path = this.waitForTesseraUris();
+    if (path.isPresent()) {
+      readTesseraUriFile(path.get());
+    } else {
+      throw new TimeoutException("Tessera did not start");
+    }
   }
 
   private Optional<Path> waitForTesseraUris() throws InterruptedException {
@@ -211,7 +215,7 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
             }
             try {
               LOG.info("Waiting for Tessera...");
-              TimeUnit.MILLISECONDS.sleep(3000L);
+              TimeUnit.MILLISECONDS.sleep(3000);
             } catch (final InterruptedException ex) {
               LOG.error(ex.getMessage());
             }
