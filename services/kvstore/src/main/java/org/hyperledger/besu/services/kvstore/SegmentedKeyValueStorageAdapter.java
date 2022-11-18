@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 
 public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
 
@@ -77,6 +79,16 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   @Override
   public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
     return storage.getAllValuesFromKeysThat(segmentHandle, returnCondition);
+  }
+
+  @Override
+  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+    return storage.getInRange(segmentHandle, startKeyHash, endKeyHash);
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    return storage.getByPrefix(segmentHandle, prefix);
   }
 
   @Override

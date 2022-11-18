@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.NodeDeletionProcessor.deletePotentialOldAccountEntries;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
@@ -116,6 +119,13 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
               });
     }
     return requests.stream();
+  }
+
+  @Override
+  public void pruneNode(final WorldStateStorage worldStateStorage) {
+    if (getSyncMode(worldStateStorage) == BONSAI) {
+      deletePotentialOldAccountEntries((BonsaiWorldStateKeyValueStorage) worldStateStorage, this);
+    }
   }
 
   @Override

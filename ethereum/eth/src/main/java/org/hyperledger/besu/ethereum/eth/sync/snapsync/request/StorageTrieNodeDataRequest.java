@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.NodeDeletionProcessor.deletePotentialOldStorageEntries;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
@@ -59,6 +61,13 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
     return createStorageTrieNodeDataRequest(childHash, getAccountHash(), getRootHash(), location);
+  }
+
+  @Override
+  public void pruneNode(final WorldStateStorage worldStateStorage) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      deletePotentialOldStorageEntries((BonsaiWorldStateKeyValueStorage) worldStateStorage, this);
+    }
   }
 
   @Override

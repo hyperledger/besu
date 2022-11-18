@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
+import static org.hyperledger.besu.ethereum.util.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.util.RangeManager.MIN_RANGE;
+import static org.hyperledger.besu.ethereum.util.RangeManager.findNewBeginElementInRange;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+import org.hyperledger.besu.ethereum.util.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -43,6 +45,7 @@ import com.google.common.annotations.VisibleForTesting;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,19 +92,29 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
-    final AtomicReference<Updater> updaterTmp = new AtomicReference<>(worldStateStorage.updater());
+    final AtomicReference<Updater> nodeUpdaterTmp =
+        new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          updaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
+          nodeUpdaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
           if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
-            updaterTmp.get().commit();
-            updaterTmp.set(worldStateStorage.updater());
+            nodeUpdaterTmp.get().commit();
+            nodeUpdaterTmp.set(worldStateStorage.updater());
           }
         };
 
-    stackTrie.commit(nodeUpdater);
+    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = (__, ___) -> {};
+    if (getSyncMode(worldStateStorage) == BONSAI) {
+      flatDatabaseUpdater =
+          (key, value) ->
+              ((BonsaiWorldStateKeyValueStorage.Updater) nodeUpdaterTmp.get())
+                  .putStorageValueBySlotHash(
+                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
+    }
 
-    updaterTmp.get().commit();
+    stackTrie.commit(nodeUpdater, flatDatabaseUpdater);
+
+    nodeUpdaterTmp.get().commit();
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 

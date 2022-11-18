@@ -12,9 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync;
+package org.hyperledger.besu.ethereum.util;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -27,8 +28,10 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * This class helps to generate ranges according to several parameters (the start and the end of the
@@ -133,6 +136,33 @@ public class RangeManager {
       }
       return Optional.empty();
     }
+  }
+
+  /**
+   * Create a key pair that corresponds to a range in a location by adding a prefix to the range if
+   * necessary For example if the location is 0x0102 the range will be 0x010200...00 to 0x0102FF..FF
+   *
+   * @param prefix to add at the beginning of the keys
+   * @param location of the range
+   * @return the range
+   */
+  public static Pair<Bytes, Bytes> generateRangeFromLocation(
+      final Bytes prefix, final Bytes location) {
+
+    int size = Bytes32.SIZE * 2;
+
+    final MutableBytes mutableBytes = MutableBytes.create(size + 1);
+    mutableBytes.fill((byte) 0x00);
+    mutableBytes.set(0, location);
+    mutableBytes.set(size, (byte) 0x10);
+    final Bytes left = Bytes.concatenate(prefix, CompactEncoding.pathToBytes(mutableBytes));
+
+    mutableBytes.fill((byte) 0x0f);
+    mutableBytes.set(0, location);
+    mutableBytes.set(size, (byte) 0x10);
+    final Bytes right = Bytes.concatenate(prefix, CompactEncoding.pathToBytes(mutableBytes));
+
+    return new Pair<>(left, right);
   }
 
   private static Bytes32 format(final BigInteger data) {

@@ -24,12 +24,15 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.OptimisticTransactionDB;
 
 public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
@@ -82,6 +85,30 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
         .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+    return stream()
+        .filter(
+            pair -> {
+              final Bytes key = Bytes.of(pair.getKey());
+              return key.compareTo(startKeyHash) >= 0 && key.compareTo(endKeyHash) <= 0;
+            })
+        .map(pair -> Bytes.of(pair.getKey()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    return stream()
+        .filter(
+            pair -> {
+              final Bytes key = Bytes.of(pair.getKey());
+              return key.commonPrefixLength(prefix) == prefix.size();
+            })
+        .map(pair -> Bytes.of(pair.getKey()))
+        .collect(Collectors.toList());
   }
 
   @Override

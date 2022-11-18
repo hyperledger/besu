@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +30,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.cache.Cache;
@@ -94,6 +96,30 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
         .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+    return stream()
+        .filter(
+            pair -> {
+              final Bytes key = Bytes.of(pair.getKey());
+              return key.compareTo(startKeyHash) >= 0 && key.compareTo(endKeyHash) <= 0;
+            })
+        .map(pair -> Bytes.of(pair.getKey()))
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<Bytes> getByPrefix(final Bytes prefix) {
+    return stream()
+        .filter(
+            pair -> {
+              final Bytes key = Bytes.of(pair.getKey());
+              return key.commonPrefixLength(prefix) == prefix.size();
+            })
+        .map(pair -> Bytes.of(pair.getKey()))
+        .collect(Collectors.toList());
   }
 
   @Override
