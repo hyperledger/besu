@@ -12,6 +12,7 @@
 - Added new RPC endpoints `debug_setHead` & `debug_replayBlock  [4580](https://github.com/hyperledger/besu/pull/4580)
 - Upgrade OpenTelemetry to version 1.19.0 [#3675](https://github.com/hyperledger/besu/pull/3675)
 - Backward sync log UX improvements [#4655](https://github.com/hyperledger/besu/pull/4655)
+- Enable RocksDB Bloom filters to improve read performance [#4682](https://github.com/hyperledger/besu/pull/4682)
 
 ### Bug Fixes
 
