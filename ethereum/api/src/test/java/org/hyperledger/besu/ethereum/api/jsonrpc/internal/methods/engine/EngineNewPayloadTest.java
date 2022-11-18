@@ -261,7 +261,6 @@ public class EngineNewPayloadTest {
 
     verify(engineCallListener, times(1)).executionEngineCalled();
     verify(mergeCoordinator, times(0)).addBadBlock(any(), any());
-    // verify mainnetBlockValidator does not add to bad block manager
 
     fromErrorResp(resp);
   }
@@ -282,7 +281,6 @@ public class EngineNewPayloadTest {
 
     verify(engineCallListener, times(1)).executionEngineCalled();
     verify(mergeCoordinator, never()).addBadBlock(any(), any());
-    // verify mainnetBlockValidator does not add to bad block manager
 
     fromErrorResp(resp);
   }

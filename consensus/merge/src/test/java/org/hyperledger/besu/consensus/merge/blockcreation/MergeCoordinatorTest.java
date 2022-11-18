@@ -286,17 +286,17 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.random(),
             suggestedFeeRecipient);
 
+    verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
 
     ArgumentCaptor<Block> block = ArgumentCaptor.forClass(Block.class);
 
-    verify(willThrow, never()).addBadBlock(any(), any());
+
     verify(mergeContext, times(txPerBlock + 1))
         .putPayloadById(eq(payloadId), block.capture()); // +1 for the empty
     assertThat(block.getValue().getBody().getTransactions().size()).isEqualTo(txPerBlock);
     // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
-    // still may
-    // be called directly.
+    // still may be called directly.
     verify(badBlockManager, never()).addBadBlock(any(), any());
     verify(willThrow, never()).addBadBlock(any(), any());
   }
