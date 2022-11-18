@@ -15,6 +15,7 @@
 package org.hyperledger.enclave.testutil;
 
 import static com.google.common.io.Files.readLines;
+import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -93,7 +94,9 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
   @Override
   public void stop() {
     if (tesseraProcess.get().isAlive()) {
-      tesseraProcess.get().destroy();
+      final Process p = tesseraProcess.get();
+      p.descendants().forEach(ProcessHandle::destroy);
+      p.destroy();
       try {
         FileUtils.forceDelete(tempFolder);
       } catch (final IOException e) {
@@ -169,6 +172,8 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
 
   private Optional<String> findTesseraStartScript() {
     final String path = System.getProperty("tessera-dist");
+    // final String path =
+    // "/Users/gtrintinalia/Development/tessera-project/tessera/tessera-dist/build/install/tessera/bin/tessera";
     return Optional.ofNullable(path);
   }
 
@@ -221,16 +226,24 @@ public class TesseraProcessTestHarness implements EnclaveTestHarness {
           java.nio.file.Files.newBufferedReader(tesseraUris, StandardCharsets.UTF_8)) {
         final Properties properties = new Properties();
         properties.load(reader);
-        this.q2TUri = URI.create(properties.getProperty("Q2T"));
-        LOG.info("Q2T URI: {}", q2TUri);
-        final URI thirdPartyUri = URI.create(properties.getProperty("THIRD_PARTY"));
-        LOG.info("ThirdParty URI: {}", thirdPartyUri);
-        this.nodeURI = URI.create(properties.getProperty("P2P"));
-        LOG.info("Node URI: {}", nodeURI);
+
+        final String q2tUri = properties.getProperty("Q2T");
+        this.q2TUri = createUri(q2tUri, "Q2T");
+
+        final String thirdPartyUri = properties.getProperty("THIRD_PARTY");
+        createUri(thirdPartyUri, "THIRD_PARTY");
+
+        final String nodeURI = properties.getProperty("P2P");
+        this.nodeURI = createUri(nodeURI, "P2P");
       }
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private URI createUri(final String url, final String type) {
+    LOG.info("{} URI: {}", type, url);
+    return URI.create(checkNonEmpty(url, type));
   }
 
   @SuppressWarnings("UnusedMethod")
