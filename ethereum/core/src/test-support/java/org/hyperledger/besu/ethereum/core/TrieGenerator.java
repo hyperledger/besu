@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,10 +34,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieGenerator {
 
   public static MerklePatriciaTrie<Bytes32, Bytes> generateTrie(
-          final WorldStateStorage worldStateStorage, final int nbAccounts) {
-    return generateTrie(worldStateStorage,
-            IntStream.range(0,nbAccounts).mapToObj(operand -> Hash.wrap(Bytes32.leftPad(Bytes.of(operand+1)))).collect(Collectors.toList()));
+      final WorldStateStorage worldStateStorage, final int nbAccounts) {
+    return generateTrie(
+        worldStateStorage,
+        IntStream.range(0, nbAccounts)
+            .mapToObj(operand -> Hash.wrap(Bytes32.leftPad(Bytes.of(operand + 1))))
+            .collect(Collectors.toList()));
   }
+
   public static MerklePatriciaTrie<Bytes32, Bytes> generateTrie(
       final WorldStateStorage worldStateStorage, final List<Hash> accounts) {
     final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
@@ -54,15 +57,15 @@ public class TrieGenerator {
       int accountIndex = i;
       storageTrie.commit(
           (location, hash, value) ->
-              updater.putAccountStorageTrieNode(
-                  accounts.get(accountIndex), location, hash, value));
+              updater.putAccountStorageTrieNode(accounts.get(accountIndex), location, hash, value));
       final Bytes code = Bytes32.leftPad(Bytes.of(i + 10));
       final Hash codeHash = Hash.hash(code);
       final StateTrieAccountValue accountValue =
           new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
       accountStateTrie.put(accounts.get(i), RLP.encode(accountValue::writeTo));
-      if(worldStateStorage instanceof BonsaiWorldStateKeyValueStorage){
-        ((BonsaiWorldStateKeyValueStorage.Updater)updater).putAccountInfoState(accounts.get(i), RLP.encode(accountValue::writeTo));
+      if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+        ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+            .putAccountInfoState(accounts.get(i), RLP.encode(accountValue::writeTo));
       }
       accountStateTrie.commit(updater::putAccountStateTrieNode);
       updater.putCode(codeHash, code);

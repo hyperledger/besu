@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -46,30 +47,21 @@ public class NodeDeletionProcessor {
             location -> {
               if (newNode instanceof LeafNode) {
                 final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
-                for (int i = 0; i < MAX_CHILDREN; i++) {
-                  if (location.size() < encodedPathToExclude.size()
-                      && encodedPathToExclude.get(location.size()) != i) {
-                    worldStateStorage.pruneAccountState(Bytes.concatenate(location, Bytes.of(i)));
-                  }
-                }
+                worldStateStorage.pruneAccountState(location, Optional.of(encodedPathToExclude));
               } else if (newNode instanceof ExtensionNode) {
                 ((ExtensionNode<Bytes>) newNode)
                     .getChild()
                     .getLocation()
                     .ifPresent(
-                        subLocation -> {
-                          for (int i = 0; i < MAX_CHILDREN; i++) {
-                            if (subLocation.get(subLocation.size() - 1) != i) {
-                              worldStateStorage.pruneAccountState(
-                                  Bytes.concatenate(location, Bytes.of(i)));
-                            }
-                          }
-                        });
+                        subLocation ->
+                            worldStateStorage.pruneAccountState(
+                                location, Optional.of(subLocation)));
               } else if (newNode instanceof BranchNode) {
                 final List<Node<Bytes>> children = newNode.getChildren();
                 for (int i = 0; i < MAX_CHILDREN; i++) {
                   if (i >= children.size() || children.get(i) instanceof NullNode) {
-                    worldStateStorage.pruneAccountState(Bytes.concatenate(location, Bytes.of(i)));
+                    worldStateStorage.pruneAccountState(
+                        Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
                   }
                 }
               }
@@ -90,32 +82,22 @@ public class NodeDeletionProcessor {
               final Bytes accountHash = storageTrieNodeDataRequest.getAccountHash();
               if (newNode instanceof LeafNode) {
                 final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
-                for (int i = 0; i < MAX_CHILDREN; i++) {
-                  if (location.size() < encodedPathToExclude.size()
-                      && encodedPathToExclude.get(location.size()) != i) {
-                    worldStateStorage.pruneStorageState(
-                        accountHash, Bytes.concatenate(location, Bytes.of(i)));
-                  }
-                }
+                worldStateStorage.pruneStorageState(
+                    accountHash, location, Optional.of(encodedPathToExclude));
               } else if (newNode instanceof ExtensionNode) {
                 ((ExtensionNode<Bytes>) newNode)
                     .getChild()
                     .getLocation()
                     .ifPresent(
-                        subLocation -> {
-                          for (int i = 0; i < MAX_CHILDREN; i++) {
-                            if (subLocation.get(subLocation.size() - 1) != i) {
-                              worldStateStorage.pruneStorageState(
-                                  accountHash, Bytes.concatenate(location, Bytes.of(i)));
-                            }
-                          }
-                        });
+                        subLocation ->
+                            worldStateStorage.pruneStorageState(
+                                accountHash, location, Optional.of(subLocation)));
               } else if (newNode instanceof BranchNode) {
                 final List<Node<Bytes>> children = newNode.getChildren();
                 for (int i = 0; i < MAX_CHILDREN; i++) {
                   if (i >= children.size() || children.get(i) instanceof NullNode) {
                     worldStateStorage.pruneStorageState(
-                        accountHash, Bytes.concatenate(location, Bytes.of(i)));
+                        accountHash, Bytes.concatenate(location, Bytes.of(i)), Optional.empty());
                   }
                 }
               }
