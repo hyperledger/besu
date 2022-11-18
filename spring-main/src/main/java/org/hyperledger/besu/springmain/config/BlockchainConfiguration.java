@@ -55,7 +55,8 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
-import org.springframework.beans.factory.annotation.Value;
+import org.hyperledger.besu.springmain.config.properties.BesuProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -63,26 +64,17 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 public class BlockchainConfiguration {
 
 
-    @Value("${reorg-logging-treshold:6}")
-    protected long reorgLoggingThreshold;
-
-    @Value("${revert-reason-enabled:false}")
-    private boolean isRevertReasonEnabled;
-
-    @Value("${key-value-storage:rocksdb}")
-    private String keyValueStorageName;
-
-
-    @Value("${data-path:.}")
-    private String dataPath;
-
     @Bean
-    public MutableBlockchain blockchain(GenesisState genesisState, BlockchainStorage blockchainStorage, MetricsSystem metricsSystem, BesuConfiguration besuConfiguration) {
+    public MutableBlockchain blockchain(GenesisState genesisState,
+                                        BlockchainStorage blockchainStorage,
+                                        MetricsSystem metricsSystem,
+                                        BesuConfiguration besuConfiguration,
+                                        BesuProperties besuProperties) {
         return DefaultBlockchain.createMutable(
                 genesisState.getBlock(),
                 blockchainStorage,
                 metricsSystem,
-                reorgLoggingThreshold,
+                besuProperties.getReorgLoggingThreshold(),
                 besuConfiguration.getDataPath().toString());
     }
 
@@ -92,16 +84,17 @@ public class BlockchainConfiguration {
     }
 
     @Bean
-    StorageProvider storageProvider(StorageService storageService, MetricsSystem metricsSystem, BesuConfiguration besuConfiguration) {
+    StorageProvider storageProvider(StorageService storageService, MetricsSystem metricsSystem, BesuConfiguration besuConfiguration,
+                                    BesuProperties besuProperties) {
         return
                 new KeyValueStorageProviderBuilder()
                         .withStorageFactory(
                                 storageService
-                                        .getByName(keyValueStorageName)
+                                        .getByName(besuProperties.getKeyValueStorageName())
                                         .orElseThrow(
                                                 () ->
                                                         new StorageException(
-                                                                "No KeyValueStorageFactory found for key: " + keyValueStorageName)))
+                                                                "No KeyValueStorageFactory found for key: " + besuProperties.getKeyValueStorageName())))
                         .withCommonConfiguration(besuConfiguration)
                         .withMetricsSystem(metricsSystem)
                         .isGoQuorumCompatibilityMode(false)
@@ -110,8 +103,8 @@ public class BlockchainConfiguration {
     }
 
     @Bean
-    BesuConfiguration besuConfiguration() {
-        final Path dataDir = Path.of(dataPath);
+    BesuConfiguration besuConfiguration(BesuProperties besuProperties) {
+        final Path dataDir = Path.of(besuProperties.getDataPath());
         return new BesuConfigurationImpl(dataDir, dataDir.resolve(DATABASE_PATH));
     }
 
@@ -136,7 +129,7 @@ public class BlockchainConfiguration {
     }
 
     @Bean
-    RocksDBCLIOptions options(){
+    RocksDBCLIOptions options() {
         return RocksDBCLIOptions.create();
     }
 
@@ -151,9 +144,12 @@ public class BlockchainConfiguration {
     }
 
     @Bean
-    protected ProtocolSchedule createProtocolSchedule(GenesisConfigOptions genesisConfigFile, PrivacyParameters privacyParameters, EvmConfiguration evmConfiguration) {
+    protected ProtocolSchedule createProtocolSchedule(GenesisConfigOptions genesisConfigFile,
+                                                      PrivacyParameters privacyParameters,
+                                                      EvmConfiguration evmConfiguration,
+                                                      BesuProperties besuProperties) {
         return MainnetProtocolSchedule.fromConfig(
-                genesisConfigFile, privacyParameters, isRevertReasonEnabled, evmConfiguration);
+                genesisConfigFile, privacyParameters, besuProperties.isRevertReasonEnabled(), evmConfiguration);
     }
 
     @Bean
@@ -172,7 +168,7 @@ public class BlockchainConfiguration {
     }
 
     @Bean
-    public WorldStateArchive worldStateArchive(StorageProvider storageProvider, DataStorageConfiguration dataStorageConfiguration, Blockchain blockchain, WorldStateStorage worldStateStorage){
+    public WorldStateArchive worldStateArchive(StorageProvider storageProvider, DataStorageConfiguration dataStorageConfiguration, Blockchain blockchain, WorldStateStorage worldStateStorage) {
 
         switch (dataStorageConfiguration.getDataStorageFormat()) {
             case BONSAI:
@@ -191,12 +187,13 @@ public class BlockchainConfiguration {
     }
 
     @Bean
-    public WorldStateStorage worldStateStorage(StorageProvider storageProvider, DataStorageConfiguration dataStorageConfiguration){
+    public WorldStateStorage worldStateStorage(StorageProvider storageProvider, DataStorageConfiguration dataStorageConfiguration) {
         return storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
     }
 
     @Bean
-    public DataStorageConfiguration dataStorageConfiguration(){
+    public DataStorageConfiguration dataStorageConfiguration() {
         return DataStorageConfiguration.DEFAULT_CONFIG;
     }
+
 }

@@ -27,18 +27,13 @@ import org.hyperledger.besu.nat.docker.DockerDetector;
 import org.hyperledger.besu.nat.docker.DockerNatManager;
 import org.hyperledger.besu.nat.kubernetes.KubernetesDetector;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.springframework.beans.factory.annotation.Value;
+import org.hyperledger.besu.springmain.config.properties.P2PProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
 public class NatServiceConfiguration {
-    @Value("${p2p.host:localhost")
-    private String p2pAdvertisedHost;
-    @Value("${p2p.port:30303}")
-    private int p2pListenPort;
 
     @Bean
     public NatService natService(Optional<NatManager> manager, NatOptions natOptions) {
@@ -47,7 +42,7 @@ public class NatServiceConfiguration {
     }
 
     @Bean
-    public Optional<NatManager> natManager(NatMethod natMethod, JsonRpcConfiguration jsonRpcConfiguration) {
+    public Optional<NatManager> natManager(NatMethod natMethod, JsonRpcConfiguration jsonRpcConfiguration, P2PProperties p2pProperties) {
         final NatMethod detectedNatMethod =
                 Optional.of(natMethod)
                         .filter(not(isEqual(NatMethod.AUTO)))
@@ -57,7 +52,7 @@ public class NatServiceConfiguration {
                 return Optional.of(new UpnpNatManager());
             case DOCKER:
                 return Optional.of(
-                        new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+                        new DockerNatManager(p2pProperties.getHost(), p2pProperties.getPort(), jsonRpcConfiguration.getPort()));
             case NONE:
             default:
                 return Optional.empty();

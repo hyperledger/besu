@@ -24,7 +24,6 @@ import java.util.Optional;
 import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.hyperledger.besu.BesuInfo;
-import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairSecurityModule;
@@ -53,8 +52,9 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
+import org.hyperledger.besu.springmain.config.properties.BesuProperties;
+import org.hyperledger.besu.springmain.config.properties.P2PProperties;
 import org.hyperledger.besu.util.number.Fraction;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_SECURITY_MODULE;
@@ -63,49 +63,17 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_SECURITY_MOD
 public class NetworkRunnerConfiguration {
 
 
-    @Value("${p2p.enabled:true}")
-    private boolean p2pEnabled;
-
-    @Value("${security-module-name:localfile}")
-    private String securityModuleName;
-
-    @Value("${p2p.listen-interface:0.0.0.0}")
-    private String p2pListenInterface;
-
-    @Value("${p2p.listen-port:30303}")
-    private int p2pListenPort;
-    @Value("${p2p.host:localhost}")
-    private String p2pAdvertisedHost;
-    @Value("${p2p.max-peers:25}")
-    private int maxPeers;
-
-    @Value("${p2p.min-peers:0}")
-    private int minPeers;
-
-
-    @Value("${identity-string:}")
-    private String identityString;
-
-    @Value("${limit-remote-wire-connections-enabled:false}")
-    private boolean limitRemoteWireConnectionsEnabled;
     private float fractionRemoteConnectionsAllowed;
-    @Value("${p2p.max-remote-wire-connections-percentage}")
-    private int maxRemoteConnectionsPercentage;
-
-    @Value("${p2p.random-peer-priority-enabled:false}")
-    private boolean randomPeerPriority;
-
-    @Value("${node-private-key:#{null}}")
-    private String nodePrivateKey;
 
     @Bean
     public NetworkRunner networkRunner(List<SubProtocol> subProtocols, List<ProtocolManager> protocolManagers, MetricsSystem metricsSystem,
-                                       NetworkRunner.NetworkBuilder activeNetwork, NetworkRunner.NetworkBuilder inactiveNetwork) {
+                                       NetworkRunner.NetworkBuilder activeNetwork, NetworkRunner.NetworkBuilder inactiveNetwork,
+                                       P2PProperties p2PProperties) {
 
         return NetworkRunner.builder()
                 .protocolManagers(protocolManagers)
                 .subProtocols(subProtocols)
-                .network(p2pEnabled ? activeNetwork : inactiveNetwork)
+                .network(p2PProperties.isEnabled() ? activeNetwork : inactiveNetwork)
                 .metricsSystem(metricsSystem)
                 .build();
     }
@@ -125,7 +93,8 @@ public class NetworkRunnerConfiguration {
                                                        Optional<TLSConfiguration> p2pTLSConfiguration,
                                                        GenesisConfigOptions getGenesisConfigOptions,
                                                        NodeKey nodeKey,
-                                                       StorageProvider storageProvider) {
+                                                       StorageProvider storageProvider,
+                                                       P2PProperties p2PProperties) {
         return caps ->
                 DefaultP2PNetwork.builder()
                         .vertx(vertx)
@@ -135,7 +104,7 @@ public class NetworkRunnerConfiguration {
                         .metricsSystem(metricsSystem)
                         .supportedCapabilities(caps)
                         .natService(natService)
-                        .randomPeerPriority(randomPeerPriority)
+                        .randomPeerPriority(p2PProperties.isRandomPeerPriority())
                         .p2pTLSConfiguration(p2pTLSConfiguration)
                         .blockchain(blockchain)
                         .forks(getGenesisConfigOptions.getForks())
@@ -152,26 +121,26 @@ public class NetworkRunnerConfiguration {
     }
 
     @Bean
-    public DiscoveryConfiguration discoveryConfiguration() {
+    public DiscoveryConfiguration discoveryConfiguration(P2PProperties p2PProperties) {
         return
                 DiscoveryConfiguration.create()
-                        .setBindHost(p2pListenInterface)
-                        .setBindPort(p2pListenPort)
-                        .setAdvertisedHost(p2pAdvertisedHost);
+                        .setBindHost(p2PProperties.getP2pInterface())
+                        .setBindPort(p2PProperties.getPort())
+                        .setAdvertisedHost(p2PProperties.getHost());
     }
 
     @Bean
-    public RlpxConfiguration rlpxConfiguration(SubProtocolConfiguration subProtocolConfiguration) {
+    public RlpxConfiguration rlpxConfiguration(SubProtocolConfiguration subProtocolConfiguration, P2PProperties p2PProperties, BesuProperties besuProperties) {
         return
                 RlpxConfiguration.create()
-                        .setBindHost(p2pListenInterface)
-                        .setBindPort(p2pListenPort)
-                        .setPeerUpperBound(maxPeers)
-                        .setPeerLowerBound(minPeers)
+                        .setBindHost(p2PProperties.getP2pInterface())
+                        .setBindPort(p2PProperties.getPort())
+                        .setPeerUpperBound(p2PProperties.getMaxPeers())
+                        .setPeerLowerBound(p2PProperties.getMinPeers())
                         .setSupportedProtocols(subProtocolConfiguration.getSubProtocols())
-                        .setClientId(BesuInfo.nodeName(Optional.of(identityString)))
-                        .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
-                        .setFractionRemoteWireConnectionsAllowed(Fraction.fromPercentage(maxRemoteConnectionsPercentage)
+                        .setClientId(BesuInfo.nodeName(Optional.ofNullable(besuProperties.getIdentityString())))
+                        .setLimitRemoteWireConnectionsEnabled(besuProperties.isLimitRemoteWireConnectionsEnabled())
+                        .setFractionRemoteWireConnectionsAllowed(Fraction.fromPercentage(p2PProperties.getMaxRemoteConnectionsPercentage())
                                 .getValue());
     }
 
@@ -192,10 +161,10 @@ public class NetworkRunnerConfiguration {
     }
 
     @Bean
-    public SecurityModule securityModule(SecurityModuleService securityModuleService) {
+    public SecurityModule securityModule(SecurityModuleService securityModuleService, BesuProperties besuProperties) {
         return securityModuleService
-                .getByName(securityModuleName)
-                .orElseThrow(() -> new RuntimeException("Security Module not found: " + securityModuleName))
+                .getByName(besuProperties.getSecurityModuleName())
+                .orElseThrow(() -> new RuntimeException("Security Module not found: " + besuProperties.getSecurityModuleName()))
                 .get();
     }
 
@@ -208,15 +177,8 @@ public class NetworkRunnerConfiguration {
     }
 
     @Bean
-    public SecurityModule defaultSecurityModule(BesuConfiguration besuConfiguration) {
-        return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFile(),besuConfiguration.getDataPath()));
-    }
-
-    private File nodePrivateKeyFile() {
-        if (nodePrivateKey == null) {
-            return null;
-        }
-        return new File(nodePrivateKey);
+    public SecurityModule defaultSecurityModule(BesuConfiguration besuConfiguration, BesuProperties properties) {
+        return new KeyPairSecurityModule(loadKeyPair(properties.getNodePrivateKeyFile(), besuConfiguration.getDataPath()));
     }
 
     public KeyPair loadKeyPair(final File nodePrivateKeyFile, Path dataPath) {
@@ -231,7 +193,7 @@ public class NetworkRunnerConfiguration {
 
 
     @Bean
-    NetworkingConfiguration networkingConfiguration(){
+    NetworkingConfiguration networkingConfiguration() {
         return NetworkingConfiguration.create();
     }
 

@@ -23,13 +23,11 @@ import io.vertx.core.metrics.MetricsOptions;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 public class VertxConfiguration {
 
-
     @Bean
-    public Vertx vertx(VertxOptions vertxOptions){
+    public Vertx vertx(VertxOptions vertxOptions) {
         return Vertx.vertx(vertxOptions);
     }
 

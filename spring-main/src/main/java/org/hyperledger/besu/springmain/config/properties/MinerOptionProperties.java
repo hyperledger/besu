@@ -21,6 +21,9 @@ package org.hyperledger.besu.springmain.config.properties;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "miner")
 
 public class MinerOptionProperties {
 

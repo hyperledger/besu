@@ -43,7 +43,7 @@ public class MiningCoordinatorConfiguration {
             final SyncState syncState,
             final EthProtocolManager ethProtocolManager,
             Clock clock,
-    EpochCalculator epochCalculator) {
+            EpochCalculator epochCalculator) {
 
         final PoWMinerExecutor executor =
                 new PoWMinerExecutor(
@@ -76,7 +76,7 @@ public class MiningCoordinatorConfiguration {
     }
 
     @Bean
-    public EpochCalculator epochCalculator(){
+    public EpochCalculator epochCalculator() {
         return new EpochCalculator.DefaultEpochCalculator();
     }
 

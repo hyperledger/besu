@@ -17,6 +17,9 @@
  */
 package org.hyperledger.besu.springmain.config.properties;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "mining")
 public class MiningOptionsProperties {
     private String stratumExtranonce;
     private int remoteSealersLimit;

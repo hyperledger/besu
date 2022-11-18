@@ -17,10 +17,31 @@
  */
 package org.hyperledger.besu.springmain;
 
+import org.hyperledger.besu.springmain.config.properties.BesuProperties;
+import org.hyperledger.besu.springmain.config.properties.EngineRpcProperties;
+import org.hyperledger.besu.springmain.config.properties.GenesisProperties;
+import org.hyperledger.besu.springmain.config.properties.JsonRPCHttpProperties;
+import org.hyperledger.besu.springmain.config.properties.MetricsProperties;
+import org.hyperledger.besu.springmain.config.properties.MinerOptionProperties;
+import org.hyperledger.besu.springmain.config.properties.MiningOptionsProperties;
+import org.hyperledger.besu.springmain.config.properties.P2PProperties;
+import org.hyperledger.besu.springmain.config.properties.TXPoolProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties({
+        BesuProperties.class,
+        EngineRpcProperties.class,
+        GenesisProperties.class,
+        JsonRPCHttpProperties.class,
+        MetricsProperties.class,
+        MinerOptionProperties.class,
+        MiningOptionsProperties.class,
+        P2PProperties.class,
+        TXPoolProperties.class
+})
 public class SpringMainApplication {
 
     public static void main(final String[] args) {

@@ -26,52 +26,26 @@ import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
-import org.springframework.beans.factory.annotation.Value;
+import org.hyperledger.besu.springmain.config.properties.MetricsProperties;
+import org.hyperledger.besu.springmain.config.properties.P2PProperties;
 import org.springframework.context.annotation.Bean;
 
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
 public class MetricsSystemConfiguration {
 
-    @Value("${p2p.host}")
-    private String p2pHost;
-
-    @Value("${metrics.enabled}")
-    private boolean isMetricsEnabled;
-    @Value("${metrics.push-enabled}")
-    private boolean isMetricsPushEnabled;
-    @Value("${metrics.host:}")
-    private String metricsHost;
-
-    @Value("${metrics.port}")
-    private int metricsPort;
-
-    @Value("${metrics.protocol}")
-    private String metricsProtocol;
-
-    @Value("${metrics.push-host:}")
-    private String metricsPushHost;
-
-    @Value("${metrics.push-port}")
-    private int metricsPushPort;
-
-    @Value("${metrics.push-interval}")
-    private int metricsPushInterval;
-
-    @Value("${metrics.allow-list:}")
-    private String[] hostsAllowlist;
-
-    @Value("${metrics.prometheus-job}")
-    private String metricsPrometheusJob;
 
     @Bean
-    public MetricsSystem metricsSystem() {
-        return MetricsSystemFactory.create(metricsConfiguration());
+    public MetricsSystem metricsSystem(MetricsConfiguration metricsConfiguration) {
+        return MetricsSystemFactory.create(metricsConfiguration);
     }
 
     @Bean
-    private MetricsConfiguration metricsConfiguration() {
-        if (isMetricsEnabled && isMetricsPushEnabled) {
+    public MetricsConfiguration metricsConfiguration(MetricsProtocol metricsProtocol,
+                                                     MetricsProperties metricsProperties,
+                                                     Set<MetricCategory> metricCategories,
+                                                     P2PProperties p2pProperties) {
+        if (metricsProperties.isEnabled() && metricsProperties.isPushEnabled()) {
             throw new RuntimeException(
                     "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
                             + "time.  Please refer to CLI reference for more details about this constraint.");
@@ -81,33 +55,33 @@ public class MetricsSystemConfiguration {
 
         return unstableMetricsCLIOptions
                 .toDomainObject()
-                .enabled(isMetricsEnabled)
+                .enabled(metricsProperties.isEnabled())
                 .host(
-                        Strings.isNullOrEmpty(metricsHost)
-                                ? p2pHost
-                                : metricsHost)
-                .port(metricsPort)
-                .protocol(metricsProtocol())
-                .metricCategories(metricCategories())
-                .pushEnabled(isMetricsPushEnabled)
+                        Strings.isNullOrEmpty(metricsProperties.getHost())
+                                ? p2pProperties.getHost()
+                                : metricsProperties.getHost())
+                .port(metricsProperties.getPort())
+                .protocol(metricsProtocol)
+                .metricCategories(metricCategories)
+                .pushEnabled(metricsProperties.isPushEnabled())
                 .pushHost(
-                        Strings.isNullOrEmpty(metricsPushHost)
-                                ? p2pHost
-                                : metricsPushHost)
-                .pushPort(metricsPushPort)
-                .pushInterval(metricsPushInterval)
-                .hostsAllowlist(Arrays.asList(hostsAllowlist))
-                .prometheusJob(metricsPrometheusJob)
+                        Strings.isNullOrEmpty(metricsProperties.getPushHost())
+                                ? p2pProperties.getHost()
+                                : metricsProperties.getPushHost())
+                .pushPort(metricsProperties.getPushPort())
+                .pushInterval(metricsProperties.getPushInterval())
+                .hostsAllowlist(Arrays.asList(metricsProperties.getAllowList()))
+                .prometheusJob(metricsProperties.getPrometheusJob())
                 .build();
     }
 
     @Bean
-    private Set<MetricCategory> metricCategories() {
+    public Set<MetricCategory> metricCategories() {
         return DEFAULT_METRIC_CATEGORIES;
     }
 
     @Bean
-    private MetricsProtocol metricsProtocol() {
-        return MetricsProtocol.valueOf(metricsProtocol.toUpperCase());
+    public MetricsProtocol metricsProtocol(MetricsProperties metricsProperties) {
+        return MetricsProtocol.valueOf(metricsProperties.getProtocol().toUpperCase());
     }
 }

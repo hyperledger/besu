@@ -3,10 +3,32 @@ spring:
     image:
       location: "classpath:banner.png"
 
+besu:
+  reorg-logging-threshold: 6
+  revert-reason-enabled: false
+  key-value-storage-name: "rocksdb"
+  data-path: "/tmp/besu"
+  fast-sync-min-peer-count: 5
+#  target-gas-limit: 10000000
+#  node-private-key-file: "/tmp/besu/nodeKey"
+  security-module-name: "localfile"
+#  identity-string: "besu"
+  limit-remote-wire-connections-enabled: false
 
 p2p:
-  max-remote-wire-connections-percentage: 50
-  host: "0.0.0.0"
+  enabled: false
+  peer-discovery-enabled: true
+#  boot-nodes: []
+  host: "localhost"
+  p2p-interface: "0.0.0.0"
+  port: 30303
+  min-peers: 0
+  max-peers: 25
+  limit-remote-wire-connections: true
+  max-remote-connections-percentage: 60
+  random-peer-priority: false
+#  discovery-dns-url:
+
 
 metrics:
   enabled: false
@@ -17,7 +39,34 @@ metrics:
 #  push-host:
   push-port: 9001
   push-interval: 10
-#  allowed-list: []
   prometheus-job: "besu-client"
+  allow-list: ["*"]
 
+engine-rpc:
+  auth-disabled: false
+  override-engine-rpc-enabled: false
+  port: 8551
+  #  engine-jwt-key-file:
+  deprecated-is-engine-auth-enabled: true
+  allow-list: ["*"]
 
+json-rpc:
+  enabled: false
+  host: "localhost"
+  port: 8545
+  max-connections: 80
+  cors-allowed-origins: []
+  apis: ["ETH","NET","WEB3"]
+  no-auth-apis: []
+  authentication-enabled: false
+#  authentication-credentials-file: "authentication.json"
+  authentication-algorithm: "RS256"
+  tls-enabled: false
+#  tls-key-store-file: "keystore.jks"
+#  tls-key-store-password-file: "keystore_password"
+  tls-client-auth-enabled: false
+#  tls-known-clients-file: "known_clients"
+  tls-ca-clients-enabled: false
+  tls-protocols: ["TLSv1.3","TLSv1.2"]
+  tls-cipher-suites: []
+  timeout-seconds: 300

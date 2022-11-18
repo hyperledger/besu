@@ -18,6 +18,10 @@
 
 package org.hyperledger.besu.springmain.config.properties;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "txpool")
+
 public class TXPoolProperties {
     private int txPoolMaxSize;
     private int pendingTxRetentionPeriod;

@@ -20,7 +20,6 @@ package org.hyperledger.besu.springmain.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
@@ -40,10 +39,8 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ConsensusContextFactory;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -70,11 +67,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.springmain.config.properties.BesuProperties;
+import org.hyperledger.besu.springmain.config.properties.GenesisProperties;
 import org.hyperledger.besu.springmain.config.properties.MinerOptionProperties;
 import org.hyperledger.besu.springmain.config.properties.MiningOptionsProperties;
+import org.hyperledger.besu.springmain.config.properties.P2PProperties;
 import org.hyperledger.besu.springmain.config.properties.TXPoolProperties;
 import org.hyperledger.besu.util.number.Percentage;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
@@ -85,19 +84,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 
 public class EthProtocolManagerConfiguration {
 
-    @Value("${genesis-filename:#{null}}")
-    private String genesisFilename;
-
-    @Value("${network-id:#{null}}")
-    private BigInteger networkId;
-
-    @Value("${fast-sync-min-peer-count:5}")
-    private int fastSyncMinPeerCount;
-
-    @Value("${p2p.max-peers:25}")
-    private int maxPeers;
-    @Value("${target-gas-limit:#{null}}")
-    private Long targetGasLimit;
 
     @Bean
     public EthProtocolManager ethProtocolManager(MutableBlockchain blockchain,
@@ -133,21 +119,23 @@ public class EthProtocolManagerConfiguration {
     EthNetworkConfig ethNetworkConfig(NetworkName network,
                                       GenesisConfigFile genesisConfigFile,
                                       GenesisConfigOptions genesisConfigOptions,
-                                      EnodeDnsConfiguration enodeDnsConfiguration) throws IOException {
+                                      EnodeDnsConfiguration enodeDnsConfiguration,
+                                      GenesisProperties genesisProperties) throws IOException {
         final EthNetworkConfig.Builder builder =
                 new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
-        if (genesisFile() != null) {
+        if (genesisFile(genesisProperties.getGenesisFilename()) != null) {
 
-            builder.setGenesisConfig(Resources.toString(genesisFile().toURI().toURL(), UTF_8));
+            builder.setGenesisConfig(Resources.toString(genesisFile(genesisProperties.getGenesisFilename()).toURI()
+                    .toURL(), UTF_8));
 
-            if (networkId == null) {
+            if (genesisProperties.getNetworkId() == null) {
                 // If no chain id is found in the genesis, use mainnet network id
-                    builder.setNetworkId(
-                            genesisConfigFile
-                                    .getConfigOptions(genesisConfigOverrides())
-                                    .getChainId()
-                                    .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
+                builder.setNetworkId(
+                        genesisConfigFile
+                                .getConfigOptions(genesisConfigOverrides())
+                                .getChainId()
+                                .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
             }
 
 //            if (p2PDiscoveryOptionGroup.bootNodes == null) {
@@ -159,13 +147,13 @@ public class EthProtocolManagerConfiguration {
 /*        if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
             builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);
         } else if (genesisConfigOptions != null) {*/
-            final Optional<String> discoveryDnsUrlFromGenesis =
-                    genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
-            discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
+        final Optional<String> discoveryDnsUrlFromGenesis =
+                genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
+        discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
 //        }
 
-        if (networkId != null) {
-            builder.setNetworkId(networkId);
+        if (genesisProperties.getNetworkId() != null) {
+            builder.setNetworkId(genesisProperties.getNetworkId());
         }
 
         List<EnodeURL> listBootNodes = null;
@@ -176,11 +164,11 @@ public class EthProtocolManagerConfiguration {
 //                throw new ParameterException(commandLine, e.getMessage());
 //            }
 //        } else if (genesisConfigOptions != null) {
-            final Optional<List<String>> bootNodesFromGenesis =
-                    genesisConfigOptions.getDiscoveryOptions().getBootNodes();
-            if (bootNodesFromGenesis.isPresent()) {
-                listBootNodes = buildEnodes(bootNodesFromGenesis.get(), enodeDnsConfiguration);
-            }
+        final Optional<List<String>> bootNodesFromGenesis =
+                genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+        if (bootNodesFromGenesis.isPresent()) {
+            listBootNodes = buildEnodes(bootNodesFromGenesis.get(), enodeDnsConfiguration);
+        }
 //        }
         if (listBootNodes != null) {
 /*            if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
@@ -197,7 +185,7 @@ public class EthProtocolManagerConfiguration {
         return Map.of();
     }
 
-    private File genesisFile() {
+    private File genesisFile(final String genesisFilename) {
         if (genesisFilename == null) {
             return null;
         }
@@ -205,7 +193,7 @@ public class EthProtocolManagerConfiguration {
     }
 
     @Bean
-    NetworkName network(){
+    NetworkName network() {
         return NetworkName.MAINNET;
     }
 
@@ -219,19 +207,20 @@ public class EthProtocolManagerConfiguration {
     }
 
     @Bean
-    EnodeDnsConfiguration enodeDnsConfiguration(){
+    EnodeDnsConfiguration enodeDnsConfiguration() {
         return DnsOptions.create().toDomainObject();
     }
 
     @Bean
-    SynchronizerConfiguration synchronizerConfiguration(SyncMode syncMode){
+    SynchronizerConfiguration synchronizerConfiguration(SyncMode syncMode, BesuProperties besuProperties) {
         return SynchronizerOptions.create().toDomainObject()
                 .syncMode(syncMode)
-                .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
+                .fastSyncMinimumPeerCount(besuProperties.getFastSyncMinPeerCount())
                 .build();
     }
 
-    @Bean SyncMode syncMode(){
+    @Bean
+    SyncMode syncMode() {
         return SyncMode.X_CHECKPOINT;
     }
 
@@ -243,7 +232,7 @@ public class EthProtocolManagerConfiguration {
                                     SyncState syncState,
                                     Clock clock,
                                     MiningParameters miningParameters,
-                                    TransactionPoolConfiguration transactionPoolConfiguration){
+                                    TransactionPoolConfiguration transactionPoolConfiguration) {
         return TransactionPoolFactory.createTransactionPool(
                 protocolSchedule,
                 protocolContext,
@@ -256,10 +245,10 @@ public class EthProtocolManagerConfiguration {
     }
 
     @Bean
-    MiningParameters miningParameters(MinerOptionProperties minerOptionProperties, MiningOptionsProperties miningOptionsProperties){
+    MiningParameters miningParameters(MinerOptionProperties minerOptionProperties, MiningOptionsProperties miningOptionsProperties, BesuProperties besuProperties) {
         return new MiningParameters.Builder()
                 .coinbase(minerOptionProperties.translateCoinbase())
-                .targetGasLimit(targetGasLimit)
+                .targetGasLimit(besuProperties.getTargetGasLimit())
                 .minTransactionGasPrice(DEFAULT_MIN_TRANSACTION_GAS_PRICE)
                 .extraData(minerOptionProperties.getExtraData())
                 .miningEnabled(minerOptionProperties.isMiningEnabled())
@@ -277,18 +266,7 @@ public class EthProtocolManagerConfiguration {
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "miner")
-    public MinerOptionProperties minerOptionConfigProperties() {
-        return new MinerOptionProperties();
-    }
-    @Bean
-    @ConfigurationProperties(prefix = "mining")
-    MiningOptionsProperties miningOptionsProperties(){
-        return new MiningOptionsProperties();
-    }
-
-    @Bean
-    ProtocolContext protocolContext(MutableBlockchain blockchain, WorldStateArchive worldStateArchive, ProtocolSchedule protocolSchedule, final ConsensusContextFactory consensusContextFactory){
+    ProtocolContext protocolContext(MutableBlockchain blockchain, WorldStateArchive worldStateArchive, ProtocolSchedule protocolSchedule, final ConsensusContextFactory consensusContextFactory) {
         return ProtocolContext.init(
                 blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
     }
@@ -335,41 +313,52 @@ public class EthProtocolManagerConfiguration {
         }
     }
 
-    @Bean Clock clock(){
+    @Bean
+    Clock clock() {
         return Clock.systemUTC();
     }
 
     @Bean
-    SyncState syncState(MutableBlockchain blockchain, EthPeers ethPeers, SynchronizerConfiguration syncConfig){
+    SyncState syncState(MutableBlockchain blockchain, EthPeers ethPeers, SynchronizerConfiguration syncConfig) {
         return new SyncState(blockchain, ethPeers, !SyncMode.isFullSync(syncConfig.getSyncMode()), Optional.empty());
     }
 
-    @Bean EthPeers ethPeers(Clock clock, MetricsSystem metricsSystem, EthProtocolConfiguration ethereumWireProtocolConfiguration){
+    @Bean
+    EthPeers ethPeers(Clock clock,
+                      MetricsSystem metricsSystem,
+                      EthProtocolConfiguration ethereumWireProtocolConfiguration,
+                      P2PProperties p2PProperties) {
         return new EthPeers(
                 EthProtocol.NAME,
                 clock,
                 metricsSystem,
-                maxPeers,
+                p2PProperties.getMaxPeers(),
                 ethereumWireProtocolConfiguration.getMaxMessageSize(),
                 Collections.emptyList());
     }
 
-    @Bean EthProtocolConfiguration ethereumWireProtocolConfiguration(){
+    @Bean
+    EthProtocolConfiguration ethereumWireProtocolConfiguration() {
         return EthProtocolOptions.create().toDomainObject();
     }
 
-    @Bean EthMessages ethMessages(){
-        return new EthMessages();
-    }
-    @Bean EthMessages snapMessages(){
+    @Bean
+    EthMessages ethMessages() {
         return new EthMessages();
     }
 
-    @Bean EthContext ethContext(EthPeers ethPeers, EthMessages ethMessages, EthMessages snapMessages, EthScheduler ethScheduler){
+    @Bean
+    EthMessages snapMessages() {
+        return new EthMessages();
+    }
+
+    @Bean
+    EthContext ethContext(EthPeers ethPeers, EthMessages ethMessages, EthMessages snapMessages, EthScheduler ethScheduler) {
         return new EthContext(ethPeers, ethMessages, snapMessages, ethScheduler);
     }
 
-    @Bean EthScheduler ethScheduler(SynchronizerConfiguration syncConfig, MetricsSystem metricsSystem){
+    @Bean
+    EthScheduler ethScheduler(SynchronizerConfiguration syncConfig, MetricsSystem metricsSystem) {
         return
                 new EthScheduler(
                         syncConfig.getDownloaderParallelism(),
@@ -378,7 +367,8 @@ public class EthProtocolManagerConfiguration {
                         metricsSystem);
     }
 
-    @Bean TransactionPoolConfiguration transactionPoolConfiguration(TXPoolProperties TXPoolProperties){
+    @Bean
+    TransactionPoolConfiguration transactionPoolConfiguration(TXPoolProperties TXPoolProperties) {
         return TransactionPoolOptions.create()
                 .toDomainObject()
                 .txPoolMaxSize(TXPoolProperties.getTxPoolMaxSize())
@@ -386,11 +376,5 @@ public class EthProtocolManagerConfiguration {
                 .priceBump(Percentage.fromInt(TXPoolProperties.getPriceBump()))
                 .txFeeCap(TransactionPoolConfiguration.DEFAULT_RPC_TX_FEE_CAP)
                 .build();
-    }
-
-    @Bean
-    @ConfigurationProperties(prefix = "txpool")
-    TXPoolProperties TXPoolProperties(){
-        return new TXPoolProperties();
     }
 }
