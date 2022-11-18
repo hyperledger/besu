@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.util.RangeManager.generateRangeFromLocation;
 
+import org.apache.tuweni.rlp.RLP;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -24,6 +25,7 @@ import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -164,9 +166,33 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    return storageStorage
-        .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-        .map(Bytes::wrap);
+    Optional<Bytes> response =
+            storageStorage
+                    .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
+                    .map(Bytes::wrap);
+    Optional<Bytes> response2 = Optional.empty();
+    // after a snapsync/fastsync we only have the trie branches.
+    final Optional<Bytes> account = getAccount(accountHash);
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    if (account.isPresent() && worldStateRootHash.isPresent()) {
+      final StateTrieAccountValue accountValue =
+              StateTrieAccountValue.readFrom(
+                      org.hyperledger.besu.ethereum.rlp.RLP.input(account.get()));
+      response2 =
+              new StoredMerklePatriciaTrie<>(
+                      new StoredNodeFactory<>(
+                              (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                              Function.identity(),
+                              Function.identity()),
+                      accountValue.getStorageRoot())
+                      .get(slotHash)
+                      .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+
+    }
+    if(!response.equals(response2)){
+      System.out.println("dismatch "+response+" "+response2+" "+accountHash+" "+slotHash+" "+response.map(Hash::hash).orElse(Hash.EMPTY)+" "+response2.map(Hash::hash).orElse(Hash.EMPTY));
+    }
+    return response;
   }
 
   @Override
