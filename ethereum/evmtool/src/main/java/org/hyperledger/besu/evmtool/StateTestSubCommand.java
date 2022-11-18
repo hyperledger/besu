@@ -19,6 +19,7 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -52,9 +53,11 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -63,6 +66,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.logging.log4j.Level;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -184,7 +190,9 @@ public class StateTestSubCommand implements Runnable {
 
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       if (transaction == null) {
-        // Check the world state root hash.
+        if (parentCommand.showJsonAlloc || parentCommand.showJsonResults) {
+          output.println("{\"error\":\"Transaction was invalid, trace and alloc unavailable.\"}");
+        }
         summaryLine.put("test", test);
         summaryLine.put("fork", spec.getFork());
         summaryLine.put("d", spec.getDataIndex());
@@ -270,6 +278,56 @@ public class StateTestSubCommand implements Runnable {
           summaryLine.put(
               "validationError",
               "Exception '" + spec.getExpectException() + "' was expected but did not occur");
+        }
+
+        if (parentCommand.showJsonAlloc) {
+          output.println("{");
+          worldState
+              .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+              .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+              .forEach(
+                  account -> {
+                    output.println(
+                        " \""
+                            + account.getAddress().map(Address::toHexString).orElse("-")
+                            + "\": {");
+                    if (account.getCode() != null && account.getCode().size() > 0) {
+                      output.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
+                    }
+                    var storateEntries =
+                        account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+                    if (!storateEntries.isEmpty()) {
+                      output.println("  \"storage\": {");
+                      output.println(
+                          EvmToolCommand.STORAGE_JOINER.join(
+                              storateEntries.values().stream()
+                                  .map(
+                                      accountStorageEntry ->
+                                          "   \""
+                                              + accountStorageEntry
+                                                  .getKey()
+                                                  .map(UInt256::toHexString)
+                                                  .orElse("-")
+                                              + "\": \""
+                                              + accountStorageEntry.getValue().toHexString()
+                                              + "\"")
+                                  .collect(Collectors.toList())));
+                      output.println("  },");
+                    }
+                    output.print(
+                        "  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+                    if (account.getNonce() > 0) {
+                      output.println(",");
+                      output.println(
+                          "  \"nonce\": \""
+                              + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
+                              + "\"");
+                    } else {
+                      output.println();
+                    }
+                    output.println(" },");
+                  });
+          output.println("}");
         }
       }
 

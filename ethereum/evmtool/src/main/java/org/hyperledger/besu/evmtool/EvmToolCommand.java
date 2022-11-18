@@ -47,13 +47,18 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.Level;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -131,6 +136,12 @@ public class EvmToolCommand implements Runnable {
   final Boolean showJsonResults = false;
 
   @Option(
+      names = {"--json-alloc"},
+      description = "Output the final allocations after a run.",
+      scope = INHERIT)
+  final Boolean showJsonAlloc = false;
+
+  @Option(
       names = {"--nomemory"},
       description = "Disable showing the full memory output for each op.",
       scope = INHERIT)
@@ -151,6 +162,7 @@ public class EvmToolCommand implements Runnable {
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
 
+  static final Joiner STORAGE_JOINER = Joiner.on(",\n");
   private final EvmToolCommandOptionsModule daggerOptions = new EvmToolCommandOptionsModule();
   private PrintWriter out =
       new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, UTF_8)), true);
@@ -212,28 +224,6 @@ public class EvmToolCommand implements Runnable {
       final ProtocolSpec protocolSpec = component.getProtocolSpec().apply(0);
       Log4j2ConfiguratorUtil.setLevel(
           "org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder", null);
-      final Transaction tx =
-          new Transaction(
-              0,
-              Wei.ZERO,
-              Long.MAX_VALUE,
-              Optional.ofNullable(receiver),
-              Wei.ZERO,
-              null,
-              callData,
-              sender,
-              Optional.empty());
-
-      final long intrinsicGasCost =
-          protocolSpec
-              .getGasCalculator()
-              .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-      final long accessListCost =
-          tx.getAccessList()
-              .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
-              .orElse(0L);
-      long txGas = gas - intrinsicGasCost - accessListCost;
-
       final PrecompileContractRegistry precompileContractRegistry =
           protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
@@ -262,7 +252,7 @@ public class EvmToolCommand implements Runnable {
                 .type(MessageFrame.Type.MESSAGE_CALL)
                 .messageFrameStack(messageFrameStack)
                 .worldUpdater(updater)
-                .initialGas(txGas)
+                .initialGas(gas)
                 .contract(Address.ZERO)
                 .address(receiver)
                 .originator(sender)
@@ -300,19 +290,91 @@ public class EvmToolCommand implements Runnable {
           }
 
           if (lastLoop && messageFrameStack.isEmpty()) {
-            final long evmGas = txGas - messageFrame.getRemainingGas();
+            final Transaction tx =
+                new Transaction(
+                    0,
+                    Wei.ZERO,
+                    Long.MAX_VALUE,
+                    Optional.ofNullable(receiver),
+                    Wei.ZERO,
+                    null,
+                    callData,
+                    sender,
+                    Optional.empty());
+
+            final long intrinsicGasCost =
+                protocolSpec
+                    .getGasCalculator()
+                    .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+            final long accessListCost =
+                tx.getAccessList()
+                    .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+                    .orElse(0L);
+            final long evmGas = gas - messageFrame.getRemainingGas();
             out.println();
             out.println(
                 new JsonObject()
                     .put("gasUser", "0x" + Long.toHexString(evmGas))
                     .put("timens", lastTime)
                     .put("time", lastTime / 1000)
-                    .put("gasTotal", "0x" + Long.toHexString(evmGas))
+                    .put(
+                        "gasTotal",
+                        "0x" + Long.toHexString(evmGas + intrinsicGasCost) + accessListCost)
                     .put("output", messageFrame.getOutputData().toHexString()));
           }
         }
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
+        if (showJsonAlloc && lastLoop) {
+          updater.commit();
+          out.println("{");
+          component
+              .getWorldState()
+              .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+              .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+              .forEach(
+                  account -> {
+                    out.println(
+                        " \""
+                            + account.getAddress().map(Address::toHexString).orElse("-")
+                            + "\": {");
+                    if (account.getCode() != null && account.getCode().size() > 0) {
+                      out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
+                    }
+                    var storateEntries =
+                        account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+                    if (!storateEntries.isEmpty()) {
+                      out.println("  \"storage\": {");
+                      out.println(
+                          STORAGE_JOINER.join(
+                              storateEntries.values().stream()
+                                  .map(
+                                      accountStorageEntry ->
+                                          "   \""
+                                              + accountStorageEntry
+                                                  .getKey()
+                                                  .map(UInt256::toHexString)
+                                                  .orElse("-")
+                                              + "\": \""
+                                              + accountStorageEntry.getValue().toHexString()
+                                              + "\"")
+                                  .collect(Collectors.toList())));
+                      out.println("  },");
+                    }
+                    out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
+                    if (account.getNonce() > 0) {
+                      out.println(",");
+                      out.println(
+                          "  \"nonce\": \""
+                              + Bytes.ofUnsignedLong(account.getNonce()).toShortHexString()
+                              + "\"");
+                    } else {
+                      out.println();
+                    }
+                    out.println(" },");
+                  });
+          out.println("}");
+        }
       } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
