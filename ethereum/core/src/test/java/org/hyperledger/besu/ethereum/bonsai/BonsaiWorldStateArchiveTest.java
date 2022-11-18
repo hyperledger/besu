@@ -83,10 +83,7 @@ public class BonsaiWorldStateArchiveTest {
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
-            blockchain,
-            Optional.of(1L),
-            false);
+            new BonsaiWorldStateKeyValueStorage(storageProvider), blockchain, Optional.of(1L));
 
     assertThat(bonsaiWorldStateArchive.getMutable(null, chainHead.getHash(), true))
         .containsInstanceOf(BonsaiPersistedWorldState.class);
@@ -108,10 +105,7 @@ public class BonsaiWorldStateArchiveTest {
   public void testGetMutableWhenLoadLessThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
-            blockchain,
-            Optional.of(512L),
-            false);
+            new BonsaiWorldStateKeyValueStorage(storageProvider), blockchain, Optional.of(512L));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(511).buildHeader();
 
