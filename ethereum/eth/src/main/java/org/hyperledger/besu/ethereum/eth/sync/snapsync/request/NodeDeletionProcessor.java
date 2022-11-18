@@ -49,8 +49,7 @@ public class NodeDeletionProcessor {
                 for (int i = 0; i < MAX_CHILDREN; i++) {
                   if (location.size() < encodedPathToExclude.size()
                       && encodedPathToExclude.get(location.size()) != i) {
-                    worldStateStorage.pruneAccountState(
-                        Bytes.concatenate(location, Bytes.of(i)), accountTrieNodeDataRequest.data);
+                    worldStateStorage.pruneAccountState(Bytes.concatenate(location, Bytes.of(i)));
                   }
                 }
               } else if (newNode instanceof ExtensionNode) {
@@ -62,8 +61,7 @@ public class NodeDeletionProcessor {
                           for (int i = 0; i < MAX_CHILDREN; i++) {
                             if (subLocation.get(subLocation.size() - 1) != i) {
                               worldStateStorage.pruneAccountState(
-                                  Bytes.concatenate(location, Bytes.of(i)),
-                                  accountTrieNodeDataRequest.data);
+                                  Bytes.concatenate(location, Bytes.of(i)));
                             }
                           }
                         });
@@ -71,8 +69,7 @@ public class NodeDeletionProcessor {
                 final List<Node<Bytes>> children = newNode.getChildren();
                 for (int i = 0; i < MAX_CHILDREN; i++) {
                   if (i >= children.size() || children.get(i) instanceof NullNode) {
-                    worldStateStorage.pruneAccountState(
-                        Bytes.concatenate(location, Bytes.of(i)), accountTrieNodeDataRequest.data);
+                    worldStateStorage.pruneAccountState(Bytes.concatenate(location, Bytes.of(i)));
                   }
                 }
               }
@@ -97,9 +94,7 @@ public class NodeDeletionProcessor {
                   if (location.size() < encodedPathToExclude.size()
                       && encodedPathToExclude.get(location.size()) != i) {
                     worldStateStorage.pruneStorageState(
-                        accountHash,
-                        Bytes.concatenate(location, Bytes.of(i)),
-                        storageTrieNodeDataRequest.data);
+                        accountHash, Bytes.concatenate(location, Bytes.of(i)));
                   }
                 }
               } else if (newNode instanceof ExtensionNode) {
@@ -111,9 +106,7 @@ public class NodeDeletionProcessor {
                           for (int i = 0; i < MAX_CHILDREN; i++) {
                             if (subLocation.get(subLocation.size() - 1) != i) {
                               worldStateStorage.pruneStorageState(
-                                  accountHash,
-                                  Bytes.concatenate(location, Bytes.of(i)),
-                                  storageTrieNodeDataRequest.data);
+                                  accountHash, Bytes.concatenate(location, Bytes.of(i)));
                             }
                           }
                         });
@@ -122,9 +115,7 @@ public class NodeDeletionProcessor {
                 for (int i = 0; i < MAX_CHILDREN; i++) {
                   if (i >= children.size() || children.get(i) instanceof NullNode) {
                     worldStateStorage.pruneStorageState(
-                        accountHash,
-                        Bytes.concatenate(location, Bytes.of(i)),
-                        storageTrieNodeDataRequest.data);
+                        accountHash, Bytes.concatenate(location, Bytes.of(i)));
                   }
                 }
               }

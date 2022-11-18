@@ -182,14 +182,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     storageStorage.clear();
   }
 
-  public void pruneAccountState(final Bytes location, final Bytes data) {
+  public void pruneAccountState(final Bytes location) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(Bytes.EMPTY, location);
     final AtomicInteger eltRemoved = new AtomicInteger();
     final AtomicReference<KeyValueStorageTransaction> nodeUpdaterTmp =
         new AtomicReference<>(accountStorage.startTransaction());
 
     // cleaning the account trie node in this location
-    pruneTrieNode(Bytes.EMPTY, location, data);
+    pruneTrieNode(Bytes.EMPTY, location);
 
     // cleaning the account flat database by searching for the keys that are in the range
     accountStorage
@@ -200,7 +200,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
               // "+range.getLeft()+" to "+range.getRight()+" for data "+data+" and location
               // "+location+" ");
               // clean the storage of the deleted account
-              pruneStorageState(key, Bytes.EMPTY, data);
+              pruneStorageState(key, Bytes.EMPTY);
               nodeUpdaterTmp.get().remove(key.toArrayUnsafe());
               if (eltRemoved.getAndIncrement() % 100 == 0) {
                 nodeUpdaterTmp.get().commit();
@@ -210,14 +210,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     nodeUpdaterTmp.get().commit();
   }
 
-  public void pruneStorageState(final Bytes accountHash, final Bytes location, final Bytes data) {
+  public void pruneStorageState(final Bytes accountHash, final Bytes location) {
     final Pair<Bytes, Bytes> range = generateRangeFromLocation(accountHash, location);
     final AtomicInteger eltRemoved = new AtomicInteger();
     final AtomicReference<KeyValueStorageTransaction> nodeUpdaterTmp =
         new AtomicReference<>(storageStorage.startTransaction());
 
     // cleaning the storage trie node in this location
-    pruneTrieNode(accountHash, location, data);
+    pruneTrieNode(accountHash, location);
 
     // cleaning the storage flat database by searching for the keys that are in the range
     storageStorage
@@ -236,7 +236,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     nodeUpdaterTmp.get().commit();
   }
 
-  private void pruneTrieNode(final Bytes accountHash, final Bytes location, final Bytes data) {
+  private void pruneTrieNode(final Bytes accountHash, final Bytes location) {
     final AtomicInteger eltRemoved = new AtomicInteger();
     final AtomicReference<KeyValueStorageTransaction> nodeUpdaterTmp =
         new AtomicReference<>(trieBranchStorage.startTransaction());
