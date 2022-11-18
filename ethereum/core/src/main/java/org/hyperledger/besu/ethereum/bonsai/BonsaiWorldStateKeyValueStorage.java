@@ -21,6 +21,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -30,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import kotlin.Pair;
@@ -96,7 +99,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    Optional<Bytes> response2 = Optional.empty();
+    if (worldStateRootHash.isPresent()) {
+      response2 =
+              new StoredMerklePatriciaTrie<>(
+                      new StoredNodeFactory<>(
+                              this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                      Bytes32.wrap(worldStateRootHash.get()))
+                      .get(accountHash);
+    }
+    if(!response.equals(response2)){
+      System.out.println("dismatch "+response+" "+response2+" "+accountHash+" "+response.map(Hash::hash).orElse(Hash.EMPTY)+" "+response2.map(Hash::hash).orElse(Hash.EMPTY));
+    }
+    return response;
   }
 
   @Override

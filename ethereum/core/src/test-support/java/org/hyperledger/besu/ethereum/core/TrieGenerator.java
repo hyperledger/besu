@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
@@ -24,6 +25,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -32,17 +35,19 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieGenerator {
 
   public static MerklePatriciaTrie<Bytes32, Bytes> generateTrie(
-      final WorldStateStorage worldStateStorage, final int nbAccounts) {
-    final List<Hash> accountHash = new ArrayList<>();
+          final WorldStateStorage worldStateStorage, final int nbAccounts) {
+    return generateTrie(worldStateStorage,
+            IntStream.range(0,nbAccounts).mapToObj(operand -> Hash.wrap(Bytes32.leftPad(Bytes.of(operand+1)))).collect(Collectors.toList()));
+  }
+  public static MerklePatriciaTrie<Bytes32, Bytes> generateTrie(
+      final WorldStateStorage worldStateStorage, final List<Hash> accounts) {
     final MerklePatriciaTrie<Bytes32, Bytes> accountStateTrie =
         emptyAccountStateTrie(worldStateStorage);
     // Add some storage values
-    for (int i = 0; i < nbAccounts; i++) {
+    for (int i = 0; i < accounts.size(); i++) {
       final WorldStateStorage.Updater updater = worldStateStorage.updater();
-
-      accountHash.add(Hash.wrap(Bytes32.leftPad(Bytes.of(i + 1))));
       final MerklePatriciaTrie<Bytes32, Bytes> storageTrie =
-          emptyStorageTrie(worldStateStorage, accountHash.get(i));
+          emptyStorageTrie(worldStateStorage, accounts.get(i));
       writeStorageValue(storageTrie, UInt256.ONE, UInt256.valueOf(2L));
       writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
       writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
@@ -50,12 +55,15 @@ public class TrieGenerator {
       storageTrie.commit(
           (location, hash, value) ->
               updater.putAccountStorageTrieNode(
-                  accountHash.get(accountIndex), location, hash, value));
+                  accounts.get(accountIndex), location, hash, value));
       final Bytes code = Bytes32.leftPad(Bytes.of(i + 10));
       final Hash codeHash = Hash.hash(code);
       final StateTrieAccountValue accountValue =
           new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
-      accountStateTrie.put(accountHash.get(i), RLP.encode(accountValue::writeTo));
+      accountStateTrie.put(accounts.get(i), RLP.encode(accountValue::writeTo));
+      if(worldStateStorage instanceof BonsaiWorldStateKeyValueStorage){
+        ((BonsaiWorldStateKeyValueStorage.Updater)updater).putAccountInfoState(accounts.get(i), RLP.encode(accountValue::writeTo));
+      }
       accountStateTrie.commit(updater::putAccountStateTrieNode);
       updater.putCode(codeHash, code);
       // Persist updates
