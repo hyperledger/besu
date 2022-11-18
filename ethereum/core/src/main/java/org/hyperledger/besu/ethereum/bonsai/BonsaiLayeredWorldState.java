@@ -264,16 +264,7 @@ public class BonsaiLayeredWorldState implements MutableWorldState, BonsaiWorldVi
     return archive
         .getMutableSnapshot(this.blockHash())
         .map(BonsaiSnapshotWorldState.class::cast)
-        .map(
-            snapshot ->
-                new BonsaiInMemoryWorldStateKeyValueStorage(
-                    snapshot.getWorldStateStorage().accountStorage,
-                    snapshot.getWorldStateStorage().codeStorage,
-                    snapshot.getWorldStateStorage().storageStorage,
-                    snapshot.getWorldStateStorage().trieBranchStorage,
-                    snapshot.getWorldStateStorage().trieLogStorage,
-                    snapshot.getWorldStateStorage().getMaybeFallbackNodeFinder()))
-        .map(kvStorage -> new BonsaiInMemoryWorldState(archive, kvStorage))
+        .map(snapshot -> new BonsaiInMemoryWorldState(archive, snapshot.getWorldStateStorage()))
         .orElseThrow(
             () ->
                 new StorageException(
