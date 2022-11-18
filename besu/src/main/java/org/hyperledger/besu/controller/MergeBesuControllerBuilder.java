@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.manager.MergePeerFilter;
 import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -87,7 +88,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -120,7 +121,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     EthProtocolManager ethProtocolManager =
         super.createEthProtocolManager(
             protocolContext,
-            fastSyncEnabled,
+            synchronizerConfiguration,
             transactionPool,
             ethereumWireProtocolConfiguration,
             ethPeers,

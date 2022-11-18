@@ -84,7 +84,7 @@ public class BadBlockManager {
     return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
   }
 
-  public boolean isInternalError(final Throwable causedBy) {
+  private boolean isInternalError(final Throwable causedBy) {
     // As new "internal only" types of exception are discovered, add them here.
     if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
       return true;

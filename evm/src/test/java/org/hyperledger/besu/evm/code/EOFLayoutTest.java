@@ -22,32 +22,12 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class EOFLayoutTest {
 
-  private final String containerString;
-  private final String description;
-  private final String failureReason;
-  private final String code;
-
-  public EOFLayoutTest(
-      final String containerString,
-      final String description,
-      final String failureReason,
-      final String code) {
-    this.containerString = containerString;
-    this.description = description;
-    this.failureReason = failureReason;
-    this.code = code;
-  }
-
-  @Parameters(name = "{1}")
-  public static Collection<Object[]> data() {
+  public static Collection<Object[]> testCasesFromEIP3540() {
     return Arrays.asList(
         new Object[][] {
           {"EF", "No magic", "EOF Container too small", null},
@@ -145,8 +125,13 @@ public class EOFLayoutTest {
         });
   }
 
-  @Test
-  public void test() throws Exception {
+  @ParameterizedTest(name = "{1}")
+  @MethodSource("testCasesFromEIP3540")
+  void test(
+      final String containerString,
+      final String description,
+      final String failureReason,
+      final String code) {
     final Bytes container = Bytes.fromHexString(containerString);
     final EOFLayout layout = EOFLayout.parseEOF(container);
     System.out.println(description);

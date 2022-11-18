@@ -141,7 +141,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected EthProtocolManager createEthProtocolManager(
       final ProtocolContext protocolContext,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final TransactionPool transactionPool,
       final EthProtocolConfiguration ethereumWireProtocolConfiguration,
       final EthPeers ethPeers,
@@ -152,7 +152,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final Optional<MergePeerFilter> mergePeerFilter) {
     return mergeBesuControllerBuilder.createEthProtocolManager(
         protocolContext,
-        fastSyncEnabled,
+        synchronizerConfiguration,
         transactionPool,
         ethereumWireProtocolConfiguration,
         ethPeers,

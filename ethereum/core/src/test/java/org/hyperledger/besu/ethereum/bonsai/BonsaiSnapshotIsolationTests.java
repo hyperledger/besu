@@ -70,14 +70,12 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@Ignore("TODO: fix rocksdbjni segfaults when running via gradle")
 @RunWith(MockitoJUnitRunner.class)
 public class BonsaiSnapshotIsolationTests {
 

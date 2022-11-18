@@ -65,7 +65,7 @@ public class PeerValidatorRunner {
   }
 
   protected void scheduleNextCheck(final EthPeer ethPeer) {
-    Duration timeout = peerValidator.nextValidationCheckTimeout(ethPeer);
+    final Duration timeout = peerValidator.nextValidationCheckTimeout(ethPeer);
     ethContext.getScheduler().scheduleFutureTask(() -> checkPeer(ethPeer), timeout);
   }
 }

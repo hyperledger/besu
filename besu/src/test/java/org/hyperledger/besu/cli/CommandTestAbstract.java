@@ -99,6 +99,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.apache.tuweni.bytes.Bytes;
@@ -279,8 +280,8 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.ethstatsUrl(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.forkIdSupplier(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
@@ -319,6 +320,8 @@ public abstract class CommandTestAbstract {
 
   @Before
   public void setUpStreams() {
+    // reset the global opentelemetry singleton
+    GlobalOpenTelemetry.resetForTest();
     commandOutput.reset();
     commandErrorOutput.reset();
     System.setOut(new PrintStream(commandOutput));
@@ -355,6 +358,8 @@ public abstract class CommandTestAbstract {
   protected TestBesuCommand parseCommand(final InputStream in, final String... args) {
     // turn off ansi usage globally in picocli
     System.setProperty("picocli.ansi", "false");
+    // reset GlobalOpenTelemetry
+    GlobalOpenTelemetry.resetForTest();
 
     final TestBesuCommand besuCommand =
         new TestBesuCommand(
@@ -372,11 +377,11 @@ public abstract class CommandTestAbstract {
             privacyPluginService);
     besuCommands.add(besuCommand);
 
-    File defaultKeyFile =
+    final File defaultKeyFile =
         KeyPairUtil.getDefaultKeyFile(DefaultCommandValues.getDefaultBesuDataPath(besuCommand));
     try {
       Files.writeString(defaultKeyFile.toPath(), keyPair.getPrivateKey().toString());
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
     besuCommand.setBesuConfiguration(commonPluginConfiguration);
