@@ -153,12 +153,12 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public List<Bytes> getInRange(Bytes startKeyHash, Bytes endKeyHash) {
+  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
     return null;
   }
 
   @Override
-  public List<Bytes> getByPrefix(Bytes prefix) {
+  public List<Bytes> getByPrefix(final Bytes prefix) {
     return null;
   }
 
