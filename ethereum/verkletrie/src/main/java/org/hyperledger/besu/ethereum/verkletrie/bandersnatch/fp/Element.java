@@ -163,7 +163,8 @@ public class Element {
     return product;
   }
 
-  private UInt256 madd3(final UInt256 a, final UInt256 b, final UInt256 c, final UInt256 d, final UInt256 e) {
+  private UInt256 madd3(
+      final UInt256 a, final UInt256 b, final UInt256 c, final UInt256 d, final UInt256 e) {
     UInt256 product = a.multiply(b);
     product = product.add(c).add(d);
     product = product.add(e.shiftLeft(64));
