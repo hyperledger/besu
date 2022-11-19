@@ -18,10 +18,9 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class ShandongGasCalculator extends LondonGasCalculator {
 
@@ -30,17 +29,24 @@ public class ShandongGasCalculator extends LondonGasCalculator {
   public ShandongGasCalculator() {}
 
   @Override
+  public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
+    final long gasCost = super.transactionIntrinsicGasCost(payload, isContractCreation);
+
+    return isContractCreation ? (gasCost + (wordSize(payload.size()) * 2L)) : gasCost;
+  }
+
+  @Override
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeOffset = clampedToLong(frame.getStackItem(1));
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
 
     final long memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
-    final long initCodeCost = clampedMultiply(wordSize(initCodeLength),2L);
+    final long initCodeCost = clampedMultiply(wordSize(initCodeLength), 2L);
 
     return clampedAdd(CREATE_OPERATION_GAS_COST, clampedAdd(memoryGasCost, initCodeCost));
   }
 
   private long wordSize(final long length) {
-    return clampedAdd(length,31L) / 32;
+    return clampedAdd(length, 31L) / 32;
   }
 }

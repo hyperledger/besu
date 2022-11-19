@@ -56,11 +56,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
-    final long initCodeSize = clampedToLong(frame.getStackItem(2));
-    if(initCodeSize > initCodeSizeLimit){
-      fail(frame);
-      return new OperationResult(0, ExceptionalHaltReason.INITCODE_TOO_LARGE);
-    }
     final long cost = cost(frame);
     if (frame.isStatic()) {
       return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
@@ -74,9 +69,13 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
+    final long initCodeSize = clampedToLong(frame.getStackItem(2));
     if (value.compareTo(account.getBalance()) > 0
         || frame.getMessageStackDepth() >= 1024
         || account.getNonce() == -1) {
+      fail(frame);
+    } else if (initCodeSize > initCodeSizeLimit) {
+      account.incrementNonce();
       fail(frame);
     } else {
       account.incrementNonce();

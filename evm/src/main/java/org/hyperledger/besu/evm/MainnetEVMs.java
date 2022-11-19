@@ -124,9 +124,6 @@ public class MainnetEVMs {
     // utility class
   }
 
-  public static final BigInteger DEV_NET_CHAIN_ID = BigInteger.valueOf(1337);
-
-
   public static EVM frontier(final EvmConfiguration evmConfiguration) {
     return frontier(new FrontierGasCalculator(), evmConfiguration);
   }
