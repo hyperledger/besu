@@ -454,33 +454,34 @@ public class Element {
     return "Element{" + "value=" + value + '}';
   }
 
-  private UInt256 add(UInt256 z) {
+  private UInt256 add(final UInt256 z) {
+    UInt256 mutableZ = z;
     // m = z[0]n'[0] mod W
     // m := z[0] * 17410672245482742751
-    UInt256 z0 = limb(z, 0);
+    UInt256 z0 = limb(mutableZ, 0);
     UInt256 m =
         setLimb(
             UInt256.ZERO,
             UInt256.valueOf(new BigInteger("17410672245482742751", 10)).multiply(z0),
             0);
     // C := madd0(m, 8429901452645165025, z[0])
-    UInt256 tempC = madd0(m, limb(Q_MODULUS.value, 0), limb(z, 0));
+    UInt256 tempC = madd0(m, limb(Q_MODULUS.value, 0), limb(mutableZ, 0));
     UInt256 c = setLimb(UInt256.ZERO, limb(tempC, 1), 0);
     // C, z[0] = madd2(m, 18415085837358793841, z[1], C)
-    tempC = madd2(m, limb(Q_MODULUS.value, 1), limb(z, 1), c);
+    tempC = madd2(m, limb(Q_MODULUS.value, 1), limb(mutableZ, 1), c);
     c = setLimb(c, limb(tempC, 1), 0);
-    z = setLimb(z, limb(tempC, 0), 0);
+    mutableZ = setLimb(mutableZ, limb(tempC, 0), 0);
     // C, z[1] = madd2(m, 922804724659942912, z[2], C)
-    tempC = madd2(m, limb(Q_MODULUS.value, 2), limb(z, 2), c);
+    tempC = madd2(m, limb(Q_MODULUS.value, 2), limb(mutableZ, 2), c);
     c = setLimb(c, limb(tempC, 1), 0);
-    z = setLimb(z, limb(tempC, 0), 1);
+    mutableZ = setLimb(mutableZ, limb(tempC, 0), 1);
     // C, z[2] = madd2(m, 2088379214866112338, z[3], C)
-    tempC = madd2(m, limb(Q_MODULUS.value, 3), limb(z, 3), c);
+    tempC = madd2(m, limb(Q_MODULUS.value, 3), limb(mutableZ, 3), c);
     c = setLimb(c, limb(tempC, 1), 0);
-    z = setLimb(z, limb(tempC, 0), 2);
+    mutableZ = setLimb(mutableZ, limb(tempC, 0), 2);
     // z[3] = C
-    z = setLimb(z, limb(c, 0), 3);
-    return z;
+    mutableZ = setLimb(mutableZ, limb(c, 0), 3);
+    return mutableZ;
   }
 
   /**
