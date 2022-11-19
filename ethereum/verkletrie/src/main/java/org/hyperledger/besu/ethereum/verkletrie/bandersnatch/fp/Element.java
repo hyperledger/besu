@@ -70,7 +70,7 @@ public class Element {
     this.value = value;
   }
 
-  public static Element fromBytes(Bytes data, ByteOrder byteOrder) {
+  public static Element fromBytes(final Bytes data, final ByteOrder byteOrder) {
     return new Element(
         UInt256.fromBytes(byteOrder == ByteOrder.BIG_ENDIAN ? data : data.reverse()));
   }
@@ -135,7 +135,7 @@ public class Element {
     return new Element(Q_MODULUS.value.subtract(this.value));
   }
 
-  public byte[] limb(int i) {
+  public byte[] limb(final int i) {
     return value.slice(32 - (i + 1) * 8, 8).toArrayUnsafe();
   }
 
@@ -148,33 +148,33 @@ public class Element {
     return this.multiply(bInv);
   }
 
-  private UInt256 madd0(UInt256 a, UInt256 b, UInt256 c) {
+  private UInt256 madd0(final UInt256 a, final UInt256 b, final UInt256 c) {
     UInt256 product = a.multiply(b).add(c);
     return product;
   }
 
-  private UInt256 madd1(UInt256 a, UInt256 b, UInt256 c) {
+  private UInt256 madd1(final UInt256 a, final UInt256 b, final UInt256 c) {
     UInt256 product = a.multiply(b).add(c);
     return product;
   }
 
-  private UInt256 madd2(UInt256 a, UInt256 b, UInt256 c, UInt256 d) {
+  private UInt256 madd2(final UInt256 a, final UInt256 b, final UInt256 c, final UInt256 d) {
     UInt256 product = a.multiply(b).add(c).add(d);
     return product;
   }
 
-  private UInt256 madd3(UInt256 a, UInt256 b, UInt256 c, UInt256 d, UInt256 e) {
+  private UInt256 madd3(final UInt256 a, final UInt256 b, final UInt256 c, final UInt256 d, final UInt256 e) {
     UInt256 product = a.multiply(b);
     product = product.add(c).add(d);
     product = product.add(e.shiftLeft(64));
     return product;
   }
 
-  private UInt256 limb(UInt256 value, int index) {
+  private UInt256 limb(final UInt256 value, int index) {
     return UInt256.fromBytes(Bytes32.leftPad(value.slice(32 - (index + 1) * 8, 8)));
   }
 
-  private UInt256 setLimb(UInt256 value, UInt256 limb, int index) {
+  private UInt256 setLimb(final UInt256 value, final UInt256 limb, final int index) {
     MutableBytes32 mutable = value.toBytes().mutableCopy();
     mutable.set(32 - (index + 1) * 8, limb.slice(24, 8));
     return UInt256.fromBytes(mutable);
@@ -469,7 +469,7 @@ public class Element {
     return "Element{" + "value=" + value + '}';
   }
 
-  private UInt256 add(UInt256 z) {
+  private UInt256 add(final UInt256 z) {
     // m = z[0]n'[0] mod W
     // m := z[0] * 18446744069414584319
     UInt256 z0 = limb(z, 0);
