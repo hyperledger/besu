@@ -70,7 +70,7 @@ public class Element {
     this.value = value;
   }
 
-  public static Element fromBytes(Bytes data, ByteOrder byteOrder) {
+  public static Element fromBytes(final Bytes data, final ByteOrder byteOrder) {
     return new Element(
         UInt256.fromBytes(byteOrder == ByteOrder.BIG_ENDIAN ? data : data.reverse()));
   }
