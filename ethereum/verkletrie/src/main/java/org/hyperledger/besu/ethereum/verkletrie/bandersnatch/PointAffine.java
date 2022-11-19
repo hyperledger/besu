@@ -26,7 +26,7 @@ public class PointAffine {
     this.y = y;
   }
 
-  public static PointAffine fromProj(Point point) {
+  public static PointAffine fromProj(final Point point) {
     return new PointAffine(point.x.divide(point.z), point.y.divide(point.z));
   }
 }

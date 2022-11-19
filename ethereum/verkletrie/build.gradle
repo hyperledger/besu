@@ -37,8 +37,7 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
-  //implementation 'org.hyperledger.besu:ipa-multipoint'
-  implementation files('/Users/interop/.m2/repository/org/hyperledger/besu/ipa-multipoint/0.6.2-SNAPSHOT/ipa-multipoint-0.6.2-SNAPSHOT.jar')
+  implementation 'org.hyperledger.besu:ipa-multipoint'
 
   annotationProcessor "org.immutables:value"
 
