@@ -371,7 +371,15 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                     return tasks;
                   })
               .andFinishWith(
-                  "batchTrieNodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+                  "batchTrieNodeDataDownloaded",
+                  tasks -> {
+                    tasks.forEach(requestsToComplete::put);
+                    if (tasks.isEmpty()) {
+                      snapSyncState
+                          .getPivotBlockHeader()
+                          .ifPresent(blockHeader -> downloadState.checkCompletion(blockHeader));
+                    }
+                  });
 
       return new SnapWorldStateDownloadProcess(
           fetchAccountDataPipeline,
