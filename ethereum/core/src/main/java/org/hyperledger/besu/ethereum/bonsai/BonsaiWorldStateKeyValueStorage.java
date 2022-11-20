@@ -22,8 +22,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.PeerTrieNodeFinder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -33,7 +31,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import kotlin.Pair;
@@ -100,31 +97,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-    Optional<Bytes> response2 = Optional.empty();
-    if (worldStateRootHash.isPresent()) {
-      response2 =
-          new StoredMerklePatriciaTrie<>(
-                  new StoredNodeFactory<>(
-                      this::getAccountStateTrieNode, Function.identity(), Function.identity()),
-                  Bytes32.wrap(worldStateRootHash.get()))
-              .get(accountHash);
-    }
-    if (!response.equals(response2)) {
-      System.out.println(
-          "dismatch "
-              + response
-              + " "
-              + response2
-              + " "
-              + accountHash
-              + " "
-              + response.map(Hash::hash).orElse(Hash.EMPTY)
-              + " "
-              + response2.map(Hash::hash).orElse(Hash.EMPTY));
-    }
-    return response;
+    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   @Override
@@ -223,7 +196,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     accountStorage
         .getInRange(range.getFirst(), range.getSecond())
         .forEach(
-            (key) -> {
+            (key, value) -> {
               final boolean shouldExclude =
                   maybeExclude
                       .filter(
@@ -232,8 +205,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
                                   == bytes.size())
                       .isPresent();
               if (!shouldExclude) {
-                // clean the storage of the deleted account
+                // clean the storage and code of the deleted account
                 pruneStorageState(key, Bytes.EMPTY, Optional.empty());
+                pruneCodeState(key);
                 nodeUpdaterTmp.get().remove(key.toArrayUnsafe());
                 if (eltRemoved.getAndIncrement() % 100 == 0) {
                   nodeUpdaterTmp.get().commit();
@@ -258,7 +232,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     storageStorage
         .getInRange(range.getFirst(), range.getSecond())
         .forEach(
-            (key) -> {
+            (key, value) -> {
               final boolean shouldExclude =
                   maybeExclude
                       .filter(
@@ -279,6 +253,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
               }
             });
     nodeUpdaterTmp.get().commit();
+  }
+
+  public void pruneCodeState(final Bytes accountHash) {
+    final KeyValueStorageTransaction transaction = codeStorage.startTransaction();
+    transaction.remove(accountHash.toArrayUnsafe());
+    transaction.commit();
   }
 
   private void pruneTrieNode(

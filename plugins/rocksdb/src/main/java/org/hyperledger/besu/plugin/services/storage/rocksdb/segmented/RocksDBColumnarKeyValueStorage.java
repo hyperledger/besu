@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -271,7 +272,7 @@ public class RocksDBColumnarKeyValueStorage
   }
 
   @Override
-  public List<Bytes> getInRange(
+  public TreeMap<Bytes, Bytes> getInRange(
       final RocksDbSegmentIdentifier segmentHandle,
       final Bytes startKeyHash,
       final Bytes endKeyHash) {
@@ -279,12 +280,13 @@ public class RocksDBColumnarKeyValueStorage
     rocksIterator.seek(startKeyHash.toArrayUnsafe());
     final RocksDbIterator rocksDbKeyIterator = RocksDbIterator.create(rocksIterator);
     try {
-      final List<Bytes> res = new ArrayList<>();
+      final TreeMap<Bytes, Bytes> res = new TreeMap<>();
       while (rocksDbKeyIterator.hasNext()) {
-        final Bytes key = Bytes.wrap(rocksDbKeyIterator.nextKey());
+        final Pair<byte[], byte[]> next = rocksDbKeyIterator.next();
+        final Bytes key = Bytes.wrap(next.getKey());
         if (key.compareTo(startKeyHash) >= 0) {
           if (key.compareTo(endKeyHash) <= 0) {
-            res.add(key);
+            res.put(key, Bytes.of(next.getValue()));
           } else {
             return res;
           }

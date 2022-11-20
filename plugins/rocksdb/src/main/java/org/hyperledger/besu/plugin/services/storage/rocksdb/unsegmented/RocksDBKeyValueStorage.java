@@ -29,6 +29,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -153,7 +154,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
-  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+  public Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
     return null;
   }
 

@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -82,7 +83,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
   }
 
   @Override
-  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+  public Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
     return storage.getInRange(segmentHandle, startKeyHash, endKeyHash);
   }
 

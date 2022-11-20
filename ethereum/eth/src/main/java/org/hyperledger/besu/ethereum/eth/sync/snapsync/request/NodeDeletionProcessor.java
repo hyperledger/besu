@@ -17,18 +17,24 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.trie.BranchNode;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.ExtensionNode;
 import org.hyperledger.besu.ethereum.trie.LeafNode;
+import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.TrieNodeDecoder;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class NodeDeletionProcessor {
 
@@ -48,6 +54,29 @@ public class NodeDeletionProcessor {
               if (newNode instanceof LeafNode) {
                 final Bytes encodedPathToExclude = Bytes.concatenate(location, newNode.getPath());
                 worldStateStorage.pruneAccountState(location, Optional.of(encodedPathToExclude));
+                // check state of the current account
+                newNode
+                    .getValue()
+                    .ifPresent(
+                        value -> {
+                          final StateTrieAccountValue account =
+                              StateTrieAccountValue.readFrom(new BytesValueRLPInput(value, false));
+                          // if storage is deleted
+                          final Hash accountHash =
+                              Hash.wrap(
+                                  Bytes32.wrap(CompactEncoding.pathToBytes(encodedPathToExclude)));
+                          if (account
+                              .getStorageRoot()
+                              .equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+                            worldStateStorage.pruneStorageState(
+                                accountHash, Bytes.EMPTY, Optional.empty());
+                          }
+                          // if code is deleted
+                          if (account.getCodeHash().equals(Hash.EMPTY)) {
+                            worldStateStorage.pruneCodeState(accountHash);
+                          }
+                        });
+
               } else if (newNode instanceof ExtensionNode) {
                 ((ExtensionNode<Bytes>) newNode)
                     .getChild()

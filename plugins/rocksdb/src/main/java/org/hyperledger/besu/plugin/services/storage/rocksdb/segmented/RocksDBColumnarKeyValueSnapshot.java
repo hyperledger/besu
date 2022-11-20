@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdenti
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -88,15 +89,14 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   }
 
   @Override
-  public List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
+  public Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash) {
     return stream()
         .filter(
             pair -> {
               final Bytes key = Bytes.of(pair.getKey());
               return key.compareTo(startKeyHash) >= 0 && key.compareTo(endKeyHash) <= 0;
             })
-        .map(pair -> Bytes.of(pair.getKey()))
-        .collect(Collectors.toList());
+        .collect(Collectors.toMap(o -> Bytes.of(o.getKey()), o -> Bytes.of(o.getValue())));
   }
 
   @Override

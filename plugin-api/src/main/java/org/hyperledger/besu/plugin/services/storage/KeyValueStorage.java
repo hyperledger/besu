@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -103,7 +104,7 @@ public interface KeyValueStorage extends Closeable {
 
   Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition);
 
-  List<Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash);
+  Map<Bytes, Bytes> getInRange(final Bytes startKeyHash, final Bytes endKeyHash);
 
   List<Bytes> getByPrefix(final Bytes prefix);
 
