@@ -16,6 +16,9 @@
 
 package org.hyperledger.besu.evm.contractvalidation;
 
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -23,16 +26,23 @@ import java.util.Optional;
 
 public class CachedInvalidCodeRule implements ContractValidationRule {
 
+  private final int maxEofVersion;
+
+  public CachedInvalidCodeRule(final int maxEofVersion) {
+    this.maxEofVersion = maxEofVersion;
+  }
+
   @Override
   public Optional<ExceptionalHaltReason> validate(final MessageFrame frame) {
-    if (!frame.getCode().isValid()) {
+    final Code code = CodeFactory.createCode(frame.getOutputData(), maxEofVersion, false);
+    if (!code.isValid()) {
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     } else {
       return Optional.empty();
     }
   }
 
-  public static ContractValidationRule of() {
-    return new CachedInvalidCodeRule();
+  public static ContractValidationRule of(final EvmSpecVersion specVersion) {
+    return new CachedInvalidCodeRule(specVersion.getMaxEofVersion());
   }
 }

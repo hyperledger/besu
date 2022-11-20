@@ -130,12 +130,13 @@ public class MainnetContractCreationProcessorTest {
 
   @Test
   public void shouldThrowAnExceptionWhenDeployingInvalidContract() {
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.SHANDONG;
     processor =
         new ContractCreationProcessor(
             gasCalculator,
             evm,
             true,
-            Collections.singletonList(CachedInvalidCodeRule.of()),
+            Collections.singletonList(CachedInvalidCodeRule.of(evmSpecVersion)),
             1,
             Collections.emptyList());
     final Bytes contractCreateCode = Bytes.fromHexString("0x67ef0001010001006060005260086018f3");
@@ -145,7 +146,7 @@ public class MainnetContractCreationProcessorTest {
                 CodeFactory.createCode(
                     contractCreateCode,
                     Hash.hash(contractCreateCode),
-                    EvmSpecVersion.SHANDONG.getMaxEofVersion(),
+                    evmSpecVersion.getMaxEofVersion(),
                     true))
             .build();
     messageFrame.setOutputData(Bytes.fromHexString("0xef00010100010060"));
