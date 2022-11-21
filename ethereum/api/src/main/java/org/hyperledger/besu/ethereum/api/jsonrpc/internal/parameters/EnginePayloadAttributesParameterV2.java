@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -67,7 +68,9 @@ public class EnginePayloadAttributesParameterV2 {
         .put("suggestedFeeRecipient", suggestedFeeRecipient.toHexString())
         .put(
             "withdrawals",
-            withdrawals.stream().map(WithdrawalParameter::serialize).collect(toList()))
+            Optional.ofNullable(withdrawals)
+                .map(w -> w.stream().map(WithdrawalParameter::serialize).collect(toList()))
+                .orElse(null))
         .encode();
   }
 }
