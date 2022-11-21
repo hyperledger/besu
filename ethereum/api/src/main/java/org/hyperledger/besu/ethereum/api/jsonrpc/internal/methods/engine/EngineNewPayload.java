@@ -182,7 +182,6 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(newBlockHeader, new BlockBody(transactions, Collections.emptyList()));
-    final String warningMessage = "Sync to block " + block.toLogString() + " failed";
 
     if (mergeContext.get().isSyncing() || parentHeader.isEmpty()) {
       LOG.debug(
@@ -198,13 +197,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
         && !ChainDataPruner.isPruningEnabled()) {
-      mergeCoordinator
-          .appendNewPayloadToSync(block)
-          .exceptionally(
-              exception -> {
-                LOG.warn(warningMessage, exception.getMessage());
-                return null;
-              });
+      mergeCoordinator.addBadBlock(block, Optional.empty());
       return respondWithInvalid(
           reqId,
           blockParam,
