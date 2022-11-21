@@ -67,7 +67,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
 
   boolean isMiningBeforeMerge();
 
-  void addBadBlock(final Block block);
+  void addBadBlock(final Block block, Optional<Throwable> maybeCause);
 
   boolean isBadBlock(Hash blockHash);
 

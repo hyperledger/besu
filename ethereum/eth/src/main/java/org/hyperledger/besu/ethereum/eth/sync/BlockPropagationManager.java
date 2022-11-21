@@ -649,8 +649,10 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       return runImportTask(block);
     } else {
       processingBlocksManager.registerBlockImportDone(block.getHash());
-      badBlockManager.addBadBlock(block);
-      LOG.warn("Failed to import announced block {}", block.toLogString());
+      badBlockManager.addBadBlock(block, Optional.empty());
+      LOG.warn(
+          "Added to bad block manager for invalid header, failed to import announced block {}",
+          block.toLogString());
       return CompletableFuture.completedFuture(block);
     }
   }
