@@ -65,7 +65,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     headers.forEach(
         (header) -> {
           final BodyIdentifier bodyId = new BodyIdentifier(header);
-          bodyToHeaders.putIfAbsent(bodyId, new ArrayList<>());
+          bodyToHeaders.putIfAbsent(bodyId, new ArrayList<>(headers.size()));
           bodyToHeaders.get(bodyId).add(header);
         });
   }
@@ -112,7 +112,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       return Optional.empty();
     }
 
-    final List<Block> blocks = new ArrayList<>();
+    final List<Block> blocks = new ArrayList<>(headers.size());
     for (final BlockBody body : bodies) {
       final List<BlockHeader> headers = bodyToHeaders.get(new BodyIdentifier(body));
       if (headers == null) {

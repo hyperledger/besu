@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.Code.EMPTY_CODE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -34,12 +34,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class Push0OperationTest {
+class Push0OperationTest {
 
   private final GasCalculator gasCalculator = new BerlinGasCalculator();
 
   @Test
-  public void shouldPush0OntoStack() {
+  void shouldPush0OntoStack() {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new Push0Operation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
@@ -59,7 +59,7 @@ public class Push0OperationTest {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(baseFee);
     when(frame.getBlockValues()).thenReturn(blockHeader);
-    when(frame.getCode()).thenReturn(EMPTY_CODE);
+    when(frame.getCode()).thenReturn(CodeV0.EMPTY_CODE);
     return frame;
   }
 }

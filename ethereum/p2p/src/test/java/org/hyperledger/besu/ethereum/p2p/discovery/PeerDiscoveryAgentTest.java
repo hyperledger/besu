@@ -28,6 +28,7 @@ import org.hyperledger.besu.crypto.NodeKey;
 import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper.AgentBuilder;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAgent;
@@ -106,12 +107,11 @@ public class PeerDiscoveryAgentTest {
     assertThat(nodeRecord.getSeq()).isNotNull();
     assertThat(nodeRecord.get("eth")).isNotNull();
     assertThat(nodeRecord.get("eth"))
-        .isEqualTo(Collections.singletonList(Collections.singletonList(Bytes.EMPTY)));
+        .isEqualTo(
+            Collections.singletonList(new ForkId(Bytes.EMPTY, Bytes.EMPTY).getForkIdAsBytesList()));
     assertThat(nodeRecord.asEnr())
         .isEqualTo(
-            "enr:-JC4QOfroMOa1sB6ajxcBKdWn3s9S4Ojl33pbRm72S5FnCwyZfskmjkJvZznQaWNTrOHrnKxw1R9xMm9rl"
-                + "EGOcsOyscBg2V0aMLBgIJpZIJ2NIJpcIR_AAABiXNlY3AyNTZrMaEDymNMrg1JrLQB2KTGtv6MVbcNEV"
-                + "v0AHacwUAPMljNMTiDdGNwAoN1ZHCCdl8");
+            "enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-cbnw8vJ00NvO8vGnAf85JMwLiP-Qo49DL2xYMzX3zg_d5VXhegmoVTFJRWgZAtCYBg2V0aMPCgICCaWSCdjSCaXCEfwAAAYlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9AB2nMFADzJYzTE4g3RjcAKDdWRwgnZf");
   }
 
   @Test

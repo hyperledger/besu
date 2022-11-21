@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -54,7 +53,8 @@ public class BlockchainModule {
   }
 
   @Provides
-  MutableWorldView getMutableWorldView(
+  @Singleton
+  MutableWorldState getMutableWorldState(
       @Named("StateRoot") final Bytes32 stateRoot,
       final WorldStateStorage worldStateStorage,
       final WorldStatePreimageStorage worldStatePreimageStorage,
@@ -64,32 +64,35 @@ public class BlockchainModule {
       final MutableWorldState mutableWorldState =
           new DefaultMutableWorldState(worldStateStorage, worldStatePreimageStorage);
       genesisState.writeStateTo(mutableWorldState);
-      return (MutableWorldView) mutableWorldState;
+      return mutableWorldState;
     } else {
-      return (MutableWorldView)
-          new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
+      return new DefaultMutableWorldState(stateRoot, worldStateStorage, worldStatePreimageStorage);
     }
   }
 
   @Provides
+  @Singleton
   WorldStateStorage provideWorldStateStorage(
       @Named("worldState") final KeyValueStorage keyValueStorage) {
     return new WorldStateKeyValueStorage(keyValueStorage);
   }
 
   @Provides
+  @Singleton
   WorldStatePreimageStorage provideWorldStatePreimageStorage(
       @Named("worldStatePreimage") final KeyValueStorage keyValueStorage) {
     return new WorldStatePreimageKeyValueStorage(keyValueStorage);
   }
 
   @Provides
-  WorldUpdater provideWorldUpdater(final MutableWorldView mutableWorldView) {
-    return mutableWorldView.updater();
+  @Singleton
+  WorldUpdater provideWorldUpdater(final MutableWorldState mutableWorldState) {
+    return mutableWorldState.updater();
   }
 
   @Provides
   @Named("StateRoot")
+  @Singleton
   Bytes32 provideStateRoot(final BlockParameter blockParameter, final Blockchain blockchain) {
     if (blockParameter.isEarliest()) {
       return blockchain.getBlockHeader(0).orElseThrow().getStateRoot();

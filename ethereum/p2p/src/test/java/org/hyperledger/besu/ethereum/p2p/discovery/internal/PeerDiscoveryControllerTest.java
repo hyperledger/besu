@@ -31,7 +31,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
@@ -49,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -59,14 +65,19 @@ import java.util.stream.Collectors;
 import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Assertions;
+import org.ethereum.beacon.discovery.schema.EnrField;
+import org.ethereum.beacon.discovery.schema.IdentitySchema;
 import org.ethereum.beacon.discovery.schema.IdentitySchemaInterpreter;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -1468,6 +1479,175 @@ public class PeerDiscoveryControllerTest {
             matchPacketOfType(PacketType.ENR_RESPONSE));
   }
 
+  @Test
+  public void shouldFiltersOnForkIdSuccess() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final ForkIdManager forkIdManager = mock(ForkIdManager.class);
+    final DiscoveryPeer sender = peers.get(0);
+    final Packet enrPacket = prepareForForkIdCheck(forkIdManager, nodeKeys, sender, true);
+
+    when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(true);
+    controller.onMessage(enrPacket, sender);
+
+    final Optional<DiscoveryPeer> maybePeer =
+        controller
+            .streamDiscoveredPeers()
+            .filter(p -> p.getId().equals(sender.getId()))
+            .findFirst();
+
+    assertThat(maybePeer.isPresent()).isTrue();
+    assertThat(maybePeer.get().getForkId().isPresent()).isTrue();
+    verify(controller, times(1)).connectOnRlpxLayer(eq(maybePeer.get()));
+  }
+
+  @Test
+  public void shouldFiltersOnForkIdFailure() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final ForkIdManager forkIdManager = mock(ForkIdManager.class);
+    final DiscoveryPeer sender = peers.get(0);
+    final Packet enrPacket = prepareForForkIdCheck(forkIdManager, nodeKeys, sender, true);
+
+    when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(false);
+    controller.onMessage(enrPacket, sender);
+
+    final Optional<DiscoveryPeer> maybePeer =
+        controller
+            .streamDiscoveredPeers()
+            .filter(p -> p.getId().equals(sender.getId()))
+            .findFirst();
+
+    assertThat(maybePeer.isPresent()).isTrue();
+    assertThat(maybePeer.get().getForkId().isPresent()).isTrue();
+    verify(controller, never()).connectOnRlpxLayer(eq(maybePeer.get()));
+  }
+
+  @Test
+  public void shouldStillCallConnectIfNoForkIdSent() {
+    final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(1);
+    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
+    final DiscoveryPeer sender = peers.get(0);
+    final Packet enrPacket =
+        prepareForForkIdCheck(mock(ForkIdManager.class), nodeKeys, sender, false);
+
+    controller.onMessage(enrPacket, sender);
+
+    final Optional<DiscoveryPeer> maybePeer =
+        controller
+            .streamDiscoveredPeers()
+            .filter(p -> p.getId().equals(sender.getId()))
+            .findFirst();
+
+    assertThat(maybePeer.isPresent()).isTrue();
+    assertThat(maybePeer.get().getForkId().isPresent()).isFalse();
+    verify(controller, times(1)).connectOnRlpxLayer(eq(maybePeer.get()));
+  }
+
+  @NotNull
+  private Packet prepareForForkIdCheck(
+      final ForkIdManager forkIdManager,
+      final List<NodeKey> nodeKeys,
+      final DiscoveryPeer sender,
+      final boolean sendForkId) {
+    final HashMap<PacketType, Bytes> packetTypeBytesHashMap = new HashMap<>();
+    final OutboundMessageHandler outboundMessageHandler =
+        (dp, pa) -> packetTypeBytesHashMap.put(pa.getType(), pa.getHash());
+    final Cache<Bytes, Packet> enrs =
+        CacheBuilder.newBuilder()
+            .maximumSize(50)
+            .expireAfterWrite(1, TimeUnit.NANOSECONDS)
+            .ticker(
+                new Ticker() {
+                  int tickCount = 1;
+
+                  @Override
+                  public long read() {
+                    return tickCount += 10;
+                  }
+                })
+            .build();
+    controller =
+        getControllerBuilder()
+            .peers(sender)
+            .outboundMessageHandler(outboundMessageHandler)
+            .enrCache(enrs)
+            .filterOnForkId(true)
+            .forkIdManager(forkIdManager)
+            .build();
+
+    // Mock the creation of the PING packet, so that we can control the hash, which gets validated
+    // when receiving the PONG.
+    final PingPacketData mockPing =
+        PingPacketData.create(
+            Optional.ofNullable(localPeer.getEndpoint()), sender.getEndpoint(), UInt64.ONE);
+    final Packet mockPacket = Packet.create(PacketType.PING, mockPing, nodeKeys.get(0));
+    mockPingPacketCreation(mockPacket);
+
+    controller.start();
+
+    final PongPacketData pongRequestPacketData =
+        PongPacketData.create(localPeer.getEndpoint(), mockPacket.getHash(), UInt64.ONE);
+
+    final Packet pongPacket =
+        Packet.create(PacketType.PONG, pongRequestPacketData, nodeKeys.get(0));
+
+    controller.onMessage(pongPacket, sender);
+
+    final NodeRecord nodeRecord = createNodeRecord(nodeKeys.get(0), sendForkId);
+
+    final ENRResponsePacketData enrResponsePacketData =
+        ENRResponsePacketData.create(
+            packetTypeBytesHashMap.get(PacketType.ENR_REQUEST), nodeRecord);
+    final Packet enrPacket =
+        Packet.create(PacketType.ENR_RESPONSE, enrResponsePacketData, nodeKeys.get(0));
+    return enrPacket;
+  }
+
+  private NodeRecord createNodeRecord(final NodeKey nodeKey, final boolean sendForkId) {
+    final UInt64 sequenceNumber = UInt64.ZERO.add(1);
+    final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+    final Bytes addressBytes = Bytes.of(InetAddresses.forString("127.0.0.1").getAddress());
+
+    final NodeRecord nodeRecord;
+    if (sendForkId) {
+      final Bytes forkIdHash = Bytes.fromHexString("0xfc64ec04");
+      final Bytes forkIdNext = Bytes.fromHexString("118c30");
+      final ArrayList<Bytes> forkIdBytesList = new ArrayList<>();
+      forkIdBytesList.add(0, forkIdHash);
+      forkIdBytesList.add(1, forkIdNext);
+      nodeRecord =
+          nodeRecordFactory.createFromValues(
+              sequenceNumber,
+              new EnrField(EnrField.ID, IdentitySchema.V4),
+              new EnrField(
+                  EnrField.PKEY_SECP256K1,
+                  signatureAlgorithm.compressPublicKey(nodeKey.getPublicKey())),
+              new EnrField(EnrField.IP_V4, addressBytes),
+              new EnrField(EnrField.TCP, 7890),
+              new EnrField(EnrField.UDP, 4871),
+              new EnrField("eth", Collections.singletonList(forkIdBytesList)));
+    } else {
+      nodeRecord =
+          nodeRecordFactory.createFromValues(
+              sequenceNumber,
+              new EnrField(EnrField.ID, IdentitySchema.V4),
+              new EnrField(
+                  EnrField.PKEY_SECP256K1,
+                  signatureAlgorithm.compressPublicKey(nodeKey.getPublicKey())),
+              new EnrField(EnrField.IP_V4, addressBytes),
+              new EnrField(EnrField.TCP, 7890),
+              new EnrField(EnrField.UDP, 4871));
+    }
+    nodeRecord.setSignature(
+        nodeKey
+            .sign(Hash.keccak256(nodeRecord.serializeNoSignature()))
+            .encodedBytes()
+            .slice(0, 64));
+    return nodeRecord;
+  }
+
   private static Packet mockPingPacket(final DiscoveryPeer from, final DiscoveryPeer to) {
     final Packet packet = mock(Packet.class);
 
@@ -1539,6 +1719,8 @@ public class PeerDiscoveryControllerTest {
 
     private Cache<Bytes, Packet> enrs =
         CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.SECONDS).build();
+    private boolean filterOnForkId = false;
+    private ForkIdManager forkIdManager;
 
     public static ControllerBuilder create() {
       return new ControllerBuilder();
@@ -1589,6 +1771,16 @@ public class PeerDiscoveryControllerTest {
       return this;
     }
 
+    public ControllerBuilder filterOnForkId(final boolean filterOnForkId) {
+      this.filterOnForkId = filterOnForkId;
+      return this;
+    }
+
+    public ControllerBuilder forkIdManager(final ForkIdManager forkIdManager) {
+      this.forkIdManager = forkIdManager;
+      return this;
+    }
+
     PeerDiscoveryController build() {
       checkNotNull(nodeKey);
       if (localPeer == null) {
@@ -1611,6 +1803,8 @@ public class PeerDiscoveryControllerTest {
               .peerPermissions(peerPermissions)
               .metricsSystem(new NoOpMetricsSystem())
               .cacheForEnrRequests(enrs)
+              .forkIdManager(forkIdManager == null ? mock(ForkIdManager.class) : forkIdManager)
+              .filterOnEnrForkId(filterOnForkId)
               .rlpxAgent(mock(RlpxAgent.class))
               .build());
     }

@@ -52,14 +52,12 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
 import org.assertj.core.api.Assertions;
@@ -95,12 +93,11 @@ public final class DefaultP2PNetworkTest {
   public void before() {
     lenient().when(rlpxAgent.start()).thenReturn(CompletableFuture.completedFuture(30303));
     lenient().when(rlpxAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
+    lenient().when(discoveryAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
+    lenient().when(discoveryAgent.checkForkId(any())).thenReturn(true);
     lenient()
         .when(discoveryAgent.start(anyInt()))
-        .thenAnswer(
-            invocation ->
-                CompletableFuture.completedFuture(invocation.getArgument(0, Integer.class)));
-    lenient().when(discoveryAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));
+        .thenReturn(CompletableFuture.completedFuture(Integer.valueOf(30301)));
   }
 
   @Test
@@ -295,7 +292,8 @@ public final class DefaultP2PNetworkTest {
     network.attemptPeerConnections();
     verify(rlpxAgent, times(1)).connect(peerStreamCaptor.capture());
 
-    List<? extends Peer> capturedPeers = peerStreamCaptor.getValue().collect(Collectors.toList());
+    final List<? extends Peer> capturedPeers =
+        peerStreamCaptor.getValue().collect(Collectors.toList());
     assertThat(capturedPeers.contains(discoPeer)).isTrue();
     assertThat(capturedPeers.size()).isEqualTo(1);
   }
@@ -311,7 +309,8 @@ public final class DefaultP2PNetworkTest {
     network.attemptPeerConnections();
     verify(rlpxAgent, times(1)).connect(peerStreamCaptor.capture());
 
-    List<? extends Peer> capturedPeers = peerStreamCaptor.getValue().collect(Collectors.toList());
+    final List<? extends Peer> capturedPeers =
+        peerStreamCaptor.getValue().collect(Collectors.toList());
     assertThat(capturedPeers.contains(discoPeer)).isFalse();
     assertThat(capturedPeers.size()).isEqualTo(0);
   }
@@ -331,7 +330,8 @@ public final class DefaultP2PNetworkTest {
     network.attemptPeerConnections();
     verify(rlpxAgent, times(1)).connect(peerStreamCaptor.capture());
 
-    List<? extends Peer> capturedPeers = peerStreamCaptor.getValue().collect(Collectors.toList());
+    final List<? extends Peer> capturedPeers =
+        peerStreamCaptor.getValue().collect(Collectors.toList());
     assertThat(capturedPeers.size()).isEqualTo(3);
     assertThat(capturedPeers.get(0)).isEqualTo(discoPeers.get(1));
     assertThat(capturedPeers.get(1)).isEqualTo(discoPeers.get(0));
@@ -349,7 +349,7 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void shouldNotStartDnsDiscoveryWhenDnsURLIsNotConfigured() {
-    DefaultP2PNetwork testClass = network();
+    final DefaultP2PNetwork testClass = network();
     testClass.start();
     // ensure DnsDaemon is NOT present:
     assertThat(testClass.getDnsDaemon()).isNotPresent();
@@ -358,15 +358,15 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void shouldStartDnsDiscoveryWhenDnsURLIsConfigured() {
     // create a discovery config with a dns config
-    DiscoveryConfiguration disco =
+    final DiscoveryConfiguration disco =
         DiscoveryConfiguration.create().setDnsDiscoveryURL("enrtree://mock@localhost");
 
     // spy on config to return dns discovery config:
-    NetworkingConfiguration dnsConfig =
+    final NetworkingConfiguration dnsConfig =
         when(spy(config).getDiscovery()).thenReturn(disco).getMock();
 
     // spy on DefaultP2PNetwork
-    DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
+    final DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
 
     testClass.start();
     assertThat(testClass.getDnsDaemon()).isPresent();
@@ -375,15 +375,15 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void shouldUseDnsServerOverrideIfPresent() {
     // create a discovery config with a dns config
-    DiscoveryConfiguration disco =
+    final DiscoveryConfiguration disco =
         DiscoveryConfiguration.create().setDnsDiscoveryURL("enrtree://mock@localhost");
 
     // spy on config to return dns discovery config:
-    NetworkingConfiguration dnsConfig = spy(config);
+    final NetworkingConfiguration dnsConfig = spy(config);
     doReturn(disco).when(dnsConfig).getDiscovery();
     doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
 
-    DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
+    final DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
     testClass.start();
 
     // ensure we used the dns server override config when building DNSDaemon:
@@ -407,7 +407,6 @@ public final class DefaultP2PNetworkTest {
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
         .supportedCapabilities(Capability.create("eth", 63))
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY));
+        .storageProvider(new InMemoryKeyValueStorageProvider());
   }
 }
