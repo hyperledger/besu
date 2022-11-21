@@ -322,7 +322,7 @@ public class BackwardSyncContext {
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE);
-    if (optResult.getYield().isPresent()) {
+    if (optResult.isSuccessful()) {
       traceLambda(LOG, "Block {} was validated, going to import it", block::toLogString);
       optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()

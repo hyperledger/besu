@@ -96,7 +96,10 @@ public class BonsaiWorldStateArchiveTest {
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateArchive(
-            new BonsaiWorldStateKeyValueStorage(storageProvider), blockchain, Optional.of(512L));
+            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            blockchain,
+            Optional.of(512L),
+            false);
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getBlockHeader(eq(blockHeader.getHash()))).thenReturn(Optional.of(blockHeader));
