@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShandongGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.CreateOperation;
@@ -54,7 +55,7 @@ public class CreateOperationTest {
   private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
   private final MutableAccount mutableAccount = mock(MutableAccount.class);
   private final MutableAccount newMutableAccount = mock(MutableAccount.class);
-  private final CreateOperation operation = new CreateOperation(new ConstantinopleGasCalculator());
+  private final CreateOperation operation = new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
@@ -72,6 +73,7 @@ public class CreateOperationTest {
           );
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
 
+  private static final int SHANDONG_CREATE_GAS = 41240;
   @Test
   public void createFromMemoryMutationSafe() {
 
@@ -175,6 +177,62 @@ public class CreateOperationTest {
     assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
   }
 
+  @Test
+  public void shandongMaxInitCodeSizeCreate() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.valueOf(ShandongGasCalculator.MAX_INITCODE_SIZE);
+    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+    final MessageFrame messageFrame =
+        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(account.getNonce()).thenReturn(55L);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.shandong(EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    final MessageFrame createFrame = messageFrameStack.peek();
+    final ContractCreationProcessor ccp =
+        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+    ccp.process(createFrame, OperationTracer.NO_TRACING);
+
+    final Log log = createFrame.getLogs().get(0);
+    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
+    assertThat(calculatedTopic).isEqualTo(TOPIC);
+    assertThat(result.getGasCost()).isEqualTo(SHANDONG_CREATE_GAS);
+  }
+  @Test
+  public void shandongMaxInitCodeSizePlus1Create() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.valueOf(ShandongGasCalculator.MAX_INITCODE_SIZE+1);
+    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
+    final MessageFrame messageFrame =
+        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(account.getNonce()).thenReturn(55L);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.shandong(EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(result.getGasCost()).isEqualTo(SHANDONG_CREATE_GAS);
+  }
+
   @NotNull
   private MessageFrame testMemoryFrame(
       final UInt256 memoryOffset,
@@ -211,4 +269,5 @@ public class CreateOperationTest {
         memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     return messageFrame;
   }
+
 }

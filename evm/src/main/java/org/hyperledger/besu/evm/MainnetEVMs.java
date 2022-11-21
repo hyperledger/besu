@@ -430,6 +430,10 @@ public class MainnetEVMs {
     registry.put(new PrevRanDaoOperation(gasCalculator));
   }
 
+  public static EVM shandong(final EvmConfiguration evmConfiguration) {
+    return london(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
   public static EVM shandong(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     return shandong(new ShandongGasCalculator(), chainId, evmConfiguration);
   }
