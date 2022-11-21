@@ -20,6 +20,7 @@ import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
 
 import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryControl
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.TimerUtil;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.VertxTimerUtil;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatService;
@@ -38,7 +40,6 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.IntSupplier;
@@ -54,7 +55,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramPacket;
 import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +73,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
-      final Supplier<List<Bytes>> forkIdSupplier) {
+      final ForkIdManager forkIdManager,
+      final RlpxAgent rlpxAgent) {
     super(
         nodeKey,
         config,
@@ -81,7 +82,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         natService,
         metricsSystem,
         storageProvider,
-        forkIdSupplier);
+        forkIdManager,
+        rlpxAgent);
     checkArgument(vertx != null, "vertx instance cannot be null");
     this.vertx = vertx;
 

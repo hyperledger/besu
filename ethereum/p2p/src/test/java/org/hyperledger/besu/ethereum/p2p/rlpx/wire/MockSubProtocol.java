@@ -16,10 +16,16 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 public class MockSubProtocol {
   public static SubProtocol create() {
-    return create("eth");
+    return create("eth", 8);
   }
 
   public static SubProtocol create(final String name) {
+    final int messageSpace = 8;
+    return create(name, messageSpace);
+  }
+
+  public static SubProtocol create(final String name, final int messageSpace) {
+
     return new SubProtocol() {
       @Override
       public String getName() {
@@ -28,7 +34,7 @@ public class MockSubProtocol {
 
       @Override
       public int messageSpace(final int protocolVersion) {
-        return 8;
+        return messageSpace;
       }
 
       @Override

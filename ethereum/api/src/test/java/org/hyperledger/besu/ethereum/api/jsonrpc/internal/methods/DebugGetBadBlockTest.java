@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -92,8 +93,8 @@ public class DebugGetBadBlockTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions())
                     .setParentHash(parentBlock.getHash()));
 
-    badBlockManager.addBadBlock(badBlockWithTransaction);
-    badBlockManager.addBadBlock(badBlockWoTransaction);
+    badBlockManager.addBadBlock(badBlockWithTransaction, Optional.empty());
+    badBlockManager.addBadBlock(badBlockWoTransaction, Optional.empty());
 
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
