@@ -125,7 +125,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   }
 
   private long conservativelyEstimatedPivotBlock() {
-    long estimatedNextPivot =
+    final long estimatedNextPivot =
         syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
     return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
   }

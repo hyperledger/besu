@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -122,6 +123,7 @@ public class TestNode implements Closeable {
         new ProtocolContext(blockchain, worldStateArchive, null);
 
     final SyncState syncState = mock(SyncState.class);
+    final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
     when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
@@ -161,7 +163,7 @@ public class TestNode implements Closeable {
             ethContext,
             Collections.emptyList(),
             Optional.empty(),
-            false,
+            syncConfig,
             scheduler);
 
     final NetworkRunner networkRunner =
@@ -177,7 +179,8 @@ public class TestNode implements Closeable {
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
                         .storageProvider(new InMemoryKeyValueStorageProvider())
-                        .forkIdSupplier(() -> Collections.singletonList(Bytes.EMPTY))
+                        .blockchain(blockchain)
+                        .forks(Collections.emptyList())
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();
