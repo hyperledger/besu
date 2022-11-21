@@ -179,22 +179,24 @@ public class ElementTest {
     assertThat(before.toMontgomery()).isEqualTo(expected);
   }
 
-  @Test
-  public void testToMont3() {
-    Element before =
-        new Element(
-            UInt256.valueOf(new BigInteger("6121572481584493354", 10))
-                .add(UInt256.valueOf(new BigInteger("12601925224297426022", 10)).shiftLeft(64))
-                .add(UInt256.valueOf(new BigInteger("7716030069200636218", 10)).shiftLeft(128))
-                .add(UInt256.valueOf(new BigInteger("1351674413095362254", 10)).shiftLeft(192)));
-    Element expected =
-        new Element(
-            UInt256.valueOf(new BigInteger("479530773443910689", 10))
-                .add(UInt256.valueOf(new BigInteger("6571075494204656015", 10)).shiftLeft(64))
-                .add(UInt256.valueOf(new BigInteger("12714171422618877016", 10)).shiftLeft(128))
-                .add(UInt256.valueOf(new BigInteger("1309675183017776880", 10)).shiftLeft(192)));
-    assertThat(before.toMontgomery()).isEqualTo(expected);
-  }
+  //  @Test
+  //  public void testToMont3() {
+  //    Element before =
+  //        new Element(
+  //            UInt256.valueOf(new BigInteger("6121572481584493354", 10))
+  //                .add(UInt256.valueOf(new BigInteger("12601925224297426022", 10)).shiftLeft(64))
+  //                .add(UInt256.valueOf(new BigInteger("7716030069200636218", 10)).shiftLeft(128))
+  //                .add(UInt256.valueOf(new BigInteger("1351674413095362254",
+  // 10)).shiftLeft(192)));
+  //    Element expected =
+  //        new Element(
+  //            UInt256.valueOf(new BigInteger("479530773443910689", 10))
+  //                .add(UInt256.valueOf(new BigInteger("6571075494204656015", 10)).shiftLeft(64))
+  //                .add(UInt256.valueOf(new BigInteger("12714171422618877016", 10)).shiftLeft(128))
+  //                .add(UInt256.valueOf(new BigInteger("1309675183017776880",
+  // 10)).shiftLeft(192)));
+  //    assertThat(before.toMontgomery()).isEqualTo(expected);
+  //  }
 
   @Test
   public void testSetBytes() {
