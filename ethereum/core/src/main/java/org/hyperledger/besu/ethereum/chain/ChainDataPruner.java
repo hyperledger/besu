@@ -42,6 +42,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
   private static final Bytes FORK_BLOCKS_PREFIX = Bytes.of(2);
 
+  private static boolean pruningEnabled = false;
   private final BlockchainStorage blockchainStorage;
   private final KeyValueStorage prunerStorage;
   private final long blocksToRetain;
@@ -57,6 +58,14 @@ public class ChainDataPruner implements BlockAddedObserver {
     this.prunerStorage = prunerStorage;
     this.blocksToRetain = blocksToRetain;
     this.pruningFrequency = pruningFrequency;
+  }
+
+  public static void enablePruning() {
+    pruningEnabled = true;
+  }
+
+  public static boolean isPruningEnabled() {
+    return pruningEnabled;
   }
 
   @Override

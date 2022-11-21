@@ -321,6 +321,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString());
 
     if (isChainDataPruningEnabled) {
+      ChainDataPruner.enablePruning();
       ChainDataPruner chainDataPruner =
           new ChainDataPruner(
               blockchainStorage,
