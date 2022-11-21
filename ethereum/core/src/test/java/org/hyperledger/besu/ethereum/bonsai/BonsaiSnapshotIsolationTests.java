@@ -17,105 +17,21 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 
-import org.hyperledger.besu.config.GenesisAllocation;
-import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SECPPrivateKey;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.BesuConfiguration;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.time.Clock;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BonsaiSnapshotIsolationTests {
-
-  private BonsaiWorldStateArchive archive;
-  private ProtocolContext protocolContext;
-  final Function<String, KeyPair> asKeyPair =
-      key ->
-          SignatureAlgorithmFactory.getInstance()
-              .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
-  private final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(GenesisConfigFile.development().getConfigOptions());
-  private final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
-  private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
-  private final AbstractPendingTransactionsSorter sorter =
-      new GasPricePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build(),
-          Clock.systemUTC(),
-          new NoOpMetricsSystem(),
-          blockchain::getChainHeadHeader);
-
-  private final List<GenesisAllocation> accounts =
-      GenesisConfigFile.development()
-          .streamAllocations()
-          .filter(ga -> ga.getPrivateKey().isPresent())
-          .collect(Collectors.toList());
-
-  KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
-
-  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
-
-  @Before
-  public void createStorage() {
-    //    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    archive = new BonsaiWorldStateArchive(createKeyValueStorageProvider(), blockchain);
-    var ws = archive.getMutable();
-    genesisState.writeStateTo(ws);
-    ws.persist(blockchain.getChainHeadHeader());
-    protocolContext = new ProtocolContext(blockchain, archive, null);
-  }
+public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
 
   @Test
   public void testIsolatedFromHead_behindHead() {
@@ -391,133 +307,5 @@ public class BonsaiSnapshotIsolationTests {
     }
 
     assertThat(head.get(testAddress)).isNull();
-  }
-
-  private Transaction burnTransaction(final KeyPair sender, final Long nonce, final Address to) {
-    return new TransactionTestFixture()
-        .sender(Address.extract(Hash.hash(sender.getPublicKey().getEncodedBytes())))
-        .to(Optional.of(to))
-        .value(Wei.of(1_000_000_000_000_000_000L))
-        .gasLimit(21_000L)
-        .nonce(nonce)
-        .createTransaction(sender);
-  }
-
-  private Block forTransactions(final List<Transaction> transactions) {
-    return forTransactions(transactions, blockchain.getChainHeadHeader());
-  }
-
-  private Block forTransactions(final List<Transaction> transactions, final BlockHeader forHeader) {
-    return TestBlockCreator.forHeader(forHeader, protocolContext, protocolSchedule, sorter)
-        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
-        .getBlock();
-  }
-
-  private BlockProcessingResult executeBlock(final MutableWorldState ws, final Block block) {
-    var res =
-        protocolSchedule
-            .getByBlockNumber(0)
-            .getBlockProcessor()
-            .processBlock(blockchain, ws, block);
-    blockchain.appendBlock(block, res.getReceipts());
-    return res;
-  }
-
-  static class TestBlockCreator extends AbstractBlockCreator {
-    private TestBlockCreator(
-        final Address coinbase,
-        final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final Supplier<Optional<Long>> targetGasLimitSupplier,
-        final ExtraDataCalculator extraDataCalculator,
-        final AbstractPendingTransactionsSorter pendingTransactions,
-        final ProtocolContext protocolContext,
-        final ProtocolSchedule protocolSchedule,
-        final Wei minTransactionGasPrice,
-        final Double minBlockOccupancyRatio,
-        final BlockHeader parentHeader) {
-      super(
-          coinbase,
-          miningBeneficiaryCalculator,
-          targetGasLimitSupplier,
-          extraDataCalculator,
-          pendingTransactions,
-          protocolContext,
-          protocolSchedule,
-          minTransactionGasPrice,
-          minBlockOccupancyRatio,
-          parentHeader);
-    }
-
-    static TestBlockCreator forHeader(
-        final BlockHeader parentHeader,
-        final ProtocolContext protocolContext,
-        final ProtocolSchedule protocolSchedule,
-        final AbstractPendingTransactionsSorter sorter) {
-      return new TestBlockCreator(
-          Address.ZERO,
-          __ -> Address.ZERO,
-          () -> Optional.of(30_000_000L),
-          __ -> Bytes.fromHexString("deadbeef"),
-          sorter,
-          protocolContext,
-          protocolSchedule,
-          Wei.of(1L),
-          0d,
-          parentHeader);
-    }
-
-    @Override
-    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
-      return BlockHeaderBuilder.create()
-          .difficulty(Difficulty.ZERO)
-          .mixHash(Hash.ZERO)
-          .populateFrom(sealableBlockHeader)
-          .nonce(0L)
-          .blockHeaderFunctions(blockHeaderFunctions)
-          .buildBlockHeader();
-    }
-  }
-
-  // storage provider which uses a temporary directory based rocksdb
-  private StorageProvider createKeyValueStorageProvider() {
-    try {
-      tempData.create();
-      return new KeyValueStorageProviderBuilder()
-          .withStorageFactory(
-              new RocksDBKeyValueStorageFactory(
-                  () ->
-                      new RocksDBFactoryConfiguration(
-                          1024 /* MAX_OPEN_FILES*/,
-                          4 /*MAX_BACKGROUND_COMPACTIONS*/,
-                          4 /*BACKGROUND_THREAD_COUNT*/,
-                          8388608 /*CACHE_CAPACITY*/,
-                          false),
-                  Arrays.asList(KeyValueSegmentIdentifier.values()),
-                  2,
-                  RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-          .withCommonConfiguration(
-              new BesuConfiguration() {
-
-                @Override
-                public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
-                      .toPath();
-                }
-
-                @Override
-                public Path getDataPath() {
-                  return tempData.getRoot().toPath();
-                }
-
-                @Override
-                public int getDatabaseVersion() {
-                  return 2;
-                }
-              })
-          .withMetricsSystem(new NoOpMetricsSystem())
-          .build();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 }
