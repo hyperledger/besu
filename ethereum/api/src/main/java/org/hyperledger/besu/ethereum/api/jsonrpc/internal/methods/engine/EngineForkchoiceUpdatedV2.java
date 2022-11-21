@@ -114,6 +114,14 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
+    // TODO Withdrawals TODO SLD validate withdrawals, tidy up as some payloadAttribute validation
+    // already in mergeCoordinator
+    boolean payloadAttributesAreValid =
+        maybePayloadAttributes.map(this::payloadAttributesAreValid).orElse(true);
+    if (!payloadAttributesAreValid) {
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES);
+    }
+
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -144,9 +152,13 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                         payloadAttributes.getTimestamp(),
                         payloadAttributes.getPrevRandao(),
                         payloadAttributes.getSuggestedFeeRecipient(),
-                        payloadAttributes.getWithdrawals().stream()
-                            .map(WithdrawalParameter::toWithdrawal)
-                            .collect(Collectors.toList()))));
+                        // TODO Withdrawals TODO SLD should be null -> emptyList? or
+                        // Optional<List<Withdrawals>>?
+                        payloadAttributes.getWithdrawals() == null
+                            ? null
+                            : payloadAttributes.getWithdrawals().stream()
+                                .map(WithdrawalParameter::toWithdrawal)
+                                .collect(Collectors.toList()))));
 
     if (!result.isValid()) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -162,10 +174,12 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    Optional.of(
-                        payloadAttributes.getWithdrawals().stream()
-                            .map(WithdrawalParameter::toWithdrawal)
-                            .collect(Collectors.toList()))));
+                    Optional.ofNullable(payloadAttributes.getWithdrawals())
+                        .map(
+                            w ->
+                                w.stream()
+                                    .map(WithdrawalParameter::toWithdrawal)
+                                    .collect(Collectors.toList()))));
 
     payloadId.ifPresent(
         pid ->
@@ -183,6 +197,12 @@ public class EngineForkchoiceUpdatedV2 extends ExecutionEngineJsonRpcMethod {
             result.getNewHead().map(BlockHeader::getHash).orElse(null),
             payloadId.orElse(null),
             Optional.empty()));
+  }
+
+  private boolean payloadAttributesAreValid(
+      final EnginePayloadAttributesParameterV2 payloadAttributes) {
+    // if pre-shanghai, must have null withdrawals
+    return payloadAttributes.getWithdrawals() == null;
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
