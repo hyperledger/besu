@@ -45,6 +45,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
+import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
@@ -174,10 +175,11 @@ public class RocksDBColumnarKeyValueStorage
   private BlockBasedTableConfig createBlockBasedTableConfigHighSpec() {
     final LRUCache cache = new LRUCache(ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC);
     return new BlockBasedTableConfig()
-        .setBlockCache(cache)
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setOptimizeFiltersForMemory(true)
-        .setCacheIndexAndFilterBlocks(true)
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false))
+        .setPartitionFilters(true)
+        .setCacheIndexAndFilterBlocks(false)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
@@ -185,10 +187,11 @@ public class RocksDBColumnarKeyValueStorage
       final RocksDBConfiguration config) {
     final LRUCache cache = new LRUCache(config.getCacheCapacity());
     return new BlockBasedTableConfig()
-        .setBlockCache(cache)
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setOptimizeFiltersForMemory(true)
-        .setCacheIndexAndFilterBlocks(true)
+        .setBlockCache(cache)
+        .setFilterPolicy(new BloomFilter(10, false))
+        .setPartitionFilters(true)
+        .setCacheIndexAndFilterBlocks(false)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
