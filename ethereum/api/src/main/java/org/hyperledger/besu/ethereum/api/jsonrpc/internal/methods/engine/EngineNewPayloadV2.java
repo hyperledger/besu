@@ -118,10 +118,11 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
           INVALID,
           "Failed to decode transactions from block parameter");
     }
-    final List<Withdrawal> withdrawals =
-        blockParam.getWithdrawals().stream()
-            .map(WithdrawalParameter::toWithdrawal)
-            .collect(Collectors.toList());
+    final Optional<List<Withdrawal>> maybeWithdrawals =
+        Optional.ofNullable(blockParam.getWithdrawals())
+            .map(
+                w ->
+                    w.stream().map(WithdrawalParameter::toWithdrawal).collect(Collectors.toList()));
 
     if (blockParam.getExtraData() == null) {
       return respondWithInvalid(
@@ -150,7 +151,7 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
             blockParam.getBaseFeePerGas(),
             blockParam.getPrevRandao(),
             0,
-            BodyValidation.withdrawalsRoot(withdrawals),
+            maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(Hash.EMPTY),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -193,7 +194,7 @@ public class EngineNewPayloadV2 extends ExecutionEngineJsonRpcMethod {
 
     final var block =
         new Block(
-            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), Optional.of(withdrawals)));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
 
     if (parentHeader.isEmpty()) {
       debugLambda(
