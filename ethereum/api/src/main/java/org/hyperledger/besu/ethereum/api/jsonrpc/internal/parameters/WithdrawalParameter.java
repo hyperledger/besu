@@ -53,8 +53,8 @@ public class WithdrawalParameter {
 
   public static WithdrawalParameter fromWithdrawal(final Withdrawal withdrawal) {
     return new WithdrawalParameter(
-        withdrawal.getIndex().toShortHexString(),
-        withdrawal.getValidatorIndex().toShortHexString(),
+        withdrawal.getIndex().toBytes().toQuantityHexString(),
+        withdrawal.getValidatorIndex().toBytes().toQuantityHexString(),
         withdrawal.getAddress().toString(),
         withdrawal.getAmount().toShortHexString());
   }
