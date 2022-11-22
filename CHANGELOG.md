@@ -21,7 +21,7 @@
 - Add field `type` to Transaction receipt object (eth_getTransactionReceipt) [#4505](https://github.com/hyperledger/besu/issues/4505)
 
 ### Bug Fixes
-- Restore updating chain head during backward sync [#4688](https://github.com/hyperledger/besu/pull/4688)
+- Restore updating chain head and finalized block during backward sync [#4718](https://github.com/hyperledger/besu/pull/4718)
 
 ### Download Links
 
