@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,11 +35,15 @@ import java.util.function.Function;
 
 public class KeyValueStorageProvider implements StorageProvider {
 
-  private final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
+  public static final boolean SEGMENT_ISOLATION_SUPPORTED = true;
+  public static final boolean SNAPSHOT_ISOLATION_UNSUPPORTED = false;
+
+  protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final KeyValueStorage privateWorldStatePreimageStorage;
   private final boolean isWorldStateIterable;
-  private final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
+  private final boolean isWorldStateSnappable;
+  protected final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
@@ -48,17 +53,20 @@ public class KeyValueStorageProvider implements StorageProvider {
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
+    this.isWorldStateSnappable = SNAPSHOT_ISOLATION_UNSUPPORTED;
   }
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final KeyValueStorage privateWorldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
+      final boolean segmentIsolationSupported,
+      final boolean storageSnapshotIsolationSupported) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
+    this.isWorldStateSnappable = storageSnapshotIsolationSupported;
   }
 
   @Override
@@ -89,6 +97,12 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
+  public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
+      final SegmentIdentifier segment) {
+    return (SnappableKeyValueStorage) getStorageBySegmentIdentifier(segment);
+  }
+
+  @Override
   public WorldStateStorage createPrivateWorldStateStorage() {
     return new WorldStateKeyValueStorage(
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.GOQUORUM_PRIVATE_WORLD_STATE));
@@ -108,6 +122,11 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public boolean isWorldStateIterable() {
     return isWorldStateIterable;
+  }
+
+  @Override
+  public boolean isWorldStateSnappable() {
+    return isWorldStateSnappable;
   }
 
   @Override

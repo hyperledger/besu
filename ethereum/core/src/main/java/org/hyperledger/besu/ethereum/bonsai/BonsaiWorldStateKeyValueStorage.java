@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
-public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
+public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
   public static final byte[] WORLD_ROOT_HASH_KEY = "worldRoot".getBytes(StandardCharsets.UTF_8);
 
   public static final byte[] WORLD_BLOCK_HASH_KEY =
@@ -235,7 +235,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Updater updater() {
+  public BonsaiUpdater updater() {
     return new Updater(
         accountStorage.startTransaction(),
         codeStorage.startTransaction(),
@@ -268,7 +268,29 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     this.maybeFallbackNodeFinder = maybeFallbackNodeFinder;
   }
 
-  public static class Updater implements WorldStateStorage.Updater {
+  @Override
+  public void close() throws Exception {
+    // no-op
+  }
+
+  public interface BonsaiUpdater extends WorldStateStorage.Updater {
+    BonsaiUpdater removeCode(final Hash accountHash);
+
+    BonsaiUpdater removeAccountInfoState(final Hash accountHash);
+
+    BonsaiUpdater putAccountInfoState(final Hash accountHash, final Bytes accountValue);
+
+    BonsaiUpdater putStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash, final Bytes storage);
+
+    void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash);
+
+    KeyValueStorageTransaction getTrieBranchStorageTransaction();
+
+    KeyValueStorageTransaction getTrieLogStorageTransaction();
+  }
+
+  public static class Updater implements BonsaiUpdater {
 
     private final KeyValueStorageTransaction accountStorageTransaction;
     private final KeyValueStorageTransaction codeStorageTransaction;
@@ -290,13 +312,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       this.trieLogStorageTransaction = trieLogStorageTransaction;
     }
 
-    public Updater removeCode(final Hash accountHash) {
+    @Override
+    public BonsaiUpdater removeCode(final Hash accountHash) {
       codeStorageTransaction.remove(accountHash.toArrayUnsafe());
       return this;
     }
 
     @Override
-    public Updater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
+    public BonsaiUpdater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;
@@ -305,12 +328,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    public Updater removeAccountInfoState(final Hash accountHash) {
+    @Override
+    public BonsaiUpdater removeAccountInfoState(final Hash accountHash) {
       accountStorageTransaction.remove(accountHash.toArrayUnsafe());
       return this;
     }
 
-    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
+    @Override
+    public BonsaiUpdater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
       if (accountValue.size() == 0) {
         // Don't save empty values
         return this;
@@ -329,7 +354,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public Updater putAccountStateTrieNode(
+    public BonsaiUpdater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
@@ -340,13 +365,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public Updater removeAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+    public BonsaiUpdater removeAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
       trieBranchStorageTransaction.remove(location.toArrayUnsafe());
       return this;
     }
 
     @Override
-    public Updater putAccountStorageTrieNode(
+    public BonsaiUpdater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
@@ -357,21 +382,26 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    public Updater putStorageValueBySlotHash(
+    @Override
+    public synchronized BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
       storageStorageTransaction.put(
           Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
       return this;
     }
 
-    public void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+    @Override
+    public synchronized void removeStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash) {
       storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 
+    @Override
     public KeyValueStorageTransaction getTrieBranchStorageTransaction() {
       return trieBranchStorageTransaction;
     }
 
+    @Override
     public KeyValueStorageTransaction getTrieLogStorageTransaction() {
       return trieLogStorageTransaction;
     }

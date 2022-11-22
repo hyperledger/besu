@@ -18,7 +18,7 @@ import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator.Result;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
@@ -44,6 +44,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
     super(miningCoordinator, mergeCoordinator);
     this.miningCoordinator = miningCoordinator;
     this.mergeCoordinator = (MergeMiningCoordinator) mergeCoordinator;
+  }
+
+  public MergeMiningCoordinator getMergeCoordinator() {
+    return mergeCoordinator;
   }
 
   @Override
@@ -127,18 +131,18 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   public PayloadIdentifier preparePayload(
       final BlockHeader parentHeader,
       final Long timestamp,
-      final Bytes32 random,
+      final Bytes32 prevRandao,
       final Address feeRecipient) {
-    return mergeCoordinator.preparePayload(parentHeader, timestamp, random, feeRecipient);
+    return mergeCoordinator.preparePayload(parentHeader, timestamp, prevRandao, feeRecipient);
   }
 
   @Override
-  public Result rememberBlock(final Block block) {
+  public BlockProcessingResult rememberBlock(final Block block) {
     return mergeCoordinator.rememberBlock(block);
   }
 
   @Override
-  public Result validateBlock(final Block block) {
+  public BlockProcessingResult validateBlock(final Block block) {
     return mergeCoordinator.validateBlock(block);
   }
 
@@ -200,8 +204,8 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void addBadBlock(final Block block) {
-    mergeCoordinator.addBadBlock(block);
+  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
+    mergeCoordinator.addBadBlock(block, maybeCause);
   }
 
   @Override
@@ -212,5 +216,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public Optional<Hash> getLatestValidHashOfBadBlock(final Hash blockHash) {
     return mergeCoordinator.getLatestValidHashOfBadBlock(blockHash);
+  }
+
+  @Override
+  public void finalizeProposalById(final PayloadIdentifier payloadId) {
+    mergeCoordinator.finalizeProposalById(payloadId);
   }
 }

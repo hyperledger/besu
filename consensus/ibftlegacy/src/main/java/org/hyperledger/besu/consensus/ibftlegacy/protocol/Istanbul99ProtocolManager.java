@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -45,7 +46,7 @@ public class Istanbul99ProtocolManager extends EthProtocolManager {
       final EthMessages ethMessages,
       final EthContext ethContext,
       final List<PeerValidator> peerValidators,
-      final boolean fastSyncEnabled,
+      final SynchronizerConfiguration synchronizerConfiguration,
       final EthScheduler scheduler) {
     super(
         blockchain,
@@ -58,7 +59,7 @@ public class Istanbul99ProtocolManager extends EthProtocolManager {
         ethContext,
         peerValidators,
         Optional.empty(),
-        fastSyncEnabled,
+        synchronizerConfiguration,
         scheduler);
   }
 

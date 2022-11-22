@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,6 +134,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 buildPluginContext(
                     node, storageService, securityModuleService, commonPluginConfiguration));
 
+    GlobalOpenTelemetry.resetForTest();
     final ObservableMetricsSystem metricsSystem =
         MetricsSystemFactory.create(node.getMetricsConfiguration());
     final List<EnodeURL> bootnodes =
@@ -218,7 +220,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .besuPluginContext(new BesuPluginContextImpl())
         .autoLogBloomCaching(false)
         .storageProvider(storageProvider)
-        .forkIdSupplier(() -> besuController.getProtocolManager().getForkIdAsBytesList())
         .rpcEndpointService(new RpcEndpointServiceImpl());
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
 

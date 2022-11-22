@@ -1,13 +1,13 @@
 {
-  "request": "{account { balance } }",
+  "request": "{ pending { account { balance } } }",
   "response": {
     "errors": [
       {
-        "message": "Validation error of type MissingFieldArgument: Missing field argument address @ 'account'",
+        "message": "Validation error (MissingFieldArgument@[pending/account]) : Missing field argument 'address'",
         "locations": [
           {
             "line": 1,
-            "column": 2
+            "column": 13
           }
         ],
         "extensions": {

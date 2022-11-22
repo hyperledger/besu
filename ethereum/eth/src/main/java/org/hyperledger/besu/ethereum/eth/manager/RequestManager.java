@@ -36,7 +36,8 @@ import org.slf4j.LoggerFactory;
 public class RequestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
-  private final AtomicLong requestIdCounter = new AtomicLong(0);
+  private final AtomicLong requestIdCounter =
+      new AtomicLong(1); // some clients have issues encoding zero
   private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
   private final boolean supportsRequestId;
@@ -79,12 +80,10 @@ public class RequestManager {
         Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
             .ifPresentOrElse(
                 responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
-                // disconnect on incorrect requestIds
-                () -> {
-                  LOG.debug(
-                      "Request ID incorrect (BREACH_OF_PROTOCOL), disconnecting peer {}", peer);
-                  peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
-                });
+                // Consider incorrect requestIds to be a useless response; too
+                // many of these and we will disconnect.
+                () -> peer.recordUselessResponse("Request ID incorrect"));
+
       } else {
         // otherwise iterate through all of them
         streams.forEach(stream -> stream.processMessage(ethMessage.getData()));

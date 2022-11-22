@@ -204,7 +204,9 @@ public class RetestethContext {
     final EthContext ethContext = new EthContext(ethPeers, new EthMessages(), ethScheduler);
 
     final TransactionPoolConfiguration transactionPoolConfiguration =
-        ImmutableTransactionPoolConfiguration.builder().build();
+        ImmutableTransactionPoolConfiguration.builder()
+            .txPoolLimitByAccountPercentage(0.004f)
+            .build();
 
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -213,7 +215,7 @@ public class RetestethContext {
             ethContext,
             retestethClock,
             metricsSystem,
-            syncState::isInitialSyncPhaseDone,
+            syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             transactionPoolConfiguration);
 

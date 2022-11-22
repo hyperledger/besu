@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
@@ -41,6 +40,14 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.Utils;
+import org.web3j.abi.datatypes.Bool;
+import org.web3j.abi.datatypes.DynamicArray;
+import org.web3j.abi.datatypes.DynamicBytes;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.Type;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.besu.Besu;
@@ -101,8 +108,6 @@ public class PrivacyRequestFactory {
 
   public static class GetPrivateTransactionResponse
       extends Response<PrivateTransactionGroupResponse> {}
-
-  public static class JsonRpcSuccessResponseResponse extends Response<String> {}
 
   public static class CreatePrivacyGroupResponse extends Response<String> {}
 
@@ -232,7 +237,13 @@ public class PrivacyRequestFactory {
   }
 
   private Bytes encodeRemoveFromGroupFunctionCall(final Bytes toRemove) {
-    return Bytes.concatenate(FlexibleGroupManagement.REMOVE_PARTICIPANT_METHOD_SIGNATURE, toRemove);
+    final Function function =
+        new Function(
+            "removeParticipant",
+            Arrays.asList(new DynamicBytes(toRemove.toArrayUnsafe())),
+            Arrays.asList(new TypeReference<Bool>() {}));
+
+    return Bytes.fromHexString(FunctionEncoder.encode(function));
   }
 
   public String privxLockPrivacyGroup(
@@ -588,29 +599,19 @@ public class PrivacyRequestFactory {
   }
 
   private Bytes encodeAddToGroupFunctionCall(final List<Bytes> participants) {
-    return Bytes.concatenate(
-        FlexibleGroupManagement.ADD_PARTICIPANTS_METHOD_SIGNATURE, encodeList(participants));
-  }
+    final Function function =
+        new Function(
+            "addParticipants",
+            Arrays.asList(
+                new DynamicArray<>(
+                    DynamicBytes.class,
+                    Utils.typeMap(
+                        participants.stream()
+                            .map(Bytes::toArrayUnsafe)
+                            .collect(Collectors.toList()),
+                        DynamicBytes.class))),
+            Collections.emptyList());
 
-  private Bytes encodeList(final List<Bytes> participants) {
-    final Bytes dynamicParameterOffset = encodeLong(32);
-    final Bytes length = encodeLong(participants.size());
-    return Bytes.concatenate(
-        dynamicParameterOffset,
-        length,
-        Bytes.fromHexString(
-            participants.stream()
-                .map(Bytes::toUnprefixedHexString)
-                .collect(Collectors.joining(""))));
-  }
-
-  // long to uint256, 8 bytes big endian, so left padded by 24 bytes
-  private static Bytes encodeLong(final long l) {
-    checkArgument(l >= 0, "Unsigned value must be positive");
-    final byte[] longBytes = new byte[8];
-    for (int i = 0; i < 8; i++) {
-      longBytes[i] = (byte) ((l >> ((7 - i) * 8)) & 0xFF);
-    }
-    return Bytes.concatenate(Bytes.wrap(new byte[24]), Bytes.wrap(longBytes));
+    return Bytes.fromHexString(FunctionEncoder.encode(function));
   }
 }

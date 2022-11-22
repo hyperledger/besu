@@ -17,6 +17,7 @@
 
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
+import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -41,19 +42,20 @@ public class SyncStepStep {
     this.backwardChain = backwardChain;
   }
 
-  public CompletableFuture<Void> executeAsync(final Hash hash) {
+  public CompletableFuture<Block> executeAsync(final Hash hash) {
     return CompletableFuture.supplyAsync(() -> hash)
         .thenCompose(this::requestBlock)
         .thenApply(this::saveBlock);
   }
 
   private CompletableFuture<Block> requestBlock(final Hash targetHash) {
+    debugLambda(LOG, "Fetching block by hash {} from peers", targetHash::toString);
     final RetryingGetBlockFromPeersTask getBlockTask =
         RetryingGetBlockFromPeersTask.create(
             context.getProtocolSchedule(),
             context.getEthContext(),
             context.getMetricsSystem(),
-            context.getEthContext().getEthPeers().getMaxPeers(),
+            context.getEthContext().getEthPeers().peerCount(),
             Optional.of(targetHash),
             UNUSED);
     return context
@@ -63,10 +65,9 @@ public class SyncStepStep {
         .thenApply(AbstractPeerTask.PeerTaskResult::getResult);
   }
 
-  private Void saveBlock(final Block block) {
-    LOG.debug(
-        "Appending block {}({})", block.getHeader().getNumber(), block.getHash().toHexString());
+  private Block saveBlock(final Block block) {
+    debugLambda(LOG, "Appending fetched block {}", block::toLogString);
     backwardChain.appendTrustedBlock(block);
-    return null;
+    return block;
   }
 }

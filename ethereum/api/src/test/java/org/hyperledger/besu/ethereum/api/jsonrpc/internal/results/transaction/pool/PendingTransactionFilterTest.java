@@ -30,7 +30,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter.Filter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -123,9 +123,8 @@ public class PendingTransactionFilterTest {
     }
   }
 
-  private Set<AbstractPendingTransactionsSorter.TransactionInfo> getPendingTransactions() {
-    final List<AbstractPendingTransactionsSorter.TransactionInfo> transactionInfoList =
-        new ArrayList<>();
+  private Set<PendingTransaction> getPendingTransactions() {
+    final List<PendingTransaction> pendingTransactionList = new ArrayList<>();
     final int numberTrx = 5;
     for (int i = 1; i < numberTrx; i++) {
       Transaction transaction = mock(Transaction.class);
@@ -140,10 +139,9 @@ public class PendingTransactionFilterTest {
       if (i == numberTrx - 1) {
         when(transaction.isContractCreation()).thenReturn(true);
       }
-      transactionInfoList.add(
-          new AbstractPendingTransactionsSorter.TransactionInfo(
-              transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)));
+      pendingTransactionList.add(
+          new PendingTransaction(transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)));
     }
-    return new LinkedHashSet<>(transactionInfoList);
+    return new LinkedHashSet<>(pendingTransactionList);
   }
 }

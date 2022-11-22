@@ -21,12 +21,11 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.warnLambda;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -48,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collections;
@@ -108,6 +108,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
           "Failed to decode transactions from block parameter");
     }
 
@@ -116,6 +117,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
           "Field extraData must not be null");
     }
 
@@ -142,11 +144,12 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
     // ensure the block hash matches the blockParam hash
     // this must be done before any other check
     if (!newBlockHeader.getHash().equals(blockParam.getBlockHash())) {
-      LOG.debug(
+      String errorMessage =
           String.format(
               "Computed block hash %s does not match block hash parameter %s",
-              newBlockHeader.getBlockHash(), blockParam.getBlockHash()));
-      return respondWith(reqId, blockParam, null, INVALID_BLOCK_HASH);
+              newBlockHeader.getBlockHash(), blockParam.getBlockHash());
+      LOG.debug(errorMessage);
+      return respondWithInvalid(reqId, blockParam, null, INVALID_BLOCK_HASH, errorMessage);
     }
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
@@ -154,13 +157,14 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       return respondWith(reqId, blockParam, blockParam.getBlockHash(), VALID);
     }
     if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
-      return respondWith(
+      return respondWithInvalid(
           reqId,
           blockParam,
           mergeCoordinator
               .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
               .orElse(Hash.ZERO),
-          INVALID);
+          INVALID,
+          "Block already present in bad block manager.");
     }
 
     Optional<BlockHeader> parentHeader =
@@ -171,6 +175,7 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           reqId,
           blockParam,
           mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
           "block timestamp not greater than parent");
     }
 
@@ -183,24 +188,19 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
           mergeContext.get().isSyncing(),
           parentHeader.isEmpty(),
           block.getHash());
-      mergeCoordinator
-          .appendNewPayloadToSync(block)
-          .exceptionally(
-              exception -> {
-                LOG.warn(
-                    "Sync to block " + block.toLogString() + " failed", exception.getMessage());
-                return null;
-              });
+      mergeCoordinator.appendNewPayloadToSync(block);
+
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
     // TODO: post-merge cleanup
     if (!mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)) {
-      mergeCoordinator.addBadBlock(block);
+      mergeCoordinator.addBadBlock(block, Optional.empty());
       return respondWithInvalid(
           reqId,
           blockParam,
           Hash.ZERO,
+          INVALID,
           newBlockHeader.getHash() + " did not descend from terminal block");
     }
 
@@ -212,16 +212,15 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
     // execute block and return result response
     final long startTimeMs = System.currentTimeMillis();
-    final BlockValidator.Result executionResult = mergeCoordinator.rememberBlock(block);
+    final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
 
-    if (executionResult.errorMessage.isEmpty()) {
+    if (executionResult.isSuccessful()) {
       logImportedBlockInfo(block, (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
-      if (executionResult.cause.isPresent()) {
-        // TODO; would prefer to invert the logic so we rpc error on anything that isn't a
-        // consensus error
-        if (executionResult.cause.get() instanceof StorageException) {
+      if (executionResult.causedBy().isPresent()) {
+        Throwable causedBy = executionResult.causedBy().get();
+        if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
           JsonRpcError error = JsonRpcError.INTERNAL_ERROR;
           JsonRpcErrorResponse response = new JsonRpcErrorResponse(reqId, error);
           return response;
@@ -229,7 +228,11 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       }
       LOG.debug("New payload is invalid: {}", executionResult.errorMessage.get());
       return respondWithInvalid(
-          reqId, blockParam, latestValidAncestor.get(), executionResult.errorMessage.get());
+          reqId,
+          blockParam,
+          latestValidAncestor.get(),
+          INVALID,
+          executionResult.errorMessage.get());
     }
   }
 
@@ -238,6 +241,10 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
       final EnginePayloadParameter param,
       final Hash latestValidHash,
       final EngineStatus status) {
+    if (INVALID.equals(status) || INVALID_BLOCK_HASH.equals(status)) {
+      throw new IllegalArgumentException(
+          "Don't call respondWith() with invalid status of " + status.toString());
+    }
     debugLambda(
         LOG,
         "New payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}",
@@ -251,28 +258,38 @@ public class EngineNewPayload extends ExecutionEngineJsonRpcMethod {
   }
 
   // engine api calls are synchronous, no need for volatile
-  private long lastInvalidWarn = System.currentTimeMillis();
+  private long lastInvalidWarn = 0;
 
   JsonRpcResponse respondWithInvalid(
       final Object requestId,
       final EnginePayloadParameter param,
       final Hash latestValidHash,
+      final EngineStatus invalidStatus,
       final String validationError) {
+    if (!INVALID.equals(invalidStatus) && !INVALID_BLOCK_HASH.equals(invalidStatus)) {
+      throw new IllegalArgumentException(
+          "Don't call respondWithInvalid() with non-invalid status of " + invalidStatus.toString());
+    }
+    final String invalidBlockLogMessage =
+        String.format(
+            "Invalid new payload: number: %s, hash: %s, parentHash: %s, latestValidHash: %s, status: %s, validationError: %s",
+            param.getBlockNumber(),
+            param.getBlockHash(),
+            param.getParentHash(),
+            latestValidHash == null ? null : latestValidHash.toHexString(),
+            invalidStatus.name(),
+            validationError);
+    // always log invalid at DEBUG
+    LOG.debug(invalidBlockLogMessage);
+    // periodically log at WARN
     if (lastInvalidWarn + ENGINE_API_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastInvalidWarn = System.currentTimeMillis();
-      warnLambda(
-          LOG,
-          "Invalid new payload: number: {}, hash: {}, parentHash: {}, latestValidHash: {}, status: {}, validationError: {}",
-          () -> param.getBlockNumber(),
-          () -> param.getBlockHash(),
-          () -> param.getParentHash(),
-          () -> latestValidHash == null ? null : latestValidHash.toHexString(),
-          INVALID::name,
-          () -> validationError);
+      LOG.warn(invalidBlockLogMessage);
     }
     return new JsonRpcSuccessResponse(
         requestId,
-        new EnginePayloadStatusResult(INVALID, latestValidHash, Optional.of(validationError)));
+        new EnginePayloadStatusResult(
+            invalidStatus, latestValidHash, Optional.of(validationError)));
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {

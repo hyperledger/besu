@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -29,7 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -37,8 +37,6 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -115,7 +113,7 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
         .thenReturn(Optional.empty());
 
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
@@ -137,28 +135,10 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return false;
-              }
-            });
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
@@ -178,28 +158,10 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
-    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
         .thenReturn(Optional.of(mock(MutableWorldState.class)));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return true;
-              }
-            });
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
     mainnetBlockValidator.validateAndProcessBlock(
         protocolContext,
@@ -211,6 +173,9 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void shouldNotCacheWhenValidBlocks() {
+    MutableWorldState mockWorldState =
+        when(mock(MutableWorldState.class).isPersistable()).thenReturn(true).getMock();
+
     when(blockchain.getBlockHeader(any(Hash.class)))
         .thenReturn(Optional.of(new BlockHeaderTestFixture().buildHeader()));
     when(blockHeaderValidator.validateHeader(
@@ -219,28 +184,12 @@ public class MainnetBlockValidatorTest {
             eq(protocolContext),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
+    when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class), anyBoolean()))
+        .thenReturn(Optional.of(mockWorldState));
     when(worldStateArchive.getMutable(any(Hash.class), any(Hash.class)))
-        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+        .thenReturn(Optional.of(mockWorldState));
     when(blockProcessor.processBlock(eq(blockchain), any(MutableWorldState.class), eq(badBlock)))
-        .thenReturn(
-            new BlockProcessor.Result() {
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @SuppressWarnings("unchecked")
-              @Override
-              public List<TransactionReceipt> getPrivateReceipts() {
-                return Collections.EMPTY_LIST;
-              }
-
-              @Override
-              public boolean isSuccessful() {
-                return true;
-              }
-            });
+        .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(badBlock),

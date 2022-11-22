@@ -59,7 +59,7 @@ public class GenesisConfigOptionsTest {
   public void shouldUseIbftLegacyWhenIbftInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
     assertThat(config.isIbftLegacy()).isTrue();
-    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(JsonBftConfigOptions.DEFAULT);
+    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(IbftLegacyConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("ibft");
   }
 
@@ -198,6 +198,12 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
+  public void shouldGetShandongBlockNumber() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("shandongBlock", 1337));
+    assertThat(config.getShandongBlockNumber()).hasValue(1337);
+  }
+
+  @Test
   // TODO ECIP-1049 change for the actual fork name when known
   public void shouldGetECIP1049BlockNumber() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
@@ -220,6 +226,7 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getLondonBlockNumber()).isEmpty();
     assertThat(config.getArrowGlacierBlockNumber()).isEmpty();
     assertThat(config.getGrayGlacierBlockNumber()).isEmpty();
+    assertThat(config.getShandongBlockNumber()).isEmpty();
     assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
@@ -244,13 +251,13 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config =
         fromConfigOptions(singletonMap("terminalTotalDifficulty", BigInteger.valueOf(1000)));
     assertThat(config.getTerminalTotalDifficulty()).isPresent();
-    assertThat(config.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(1000));
+    assertThat(config.getTerminalTotalDifficulty()).contains(UInt256.valueOf(1000));
 
     // stubJsonGenesis
     final GenesisConfigOptions stub =
         new StubGenesisConfigOptions().terminalTotalDifficulty(UInt256.valueOf(500));
     assertThat(stub.getTerminalTotalDifficulty()).isPresent();
-    assertThat(stub.getTerminalTotalDifficulty().get()).isEqualTo(UInt256.valueOf(500));
+    assertThat(stub.getTerminalTotalDifficulty()).contains(UInt256.valueOf(500));
   }
 
   @Test

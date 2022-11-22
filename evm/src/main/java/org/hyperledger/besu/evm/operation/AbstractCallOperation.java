@@ -21,12 +21,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import java.util.Optional;
-import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -40,10 +38,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 public abstract class AbstractCallOperation extends AbstractOperation {
 
   protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(
-          OptionalLong.of(0L), Optional.of(ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS));
+      new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
-  protected AbstractCallOperation(
+  AbstractCallOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
@@ -160,8 +157,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final long cost = cost(frame);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(
-          OptionalLong.of(cost), Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     frame.decrementRemainingGas(cost);
 
@@ -180,14 +176,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(UInt256.ZERO);
-      return new OperationResult(OptionalLong.of(cost), Optional.empty());
+      return new OperationResult(cost, null);
     }
 
     final Bytes inputData = frame.readMutableMemory(inputDataOffset(frame), inputDataLength(frame));
 
     final Code code =
         contract == null
-            ? Code.EMPTY_CODE
+            ? CodeV0.EMPTY_CODE
             : evm.getCode(contract.getCodeHash(), contract.getCode());
 
     final MessageFrame childFrame =
@@ -217,7 +213,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.getMessageFrameStack().addFirst(childFrame);
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
-    return new OperationResult(OptionalLong.of(cost), Optional.empty(), 0);
+    return new OperationResult(cost, null, 0);
   }
 
   protected abstract long cost(final MessageFrame frame);

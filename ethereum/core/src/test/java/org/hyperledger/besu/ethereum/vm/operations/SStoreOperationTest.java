@@ -35,7 +35,6 @@ import org.hyperledger.besu.evm.operation.SStoreOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
@@ -48,7 +47,7 @@ public class SStoreOperationTest {
   private final long minimumGasAvailable;
   private final long initialGas;
   private final long remainingGas;
-  private final Optional<ExceptionalHaltReason> expectedHalt;
+  private final ExceptionalHaltReason expectedHalt;
 
   private static final GasCalculator gasCalculator = new ConstantinopleGasCalculator();
 
@@ -81,7 +80,7 @@ public class SStoreOperationTest {
     this.minimumGasAvailable = minimumGasAvailable;
     this.initialGas = initialGas;
     this.remainingGas = remainingGas;
-    this.expectedHalt = Optional.ofNullable(expectedHalt);
+    this.expectedHalt = expectedHalt;
   }
 
   @Parameterized.Parameters(

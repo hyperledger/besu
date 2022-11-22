@@ -21,16 +21,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.TransactionDB;
 
 public class RocksDbSegmentIdentifier {
 
-  private final TransactionDB db;
+  private final OptimisticTransactionDB db;
   private final AtomicReference<ColumnFamilyHandle> reference;
 
   public RocksDbSegmentIdentifier(
-      final TransactionDB db, final ColumnFamilyHandle columnFamilyHandle) {
+      final OptimisticTransactionDB db, final ColumnFamilyHandle columnFamilyHandle) {
     this.db = db;
     this.reference = new AtomicReference<>(columnFamilyHandle);
   }

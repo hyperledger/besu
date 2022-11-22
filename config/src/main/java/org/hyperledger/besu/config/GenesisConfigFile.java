@@ -37,7 +37,7 @@ public class GenesisConfigFile {
   public static final GenesisConfigFile DEFAULT =
       new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
 
-  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1000000000L);
+  public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
   private final ObjectNode configRoot;
 
   private GenesisConfigFile(final ObjectNode config) {
@@ -139,12 +139,17 @@ public class GenesisConfigFile {
   }
 
   public Optional<Wei> getGenesisBaseFeePerGas() {
-    // if we have a base fee market at genesis, get either the configured baseFeePerGas, or the
-    // default
-    return getBaseFeePerGas()
-        .map(Optional::of)
-        .orElseGet(() -> Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE))
-        .filter(z -> 0L == getConfigOptions().getLondonBlockNumber().orElse(-1L));
+    if (getBaseFeePerGas().isPresent()) {
+      // always use specified basefee if present
+      return getBaseFeePerGas();
+    } else if (getConfigOptions().getLondonBlockNumber().orElse(-1L) == 0) {
+      // if not specified, and we specify london at block zero use a default fee
+      // this is needed for testing.
+      return Optional.of(BASEFEE_AT_GENESIS_DEFAULT_VALUE);
+    } else {
+      // no explicit base fee and no london block zero means no basefee at genesis
+      return Optional.empty();
+    }
   }
 
   public String getMixHash() {
@@ -170,7 +175,7 @@ public class GenesisConfigFile {
   private String getFirstRequiredString(final String... keys) {
     List<String> keysList = Arrays.asList(keys);
     return keysList.stream()
-        .filter(key -> configRoot.has(key))
+        .filter(configRoot::has)
         .findFirst()
         .map(key -> configRoot.get(key).asText())
         .orElseThrow(

@@ -46,13 +46,15 @@ public class BonsaiValue<T> {
     return updated;
   }
 
-  public void setPrior(final T prior) {
+  public BonsaiValue<T> setPrior(final T prior) {
     this.prior = prior;
+    return this;
   }
 
-  public void setUpdated(final T updated) {
+  public BonsaiValue<T> setUpdated(final T updated) {
     this.cleared = updated == null;
     this.updated = updated;
+    return this;
   }
 
   void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {

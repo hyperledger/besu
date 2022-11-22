@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult.BlockImportStatus;
 
 import java.util.List;
 
@@ -31,28 +32,32 @@ public class MainnetBlockImporter implements BlockImporter {
   }
 
   @Override
-  public synchronized boolean importBlock(
+  public synchronized BlockImportResult importBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
     if (context.getBlockchain().contains(block.getHash())) {
-      return true;
+      return new BlockImportResult(BlockImportStatus.ALREADY_IMPORTED);
     }
 
     final var result =
         blockValidator.validateAndProcessBlock(
             context, block, headerValidationMode, ommerValidationMode);
 
-    result.blockProcessingOutputs.ifPresent(
-        processingOutputs ->
-            context.getBlockchain().appendBlock(block, processingOutputs.receipts));
+    if (result.isSuccessful()) {
+      result
+          .getYield()
+          .ifPresent(
+              processingOutputs ->
+                  context.getBlockchain().appendBlock(block, processingOutputs.getReceipts()));
+    }
 
-    return result.blockProcessingOutputs.isPresent();
+    return new BlockImportResult(result.isSuccessful());
   }
 
   @Override
-  public boolean fastImportBlock(
+  public BlockImportResult fastImportBlock(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
@@ -62,9 +67,9 @@ public class MainnetBlockImporter implements BlockImporter {
     if (blockValidator.fastBlockValidation(
         context, block, receipts, headerValidationMode, ommerValidationMode)) {
       context.getBlockchain().appendBlock(block, receipts);
-      return true;
+      return new BlockImportResult(true);
     }
 
-    return false;
+    return new BlockImportResult(false);
   }
 }

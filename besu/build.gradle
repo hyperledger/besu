@@ -89,6 +89,7 @@ dependencies {
   testImplementation 'com.google.auto.service:auto-service'
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'commons-io:commons-io'
+  testImplementation 'io.opentelemetry:opentelemetry-api'
   testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-text'
   testImplementation 'org.apache.tuweni:tuweni-bytes'

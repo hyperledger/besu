@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter.TransactionInfo;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -82,15 +81,15 @@ public class TransactionReplacementRulesTest {
         });
   }
 
-  private final TransactionInfo oldTx;
-  private final TransactionInfo newTx;
+  private final PendingTransaction oldTx;
+  private final PendingTransaction newTx;
   private final Optional<Wei> baseFee;
   private final int priceBump;
   private final boolean expected;
 
   public TransactionReplacementRulesTest(
-      final TransactionInfo oldTx,
-      final TransactionInfo newTx,
+      final PendingTransaction oldTx,
+      final PendingTransaction newTx,
       final Optional<Wei> baseFee,
       final int priceBump,
       final boolean expected) {
@@ -112,22 +111,22 @@ public class TransactionReplacementRulesTest {
         .isEqualTo(expected);
   }
 
-  private static TransactionInfo frontierTx(final long price) {
-    final TransactionInfo transactionInfo = mock(TransactionInfo.class);
+  private static PendingTransaction frontierTx(final long price) {
+    final PendingTransaction pendingTransaction = mock(PendingTransaction.class);
     final Transaction transaction =
         Transaction.builder()
             .chainId(BigInteger.ZERO)
             .type(TransactionType.FRONTIER)
             .gasPrice(Wei.of(price))
             .build();
-    when(transactionInfo.getTransaction()).thenReturn(transaction);
-    when(transactionInfo.getGasPrice()).thenReturn(Wei.of(price));
-    return transactionInfo;
+    when(pendingTransaction.getTransaction()).thenReturn(transaction);
+    when(pendingTransaction.getGasPrice()).thenReturn(Wei.of(price));
+    return pendingTransaction;
   }
 
-  private static TransactionInfo eip1559Tx(
+  private static PendingTransaction eip1559Tx(
       final long maxPriorityFeePerGas, final long maxFeePerGas) {
-    final TransactionInfo transactionInfo = mock(TransactionInfo.class);
+    final PendingTransaction pendingTransaction = mock(PendingTransaction.class);
     final Transaction transaction =
         Transaction.builder()
             .chainId(BigInteger.ZERO)
@@ -135,7 +134,7 @@ public class TransactionReplacementRulesTest {
             .maxPriorityFeePerGas(Wei.of(maxPriorityFeePerGas))
             .maxFeePerGas(Wei.of(maxFeePerGas))
             .build();
-    when(transactionInfo.getTransaction()).thenReturn(transaction);
-    return transactionInfo;
+    when(pendingTransaction.getTransaction()).thenReturn(transaction);
+    return pendingTransaction;
   }
 }

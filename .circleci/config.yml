@@ -262,7 +262,7 @@ jobs:
           docker_layer_caching: true
       - run:
           name: Quorum Acceptance Tests
-          no_output_timeout: 30m
+          no_output_timeout: 5m
           command: ./gradlew --no-daemon acceptanceTestsQuorum
       - store_artifacts:
           path: build/quorum-at

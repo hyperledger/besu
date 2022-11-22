@@ -39,15 +39,12 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Restriction;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /*
  This class is an abstraction on top of the privacy group management smart contract.
@@ -67,6 +64,7 @@ import org.apache.tuweni.units.bigints.UInt256;
     that is not on a block boundary. Used this way, the object's lifetime is intended to be short.
 */
 public class FlexiblePrivacyGroupContract {
+
   @FunctionalInterface
   public interface TransactionSimulator {
     Optional<TransactionProcessingResult> simulate(
@@ -167,7 +165,11 @@ public class FlexiblePrivacyGroupContract {
     if (rlpInput.nextSize() > 0) {
       final PrivacyGroup privacyGroup =
           new PrivacyGroup(
-              privacyGroupId, PrivacyGroup.Type.FLEXIBLE, "", "", decodeList(rlpInput.raw()));
+              privacyGroupId,
+              PrivacyGroup.Type.FLEXIBLE,
+              "",
+              "",
+              FlexibleUtil.decodeList(rlpInput.raw()));
       return Optional.of(privacyGroup);
     } else {
       return Optional.empty();
@@ -226,21 +228,5 @@ public class FlexiblePrivacyGroupContract {
   private CallParameter buildCallParams(final Bytes methodCall) {
     return new CallParameter(
         Address.ZERO, FLEXIBLE_PRIVACY_PROXY, 3000000, Wei.of(1000), Wei.ZERO, methodCall);
-  }
-
-  public static List<String> decodeList(final Bytes rlpEncodedList) {
-    final ArrayList<String> decodedElements = new ArrayList<>();
-    // first 32 bytes is dynamic list offset
-    if (rlpEncodedList.size() < 64) return decodedElements;
-    // Bytes uses a byte[] for the content which can only have up to Integer.MAX_VALUE-5 elements
-    final int lengthOfList =
-        UInt256.fromBytes(rlpEncodedList.slice(32, 32)).toInt(); // length of list
-    if (rlpEncodedList.size() < 64 + lengthOfList * 32) return decodedElements;
-
-    for (int i = 0; i < lengthOfList; ++i) {
-      decodedElements.add(
-          Bytes.wrap(rlpEncodedList.slice(64 + (32 * i), 32)).toBase64String()); // participant
-    }
-    return decodedElements;
   }
 }

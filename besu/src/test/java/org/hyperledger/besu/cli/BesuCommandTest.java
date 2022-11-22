@@ -29,20 +29,22 @@ import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.ROPSTEN;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
+import static org.hyperledger.besu.cli.config.NetworkName.SHANDONG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATED_AND_USELESS_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.PERM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.SHANDONG_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.junit.Assume.assumeThat;
@@ -100,6 +102,7 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -227,7 +230,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   // Testing default values
   @Test
-  public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() throws Exception {
+  public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() {
     parseCommand();
 
     final int maxPeers = 25;
@@ -847,7 +850,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() throws IOException {
+  public void noOverrideDefaultValuesIfKeyIsNotPresentInConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
 
     parseCommand("--config-file", configFile);
@@ -1038,6 +1041,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
+  }
+
+  @Test
+  public void testGenesisPathShandongEthConfig() {
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    parseCommand("--network", "shandong");
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.getBootNodes()).isEqualTo(SHANDONG_BOOTSTRAP_NODES);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(1337903));
   }
 
   @Test
@@ -1709,7 +1728,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeersOption() {
+  public void checkValidDefaultFastSyncMinPeers() {
     parseCommand("--sync-mode", "FAST");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
@@ -1721,56 +1740,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeersPreMergeOption() {
-    parseCommand("--sync-mode", "FAST", "--network", "CLASSIC");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkValidDefaultFastSyncMinPeersPostMergeOption() {
-    parseCommand("--sync-mode", "FAST", "--network", "GOERLI");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(1);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void parsesValidFastSyncMinPeersOption() {
     parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesValidFastSyncMinPeersOptionPreMerge() {
-    parseCommand("--sync-mode", "FAST", "--network", "CLASSIC", "--fast-sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesValidFastSyncMinPeersOptionPostMerge() {
-    parseCommand("--sync-mode", "FAST", "--network", "GOERLI", "--fast-sync-min-peers", "11");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
@@ -2342,28 +2313,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSet() {
-    parseCommand("--fast-sync-min-peers", "5");
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void fastSyncOptionsRequiresFastSyncModeToBeSetToml() throws IOException {
-    final Path toml = createTempFile("toml", "fast-sync-min-peers=5\n");
-
-    parseCommand("--config-file", toml.toString());
-
-    verifyOptionsConstraintLoggerCall("--sync-mode", "--fast-sync-min-peers");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void rpcApisPropertyWithInvalidEntryMustDisplayError() {
     parseCommand("--rpc-http-api", "BOB");
 
@@ -2372,7 +2321,19 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     // PicoCLI uses longest option name for message when option has multiple names, so here plural.
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--rpc-http-apis'");
+        .contains("Invalid value for option '--rpc-http-api': invalid entries found [BOB]");
+  }
+
+  @Test
+  public void rpcWsApisPropertyWithInvalidEntryMustDisplayError() {
+    parseCommand("--rpc-ws-api", "ETH,BOB,TEST");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+
+    assertThat(commandErrorOutput.toString(UTF_8).trim())
+        .contains("Invalid value for option '--rpc-ws-api': invalid entries found [BOB, TEST]");
   }
 
   @Test
@@ -4034,6 +3995,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void shandongValuesAreUsed() {
+    parseCommand("--network", "shandong");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(SHANDONG));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Shandong is deprecated and will be shutdown"));
+  }
+
+  @Test
   public void classicValuesAreUsed() throws Exception {
     parseCommand("--network", "classic");
 
@@ -4094,6 +4073,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void ropstenValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("ropsten");
+  }
+
+  public void shandongValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("shandong");
   }
 
   @Test
@@ -4327,13 +4310,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             DEPRECATION_WARNING_MSG,
             "--privacy-onchain-groups-enabled",
             "--privacy-flexible-groups-enabled");
-  }
-
-  @Test
-  public void txPoolHashesMaxSizeOptionIsDeprecated() {
-    parseCommand("--tx-pool-hashes-max-size", "1024");
-
-    verify(mockLogger).warn(DEPRECATED_AND_USELESS_WARNING_MSG, "--tx-pool-hashes-max-size");
   }
 
   @Test
@@ -5397,5 +5373,56 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
     verify(mockLogger)
         .info("jemalloc library not found, memory usage may be reduced by installing it");
+  }
+
+  @Test
+  public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
+    parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--fast-sync-min-peers can't be used with FULL sync-mode");
+  }
+
+  @Test
+  public void posBlockCreationMaxTimeDefaultValue() {
+    parseCommand();
+    assertThat(getPosBlockCreationMaxTimeValue()).isEqualTo(DEFAULT_POS_BLOCK_CREATION_MAX_TIME);
+  }
+
+  @Test
+  public void posBlockCreationMaxTimeOption() {
+    parseCommand("--Xpos-block-creation-max-time", "7000");
+    assertThat(getPosBlockCreationMaxTimeValue()).isEqualTo(7000L);
+  }
+
+  private long getPosBlockCreationMaxTimeValue() {
+    final ArgumentCaptor<MiningParameters> miningArg =
+        ArgumentCaptor.forClass(MiningParameters.class);
+
+    verify(mockControllerBuilder).miningParameters(miningArg.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    return miningArg.getValue().getPosBlockCreationMaxTime();
+  }
+
+  @Test
+  public void posBlockCreationMaxTimeOutOfAllowedRange() {
+    parseCommand("--Xpos-block-creation-max-time", "17000");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xpos-block-creation-max-time must be positive and ≤ 12000");
+  }
+
+  @Test
+  public void portInUseReportsError() throws IOException {
+    final ServerSocket serverSocket = new ServerSocket(8545);
+
+    parseCommand("--rpc-http-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Port(s) '[8545]' already in use. Check for other processes using the port(s).");
+
+    serverSocket.close();
   }
 }

@@ -14,7 +14,6 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.hyperledger.besu.util.Slf4jLambdaHelper.debugLambda;
@@ -22,11 +21,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -57,11 +59,15 @@ public class BackwardsSyncAlgorithm {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
       return executeSyncStep(firstHash.get())
-          .whenComplete(
-              (result, throwable) -> {
-                if (throwable == null) {
-                  context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                }
+          .thenAccept(
+              result -> {
+                LOG.info("Backward sync target block is {}", result.toLogString());
+                context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                context
+                    .getStatus()
+                    .setSyncRange(
+                        context.getProtocolContext().getBlockchain().getChainHeadBlockNumber(),
+                        result.getHeader().getNumber());
               });
     }
     if (!context.isReady()) {
@@ -73,7 +79,7 @@ public class BackwardsSyncAlgorithm {
         context.getBackwardChain().getFirstAncestorHeader();
     if (possibleFirstAncestorHeader.isEmpty()) {
       this.finished = true;
-      LOG.info("The Backward sync is done...");
+      LOG.info("The Backward sync is done");
       context.getBackwardChain().clear();
       return CompletableFuture.completedFuture(null);
     }
@@ -85,13 +91,16 @@ public class BackwardsSyncAlgorithm {
     if (blockchain.getChainHead().getHeight() > firstAncestorHeader.getNumber()) {
       debugLambda(
           LOG,
-          "Backward reached below previous head {} : {}",
+          "Backward reached below current chain head {} : {}",
           () -> blockchain.getChainHead().toLogString(),
           firstAncestorHeader::toLogString);
     }
 
     if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)) {
-      LOG.info("Backward sync reached ancestor header, starting Forward sync");
+      debugLambda(
+          LOG,
+          "Backward sync reached ancestor header with {}, starting Forward sync",
+          firstAncestorHeader::toLogString);
       return executeForwardAsync();
     }
 
@@ -104,7 +113,7 @@ public class BackwardsSyncAlgorithm {
   }
 
   @VisibleForTesting
-  public CompletableFuture<Void> executeSyncStep(final Hash hash) {
+  public CompletableFuture<Block> executeSyncStep(final Hash hash) {
     return new SyncStepStep(context, context.getBackwardChain()).executeAsync(hash);
   }
 
@@ -131,15 +140,20 @@ public class BackwardsSyncAlgorithm {
   private void checkReadiness(final CountDownLatch latch, final long idTTD, final long idIS) {
     try {
       if (!context.isReady()) {
-        LOG.info("Waiting for preconditions...");
+        LOG.debug("Waiting for preconditions...");
         final boolean await = latch.await(2, TimeUnit.MINUTES);
         if (await) {
-          LOG.info("Preconditions meet...");
+          LOG.debug("Preconditions meet, ensure at least one peer is connected");
+          waitForPeers(1).get();
         }
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new BackwardSyncException("Wait for TTD preconditions interrupted");
+      throw new BackwardSyncException(
+          "Wait for TTD preconditions interrupted (" + e.getMessage() + ")");
+    } catch (ExecutionException e) {
+      throw new BackwardSyncException(
+          "Error while waiting for at least one connected peer (" + e.getMessage() + ")", true);
     } finally {
       context.getSyncState().unsubscribeTTDReached(idTTD);
       context.getSyncState().unsubscribeInitialConditionReached(idIS);
@@ -196,5 +210,11 @@ public class BackwardsSyncAlgorithm {
     }
 
     blockchain.setFinalized(newFinalized);
+  }
+
+  private CompletableFuture<Void> waitForPeers(final int count) {
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(context.getEthContext(), count, context.getMetricsSystem());
+    return waitForPeersTask.run();
   }
 }

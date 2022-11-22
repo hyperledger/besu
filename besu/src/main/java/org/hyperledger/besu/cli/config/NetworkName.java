@@ -25,6 +25,7 @@ public enum NetworkName {
   ROPSTEN("/ropsten.json", BigInteger.valueOf(3)),
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  SHANDONG("/shandong.json", BigInteger.valueOf(1337903)),
   KILN("/kiln.json", BigInteger.valueOf(1337802), false),
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
@@ -85,17 +86,5 @@ public enum NetworkName {
 
   public Optional<String> getDeprecationDate() {
     return Optional.ofNullable(deprecationDate);
-  }
-
-  public static boolean isMergedNetwork(final NetworkName networkName) {
-    switch (networkName) {
-      case GOERLI:
-      case ROPSTEN:
-      case SEPOLIA:
-      case KILN:
-        return true;
-      default:
-        return false;
-    }
   }
 }
