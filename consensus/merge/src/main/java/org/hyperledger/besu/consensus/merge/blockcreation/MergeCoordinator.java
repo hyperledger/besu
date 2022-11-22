@@ -390,17 +390,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash headHash) {
+  public Optional<BlockHeader> getOrSyncHeaderByHash(final Hash blockHash) {
     final var chain = protocolContext.getBlockchain();
-    final var maybeHeadHeader = chain.getBlockHeader(headHash);
+    final var optHeader = chain.getBlockHeader(blockHash);
 
-    if (maybeHeadHeader.isPresent()) {
-      debugLambda(LOG, "Block {} is already present", maybeHeadHeader.get()::toLogString);
+    if (optHeader.isPresent()) {
+      debugLambda(LOG, "BlockHeader {} is already present", () -> optHeader.get().toLogString());
     } else {
-      debugLambda(LOG, "Appending new head block hash {} to backward sync", headHash::toHexString);
-      backwardSyncContext.syncBackwardsUntil(headHash);
+      debugLambda(LOG, "appending block hash {} to backward sync", blockHash::toHexString);
+      backwardSyncContext.syncBackwardsUntil(blockHash);
     }
-    return maybeHeadHeader;
+    return optHeader;
   }
 
   @Override
