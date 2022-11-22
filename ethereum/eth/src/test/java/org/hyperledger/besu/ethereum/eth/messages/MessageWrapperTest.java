@@ -246,7 +246,7 @@ public class MessageWrapperTest {
         @JsonProperty("s") final String s,
         @JsonProperty("hash") final String __) {
       super(
-          Long.decode(nonce),
+          Bytes.fromHexStringLenient(nonce).toLong(),
           Wei.fromHexString(gasPrice),
           Long.decode(gasLimit),
           Address.fromHexString(to),
@@ -325,7 +325,7 @@ public class MessageWrapperTest {
           Bytes.fromHexString(extraData),
           null,
           Hash.fromHexString(mixHash),
-          Long.decode(nonce),
+          Bytes.fromHexStringLenient(nonce).toLong(),
           new MainnetBlockHeaderFunctions());
     }
   }

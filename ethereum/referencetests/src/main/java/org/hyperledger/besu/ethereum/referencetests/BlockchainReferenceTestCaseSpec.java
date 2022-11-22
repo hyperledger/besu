@@ -174,7 +174,7 @@ public class BlockchainReferenceTestCaseSpec {
           Bytes.fromHexString(extraData), // extraData
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
-          Long.decode(nonce),
+          Bytes.fromHexStringLenient(nonce).toLong(),
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
