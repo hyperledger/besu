@@ -5438,8 +5438,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommandWithRequiredOption();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .isEqualTo(
-            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'\n");
+        .startsWith(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
   }
 
   @Test
@@ -5448,8 +5448,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommandWithRequiredOption();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .isEqualTo(
-            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'\n");
+        .startsWith(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
   }
 
   @Test
@@ -5458,7 +5458,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommandWithRequiredOption("--config-file", toml.toString());
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .isEqualTo(
-            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'\n");
+        .startsWith(
+            "Missing required option: '--accept-terms-and-conditions=<acceptTermsAndConditions>'");
   }
 }
