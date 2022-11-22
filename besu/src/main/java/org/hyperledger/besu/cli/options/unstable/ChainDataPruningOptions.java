@@ -33,7 +33,9 @@ public class ChainDataPruningOptions {
       hidden = true,
       names = {"--Xchain-data-pruning-blocks-retained"},
       description =
-          "The number of recent blocks for which to keep the chain data. Must be >= 50400 (default: ${DEFAULT-VALUE})")
+          "The number of recent blocks for which to keep the chain data. Must be >= "
+              + DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED
+              + " (default: ${DEFAULT-VALUE})")
   private final Long chainDataPruningBlocksRetained =
       DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED;
 

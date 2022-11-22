@@ -42,6 +42,8 @@ public class ChainDataPruner implements BlockAddedObserver {
   private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
   private static final Bytes FORK_BLOCKS_PREFIX = Bytes.of(2);
 
+  // TODO: cleanup - pruningEnabled will not be required after
+  // https://github.com/hyperledger/besu/pull/4703 is merged.
   private static boolean pruningEnabled = false;
   private final BlockchainStorage blockchainStorage;
   private final KeyValueStorage prunerStorage;
