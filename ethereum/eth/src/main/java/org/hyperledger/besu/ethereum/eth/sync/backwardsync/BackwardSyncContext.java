@@ -103,14 +103,18 @@ public class BackwardSyncContext {
         .orElse(Boolean.FALSE);
   }
 
-  public synchronized void updateHead(final Hash head) {
-    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
-    maybeCurrentStatus.ifPresent(
-        status ->
-            backwardChain
-                .getBlock(head)
-                .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber())));
-    this.maybeHead = Optional.of(head);
+  public synchronized void updateHead(final Hash headHash) {
+    if (Hash.ZERO.equals(headHash)) {
+      maybeHead = Optional.empty();
+    } else {
+      maybeHead = Optional.of(headHash);
+      Optional<Status> maybeCurrentStatus = Optional.ofNullable(currentBackwardSyncStatus.get());
+      maybeCurrentStatus.ifPresent(
+          status ->
+              backwardChain
+                  .getBlock(headHash)
+                  .ifPresent(block -> status.updateTargetHeight(block.getHeader().getNumber())));
+    }
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {

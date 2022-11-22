@@ -100,7 +100,8 @@ public class EngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
     }
 
     final Optional<BlockHeader> maybeNewHead =
-        mergeCoordinator.getOrSyncHeadByHash(forkChoice.getHeadBlockHash());
+        mergeCoordinator.getOrSyncHeadByHash(
+            forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
     if (maybeNewHead.isEmpty()) {
       return syncingResponse(requestId, forkChoice);

@@ -73,12 +73,11 @@ public class BackwardsSyncAlgorithm {
     if (!context.isReady()) {
       return waitForReady();
     }
-
     final Optional<BlockHeader> maybeFirstAncestorHeader =
         context.getBackwardChain().getFirstAncestorHeader();
     if (maybeFirstAncestorHeader.isEmpty()) {
       this.finished = true;
-      LOG.info("The Backward sync is done");
+      LOG.info("Current backward sync session is done");
       context.getBackwardChain().clear();
       return CompletableFuture.completedFuture(null);
     }
@@ -100,7 +99,7 @@ public class BackwardsSyncAlgorithm {
     if (finalBlockConfirmation.ancestorHeaderReached(firstAncestorHeader)) {
       debugLambda(
           LOG,
-          "Backward sync reached ancestor header with {}, starting Forward sync",
+          "Backward sync reached ancestor header with {}, starting forward sync",
           firstAncestorHeader::toLogString);
       return executeForwardAsync();
     }

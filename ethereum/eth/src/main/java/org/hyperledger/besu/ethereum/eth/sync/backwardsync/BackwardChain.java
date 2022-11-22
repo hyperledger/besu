@@ -93,15 +93,14 @@ public class BackwardChain {
       headers.put(blockHeader.getHash(), blockHeader);
       return;
     }
-    BlockHeader firstHeader = firstStoredAncestor.get();
+    final BlockHeader firstHeader = firstStoredAncestor.get();
     headers.put(blockHeader.getHash(), blockHeader);
-    chainStorage.put(blockHeader.getHash(), firstStoredAncestor.get().getHash());
+    chainStorage.put(blockHeader.getHash(), firstHeader.getHash());
     firstStoredAncestor = Optional.of(blockHeader);
     debugLambda(
         LOG,
-        "Added header {} on height {} to backward chain led by pivot {} on height {}",
+        "Added header {} to backward chain led by pivot {} on height {}",
         blockHeader::toLogString,
-        blockHeader::getNumber,
         () -> lastStoredPivot.orElseThrow().toLogString(),
         firstHeader::getNumber);
   }
@@ -127,13 +126,19 @@ public class BackwardChain {
   }
 
   public synchronized void appendTrustedBlock(final Block newPivot) {
-    debugLambda(LOG, "appending trusted block {}", newPivot::toLogString);
+    debugLambda(LOG, "Appending trusted block {}", newPivot::toLogString);
     headers.put(newPivot.getHash(), newPivot.getHeader());
     blocks.put(newPivot.getHash(), newPivot);
     if (lastStoredPivot.isEmpty()) {
       firstStoredAncestor = Optional.of(newPivot.getHeader());
     } else {
       if (newPivot.getHeader().getParentHash().equals(lastStoredPivot.get().getHash())) {
+        debugLambda(
+            LOG,
+            "Added block {} to backward chain led by pivot {} on height {}",
+            newPivot::toLogString,
+            lastStoredPivot.get()::toLogString,
+            firstStoredAncestor.get()::getNumber);
         chainStorage.put(lastStoredPivot.get().getHash(), newPivot.getHash());
       } else {
         firstStoredAncestor = Optional.of(newPivot.getHeader());
