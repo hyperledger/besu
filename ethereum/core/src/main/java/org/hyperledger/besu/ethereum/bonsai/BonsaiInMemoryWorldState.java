@@ -144,4 +144,10 @@ public class BonsaiInMemoryWorldState extends BonsaiPersistedWorldState {
     worldStateBlockHash = blockHeader.getBlockHash();
     isPersisted = true;
   }
+
+  @Override
+  public void close() throws Exception {
+    // if storage is snapshot-based we need to close:
+    worldStateStorage.close();
+  }
 }
